@@ -1,0 +1,54 @@
+/*
+ * Copyright (c) 2015 IBM Corporation and others.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+dependencies {
+    compile name: 'translator-0.0.3'
+    runtime group: 'rhino', name: 'js', version: '1.7+'
+    runtime group: 'org.eclipse.jdt', name: 'org.eclipse.jdt.core', version: '3.10.0'
+}
+
+archivesBaseName = 'brunel-data'
+
+task(testTranslate, dependsOn: 'classes', type: JavaExec) {
+    main = 'org.brunel.translator.DoTranslate'
+    classpath = configurations.runtime
+    args  '-log', 'warning'
+    args  '-name', 'BrunelData'
+    args  '-out', 'build/translated/BrunelDataTest.js'
+    args  '-html', 'build/translated/BrunelDataTest.html'
+    args  'src/main/java', 'src/test/java'
+}
+
+task(doTranslate, dependsOn: ['classes', testTranslate], type: JavaExec) {
+	main = 'org.brunel.translator.DoTranslate'
+	classpath = configurations.runtime
+    args  '-log', 'warning'
+	args  '-name', 'BrunelData'
+	args  '-out', 'build/translated/BrunelData.js'
+	args  'src/main/java'
+}
+
+//For development only
+task deploy(type: Copy, dependsOn: doTranslate) {
+    description 'Copy to deployment'
+    from 'build/translated/BrunelData.js'
+    into '../core/src/main/resources/javascript'
+}
+
+
+defaultTasks 'doTranslate'
+
