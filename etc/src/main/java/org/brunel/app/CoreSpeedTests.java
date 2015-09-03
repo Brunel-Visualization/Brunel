@@ -42,7 +42,7 @@ public class CoreSpeedTests {
     private static final Action ACTION = Action.parse(COMMAND);
 
     private static Field[] readResourceAsCSV(String resourceName) {
-        InputStream stream = FullTests.class.getResourceAsStream("/org/brunel/app/data-csv/" + resourceName);
+        InputStream stream = VisualTests.class.getResourceAsStream("/org/brunel/app/data-csv/" + resourceName);
         Scanner scanner = new Scanner(stream).useDelimiter("\\A");
         String s = scanner.hasNext() ? scanner.next() : "";
         return CSV.read(s);

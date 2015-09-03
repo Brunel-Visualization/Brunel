@@ -1,25 +1,12 @@
 #### Action library to be used
 
-colorScatter	|	x($1) y($2) color($3)
-                |	field, field, categorical
-
-line	        |	line x($1) y($2) color($3)
-                |	field, field, categorical
-
-cloud           |   x($1) cloud size($2) color($2) sort($2) mean($2)
-                |   categorical, numeric
-
-sizedBar	    |	bar x($1) y(#count) size($2:100) color($2:blue) mean($2) sort(#count)
-                |	categorical, field
-
-multiline       |   line x($1) y($2) color(#series) mean($2)
-                |   field, multiple
-
-treemap         |   treemap x($2) size(#count) label($1) list($1:50)
-                |   field, categorical
-
-
-
+colorScatter	:: x($1) y($2) color($3)                                    :: field, field, categorical
+line	        :: line x($1) y($2) color($3)                               :: field, field, categorical
+cloud           :: x($1) cloud size($2) color($2) sort($2) mean($2)         :: categorical, numeric
+multiline       :: line x($1) y($2) color(#series) mean($2)                 :: field, multiple
+treemap         :: treemap x($2) size(#count) label($1) list($1:50)         :: field, categorical
+sizedBar	    :: bar x($1) y(#count) size($2:100) color($2:blue) mean($2) sort(#count)
+                :: categorical, field
 
 #### The Tests
 
@@ -49,22 +36,50 @@ sizedBar whiskey country rating / transpose         :: pass
 sizedBar whiskey age rating                         :: pass
 sizedBar cpi Date ALL                               :: pass     :: The data is regular, so the counts are similar up to the last year
 
-
-
 multiline cpi Date food housing health transport                    :: pass
 multiline cpi Date food housing health transport / stack            :: improve :: The stacking is in 'natural order' but should be the order the fields were defined in 'y'
 multiline whiskey country rating abv / label(#series) sort(rating) size(#series:1000)  :: pass :: Note that we have sorted by rating so that line should decrease left-to-right
 multiline whiskey rating country category / point bin(rating)       :: improve :: Very modified "line" chart --  must fix the horizontal axes ticks which overlap
 
-- cpi / line x(Date) y(CLOTHING, HOUSING)                           :: pass     :: Should split automatically
-- cpi / line x(Date) y(CLOTHING, HOUSING) label(#series)            :: pass     :: Should split automatically
-- baseball / path x(weight) y(height) + text x(weight) y(height) label(#row)    :: pass :: Messy, but correct
+- cpi       / line x(Date) y(CLOTHING, HOUSING)                                 :: pass     :: Should split automatically
+- cpi       / line x(Date) y(CLOTHING, HOUSING) label(#series)                  :: pass     :: Should split automatically
+- baseball  / path x(weight) y(height) + text x(weight) y(height) label(#row)   :: pass :: Messy, but correct
 - baseball / path x(weight) y(height) | line x(weight) y(height)  | polygon x(weight) y(height) | area x(weight) y(height)    :: pass     :: Left is not sorted, right is
 
 treemap whiskey brand country category                              :: improve  :: Labels are good, but the treemap doesn't make areas very accurately
 - whiskey / bar x(ABV) y(#count) bin(ABV) sort(#count) label(brand) tooltip(#all) list(brand:50) :: fail
 colorScatter whiskey age rating category / label(brand:3)             :: pass     :: Make sure the labels move when panning
 multiline cpi Date food housing health transport / stack area label(#series)      :: improve :: The stacking is in 'natural order' but should be the order the fields were defined in 'y'
+
+- simple	/ bar x(animal) y(size) color(animal) sort(size) filter(size, #row, animal, mammal) :: pass
+- simple	/ bar x(animal) y(size) color(mammal) transpose                                     :: pass
+- simple	/ bar x(aquatic, mammal) y(size) color(mammal)                                      :: fail :: clustered X axis not yet implemented
+- simple	/ bar x(mammal) y(size) color(aquatic) stack label(#all) tooltip(aquatic, #count)   :: pass
+
+- whiskey	/ bar x(country) y(#count) color(category) stack                                    :: pass
+- whiskey	/ bar x(country) y(#count) percent(#count) color(category) stack                    :: pass
+- whiskey	/ bar y(#count) color(country) stack polar label(country)                           :: pass
+- cpi	    / bar x(housing) bin(housing) y(#count)                                             :: pass
+
+- simple	/ area x(animal) y(size) color(mammal) stack                                        :: pass
+- whiskey	/ area y(#count) x(country) color(category) stack                                   :: pass
+- whiskey	/ area y(#count) percent(#count) x(country) color(category) stack                   :: pass
+- cpi	    / area x(date) yrange(food, housing)                                                :: fail :: Should show area spanning ranges
+
+- simple	/ bar y(size) color(animal) stack polar label(#all)                                 :: pass
+- whiskey	/ point x(Price) y(Rating) color(country) tooltip('(', Price, ',' , Rating, ')') style('size:40px; fill-opacity:0.2') :: fail :: size is being ignored
+- whiskey	/ edge yrange(country, category) chord size(#count) color(country) tooltip(#all)        :: pass
+- whiskey	/ point size(#count) color(country) bubble label(country, '\n', #count) tooltip(#all)   :: improve :: should respect the newline character
+
+- simple	/ bar x(mammal, aquatic) size(#count) color(#count) label('Mammal=', mammal, '; Aquatic=', aquatic) treemap tooltip(#all)   :: pass
+- whiskey	/ bar x(country, category) size(#count) mean(Rating) color(Rating) label(Country, ',' , category) treemap tooltip(#all)     :: pass
+- baseball	/ bar x(HomeRunRate) y(Salary)                             :: pass
+- baseball	/ bar x(HomeRunRate) y(Salary) transpose                   :: improve :: axes labels clash
+
+- baseball	/ point size(SlugRate) color(Salary) bubble                                                                     :: pass
+- baseball	/ point x(PutOutRate) y(AssistRate) color(SlugRate) size(salary) sort(salary) style('size:300%') tooltip(#all)  :: improve :: respect the % size
+- cpi	    / point x(food) y(housing) bin(housing, food) color(#count) style('symbol:rect; border-radius:5px')             :: improve :: respect the rounded rectangle setting
+
 
 
 

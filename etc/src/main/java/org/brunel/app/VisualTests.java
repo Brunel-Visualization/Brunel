@@ -32,19 +32,20 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Scanner;
 
-class FullTests {
+class VisualTests {
 
     private static final String TESTS_LOCATION = "/org/brunel/app/tests.txt";
     private static final String INDEX_LOCATION = "/org/brunel/app/test-html/test-index.html";
 
-    private final Dataset baseball, cpi, whiskey;             // Data sets to use
+    private final Dataset baseball, cpi, whiskey, simple;             // Data sets to use
     private final Library library;                          // Library we build
     private final WebDisplay display;
 
-    private FullTests() {
+    private VisualTests() {
         baseball = Dataset.make(readResourceAsCSV("baseball2004.csv"));
         cpi = Dataset.make(readResourceAsCSV("UK_CPI.csv"));
         whiskey = Dataset.make(readResourceAsCSV("whiskey.csv"));
+        simple = Dataset.make(readResourceAsCSV("simple.csv"));
         library = Library.custom();
         display = new WebDisplay("Full Tests");
     }
@@ -128,7 +129,12 @@ class FullTests {
 
         int HEIGHT = 400;
         int WIDTH = 600;
-        display.buildSingle(a.apply(base), WIDTH, HEIGHT, id + ".html", makeTitle(name, a, result), makeComments(comments, result));
+        try {
+            display.buildSingle(a.apply(base), WIDTH, HEIGHT, id + ".html", makeTitle(name, a, result), makeComments(comments, result));
+        } catch (Exception e) {
+            System.err.println("Error running test: " + test);
+            e.printStackTrace();
+        }
     }
 
     private String makeComments(String notes, String result) {
@@ -169,16 +175,17 @@ class FullTests {
         if (s.equalsIgnoreCase("baseball") || s.equalsIgnoreCase("bb")) return baseball;
         else if (s.equalsIgnoreCase("whiskey") || s.equalsIgnoreCase("why")) return whiskey;
         else if (s.equalsIgnoreCase("cpi") || s.equalsIgnoreCase("cp")) return cpi;
+        else if (s.equalsIgnoreCase("simple") || s.equalsIgnoreCase("si")) return simple;
         else throw new IllegalStateException("Bad data set: " + s);
     }
 
     public static void main(String[] args) throws Exception {
-        FullTests tests = new FullTests();
+        VisualTests tests = new VisualTests();
         tests.run();
     }
 
     private Field[] readResourceAsCSV(String resourceName) {
-        InputStream stream = FullTests.class.getResourceAsStream("/org/brunel/app/data-csv/" + resourceName);
+        InputStream stream = VisualTests.class.getResourceAsStream("/org/brunel/app/data-csv/" + resourceName);
         Scanner scanner = new Scanner(stream).useDelimiter("\\A");
         String s = scanner.hasNext() ? scanner.next() : "";
         return CSV.read(s);

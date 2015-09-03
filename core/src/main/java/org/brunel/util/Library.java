@@ -86,23 +86,21 @@ public class Library {
 
     /**
      * Add to the library by reading from a text resource. The format of the items should be as follows:
-     * Each item should be separated from the next by a blank line, and the format for each line
-     * is NAME | PARAMETERIZED_ACTION | PARAMETERS_LIST
+     * is NAME :: PARAMETERIZED_ACTION :: PARAMETERS_LIST
      * E.g.
-     * <p/>
-     * scatter	    |	point x($1) y($2)   |	field, field
-     * <p/>
-     * line	        |	line x($1) y($2)    |	field, field
+     * scatter	    ::	point x($1) y($2)   ::	field, field
+     * line	        ::	line x($1) y($2)    ::	field, field
+     *
+     * Any white space characters, including new lines, are allowed around the "::" separators
      *
      * @param inputStream items to read
      */
     public void addItems(InputStream inputStream) {
-        Scanner scanner = new Scanner(inputStream, "UTF-8").useDelimiter("\\n\\n");
+        Scanner scanner = new Scanner(inputStream, "UTF-8").useDelimiter("[\r\n\t ]+::[\n\t ]+|\n");
         while (scanner.hasNext()) {
-            String[] item = scanner.next().split("\\|");
-            String name = item[0].trim();
-            String action = item[1].trim();
-            Param[] params = toParams(item[2].split(","));
+            String name = scanner.next();
+            String action = scanner.next();
+            Param[] params = toParams(scanner.next().split(","));
             add(new LibraryItem(name, action, params));
         }
 
