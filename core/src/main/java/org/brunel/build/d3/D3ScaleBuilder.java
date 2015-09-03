@@ -255,7 +255,7 @@ class D3ScaleBuilder {
 
     public void writeLegends(VisSingle vis) {
         if (vis.fColor.isEmpty() || colorLegendField == null) return;
-        if (!vis.fColor.get(0).equals(colorLegendField.name)) return;
+        if (!vis.fColor.get(0).asField().equals(colorLegendField.name)) return;
         String legendTicks;
         if (colorLegendField.preferCategorical()) {
             // Categorical data can just grab it from the domain
