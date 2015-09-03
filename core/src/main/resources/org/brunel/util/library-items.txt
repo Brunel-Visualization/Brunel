@@ -1,0 +1,23 @@
+wordle	        |	text x($1) cloud color($1) size(#count)
+                |   categorical
+
+barOfCounts	    |	bar x($1) y(#count) tooltip(#all) sort(#count)
+                |	categorical
+
+scatter	        |	point x($1) y($2)
+                |	field, field
+
+line	        |	line x($1) y($2)
+                |	field, field
+
+lineWithPoints	|	point x($1) y($2) style('{size:50%') + line x($1) y($2) mean($2) using(interpolate)
+                |	field, field
+
+bubble	        |	point x($1) y($2) size($3)
+                |	field, field, numeric
+
+heatmap	        |   x($1) y($2) sort(#count) color(#count) label(#count) tooltip(#all) style('symbol:rect;border-radius:8;size:95%')
+                |	categorical, categorical
+
+treemap	        |	bar x($1) treemap color($1[-1]) size(#count) label($1[-0]) tooltip(#all)
+                |	multiCategorical

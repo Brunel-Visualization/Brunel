@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<!--
+    jQuery Copyright © 2010 by The jQuery Project
+    Dropzone Copyright © 2013 lev-kuznetsov (https://github.com/webjars/dropzone/blob/master/LICENSE)
+-->
+
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="../common/brunelapp.css">
+    <link rel="stylesheet" href="../dropzone/basic.min.css">
+    <style>
+        .display {
+            margin: 40px 0 0;
+            width: 900px;
+            height: 500px;
+            padding: 0px;
+            overflow: hidden
+        }
+
+        .main {
+            margin-top: 40px;
+            left: 160px;
+            right: 5px;
+            padding: 20px 20px 60px;
+            position: absolute;
+        }
+
+        #data-name {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+<div id="navback"></div>
+<header>
+    BrunelPad
+</header>
+<nav>
+    Currently Using: <span id='data-name'>... loading ...</span><br>
+    <hr/>
+        <ul id="data-fields"></ul>
+    <hr/>
+
+    <form style="background-color:white; outline: blue dotted;text-align: center;" action="../brunel/interpret/data"
+          class="dropzone" id='drop-zone'>
+        <input id='file-name' type="hidden" name="file_name"/>
+    </form>
+    <hr/>
+    <button onclick="showEmbedIFrame()">Embed..</button>
+</nav>
+
+<div class="main">
+<iframe class="display" id="actionResult" frameborder="0" seamless="seamless"></iframe>
+<textarea id="actionText" rows="3" style="width:100%" spellcheck="false" draggable="false">Action...</textarea>
+</div>
+
+<footer> Cognitive Visualization Group</footer>
+
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js" charset="utf-8"></script>
+<script src="../dropzone/dropzone.min.js" charset="utf-8"></script>
+<script src="../../brunelsupport/BrunelData.js" charset="utf-8"></script>
+
+<script>
+
+    function readDataFile(fileName) {
+        $('#file-name').val(fileName);
+        $('#data-name').text(fileName);
+        var list = $('data-fields');
+    }
+    Dropzone.options.dropZone = {
+        dictDefaultMessage: "Drop A CSV File Here",
+        createImageThumbnails: false,
+        init: function () {
+            this.on("success", function (file) {
+                getBrunel(null, currentData, file.name);
+                currentData = file.name;
+                setTimeout(function () {
+                    $('div.dz-success').remove();
+                }, 1500);
+
+            });
+        },
+
+        accept: function (file, done) {
+            readDataFile(file.name);
+            done();
+        }
+    };
+
+
+    var currentData;
+    var carsData = baseUrl() + "/data/cars.csv";
+    var locSize = "&width=880&height=500";
+
+    function getBrunel(src, oldData, newData) {
+        if (src == null) src = $("#actionText").val();
+        if (oldData == null) oldData = carsData;
+
+        $.ajax({
+            type: "GET",
+            dataType: "text",
+            data: {
+                original_data: oldData,
+                new_data: newData,
+                src: src
+            },
+            url: "../brunel/interpret/templated",
+            success: function (brunel) {
+                showAction(brunel, oldData, newData);
+            }
+        });
+    }
+
+
+    function load(name) {
+        $('#main').load(name + '.html');
+    }
+
+    //Gets the base url and context path.
+
+    //This is only needed because we are using our app server to also host the data.
+    //As such, the location and context path may vary depending on the deployment.
+    function baseUrl() {
+        var fullUrl = window.location.href;
+        return fullUrl.substring(0, fullUrl.indexOf("/demo"))
+    }
+
+    function showEmbedIFrame() {
+
+        var data = currentData == null ? carsData : currentData;
+        var style = "'margin: 0; margin-top: 40px;width: 900px;  height: 500px; padding: 0px; overflow: hidden'";
+        var loc = baseUrl() + "/brunel/interpret/d3?src=" + encodeURIComponent(removeLineBreaks($("#actionText").val())) +
+                locSize + "&data=" + data;
+        var embedIFrame = "<iframe style= " + style + " frameborder='0' seamless='seamless' src=" + loc + "></iframe>";
+        prompt("Copy The Following Into an HTML File To Embed This Graphic:", embedIFrame);
+
+    }
+
+    function showAction(text, oldData, newData) {
+
+        if (!oldData && !newData) {
+            if (currentData) {
+                getBrunel(text, carsData, currentData);
+                return;
+            }
+        }
+
+        if (!newData) newData = carsData;
+
+        var txt = removeLineBreaks(text);
+
+        var loc = "../brunel/interpret/d3?src="
+                + encodeURIComponent(txt) + locSize
+                + "&data=" + newData;
+        $('#actionResult').attr("src", loc);
+        $('#actionText').val(txt);
+
+    }
+
+    $('#actionText').keyup(function (e) {
+        var code = e.keyCode || e.which;
+        if (code == 13) {
+            var text = $("#actionText").val();
+            showAction(text, null, currentData);
+        }
+    });
+
+
+    function removeLineBreaks(text) {
+        return text.replace(/(\r\n|\n|\r)/gm, "");
+    }
+
+    load('cars');
+    readDataFile('cars.csv');
+    showAction("x(year) y(mpg) color(origin)");
+</script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+/*
+ * Copyright (c) 2015 IBM Corporation and others.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+.brunel * {
+    font-family: helvetica neue, helvetica, arial;
+    font-size: 12px;
+}
+
+.brunel .background {
+    fill: white;
+    outline-opacity: 0;
+    padding: 5px;
+}
+
+.brunel .coordinates {
+    opacity: 0
+}
+
+.brunel .title {
+    font-weight: bold;
+    font-size: 14px;
+    padding: 2px;
+}
+
+.brunel .box {
+    fill: #f9ecb7;
+    stroke: #666666;
+}
+
+.brunel .axis {
+    fill: #888888
+}
+
+.brunel .domain {
+    fill: none;
+    stroke: #888888
+}
+
+.brunel .tick line {
+    stroke: #888888
+}
+
+.brunel .tick mark {
+    font-size: 12px;
+}
+
+.brunel .grid {
+    visibility: hidden;
+}
+
+.brunel .legend.title {
+    fill: #00669e;
+}
+
+.brunel .legend.label {
+    font-size: 12px;
+}
+
+.brunel .legend rect {
+    stroke: black;
+    stroke-width: 0.25px;
+}
+
+.brunel .hierarchy {
+    fill: white;
+    stroke-width: 0;
+}
+
+.brunel .hierarchy .L0 {
+    visibility: hidden;
+}
+
+.brunel .hierarchy .L1 {
+    fill: #f9ecb7;
+}
+
+.brunel .hierarchy .L2 {
+    fill: #d3870d;
+}
+
+.brunel .treemap.axis {
+    visibility: hidden
+}
+
+.brunel .treemap.axis .L1 {
+    visibility: visible;
+    fill: #d3870d;
+    font-weight: bold;
+    font-size: 14px
+}
+
+.brunel .treemap.axis .L2 {
+    visibility: visible;
+    fill: white;
+    font-size: 10px
+}
+
+.brunel .tree .edge {
+    stroke-width: 1;
+    stroke: #0b9bdb;
+    fill: none;
+}
+
+.brunel .label {
+    fill: black;
+    font-size: 12px;
+    stroke: none;
+    pointer-events: none;
+}
+
+.brunel .labels text {
+    text-shadow: 1px 1px 5px white, -1px -1px 5px white, -1px 1px 5px white, 1px -1px 5px white
+}
+
+.brunel .element.bar {
+    width: 90%
+}
+
+.brunel .element.text {
+    text-anchor: middle
+}
+
+.brunel .element.line, .brunel .element.path, .brunel .element.edge {
+    stroke-width: 2;
+    stroke: #0b9bdb;
+    fill: none;
+}
+
+.brunel .element.bar, .brunel .element.polygon, .brunel .element.area {
+    fill: #0b9bdb;
+    stroke-width: 0.5;
+    stroke: #000000
+}
+
+.brunel .element.point, .brunel .chord .element.edge {
+    fill: #0b9bdb;
+    fill-opacity: 0.8;
+    stroke: #000000
+}
+
+.brunel circle.element, .brunel .chord .element.edge {
+    stroke-width: 0.25;
+}
+
+.brunel rect.point, .brunel .chord .element.edge {
+    stroke-width: 0;
+}
+
+.brunel .element2 .element {
+    fill: #f2574c
+}
+
+.brunel .element3 .element {
+    fill: #67b51b
+}
+
+.brunel .element2 .element.line, .brunel .element2 .element.path, .brunel .element2 .element.edge {
+    fill: none;
+    stroke: #f2574c
+}
+
+.brunel .element3 .element.line, .brunel .element3 .element.path, .brunel .element3 .element.edge {
+    fill: none;
+    stroke: #67b51b
+}
+
+.brunel .horizontal-box {
+    -moz-box-orient: horizontal;
+    -moz-box-align: stretch;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    box-sizing: border-box;
+    padding-top: 5px;
+    padding-bottom: 5px
+}
+
+.brunel .control-label {
+    min-width: 5em;
+    padding-right: 10px;
+    padding-left: 10px
+}
+
+.brunel .control-left-label {
+    text-align: right;
+}
+
+.brunel .control-title {
+    padding-right: 10px;
+}
+
+.brunel.tooltip, .brunel.tooltip .title, .brunel.tooltip .field {
+    font-size: 12px;
+    color: white;
+}
+
+div.brunel.tooltip {
+    padding: 0.5em;
+    background: black;
+    opacity: 0.8;
+    border-radius: 3px;
+    position: absolute;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+div.brunel.tooltip:after {
+    content: '\25bc';
+    position: absolute;
+    display: inline;
+    left: 0;
+    top: 100%;
+    width: 100%;
+    color: black;
+    margin-top: -2px;
+    font-size: 12px;
+    line-height: 1;
+    text-align: center;
+}
+
+.brunel.tooltip .title {
+    font-weight: bold;
+}
+
+.brunel.tooltip .field {
+    color: #fdb813
+}
+
+.brunel rect.overlay {
+    cursor: move;
+    fill: none;
+    pointer-events: all;
+}
+
+.ui-slider {
+    width: 200px;
+}
+
+

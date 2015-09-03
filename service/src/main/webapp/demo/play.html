@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<html>
+
+<head>
+    <style>
+        header {
+            position: absolute;
+            left: 0px;
+            top: 0px;
+            width: 100%;
+            height: 40px;
+            background-color: black;
+            color: white;
+            text-align: center;
+            font-size: 16pt;
+            line-height: 40px;
+        }
+
+        nav {
+            position: absolute;
+            top: 40px;
+            line-height: 24px;
+            width: 130px;
+            float: left;
+            padding: 4px;
+        }
+
+        #navback {
+            position: fixed;
+            background-color: #eeeeee;
+            left: 0;
+            width: 160px;
+            top: 40px;
+            bottom: 0;
+        }
+
+        #belowheader {
+            top: 40px;
+        }
+
+        nav a {
+            color: #00669E;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .playarea {
+            margin-top: 40px;
+            width: 100%;
+            padding: 5px;
+        }
+
+        #actionText {
+            font-family: Monaco;
+            font-size: 9pt;
+            color: #4E7F00;
+        }
+
+        #main {
+            margin-top: 40px;
+        }
+
+        footer {
+            position: fixed;
+            background-color: #aaa;
+            color: white;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            text-align: center;
+            padding: 3px;
+        }
+
+        .examples a {
+            background-color: #eeeeee;
+            font-family: Monaco;
+            font-size: 9pt;
+            color: #4E7F00;
+            text-decoration: none;
+        }
+
+        .fields, .fields a {
+            margin: 0;
+            text-align: center;
+            color: #888888;
+            font-family: Monaco;
+            font-size: 7pt;
+            text-decoration: none;
+        }
+
+        code {
+            font-family: Monaco;
+            font-size: 9pt;
+        }
+
+        img {
+            border: none;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<header>
+    Cognitive Visualization
+</header>
+
+
+<div class="playarea">
+    <center>
+        <iframe style="overflow: hidden; width: 1000px; height: 600px"  id="actionResult" frameborder="0" seamless="seamless"></iframe>
+			<textarea id="actionText" cols="150" style="width:1000px"
+                      spellcheck="false" draggable="false">Action...</textarea>
+
+        <div>
+            <p class="fields">
+                <a
+                   onClick="showAction('bubble label(state) style(\'* {font-size:6pt\') tooltip(state)')">state</a>
+                <a
+                   onClick="showAction('bar x(region) y(#count) transpose')">region</a>
+                <a
+                   onClick="showAction('bar x(person) bin(person) y(#count)')">person</a>
+                <a
+                   onClick="showAction('bar x(density) bin(density) y(#count)')">density</a>
+                <a
+                   onClick="showAction('bar x(income) bin(income) y(#count)')">income</a>
+                <a
+                   onClick="showAction('bar x(summer) bin(summer) y(#count)')">summer</a>
+                <a
+                   onClick="showAction('bar x(winter) bin(winter) y(#count)')">winter</a>
+                <a onClick="showAction('bar x(rain) bin(rain) y(#count)')">rain</a>
+            </p>
+        </div>
+    </center>
+</div>
+
+
+<footer> Cognitive Visualization Group</footer>
+
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+<script>
+    function load(name) {
+        $('#main').load(name + '.html');
+    }
+
+    function showAction(text) {
+        var loc = "../brunel/interpret/d3?src="
+                + encodeURIComponent(text) + "&width=960&height=560";
+        $('#actionResult').attr("src", loc);
+        $('#actionText').val(text);
+    }
+
+    $('#actionText').keyup(function (e) {
+        var code = e.keyCode || e.which;
+        if (code == 13) {
+            var text = $("#actionText").val();
+            showAction(text);
+        }
+    });
+
+    load('intro');
+    showAction("x(winter) y(summer) color(#selection) legends(none) |  bar x(density) y(#count) stack color(#selection) bin(density) interaction(select) | bar x(region) y(#count) interaction(select) color(#selection) transpose axes(x) legends(none) stack");
+</script>
+
+
+<div class="examples">
+    <center>
+        <p>
+            <a
+               onClick="showAction('x(winter) y(summer) | bar x(state) yrange(summer, winter) sort(winter) transpose')">x
+                y yrange</a> &nbsp;&nbsp;&nbsp;&nbsp; <a
+                                                         onClick="showAction('polygon x(winter) y(summer) + line x(winter) y(summer) + point x(winter) y(summer)')">point
+            bar line path polygon edge</a> &nbsp;&nbsp;&nbsp;&nbsp; <a
+                                                                       onClick="showAction('x(winter) y(summer) color | x(winter) y(summer) size ')">color
+            size split</a> &nbsp;&nbsp;&nbsp;&nbsp; <a
+                                                       onClick="showAction('line x(winter) y(rain) bin(winter) sum(rain) sort(rain) + bar x(winter) y(rain) bin(winter) mean(rain) ')">sort
+            bin mean sum</a> &nbsp;&nbsp;&nbsp;&nbsp; <a
+                                                         onClick="showAction('x(region) y(#row) | bar x(region) y(#count) stack')">#row
+            #count #percent #series #all</a>
+
+        </p>
+
+        <p>
+            <a
+               onClick="showAction('bar x(region) y(#count) transpose | bar x(region) y(#count) polar | bar x(region) y(rain) stack')">transpose
+                polar stack</a> &nbsp;&nbsp;&nbsp;&nbsp; <a
+                                                            onClick="showAction('y(region,summer, winter) bin(summer,winter) treemap color(winter)')">treemap
+            cloud chord pack</a> &nbsp;&nbsp;&nbsp;&nbsp; <a
+                                                             onClick="showAction('transpose bar x(region) y(#count) label(\'count = \', #count)')">label
+            tooltip</a> &nbsp;&nbsp;&nbsp;&nbsp; <a
+                                                    onClick="showAction('bar x(region) y(summer) mean(summer) color(rain) mean(rain) size(#count) axes(x) legends(all) style(\'{symbol: rrect}* {font-family:Times}\')')">legends
+            axes style</a>
+        </p>
+    </center>
+</div>
+
+
+</body>
+</html>

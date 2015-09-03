@@ -1,0 +1,131 @@
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<H1>Axes and Style</H1>
+
+<H3>Axes</H3>
+<p>
+    The axes command controls which axes are displayed. Legal values are <code>none, all, x, y, auto</code>
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(none)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(all)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(x)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(y)</a></p>
+
+<H3>Legends</H3>
+<p>
+    The legends command controls which axes are displayed. Legal values are <code>none, all, auto</code>
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">color(winter) size(summer) x(state) y(summer) legends(auto)</a>
+</p>
+<p class="examples"><a onClick="showAction(this.text)">color(winter) size(summer) x(state) y(summer) legends(all)</a>
+</p>
+<p class="examples"><a onClick="showAction(this.text)">color(winter) size(summer) x(state) y(summer) legends(none)</a>
+</p>
+
+<H3>Style</H3>
+<p>
+    This command is used to change the style of the chart. Its parameter can be a very long string, and consists of
+    CSS-like descriptions of styles.
+    If there are no tags that indicate what the style applies to, it defaults to the element being show. The possible
+    styles include
+    <code>fill, outline, symbol,width, height, size, font-family, font-size, font-weight, stroke-width</code>.
+
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('fill:red')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('fill:white; outline:red')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('size:400%')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('symbol:rect')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('symbol:rect;border-radius:5')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('size:30;stroke-width:3')</a></p>
+<p class="examples"><a onClick="showAction(this.text)"> treemap color(region) size(#count) label(#all) style('.label
+    {font-size:24px}')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) label(#all) style('.label
+    {font-weight:bold; fill:white; text-shadow:none})')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('.axis {fill:red; font-weight:
+    bold')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('.axis .tick line
+    {stroke-width:5;stroke:red} .axis .title {font-size:30px ;fill:cyan}')</a></p>
+
+<p>
+    When there are multiple elements in a chart, if you use the simple form of style without a target,
+    it will choose the current element only as the target.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">line x(state) y(summer) style('stroke:red') + line x(state)
+    y(winter) style('stroke:blue')</a></p>
+
+<H4>Style Details</H4>
+<p>
+    The styles defined are generally CSS style statements, and are placed into the resulting code as a local
+    style sheet. However note:
+</p>
+<ul>
+    <li>Brunel reads the styles and uses the values for initial layout.; for example it may reserve space depending on font size.
+    This expands the list of possible style attributes, notably adding <code>symbol</code> and <code>size</code> as
+    attributes that can be specified.</li>
+    <li>However, Brunel does not support all the complexities of CSS. If you stick to element names and paths and
+    combining them with commas and hierarchies, you should be fine.</li>
+    <li>Local overrides (with the style command) are given them CSS "!important" tag. This means they will completely
+    override any other definition. So if you do <code>style('* {fill:blue}')</code> it will turn all of brunel blue ...</li>
+    <li>SVG CSS is used, so we do not use "color" for color -- instead use "fill" or "stroke"</li>
+</ul>
+
+<p class="examples"><a onClick="showAction(this.text)"><p class="examples"><a onClick="showAction(this.text)">line x(state) y(summer) style('stroke:red') + line x(state)
+    y(winter) style('stroke:blue')</a></p>
+</a></p>
+
+<H4>Group Hierarchy for CSS</H4>
+<p>The hierarchy for CSS purposes is given below. This is not written in stone and may change slightly in the future.
+Be careful of depending on it too strongly</p>
+<pre>
+  svg.brunel#id             -- the top level svg container with an id as given by the application
+    g.chart1                -- the first chart
+      g.interior            -- items inside the coordinate space
+
+        g.element1          -- first element
+          g.main            -- main items in the element
+            ???.element     -- this is where the lines, paths, rects and so on will be found
+          g.labels          -- labels for the shapes in '.main'
+            text.label      -- all the labels
+
+        g.element2          -- second element
+          ...               -- main, labels and any other special items (diagrams sometimes add a group)
+
+      g.axis                -- axes for the first chart
+        g.xaxis             -- x axis
+          text.title        -- axis title
+          g.tick            -- group for a tick mark (many of these)
+            line            -- tick mark line
+            text            -- tick mark label
+        g.yaxis             -- y axis
+          ...
+
+      g.legend              -- axes for the first chart
+        text.title          -- legend title
+        g.tick              -- group for a legend swatch (many of these)
+            rect            -- swatch item
+            text            -- swatch label
+</pre>
+
+
+
+
+
+
+

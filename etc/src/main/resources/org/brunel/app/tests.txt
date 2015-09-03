@@ -1,0 +1,79 @@
+#### Action library to be used
+
+colorScatter	|	x($1) y($2) color($3)
+                |	field, field, categorical
+
+line	        |	line x($1) y($2) color($3)
+                |	field, field, categorical
+
+cloud           |   x($1) cloud size($2) color($2) sort($2) mean($2)
+                |   categorical, numeric
+
+sizedBar	    |	bar x($1) y(#count) size($2:100) color($2:blue) mean($2) sort(#count)
+                |	categorical, field
+
+multiline       |   line x($1) y($2) color(#series) mean($2)
+                |   field, multiple
+
+treemap         |   treemap x($2) size(#count) label($1) list($1:50)
+                |   field, categorical
+
+
+
+
+#### The Tests
+
+
+colorScatter baseball Age HomeRunRate Salary        :: improve  :: Could be improved by allowing the vertical axis to go negative giving padding for the points
+colorScatter whiskey Rating Price Category          :: pass     :: Note the log Y axis
+colorScatter cpi Date ALL ALL                       :: pass     :: Leaves margins at left and right
+colorScatter cpi Date Date ALL                      :: improve  :: Too much room for axis ticks at left
+
+colorScatter whiskey Country Brand Rating           :: pass
+colorScatter whiskey Category Country #count        :: pass
+colorScatter whiskey Category 5 #count              :: pass     :: circles drawn because 'y' is numeric
+colorScatter whiskey Category 'a' #count            :: pass     :: rectangles because both dimensions are categorical
+
+line baseball Age HomeRunRate Salary                :: pass
+line whiskey Rating Age Category                    :: pass
+line whiskey Rating Age Category / transpose        :: pass     :: Note: transposed
+line cpi Date ALL 'overall' / transpose             :: pass     :: Note: transposed
+
+cloud whiskey category rating / style("font-family:Impact, Charcoal, sans-serif")               :: pass
+cloud whiskey brand rating                          :: pass
+cloud whiskey name rating                           :: pass     :: Slow, but should not feel like it has hanged
+cloud baseball age Salary                           :: pass
+
+sizedBar baseball age salary                        :: pass
+sizedBar whiskey country rating / transpose         :: pass
+sizedBar whiskey age rating                         :: pass
+sizedBar cpi Date ALL                               :: pass     :: The data is regular, so the counts are similar up to the last year
+
+
+
+multiline cpi Date food housing health transport                    :: pass
+multiline cpi Date food housing health transport / stack            :: improve :: The stacking is in 'natural order' but should be the order the fields were defined in 'y'
+multiline whiskey country rating abv / label(#series) sort(rating) size(#series:1000)  :: pass :: Note that we have sorted by rating so that line should decrease left-to-right
+multiline whiskey rating country category / point bin(rating)       :: improve :: Very modified "line" chart --  must fix the horizontal axes ticks which overlap
+
+- cpi / line x(Date) y(CLOTHING, HOUSING)                           :: pass     :: Should split automatically
+- cpi / line x(Date) y(CLOTHING, HOUSING) label(#series)            :: pass     :: Should split automatically
+- baseball / path x(weight) y(height) + text x(weight) y(height) label(#row)    :: pass :: Messy, but correct
+- baseball / path x(weight) y(height) | line x(weight) y(height)  | polygon x(weight) y(height) | area x(weight) y(height)    :: pass     :: Left is not sorted, right is
+
+treemap whiskey brand country category                              :: improve  :: Labels are good, but the treemap doesn't make areas very accurately
+- whiskey / bar x(ABV) y(#count) bin(ABV) sort(#count) label(brand) tooltip(#all) list(brand:50) :: fail
+colorScatter whiskey age rating category / label(brand:3)             :: pass     :: Make sure the labels move when panning
+multiline cpi Date food housing health transport / stack area label(#series)      :: improve :: The stacking is in 'natural order' but should be the order the fields were defined in 'y'
+
+
+
+#### Notes
+
+baseball:   Age Weight Height BattingAvg OnBasePct HomeRunRate SlugRate RBIRate WalkRate
+            StrikeRate StolenBases HitByPitch PutOutRate AssistRate ErrorRate Salary
+
+whiskey:    Name Rating Country Category Price ABV Age Brand
+
+cpi:        Date DateLabel ALL FOOD ALCOHOL/TOBACCO CLOTHING HOUSING FURNITURE HEALTH
+            TRANSPORT COMMUNICATION RECREATION EDUCATION MISC

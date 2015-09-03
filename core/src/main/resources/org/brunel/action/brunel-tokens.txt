@@ -1,0 +1,88 @@
+# Note that the order here is important -- it is used for sequence simplification
+### The format of each line is NAME TYPE [ALLOWED_PARAMETERS]
+### No parameters means they are not allowed, CAPS indicate a type, lower case a choice of options
+
+## Data must be first
+data other STRING
+
+## Element definitions
+point element
+line element
+area element
+bar element
+text element
+edge element
+path element
+polygon element
+
+## Diagrams
+bubble diagram
+chord diagram
+cloud diagram
+pack diagram
+tree diagram
+treemap diagram
+
+## X and Y locations
+x position FIELD/LIT+
+y position FIELD/LIT+
+yrange position FIELD/LIT+
+
+
+## Coords
+stack coords
+polar coords
+transpose coords
+flipx coords
+flip coords
+
+## Aesthetics
+color aesthetic FIELD+
+size aesthetic FIELD+
+split aesthetic FIELD+
+key aesthetic FIELD+
+sort aesthetic FIELD+
+filter aesthetic FIELD+
+label aesthetic FIELD/LIT+
+tooltip aesthetic FIELD/LIT+
+
+## Data transform operations
+bin transform FIELD+
+rank transform FIELD+
+inner transform FIELD+
+outer transform FIELD+
+
+## Data summary operations
+count data FIELD+
+sum data FIELD+
+percent data FIELD+
+mean data FIELD+
+median data FIELD+
+mode data FIELD+
+min data FIELD+
+max data FIELD+
+unique data FIELD+
+valid data FIELD+
+list data FIELD+
+stddev data FIELD+
+skew data FIELD+
+kurtosis data FIELD+
+valid data FIELD+
+q1 data FIELD+
+q3 data FIELD+
+iqr data FIELD+
+range data FIELD+
+
+# Miscellaneous
+using other dodge interpolate
+axes other auto none all x y
+legends other auto none all color size
+at other NUMBER+
+style other STRING
+interaction other select panzoom filter auto none
+
+## Combination actions
++ combination
+| combination
+> combination
+>> combination

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tests</title>
+    <style>
+
+        table#main {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        iframe {
+            padding: 5px
+        }
+
+        td {
+            border: 1px solid lightgray;
+        }
+
+        div#controls {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            padding: 0;
+            margin: 0;
+            background-color: #666666;
+            box-shadow: 5px 5px 5px #888888;
+        }
+
+        button {
+            font-family: 'open sans', 'helventica neue';
+            color: white;
+            font-size: 16px;
+            background: Transparent no-repeat;
+            border: none;
+            cursor: pointer;
+            overflow: hidden;
+            outline: none;
+            padding: 1px;
+        }
+
+    </style>
+
+    <script>
+        var MAX = $MAX$;
+        var index = 1;
+
+        // Set the content of each cell
+        function setAll(a, b, c, d) {
+            for (var i = 0; i < 4; i++) {
+                var e = document.getElementById('f' + i);
+                e.src = arguments[i] ? "test" + ("000" + arguments[i]).slice(-4) + ".html" : null;
+            }
+        }
+
+        function change(amount) {
+            index += 4 * amount;
+            if (index < 1) index = 1;
+            if (index > MAX) index = Math.floor((MAX - 1) / 4) * 4 + 1;
+            // Blank everything then start runnignt he frames after a very brief pause
+            setAll(null, null, null, null);
+            setTimeout(function () {
+                setAll(
+                        index,
+                        index + 1 > MAX ? null : index + 1,
+                        index + 2 > MAX ? null : index + 2,
+                        index + 3 > MAX ? null : index + 3
+                );
+            });
+        }
+    </script>
+
+</head>
+<body>
+<table id="main">
+    <tr>
+        <td>
+            <iframe id="f0" name="a" frameborder=0 seamless width="100%" height="100%" src="test0001.html"></iframe>
+        </td>
+        <td>
+            <iframe id="f1" name="b" frameborder=0 seamless width="100%" height="100%" src="test0002.html"></iframe>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <iframe id="f2" name="c" frameborder=0 seamless width="100%" height="100%" src="test0003.html"></iframe>
+        </td>
+        <td>
+            <iframe id="f3" name="d" frameborder=0 seamless width="100%" height="100%" src="test0004.html"></iframe>
+        </td>
+    </tr>
+</table>
+
+<div id="controls">
+    <button onclick="change(-10000)">&#x25cf</button>
+    <button onclick="change(-1)">&#x25c4</button>
+    <button onclick="change(1)">&#x25ba</button>
+    <button onclick="change(10000)">&#x25cf</button>
+</div>
+
+</body>
+
+</html>
+
+
+

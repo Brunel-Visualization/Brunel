@@ -1,0 +1,79 @@
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<H1>Introduction to Brunel</H1>
+
+<p>
+    The Brunel project defines a highly succinct and novel language that defines interactive data visualizations
+    based on tabular data. The language is well suited for both data scientists and more aggressive business users.
+    The system interprets the language and produces visualizations using the user's choice of existing lower-level
+    visualization technologies typically used by application engineers such as RAVE or D3.
+</p><p>
+    The goal of Brunel is to be as easy as possible to integrate into an existing solution. It can be set up as a
+    service (web or local) easily, and delivers results that can directly be added to web pages. The D3 driver, for
+    example, produces javascript and CSS that can are placed directly into web pages with no additional steps needed.
+
+    In addition the service oriented nature makes other delivery mechanisms simple; Jupyter notebooks (formerly
+    iPython) allow access to Brunel from <i>Python</i>, <i>R</i> and a variety of other languages. We will be adding
+    more delivery mechanisms as the project progresses -- in general it doesn't take more than a few days.
+</p>
+
+<H3>Language Basics</H3>
+<p>
+    The Brunel language consists of a list of commands. These commands each control an aspect of the chart.
+    In general the order of the actions is not important, but note:
+<ul>
+    <li> Some actions set properties like the coordinate system, but in case of conflict, the last one wins</li>
+    <li> Some actions can be applied to multiple targets -- <code>bin(a,b)</code> is the same as <code>bin(a)
+        bin(b)</code></li>
+    <li> The order can be important for actions that take lists of fields (for example the <code>x</code> and
+        <code>y</code> commands)
+    </li>
+</ul>
+
+<p>
+    Brunel commands work on a single "element" within a single chart -- in other words they work on a single
+    graphical representation. To combine "elements", we use the composition operators which join together
+    different elements. These operators allow side-by-side charts, overlaid elements and nested elements.
+</p>
+
+<H3>How This Guide is Organized</H3>
+<p>
+    This document is available both as a simple file, and also as an online guide. The online version allows
+    you to click on the Brunel examples and see them in operation on a sample data set. You can also edit the
+    commands and hit return to modify the syntax.
+</p>
+
+<H3>Some Brunel Examples</H3>
+
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) sort(#count) + line x(region) y(#count)
+    sort(#count)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar color(region) y(#count) polar stack
+    label(region)</a></p>
+<p class="examples"></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(summer) bin(summer) color(#count)
+    label(#count) style('symbol:rect; border-radius:15')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bubble label(abbr) size(population) color(region)
+    sort(density) tooltip(state, population, density)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(boys_name) y(girls_name)  chord size(#count) color(girls_name)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">cloud x(state) size(density) color(summer) sort(summer)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bubble size(area) tooltip(state) sort(area)
+    label(state:2)
+    color(region) x(region)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bin(income) x(income) label(#count) tooltip(abbr) y(#count) bar list(abbr) color(region) stack axes(x) legends(none)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region, presidential_choice) treemap size(population) label(abbr) tooltip(state) color(dem_rep:red-blue)</a></p>

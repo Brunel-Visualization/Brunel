@@ -1,0 +1,142 @@
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<H1>Data Transformations</H1>
+<p>
+    In Brunel, we define data transforms on fields, and the system coordinates all of these into a final set of
+    transformations. An important point is that a transformation completely replaces a field. This means that if you
+    bin a field, for example, you no longer have access to the unbinned values. In practice this limitation is not
+    often a difficulty as when we combine visualizations, we can use different transforms <i>within</i> each
+    visualization.
+</p>
+
+
+<h3>Sort</h3>
+<p>
+    The sort action can be applied to any list of fields, and has the result that when a categorical field is being used
+    in the data set, then we set the order of that field's categories so that the ones corresponding to high values of
+    the sort fields are shown first. We can set an optional parameter 'ascending' to change to show smallest values
+    first. When multiple fields are used in the sort, the first field is the most important -- the others are used
+    only to break ties.
+</p>
+<p>
+    Here are some sort examples:
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(state) y(summer) sort(summer) color(region) legends(none)</a>
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(state) y(summer) sort(region) color(region) legends(none)</a>
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(state) y(summer) sort(region,summer) color(region)
+    legends(none)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(state) y(summer) sort(summer:ascending) color(region)
+    legends(none)</a></p>
+
+
+<h3>Bin</h3>
+<p>
+    For numeric data, the bin action takes a set of numeric values and transforms them into an ordered set of categories
+    representing ranges of the data. This is done adaptively, so the bins will be different for different data sets.
+    Binning for dates is done based on calendar ranges and so bins for dates may not be of equal numbers of days (for
+    example when we bin by months)
+</p>
+<p>
+    For categorical data, the bin actions bins all categories with small counts into a single "Other" category. "Small"
+    is defined by default that the non-binned data will comprise about 95% of the total data (i.e. we try and aggregate
+    the lowest 5%). Note that this means that if there are lot of very small count values the "Other" category will be
+    large.
+</p>
+<p>
+    Binning does not automatically aggregate or summarize the data. There will still be the same number of data rows
+    after binning. Bin has an optional parameter which is the desired number of bins.
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(summer) y(winter) bin(summer)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(summer) y(winter) bin(summer:3)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(summer) y(winter) bin(summer, winter) style("opacity:0.1")</a>
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(summer) y(winter) bin(summer:10, winter:10)
+    style("opacity:0.1")</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(summer) y(winter) bin(summer, winter) size(#count)</a></p>
+
+<h3>Aggregation</h3>
+<p>
+    In Brunel, data can of course be passed in pre-aggregated (and this is necessary for very large data sets), but
+    to get fast local interactivity, we need to be able to aggregate and re-aggregate in the client. We provide a
+    simple system for aggregation, with the following features:
+</p>
+<ul>
+    <li>Aggregation is performed when a summary function is defined (see list below) or the special field
+        <code>#count</code>
+        is used.
+    </li>
+    <li>When aggregating, #count and any fields defined by a summary function are treated as responses, and all other
+        fields are used to define the groups or 'dimensions' for the summaries.
+    </li>
+    <li>All other fields are dropped</li>
+</ul>
+<p>
+    The following summary functions work for all types of field (categorical and numeric)
+</p>
+<ul>
+    <li><b>count</b>: The number of rows in the group</li>
+    <li><b>valid</b>: The number of rows that are not missing and (if numeric or date) of the correct format</li>
+    <li><b>unique</b>: The number if unique categories or values in that group</li>
+    <li><b>list</b>: A concatenated list of the unique values for the group. Takes an optional integer parameter that
+        limits the number of items to display (this defaults to 12)
+    </li>
+    <li><b>mode</b>: The most common value (ties broken by the row order)</li>
+    <li><b>mean</b>: The mean value. Note that for categorical data, this silently changes to the mode. Although this is
+        unusual, it is very helpful for use when you are unsure if data is numeric or not
+    </li>
+</ul>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) label(#count)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(population) count(population) sort(population) label(region:3, ": ", population)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(population) valid(population) sort(population) label(region:3, ": ", population)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(summer) bin(summer) y(region) unique(region) label(region)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar y(1) bin(summer) color(summer:red) list(region) label(region) stack axes(none) legends(none)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bubble label(region:8) list(region) size(summer) bin(summer:20) tooltip(region) </a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(summer) bin(summer) y(#count) mode(region) label(region:9)</a></p>
+
+
+
+<p>The following summary functions produce results only for numeric data </p>
+<ul>
+    <li><b>sum</b>: Sum of all values in the group</li>
+    <li><b>percent</b>: The percent of the sum of this group as a percent of the sum of all groups with the same 'x' value</li>
+    <li><b>median</b>: Median value of the group</li>
+    <li><b>min</b>, <b>max</b>: Lower and upper values of the group</li>
+    <li><b>range</b>: Distance between min and max values</li>
+    <li><b>q1</b>, <b>q3</b>: Lower and Upper quartiles</li>
+    <li><b>iqr</b>:Distance between q1 and q3 -- the interquartile range</li>
+    <li><b>stddev</b>, <b>variance</b>, <b>skew</b>,<b>kurtosis</b>: statistical measure for the group</li>
+</ul>
+<p>Note that <code>iqr</code> and <code>range</code> produce a range -- two values. If used with 'y' the result is the
+    distance between them, but if used with 'yrange' it will generate the actual range. See the examples below for how
+    this works</p>
+
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(population) sum(population) sort(population)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(summer) bin(summer) color(region) y(#count) percent(#count) stack label(#count)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">area x(region) y(density) mean(density) sort(density)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(summer) range(summer) sort(summer)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) yrange(summer) range(summer) sort(summer)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">area x(region) yrange(dem_rep) iqr(dem_rep) + line x(region) y(dem_rep) median(dem_rep)</a></p>
+
+
+
+
+
+
+

@@ -1,0 +1,68 @@
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<H1>Diagrams</H1>
+
+<p>
+    Diagrams take the existing X and Y values and re-interpret them using a layout as a diagram, rather than by
+    using the positional values in a coordinate system.
+</p>
+
+
+<h3>Treemap</h3>
+<p>
+    This uses all the position fields to create a recursively divided space where each field splits the previous set of
+    rectangles up into smaller ones so as to fill the space completely
+</p>
+<p class="examples"><a onClick="showAction(this.text)">treemap x(region) label(abbr)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">treemap x(region) size(population) sum(population) label(state)
+    list(state) sort(population) color(population:green)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region,summer) bin(summer) treemap label(abbr) list(state)
+    size(#count) color(summer:red) legends(none) sort(summer)</a>
+</p>
+
+
+<h3>Cloud</h3>
+<p>
+    This ignores all positions and places the rows in a tag-cloud layout.
+    If a label is defiend, it uses that text, otherwise it uses the rows
+</p>
+<p class="examples"><a onClick="showAction(this.text)">cloud color(population) size(population)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">cloud label(abbr) color(population) size(population)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">cloud label(abbr,":",region:3) color(population) size(population)</a></p>
+
+
+<h3>Chord</h3>
+<p>
+    This uses the first two positional fields as categories in a chord plot
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(boys_name) y(girls_name) chord color(girls_name) legends(none) </a></p>
+
+
+<h3>Bubble</h3>
+<p>
+    Like cloud, 'bubble' ignores the positions and simply places all items together as if they were bubbles.
+    Unlike cloud, bubble uses multiple fields to form a hiearachy, like treemap does
+</p>
+<p class="examples"><a onClick="showAction(this.text)">bubble size(population) color(region) label(state) legends(none)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bubble x(region) size(population) color(region) label(abbr) legends(none)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bubble x(region, presidential_choice) size(population) color(region) label(abbr) legends(none) tooltip(#all)</a></p>
+
+
+
+
+

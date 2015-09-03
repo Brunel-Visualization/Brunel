@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="../common/brunelapp.css">
+</head>
+
+<body>
+<div id="navback"></div>
+<header>
+    Cognitive Visualization
+</header>
+<nav>
+    <a onClick="load('intro')">Introduction</a><br>
+    <a onClick="load('basics')">Basics</a><br>
+    <hr/>
+    <a onClick="load('coords')">Coordinates</a><br>
+    <a onClick="load('special')">Special Fields</a><br>
+    <a onClick="load('aesthetics')">Aesthetics</a><br>
+    <a onClick="load('data')">Data Transforms</a><br>
+    <a onClick="load('interactivity')">Interactivity</a><br>
+    <a onClick="load('diagram')">Diagrams</a><br>
+    <a onClick="load('label')">Label and Tooltips</a><br>
+    <a onClick="load('other')">Guides and Style</a><br>
+    <a onClick="load('composition')">Composition</a><br>
+    <hr/>
+    <a href="Brunel Documentation.md">Docs as Markdown</a><br>
+    <a href="Brunel Documentation.pdf">Docs as PDF</a><br>
+    <hr/>
+    <a href="play.html">Try for Yourself</a><br>
+</nav>
+<aside>
+    <iframe style="overflow: hidden; width: 410px; height: 410px" id="actionResult" frameborder="0"
+            seamless="seamless"></iframe>
+                <textarea id="actionText" rows="3" style="width:402px"
+                          spellcheck="false" draggable="false">Action...</textarea>
+
+    <p class="fields">
+        <a onClick="showAction('cloud label(state)')">state</a>
+        <a onClick="showAction('cloud label(region) size(#count)')">region</a>
+        <a onClick="showAction('bar x(date) bin(date) y(#count)')">date</a>
+        <a onClick="showAction('bar x(population) bin(population) y(#count)')">population</a>
+        <a onClick="showAction('bar x(under_18) bin(under_18) y(#count)')">under_18</a>
+        <a onClick="showAction('bar x(area) bin(area) y(#count)')">area</a>
+        <a onClick="showAction('text x(longitude) y(latitude) label(abbr)')">latitude/longitude</a>
+        <a onClick="showAction('bar x(water) bin(water) y(#count)')">water</a>
+        <a onClick="showAction('bar x(density) bin(density) y(#count)')">density</a>
+        <a onClick="showAction('bar x(summer) bin(summer) y(#count)')">summer</a>
+        <a onClick="showAction('bar x(winter) bin(winter) y(#count)')">winter</a>
+        <a onClick="showAction('bar x(violent_crimes) bin(violent_crimes) y(#count)')">area</a>
+        <a onClick="showAction('bar x(income) bin(income) y(#count)')">income</a>
+        <a onClick="showAction('bar x(presidential_choice) bin(presidential_choice) y(#count)')">presidential_choice</a>
+        <a onClick="showAction('bar x(dem_rep) bin(dem_rep) y(#count)')">dem_rep</a>
+        <a onClick="showAction('bar x(boys_name) y(#count)')">boys_name</a>
+        <a onClick="showAction('bar x(girls_name) y(#count)')">girls_name</a>
+    </p>
+</aside>
+<div id="main">Loading ...</div>
+<footer> Cognitive Visualization Group</footer>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+<script>
+    function load(name) {
+        $('#main').load(name + '.html');
+    }
+
+    //Gets the base url and context path.
+
+    //This is only needed because we are using our app server to also host the data.
+    //As such, the location and context path may vary depending on the deployment.
+    function baseUrl() {
+        var fullUrl = window.location.href;
+        return fullUrl.substring(0, fullUrl.indexOf("/docs"))
+    }
+
+    function showAction(text) {
+        var txt = removeLineBreaks(text);
+        var data = baseUrl() + "/data/" + encodeURIComponent("US States.csv");
+        console.log(data);
+        var loc = "../brunel/interpret/d3?brunel_src="
+                + encodeURIComponent(txt) + "&width=400&height=370"
+                + "&data=" + encodeURIComponent(data);
+        $('#actionResult').attr("src", loc);
+        $('#actionText').val(txt);
+    }
+
+    function removeLineBreaks(text) {
+        return text.replace(/(\r\n|\n|\r)/gm, "");
+    }
+
+    $('#actionText').keyup(function (e) {
+        var code = e.keyCode || e.which;
+        if (code == 13) {
+            var text = $("#actionText").val();
+            showAction(text);
+        }
+    });
+
+    load('intro');
+    showAction("x(winter) y(summer) color(region)");
+</script>
+</body>
+</html>

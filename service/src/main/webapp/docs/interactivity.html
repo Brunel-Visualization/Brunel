@@ -1,0 +1,82 @@
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<H1>Interactivity</H1>
+
+<p>
+    Brunel allows a number of interactive features.
+    If not specified, some interactivity is available by default, but, as always, specifying what is wanted will
+    force that option.
+    Note that interactivity is specified on a per-chart basis, so each chart can have a different mode of use.
+</p>
+
+
+<h3>Pan/Zoom</h3>
+<p>
+    By default this is set <b>on</b>, but this feature will only apply to <i>numeric</i> dimensions of charts that
+    do not specify a diagram.
+    When this feature is active, a chart can be panned and zoomed by dragging
+    or double-clicking on any <b>blank</b> area of the chart.
+    Holding down the shift key while double-clicking zooms the chart out instead of in.
+</p>
+<p class="examples"><a onClick="showAction(this.text)">text x(winter) y(summer) tooltip(state, region) label(abbr)</a>
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(latitude) y(summer) | x(latitude) y(winter)
+    interaction(none)</a>
+</p>
+
+<h3>Selection</h3>
+<p>
+    Each data set has a special field <code>"#selection"</code> that can be used in the same way as any other field --
+    for color, coordinates, etc. In general this feature not be useful unless you have multiple charts and at least one
+    of
+    them states that they use selection interactivity. When clicking on elements of that chart, those selections
+    will then be propagated through to the other charts in that system.
+</p>
+<p>
+
+    Selection takes on two possible values, an 'x' for unselected and a check mark for selected. One common use case is
+    to map the value to color to show the selected parts from one chart as highlighted in the other chart.
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) color(#selection) size(#selection:200) |
+    y(region) size(#count) interaction(select) color(#selection) x('') axes(none)
+    label(region) sort(#count:ascending)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">treemap x(region, presidential_choice) tooltip(#all)
+    size(population) color(#selection) label(abbr) | bar x(boys_name) y(#count) stack color(#selection)
+    interaction(select) transpose axes(x) | bar x(girls_name) axes(x) y(#count) stack color(#selection)
+    interaction(select) color(#selection) transpose axes(x) legends(none) stack</a></p>
+
+<h3>Interaction(filter)</h3>
+<p>
+    Instead of using the<code>#selection</code> field as a regular field, it can also be used to filter the data
+    going into the chart, by specifying <code>interaction(filter)</code>.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">x(boys_name) y(girls_name) label(#count) interaction(filter) |
+    bar y(population) stack color(#selection) split(region) sort(population) label(region) sum(population)
+    interaction(select)</a></p>
+
+<h3>Filter</h3>
+<p>
+    The <code>filter</code> command is an interaction command which will create one or more interactive controls
+    (sliders, check boxes, ...) beside the visualization and allow dynamic filtering using those items. As is true
+    for all interactivity, the filtering happens client-side and sorting and summarization happen afterwards and
+    so will respect the filtered data.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">x(population) y(violent_crimes) color(dem_rep) size(water:600)
+    filter(presidential_choice, water)</a></p>

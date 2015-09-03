@@ -1,0 +1,128 @@
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<H1>Aesthetics</H1>
+
+<p>
+    "Aesthetics" is the term we give to commands that modify properties of the graphical object that are not
+    related to position. Currently Brunel supports <code>color</code> and <code>size</code> aesthetics. Also included in
+    this section is the <code>split</code> command, which is really more of a data grouping construct, but it acts
+    in many ways like an aesthetic.
+</p><p>
+    When we use a field as an aesthetic, it has a significant side effect; the data is split into
+    groups, one for each value of that aesthetic. Multiple aesthetics make groups based on the combinations of values.
+    For elements that show one shape for each data row, that makes no difference, but for elements (like area and line)
+    that aggregate multiple rows of data into one shape, it makes a strong difference. For this reason, when using
+    aggregating elements, it is common to use categorical fields for aesthetics. Alternatively, we can bin a
+    numeric field to ensure it has fewer different values.
+</p>
+
+<h3>Color</h3>
+<p>
+    Color is probably the most used aesthetic. When we map a field to
+</p>
+<p class="examples"><a onClick="showAction(this.text)">color(winter) x(winter) y(summer) style("size:200%")</a></p>
+<p class="examples"><a onClick="showAction(this.text)">color(region) x(winter) y(summer) style("size:200%")</a></p>
+<p class="examples"><a onClick="showAction(this.text)">color(winter) x(winter) y(summer) bin(winter)
+    style("size:200%")</a></p>
+<p>
+    In the above examples, you can see that the mapping from field to color is dependent on the type of the field.
+    There are three different classes of mapping used:
+<ul>
+    <li><b>nominal</b>: Used by default for categorical data, this mapping has no order and tries to create a spread of
+        different hues to distinguish as many different hues as possible
+    </li>
+    <li><b>diverging</b>: Used by default for most numeric data, this mapping assumes that high and low values are of
+        interest
+        and so creates a two-ended color range that highlights those values
+    </li>
+    <li><b>continuous</b>: Used for counts and binned data, this mapping goes from low to high with one range of color
+    </li>
+</ul>
+Some examples are given below:
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">color(winter:nominal) bar x(winter) y(#count) bin(winter)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">color(winter:diverging) bar x(winter) y(#count) bin(winter)</a>
+</p>
+<p class="examples"><a onClick="showAction(this.text)">color(winter:continuous) bar x(winter) y(#count) bin(winter)</a>
+</p>
+
+<p>
+    In addition to these classes of mappings, explicit color mappings can be used from the following list:
+    <code>blue</code>,<code>green</code>,<code>red</code>,<code>yellow</code>,<code>gray</code>,
+    <code>blue-red</code>,<code>green-red</code>,<code>green-blue</code>, <code>white-black</code>,
+    <code>red-blue</code>,<code>red-green</code>,<code>blue-green</code>, <code>black-white</code>:
+</p>
+<p class="examples"><a onClick="showAction(this.text)">color(winter:gray) x(winter) y(summer) style("size:200%")</a></p>
+<p class="examples"><a onClick="showAction(this.text)">color(winter:blue-red) x(winter) y(summer) style("size:200%")</a>
+</p>
+<p class="examples"><a onClick="showAction(this.text)">color(winter:green) x(winter) y(summer) style("size:200%")</a>
+</p>
+
+
+<p>As described above, aesthetics interact with the element type. Because elements such as lines need one color only,
+    when we use color on such an element, it splits into pieces, one for each "group" created by the aesthetic.
+
+<p class="examples"><a onClick="showAction(this.text)">line x(winter) y(summer) color(region)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">polygon x(winter) y(summer) color(region)</a></p>
+
+<p>
+    Currently, only the first color field is used. In the future, we will enhance this so that if two fields are set,
+    the first is used for HUE, and the second for SATURATION and BRIGHTNESS. When three fields are used, they
+    will set the red, green and blue components.
+</p>
+<p class="examples"><a onClick="showAction(this.text)">color(region, #count) x(summer) size(#count) bin(summer)
+    bubble</a></p>
+
+<H3>Size</H3>
+<p>
+    The size aesthetic works very similarly to color, except it modifies the size of the element.
+    It can be given an optional parameter which is a percentage to increase size by for the maximum value
+    of the field. This defaults to 100.
+</p>
+<p class="examples"><a onClick="showAction(this.text)">point x(state) y(density) size(density)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">point x(state) y(density) size(density) style("size:200%")</a></p>
+<p class="examples"><a onClick="showAction(this.text)">point x(state) y(density) size(density:1000)</a></p>
+<p>
+    <code>Size</code> works differently for different elements; point elements can be sized as you would expect; bars
+    are sized on their widths only (so <code>width</code> and <code>size</code> have the same effect.
+    Lines, paths and edges have their stroke sizes modified. Size has no effect on areas and polygons.
+</p>
+<p class="examples"><a onClick="showAction(this.text)">point x(state) y(density) size(density)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(density) size(#count) mean(density) label(#count)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">line x(state) y(density) size(region)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">line x(state) y(density) size(region:1600)</a></p>
+<p>
+    Size can also take two fields. For this definition the two fields modify width and height, so this way of specifying
+    size is most suited to a point element with a rectangle type.
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(longitude) y(latitude) size(population, density) style('symbol:rect; size:300%')</a></p>
+
+
+<H3>Split</H3>
+<p>
+    The split aesthetic does not modify the appearance of items at all -- all it does is to split up a single item (like
+    an area)into multiple ones. Effectively it is used just for creating groups. Multiple fields can be used to split by
+</p>
+<p class="examples"><a onClick="showAction(this.text)">polygon x(winter) y(summer) split(region)</a></p>
+
+
+
+
+
+

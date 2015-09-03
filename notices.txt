@@ -1,0 +1,23 @@
+3rd party	Version		License
+
+DISTRIBUTED
+google-gson	2.3.1		APL 2.0
+Dropzone.js	4.0.1		MIT
+SumoSelect	2.0.2		MIT
+d3.js		3.5.5		BSD
+Jquery		1.10.2		MIT
+jquery-ui	1.11.4		MIT
+httr		1.0.0		MIT + file LICENSE
+uuid		0.1-2		MIT + file LICENSE
+jsonlite	0.9.16		MIT + file LICENSE
+
+NOT DISTRIBUTED
+Eclipse JDT	3.10.0
+rhino		1.7
+jupyter-pip	0.3
+Gradle		2.4
+Junit		4.12
+roxygen2	4.1.1
+devtools	1.8.0
+
+
