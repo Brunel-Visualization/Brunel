@@ -4,10 +4,8 @@ deploy:
   api_key:
     secure: Ami9H7tZ5UfZVY9KpjM1uByvW4aUBmpoQdOoLGJTPCHoUTvOvpYiWtNQS5SBFIoEymnv7WQtEdtCuVYGyk7a6Lj8eQCpPpdWkEz/U8Ou9G2Fu3AaAHTrF3WrCZUGc4wHclFoNq9HIqk/QnkPn0Uoo95Eqb2MEqHMHMTBUNmteFjWlPVyYLU0AzzCT+MuBJvuVWtUfGVN5UGxLfhvaL9AHyhoxv14oBpAYJ1VQnfKSXWLXrR1GUFA7NZbVPwtitFXdMAWCjKfvRr4M7gUfom5FEys+Hog3vuLZe7JbqyfHtLQ9lC7XNmzFwTJeOEod1ITcA+VfTLZ01KH2lO1j0wehNbWQNSTEw5k8TP6VOLGi/Hms407WqApn6z5uIeEm0fjGCAyB7jCUgPbmEtsMocESCEqf1MrUVutfbWqcO6r45cAADg5cjGJkKfVv7S1PMnHPUvvFEbOUHBjtNRQJicDRi5a4vAI7AoKE9GYZjSmj3wqKbnZXw7S5VIJpRCIbbdzjcuSM1adb+uVFv+1nqRIqGx3yTAZ08FMLKBZzC6/FUDdvVYZctomrsLp9KR23SZIxRXcgKABVPpI88GfNjfJemhfzSzj3WTu/eY9Iai7CPyJtCabrN5uguKU2N0zFq+NSXZjakfyIMclfk5pZ5IzK659ySkbShfhzQOoDGDKWQo=
   file: 
-     - "brunel/core/build/libs/brunel-core-0.1.jar"
-     - "brunel/data/build/libs/brunel-data-0.1.jar"
-     - "brunel/etc/build/libs/brunel-etc-0.1.jar"
-     - "brunel/service/build/libs/brunel-service-0.1.war"
+     - "brunel-all.tar.gz"
+     - "brunel-all.zip"
   skip_cleanup: true
   on:
     repo: Brunel-Visualization/Brunel

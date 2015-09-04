@@ -170,3 +170,6 @@ local.properties
 # TeXlipse plugin
 .texlipse
 
+# Brunel Archives
+brunel*.gz
+brunel*.zip
