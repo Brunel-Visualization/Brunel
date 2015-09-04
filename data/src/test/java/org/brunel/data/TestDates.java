@@ -66,6 +66,16 @@ public class TestDates {
     }
 
     @Test
+    public void testDateCalculations() {
+        Date d = Data.asDate("January 1, 1970");
+        assertEquals(0, Data.asNumeric(d), 1e-6);
+
+        d = Data.asDate("1/1/88");
+        assertEquals(6574, Data.asNumeric(d), 1e-6);
+
+    }
+
+    @Test
     public void testDateIncrement() {
         Date d = Data.asDate("February 19, 1976 3:04:25");
         assertEquals(Data.asDate("February 19, 1976 3:04:26"), DateUnit.increment(d, DateUnit.second, 1));

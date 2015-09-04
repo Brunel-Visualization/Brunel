@@ -548,7 +548,7 @@ class D3ScaleBuilder {
             D3Util.DateBuilder dateBuilder = new D3Util.DateBuilder();
             for (int i = 0; i < divs.length; i++) {
                 double v = min + (max - min) * i / (numericDomainDivs - 1);
-                divs[i] = dateBuilder.make(Data.asDate(v), dateFormat);
+                divs[i] = dateBuilder.make(Data.asDate(v), dateFormat, true);
             }
             out.add("d3.time.scale()");
         } else {

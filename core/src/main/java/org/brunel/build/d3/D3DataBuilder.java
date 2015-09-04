@@ -155,7 +155,7 @@ public class D3DataBuilder {
             } else if (field.hasProperty("date")) {
                 Date date = Data.asDate(value);
                 if (date == null) return null;
-                row.append(dateBuilder.make(date, (DateFormat) field.getProperty("dateFormat")));
+                row.append(dateBuilder.make(date, (DateFormat) field.getProperty("dateFormat"), false));
             } else if (field.hasProperty("numeric")) {
                 Double d = Data.asNumeric(value);
                 if (d == null) return null;

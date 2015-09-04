@@ -750,7 +750,7 @@ V.auto_NumericScale.makeLogScale = function(f, nice, padFraction, includeZeroTol
     var b = Math.log(f.max()) / Math.log(10);
     a -= padFraction[0] * (b - a);
     b += padFraction[1] * (b - a);
-    if (a > 0 && a / (b - 1) <= includeZeroTolerance) a = 0;
+    if (a > 0 && a / b <= includeZeroTolerance) a = 0;
     if (nice) {
         a = Math.floor(a);
         b = Math.ceil(b);

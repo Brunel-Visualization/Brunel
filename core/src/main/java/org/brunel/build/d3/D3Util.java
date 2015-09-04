@@ -23,7 +23,7 @@ import org.brunel.data.util.DateFormat;
 
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * Utilities for writing D3 code
@@ -49,11 +49,11 @@ public class D3Util {
         // Anything else and it is a regular field, known to be good
         char c = s.charAt(0);
 
-        if (c=='#')
+        if (c == '#')
             return '$' + s.substring(1);                // #count -> $count
-        if (c =='\'') {
-            s = s.substring(1, s.length()-1)            // remove the quotes
-                .replaceAll("[.+\\-]", "_");            // transform numeric symbols
+        if (c == '\'') {
+            s = s.substring(1, s.length() - 1)            // remove the quotes
+                    .replaceAll("[.+\\-]", "_");            // transform numeric symbols
             return '_' + s;                             // Prepend '_'
         }
 
@@ -69,14 +69,22 @@ public class D3Util {
     }
 
     public static class DateBuilder {
-        private final Calendar calendar = Calendar.getInstance(Locale.US);
+        private final Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 
-        public String make(Date d, DateFormat dateFormat) {
+        public String make(Date d, DateFormat dateFormat, boolean wrappedWithMake) {
             calendar.setTime(d);
-            String parts = calendar.get(Calendar.YEAR) + "," + calendar.get(Calendar.MONTH) + "," + calendar.get(Calendar.DAY_OF_MONTH);
-            if (dateFormat.ordinal() < DateFormat.YearMonthDay.ordinal())
-                parts += "," + calendar.get(Calendar.HOUR) + "," + calendar.get(Calendar.MINUTE) + "," + calendar.get(Calendar.SECOND);
-            return "new Date(" + parts + ")";
+            String text;
+            if (dateFormat.ordinal() >= DateFormat.YearMonthDay.ordinal()) {
+                // YYYY-MM-DD
+                text = String.format("'%d-%02d-%02d'",
+                        calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.DAY_OF_MONTH));
+            } else {
+                text = String.format("'%d-%02d-%02dT%02d:%02d:%02d'",
+                        calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.DAY_OF_MONTH),
+                        calendar.get(Calendar.HOUR), calendar.get(Calendar.MINUTE), calendar.get(Calendar.SECOND)
+                );
+            }
+            return wrappedWithMake ? "new Date(" + text + ")" : text;
         }
 
     }
