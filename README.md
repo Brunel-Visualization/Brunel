@@ -36,6 +36,8 @@ For direct Java integrations, see:  `D3Builder` for creating D3 output, `Control
 
 This will build all Java (including the '.war' file), run all tests, create Javadocs, collect all required Javascript and place all of this into `/brunel/out` 
 
+Note: `gradle assemble` can be used to produce only the Java `.jar` files and likely does not require TomEE or Python to be installed.  The resulting .jars will appear in the `/build` folder for each Java project.
+
 #### To start the Brunel server
 
 Gradle can be used to deploy Brunel to TomEE and start the web server:
