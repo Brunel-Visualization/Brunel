@@ -11,4 +11,4 @@ deploy:
   skip_cleanup: true
   on:
     repo: Brunel-Visualization/Brunel
-    tags: true
+
