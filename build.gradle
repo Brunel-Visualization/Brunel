@@ -27,6 +27,7 @@ if (brunelServer == null) brunelServer = "http://locahost:8080/brunel-service"
 
 //All JS/CSS files needed to run Brunel under the assumption the translator has been run
 ext.webFiles = files(project(':core').file('src/main/resources/javascript'), project(':data').file('build/translated'))
+def distName = 'brunel-all'
 
 
 configure([project(":data"), project(":core"), project(":etc"), project(":service")]) {
@@ -91,3 +92,22 @@ task brunelJS(type: Copy, dependsOn: [project(':core').build, project(':data').b
 task build(dependsOn: [project(':core').brunelJar, project(':etc').brunelJar, project(':data').brunelJar, 
 	project(':service').brunelJar,  brunelJS, brunelJavadoc]) {
 }
+
+task makeZip(type:Zip, dependsOn: build ) {
+    description 'Create a .zip of the contents of the bulid output (/out)'
+	from ('out/')
+	archiveName distName + ".zip"
+}
+
+task makeTar(type:Tar, dependsOn: build ) {
+    description 'Create a compressed tar of the contents of the bulid output (/out)'
+	from ('out/')
+	compression = Compression.GZIP  
+	archiveName distName + ".tar.gz"
+}
+
+task makeArchives(dependsOn: [makeZip, makeTar]) {
+    description 'Create both .zip and compressed tar of the contents of the bulid output (/out)'
+
+}
+
