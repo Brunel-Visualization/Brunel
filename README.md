@@ -1,4 +1,5 @@
-# Brunel Visualization
+# Brunel Visualization [![Build Status](https://travis-ci.org/Brunel-Visualization/Brunel.svg?branch=master)](https://travis-ci.org/Brunel-Visualization/Brunel)
+
 
 The Brunel Visualization project defines a highly succinct and novel language that defines interactive data visualizations based on tabular data.  The language is well suited for both data scientists and more aggressive business users.  The system interprets the language and produces visualizations using the user's choice of existing lower-level visualization technologies typically used by application engineers such as RAVE or D3 .  It can operate stand-alone and integrated into iPython notebooks with further integrations as well as other low-level rendering support depending on the desires of the community.
 
@@ -61,6 +62,3 @@ Brunel uses a mix of static, translated and generated Javascript.
 * `VisualTests.java` (in `/etc`) will copy the JS/CSS upon execution so they are in the expected locations
 * Builds for `/service` will copy the JS/CSS in the correct locations for the .war file.  Additionally, the task `copyWebFiles` copies the JS/CSS in the expected place for execution directly from the src.
 * Builds for `/python`, will copy the JS/CSS into a folder that also contains JS that is specific for the Jupyter integration 
-
-
-
