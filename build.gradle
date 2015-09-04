@@ -106,7 +106,7 @@ task makeTar(type:Tar, dependsOn: build ) {
 	archiveName distName + ".tar.gz"
 }
 
-task makeAchives(dependsOn: [makeZip, makeTar]) {
+task makeArchives(dependsOn: [makeZip, makeTar]) {
     description 'Create both .zip and compressed tar of the contents of the bulid output (/out)'
 
 }
