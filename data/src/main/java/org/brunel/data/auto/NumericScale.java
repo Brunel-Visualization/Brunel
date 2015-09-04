@@ -31,12 +31,12 @@ import java.util.List;
  * They are each initialized using a field, a boolean 'nice' to indicate whether to expand the range to nice numbers,
  * a fractional amount to pad the field's domain by (e.g. 0.02) and a desired number of ticks,
  * as well as other parameters for specific scales.
- *
+ * <p/>
  * When called, the effect is to return a NumericScale that has all properties set to useful values
  */
 public class NumericScale {
 
-    public static NumericScale makeDateScale(Field f, boolean nice, double padFraction, int desiredTickCount) {
+    public static NumericScale makeDateScale(Field f, boolean nice, double[] padFraction, int desiredTickCount) {
         double a = f.min();
         double b = f.max();
 
@@ -45,9 +45,8 @@ public class NumericScale {
             a = Data.asNumeric(DateUnit.increment(Data.asDate(a), unit, -1));
             b = Data.asNumeric(DateUnit.increment(Data.asDate(b), unit, 1));
         } else {
-            double pad = padFraction * (b - a);
-            a -= pad;
-            b += pad;
+            a -= padFraction[0] * (b - a);
+            b += padFraction[1] * (b - a);
         }
         double desiredDaysGap = (b - a) / (desiredTickCount - 1);
         DateUnit unit = DateStats.getUnit(desiredDaysGap * 4);
@@ -77,7 +76,7 @@ public class NumericScale {
         if (nice) b = Data.asNumeric(x);
 
         Double[] data = d.toArray(new Double[d.size()]);
-        return new NumericScale("date", a, b, data, a, false);
+        return new NumericScale("date", a, b, data, false);
     }
 
     private static int bestDateMultiple(DateUnit unit, double desiredDaysGap) {
@@ -94,24 +93,28 @@ public class NumericScale {
         return multiple;
     }
 
-    public static NumericScale makeLinearScale(Field f, boolean nice, double includeZeroTolerance, double padFraction, int desiredTickCount, boolean forBinning) {
+    public static NumericScale makeLinearScale(Field f, boolean nice, double includeZeroTolerance, double[] padFraction, int desiredTickCount, boolean forBinning) {
         // Guard against having no data
-        if (f.valid() == 0) return new NumericScale("linear", 0, 1, new Double[]{0.0, 1.0}, 0, false);
+        if (f.valid() == 0) return new NumericScale("linear", 0, 1, new Double[]{0.0, 1.0}, false);
 
-        double a = f.min();
-        double b = f.max();
+        double a0 = f.min();
+        double b0 = f.max();
 
-        double pad = padFraction * (b - a);
+        double padA = padFraction[0] * (b0 - a0);
+        double padB = padFraction[1] * (b0 - a0);
 
-        // ensure we do not pad to make a scale cross zero
-        if (a >= 0 && a - pad < 0) a = 0;
-        else a -= pad;
-        if (b <= 0 && b + pad > 0) b = 0;
-        else b += pad;
+        double a = a0 - padA;
+        double b = b0 + padB;
 
         // Include zero if it doesn't expand too much
         if (a > 0 && a / b <= includeZeroTolerance) a = 0;
         if (b < 0 && b / a <= includeZeroTolerance) b = 0;
+
+        // Handle nice ranges that we want to keep very nice
+        if (a == 0) {
+            if (b0 <= 1 && b > 1) b = 1;                        // 0 - 1
+            if (b0 <= 100 && b > 100) b = 100;                  // 0 - 100
+        }
 
         // For degenerate data expand out
         if (a + 1e-6 > b) {
@@ -126,7 +129,7 @@ public class NumericScale {
         double granularDivs = (b - a) / granularity;
         if ((forBinning || f.preferCategorical()) && granularDivs > desiredDivCount / 2 && granularDivs < desiredDivCount * 2) {
             Double[] data = makeGranularDivisions(a, b, granularity, nice);
-            return new NumericScale(transform, a, b, data, 0, true);
+            return new NumericScale(transform, a, b, data, true);
         }
 
         // Work out a likely delta based on powers of ten
@@ -136,7 +139,7 @@ public class NumericScale {
 
         // Then look around that multiple, using decimal-friendly multipliers
         double bestDiff = 1e9;
-        double[] choices = new double[]{delta, delta * 10, delta / 10, delta * 5, delta / 2, delta * 2.5, delta / 4};
+        double[] choices = new double[]{delta, delta * 10, delta / 10, delta * 5, delta / 2, delta * 2, delta / 5};
         for (double d : choices) {
             double low = d * Math.ceil(a / d);
             double high = d * Math.floor(b / d);
@@ -167,7 +170,7 @@ public class NumericScale {
         }
 
         Double[] data = d.toArray(new Double[d.size()]);
-        return new NumericScale(transform, a, b, data, 0, false);
+        return new NumericScale(transform, a, b, data, false);
     }
 
     private static Double[] makeGranularDivisions(double min, double max, double granularity, boolean nice) {
@@ -185,16 +188,15 @@ public class NumericScale {
         return div.toArray(new Double[div.size()]);
     }
 
-    public static NumericScale makeLogScale(Field f, boolean nice, double padFraction, double includeZeroTolerance) {
+    public static NumericScale makeLogScale(Field f, boolean nice, double[] padFraction, double includeZeroTolerance) {
         double a = Math.log(f.min()) / Math.log(10);
         double b = Math.log(f.max()) / Math.log(10);
 
-        double pad = padFraction * (b - a);
-        a -= pad;
-        b += pad;
+        a -= padFraction[0] * (b - a);
+        b += padFraction[1] * (b - a);
 
         // Include zero (actually one in untransformed space) if it doesn't expand too much
-        if (a > 0 && a / (b - 1) <= includeZeroTolerance) a = 0;
+        if (a > 0 && a / b <= includeZeroTolerance) a = 0;
 
         if (nice) {
             a = Math.floor(a);
@@ -205,22 +207,20 @@ public class NumericScale {
         for (int i = (int) Math.ceil(a); i <= b + 1e-6; i++)
             d.add(Math.pow(10, i));
         Double[] data = d.toArray(new Double[d.size()]);
-        return new NumericScale("log", Math.pow(10, a), Math.pow(10, b), data, 1, false);
+        return new NumericScale("log", Math.pow(10, a), Math.pow(10, b), data, false);
     }
 
     public final Double[] divisions;
     public final double max;
     public final double min;
-    public final double origin;
     public final String type;
     public final boolean granular;
 
-    private NumericScale(String type, double min, double max, Double[] divs, double origin, boolean granular) {
+    private NumericScale(String type, double min, double max, Double[] divs, boolean granular) {
         this.type = type;
         this.min = min;
         this.max = max;
         divisions = divs;
-        this.origin = origin;
         this.granular = granular;
     }
 

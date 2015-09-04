@@ -262,7 +262,7 @@ class D3ScaleBuilder {
             legendTicks = "scale_color.domain()";
         } else {
             // Numeric must calculate a nice range
-            NumericScale details = Auto.makeNumericScale(colorLegendField, true, 0, 0.25, 7, false);
+            NumericScale details = Auto.makeNumericScale(colorLegendField, true, new double[]{0,0}, 0.25, 7, false);
             Double[] divisions = details.divisions;
             if (details.granular) {
                 // Granular data has divisions BETWEEN the values, not at them, so need to fix that
@@ -394,20 +394,29 @@ class D3ScaleBuilder {
         return 0.2;
     }
 
-    private double getNumericPaddingFraction(Purpose purpose) {
-        if (purpose == Purpose.color || purpose == Purpose.size) return 0;
-        double pad = 0;
+    private double[] getNumericPaddingFraction(Purpose purpose, VisTypes.Coordinates coords) {
+        double[] padding = new double[]{0, 0};
+        if (purpose == Purpose.color || purpose == Purpose.size) return padding;                // None for esthetics
+        if (coords == VisTypes.Coordinates.polar) return padding;                               // None for polar angle
         for (VisSingle e : element) {
-            if (e.tElement == VisTypes.Element.point || e.tElement == VisTypes.Element.polygon
-                    || e.tElement == VisTypes.Element.edge || e.tElement == VisTypes.Element.path)
-                pad = Math.max(pad, 0.02);
-            else if (e.tElement == VisTypes.Element.text)
-                pad = Math.max(pad, 0.1);
-            else if (e.tElement == VisTypes.Element.bar && purpose != Purpose.y)
-                pad = Math.max(pad, 0.02);
-
+            boolean noBottomYPadding = e.tElement == VisTypes.Element.bar || e.tElement == VisTypes.Element.area || e.tElement == VisTypes.Element.line;
+            boolean noSidePadding = e.tElement == VisTypes.Element.line || e.tElement == VisTypes.Element.area;
+            if (e.tElement == VisTypes.Element.text) {
+                // Text needs lot of padding
+                padding[0] = Math.max(padding[0], 0.1);
+                padding[1] = Math.max(padding[1], 0.1);
+            } else if (purpose == Purpose.y && noBottomYPadding) {
+                // A little padding on the top only
+                padding[1] = Math.max(padding[1], 0.02);
+            } else if (purpose == Purpose.x && noSidePadding) {
+                // Nothing
+            } else {
+                // A little padding
+                padding[0] = Math.max(padding[0], 0.02);
+                padding[1] = Math.max(padding[1], 0.02);
+            }
         }
-        return pad;
+        return padding;
     }
 
     /**
@@ -527,7 +536,7 @@ class D3ScaleBuilder {
 
         // We util a nice scale only for rectangular coordinates
         boolean nice = (name.equals("x") || name.equals("y")) && coords != VisTypes.Coordinates.polar;
-        double padding = getNumericPaddingFraction(purpose);
+        double[] padding = getNumericPaddingFraction(purpose, coords);
 
         NumericScale detail = Auto.makeNumericScale(scaleField, nice, padding, includeZero, 9, false);
         double min = detail.min;

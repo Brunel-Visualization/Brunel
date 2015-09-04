@@ -37,12 +37,12 @@ public class Auto {
      *
      * @param f                    the scale to use
      * @param nice                 whether to make the limits a nice number
-     * @param padFraction           amount to pad the raw range by
+     * @param padFraction          amount to pad the raw range by (upper and lower values)
      * @param includeZeroTolerance include zero if it does not make "white space" more than this fraction
      * @param desiredTickCount     number of ticks it would be nice to get (<= 0 for auto)
      * @return the util on the scale
      */
-    public static NumericScale makeNumericScale(Field f, boolean nice, double padFraction, double includeZeroTolerance, int desiredTickCount, boolean forBinning) {
+    public static NumericScale makeNumericScale(Field f, boolean nice, double[] padFraction, double includeZeroTolerance, int desiredTickCount, boolean forBinning) {
         setTransform(f);
 
         // If the tick count is not set, calculate the optimal value, but no more than 20 bins

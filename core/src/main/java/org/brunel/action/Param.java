@@ -18,6 +18,8 @@
 package org.brunel.action;
 
 import org.brunel.data.Data;
+import org.brunel.data.Dataset;
+import org.brunel.data.Field;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -77,9 +79,35 @@ public class Param implements Comparable<Param> {
         else return Double.parseDouble(content.toString());
     }
 
+    /**
+     * Return the name fo the matching field in the data
+     *
+     * @param data the data set to match into; if null no matching will be done and the name assumed correct
+     * @return name as known in the data set
+     */
+    public String asField(Dataset data) {
+        if (type == Type.field) {
+            String name = content.toString();
+            if (name.startsWith("#"))
+                return name.toLowerCase();
+            else if (data == null)
+                return name;
+            else {
+                Field field = data.field(name, true);
+                if (field == null) throw new IllegalArgumentException("Cannot find field '" + name + "' in the data");
+                return field.name;
+            }
+        } else return "'" + asString() + "'";
+    }
+
+    /**
+     * Return the name as a field name.
+     * Since no data set is passed in, this does not do matching and assumes the paramter name is correct
+     *
+     * @return parameter name
+     */
     public String asField() {
-        if (type == Type.field) return content.toString();
-        else return "'" + content.toString() + "'";
+        return asField(null);
     }
 
     public String asString() {

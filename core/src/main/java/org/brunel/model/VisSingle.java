@@ -248,8 +248,9 @@ public class VisSingle extends VisItem implements Cloneable {
 
         if (tDiagram != null && stacked) error = addError(error, "diagrams cannot be stacked");
 
+        Dataset dataset = getDataset();
         if (fX.size() > 1) {
-            Field x = getDataset().field(fX.get(0).asField());
+            Field x = dataset.field(fX.get(0).asField(dataset));
             if (!x.preferCategorical() && !"bin".equals(fTransform.get(fX.get(0))))
                 error = addError(error, "when using multiple x fields, the first must be categorical");
         }
@@ -259,8 +260,8 @@ public class VisSingle extends VisItem implements Cloneable {
 
         // Handle cases where the range is defined
         if (fRange != null) {
-            Field fY1 = getDataset().field(fRange[0].asField());
-            Field fY2 = getDataset().field(fRange[1].asField());
+            Field fY1 = dataset.field(fRange[0].asField(dataset));
+            Field fY2 = dataset.field(fRange[1].asField(dataset));
             if (tElement == VisTypes.Element.path || tElement == VisTypes.Element.point || tElement == VisTypes.Element.polygon || tElement == VisTypes.Element.text)
                 error = addError(error, "Element '" + tElement + "' should not be used with a y range");
             if (fY1 != null && fY2 != null) {
@@ -301,12 +302,14 @@ public class VisSingle extends VisItem implements Cloneable {
 
     @SuppressWarnings("unchecked")
     private void makeUsedFields() {
+
         // Position Fields -- Note that these are a LIST -- we may have repeated values
         List<String> posFields = new ArrayList<String>();
         addFieldNames(posFields, true, fX, fY);
         if (fRange != null) {
-            posFields.add((fRange[0].asField()));
-            posFields.add((fRange[1].asField()));
+            Dataset dataset = getDataset();
+            posFields.add((fRange[0].asField(dataset)));
+            posFields.add((fRange[1].asField(dataset)));
         }
         pos = posFields.toArray(new String[posFields.size()]);
 
@@ -337,7 +340,7 @@ public class VisSingle extends VisItem implements Cloneable {
         for (List<Param> s : sources)
             for (Param p : s)
                 if (p.isField() || forceToBeField)
-                    target.add(p.asField());
+                    target.add(p.asField(getDataset()));
     }
 
     public VisSingle polar() {
@@ -357,20 +360,18 @@ public class VisSingle extends VisItem implements Cloneable {
 
     public VisSingle resolve() {
 
-        Dataset dataset = getDataset();
-
-        ensureCanonical(fColor, dataset);
-        ensureCanonical(fSize, dataset);
-        ensureCanonical(fFilter, dataset);
-        ensureCanonical(fSort, dataset);
-        ensureCanonical(fKeys, dataset);
-        ensureCanonical(fSplits, dataset);
-        ensureCanonical(fX, dataset);
-        ensureCanonical(fY, dataset);
-        ensureCanonical(itemsLabel, dataset);
-        ensureCanonical(itemsTooltip, dataset);
-        ensureCanonical(fSummarize, dataset);
-        ensureCanonical(fTransform, dataset);
+        ensureCanonical(fColor);
+        ensureCanonical(fSize);
+        ensureCanonical(fFilter);
+        ensureCanonical(fSort);
+        ensureCanonical(fKeys);
+        ensureCanonical(fSplits);
+        ensureCanonical(fX);
+        ensureCanonical(fY);
+        ensureCanonical(itemsLabel);
+        ensureCanonical(itemsTooltip);
+        ensureCanonical(fSummarize);
+        ensureCanonical(fTransform);
 
         makeUsedFields();
 
@@ -418,30 +419,28 @@ public class VisSingle extends VisItem implements Cloneable {
         return result;
     }
 
-    private void ensureCanonical(List<Param> list, Dataset dataset) {
+    private void ensureCanonical(List<Param> list) {
+        if (list.isEmpty()) return;
+        Dataset dataset = getDataset();
         for (int i = 0; i < list.size(); i++) {
             Param p = list.get(i);
-            if (p.isField() && !p.asField().startsWith("#")) {
-                String name = p.asField();
-                Field f = dataset.field(name, true);
-                // If it cannot be found, we have a problem
-                if (f == null) throw new IllegalArgumentException("Cannot find field '" + name + "' in the data");
+            if (p.isField()) {
+                String name = p.asField(dataset);
                 // If the name is not the canonical one, replace it with the correct one
-                if (!name.equals(f.name)) list.set(i, Param.makeField(f.name).addModifiers(p.modifiers()));
+                if (!name.equals(p.asString())) list.set(i, Param.makeField(name).addModifiers(p.modifiers()));
             }
         }
     }
 
-    private void ensureCanonical(Map<Param, String> map, Dataset dataset) {
+    private void ensureCanonical(Map<Param, String> map) {
+        if (map.isEmpty()) return;
+        Dataset dataset = getDataset();
         for (Param p : new ArrayList<Param>(map.keySet())) {
-            if (p.isField() && !p.asField().startsWith("#")) {
-                String name = p.asField();
-                Field f = dataset.field(name, true);
-                // If it cannot be found, we have a problem
-                if (f == null) throw new IllegalArgumentException("Cannot find field '" + name + "' in the data");
+            if (p.isField() && !p.asField(dataset).startsWith("#")) {
+                String name = p.asField(getDataset());
                 // If the name is not the canonical one, replace it with the correct one
-                if (!name.equals(f.name)) {
-                    Param newParameter = Param.makeField(f.name).addModifiers(p.modifiers());
+                if (!name.equals(p.asString())) {
+                    Param newParameter = Param.makeField(name).addModifiers(p.modifiers());
                     map.put(newParameter, map.get(p));
                 }
             }
@@ -451,13 +450,14 @@ public class VisSingle extends VisItem implements Cloneable {
     private List<Param> replaceAllField(List<Param> items, LinkedHashSet<String> replacementFieldNames) {
         // A zero length list is easy
         if (items.isEmpty()) return items;
+        Dataset dataset = getDataset();
 
         // Search for all and create a set of fields that are in items
         LinkedHashSet<String> itemFields = new LinkedHashSet<String>();
         Param allParam = null;
         for (Param p : items)
             if (p.isField()) {
-                String s = p.asField();
+                String s = p.asField(dataset);
                 if (s.equals("#all")) allParam = p;
                 else itemFields.add(s);
             }
@@ -477,7 +477,7 @@ public class VisSingle extends VisItem implements Cloneable {
         // Build the final list from the original list, replacing '#all' with the replacements
         ArrayList<Param> result = new ArrayList<Param>();
         for (Param p : items)
-            if (p.asField().equals("#all"))
+            if (p.asField(dataset).equals("#all"))
                 result.addAll(replacement);
             else
                 result.add(p);
@@ -487,13 +487,14 @@ public class VisSingle extends VisItem implements Cloneable {
     private Map<Param, String> replaceAllField(Map<Param, String> items, LinkedHashSet<String> replacementFieldNames) {
         // A zero length list is easy
         if (items.isEmpty()) return items;
+        Dataset data = getDataset();
 
         // Search for all and create a set of fields that are in items
         LinkedHashSet<String> itemFields = new LinkedHashSet<String>();
         Param allParam = null;
         for (Param p : items.keySet())
             if (p.isField()) {
-                String s = p.asField();
+                String s = p.asField(data);
                 if (s.equals("#all")) allParam = p;
                 else itemFields.add(s);
             }
@@ -515,7 +516,7 @@ public class VisSingle extends VisItem implements Cloneable {
         for (Map.Entry<Param, String> o : items.entrySet()) {
             Param p = o.getKey();
             String value = o.getValue();
-            if (p.asField().equals("#all")) {
+            if (p.asField(data).equals("#all")) {
                 for (Param s : replacement) result.put(s, value);
             } else
                 result.put(p, value);

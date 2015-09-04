@@ -24,7 +24,7 @@ public class Controls {
 
     public void buildControls(VisSingle vis, Dataset data) {
         for (Param f : vis.fFilter) {
-            filters.add(Filter.makeForField(data, f.asField()));
+            filters.add(Filter.makeForField(data, f.asField(data)));
         }
     }
 }

@@ -11,7 +11,7 @@ sizedBar	    :: bar x($1) y(#count) size($2:100) color($2:blue) mean($2) sort(#c
 #### The Tests
 
 
-colorScatter baseball Age HomeRunRate Salary        :: improve  :: Could be improved by allowing the vertical axis to go negative giving padding for the points
+colorScatter baseball Age HomeRunRate Salary        :: pass
 colorScatter whiskey Rating Price Category          :: pass     :: Note the log Y axis
 colorScatter cpi Date ALL ALL                       :: pass     :: Leaves margins at left and right
 colorScatter cpi Date Date ALL                      :: improve  :: Too much room for axis ticks at left
@@ -47,7 +47,7 @@ multiline whiskey rating country category / point bin(rating)       :: improve :
 - baseball / path x(weight) y(height) | line x(weight) y(height)  | polygon x(weight) y(height) | area x(weight) y(height)    :: pass     :: Left is not sorted, right is
 
 treemap whiskey brand country category                              :: improve  :: Labels are good, but the treemap doesn't make areas very accurately
-- whiskey / bar x(ABV) y(#count) bin(ABV) sort(#count) label(brand) tooltip(#all) list(brand:50) :: fail
+- whiskey / bar x(ABV) y(#count) bin(ABV) sort(#count) label(brand) tooltip(#all) list(brand:50) :: pass
 colorScatter whiskey age rating category / label(brand:3)             :: pass     :: Make sure the labels move when panning
 multiline cpi Date food housing health transport / stack area label(#series)      :: improve :: The stacking is in 'natural order' but should be the order the fields were defined in 'y'
 
@@ -64,7 +64,7 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - simple	/ area x(animal) y(size) color(mammal) stack                                        :: pass
 - whiskey	/ area y(#count) x(country) color(category) stack                                   :: pass
 - whiskey	/ area y(#count) percent(#count) x(country) color(category) stack                   :: pass
-- cpi	    / area x(date) yrange(food, housing)                                                :: fail :: Should show area spanning ranges
+- cpi	    / area x(date) yrange(food, housing)                                                :: pass
 
 - simple	/ bar y(size) color(animal) stack polar label(#all)                                 :: pass
 - whiskey	/ point x(Price) y(Rating) color(country) tooltip('(', Price, ',' , Rating, ')') style('size:40px; fill-opacity:0.2') :: fail :: size is being ignored

@@ -103,7 +103,7 @@ public class TestBin {
         binned = Transform.bin(data.fields[1], 4);
         Assert.assertEquals("10,000|15,000|20,000|25,000", binsToString(binned));
         binned = Transform.bin(data.fields[1], 8);
-        Assert.assertEquals("10,000|12,500|15,000|17,500|20,000|22,500|25,000", binsToString(binned));
+        Assert.assertEquals("10,000|12,000|14,000|16,000|18,000|20,000|22,000|24,000|26,000", binsToString(binned));
         binned = Transform.bin(data.fields[1], 2);
         Assert.assertEquals("10,000|20,000|30,000", binsToString(binned));
         binned = Transform.bin(data.fields[1], 20);
@@ -119,7 +119,7 @@ public class TestBin {
 
         // 'educ' is in the range 8 .. 16
         binned = Transform.bin(data.fields[2], 4);
-        Assert.assertEquals("7.5|10|12.5|15|17.5", binsToString(binned));
+        Assert.assertEquals("8|10|12|14|16", binsToString(binned));
         binned = Transform.bin(data.fields[2], 8);
         Assert.assertEquals("7.5|8.5|9.5|10.5|11.5|12.5|13.5|14.5|15.5|16.5", binsToString(binned));
         binned = Transform.bin(data.fields[2], 2);

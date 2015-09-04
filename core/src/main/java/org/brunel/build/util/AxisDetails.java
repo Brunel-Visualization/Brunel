@@ -42,8 +42,8 @@ public class AxisDetails {
                     maxCharCount = Math.max(maxCharCount, length);
                 }
             } else {
-                // If we have numeric data, we util our scaling to guess the divisions needed
-                Object[] sampleTicks = Auto.makeNumericScale(f, true, 0, 0, 5, false).divisions;
+                // If we have numeric data, we use our scaling to guess the divisions needed
+                Object[] sampleTicks = Auto.makeNumericScale(f, true, new double[]{0,0}, 0, 5, false).divisions;
                 for (Object s : sampleTicks)
                     maxCharCount = Math.max(maxCharCount, f.format(s).length());
                 // Always allow room for three characters. We need this because D3 often

@@ -131,7 +131,7 @@ public class Transform extends DataOperation {
     }
 
     private static Field binNumeric(Field f, int desiredBinCount) {
-        NumericScale scale = Auto.makeNumericScale(f, true, 0, 0.0, desiredBinCount + 1, true);
+        NumericScale scale = Auto.makeNumericScale(f, true, new double[] {0,0}, 0.0, desiredBinCount + 1, true);
         Double[] divisions = scale.divisions;
         boolean isDate = f.hasProperty("date");
         DateFormat dateFormat = isDate ? (DateFormat) f.getProperty("dateFormat") : null;

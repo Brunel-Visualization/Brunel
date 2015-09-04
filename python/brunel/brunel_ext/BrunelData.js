@@ -603,22 +603,22 @@ V.auto_Domain.prototype.mergedUnwastedSpace = function(other) {
 //   They are each initialized using a field, a boolean 'nice' to indicate whether to expand the range to nice numbers,
 //   a fractional amount to pad the field's domain by (e.g. 0.02) and a desired number of ticks,
 //   as well as other parameters for specific scales.
+//   <p/>
 //   When called, the effect is to return a NumericScale that has all properties set to useful values
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-V.auto_NumericScale = function(type, min, max, divs, origin, granular) {
+V.auto_NumericScale = function(type, min, max, divs, granular) {
     this.type = type;
     this.min = min;
     this.max = max;
     this.divisions = divs;
-    this.origin = origin;
     this.granular = granular;
 };
 
 V.auto_NumericScale.makeDateScale = function(f, nice, padFraction, desiredTickCount) {
-    var d, data, desiredDaysGap, multiple, pad, unit, v, x;
+    var d, data, desiredDaysGap, multiple, unit, v, x;
     var a = f.min();
     var b = f.max();
     if (a == b) {
@@ -626,9 +626,8 @@ V.auto_NumericScale.makeDateScale = function(f, nice, padFraction, desiredTickCo
         a = V.Data.asNumeric(V.util_DateUnit.increment(V.Data.asDate(a), unit, -1));
         b = V.Data.asNumeric(V.util_DateUnit.increment(V.Data.asDate(b), unit, 1));
     } else {
-        pad = padFraction * (b - a);
-        a -= pad;
-        b += pad;
+        a -= padFraction[0] * (b - a);
+        b += padFraction[1] * (b - a);
     }
     desiredDaysGap = (b - a) / (desiredTickCount - 1);
     unit = V.stats_DateStats.getUnit(desiredDaysGap * 4);
@@ -650,7 +649,7 @@ V.auto_NumericScale.makeDateScale = function(f, nice, padFraction, desiredTickCo
     }
     if (nice) b = V.Data.asNumeric(x);
     data = d.toArray();
-    return new V.auto_NumericScale("date", a, b, data, a, false);
+    return new V.auto_NumericScale("date", a, b, data, false);
 };
 
 V.auto_NumericScale.bestDateMultiple = function(unit, desiredDaysGap) {
@@ -668,23 +667,22 @@ V.auto_NumericScale.bestDateMultiple = function(unit, desiredDaysGap) {
 
 V.auto_NumericScale.makeLinearScale = function(f, nice,
     includeZeroTolerance, padFraction, desiredTickCount, forBinning) {
-    var _i, a, b, bestDiff, choices, d, dCount, data, delta, deltaLog10, desiredDivCount, diff, granularDivs,
-        granularity, high, low, pad, rawDelta, transform, x;
+    var _i, a, a0, b, b0, bestDiff, choices, d, dCount, data, delta, deltaLog10, desiredDivCount, diff, granularDivs,
+        granularity, high, low, padA, padB, rawDelta, transform, x;
     if (f.valid() == 0)
-        return new V.auto_NumericScale("linear", 0, 1, [0.0, 1.0], 0, false);
-    a = f.min();
-    b = f.max();
-    pad = padFraction * (b - a);
-    if (a >= 0 && a - pad < 0)
-        a = 0;
-    else
-        a -= pad;
-    if (b <= 0 && b + pad > 0)
-        b = 0;
-    else
-        b += pad;
+        return new V.auto_NumericScale("linear", 0, 1, [0.0, 1.0], false);
+    a0 = f.min();
+    b0 = f.max();
+    padA = padFraction[0] * (b0 - a0);
+    padB = padFraction[1] * (b0 - a0);
+    a = a0 - padA;
+    b = b0 + padB;
     if (a > 0 && a / b <= includeZeroTolerance) a = 0;
     if (b < 0 && b / a <= includeZeroTolerance) b = 0;
+    if (a == 0) {
+        if (b0 <= 1 && b > 1) b = 1;
+        if (b0 <= 100 && b > 100) b = 100;
+    }
     if (a + 1e-6 > b) {
         b = Math.max(0, 2 * a);
         a = Math.min(0, 2 * a);
@@ -696,13 +694,13 @@ V.auto_NumericScale.makeLinearScale = function(f, nice,
     if ((forBinning || f.preferCategorical()) && granularDivs >
         desiredDivCount / 2 && granularDivs < desiredDivCount * 2) {
         data = V.auto_NumericScale.makeGranularDivisions(a, b, granularity, nice);
-        return new V.auto_NumericScale(transform, a, b, data, 0, true);
+        return new V.auto_NumericScale(transform, a, b, data, true);
     }
     rawDelta = (b - a) / desiredDivCount;
     deltaLog10 = Math.floor(Math.log(rawDelta) / Math.log(10));
     delta = Math.pow(10, deltaLog10);
     bestDiff = 1e9;
-    choices = [delta, delta * 10, delta / 10, delta * 5, delta / 2, delta * 2.5, delta / 4];
+    choices = [delta, delta * 10, delta / 10, delta * 5, delta / 2, delta * 2, delta / 5];
     for(_i=$.iter(choices), d=_i.current; _i.hasNext(); d=_i.next()) {
         low = d * Math.ceil(a / d);
         high = d * Math.floor(b / d);
@@ -728,7 +726,7 @@ V.auto_NumericScale.makeLinearScale = function(f, nice,
         x += delta;
     }
     data = d.toArray();
-    return new V.auto_NumericScale(transform, a, b, data, 0, false);
+    return new V.auto_NumericScale(transform, a, b, data, false);
 };
 
 V.auto_NumericScale.makeGranularDivisions = function(min, max, granularity, nice) {
@@ -750,9 +748,8 @@ V.auto_NumericScale.makeLogScale = function(f, nice, padFraction, includeZeroTol
     var d, data, i;
     var a = Math.log(f.min()) / Math.log(10);
     var b = Math.log(f.max()) / Math.log(10);
-    var pad = padFraction * (b - a);
-    a -= pad;
-    b += pad;
+    a -= padFraction[0] * (b - a);
+    b += padFraction[1] * (b - a);
     if (a > 0 && a / (b - 1) <= includeZeroTolerance) a = 0;
     if (nice) {
         a = Math.floor(a);
@@ -762,7 +759,7 @@ V.auto_NumericScale.makeLogScale = function(f, nice, padFraction, includeZeroTol
     for (i = Math.ceil(a); i <= b + 1e-6; i++)
         d.add(Math.pow(10, i));
     data = d.toArray();
-    return new V.auto_NumericScale("log", Math.pow(10, a), Math.pow(10, b), data, 1, false);
+    return new V.auto_NumericScale("log", Math.pow(10, a), Math.pow(10, b), data, false);
 };
 
 ////////////////////// Data ////////////////////////////////////////////////////////////////////////////////////////////
@@ -2718,7 +2715,7 @@ V.modify_Transform.binCategorical = function(f, desiredBinCount) {
 };
 
 V.modify_Transform.binNumeric = function(f, desiredBinCount) {
-    var scale = V.auto_Auto.makeNumericScale(f, true, 0, 0.0, desiredBinCount + 1, true);
+    var scale = V.auto_Auto.makeNumericScale(f, true, [0, 0], 0.0, desiredBinCount + 1, true);
     var divisions = scale.divisions;
     var isDate = f.hasProperty("date");
     var dateFormat = isDate ? f.getProperty("dateFormat") : null;
