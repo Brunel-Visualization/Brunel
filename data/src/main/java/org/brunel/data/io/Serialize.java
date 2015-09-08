@@ -118,7 +118,7 @@ public class Serialize {
                 if (b == NUMBER)
                     items[i] = d.readNumber();
                 else if (b == STRING)
-                    items[i] = d.readNumber();
+                    items[i] = d.readString();
                 else
                     throw new IllegalStateException("Unknown data column type " + b);
             }

@@ -60,6 +60,10 @@ public class TestSerialize {
         byte[] bytes = Serialize.serializeDataset(dataset);
         assertEquals(2017, bytes.length);
         assertEquals(Serialize.DATA_SET, bytes[0]);
+
+        Dataset d = (Dataset) Serialize.deserialize(bytes);
+        assertEquals(dataset.rowCount(), d.rowCount());
+        assertEquals(dataset.field("rating").getNumericProperty("mean"), d.field("rating").getNumericProperty("mean"), 0.001);
     }
 
     @Test
