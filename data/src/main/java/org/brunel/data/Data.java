@@ -258,7 +258,7 @@ public class Data {
     @JSTranslation(js = {
             "if (c==null) return null;",
             "if (c.getTime) return c;",
-            "if (typeof c == 'string') return $.parseDate(c);",
+            "if (typeof c == 'string') {d = $.parseDate(c); return d == null || isNaN(d.getTime()) ? null : d };",
             "if (!isNaN(c)) return new Date(c*86400000);",
             "return null;"
     })

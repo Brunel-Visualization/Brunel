@@ -22,6 +22,7 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.io.CSV;
+import org.brunel.data.summary.FieldRowComparison;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -50,6 +51,26 @@ public class TestSort {
         a = simple.sort("D");
         Assert.assertEquals(CannedData.dump(simple), CannedData.dump(a));
 
+    }
+
+
+    @Test
+    public void testSortRanking() {
+        FieldRowComparison comparisonWithRows = new FieldRowComparison(new Field[] { simple.field("B")}, null, true);
+
+        // The order should be 0,1,3,2
+        int[] order = comparisonWithRows.makeSortedOrder(4);
+        assertEquals(0, order[0]);
+        assertEquals(1, order[1]);
+        assertEquals(3, order[2]);
+        assertEquals(2, order[3]);
+
+        FieldRowComparison comparison = new FieldRowComparison(new Field[] { simple.field("B")}, null, false);
+        double[] ranking = Sort.makeRowRanking(order, comparison);
+        assertEquals(2, ranking[0], 0.01);
+        assertEquals(2, ranking[1], 0.01);
+        assertEquals(4, ranking[2], 0.01);
+        assertEquals(2, ranking[3], 0.01);
     }
 
     @Test

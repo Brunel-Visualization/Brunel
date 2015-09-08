@@ -48,8 +48,7 @@ public class Sort extends DataOperation {
         boolean[] ascending = getAscending(dimensions, sortFields);
 
         // Sort the rows to get the new row order
-        FieldRowComparison comparison = new FieldRowComparison(dimensions, ascending, true);
-        int[] rowOrder = comparison.makeSortedOrder(base.rowCount());
+        int[] rowOrder = new FieldRowComparison(dimensions, ascending, true).makeSortedOrder(base.rowCount());
 
         // Ensure that any data binned to the "..." catch-all category is moved to the end
         for (int i = base.fields.length - 1; i >= 0; i--) {
@@ -62,7 +61,8 @@ public class Sort extends DataOperation {
         for (int i = 0; i < fields.length; i++) {
             fields[i] = Data.permute(base.fields[i], rowOrder, true);
             if (sortCategories && !fields[i].ordered()) {
-                if (rowRanking == null) rowRanking = makeRowRanking(rowOrder, comparison);
+                if (rowRanking == null)
+                    rowRanking = makeRowRanking(rowOrder, new FieldRowComparison(dimensions, null, false));
                 fields[i].setCategories(categoriesFromRanks(fields[i], rowRanking));
             }
         }
@@ -71,14 +71,14 @@ public class Sort extends DataOperation {
     }
 
     /* Convert an order (possibly with ties) into a ranking for the original rows */
-    private static double[] makeRowRanking(int[] order, FieldRowComparison comparison) {
+    static double[] makeRowRanking(int[] order, FieldRowComparison comparison) {
         double[] ranks = new double[order.length];
         int runStart = 0;
         while (runStart < order.length) {
             // Create a run [runStart, runEnd-1] of identical values
             int runEnd = runStart + 1;
             while (runEnd < order.length && comparison.compare(order[runStart], order[runEnd]) == 0) runEnd++;
-            double v = (runEnd - runStart + 1) / 2.0;
+            double v = (runEnd + runStart + 1) / 2.0;
 
             // Set the ranks in the result array, incrementing runStart to the runEnd
             while (runStart < runEnd) ranks[order[runStart++]] = v;
@@ -134,11 +134,16 @@ public class Sort extends DataOperation {
         for (Object o : categories) index.put(o, index.size());
 
         // Sum all ranks that map to the same category
-        int[] summedRanks = new int[index.size()];
+        Double[] summedRanks = new Double[index.size()];
         for (int i = 0; i < n; i++) {
             // Want rank 1 to score the most, so reverse the order. Also x2 to eliminate half ranks from ties
             Object o = field.value(i);
-            if (o != null) summedRanks[index.get(o)] += 2 * (n-rowRanking[i]);
+            if (o != null) {
+                Integer idx = index.get(o);
+                if (summedRanks[idx] == null)
+                    summedRanks[idx] = (n - i) / 10.0 / n;    // To ensure ties preserve row order
+                summedRanks[idx] += 2 * (n + 1 - rowRanking[i]);
+            }
         }
 
         // Get the order (biggest first)

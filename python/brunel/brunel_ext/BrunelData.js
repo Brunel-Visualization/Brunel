@@ -864,7 +864,7 @@ V.Data.toDate = function(f, method) {
 V.Data.asDate = function(c) {
     if (c==null) return null;
     if (c.getTime) return c;
-    if (typeof c == 'string') return $.parseDate(c);
+    if (typeof c == 'string') {d = $.parseDate(c); return d == null || isNaN(d.getTime()) ? null : d };
     if (!isNaN(c)) return new Date(c*86400000);
     return null;
 };
@@ -2182,6 +2182,7 @@ V.modify_Filter.matchAny = function(v, params) {
 //
 //   This transform sorts a dataset into an order determined bya  set of fields.
 //   Each field can be defined as "increasing" or "decreasing" and the order of fields is important!
+//   <p/>
 //   This class may sort categories of data if the data type allows it (i.e. it is categorical, not ordinal)
 //   It will always sort the rows of the data (so a PATH element will use that order, for example)
 //
@@ -2198,7 +2199,7 @@ V.modify_Sort.transform = function(base, command) {
 };
 
 V.modify_Sort.doSort = function(base, command, sortCategories) {
-    var ascending, dimensions, f, fields, i, rowOrder;
+    var ascending, dimensions, f, fields, i, rowOrder, rowRanking;
     var sortFields = V.modify_DataOperation.parts(command);
     if (sortFields == null) return base;
     dimensions = V.modify_Sort.getFields(base, sortFields);
@@ -2209,13 +2210,31 @@ V.modify_Sort.doSort = function(base, command, sortCategories) {
         if (f.hasProperty("binned") && f.preferCategorical())
             rowOrder = V.modify_Sort.moveCatchAllToEnd(rowOrder, f);
     }
+    rowRanking = null;
     fields = $.Array(base.fields.length, null);
     for (i = 0; i < fields.length; i++){
         fields[i] = V.Data.permute(base.fields[i], rowOrder, true);
-        if (sortCategories && !fields[i].ordered())
-            fields[i].setCategories(V.modify_Sort.categoriesFromData(fields[i]));
+        if (sortCategories && !fields[i].ordered()) {
+            if (rowRanking == null)
+                rowRanking = V.modify_Sort.makeRowRanking(rowOrder,
+                    new V.summary_FieldRowComparison(dimensions, null, false));
+            fields[i].setCategories(V.modify_Sort.categoriesFromRanks(fields[i], rowRanking));
+        }
     }
     return V.Data.replaceFields(base, fields);
+};
+
+V.modify_Sort.makeRowRanking = function(order, comparison) {
+    var runEnd, v;
+    var ranks = $.Array(order.length, 0);
+    var runStart = 0;
+    while (runStart < order.length) {
+        runEnd = runStart + 1;
+        while (runEnd < order.length && comparison.compare(order[runStart], order[runEnd]) == 0) runEnd++;
+        v = (runEnd + runStart + 1) / 2.0;
+        while (runStart < runEnd) ranks[order[runStart++]] = v;
+    }
+    return ranks;
 };
 
 V.modify_Sort.getFields = function(base, names) {
@@ -2266,15 +2285,28 @@ V.modify_Sort.moveCatchAllToEnd = function(order, f) {
     return result;
 };
 
-V.modify_Sort.categoriesFromData = function(field) {
-    var i, o;
-    var cats = new $.List();
-    var seen = new $.Set();
-    for (i = 0; i < field.rowCount(); i++){
+V.modify_Sort.categoriesFromRanks = function(field, rowRanking) {
+    var _i, cats, i, idx, o, summedRanks, which;
+    var categories = field.categories();
+    var n = field.rowCount();
+    var index = new $.Map();
+    for(_i=$.iter(categories), o=_i.current; _i.hasNext(); o=_i.next())
+        index.put(o, index.size());
+    summedRanks = $.Array(index.size(), 0);
+    for (i = 0; i < n; i++){
         o = field.value(i);
-        if (o != null && seen.add(o)) cats.add(o);
+        if (o != null) {
+            idx = index.get(o);
+            if (summedRanks[idx] == null)
+                summedRanks[idx] = (n - i) / 10.0 / n;
+            summedRanks[idx] += 2 * (n + 1 - rowRanking[i]);
+        }
     }
-    return cats.toArray();
+    which = V.Data.order(summedRanks, false);
+    cats = $.Array(which.length, null);
+    for (i = 0; i < which.length; i++)
+        cats[i] = categories[which[i]];
+    return cats;
 };
 
 V.modify_Sort.transformRows = function(base, command) {

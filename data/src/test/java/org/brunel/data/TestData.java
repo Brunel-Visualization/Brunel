@@ -72,6 +72,19 @@ public class TestData {
     }
 
     @Test
+    public void testDateConversionForBadDates() {
+        Object[] data = new Object[1000];
+        for (int i=0; i<data.length; i++) data[i] = i% 10 == 0 ? "name" :"-";
+        Field f = Data.makeColumnField("a", "label", data);
+        Field g = Data.toDate(f);
+        assertNotEquals(f, g);
+
+        assertEquals("a", g.name);
+        assertEquals("label", g.label);
+        assertEquals(1000, g.rowCount());
+        assertEquals(0, g.valid());}
+
+    @Test
     public void testDates() {
         assertEquals(0.0, Data.asNumeric(Data.asDate("1970-01-01")), 0.001);
         assertEquals(0.0, Data.asNumeric(Data.asDate("1/1/70")), 0.001);
@@ -137,6 +150,8 @@ public class TestData {
         // Should not change
         assertEquals(g, Data.toNumeric(g));
     }
+
+
 
     @Test
     public void testNumericFormat() {
