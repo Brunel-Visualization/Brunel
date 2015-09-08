@@ -142,7 +142,7 @@ public class Sort extends DataOperation {
                 Integer idx = index.get(o);
                 if (summedRanks[idx] == null)
                     summedRanks[idx] = (n - i) / 10.0 / n;    // To ensure ties preserve row order
-                summedRanks[idx] += 2 * (n + 1 - rowRanking[i]);
+                summedRanks[idx] += 2 * (n + 1 - rowRanking[idx]);
             }
         }
 
