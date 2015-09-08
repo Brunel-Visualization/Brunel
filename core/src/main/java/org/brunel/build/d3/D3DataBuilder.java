@@ -123,8 +123,15 @@ public class D3DataBuilder {
             if (suitableForKey(result)) return result;
         }
 
-        if (vis.tDiagram == VisTypes.Diagram.chord || vis.tDiagram == VisTypes.Diagram.treemap) {
-            // Positions are the keys for chords and treemaps
+        if (vis.tDiagram == VisTypes.Diagram.chord) {
+            List<String> result = new ArrayList<String>();
+            Collections.addAll(result, vis.positionFields());
+            Collections.addAll(result, vis.aestheticFields());
+            if (suitableForKey(result)) return result;
+        }
+
+        if (vis.tDiagram == VisTypes.Diagram.tree || vis.tDiagram == VisTypes.Diagram.treemap) {
+            // Positions are the keys for trees and treemaps
             return Arrays.asList(vis.positionFields());
         }
 

@@ -23,14 +23,14 @@ import org.brunel.data.Field;
 import org.brunel.data.summary.FieldRowComparison;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * This transform sorts a dataset into an order determined bya  set of fields.
  * Each field can be defined as "increasing" or "decreasing" and the order of fields is important!
- *
+ * <p/>
  * This class may sort categories of data if the data type allows it (i.e. it is categorical, not ordinal)
  * It will always sort the rows of the data (so a PATH element will use that order, for example)
  */
@@ -48,8 +48,8 @@ public class Sort extends DataOperation {
         boolean[] ascending = getAscending(dimensions, sortFields);
 
         // Sort the rows to get the new row order
-        int[] rowOrder = new FieldRowComparison(dimensions, ascending, true).makeSortedOrder(base.rowCount());
-
+        FieldRowComparison comparison = new FieldRowComparison(dimensions, ascending, true);
+        int[] rowOrder = comparison.makeSortedOrder(base.rowCount());
 
         // Ensure that any data binned to the "..." catch-all category is moved to the end
         for (int i = base.fields.length - 1; i >= 0; i--) {
@@ -57,14 +57,33 @@ public class Sort extends DataOperation {
             if (f.hasProperty("binned") && f.preferCategorical()) rowOrder = moveCatchAllToEnd(rowOrder, f);
         }
 
+        double[] rowRanking = null;                                    // Create rankings for row when needed only
         Field[] fields = new Field[base.fields.length];
         for (int i = 0; i < fields.length; i++) {
             fields[i] = Data.permute(base.fields[i], rowOrder, true);
-            if (sortCategories && !fields[i].ordered())
-                fields[i].setCategories(categoriesFromData(fields[i]));
+            if (sortCategories && !fields[i].ordered()) {
+                if (rowRanking == null) rowRanking = makeRowRanking(rowOrder, comparison);
+                fields[i].setCategories(categoriesFromRanks(fields[i], rowRanking));
+            }
         }
 
         return Data.replaceFields(base, fields);
+    }
+
+    /* Convert an order (possibly with ties) into a ranking for the original rows */
+    private static double[] makeRowRanking(int[] order, FieldRowComparison comparison) {
+        double[] ranks = new double[order.length];
+        int runStart = 0;
+        while (runStart < order.length) {
+            // Create a run [runStart, runEnd-1] of identical values
+            int runEnd = runStart + 1;
+            while (runEnd < order.length && comparison.compare(order[runStart], order[runEnd]) == 0) runEnd++;
+            double v = (runEnd - runStart + 1) / 2.0;
+
+            // Set the ranks in the result array, incrementing runStart to the runEnd
+            while (runStart < runEnd) ranks[order[runStart++]] = v;
+        }
+        return ranks;
     }
 
     private static Field[] getFields(Dataset base, String[] names) {
@@ -106,15 +125,31 @@ public class Sort extends DataOperation {
         return result;
     }
 
-    private static Object[] categoriesFromData(Field field) {
-        List<Object> cats = new ArrayList<Object>();
-        Set<Object> seen = new HashSet<Object>();
-        for (int i = 0; i < field.rowCount(); i++) {
-            Object o = field.value(i);
-            if (o != null && seen.add(o)) cats.add(o);
-        }
-        return cats.toArray(new Object[cats.size()]);
+    private static Object[] categoriesFromRanks(Field field, double[] rowRanking) {
+        Object[] categories = field.categories();
+        double n = field.rowCount();
 
+        // Map categories to an index
+        Map<Object, Integer> index = new HashMap<Object, Integer>();
+        for (Object o : categories) index.put(o, index.size());
+
+        // Sum all ranks that map to the same category
+        int[] summedRanks = new int[index.size()];
+        for (int i = 0; i < n; i++) {
+            // Want rank 1 to score the most, so reverse the order. Also x2 to eliminate half ranks from ties
+            Object o = field.value(i);
+            if (o != null) summedRanks[index.get(o)] += 2 * (n-rowRanking[i]);
+        }
+
+        // Get the order (biggest first)
+        Integer[] which = Data.order(summedRanks, false);
+
+        // Build the sorted category list
+        Object[] cats = new Object[which.length];
+        for (int i = 0; i < which.length; i++)
+            cats[i] = categories[which[i]];
+
+        return cats;
     }
 
     static Dataset transformRows(Dataset base, String command) {
