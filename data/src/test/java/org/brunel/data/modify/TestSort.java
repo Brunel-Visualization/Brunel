@@ -23,10 +23,9 @@ import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.io.CSV;
 import org.brunel.data.summary.FieldRowComparison;
-import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static junit.framework.TestCase.assertEquals;
 
 public class TestSort {
 
@@ -43,13 +42,13 @@ public class TestSort {
     @Test
     public void testSortNoChangeInRowOrder() {
         Dataset a = simple.sort("");
-        Assert.assertEquals(CannedData.dump(simple), CannedData.dump(a));
+        assertEquals(CannedData.dump(simple), CannedData.dump(a));
 
         a = simple.sort("A");
-        Assert.assertEquals(CannedData.dump(simple), CannedData.dump(a));
+        assertEquals(CannedData.dump(simple), CannedData.dump(a));
 
         a = simple.sort("D");
-        Assert.assertEquals(CannedData.dump(simple), CannedData.dump(a));
+        assertEquals(CannedData.dump(simple), CannedData.dump(a));
 
     }
 
@@ -71,22 +70,29 @@ public class TestSort {
         assertEquals(2, ranking[1], 0.01);
         assertEquals(4, ranking[2], 0.01);
         assertEquals(2, ranking[3], 0.01);
+
+        Object[] data = Sort.categoriesFromRanks(simple.field("A"), ranking);
+        assertEquals(3, data.length);
+        assertEquals("a", data[0]);
+        assertEquals("b", data[1]);
+        assertEquals("c", data[2]);
     }
 
     @Test
     public void testSortRowOrder() {
-        Dataset a = simple.sort("B");
-        Assert.assertEquals("A|B|C|D|#count|#row -- a|x|1|4|1|1 -- b|x|2|3|1|2 -- c|x|2|1|1|4 -- c|y|1|2|1|3", CannedData.dump(a));
-        assertEquals("c, a, b", Data.join(a.fields[0].categories()));       // c is biggest because it has ranks 1+2,
+        Dataset a = simple.sort("B:ascending");
+        assertEquals("A|B|C|D|#count|#row -- a|x|1|4|1|1 -- b|x|2|3|1|2 -- c|x|2|1|1|4 -- c|y|1|2|1|3", CannedData.dump(a));
+        assertEquals("a, b, c", Data.join(a.fields[0].categories()));       // c is biggest because it has ranks 1+2,
         assertEquals("x, y", Data.join(a.fields[1].categories()));
         assertEquals("1, 2", Data.join(a.fields[2].categories()));
         assertEquals("1, 2, 3, 4", Data.join(a.fields[3].categories()));
 
         a = simple.sort("C:ascending; D:ascending");
-        Assert.assertEquals("A|B|C|D|#count|#row -- c|y|1|2|1|3 -- a|x|1|4|1|1 -- c|x|2|1|1|4 -- b|x|2|3|1|2", CannedData.dump(a));
+        assertEquals("A|B|C|D|#count|#row -- c|y|1|2|1|3 -- a|x|1|4|1|1 -- c|x|2|1|1|4 -- b|x|2|3|1|2", CannedData.dump(a));
+        assertEquals("a, c, b", Data.join(a.fields[0].categories()));       // c is biggest because it has ranks 1+2,
 
         a = simple.sort("C:descending; D:descending");
-        Assert.assertEquals("A|B|C|D|#count|#row -- b|x|2|3|1|2 -- c|x|2|1|1|4 -- a|x|1|4|1|1 -- c|y|1|2|1|3", CannedData.dump(a));
+        assertEquals("A|B|C|D|#count|#row -- b|x|2|3|1|2 -- c|x|2|1|1|4 -- a|x|1|4|1|1 -- c|y|1|2|1|3", CannedData.dump(a));
     }
 
     @Test

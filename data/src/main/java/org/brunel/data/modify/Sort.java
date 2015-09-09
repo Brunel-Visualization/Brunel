@@ -59,12 +59,15 @@ public class Sort extends DataOperation {
         double[] rowRanking = null;                                    // Create rankings for row when needed only
         Field[] fields = new Field[base.fields.length];
         for (int i = 0; i < fields.length; i++) {
-            fields[i] = Data.permute(base.fields[i], rowOrder, true);
-            if (sortCategories && !fields[i].ordered()) {
+            Object[] newOrder = null;
+            Field field = base.fields[i];
+            if (sortCategories && !field.ordered()) {
                 if (rowRanking == null)
                     rowRanking = makeRowRanking(rowOrder, new FieldRowComparison(dimensions, null, false));
-                fields[i].setCategories(categoriesFromRanks(fields[i], rowRanking));
+                newOrder = categoriesFromRanks(field, rowRanking);
             }
+            fields[i] = Data.permute(field, rowOrder, true);
+            if (newOrder != null) fields[i].setCategories(newOrder);
         }
 
         return Data.replaceFields(base, fields);
@@ -125,29 +128,28 @@ public class Sort extends DataOperation {
         return result;
     }
 
-    private static Object[] categoriesFromRanks(Field field, double[] rowRanking) {
-        Object[] categories = field.categories();
-        double n = field.rowCount();
+    // Each row gets the mean rank
+    static Object[] categoriesFromRanks(Field field, double[] rowRanking) {
+        double n = field.rowCount();                                                // # rows
+        Object[] categories = field.categories();                                   // categories
+        int[] counts = (int[]) field.getProperty("categoryCounts");                 // category counts
+        Double[] means = new Double[counts.length];                                 // sums of ranks
+        for (int i = 0; i < means.length; i++) means[i] = i / 100.0 / means.length; // Bias towards current order
 
         // Map categories to an index
         Map<Object, Integer> index = new HashMap<Object, Integer>();
         for (Object o : categories) index.put(o, index.size());
 
-        // Sum all ranks that map to the same category
-        Double[] summedRanks = new Double[index.size()];
+        // Sum ranks for this category
         for (int i = 0; i < n; i++) {
-            // Want rank 1 to score the most, so reverse the order. Also x2 to eliminate half ranks from ties
             Object o = field.value(i);
-            if (o != null) {
-                Integer idx = index.get(o);
-                if (summedRanks[idx] == null)
-                    summedRanks[idx] = (n - i) / 10.0 / n;    // To ensure ties preserve row order
-                summedRanks[idx] += 2 * (n + 1 - rowRanking[idx]);
-            }
+            if (o == null) continue;
+            int idx = index.get(o);
+            means[idx] += rowRanking[i] / counts[idx];
         }
 
         // Get the order (biggest first)
-        Integer[] which = Data.order(summedRanks, false);
+        Integer[] which = Data.order(means, true);
 
         // Build the sorted category list
         Object[] cats = new Object[which.length];

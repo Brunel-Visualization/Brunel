@@ -1851,7 +1851,7 @@ V.io_Serialize.readFromByteInput = function(d) {
             if (b == V.io_Serialize.NUMBER)
                 items[i] = d.readNumber();
             else if (b == V.io_Serialize.STRING)
-                items[i] = d.readNumber();
+                items[i] = d.readString();
             else
                 throw new $.Exception("Unknown data column type " + b);
         }
@@ -2199,7 +2199,7 @@ V.modify_Sort.transform = function(base, command) {
 };
 
 V.modify_Sort.doSort = function(base, command, sortCategories) {
-    var ascending, dimensions, f, fields, i, rowOrder, rowRanking;
+    var ascending, dimensions, f, field, fields, i, newOrder, rowOrder, rowRanking;
     var sortFields = V.modify_DataOperation.parts(command);
     if (sortFields == null) return base;
     dimensions = V.modify_Sort.getFields(base, sortFields);
@@ -2213,13 +2213,17 @@ V.modify_Sort.doSort = function(base, command, sortCategories) {
     rowRanking = null;
     fields = $.Array(base.fields.length, null);
     for (i = 0; i < fields.length; i++){
-        fields[i] = V.Data.permute(base.fields[i], rowOrder, true);
-        if (sortCategories && !fields[i].ordered()) {
+        newOrder = null;
+        field = base.fields[i];
+        if (sortCategories && !field.ordered()) {
             if (rowRanking == null)
                 rowRanking = V.modify_Sort.makeRowRanking(rowOrder,
                     new V.summary_FieldRowComparison(dimensions, null, false));
-            fields[i].setCategories(V.modify_Sort.categoriesFromRanks(fields[i], rowRanking));
+            newOrder = V.modify_Sort.categoriesFromRanks(field, rowRanking);
         }
+        fields[i] = V.Data.permute(field, rowOrder, true);
+        if (newOrder != null)
+            fields[i].setCategories(newOrder);
     }
     return V.Data.replaceFields(base, fields);
 };
@@ -2286,23 +2290,23 @@ V.modify_Sort.moveCatchAllToEnd = function(order, f) {
 };
 
 V.modify_Sort.categoriesFromRanks = function(field, rowRanking) {
-    var _i, cats, i, idx, o, summedRanks, which;
-    var categories = field.categories();
+    var _i, cats, i, idx, index, o, which;
     var n = field.rowCount();
-    var index = new $.Map();
+    var categories = field.categories();
+    var counts = field.getProperty("categoryCounts");
+    var means = $.Array(counts.length, 0);
+    for (i = 0; i < means.length; i++)
+        means[i] = i / 100.0 / means.length;
+    index = new $.Map();
     for(_i=$.iter(categories), o=_i.current; _i.hasNext(); o=_i.next())
         index.put(o, index.size());
-    summedRanks = $.Array(index.size(), 0);
     for (i = 0; i < n; i++){
         o = field.value(i);
-        if (o != null) {
-            idx = index.get(o);
-            if (summedRanks[idx] == null)
-                summedRanks[idx] = (n - i) / 10.0 / n;
-            summedRanks[idx] += 2 * (n + 1 - rowRanking[i]);
-        }
+        if (o == null) continue;
+        idx = index.get(o);
+        means[idx] += rowRanking[i] / counts[idx];
     }
-    which = V.Data.order(summedRanks, false);
+    which = V.Data.order(means, true);
     cats = $.Array(which.length, null);
     for (i = 0; i < which.length; i++)
         cats[i] = categories[which[i]];
