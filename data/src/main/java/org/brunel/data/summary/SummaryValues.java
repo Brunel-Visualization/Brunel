@@ -50,6 +50,7 @@ public final class SummaryValues {
         Object[] data = new Object[rows.size()];
         for (int i = 0; i < data.length; i++)
             data[i] = fields[fieldIndex].value(rows.get(i));
+
         Field f = Data.makeColumnField("temp", null, data);
 
         if (summary.equals("percent")) {

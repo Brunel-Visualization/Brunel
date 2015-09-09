@@ -39,7 +39,6 @@ public class TestAuto {
 
         Field a = Data.makeColumnField("field", null, new Object[]{d1, d2, d3, null});
         Field b = Auto.convert(a);
-        assertEquals(a, b);
         Assert.assertEquals(true, b.hasProperty("numeric"));
         Assert.assertEquals(true, b.hasProperty("date"));
 

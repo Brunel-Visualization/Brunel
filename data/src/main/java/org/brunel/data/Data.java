@@ -247,7 +247,7 @@ public class Data {
                 data[i] = asDate(o);
             if (!changed) changed = Data.compare(o, data[i]) != 0;
         }
-        Field result = changed ? makeColumnField(f.name, f.label, data) : f;
+        Field result = makeColumnField(f.name, f.label, data);
         result.setProperty("date", true);
         result.setProperty("numeric", true);
         return result;

@@ -23,6 +23,8 @@ import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.junit.Test;
 
+import java.util.Date;
+
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
@@ -34,11 +36,14 @@ public class TestSerialize {
     @Test
     public void testSerializeFieldBasics() {
         Field a = Data.makeConstantField("foo", "bar", 10, 1000);
+        assertEquals(true, a.hasProperty("numeric"));
         byte[] bytes = Serialize.serializeField(a);
         Field b = (Field) Serialize.deserialize(bytes);
         assertEquals("foo", b.name);
         assertEquals("bar", b.label);
         assertEquals(1000, b.rowCount());
+        assertEquals(true, b.hasProperty("numeric"));
+        assertEquals(10, b.min(), 1e-6);
     }
 
     @Test
@@ -55,6 +60,23 @@ public class TestSerialize {
     }
 
     @Test
+    public void testSerializeFieldDateData() {
+        Date date1 = new Date();
+        Date date2 = new Date(date1.getTime() + 86400000 * 12);
+        Field a = Data.makeColumnField("a", "b", new Object[]{date1, date2});
+        a = Data.toDate(a);
+        assertTrue(a.hasProperty("numeric"));
+        assertTrue(a.hasProperty("date"));
+        assertEquals(12, a.max() - a.min(), 1e-6);
+
+        byte[] bytes = Serialize.serializeField(a);
+        Field b = (Field) Serialize.deserialize(bytes);
+        assertEquals(true, b.hasProperty("numeric"));
+        assertEquals(true, b.hasProperty("date"));
+        assertEquals(12, b.max() - b.min(), 1e-6);
+    }
+
+    @Test
     public void testWhiskeyDataset() {
         Dataset dataset = Dataset.make(CSV.read(CannedData.whiskey));
         byte[] bytes = Serialize.serializeDataset(dataset);
@@ -64,6 +86,7 @@ public class TestSerialize {
         Dataset d = (Dataset) Serialize.deserialize(bytes);
         assertEquals(dataset.rowCount(), d.rowCount());
         assertEquals(dataset.field("rating").getNumericProperty("mean"), d.field("rating").getNumericProperty("mean"), 0.001);
+        assertEquals("Count", d.field("#count").label);
     }
 
     @Test
@@ -73,7 +96,6 @@ public class TestSerialize {
         byte[] bytes = Serialize.serializeDataset(dataset);
         assertEquals("1 2 2 97 0 65 0 1 3 255 1 0 2 98 0 66 0 1 3 255 1 0", dump(bytes));
     }
-
 
     @Test
     public void testNastyData() {

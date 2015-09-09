@@ -91,6 +91,7 @@ public class Auto {
     }
 
     public static Field convert(Field base) {
+
         // Must check this first, otherwise will be converted to numeric values
         double fractionDates = countFractionDates(base);
         if (fractionDates > FRACTION_TO_CONVERT) {
@@ -124,7 +125,7 @@ public class Auto {
                 n++;
             }
         }
-        return s / n;
+        return s / (n+1);       // Add one to guard against no data
     }
 
     private static boolean isYearly(Field asNumeric) {

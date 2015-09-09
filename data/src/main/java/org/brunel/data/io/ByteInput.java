@@ -17,7 +17,10 @@
 
 package org.brunel.data.io;
 
+import org.brunel.data.Data;
 import org.brunel.translator.JSTranslation;
+
+import java.util.Date;
 
 /**
  * A class for writing bytes to
@@ -51,6 +54,11 @@ class ByteInput {
             throw new IllegalStateException("Read an odd number start: " + a);
         }
 
+    }
+
+    public Date readDate() {
+        // millis since jan 1, 1970
+        return Data.asDate(readDouble());
     }
 
     private Number readDouble() {

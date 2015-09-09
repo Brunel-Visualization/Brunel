@@ -536,7 +536,7 @@ V.auto_Auto.countFractionDates = function(f) {
             n++;
         }
     }
-    return s / n;
+    return s / (n + 1);
 };
 
 V.auto_Auto.isYearly = function(asNumeric) {
@@ -855,7 +855,7 @@ V.Data.toDate = function(f, method) {
         if (!changed)
             changed = V.Data.compare(o, data[i]) != 0;
     }
-    result = changed ? V.Data.makeColumnField(f.name, f.label, data) : f;
+    result = V.Data.makeColumnField(f.name, f.label, data);
     result.setProperty("date", true);
     result.setProperty("numeric", true);
     return result;
@@ -1510,6 +1510,10 @@ V.io_ByteInput.prototype.readNumber = function() {
     }
 };
 
+V.io_ByteInput.prototype.readDate = function() {
+    return V.Data.asDate(this.readDouble());
+};
+
 V.io_ByteInput.prototype.readDouble = function() {
     var s = this.readString();
     return s == "NaN" ? Number.NaN : Number(s);
@@ -1577,6 +1581,11 @@ V.io_ByteOutput.prototype.addDouble = function(value) {
         this.addString("NaN");
     else
         this.addString(V.Data.formatNumeric(value, false));
+};
+
+V.io_ByteOutput.prototype.addDate = function(date) {
+    this.addDouble(date == null ? null : V.Data.asNumeric(date));
+    return this;
 };
 
 V.io_ByteOutput.prototype.addString = function(s) {
@@ -1788,6 +1797,7 @@ V.io_Serialize.DATA_SET = 1;
 V.io_Serialize.FIELD = 2;
 V.io_Serialize.NUMBER = 3;
 V.io_Serialize.STRING = 4;
+V.io_Serialize.DATE = 5;
 
 V.io_Serialize.serializeDataset = function(data) {
     var _i, f, s;
@@ -1819,7 +1829,11 @@ V.io_Serialize.addFieldToOutput = function(field, s) {
         }
     }
     s.addNumber(uniques.size());
-    if (field.hasProperty("numeric")) {
+    if (field.hasProperty("date")) {
+        s.addByte(V.io_Serialize.DATE);
+        for(_i=$.iter(uniques), o=_i.current; _i.hasNext(); o=_i.next())
+            s.addDate(o);
+    } else if (field.hasProperty("numeric")) {
         s.addByte(V.io_Serialize.NUMBER);
         for(_i=$.iter(uniques), o=_i.current; _i.hasNext(); o=_i.next())
             s.addNumber(o);
@@ -1839,7 +1853,7 @@ V.io_Serialize.deserialize = function(data) {
 };
 
 V.io_Serialize.readFromByteInput = function(d) {
-    var fields, i, indices, items, label, len, name, uniqueCount;
+    var field, fields, i, indices, items, label, len, name, uniqueCount;
     var b = d.readByte();
     if (b == V.io_Serialize.FIELD) {
         name = d.readString();
@@ -1852,6 +1866,8 @@ V.io_Serialize.readFromByteInput = function(d) {
                 items[i] = d.readNumber();
             else if (b == V.io_Serialize.STRING)
                 items[i] = d.readString();
+            else if (b == V.io_Serialize.DATE)
+                items[i] = d.readDate();
             else
                 throw new $.Exception("Unknown data column type " + b);
         }
@@ -1859,13 +1875,18 @@ V.io_Serialize.readFromByteInput = function(d) {
         indices = $.Array(len, 0);
         for (i = 0; i < len; i++)
             indices[i] = d.readNumber();
-        return V.Data.makeIndexedColumnField(name, label, items, indices);
+        field = V.Data.makeIndexedColumnField(name, label, items, indices);
+        if (b == V.io_Serialize.NUMBER || b == V.io_Serialize.DATE)
+            field.setProperty("numeric", true);
+        if (b == V.io_Serialize.DATE)
+            field.setProperty("date", true);
+        return field;
     } else if (b == V.io_Serialize.DATA_SET) {
         len = d.readNumber();
         fields = $.Array(len, null);
         for (i = 0; i < len; i++)
             fields[i] = V.io_Serialize.readFromByteInput(d);
-        return new V.Dataset(fields);
+        return V.Dataset.make(fields, false);
     } else {
         throw new $.Exception("Unknown class: " + b);
     }

@@ -22,6 +22,7 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.io.CSV;
+import org.brunel.data.io.Serialize;
 import org.brunel.util.Library;
 import org.brunel.util.WebDisplay;
 
@@ -42,12 +43,16 @@ class VisualTests {
     private final WebDisplay display;
 
     private VisualTests() {
-        baseball = Dataset.make(readResourceAsCSV("baseball2004.csv"));
-        cpi = Dataset.make(readResourceAsCSV("UK_CPI.csv"));
-        whiskey = Dataset.make(readResourceAsCSV("whiskey.csv"));
-        simple = Dataset.make(readResourceAsCSV("simple.csv"));
+        baseball = serializeCheck(Dataset.make(readResourceAsCSV("baseball2004.csv")));
+        cpi = serializeCheck(Dataset.make(readResourceAsCSV("UK_CPI.csv")));
+        whiskey = serializeCheck(Dataset.make(readResourceAsCSV("whiskey.csv")));
+        simple = serializeCheck(Dataset.make(readResourceAsCSV("simple.csv")));
         library = Library.custom();
         display = new WebDisplay("Full Tests");
+    }
+
+    private Dataset serializeCheck(Dataset dataset) {
+        return (Dataset) Serialize.deserialize(Serialize.serializeDataset(dataset));
     }
 
     private void run() throws Exception {

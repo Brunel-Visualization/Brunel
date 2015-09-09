@@ -22,6 +22,7 @@ import org.brunel.translator.JSTranslation;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
+import java.util.Date;
 
 /**
  * A class for writing bytes to
@@ -84,6 +85,11 @@ class ByteOutput {
             addString("NaN");
         else
             addString(Data.formatNumeric(value.doubleValue(), false));
+    }
+
+    public ByteOutput addDate(Date date) {
+        addDouble(date == null ? null : Data.asNumeric(date));
+        return this;
     }
 
     @JSTranslation(js = {
