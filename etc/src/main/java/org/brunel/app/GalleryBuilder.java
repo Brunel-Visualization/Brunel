@@ -28,17 +28,15 @@ import java.util.Scanner;
 
 class GalleryBuilder {
 
-    private static final String ITEM_FORMAT = "<td>\n" +
+    private static final String ITEM_FORMAT = "<td width=\"33%\">\n" +
             "  <a href=\"%s\"><img title=\"%s\" src=\"https://raw.github.com/Brunel-Visualization/Brunel/master/etc/src/main/resources/gallery/%s\"/></a>\n" +
             "  <p>%s</p>\n" +
             "</td>\n";
 
     /*
         Parameters are
-        %d - top
-        %d - left
-        %s - description        ... this is a chart that ....
         %s - target URL         ... http://brunel.jupyter.ninja:9080/brunel-service/docs/
+        %s - description        ... this is a chart that ....
         %s - thumbnail image    ... bggtreemap.png
         %s - title              ... Title for the first one
      */
