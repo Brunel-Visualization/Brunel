@@ -80,7 +80,6 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - baseball	/ point x(PutOutRate) y(AssistRate) color(SlugRate) size(salary) sort(salary) style('size:300%') tooltip(#all)  :: pass
 - cpi	    / point x(food) y(housing) bin(housing, food) color(#count) style('symbol:rect; border-radius:5px')             :: improve :: less axes spacing at zero
 
-
 #### Notes
 
 baseball:   Age Weight Height BattingAvg OnBasePct HomeRunRate SlugRate RBIRate WalkRate
