@@ -29,7 +29,7 @@ import java.util.Scanner;
 class GalleryBuilder {
 
     private static final String ITEM_FORMAT = "<td>\n" +
-            "  <a href=\"%s\"><img title=\"%s\" src=\"https://rawgit.com/Brunel-Visualization/Brunel/master/etc/src/main/resources/gallery/%s\"/></a>\n" +
+            "  <a href=\"%s\"><img title=\"%s\" src=\"https://raw.github.com/Brunel-Visualization/Brunel/master/etc/src/main/resources/gallery/%s\"/></a>\n" +
             "  <p>%s</p>\n" +
             "</td>\n";
 
