@@ -93,7 +93,7 @@ import java.util.TooManyListenersException;
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 try {
-                    String content = new String(Files.readAllBytes(f.toPath()));
+                    String content = new String(Files.readAllBytes(f.toPath()), "utf-8");
                     Field[] fields = CSV.read(content);
                     Dataset source = Dataset.make(fields);
                     String name = f.getName();

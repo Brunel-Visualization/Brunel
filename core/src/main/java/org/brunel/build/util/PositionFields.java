@@ -60,12 +60,19 @@ public class PositionFields {
         this.allXFields = allX.toArray(new Field[allX.size()]);
         this.allYFields = allY.toArray(new Field[allY.size()]);
 
-        // Set ordinal / categorical and derive transforms
+        // Set ordinal / categorical and derive transforms (if not explicitly set above)
         this.xCategorical = ModelUtil.combinationIsCategorical(allXFields);
         this.yCategorical = ModelUtil.combinationIsCategorical(allYFields);
-        this.xTransform = xCategorical ? "linear" : chooseTransform(allXFields);
-        this.yTransform = yCategorical ? "linear" : chooseTransform(allYFields);
 
+        if (xTransform == null)
+            this.xTransform = xCategorical ? "linear" : chooseTransform(allXFields);
+        else
+            this.xTransform = xTransform;
+
+        if (yTransform == null)
+            this.yTransform = yCategorical ? "linear" : chooseTransform(allYFields);
+        else
+            this.yTransform = yTransform;
     }
 
     private String getDefinedXTransform(VisSingle v) {

@@ -17,14 +17,12 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.D3Builder;
 import org.brunel.build.d3.D3DataBuilder;
-import org.brunel.build.d3.D3Util;
 import org.brunel.build.util.ElementDetails;
+import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.model.VisSingle;
-import org.brunel.model.style.StyleTarget;
 
 class Chord extends D3Diagram {
 
@@ -46,15 +44,15 @@ class Chord extends D3Diagram {
         out.add("var chord = d3.layout.chord().padding(.025).sortSubgroups(d3.descending).matrix(chordData.matrix())").endStatement();
 
         // take arc path font size into account, adding a bit of padding, to define the arc width
-        String arcWidthText = getStyle(new StyleTarget("text", D3Builder.STYLE_TOP, "axis", "label"), "font-size");
-        double arcWidth = D3Util.asPixels(arcWidthText, 12) * 1.3;
-        out.add("var arc_width =", Data.formatNumeric(arcWidth, true), ";").comment("Width of exterior arc");
+        ModelUtil.Size labelSize = ModelUtil.getAxisLabelFontSize(vis);
+        double arcWidth = labelSize.valueInPixels(8);
+        out.add("var arc_width =", Data.formatNumeric(arcWidth, false), ";").comment("Width of exterior arc");
         out.add("function keyFunction(d) { return d.source.index + '|' + d.target.index };").comment(" special key function for the edges");
 
         return ElementDetails.makeForDiagram("chord.chords()", "path", "poly");
     }
 
-     public String getRowKey() {
+    public String getRowKey() {
          return "d.source.index + '|' + d.target.index";
      }
 

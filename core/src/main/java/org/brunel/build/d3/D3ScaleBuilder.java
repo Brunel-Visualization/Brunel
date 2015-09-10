@@ -183,6 +183,13 @@ class D3ScaleBuilder {
         return fieldById(p.asField(), vis);
     }
 
+    public boolean allNumeric(Field[] fields) {
+        for (Field f : fields)
+            if (!f.hasProperty("numeric"))
+                return false;
+        return true;
+    }
+
     public void writeAxes() {
         if (isDiagram) return;                          // No axes needed for diagrams
 
@@ -262,7 +269,7 @@ class D3ScaleBuilder {
             legendTicks = "scale_color.domain()";
         } else {
             // Numeric must calculate a nice range
-            NumericScale details = Auto.makeNumericScale(colorLegendField, true, new double[]{0,0}, 0.25, 7, false);
+            NumericScale details = Auto.makeNumericScale(colorLegendField, true, new double[]{0, 0}, 0.25, 7, false);
             Double[] divisions = details.divisions;
             if (details.granular) {
                 // Granular data has divisions BETWEEN the values, not at them, so need to fix that

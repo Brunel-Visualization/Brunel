@@ -25,7 +25,6 @@ import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
-import org.brunel.model.style.StyleTarget;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,9 +69,12 @@ public class D3LabelBuilder {
 
     public void addFontSizeAttribute(VisSingle vis) {
         if (!vis.fSize.isEmpty()) {
-            String textSize = ModelUtil.getStyle(vis, new StyleTarget("text", D3Builder.STYLE_TOP, "element"), "font-size");
-            String[] parts = splitByUnit(textSize);
-            out.addChained("style('font-size', function(d) { return (", parts[0], "* size(d)) +'" + parts[1] + "' })");
+            ModelUtil.Size parts = ModelUtil.getFontSize(vis);
+            if (parts == null) {
+                out.addChained("style('font-size', function(d) { return size(d) + '%' })");
+            } else {
+                out.addChained("style('font-size', function(d) { return (", parts.value(), "* size(d)) +'" + parts.suffix() + "' })");
+            }
         }
     }
 
@@ -142,16 +144,6 @@ public class D3LabelBuilder {
             result.add(p);
         }
         return result;
-    }
-
-    // Split a string into the numeric and unit parts
-    private String[] splitByUnit(String text) {
-        if (text == null) return new String[]{"12", "px"};
-        int p = text.length();
-        while (p > 0)
-            if (Character.isDigit(text.charAt(--p))) break;
-        if (p == text.length() - 1) return new String[]{text, "px"};
-        return new String[]{text.substring(0, p + 1), text.substring(p + 1)};
     }
 
     private void writeContent(List<Param> items, boolean forTooltip) {

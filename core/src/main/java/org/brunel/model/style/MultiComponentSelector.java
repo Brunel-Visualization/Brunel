@@ -53,7 +53,7 @@ class MultiComponentSelector extends StyleSelector {
     }
 
     public boolean match(StyleTarget target) {
-        // Lowest level must org.brunel.app.match this one
+        // Lowest level must match this one
         if (!components[components.length - 1].match(target)) return false;
 
         int selectorToMatch = components.length - 2;
@@ -61,10 +61,10 @@ class MultiComponentSelector extends StyleSelector {
 
         // Step though all the components in revese order
         for (int i = components.length - 2; i >= 0; i--) {
-            // Try and found a parent org.brunel.app.match by searching upwards through parent chain
+            // Try and found a parent match by searching upwards through parent chain
             while (target != null && !components[i].match(target)) target = target.parent;
 
-            // If we did not find a org.brunel.app.match, we failed, otherwise move to parent and look for next item
+            // If we did not find a match, we failed, otherwise move to parent and look for next item
             if (target == null) return false;
             target = target.parent;
         }

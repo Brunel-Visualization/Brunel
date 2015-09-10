@@ -87,10 +87,6 @@ public abstract class D3Diagram {
         isHierarchy = true;
     }
 
-    String getStyle(StyleTarget styleTarget, String key) {
-        return ModelUtil.getStyle(vis, styleTarget, key);
-    }
-
     void addAestheticsAndTooltips(ElementDetails details, String remap, boolean addLabels) {
         String remapAesthetics = remap == null ? "if (d == null || d.row == null) return;" : remap;
         String remapLabel = remap == null ? "" : remap;

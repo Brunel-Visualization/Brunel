@@ -23,7 +23,7 @@ import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
-/**
+/**sc
  * Handles adding interactivity to charts
  */
 class D3Interaction {

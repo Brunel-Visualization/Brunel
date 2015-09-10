@@ -60,6 +60,19 @@ public class Field extends Informative implements Comparable<Field> {
         }
     }
 
+    /**
+     * Sets a value for a field.
+     * This method is used by selection to set the selection results.
+     * It should not be used by general programming, as fields may share data and so setting the value in one
+     * field may affect other fields -- or cached data sets.
+     * @param o value to set
+     * @param index index at which to set the value
+     */
+    public void setValue(Object o, int index) {
+        // We may have to convert a provider from a constant provider
+        provider = provider.setValue(o, index);
+    }
+
     public int compareRows(int a, int b) {
         if (categoryOrder == null) {
             categoryOrder = new HashMap<Object, Integer>();         // Build it no matter what so next call is faster

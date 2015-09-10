@@ -67,7 +67,7 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - cpi	    / area x(date) yrange(food, housing)                                                :: pass
 
 - simple	/ bar y(size) color(animal) stack polar label(#all)                                 :: pass
-- whiskey	/ point x(Price) y(Rating) color(country) tooltip('(', Price, ',' , Rating, ')') style('size:40px; fill-opacity:0.2') :: fail :: size is being ignored
+- whiskey	/ point x(Price) y(Rating) color(country) tooltip('(', Price, ',' , Rating, ')') style('size:40px; fill-opacity:0.2') :: pass
 - whiskey	/ edge yrange(country, category) chord size(#count) color(country) tooltip(#all)        :: pass
 - whiskey	/ point size(#count) color(country) bubble label(country, '\n', #count) tooltip(#all)   :: improve :: should respect the newline character
 
@@ -77,10 +77,8 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - baseball	/ bar x(HomeRunRate) y(Salary) transpose                   :: improve :: axes labels clash
 
 - baseball	/ point size(SlugRate) color(Salary) bubble                                                                     :: pass
-- baseball	/ point x(PutOutRate) y(AssistRate) color(SlugRate) size(salary) sort(salary) style('size:300%') tooltip(#all)  :: improve :: respect the % size
-- cpi	    / point x(food) y(housing) bin(housing, food) color(#count) style('symbol:rect; border-radius:5px')             :: improve :: respect the rounded rectangle setting
-
-
+- baseball	/ point x(PutOutRate) y(AssistRate) color(SlugRate) size(salary) sort(salary) style('size:300%') tooltip(#all)  :: pass
+- cpi	    / point x(food) y(housing) bin(housing, food) color(#count) style('symbol:rect; border-radius:5px')             :: improve :: less axes spacing at zero
 
 
 #### Notes

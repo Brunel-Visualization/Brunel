@@ -298,7 +298,6 @@ public class Data {
      * @return new field
      */
     public static Field permute(Field field, int[] order, boolean onlyOrderChanged) {
-        if (!field.hasProvider()) return field;
         if (onlyOrderChanged)
             return new Field(field.name, field.label, new ReorderedProvider(field.provider, order), field);
 

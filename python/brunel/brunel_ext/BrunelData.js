@@ -895,7 +895,6 @@ V.Data.toNumeric = function(f) {
 
 V.Data.permute = function(field, order, onlyOrderChanged) {
     var f;
-    if (!field.hasProvider()) return field;
     if (onlyOrderChanged)
         return new V.Field(field.name, field.label, new V.values_ReorderedProvider(field.provider, order), field);
     f = new V.Field(field.name, field.label, new V.values_ReorderedProvider(field.provider, order));
@@ -1333,6 +1332,10 @@ V.Field.VAL_SELECTED = "\u2713";
 V.Field.VAL_UNSELECTED = "\u2717";
 
 $.extend(V.Field, V.util_Informative);
+
+V.Field.prototype.setValue = function(o, index) {
+    this.provider = this.provider.setValue(o, index);
+};
 
 V.Field.prototype.compareRows = function(a, b) {
     var cats, i;

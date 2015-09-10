@@ -25,7 +25,6 @@ import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
-import org.brunel.model.style.StyleTarget;
 
 class D3ElementBuilder {
 
@@ -35,6 +34,7 @@ class D3ElementBuilder {
     private final D3ScaleBuilder scales;
     private final PositionFields positionFields;
     private final D3Diagram diagram;
+
     public D3ElementBuilder(VisSingle vis, ScriptWriter out, D3ScaleBuilder scales,
                             PositionFields positionFields, D3DataBuilder data) {
         this.vis = vis;
@@ -54,8 +54,8 @@ class D3ElementBuilder {
 
         if (sizesNeeded()) {
             // Define size functions
-            writeElementSize("x", positionFields.getX(vis), scales.getXExtent(), getElementPercentSize("width"));
-            writeElementSize("y", positionFields.getY(vis), scales.getYExtent(), getElementPercentSize("height"));
+            writeElementSize("x", positionFields.getX(vis), scales.getXExtent(), ModelUtil.getElementSize(vis, "width"));
+            writeElementSize("y", positionFields.getY(vis), scales.getYExtent(), ModelUtil.getElementSize(vis, "height"));
 
         }
 
@@ -131,8 +131,8 @@ class D3ElementBuilder {
 
     private void writeCoordEnter() {
         // Added rounded styling if needed
-        String radius = ModelUtil.getStyle(vis, new StyleTarget("rect", null, "element", "point"), "border-radius");
-        if (radius != null) out.addChained("attr('rx'," + radius + ").attr('ry', " + radius + ")").ln();
+        ModelUtil.Size size = ModelUtil.getRoundRectangleRadius(vis);
+        if (size != null) out.addChained("attr('rx'," + size.valueInPixels(8) + ").attr('ry', " + size.valueInPixels(8) + ")").ln();
         out.endStatement().onNewLine().ln();
     }
 
@@ -217,16 +217,6 @@ class D3ElementBuilder {
         labelBuilder.addFontSizeAttribute(vis);
     }
 
-    private double getElementPercentSize(String tag) {
-        StyleTarget target = new StyleTarget(null, D3Builder.STYLE_TOP, "element");
-        String s = ModelUtil.getStyle(vis, target, tag);
-        if (s == null || !s.endsWith("%")) {
-            s = ModelUtil.getStyle(vis, target, "size");
-        }
-        if (s == null || !s.endsWith("%")) return 90;
-        return Double.parseDouble(s.substring(0, s.indexOf('%')));
-    }
-
     /* The key function ensure we have object constancy when animating */
     private String getKeyFunction() {
         String content = diagram != null ? diagram.getRowKey() : "d.key";
@@ -234,15 +224,14 @@ class D3ElementBuilder {
     }
 
     private String getSymbol() {
-        StyleTarget target = new StyleTarget(null, null, "element", "point");
-        String result = vis.styles == null ? null : vis.styles.get(target, "symbol");
+        String result = ModelUtil.getElementSymbol(vis);
         if (result != null) return result;
         // We default to a rectangle if all the scales are categorical, otherwise we util a point
         if (positionFields.allXFields.length == 0 || positionFields.allYFields.length == 0) return "point";
         return positionFields.xCategorical && positionFields.yCategorical ? "rect" : "point";
     }
 
-    private  boolean isRange(Field field) {
+    private boolean isRange(Field field) {
         String s = field.getStringProperty("summary");
         return s != null && (s.equals("iqr") || s.equals("range"));
     }
@@ -297,10 +286,9 @@ class D3ElementBuilder {
         }
     }
 
-    private void writeElementSize(String name, Field[] fields, String extent, double percentSize) {
-        int categories = scales.getCategories(fields).size();
-        out.add("function", "size_" + name + "(d) { return " + (percentSize / 100) + " * ");
+    private void writeElementSize(String name, Field[] fields, String extent, ModelUtil.Size size) {
 
+        out.add("function", "size_" + name + "(d) { return ");
         // Add in multipliers for size fields, if they are defined
         if (vis.fSize.size() == 1) {
             // Both height and width util the same one
@@ -311,18 +299,33 @@ class D3ElementBuilder {
             else out.add("height(d) * ");
         }
 
-        if (fields.length == 0) {
-            out.add(extent);
-        } else if (categories > 0) {
-            out.add(extent, " / ", categories);
-        } else {
-            // Need to define size in terms of the spacing -- or default if granularity is too small
-            Double spacing = fields[0].getNumericProperty("granularity");
-            if (spacing != null && spacing > (fields[0].max() - fields[0].min()) / 20)
-                out.add("Math.abs(scale_" + name + "(" + spacing + ")-scale_" + name + "(0))");
-            else
-                out.add("geom.default_point_size");
+        if (size != null && size.isPercent()) {
+            out.add(size.value(), "* ");
         }
+
+        if (size != null && !size.isPercent()) {
+            // Absolute size overrides everything
+            out.add(size.value());
+        } else if (fields.length == 0) {
+            // If there are no fields, then fill the extent completely
+            out.add(extent);
+        } else {
+            int categories = scales.getCategories(fields).size();
+            if (categories > 0) {
+                // Fill a category span (or 90% of it for categorical fields when percent not defined)
+                if ((size == null || !size.isPercent()) && !scales.allNumeric(fields))
+                    out.add("0.9 * ");
+                out.add(extent, "/", categories);
+            } else {
+                // Need to define size in terms of the spacing -- or default if granularity is too small
+                Double spacing = fields[0].getNumericProperty("granularity");
+                if (spacing != null && spacing > (fields[0].max() - fields[0].min()) / 20)
+                    out.add("Math.abs(scale_" + name + "(" + spacing + ")-scale_" + name + "(0))");
+                else
+                    out.add("geom.default_point_size");
+            }
+        }
+
         out.add(" }").endStatement();
     }
 

@@ -23,13 +23,12 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.modify.ApplyJoinKeys;
-import org.brunel.model.VisException;
 import org.brunel.model.VisComposition;
+import org.brunel.model.VisException;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 import org.brunel.model.style.StyleSheet;
-import org.brunel.model.style.StyleTarget;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,10 +61,6 @@ import java.util.Map;
  */
 public abstract class AbstractBuilder implements Builder {
 
-    /**
-     * Top level style target -- all targets should parent to this
-     */
-    public static final StyleTarget STYLE_TOP = new StyleTarget("svg", null, "brunel");
     /**
      * Default layouts, in percent coordinates. The outer array indexes the total number of charts, and
      * the next one indexes the chart within the order. The charts are assumed to be in importance order,
@@ -434,8 +429,12 @@ public abstract class AbstractBuilder implements Builder {
         if (item.fTransform.isEmpty()) return "";
         StringBuilder b = new StringBuilder();
         for (Map.Entry<Param, String> e : item.fTransform.entrySet()) {
+            Param p = e.getKey();
+            String name = p.asField();
+            String measure = e.getValue();
+            if (p.hasModifiers()) measure += ":" + p.firstModifier().asString();
             if (b.length() > 0) b.append("; ");
-            b.append(e.getKey() + "=" + e.getValue());
+            b.append(name).append("=").append(measure);
         }
         return b.toString();
     }
