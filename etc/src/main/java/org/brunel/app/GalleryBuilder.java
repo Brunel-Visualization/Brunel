@@ -28,12 +28,11 @@ import java.util.Scanner;
 
 class GalleryBuilder {
 
-    private static final String ITEM_FORMAT = "<div style=\"position:absolute; top:%dpx; left:%dpx;width:250px\">\n" +
-            "  <center>\n" +
+    private static final String ITEM_FORMAT = "<td>\n" +
             "  <a href=\"%s\"><img title=\"%s\" src=\"https://rawgit.com/Brunel-Visualization/Brunel/master/etc/src/main/resources/gallery/%s\"/></a>\n" +
-            "  <span style=\"position:relative; top:-15px;background-color: white; padding:3px\">%s</span>\n" +
-            "  </center>\n" +
-            "</div>";
+            "  <p>%s</p>\n" +
+            "</td>\n";
+
     /*
         Parameters are
         %d - top
@@ -59,6 +58,9 @@ class GalleryBuilder {
     private int column = 0;
 
     private void run() throws Exception {
+
+        out.append("<table>\n");
+
         /* Read the file in */
         String[] lines = new Scanner(WebDisplay.class.getResourceAsStream(GALLERY), "UTF-8").useDelimiter("\\A").next().split("\n");
 
@@ -84,6 +86,9 @@ class GalleryBuilder {
         }
 
         show(tags);
+
+        if (column != 0) out.append("</row>\n");
+        out.append("</table>\n");
 
         display.showInBrowser();
 
@@ -111,19 +116,19 @@ class GalleryBuilder {
             e.printStackTrace();
         }
 
-        // Hex gridding
-        int top = 100 + 240 * row;
-        int left = 240 * column + (row % 2 == 1 ? 120 : 0);
+        if (column == 0) {
+            out.append("<tr>\n");
+        }
 
-        String itemText = String.format(ITEM_FORMAT, top, left, description, target, image, title);
+        String itemText = String.format(ITEM_FORMAT, target, description, image, title);
         out.append(itemText);
-        out.append("\n\n");
 
         // Move to next item
-        column ++;
-        if (column == 3 && row%2 == 0 || column == 2 && row%2 == 1) {
+        column++;
+        if (column == 3 && row % 2 == 0 || column == 2 && row % 2 == 1) {
             column = 0;
             row++;
+            out.append("</tr>\n");
         }
 
     }
