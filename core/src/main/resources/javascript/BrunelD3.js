@@ -277,7 +277,7 @@ var BrunelD3 = (function () {
 
     function addEllipses(span, text, maxWidth) {
         var i = text.length - 3;
-        while (i >= 0) {
+        while (i > 0) {
             span.textContent = text[text.length - 1] == '.' ? text : text.substring(0, i) + "\u2026";
             if (span.getComputedTextLength() <= maxWidth) return true;
             i--;

@@ -75,6 +75,16 @@ public class Action implements Comparable<Action> {
     }
 
     /**
+     * Create a VisItem by applying this action.
+     * The data is not defined externally, so must be defined in the action by a 'data' statement
+     *
+     * @return resulting visualization
+     */
+    public VisItem apply() {
+        return apply(null);
+    }
+
+    /**
      * Create a VisItem by applying this action to a set of data
      *
      * @param data target data

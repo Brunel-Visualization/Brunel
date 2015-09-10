@@ -1,0 +1,42 @@
+#id             bggbubble
+#title          Bubble chart of 2000 games
+#description    A simple bubble chart showing the top ranked games.
+                The color shows the BGG rating and the size of each bubble represents the number of
+                voters for that game. The data is already sorted by rank, so no sort was needed.
+                Data is from March 2015.
+#brunel         data('http://willsfamily.org/files/vis/data/BGG Top 2000 Games.csv')
+                bubble color(rating) size(voters) sort(rating) label(title) tooltip(title, #all)
+                legends(none) style('* {font-size: 7pt}')
+
+
+#id             bggtreemap
+#title          Treemap of game designers and mechanics
+#description    The treemap sizes are calculated by summing the votes for each category, and the color is the mean
+                rating for games in those categories. Tooltips list the titles, and labels give the earliest date
+                for any game in that category.
+                Data is from March 2015.
+#brunel         data('http://willsfamily.org/files/vis/data/BGG Top 2000 Games.csv')
+                treemap x(designer, mechanics) color(rating) size(voters) sort(#count) label(published)
+                tooltip(#all, title) sum(voters) mean(rating) min(published) list(title:50)
+
+#id             bggchord
+#title          Chord chart for game player age
+#description    The chord chart shows which categories of games are rated as suitable for given ages of
+                players. These age ratings are given by the BGG reviewers and are the median responses
+                for each game
+#brunel         data('http://willsfamily.org/files/vis/data/BGG Top 2000 Games.csv')
+                chord x(categories) y(playerage) color(playerage) size(#count) tooltip(#all)
+
+#id             statesbar
+#title          State temperatures
+#description    Differences between winter and summer temperatures, sorted by the latitude of the state.
+                Color encodes the state population.
+#brunel         data('http://willsfamily.org/files/vis/data/US States.csv')
+                bar x(state) yrange(summer, winter) color(population) sort(latitude)
+
+#id             statestext
+#title          Text Scatterplot of state info
+#description    Areas and Popualtions for US states, colored by the percentage difference in votes between
+                democrat and republican in the 2012 election.
+#brunel         data('http://willsfamily.org/files/vis/data/US States.csv')
+                text x(area) y(population) color(dem_rep:red-blue) label(abbr) tooltip(#all) style('font-size:36px;font-family:times')
