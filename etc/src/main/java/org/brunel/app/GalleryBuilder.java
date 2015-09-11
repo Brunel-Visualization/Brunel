@@ -22,13 +22,15 @@ import org.brunel.model.VisItem;
 import org.brunel.util.WebDisplay;
 
 import java.awt.*;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
 class GalleryBuilder {
 
-    private static final String ITEM_FORMAT = "<td width=\"33%\">\n" +
+    private static final String ITEM_FORMAT = "<td width=\"33%%\">\n" +
             "  <a href=\"%s\"><img title=\"%s\" src=\"https://raw.github.com/Brunel-Visualization/Brunel/master/etc/src/main/resources/gallery/%s\"/></a>\n" +
             "  <p>%s</p>\n" +
             "</td>\n";
@@ -93,7 +95,7 @@ class GalleryBuilder {
         System.out.println(out.toString());
     }
 
-    private void show(Map<String, String> tags) {
+    private void show(Map<String, String> tags) throws UnsupportedEncodingException {
         if (tags.isEmpty()) return;                                                     // Nothing defined yet
 
         String brunel = tags.get("#brunel");
@@ -101,7 +103,8 @@ class GalleryBuilder {
         String title = tags.get("#title");
         String description = tags.get("#description");
         String image = id + ".png";
-        String target = "http://brunel.jupyter.ninja:9080/brunel-service/docs/";        // Service later
+        String target = String.format("http://brunel.mybluemix.net/gallery_app/renderer?" +
+                "title=%s&brunel_src=%s&description=%s", encode(title), encode(brunel), encode(description));
 
         int HEIGHT = 800;
         int WIDTH = 1000;
@@ -129,6 +132,10 @@ class GalleryBuilder {
             out.append("</tr>\n");
         }
 
+    }
+
+    private String encode(String title) throws UnsupportedEncodingException {
+        return URLEncoder.encode(title, "utf-8");
     }
 
 }
