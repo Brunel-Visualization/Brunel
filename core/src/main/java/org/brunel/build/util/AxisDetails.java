@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Stores util on an axis
+ * Calculates information on how to display axes
  */
 public class AxisDetails {
 
