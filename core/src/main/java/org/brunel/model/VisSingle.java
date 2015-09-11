@@ -386,8 +386,11 @@ public class VisSingle extends VisItem implements Cloneable {
             for (String s : aestheticFields()) if (s.equals("#series")) addSeriesSplit = false;
         }
 
-        // If we have an element, and do not need to modify anything, we can return this vis
-        if (tElement != null && !containsAll && !addSeriesSplit) return this;
+        // See if we need to add a Y field to stack with
+        boolean addY = stacked && fY.isEmpty() && fRange == null;
+
+        // If no changes, we can return this vis
+        if (tElement != null && !addY && !containsAll && !addSeriesSplit) return this;
 
         VisSingle result;
         try {
@@ -398,8 +401,19 @@ public class VisSingle extends VisItem implements Cloneable {
 
         if (addSeriesSplit) result.split(Param.makeField("#series"));
 
-        // Set the default element for the diagram, or point as an overall default
-        if (tElement == null) result.tElement = (tDiagram == null) ? VisTypes.Element.point : tDiagram.defaultElement;
+        // Set the default element
+        if (tElement == null) {
+            if (tDiagram != null) {
+                // Diagrams know what they like
+                result.tElement = tDiagram.defaultElement;
+            } else if (stacked) {
+                // Bars work well for stacking usually
+                result.tElement = VisTypes.Element.bar;
+            } else {
+                // The default
+                result.tElement = VisTypes.Element.point;
+            }
+        }
 
         if (containsAll) {
             result.fColor = replaceAllField(result.fColor, replacement);
@@ -415,6 +429,10 @@ public class VisSingle extends VisItem implements Cloneable {
             result.fSummarize = replaceAllField(result.fSummarize, replacement);
             result.fTransform = replaceAllField(result.fTransform, replacement);
         }
+
+        // Need to stack something
+        if (addY) result.y(Param.makeNumber(1.0));
+
         result.makeUsedFields();
         return result;
     }
@@ -442,6 +460,7 @@ public class VisSingle extends VisItem implements Cloneable {
                 if (!name.equals(p.asString())) {
                     Param newParameter = Param.makeField(name).addModifiers(p.modifiers());
                     map.put(newParameter, map.get(p));
+                    map.remove(p);
                 }
             }
         }

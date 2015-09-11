@@ -51,6 +51,8 @@ bin transform FIELD+
 rank transform FIELD+
 inner transform FIELD+
 outer transform FIELD+
+top transform FIELD+
+bottom transform FIELD+
 
 ## Data summary operations
 count data FIELD+

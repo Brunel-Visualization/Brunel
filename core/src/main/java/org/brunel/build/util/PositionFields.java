@@ -136,8 +136,9 @@ public class PositionFields {
 
         // Go for the transform that "does the most": log > root > linear
         String best = "linear";
-        double min = fields[0].min();
+        double min = Double.MAX_VALUE;
         for (Field f : fields) {
+            if (f.min() == null) continue;
             Auto.setTransform(f);
             String s = f.getStringProperty("transform");
             if ("log".equals(s)) best = "log";

@@ -73,8 +73,10 @@ public class Transform extends DataOperation {
             return bin(field, desiredBinCount);
         } else if (name.equals("rank")) {
             return rank(field, !"descending".equals(option));
+        } else {
+            // inner, outer, top and bottom are all filtering operations
+            return field;
         }
-        throw new IllegalArgumentException("Unknown transform: " + name);
     }
 
     private static Field rank(Field f, boolean ascending) {

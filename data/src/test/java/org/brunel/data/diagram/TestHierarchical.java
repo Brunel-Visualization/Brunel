@@ -41,7 +41,7 @@ public class TestHierarchical {
 
     @Test
     public void testPreservesKeys() {
-        Dataset trimmed = Filter.transform(simple, "A not a");
+        Dataset trimmed = Filter.transform(simple, "A !is a");
         Node data = Hierarchical.makeByNestingFields(trimmed, null, "A").root;
         Assert.assertEquals("((0-1) (1-1 2-1 3-1))", dumpTree(data));
 

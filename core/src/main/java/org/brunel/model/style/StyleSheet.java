@@ -159,7 +159,7 @@ public class StyleSheet {
                 writer.write(o.getKey());
                 writer.write(": ");
                 writer.write(o.getValue());
-                writer.write(" !important;\n");
+                writer.write(";\n");
             }
             writer.write("}\n");
 

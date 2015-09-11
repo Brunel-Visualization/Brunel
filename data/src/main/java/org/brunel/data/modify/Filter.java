@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * This transform takes data and removes rows based on filter commands
  * Commands are one of the following:
- *
+ * <p/>
  * FIELD is a,b ...                -- one of those values
  * FIELD not a,b, ...              -- not one of those values
  * FIELD in a,b                    -- in that range of values (exactly two)
@@ -38,10 +38,12 @@ public class Filter extends DataOperation {
     /*
      * Commands are one of the following:
      *
-     *      FIELD is a,b ...                -- one of those values                      [type 1]
-     *      FIELD not a,b, ...              -- not one of those values                  [type 2]
-     *      FIELD in a,b                    -- in that range of values (exactly two)    [type 3]
-     *      FIELD valid                     -- not null                                 [type 4]
+     *      FIELD valid                     -- not null                                     [type 1]
+     *      FIELD is a,b ...                -- one of those values                          [type 2]
+     *      FIELD in a,b                    -- in that range of values (exactly two)        [type 3]
+     *      FIELD ranked a,b                -- in the rank range (-ve means from bottom)    [type 4]
+     *
+     *      Each can be negated with a "!" in front of it, which also negates the type value
      */
     public static Dataset transform(Dataset base, String command) {
         // We may need to remove filtered info from the categories?
@@ -64,8 +66,15 @@ public class Filter extends DataOperation {
             int q = c.indexOf(" ", p + 1);
             if (q < 0) q = c.length();
             field[i] = base.field(c.substring(0, p).trim());
-            type[i] = getType(c.substring(p, q).trim());
-            params[i] = getParams(c.substring(q).trim(), field[i].preferCategorical());
+            int t = getType(c.substring(p, q).trim());
+            Object[] par = getParams(c.substring(q).trim(), field[i].preferCategorical());
+            if (t == 4 || t == -4) {
+                // Convert the parameters to objects at the requested edge points and then use "in"
+                par = getRankedObjects(field[i], Data.asNumeric(par[0]), Data.asNumeric(par[1]));
+                t = t < 0 ? -3 : 3;
+            }
+            type[i] = t;
+            params[i] = par;
         }
 
         // Returns null when indexing is the same as the whole data
@@ -80,11 +89,33 @@ public class Filter extends DataOperation {
 
     }
 
+    /* Get the object that are at the indicated positions for the field, by rank */
+    private static Object[] getRankedObjects(Field field, double p1, double p2) {
+        ArrayList<Object> data = new ArrayList<Object>();
+        int n = field.rowCount();
+        for (int i = 0; i < n; i++) {
+            Object o = field.value(i);
+            if (o != null) data.add(o);
+        }
+        Object[] d = data.toArray(new Object[data.size()]);
+        Data.sort(d);
+
+        int N = d.length;
+        int a = Math.min(Math.max(1, (int) p1), N);
+        int b = Math.min(Math.max(1, (int) p2), N);
+        Object high = d[N - a];
+        Object low = d[N - b];
+        return new Object[]{low, high};
+    }
+
     private static int getType(String s) {
-        if (s.equals("is")) return 1;
-        if (s.equals("not")) return 2;
-        if (s.equals("valid")) return 3;
-        if (s.equals("in")) return 4;
+        // Negated form
+        if (s.startsWith("!")) return -getType(s.substring(1).trim());
+
+        if (s.equals("valid")) return 1;
+        if (s.equals("is")) return 2;
+        if (s.equals("in")) return 3;
+        if (s.equals("ranked")) return 4;
         throw new IllegalArgumentException("Cannot use filter command " + s);
     }
 
@@ -105,16 +136,21 @@ public class Filter extends DataOperation {
             boolean bad = false;
             for (int i = 0; i < field.length; i++) {
                 Object v = field[i].value(row);
+                if (v == null) {
+                    // Missing values always fail the test, no matter what
+                    bad = true;
+                    break;
+                }
+
                 int t = type[i];
                 Object[] pars = params[i];
-                if (t == 1)
+
+                if (t == 2 || t == -2)
                     bad = !matchAny(v, pars);
-                else if (t == 2)
-                    bad = matchAny(v, pars);
-                else if (t == 3)
-                    bad = (v == null);
-                else
+                else if (t == 3 || t == -3)
                     bad = Data.compare(v, pars[0]) < 0 || Data.compare(v, pars[1]) > 0;
+
+                if (t < 0) bad = !bad;
 
                 if (bad) break;             // Known to be bad
             }

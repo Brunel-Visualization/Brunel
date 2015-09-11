@@ -36,12 +36,6 @@ public class D3Util {
         return canonicalFieldName(f.name);
     }
 
-    public static double asPixels(String text, double def) {
-        if (text == null) return def;
-        if (text.endsWith("px")) text = text.substring(0, text.length() - 2);
-        return Double.parseDouble(text);
-    }
-
     public static String canonicalFieldName(String s) {
         // The first character determines the type of field:
         // ' means it is a quoted constant ('abc' or '5.1232')
@@ -52,9 +46,7 @@ public class D3Util {
         if (c == '#')
             return '$' + s.substring(1);                // #count -> $count
         if (c == '\'') {
-            s = s.substring(1, s.length() - 1)            // remove the quotes
-                    .replaceAll("[.+\\-]", "_");            // transform numeric symbols
-            return '_' + s;                             // Prepend '_'
+            return s.replaceAll("['.+\\-]", "_");          // transform numeric symbols and quotes
         }
 
         return s;                                       // As it is

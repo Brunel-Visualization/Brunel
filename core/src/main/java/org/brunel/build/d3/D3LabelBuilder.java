@@ -71,7 +71,7 @@ public class D3LabelBuilder {
         if (!vis.fSize.isEmpty()) {
             ModelUtil.Size parts = ModelUtil.getFontSize(vis);
             if (parts == null) {
-                out.addChained("style('font-size', function(d) { return size(d) + '%' })");
+                out.addChained("style('font-size', function(d) { return (100*size(d)) + '%' })");
             } else {
                 out.addChained("style('font-size', function(d) { return (", parts.value(), "* size(d)) +'" + parts.suffix() + "' })");
             }

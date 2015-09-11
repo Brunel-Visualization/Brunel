@@ -34,9 +34,11 @@ public class NominalStats {
         int N = f.rowCount();
 
         int maxCount = 0;
+        int valid = 0;
         for (int i = 0; i < N; i++) {
             Object o = f.value(i);
             if (o == null) continue;
+            valid ++;
             Integer c = count.get(o);
             int value = c == null ? 1 : c + 1;
             count.put(o, value);
@@ -53,6 +55,7 @@ public class NominalStats {
 
         f.setProperty("n", N);
         f.setProperty("unique", count.size());
+        f.setProperty("valid", valid);
 
         if (modes.isEmpty()) {
             f.setProperty("mode", null);
@@ -86,7 +89,7 @@ public class NominalStats {
     }
 
     public static boolean creates(String key) {
-        return "n".equals(key) || "mode".equals(key) || "unique".equals(key)
+        return "n".equals(key) || "mode".equals(key) || "unique".equals(key) || "valid".equals(key)
                 || "categories".equals(key) || "categoryCounts".equals(key);
     }
 }

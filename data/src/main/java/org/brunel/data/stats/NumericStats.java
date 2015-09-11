@@ -30,13 +30,11 @@ public class NumericStats {
     public static boolean populate(Field f) {
         int n = f.rowCount();
 
-        // Extract valid numeric data (and count the non-null items)
-        int validItemCount = 0;
+        // Extract valid numeric data
         List<Double> valid = new ArrayList<Double>();
         for (int i = 0; i < n; i++) {
             Object item = f.value(i);
             if (item != null) {
-                validItemCount++;
                 if (item instanceof Range) {
                     double low = ((Range) item).low;
                     double high = ((Range) item).high;
@@ -48,9 +46,8 @@ public class NumericStats {
                 }
             }
         }
-
-        f.setProperty("valid", validItemCount);
         Double[] data = valid.toArray(new Double[valid.size()]);
+
         n = data.length;
         f.setProperty("validNumeric", n);
 
@@ -115,7 +112,7 @@ public class NumericStats {
     }
 
     public static boolean creates(String key) {
-        return "valid".equals(key) || "validNumeric".equals(key) || "mean".equals(key)
+        return "validNumeric".equals(key) || "mean".equals(key)
                 || "stddev".equals(key) || "variance".equals(key)
                 || "skew".equals(key) || "kurtosis".equals(key)
                 || "min".equals(key) || "max".equals(key)

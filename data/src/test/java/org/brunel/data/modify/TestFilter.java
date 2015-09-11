@@ -52,6 +52,23 @@ public class TestFilter {
     }
 
     @Test
+    public void testFilterByRanks() {
+        // No change because filters all ok
+        Dataset a = simple.filter("A ranked 1,4");
+        assertEquals(a, simple);
+
+        a = simple.filter("A ranked -1,1000");
+        assertEquals(a, simple);
+
+        a = simple.filter("C ranked 1,1");
+        assertEquals("A|B|C|D|#count|#row -- b|x|2|3|1|2 -- c|?|2|1|1|4", CannedData.dump(a));
+
+        a = simple.filter("B !ranked 2,100");
+        assertEquals("A|B|C|D|#count|#row -- c|y|1|2|1|3", CannedData.dump(a));
+
+    }
+
+    @Test
     public void testFilterByIs() {
         // No change because no filters
         Dataset a = simple.filter("");
@@ -71,13 +88,13 @@ public class TestFilter {
     @Test
     public void testFilterByNot() {
         // No change because filters all ok
-        Dataset a = simple.filter("A not d");
+        Dataset a = simple.filter("A !is d");
         assertEquals(a, simple);
 
-        a = simple.filter("A not c");
+        a = simple.filter("A !is c");
         assertEquals("A|B|C|D|#count|#row -- a|x|1|4|1|1 -- b|x|2|3|1|2", CannedData.dump(a));
 
-        a = simple.filter("D not 1,3.0");
+        a = simple.filter("D !is 1,3.0");
         assertEquals("A|B|C|D|#count|#row -- a|x|1|4|1|1 -- c|y|1|2|1|3", CannedData.dump(a));
     }
 

@@ -455,7 +455,7 @@ V.auto_Auto = function() {};
 V.auto_Auto.FRACTION_TO_CONVERT = 0.5;
 
 V.auto_Auto.makeNumericScale = function(f, nice, padFraction, includeZeroTolerance, desiredTickCount, forBinning) {
-    var p;
+    var p, scaling;
     V.auto_Auto.setTransform(f);
     if (desiredTickCount < 1)
         desiredTickCount = Math.min(V.auto_Auto.optimalBinCount(f), 20) + 1;
@@ -464,6 +464,13 @@ V.auto_Auto.makeNumericScale = function(f, nice, padFraction, includeZeroToleran
     p = f.getStringProperty("transform");
     if (p == "log")
         return V.auto_NumericScale.makeLogScale(f, nice, padFraction, includeZeroTolerance);
+    if (p == "root") {
+        if (f.min() > 0) {
+            scaling = (f.min() / f.max()) / (Math.sqrt(f.min()) / Math.sqrt(f.max()));
+            includeZeroTolerance *= scaling;
+            padFraction[0] *= scaling;
+        }
+    }
     return V.auto_NumericScale.makeLinearScale(f, nice, includeZeroTolerance,
         padFraction, desiredTickCount, forBinning);
 };
@@ -2106,6 +2113,7 @@ V.modify_ConvertSeries.makeIndexing = function(m, reps) {
 //
 //   This transform takes data and removes rows based on filter commands
 //   Commands are one of the following:
+//   <p/>
 //   FIELD is a,b ...                -- one of those values
 //   FIELD not a,b, ...              -- not one of those values
 //   FIELD in a,b                    -- in that range of values (exactly two)
@@ -2120,7 +2128,7 @@ V.modify_Filter = function() {
 $.extend(V.modify_Filter, V.modify_DataOperation);
 
 V.modify_Filter.transform = function(base, command) {
-    var N, c, commands, field, i, keep, p, params, q, results, type;
+    var N, c, commands, field, i, keep, p, par, params, q, results, t, type;
     if (!base.fields[0].hasProvider()) return base;
     commands = V.modify_DataOperation.parts(command);
     if (commands == null) return base;
@@ -2134,8 +2142,14 @@ V.modify_Filter.transform = function(base, command) {
         q = c.indexOf(" ", p + 1);
         if (q < 0) q = $.len(c);
         field[i] = base.field(c.substring(0, p).trim());
-        type[i] = V.modify_Filter.getType(c.substring(p, q).trim());
-        params[i] = V.modify_Filter.getParams(c.substring(q).trim(), field[i].preferCategorical());
+        t = V.modify_Filter.getType(c.substring(p, q).trim());
+        par = V.modify_Filter.getParams(c.substring(q).trim(), field[i].preferCategorical());
+        if (t == 4 || t == -4) {
+            par = V.modify_Filter.getRankedObjects(field[i], V.Data.asNumeric(par[0]), V.Data.asNumeric(par[1]));
+            t = t < 0 ? -3 : 3;
+        }
+        type[i] = t;
+        params[i] = par;
     }
     keep = V.modify_Filter.makeRowsToKeep(field, type, params);
     if (keep == null) return base;
@@ -2145,11 +2159,31 @@ V.modify_Filter.transform = function(base, command) {
     return V.Data.replaceFields(base, results);
 };
 
+V.modify_Filter.getRankedObjects = function(field, p1, p2) {
+    var N, a, b, d, high, i, low, o;
+    var data = new $.List();
+    var n = field.rowCount();
+    for (i = 0; i < n; i++){
+        o = field.value(i);
+        if (o != null) data.add(o);
+    }
+    d = data.toArray();
+    V.Data.sort(d);
+    N = d.length;
+    a = Math.min(Math.max(1, Math.floor(p1)), N);
+    b = Math.min(Math.max(1, Math.floor(p2)), N);
+    high = d[N - a];
+    low = d[N - b];
+    return [low, high];
+};
+
 V.modify_Filter.getType = function(s) {
-    if (s == "is") return 1;
-    if (s == "not") return 2;
-    if (s == "valid") return 3;
-    if (s == "in") return 4;
+    if ($.startsWith(s, "!"))
+        return -V.modify_Filter.getType(s.substring(1).trim());
+    if (s == "valid") return 1;
+    if (s == "is") return 2;
+    if (s == "in") return 3;
+    if (s == "ranked") return 4;
     throw new $.Exception("Cannot use filter command " + s);
 };
 
@@ -2174,16 +2208,17 @@ V.modify_Filter.makeRowsToKeep = function(field, type, params) {
         bad = false;
         for (i = 0; i < field.length; i++){
             v = field[i].value(row);
+            if (v == null) {
+                bad = true;
+                break;
+            }
             t = type[i];
             pars = params[i];
-            if (t == 1)
+            if (t == 2 || t == -2)
                 bad = !V.modify_Filter.matchAny(v, pars);
-            else if (t == 2)
-                bad = V.modify_Filter.matchAny(v, pars);
-            else if (t == 3)
-                bad = (v == null);
-            else
+            else if (t == 3 || t == -3)
                 bad = V.Data.compare(v, pars[0]) < 0 || V.Data.compare(v, pars[1]) > 0;
+            if (t < 0) bad = !bad;
             if (bad) break;
         }
         if (!bad) rows.add(row);
@@ -2728,8 +2763,9 @@ V.modify_Transform.modify = function(field, operation) {
         return V.modify_Transform.bin(field, desiredBinCount);
     } else if (name == "rank") {
         return V.modify_Transform.rank(field, !("descending" == option));
+    } else {
+        return field;
     }
-    throw new $.Exception("Unknown transform: " + name);
 };
 
 V.modify_Transform.rank = function(f, ascending) {
@@ -2865,9 +2901,11 @@ V.stats_NominalStats.populate = function(f) {
     var modes = new $.Set();
     var N = f.rowCount();
     var maxCount = 0;
+    var valid = 0;
     for (i = 0; i < N; i++){
         o = f.value(i);
         if (o == null) continue;
+        valid++;
         c = count.get(o);
         value = c == null ? 1 : c + 1;
         count.put(o, value);
@@ -2879,6 +2917,7 @@ V.stats_NominalStats.populate = function(f) {
     }
     f.setProperty("n", N);
     f.setProperty("unique", count.size());
+    f.setProperty("valid", valid);
     if ($.isEmpty(modes)) {
         f.setProperty("mode");
     } else {
@@ -2905,7 +2944,8 @@ V.stats_NominalStats.populate = function(f) {
 };
 
 V.stats_NominalStats.creates = function(key) {
-    return ("n" == key) || ("mode" == key) || ("unique" == key) || ("categories" == key) || ("categoryCounts" == key);
+    return ("n" == key) || ("mode" == key) || ("unique" == key) || ("valid" == key)
+        || ("categories" == key) || ("categoryCounts" == key);
 };
 
 ////////////////////// NumericStats ////////////////////////////////////////////////////////////////////////////////////
@@ -2915,12 +2955,10 @@ V.stats_NumericStats = function() {};
 V.stats_NumericStats.populate = function(f) {
     var d, data, high, i, item, low, m1, m2, m3, m4, max, min, minD;
     var n = f.rowCount();
-    var validItemCount = 0;
     var valid = new $.List();
     for (i = 0; i < n; i++){
         item = f.value(i);
         if (item != null) {
-            validItemCount++;
             if (item instanceof V.util_Range) {
                 low = item.low;
                 high = item.high;
@@ -2932,7 +2970,6 @@ V.stats_NumericStats.populate = function(f) {
             }
         }
     }
-    f.setProperty("valid", validItemCount);
     data = valid.toArray();
     n = data.length;
     f.setProperty("validNumeric", n);
@@ -2983,8 +3020,8 @@ V.stats_NumericStats.av = function(v, index) {
 };
 
 V.stats_NumericStats.creates = function(key) {
-    return ("valid" == key) || ("validNumeric" == key) || ("mean" == key) || ("stddev" == key) || ("variance" == key)
-        || ("skew" == key) || ("kurtosis" == key) || ("min" == key) || ("max" == key) || ("q1" == key) || ("q3" ==
+    return ("validNumeric" == key) || ("mean" == key) || ("stddev" == key) || ("variance" == key) || ("skew" == key)
+        || ("kurtosis" == key) || ("min" == key) || ("max" == key) || ("q1" == key) || ("q3" ==
         key) || ("median" == key) || ("granularity" == key);
 };
 

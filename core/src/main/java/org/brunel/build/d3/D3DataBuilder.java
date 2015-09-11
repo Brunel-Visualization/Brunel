@@ -193,6 +193,16 @@ public class D3DataBuilder {
         out.add("base = pre(raw)").ln();
         out.mark();
         writeTransform("addConstants", params.constantsCommand);
+
+        // Check for selection filtering
+        Param param = vis.tInteraction.get(VisTypes.Interaction.filter);
+        if (param != null) {
+            if ("unselected".equals(param.asString()))
+                writeTransform("filter", "#selection is " + Field.VAL_UNSELECTED);
+            else
+                writeTransform("filter", "#selection is " + Field.VAL_SELECTED);
+        }
+
         writeTransform("filter", params.filterCommand);
         writeTransform("bin", params.transformCommand);
         writeTransform("summarize", params.summaryCommand);
@@ -206,15 +216,6 @@ public class D3DataBuilder {
             writeTransform("series", params.seriesCommand);
         }
         writeTransform("sort", params.sortCommand);
-
-        // Check for selection filtering
-        Param param = vis.tInteraction.get(VisTypes.Interaction.filter);
-        if (param != null) {
-            if ("unselected".equals(param.asString()))
-                writeTransform("filter", "#selection is " + Field.VAL_UNSELECTED);
-            else
-                writeTransform("filter", "#selection is " + Field.VAL_SELECTED);
-        }
 
         writeTransform("stack", params.stackCommand);               // Stack must come after all else
 

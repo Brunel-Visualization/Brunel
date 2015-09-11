@@ -50,6 +50,17 @@ public class Auto {
         if (f.hasProperty("date")) return NumericScale.makeDateScale(f, nice, padFraction, desiredTickCount);
         String p = f.getStringProperty("transform");
         if (p.equals("log")) return NumericScale.makeLogScale(f, nice, padFraction, includeZeroTolerance);
+
+        // We need to modify the scale for a root transform, as we need a smaller pad fraction near zero
+        // as that will show more space than expected
+        if (p.equals("root")) {
+            if (f.min() > 0) {
+                double scaling = (f.min() / f.max()) / (Math.sqrt(f.min()) / Math.sqrt(f.max()));
+                includeZeroTolerance *= scaling;
+                padFraction[0] *= scaling;
+            }
+        }
+
         return NumericScale.makeLinearScale(f, nice, includeZeroTolerance, padFraction, desiredTickCount, forBinning);
     }
 

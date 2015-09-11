@@ -245,7 +245,7 @@ public abstract class AbstractBuilder implements Builder {
      */
     private Dataset buildData(VisSingle vis, boolean keyField, Dataset outerData) {
         String constantsCommand = makeConstantsCommand(vis);
-        String filterCommand = makeStandardFilterCommands(vis);
+        String filterCommand = makeFilterCommands(vis);
         String binCommand = makeTransformCommands(vis);
         String summaryCommand = buildSummaryCommands(vis);
         String sortCommand = makeFieldCommands(vis.fSort);
@@ -350,7 +350,7 @@ public abstract class AbstractBuilder implements Builder {
         return Data.join(toAdd, "; ");
     }
 
-    private String makeStandardFilterCommands(VisSingle vis) {
+    private String makeFilterCommands(VisSingle vis) {
         List<String> commands = new ArrayList<String>();
 
         // All position fields must be valid -- filter if not
@@ -362,7 +362,66 @@ public abstract class AbstractBuilder implements Builder {
                 commands.add(s + " valid");
         }
 
+        for (Map.Entry<Param, String> e : vis.fTransform.entrySet()) {
+            String operation = e.getValue();
+            Param key = e.getKey();
+            String name = getParameterFieldValue(vis, key);
+            Field f = vis.getDataset().field(name);
+            int N;
+            if (f == null) {
+                // The field must be a constant or created field -- get length from data set
+                N = vis.getDataset().rowCount();
+            } else {
+                name = f.name;              // Make sure we use the canonical (not lax) name
+                N = f.valid();              // And we can use the valid ones
+            }
+
+            if (name.equals("#row")) {
+                // Invert 'top' and 'bottom' as row #1 is the top one, not the bottom
+                if (operation.equals("top")) operation = "bottom";
+                else if (operation.equals("bottom")) operation = "top";
+            }
+
+            int n = getParameterIntValue(key, 10);
+            if (operation.equals("top"))
+                commands.add(name + " ranked 1," + n);
+            else if (operation.equals("bottom")) {
+                commands.add(name + " ranked " + (N - n) + "," + N);
+            } else if (operation.equals("inner")) {
+                commands.add(name + " ranked " + n + "," + (N - n));
+            } else if (operation.equals("outer")) {
+                commands.add(name + " !ranked " + n + "," + (N - n));
+            }
+        }
+
         return Data.join(commands, "; ");
+    }
+
+    private String getParameterFieldValue(VisSingle vis, Param param) {
+
+        if (param != null && param.isField()) {
+            // Usual case of a field specified
+            return param.asField();
+        } else {
+            // Try Y fields then aesthetic fields
+            if (vis.fY.size() == 1) {
+                String s = vis.fY.get(0).asField();
+                if (!s.startsWith("'")) return s;           // Do not use a constant
+            }
+            if (vis.aestheticFields().length > 0) return vis.aestheticFields()[0];
+            return "#row";      // If all else fails
+        }
+    }
+
+    protected int getParameterIntValue(Param param, int defaultValue) {
+        if (param == null) return defaultValue;
+        if (param.isField()) {
+            // The parameter is a field, so we examine the modifier for the int value
+            return getParameterIntValue(param.firstModifier(), defaultValue);
+        } else {
+            // The parameter is a value
+            return (int) param.asDouble();
+        }
     }
 
     private String makeFieldCommands(List<Param> params) {
@@ -432,9 +491,11 @@ public abstract class AbstractBuilder implements Builder {
             Param p = e.getKey();
             String name = p.asField();
             String measure = e.getValue();
-            if (p.hasModifiers()) measure += ":" + p.firstModifier().asString();
-            if (b.length() > 0) b.append("; ");
-            b.append(name).append("=").append(measure);
+            if (measure.equals("bin") || measure.equals("rank")) {
+                if (p.hasModifiers()) measure += ":" + p.firstModifier().asString();
+                if (b.length() > 0) b.append("; ");
+                b.append(name).append("=").append(measure);
+            }
         }
         return b.toString();
     }

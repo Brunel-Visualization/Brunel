@@ -23,7 +23,9 @@ import org.brunel.data.auto.Auto;
 import org.brunel.data.util.Range;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Stores util on an axis
@@ -67,11 +69,20 @@ public class AxisDetails {
     public int bottomGutter;                // Space above and below chart (for vertical chart only)
 
     /* Constructs the axis for the given fields */
-    public AxisDetails(String dimension, Field[] fields) {
+    public AxisDetails(String dimension, Field[] definedFields) {
         this.scale = "scale_" + dimension;
-        this.fields = fields;
+        this.fields = suitable(definedFields);
         this.title = title(fields);
         this.categorical = fields.length > 0 && fields[0].preferCategorical();
+    }
+
+    private Field[] suitable(Field[] fields) {
+        Set<Field> result = new LinkedHashSet<Field>();
+        for (Field f: fields) {
+            if (f.name.startsWith("'")) continue;           // Do not use constants
+            result.add(f);
+        }
+        return result.toArray(new Field[result.size()]);
     }
 
     public boolean isLog() {
@@ -155,8 +166,7 @@ public class AxisDetails {
     private static String title(Field[] fields) {
         if (fields.length == 1) {
             // No title for simple count axis
-            if (fields[0].name.equalsIgnoreCase("#count")
-                    && fields[0].label.equals("Count")) return null;
+            if (fields[0].name.equals("#count")) return null;
         }
 
         List<String> titles = new ArrayList<String>();
