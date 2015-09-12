@@ -86,7 +86,7 @@ public class AxisDetails {
     }
 
     public boolean isLog() {
-        return fields.length > 0 && "log".equals(fields[0].getProperty("transform"));
+        return fields.length > 0 && "log".equals(fields[0].property("transform"));
     }
 
     public void layoutVertically(double availableSpace) {

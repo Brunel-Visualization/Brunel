@@ -88,23 +88,23 @@ public class Field extends Informative implements Comparable<Field> {
         return (label.length() + name.length()) * 2 + 84 + 24 + provider.expectedSize();
     }
 
-    public Object getProperty(String key) {
-        Object o = super.getProperty(key);
+    public Object property(String key) {
+        Object o = super.property(key);
         if (o == null) {
             if (!calculatedNominal && NominalStats.creates(key)) {
                 makeNominalStats();
-                o = super.getProperty(key);
+                o = super.property(key);
             }
             if (!calculatedNumeric && NumericStats.creates(key)) {
                 if (!calculatedNominal) makeNominalStats();
                 makeNumericStats();
-                o = super.getProperty(key);
+                o = super.property(key);
             }
             if (!calculatedDate && DateStats.creates(key)) {
                 if (!calculatedNominal) makeNominalStats();
                 if (!calculatedNumeric) makeNumericStats();
                 makeDateStats();
-                o = super.getProperty(key);
+                o = super.property(key);
             }
         }
         return o;
@@ -113,12 +113,24 @@ public class Field extends Informative implements Comparable<Field> {
     public void setCategories(Object[] cats) {
         // We must make the nominal stats first to prevent them being overridden.
         makeNominalStats();
-        setProperty("categories", cats);
+        set("categories", cats);
     }
 
     private void makeDateStats() {
-        if (super.hasProperty("numeric")) DateStats.populate(this);
+        if (isNumeric()) DateStats.populate(this);
         calculatedDate = true;
+    }
+
+    public boolean isNumeric() {
+        return Boolean.TRUE.equals(property("numeric"));
+    }
+
+    public boolean isDate() {
+        return Boolean.TRUE.equals(property("date"));
+    }
+
+    public boolean isBinned() {
+        return Boolean.TRUE.equals(property("binned"));
     }
 
     private void makeNumericStats() {
@@ -132,7 +144,7 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public Object[] categories() {
-        return (Object[]) getProperty("categories");
+        return (Object[]) property("categories");
     }
 
     public int compareTo(Field o) {
@@ -155,11 +167,11 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public Double max() {
-        return (Double) getProperty("max");
+        return (Double) property("max");
     }
 
     public Double min() {
-        return (Double) getProperty("min");
+        return (Double) property("min");
     }
 
     public boolean isSynthetic() {
@@ -168,11 +180,11 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public boolean preferCategorical() {
-        return hasProperty("binned") || !hasProperty("numeric");
+        return !isNumeric() || Boolean.TRUE.equals(property("binned")) ;
     }
 
     public boolean ordered() {
-        return hasProperty("numeric") || name.equals("#selection");
+        return isNumeric() || name.equals("#selection");
     }
 
     public Field rename(String name, String label) {
@@ -182,7 +194,7 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public int rowCount() {
-        return provider != null ? provider.count() : getNumericProperty("n").intValue();
+        return provider != null ? provider.count() : numericProperty("n").intValue();
     }
 
     public String toString() {
@@ -190,11 +202,11 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public int uniqueValuesCount() {
-        return (int) Math.round(getNumericProperty("unique"));
+        return (int) Math.round(numericProperty("unique"));
     }
 
     public int valid() {
-        return (Integer) getProperty("valid");
+        return (Integer) property("valid");
     }
 
     public Object value(int index) {
@@ -208,15 +220,15 @@ public class Field extends Informative implements Comparable<Field> {
     public String format(Object v) {
         if (v == null) return "?";
         if (v instanceof Range) return v.toString();
-        if (hasProperty("date"))
-            return ((DateFormat) getProperty("dateFormat")).format(Data.asDate(v));
-        if ("percent".equals(getProperty("summary"))) {
+        if (isDate())
+            return ((DateFormat) property("dateFormat")).format(Data.asDate(v));
+        if ("percent".equals(property("summary"))) {
             // Show one decimal place at most
             Double d = Data.asNumeric(v);
             if (d == null) return null;
             return Data.formatNumeric(Math.round(d * 10) / 10.0, false) + "%";
         }
-        if (hasProperty("numeric")) {
+        if (isNumeric()) {
             Double d = Data.asNumeric(v);
             return d == null ? "?" : Data.formatNumeric(d, true);
         }

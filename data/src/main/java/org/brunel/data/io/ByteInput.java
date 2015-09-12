@@ -80,8 +80,7 @@ class ByteInput {
             "    var c2 = this.readByte(), c3 = this.readByte();",
             "    out += String.fromCharCode( ((c & 0x0F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F) );",
             "  }",
-            "}",
-            "return out;"
+            "}"
     })
     String readString() {
         if (data[p] == 3) {

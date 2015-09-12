@@ -42,7 +42,7 @@ public class ModelUtil {
         boolean allPreferCategorical = true;
         for (Field f : fields) {
             if (!f.preferCategorical()) allPreferCategorical = false;
-            if (!f.hasProperty("numeric")) allCanBeNumeric = false;
+            if (!f.isNumeric()) allCanBeNumeric = false;
         }
 
         // If everything wants to be categorical, or some field cannot be, we choose categorical

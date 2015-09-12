@@ -35,11 +35,11 @@ public class DimensionField implements Comparable<DimensionField> {
     }
 
     public Object getProperty(String key) {
-        return field == null ? null : field.getProperty(key);
+        return field == null ? null : field.property(key);
     }
 
-    public boolean hasProperty(String key) {
-        return field != null && field.hasProperty(key);
+    public boolean isDate() {
+        return field != null && field.isDate();
     }
 
     public String label() {

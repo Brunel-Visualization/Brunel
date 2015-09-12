@@ -140,10 +140,10 @@ public class PositionFields {
         for (Field f : fields) {
             if (f.min() == null) continue;
             Auto.setTransform(f);
-            String s = f.getStringProperty("transform");
+            String s = f.stringProperty("transform");
             if ("log".equals(s)) best = "log";
             else if ("root".equals(s) && !best.equals("log")) best = "root";
-            if (f.hasProperty("numeric"))
+            if (f.isNumeric())
                 min = Math.min(min, f.min());
         }
         if ("log".equals(best) && min <= 0) return "linear";

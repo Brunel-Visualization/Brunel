@@ -53,7 +53,7 @@ public class Sort extends DataOperation {
         // Ensure that any data binned to the "..." catch-all category is moved to the end
         for (int i = base.fields.length - 1; i >= 0; i--) {
             Field f = base.fields[i];
-            if (f.hasProperty("binned") && f.preferCategorical()) rowOrder = moveCatchAllToEnd(rowOrder, f);
+            if (f.isBinned() && f.preferCategorical()) rowOrder = moveCatchAllToEnd(rowOrder, f);
         }
 
         double[] rowRanking = null;                                    // Create rankings for row when needed only
@@ -111,7 +111,7 @@ public class Sort extends DataOperation {
                 else if (p.equalsIgnoreCase("descending")) ascending[i] = false;
                 else throw new IllegalArgumentException("Sort options must be 'ascending' or 'descending'");
             } else
-                ascending[i] = !dimensions[i].hasProperty("numeric");
+                ascending[i] = !dimensions[i].isNumeric();
         }
         return ascending;
     }
@@ -132,7 +132,7 @@ public class Sort extends DataOperation {
     static Object[] categoriesFromRanks(Field field, double[] rowRanking) {
         double n = field.rowCount();                                                // # rows
         Object[] categories = field.categories();                                   // categories
-        int[] counts = (int[]) field.getProperty("categoryCounts");                 // category counts
+        int[] counts = (int[]) field.property("categoryCounts");                 // category counts
         Double[] means = new Double[counts.length];                                 // sums of ranks
         for (int i = 0; i < means.length; i++) means[i] = i / 100.0 / means.length; // Bias towards current order
 

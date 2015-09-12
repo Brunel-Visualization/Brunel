@@ -232,7 +232,7 @@ class D3ElementBuilder {
     }
 
     private boolean isRange(Field field) {
-        String s = field.getStringProperty("summary");
+        String s = field.stringProperty("summary");
         return s != null && (s.equals("iqr") || s.equals("range"));
     }
 
@@ -318,7 +318,7 @@ class D3ElementBuilder {
                 out.add(extent, "/", categories);
             } else {
                 // Need to define size in terms of the spacing -- or default if granularity is too small
-                Double spacing = fields[0].getNumericProperty("granularity");
+                Double spacing = fields[0].numericProperty("granularity");
                 if (spacing != null && spacing > (fields[0].max() - fields[0].min()) / 20)
                     out.add("Math.abs(scale_" + name + "(" + spacing + ")-scale_" + name + "(0))");
                 else

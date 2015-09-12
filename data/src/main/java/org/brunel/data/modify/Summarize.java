@@ -169,7 +169,7 @@ public class Summarize extends DataOperation {
             for (int i = 0; i < measures.size(); i++) {
                 MeasureField m = measures.get(i);
                 String measureFunction = m.measureFunction;
-                DateFormat df = m.hasProperty("date") ? (DateFormat) m.getProperty("dateFormat") : null;
+                DateFormat df = m.isDate() ? (DateFormat) m.getProperty("dateFormat") : null;
                 measureData[i][g] = values.get(i, measureFunction, m.option, df);
             }
         }
@@ -185,7 +185,7 @@ public class Summarize extends DataOperation {
             MeasureField m = measures.get(i);
             Field result = Data.makeColumnField(m.rename, m.label(), measureData[i]);
             setProperties(result, m.field, m.measureFunction);
-            result.setProperty("summary", m.measureFunction);
+            result.set("summary", m.measureFunction);
             fields[dimData.length + i] = result;
         }
         return fields;
@@ -217,7 +217,7 @@ public class Summarize extends DataOperation {
         else {
             if (!summary.equals("count") && !summary.equals("valid") && !summary.equals("unique"))
                 Data.copyBaseProperties(to, from);
-            to.setProperty("numeric", !summary.equals("list") && !summary.equals("shorten"));
+            to.set("numeric", !summary.equals("list") && !summary.equals("shorten"));
         }
     }
 }

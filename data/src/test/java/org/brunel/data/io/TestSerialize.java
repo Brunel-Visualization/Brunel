@@ -36,13 +36,13 @@ public class TestSerialize {
     @Test
     public void testSerializeFieldBasics() {
         Field a = Data.makeConstantField("foo", "bar", 10, 1000);
-        assertEquals(true, a.hasProperty("numeric"));
+        assertEquals(true, a.isNumeric());
         byte[] bytes = Serialize.serializeField(a);
         Field b = (Field) Serialize.deserialize(bytes);
         assertEquals("foo", b.name);
         assertEquals("bar", b.label);
         assertEquals(1000, b.rowCount());
-        assertEquals(true, b.hasProperty("numeric"));
+        assertEquals(true, b.isNumeric());
         assertEquals(10, b.min(), 1e-6);
     }
 
@@ -56,7 +56,7 @@ public class TestSerialize {
         assertEquals("a", b.name);
         assertEquals("b", b.label);
         assertEquals(3, b.rowCount());
-        assertEquals(4.0, b.getNumericProperty("mean"), 1e-6);
+        assertEquals(4.0, b.numericProperty("mean"), 1e-6);
     }
 
     @Test
@@ -65,14 +65,14 @@ public class TestSerialize {
         Date date2 = new Date(date1.getTime() + 86400000 * 12);
         Field a = Data.makeColumnField("a", "b", new Object[]{date1, date2});
         a = Data.toDate(a);
-        assertTrue(a.hasProperty("numeric"));
-        assertTrue(a.hasProperty("date"));
+        assertTrue(a.isNumeric());
+        assertTrue(a.isDate());
         assertEquals(12, a.max() - a.min(), 1e-6);
 
         byte[] bytes = Serialize.serializeField(a);
         Field b = (Field) Serialize.deserialize(bytes);
-        assertEquals(true, b.hasProperty("numeric"));
-        assertEquals(true, b.hasProperty("date"));
+        assertEquals(true, b.isNumeric());
+        assertEquals(true, b.isDate());
         assertEquals(12, b.max() - b.min(), 1e-6);
     }
 
@@ -85,7 +85,7 @@ public class TestSerialize {
 
         Dataset d = (Dataset) Serialize.deserialize(bytes);
         assertEquals(dataset.rowCount(), d.rowCount());
-        assertEquals(dataset.field("rating").getNumericProperty("mean"), d.field("rating").getNumericProperty("mean"), 0.001);
+        assertEquals(dataset.field("rating").numericProperty("mean"), d.field("rating").numericProperty("mean"), 0.001);
         assertEquals("Count", d.field("#count").label);
     }
 

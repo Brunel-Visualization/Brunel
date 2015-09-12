@@ -115,8 +115,8 @@ public class Library {
 
     private Action chooseBivariate(Field x, Field y) {
         // Dates need line charts
-        if (x.hasProperty("date") && !y.hasProperty("date") && !y.preferCategorical()) return makeLineChart(x, y);
-        if (y.hasProperty("date") && !x.hasProperty("date") && !x.preferCategorical()) return makeLineChart(y, x);
+        if (x.isDate() && !y.isDate() && !y.preferCategorical()) return makeLineChart(x, y);
+        if (y.isDate() && !x.isDate() && !x.preferCategorical()) return makeLineChart(y, x);
         // Heatmaps if either is categorical
         if (x.preferCategorical() || y.preferCategorical())
             return get("heatmap").apply(orderByCoarseness(x, y));
@@ -142,7 +142,7 @@ public class Library {
 
     private boolean goodForWordle(Field f) {
         if (!f.preferCategorical()) return false;
-        if (f.getNumericProperty("unique") > 100 || f.getNumericProperty("unique") < 7) return false;
+        if (f.numericProperty("unique") > 100 || f.numericProperty("unique") < 7) return false;
         // Too long names are not good
         for (Object c : f.categories())
             if (c.toString().length() > 20) return false;
@@ -151,7 +151,7 @@ public class Library {
 
     private Action makeLineChart(Field x, Field y) {
         // If there is close to one data point per x coordinate just use lines
-        if (x.getNumericProperty("unique") > 0.95 * x.getNumericProperty("validNumeric"))
+        if (x.numericProperty("unique") > 0.95 * x.numericProperty("validNumeric"))
             return get("line").apply(x, y);
         // Otherwise show lines and points
         return get("lineWithPoints").apply(x, y);

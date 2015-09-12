@@ -96,7 +96,7 @@ public class Transform extends DataOperation {
             p = q;
         }
         Field result = Data.makeColumnField(f.name, f.label, ranks);// New data
-        result.setProperty("numeric", true);                        // Which is numeric
+        result.set("numeric", true);                        // Which is numeric
         return result;
     }
 
@@ -109,7 +109,7 @@ public class Transform extends DataOperation {
      */
     public static Field bin(Field f, int desiredBinCount) {
         Field field = f.preferCategorical() ? binCategorical(f, desiredBinCount) : binNumeric(f, desiredBinCount);
-        field.setProperty("binned", true);
+        field.set("binned", true);
         return field;
     }
 
@@ -119,7 +119,7 @@ public class Transform extends DataOperation {
         if (categories.length <= desiredBinCount) return f;         // We do not need to bin ...
 
         // Get the categories in reverse order, so largest first
-        Integer[] order = Data.order((int[]) f.getProperty("categoryCounts"), false);
+        Integer[] order = Data.order((int[]) f.property("categoryCounts"), false);
 
         // Create map form current names to the new names
         Map<Object, Object> newNames = new HashMap<Object, Object>();
@@ -135,15 +135,15 @@ public class Transform extends DataOperation {
     private static Field binNumeric(Field f, int desiredBinCount) {
         NumericScale scale = Auto.makeNumericScale(f, true, new double[] {0,0}, 0.0, desiredBinCount + 1, true);
         Double[] divisions = scale.divisions;
-        boolean isDate = f.hasProperty("date");
-        DateFormat dateFormat = isDate ? (DateFormat) f.getProperty("dateFormat") : null;
+        boolean isDate = f.isDate();
+        DateFormat dateFormat = isDate ? (DateFormat) f.property("dateFormat") : null;
         Range[] ranges = makeBinRanges(divisions, dateFormat, scale.granular);
         Object[] data = binData(f, divisions, ranges);
         Field result = Data.makeColumnField(f.name, f.label, data);
-        if (f.hasProperty("date"))
-            result.setProperty("date", true);       // We do not simply use the date format and unit -- different now!
-        result.setProperty("numeric", true);        // But it IS numeric!
-        result.setProperty("categories", ranges);   // Include all bins in the categories, not just those that exist
+        if (f.isDate())
+            result.set("date", true);       // We do not simply use the date format and unit -- different now!
+        result.set("numeric", true);        // But it IS numeric!
+        result.set("categories", ranges);   // Include all bins in the categories, not just those that exist
         return result;
     }
 

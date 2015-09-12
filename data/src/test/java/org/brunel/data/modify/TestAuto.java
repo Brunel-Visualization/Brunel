@@ -39,34 +39,34 @@ public class TestAuto {
 
         Field a = Data.makeColumnField("field", null, new Object[]{d1, d2, d3, null});
         Field b = Auto.convert(a);
-        Assert.assertEquals(true, b.hasProperty("numeric"));
-        Assert.assertEquals(true, b.hasProperty("date"));
+        Assert.assertEquals(true, b.isNumeric());
+        Assert.assertEquals(true, b.isDate());
 
         // Should ignore one error
         a = Data.makeColumnField("field", null, new Object[]{d1, d2, "oops", d3, null, null});
         b = Auto.convert(a);
-        Assert.assertEquals(true, b.hasProperty("numeric"));
-        Assert.assertEquals(true, b.hasProperty("date"));
+        Assert.assertEquals(true, b.isNumeric());
+        Assert.assertEquals(true, b.isDate());
         assertEquals(3, b.valid());
 
         a = Data.makeColumnField("field", null, new Object[]{"1971-1-3", "1971-1-12"});
         b = Auto.convert(a);
-        Assert.assertEquals(true, b.hasProperty("numeric"));
-        Assert.assertEquals(true, b.hasProperty("date"));
+        Assert.assertEquals(true, b.isNumeric());
+        Assert.assertEquals(true, b.isDate());
         assertEquals(2, b.valid());
         assertEquals(9.0, b.max() - b.min(), 0.001);
 
         a = Data.makeColumnField("field", null, new Object[]{1970, 1972, 1978});
         b = Auto.convert(a);
-        Assert.assertEquals(true, b.hasProperty("numeric"));
-        Assert.assertEquals(true, b.hasProperty("date"));
+        Assert.assertEquals(true, b.isNumeric());
+        Assert.assertEquals(true, b.isDate());
         assertEquals(3, b.valid());
         assertEquals(8 * 365 + 2, b.max() - b.min(), 0.001);
 
         a = Data.makeColumnField("field", null, new Object[]{1970, 1971.5, 1978});
         b = Auto.convert(a);
-        Assert.assertEquals(true, b.hasProperty("numeric"));
-        Assert.assertEquals(false, b.hasProperty("date"));
+        Assert.assertEquals(true, b.isNumeric());
+        Assert.assertEquals(false, b.isDate());
         assertEquals(3, b.valid());
         assertEquals(8, b.max() - b.min(), 0.001);
 
@@ -77,29 +77,29 @@ public class TestAuto {
         Field a = Data.makeColumnField("field", null, new Object[]{1, 2, 3, 4});
         Field b = Auto.convert(a);
         assertEquals(a, b);
-        Assert.assertEquals(true, b.hasProperty("numeric"));
-        Assert.assertEquals(false, b.hasProperty("date"));
-        Assert.assertEquals(2.5, b.getNumericProperty("mean"), 0.001);
+        Assert.assertEquals(true, b.isNumeric());
+        Assert.assertEquals(false, b.isDate());
+        Assert.assertEquals(2.5, b.numericProperty("mean"), 0.001);
 
         a = Data.makeColumnField("field", null, new Object[]{"1", "2", "3", "4"});
         b = Auto.convert(a);
         Assert.assertEquals(false, a == b);
-        Assert.assertEquals(true, b.hasProperty("numeric"));
-        Assert.assertEquals(false, b.hasProperty("date"));
-        Assert.assertEquals(2.5, b.getNumericProperty("mean"), 0.001);
+        Assert.assertEquals(true, b.isNumeric());
+        Assert.assertEquals(false, b.isDate());
+        Assert.assertEquals(2.5, b.numericProperty("mean"), 0.001);
 
         a = Data.makeColumnField("field", null, new Object[]{"a", "2", "3", "4"});
         b = Auto.convert(a);
         Assert.assertEquals(false, a == b);
-        Assert.assertEquals(true, b.hasProperty("numeric"));
-        Assert.assertEquals(false, b.hasProperty("date"));
-        Assert.assertEquals(3.0, b.getNumericProperty("mean"), 0.001);
+        Assert.assertEquals(true, b.isNumeric());
+        Assert.assertEquals(false, b.isDate());
+        Assert.assertEquals(3.0, b.numericProperty("mean"), 0.001);
 
         a = Data.makeColumnField("field", null, new Object[]{"a", "2", "c", "4"});
         b = Auto.convert(a);
         Assert.assertEquals(true, a == b);
-        Assert.assertEquals(false, b.hasProperty("numeric"));
-        Assert.assertEquals(false, b.hasProperty("date"));
+        Assert.assertEquals(false, b.isNumeric());
+        Assert.assertEquals(false, b.isDate());
     }
 
     @Test
@@ -120,13 +120,13 @@ public class TestAuto {
         Auto.setTransform(f);
         Auto.setTransform(g);
 
-        Assert.assertEquals("linear", a.getStringProperty("transform"));
-        Assert.assertEquals("linear", b.getStringProperty("transform"));
-        Assert.assertEquals("linear", c.getStringProperty("transform"));
-        Assert.assertEquals("root", d.getStringProperty("transform"));
-        Assert.assertEquals("log", e.getStringProperty("transform"));
-        Assert.assertEquals("root", f.getStringProperty("transform"));
-        Assert.assertEquals("linear", g.getStringProperty("transform"));
+        Assert.assertEquals("linear", a.stringProperty("transform"));
+        Assert.assertEquals("linear", b.stringProperty("transform"));
+        Assert.assertEquals("linear", c.stringProperty("transform"));
+        Assert.assertEquals("root", d.stringProperty("transform"));
+        Assert.assertEquals("log", e.stringProperty("transform"));
+        Assert.assertEquals("root", f.stringProperty("transform"));
+        Assert.assertEquals("linear", g.stringProperty("transform"));
     }
 
     @Test
@@ -217,7 +217,7 @@ public class TestAuto {
     @Test
     public void testPadding() {
         Field a = Data.toNumeric(Data.makeColumnField("a", "label", new Object[]{100, 200, 120, 200, 3100}));
-        a.setProperty("transform", "linear");
+        a.set("transform", "linear");
         Assert.assertEquals("linear : 70 3130 : |500|1000|1500|2000|2500|3000",
                 asString(NumericScale.makeLinearScale(a, false, 0.0, new double[] {0.01, 0.01}, 5, false), a));
 
@@ -232,7 +232,7 @@ public class TestAuto {
 
         Field a = Data.makeColumnField("a", "label", new Object[]{2, 4, 7, 120, 45, 120, 200, 3345});
         a = Data.toNumeric(a);
-        a.setProperty("transform", "linear");
+        a.set("transform", "linear");
         Assert.assertEquals("linear : 2 3345 : |500|1000|1500|2000|2500|3000",
                 asString(NumericScale.makeLinearScale(a, false, 0.0, pad, 5, false), a));
         Assert.assertEquals("linear : 2 3345 : |200|400|600|800|1000|1200|1400|1600|1800|2000|2200|2400|2600|2800|3000|3200",

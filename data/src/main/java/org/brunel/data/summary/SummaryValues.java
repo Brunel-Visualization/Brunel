@@ -55,31 +55,31 @@ public final class SummaryValues {
 
         if (summary.equals("percent")) {
             double sum = percentSums[fieldIndex];
-            return sum > 0 ? 100 * f.getNumericProperty("mean") * f.getNumericProperty("valid") / sum : null;
+            return sum > 0 ? 100 * f.numericProperty("mean") * f.numericProperty("valid") / sum : null;
         }
 
         if (summary.equals("range")) {
-            Double low = f.getNumericProperty("min");
-            Double high = f.getNumericProperty("max");
+            Double low = f.numericProperty("min");
+            Double high = f.numericProperty("max");
             return low == null ? null : Range.make(low, high, df);
         }
         if (summary.equals("iqr")) {
-            Double low = f.getNumericProperty("q1");
-            Double high = f.getNumericProperty("q3");
+            Double low = f.numericProperty("q1");
+            Double high = f.numericProperty("q3");
             return low == null ? null : Range.make(low, high, df);
         }
 
         if (summary.equals("sum"))
-            return f.getNumericProperty("mean") * f.getNumericProperty("valid");
+            return f.numericProperty("mean") * f.numericProperty("valid");
         if (summary.equals("list")) {
-            ItemsList categories = new ItemsList((Object[]) f.getProperty("categories"), df);
+            ItemsList categories = new ItemsList((Object[]) f.property("categories"), df);
             if (option != null) {
                 int displayCount = Integer.parseInt(option);
                 categories.setDisplayCount(displayCount);
             }
             return categories;
         }
-        return f.getProperty(summary);
+        return f.property(summary);
     }
 
 }

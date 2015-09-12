@@ -41,7 +41,7 @@ public class NumericScale {
         double b = f.max();
 
         if (a == b) {
-            DateUnit unit = (DateUnit) f.getProperty("dateUnit");
+            DateUnit unit = (DateUnit) f.property("dateUnit");
             a = Data.asNumeric(DateUnit.increment(Data.asDate(a), unit, -1));
             b = Data.asNumeric(DateUnit.increment(Data.asDate(b), unit, 1));
         } else {
@@ -124,8 +124,8 @@ public class NumericScale {
 
         double desiredDivCount = Math.max(desiredTickCount - 1, 1);
 
-        String transform = f.getStringProperty("transform");
-        double granularity = f.getNumericProperty("granularity");
+        String transform = f.stringProperty("transform");
+        double granularity = f.numericProperty("granularity");
         double granularDivs = (b - a) / granularity;
         if ((forBinning || f.preferCategorical()) && granularDivs > desiredDivCount / 2 && granularDivs < desiredDivCount * 2) {
             Double[] data = makeGranularDivisions(a, b, granularity, nice);

@@ -185,7 +185,7 @@ class D3ScaleBuilder {
 
     public boolean allNumeric(Field[] fields) {
         for (Field f : fields)
-            if (!f.hasProperty("numeric"))
+            if (!f.isNumeric())
                 return false;
         return true;
     }
@@ -390,7 +390,7 @@ class D3ScaleBuilder {
 
         // If any position are  counts or sums, always include zero
         for (Field f : fields)
-            if (f.name.equals("#count") || "sum".equals(f.getStringProperty("summary"))) return 1.0;
+            if (f.name.equals("#count") || "sum".equals(f.stringProperty("summary"))) return 1.0;
 
         // Really want it for bar/area charts that are not ranges
         for (VisSingle e : element)
@@ -533,12 +533,12 @@ class D3ScaleBuilder {
         if (name.equals("x")) {
             // We need to copy it as we are modifying it
             if (scaleField == field) scaleField = field.rename(field.name, field.label);
-            scaleField.setProperty("transform", positionFields.xTransform);
+            scaleField.set("transform", positionFields.xTransform);
         }
         if (name.equals("y")) {
             // We need to copy it as we are modifying it
             if (scaleField == field) scaleField = field.rename(field.name, field.label);
-            scaleField.setProperty("transform", positionFields.yTransform);
+            scaleField.set("transform", positionFields.yTransform);
         }
 
         // We util a nice scale only for rectangular coordinates
@@ -550,8 +550,8 @@ class D3ScaleBuilder {
         double max = detail.max;
 
         Object[] divs = new Object[numericDomainDivs];
-        if (field.hasProperty("date")) {
-            DateFormat dateFormat = (DateFormat) field.getProperty("dateFormat");
+        if (field.isDate()) {
+            DateFormat dateFormat = (DateFormat) field.property("dateFormat");
             D3Util.DateBuilder dateBuilder = new D3Util.DateBuilder();
             for (int i = 0; i < divs.length; i++) {
                 double v = min + (max - min) * i / (numericDomainDivs - 1);
@@ -567,7 +567,7 @@ class D3ScaleBuilder {
             if (name.equals("y")) transform = positionFields.yTransform;
             if (transform == null) {
                 // We are free to choose -- the user did not specify
-                transform = (String) scaleField.getProperty("transform");
+                transform = (String) scaleField.property("transform");
                 if (transform == null) transform = "linear";
                 if (transform.equals("linear")) transform = defaultTransform;
             }

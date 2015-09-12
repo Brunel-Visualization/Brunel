@@ -80,7 +80,7 @@ public class TestStack {
     @Test
     public void testStackingOrder() {
         Dataset ordered = Dataset.make(CSV.read(csv));
-        ordered.field("B").setProperty("categories", new Object[] {"y", "x"});            // reverse order
+        ordered.field("B").set("categories", new Object[]{"y", "x"});            // reverse order
         Dataset a = Stack.transform(ordered,"D; ; B; false");
         /*
          This should result in the following data:

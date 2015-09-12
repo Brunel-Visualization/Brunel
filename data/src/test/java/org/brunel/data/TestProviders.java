@@ -29,11 +29,11 @@ public class TestProviders {
         assertEquals("a", a.name);
         assertEquals("b", a.label);
         assertEquals(50, a.rowCount());
-        assertEquals(50, a.getNumericProperty("valid"), 0.001);
-        assertEquals(0, a.getNumericProperty("validNumeric"), 0.001);
-        assertEquals(1, a.getNumericProperty("unique"), 0.001);
+        assertEquals(50, a.numericProperty("valid"), 0.001);
+        assertEquals(0, a.numericProperty("validNumeric"), 0.001);
+        assertEquals(1, a.numericProperty("unique"), 0.001);
         assertEquals("foo", a.value(2));
-        assertEquals(false, a.hasProperty("numeric"));
+        assertEquals(false, a.isNumeric());
     }
 
     @Test
@@ -42,27 +42,27 @@ public class TestProviders {
         assertEquals("a", a.name);
         assertEquals("b", a.label);
         assertEquals(30, a.rowCount());
-        assertEquals(30, a.getNumericProperty("valid"), 0.001);
-        assertEquals(30, a.getNumericProperty("validNumeric"), 0.001);
-        assertEquals(30, a.getNumericProperty("unique"), 0.001);
-        assertEquals(15.5, a.getNumericProperty("mean"), 0.001);
+        assertEquals(30, a.numericProperty("valid"), 0.001);
+        assertEquals(30, a.numericProperty("validNumeric"), 0.001);
+        assertEquals(30, a.numericProperty("unique"), 0.001);
+        assertEquals(15.5, a.numericProperty("mean"), 0.001);
         assertEquals(3, a.value(2));
         assertEquals(8, a.value(7));
-        assertEquals(true, a.hasProperty("numeric"));
+        assertEquals(true, a.isNumeric());
     }
 
     @Test
     public void testPermute() {
         Field base = Data.makeIndexingField("a", "b", 10);
         Field a = Data.permute(base, new int[]{0, 0, 0, 1, 1, 2, 2, 3}, false);
-        assertEquals(true, a.hasProperty("numeric"));
+        assertEquals(true, a.isNumeric());
         assertEquals("a", a.name);
         assertEquals("b", a.label);
         assertEquals(8, a.rowCount());
-        assertEquals(8, a.getNumericProperty("valid"), 0.001);
-        assertEquals(8, a.getNumericProperty("validNumeric"), 0.001);
-        assertEquals(4, a.getNumericProperty("unique"), 0.001);
-        assertEquals((1 + 1 + 1 + 2 + 2 + 3 + 3 + 4) / 8.0, a.getNumericProperty("mean"), 0.001);
+        assertEquals(8, a.numericProperty("valid"), 0.001);
+        assertEquals(8, a.numericProperty("validNumeric"), 0.001);
+        assertEquals(4, a.numericProperty("unique"), 0.001);
+        assertEquals((1 + 1 + 1 + 2 + 2 + 3 + 3 + 4) / 8.0, a.numericProperty("mean"), 0.001);
         assertEquals(1, a.value(1));
         assertEquals(1, a.value(2));
         assertEquals(4, a.value(7));

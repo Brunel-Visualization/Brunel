@@ -57,7 +57,7 @@ public class D3DataBuilder {
     }
 
     public String getTableDescription() {
-        if (data.getStringProperty("uri") != null) return data.getStringProperty("uri");
+        if (data.stringProperty("uri") != null) return data.stringProperty("uri");
         else return data.name();
     }
 
@@ -159,11 +159,11 @@ public class D3DataBuilder {
                 row.append("null");
             } else if (value instanceof Range) {
                 row.append(Data.quote(value.toString()));
-            } else if (field.hasProperty("date")) {
+            } else if (field.isDate()) {
                 Date date = Data.asDate(value);
                 if (date == null) return null;
-                row.append(dateBuilder.make(date, (DateFormat) field.getProperty("dateFormat"), false));
-            } else if (field.hasProperty("numeric")) {
+                row.append(dateBuilder.make(date, (DateFormat) field.property("dateFormat"), false));
+            } else if (field.isNumeric()) {
                 Double d = Data.asNumeric(value);
                 if (d == null) return null;
                 row.append(d.toString());
@@ -188,7 +188,7 @@ public class D3DataBuilder {
 
     private void writeDataTransforms() {
         // The parameters are stored in the data set when it is transformed
-        DataTransformParameters params = (DataTransformParameters) data.getProperty("parameters");
+        DataTransformParameters params = (DataTransformParameters) data.property("parameters");
         D3Util.addTiming("Data Start", out);
         out.add("base = pre(raw)").ln();
         out.mark();

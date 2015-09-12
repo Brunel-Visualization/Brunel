@@ -39,8 +39,8 @@ public class TestBin {
     public void testBinningDate() {
         // 'bdate' is an excel-style date, ranging from 1930's to 1970's
         Field field = Data.toDate(data.fields[1], "excel");
-        assertEquals(true, field.hasProperty("numeric"));
-        assertEquals(true, field.hasProperty("date"));
+        assertEquals(true, field.isNumeric());
+        assertEquals(true, field.isDate());
 
         Field binned;
 
@@ -95,8 +95,8 @@ public class TestBin {
 
     @Test
     public void testBinningNumeric() {
-        assertEquals(true, data.fields[1].hasProperty("numeric"));
-        assertEquals(false, data.fields[1].hasProperty("date"));
+        assertEquals(true, data.fields[1].isNumeric());
+        assertEquals(false, data.fields[1].isDate());
 
         Field binned;
 

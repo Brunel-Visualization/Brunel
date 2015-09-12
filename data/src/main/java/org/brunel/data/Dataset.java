@@ -180,7 +180,7 @@ public class Dataset extends Informative {
     }
 
     public String name() {
-        return getStringProperty("name");
+        return stringProperty("name");
     }
 
     /**
@@ -201,7 +201,7 @@ public class Dataset extends Informative {
         }
         Field[] array = ff.toArray(new Field[ff.size()]);
         Dataset dataset = Data.replaceFields(this, array);
-        dataset.setProperty("reduced", true); // Data has been reduced to only needed fields
+        dataset.set("reduced", true); // Data has been reduced to only needed fields
         return dataset;
     }
 
@@ -267,7 +267,7 @@ public class Dataset extends Informative {
      */
     public Dataset summarize(String command) {
         Dataset dataset = Summarize.transform(this, command);
-        dataset.setProperty("reduced", true); // Data has been reduced to only needed fields
+        dataset.set("reduced", true); // Data has been reduced to only needed fields
         return dataset;
     }
 }

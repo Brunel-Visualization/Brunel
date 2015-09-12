@@ -28,10 +28,10 @@ public class DateStats {
         double days = f.max() - f.min();
         if (days == 0) days = f.max();
         DateUnit unit = getUnit(days);
-        f.setProperty("dateUnit", unit);
-        Double granularity = f.getNumericProperty("granularity");
+        f.set("dateUnit", unit);
+        Double granularity = f.numericProperty("granularity");
         double factor = Math.min(1.0, Math.sqrt(f.valid()) / 7);          // With little data, decrease granularity
-        f.setProperty("dateFormat", getFormat(unit, granularity * factor));
+        f.set("dateFormat", getFormat(unit, granularity * factor));
     }
 
     /* Return the binning unit based on the range of days spanned */

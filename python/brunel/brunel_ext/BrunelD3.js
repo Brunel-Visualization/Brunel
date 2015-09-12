@@ -25,32 +25,32 @@ var BrunelD3 = (function () {
                         inner_top, inner_left, inner_bottom, inner_right) {
         var attrs = target.attributes;
         var g = {
-            outer_width: attrs.width.value,
-            outer_height: attrs.height.value,
-            margin_top: chart_top + inner_top,
-            margin_left: chart_left + inner_left,
-            margin_bottom: chart_bottom + inner_bottom,
-            margin_right: chart_right + inner_right,
-            chart_top: chart_top,
-            chart_left: chart_left,
-            chart_bottom: chart_bottom,
-            chart_right: chart_right,
-            inner_top: inner_top,
-            inner_left: inner_left,
-            inner_bottom: inner_bottom,
-            inner_right: inner_right,
+            'outer_width': attrs.width.value,
+            'outer_height': attrs.height.value,
+            'margin_top': chart_top + inner_top,
+            'margin_left': chart_left + inner_left,
+            'margin_bottom': chart_bottom + inner_bottom,
+            'margin_right': chart_right + inner_right,
+            'chart_top': chart_top,
+            'chart_left': chart_left,
+            'chart_bottom': chart_bottom,
+            'chart_right': chart_right,
+            'inner_top': inner_top,
+            'inner_left': inner_left,
+            'inner_bottom': inner_bottom,
+            'inner_right': inner_right,
 
             // Allow the inner coords to be transposed
-            transpose: function () {
-                var t = this.inner_width;
-                this.inner_width = this.inner_height;
-                this.inner_height = t;
+            'transpose': function () {
+                var t = this['inner_width'];
+                this['inner_width'] = this['inner_height'];
+                this['inner_height'] = t;
             }
         };
-        g.inner_width = g.outer_width - g.margin_left - g.margin_right;
-        g.inner_height = g.outer_height - g.margin_top - g.margin_bottom;
-        g.inner_radius = Math.min(g.inner_width, g.inner_height) / 2;
-        g.default_point_size = Math.max(6, g.inner_radius * 0.035);
+        g['inner_width'] = g['outer_width'] - g['margin_left'] - g['margin_right'];
+        g['inner_height'] = g['outer_height'] - g['margin_top'] - g['margin_bottom'];
+        g['inner_radius'] = Math.min(g['inner_width'], g['inner_height']) / 2;
+        g['default_point_size'] = Math.max(6, g['inner_radius'] * 0.035);
         return g;
     }
 
@@ -86,7 +86,7 @@ var BrunelD3 = (function () {
             if (xFunction) d.sort(function (a, b) {
                 return xFunction(a) - xFunction(b)
             });
-            return {path: pathFunction(d), key: d[0].key, row: d[0].row}
+            return {'path': pathFunction(d), 'key': d[0].key, 'row': d[0].row}
         };
 
         // Convert array of categories into array of above structures
@@ -96,7 +96,7 @@ var BrunelD3 = (function () {
     // Create rows and keys for the data
     function makeRowsWithKeys(keyFunction, N) {
         var result = [];
-        for (var i = 0; i < N; i++) result.push({row: i, key: keyFunction(i)});
+        for (var i = 0; i < N; i++) result.push({'row': i, 'key': keyFunction(i)});
         return result;
     }
 
@@ -180,13 +180,13 @@ var BrunelD3 = (function () {
         // We use a smooth on the upper and lower differences
         // Note that we can ignore the first and last values (i==0, i==N) as we don't want to be at an edge
         // We fid the minimum distance to an upper / lower value OR to the nearest left/right edge
-        var index = N/2, heightAtX = 0, edgeD;
+        var index = N / 2, heightAtX = 0, edgeD;
         for (i in lower) {
             t = upper[i] - lower[i];
             if (lower[i + 1] && lower[i - 1])  t = (2 * t + (upper[i + 1] - lower[i + 1] + upper[i - 1] - lower[i - 1]) / 2) / 3;
             edgeD = Math.min(i, N - i) * dx;
             if (edgeD < margin) t *= 0.01;          // Only add here if we really have to
-            else if (edgeD < 2* margin) t *= 0.9;   // Prefer further in
+            else if (edgeD < 2 * margin) t *= 0.9;   // Prefer further in
             if (t > heightAtX) {
                 index = i;
                 heightAtX = t;
@@ -441,7 +441,7 @@ var BrunelD3 = (function () {
 
         // Return the functions that make X and Y locations
         return {
-            transform: function (d, i) {
+            'transform': function (d, i) {
                 return place(this, i)
             }
         }
@@ -508,19 +508,19 @@ var BrunelD3 = (function () {
 
     // Expose these methods
     return {
-        geometry: geometries,
-        addTooltip: makeTooltip,
-        makePathSplits: split,
-        addLegend: colorLegend,
-        centerInWedge: centerInArc,
-        makeRowsWithKeys: makeRowsWithKeys,
-        makeLabeling: makeLabel,
-        cloudLayout: cloud,
-        select: select,
-        shorten: shorten,
-        trans: transition,
-        tween: transitionTween,
-        time: time
+        'geometry': geometries,
+        'addTooltip': makeTooltip,
+        'makePathSplits': split,
+        'addLegend': colorLegend,
+        'centerInWedge': centerInArc,
+        'makeRowsWithKeys': makeRowsWithKeys,
+        'makeLabeling': makeLabel,
+        'cloudLayout': cloud,
+        'select': select,
+        'shorten': shorten,
+        'trans': transition,
+        'tween': transitionTween,
+        'time': time
     }
 
 })();

@@ -56,14 +56,14 @@ public class TestCSV {
         // Male,19027,15,Manager,57000,27000,98,No\n"
 
         Dataset data = Dataset.make(fields);
-        assertEquals(false, data.fields[0].hasProperty("numeric"));
-        assertEquals(true, data.fields[1].hasProperty("numeric"));
-        assertEquals(true, data.fields[2].hasProperty("numeric"));
-        assertEquals(false, data.fields[3].hasProperty("numeric"));
-        assertEquals(true, data.fields[4].hasProperty("numeric"));
-        assertEquals(true, data.fields[5].hasProperty("numeric"));
-        assertEquals(true, data.fields[6].hasProperty("numeric"));
-        assertEquals(false, data.fields[7].hasProperty("numeric"));
+        assertEquals(false, data.fields[0].isNumeric());
+        assertEquals(true, data.fields[1].isNumeric());
+        assertEquals(true, data.fields[2].isNumeric());
+        assertEquals(false, data.fields[3].isNumeric());
+        assertEquals(true, data.fields[4].isNumeric());
+        assertEquals(true, data.fields[5].isNumeric());
+        assertEquals(true, data.fields[6].isNumeric());
+        assertEquals(false, data.fields[7].isNumeric());
 
         assertEquals(2, data.fields[0].categories().length);
         assertEquals(25, data.fields[1].categories().length);

@@ -49,7 +49,7 @@ public class NumericStats {
         Double[] data = valid.toArray(new Double[valid.size()]);
 
         n = data.length;
-        f.setProperty("validNumeric", n);
+        f.set("validNumeric", n);
 
         // No numeric data -- give up and go home
         if (n == 0) return false;
@@ -59,28 +59,28 @@ public class NumericStats {
         double m2 = moment(data, m1, 2, n - 1);
         double m3 = moment(data, m1, 3, n - 1);
         double m4 = moment(data, m1, 4, n - 1);
-        f.setProperty("mean", m1);
-        f.setProperty("stddev", Math.sqrt(m2));
-        f.setProperty("variance", m2);
-        f.setProperty("skew", m3 / m2 / Math.sqrt(m2));
-        f.setProperty("kurtosis", m4 / m2 / m2 - 3.0);
+        f.set("mean", m1);
+        f.set("stddev", Math.sqrt(m2));
+        f.set("variance", m2);
+        f.set("skew", m3 / m2 / Math.sqrt(m2));
+        f.set("kurtosis", m4 / m2 / m2 - 3.0);
 
         Arrays.sort(data);
         double min = data[0];
         double max = data[n - 1];
-        f.setProperty("min", min);
-        f.setProperty("max", max);
+        f.set("min", min);
+        f.set("max", max);
 
         // Order statistics: using the Tukey hinge definition
-        f.setProperty("median", av(data, (n - 1) * 0.5));
+        f.set("median", av(data, (n - 1) * 0.5));
         if (n % 2 == 0) {
             // Even data, include the median in upper and lower
-            f.setProperty("q1", av(data, (n / 2 - 1) * 0.5));
-            f.setProperty("q3", av(data, n / 2 + (n / 2 - 1) * 0.5));
+            f.set("q1", av(data, (n / 2 - 1) * 0.5));
+            f.set("q3", av(data, n / 2 + (n / 2 - 1) * 0.5));
         } else {
             // Odd data, do not include the median in upper and lower
-            f.setProperty("q1", av(data, (n - 1) * 0.25));
-            f.setProperty("q3", av(data, (n - 1) / 2 + (n - 1) * 0.25));
+            f.set("q1", av(data, (n - 1) * 0.25));
+            f.set("q3", av(data, (n - 1) / 2 + (n - 1) * 0.25));
         }
 
         double minD = max - min;
@@ -89,7 +89,7 @@ public class NumericStats {
             double d = data[i] - data[i - 1];
             if (d > 0) minD = Math.min(minD, d);
         }
-        f.setProperty("granularity", minD);
+        f.set("granularity", minD);
         return true;
     }
 

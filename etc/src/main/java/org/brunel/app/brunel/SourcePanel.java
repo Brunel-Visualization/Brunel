@@ -99,8 +99,8 @@ import java.util.TooManyListenersException;
                     String name = f.getName();
                     if (name.contains(".")) name = name.substring(0, name.indexOf('.'));
                     name = asIdentifier(name);
-                    source.setProperty("name", name);
-                    source.setProperty("uri", f.toURI().toString());
+                    source.set("name", name);
+                    source.set("uri", f.toURI().toString());
                     setSource(source);
                     listener.handleEvent("select source", SourcePanel.this, source);
                 } catch (Throwable e) {

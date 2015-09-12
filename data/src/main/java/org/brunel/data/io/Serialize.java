@@ -85,10 +85,10 @@ public class Serialize {
 
         // Add the unique data values
         s.addNumber(uniques.size());
-        if (field.hasProperty("date")) {
+        if (field.isDate()) {
             s.addByte(DATE);
             for (Object o : uniques) s.addDate((Date) o);
-        } else if (field.hasProperty("numeric")) {
+        } else if (field.isNumeric()) {
             s.addByte(NUMBER);
             for (Object o : uniques) s.addNumber((Number) o);
         } else {
@@ -136,8 +136,8 @@ public class Serialize {
             for (int i=0; i<len; i++) indices[i] = d.readNumber().intValue();
             Field field = Data.makeIndexedColumnField(name, label, items, indices);
 
-            if (b == NUMBER || b == DATE) field.setProperty("numeric", true);
-            if (b == DATE) field.setProperty("date", true);
+            if (b == NUMBER || b == DATE) field.set("numeric", true);
+            if (b == DATE) field.set("date", true);
 
             return field;
         } else if (b == DATA_SET) {

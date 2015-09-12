@@ -28,7 +28,7 @@ public class MeasureField extends DimensionField {
         super(field, rename == null && field == null ? measureFunction : rename);
 
         // If we are asked for the mean of a field that cannot be numeric, we return the mode instead
-        if (field != null && measureFunction.equals("mean") && !field.hasProperty("numeric"))
+        if (field != null && measureFunction.equals("mean") && !field.isNumeric())
             this.measureFunction = "mode";
         else
             this.measureFunction = measureFunction;

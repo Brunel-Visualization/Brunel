@@ -47,8 +47,8 @@ public class Auto {
 
         // If the tick count is not set, calculate the optimal value, but no more than 20 bins
         if (desiredTickCount < 1) desiredTickCount = Math.min(optimalBinCount(f), 20) + 1;
-        if (f.hasProperty("date")) return NumericScale.makeDateScale(f, nice, padFraction, desiredTickCount);
-        String p = f.getStringProperty("transform");
+        if (f.isDate()) return NumericScale.makeDateScale(f, nice, padFraction, desiredTickCount);
+        String p = f.stringProperty("transform");
         if (p.equals("log")) return NumericScale.makeLogScale(f, nice, padFraction, includeZeroTolerance);
 
         // We need to modify the scale for a root transform, as we need a smaller pad fraction near zero
@@ -65,27 +65,27 @@ public class Auto {
     }
 
     public static void setTransform(Field f) {
-        if (f.hasProperty("transform")) return;
-        Double skew = f.getNumericProperty("skew");
+        if (f.property("transform") != null) return;
+        Double skew = f.numericProperty("skew");
 
         if (skew == null) {
             // Only numeric fields can have transforms
-            f.setProperty("transform", "linear");
+            f.set("transform", "linear");
             return;
         }
         if (skew > 2 && f.min() > 0 && f.max() > 75 * f.min())
-            f.setProperty("transform", "log");
+            f.set("transform", "log");
         else if (skew > 1.0 && f.min() >= 0)
-            f.setProperty("transform", "root");
+            f.set("transform", "root");
         else
-            f.setProperty("transform", "linear");
+            f.set("transform", "linear");
     }
 
     private static int optimalBinCount(Field f) {
         // Using Freedman-Diaconis for the optimal bin width OR Scott's normal reference rule
         // Whichever has a large bin size
-        double h1 = 2 * (f.getNumericProperty("q3") - f.getNumericProperty("q1")) / Math.pow(f.valid(), 0.33333);
-        double h2 = 3.5 * f.getNumericProperty("stddev") / Math.pow(f.valid(), 0.33333);
+        double h1 = 2 * (f.numericProperty("q3") - f.numericProperty("q1")) / Math.pow(f.valid(), 0.33333);
+        double h2 = 3.5 * f.numericProperty("stddev") / Math.pow(f.valid(), 0.33333);
         double h = Math.max(h1, h2);
         if (h == 0)
             return 1;
@@ -108,8 +108,8 @@ public class Auto {
         if (fractionDates > FRACTION_TO_CONVERT) {
             // If any conversion needed, do so
             Field f = (fractionDates < 1.0) ? Data.toDate(base) : base;
-            f.setProperty("numeric", true);
-            f.setProperty("date", true);
+            f.set("numeric", true);
+            f.set("date", true);
             return f;
         }
 
@@ -142,7 +142,7 @@ public class Auto {
     private static boolean isYearly(Field asNumeric) {
         if (asNumeric.min() < 1900) return false;
         if (asNumeric.max() > 2100) return false;
-        Double d = asNumeric.getNumericProperty("granularity");
+        Double d = asNumeric.numericProperty("granularity");
         return d != null && d - Math.floor(d) < 1e-6;
     }
 }

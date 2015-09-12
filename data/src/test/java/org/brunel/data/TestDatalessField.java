@@ -43,33 +43,33 @@ public class TestDatalessField {
         assertEquals(6, uniform.rowCount());
         assertEquals(8, uniformWithMissing.rowCount());
 
-        assertEquals(350, uniform.getNumericProperty("median"), 0.01);
-        assertEquals(350, uniformWithMissing.getNumericProperty("median"), 0.01);
-        assertEquals(2, peak.getNumericProperty("median"), 0.01);
-        assertEquals(1.5, skew.getNumericProperty("median"), 0.01);
-        assertEquals(2, a.getNumericProperty("median"), 0.01);
-        assertEquals(30, b.getNumericProperty("median"), 0.01);
+        assertEquals(350, uniform.numericProperty("median"), 0.01);
+        assertEquals(350, uniformWithMissing.numericProperty("median"), 0.01);
+        assertEquals(2, peak.numericProperty("median"), 0.01);
+        assertEquals(1.5, skew.numericProperty("median"), 0.01);
+        assertEquals(2, a.numericProperty("median"), 0.01);
+        assertEquals(30, b.numericProperty("median"), 0.01);
 
-        assertEquals(200, uniform.getNumericProperty("q1"), 0.01);
-        assertEquals(200, uniformWithMissing.getNumericProperty("q1"), 0.01);
-        assertEquals(2, peak.getNumericProperty("q1"), 0.01);
-        assertEquals(1, skew.getNumericProperty("q1"), 0.01);
-        assertEquals(1, a.getNumericProperty("q1"), 0.01);
-        assertEquals(21, b.getNumericProperty("q1"), 0.01);
+        assertEquals(200, uniform.numericProperty("q1"), 0.01);
+        assertEquals(200, uniformWithMissing.numericProperty("q1"), 0.01);
+        assertEquals(2, peak.numericProperty("q1"), 0.01);
+        assertEquals(1, skew.numericProperty("q1"), 0.01);
+        assertEquals(1, a.numericProperty("q1"), 0.01);
+        assertEquals(21, b.numericProperty("q1"), 0.01);
 
-        assertEquals(500, uniform.getNumericProperty("q3"), 0.01);
-        assertEquals(500, uniformWithMissing.getNumericProperty("q3"), 0.01);
-        assertEquals(2, peak.getNumericProperty("q3"), 0.01);
-        assertEquals(2, skew.getNumericProperty("q3"), 0.01);
-        assertEquals(7.5, a.getNumericProperty("q3"), 0.01);
-        assertEquals(45, b.getNumericProperty("q3"), 0.01);
+        assertEquals(500, uniform.numericProperty("q3"), 0.01);
+        assertEquals(500, uniformWithMissing.numericProperty("q3"), 0.01);
+        assertEquals(2, peak.numericProperty("q3"), 0.01);
+        assertEquals(2, skew.numericProperty("q3"), 0.01);
+        assertEquals(7.5, a.numericProperty("q3"), 0.01);
+        assertEquals(45, b.numericProperty("q3"), 0.01);
 
-        assertEquals(100, uniform.getNumericProperty("granularity"), 0.01);
-        assertEquals(100, uniformWithMissing.getNumericProperty("granularity"), 0.01);
-        assertEquals(1, peak.getNumericProperty("granularity"), 0.01);
-        assertEquals(1, skew.getNumericProperty("granularity"), 0.01);
-        assertEquals(1, a.getNumericProperty("granularity"), 0.01);
-        assertEquals(2, b.getNumericProperty("granularity"), 0.01);
+        assertEquals(100, uniform.numericProperty("granularity"), 0.01);
+        assertEquals(100, uniformWithMissing.numericProperty("granularity"), 0.01);
+        assertEquals(1, peak.numericProperty("granularity"), 0.01);
+        assertEquals(1, skew.numericProperty("granularity"), 0.01);
+        assertEquals(1, a.numericProperty("granularity"), 0.01);
+        assertEquals(2, b.numericProperty("granularity"), 0.01);
     }
 
 }

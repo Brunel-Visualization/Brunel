@@ -273,8 +273,8 @@ public abstract class AbstractBuilder implements Builder {
             else
                 data = ApplyJoinKeys.transformChild(data, params.outerData);
         }
-        if (!data.hasProperty("reduced")) data = data.reduce(params.usedCommand);        // Drop unnecessary fields
-        data.setProperty("parameters", params);                                          // Params used to build this
+        if (data.property("reduced") == null) data = data.reduce(params.usedCommand);   // Drop unnecessary fields
+        data.set("parameters", params);                                             // Params used to build this
         return data;
     }
 
@@ -358,7 +358,7 @@ public abstract class AbstractBuilder implements Builder {
         for (String s : pos) {
             Field f = vis.getDataset().field(s);
             if (f == null) continue;        // May have been added as a constant -- no need to filter
-            if (f.getNumericProperty("valid") < f.rowCount())
+            if (f.numericProperty("valid") < f.rowCount())
                 commands.add(s + " valid");
         }
 

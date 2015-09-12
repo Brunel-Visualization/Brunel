@@ -159,7 +159,7 @@ public class Data {
     /* Makes a field that is a constant value */
     public static Field makeConstantField(String name, String label, Object o, int len) {
         Field field = new Field(name, label, new ConstantProvider(o, len));
-        if (Data.asNumeric(o) != null) field.setProperty("numeric", true);
+        if (Data.asNumeric(o) != null) field.set("numeric", true);
         return field;
     }
 
@@ -196,7 +196,7 @@ public class Data {
     /* Makes a field that indexes the data */
     public static Field makeIndexingField(String name, String label, int len) {
         Field field = new Field(name, label, new RowProvider(len));
-        field.setProperty("numeric", true);
+        field.set("numeric", true);
         return field;
     }
 
@@ -229,7 +229,7 @@ public class Data {
     }
 
     public static Field toDate(Field f, String method) {
-        if (f.hasProperty("date")) return f;
+        if (f.isDate()) return f;
         Date[] data = new Date[f.rowCount()];
         boolean changed = false;
         for (int i = 0; i < data.length; i++) {
@@ -248,8 +248,8 @@ public class Data {
             if (!changed) changed = Data.compare(o, data[i]) != 0;
         }
         Field result = makeColumnField(f.name, f.label, data);
-        result.setProperty("date", true);
-        result.setProperty("numeric", true);
+        result.set("date", true);
+        result.set("numeric", true);
         return result;
     }
 
@@ -276,7 +276,7 @@ public class Data {
     }
 
     public static Field toNumeric(Field f) {
-        if (f.hasProperty("numeric")) return f;
+        if (f.isNumeric()) return f;
         boolean changed = false;
         Number[] data = new Number[f.rowCount()];
         for (int i = 0; i < data.length; i++) {
@@ -285,7 +285,7 @@ public class Data {
             if (!changed) changed = Data.compare(o, data[i]) != 0;
         }
         Field result = changed ? makeColumnField(f.name, f.label, data) : f;
-        result.setProperty("numeric", true);
+        result.set("numeric", true);
         return result;
     }
 
@@ -307,13 +307,13 @@ public class Data {
     }
 
     public static void copyBaseProperties(Field target, Field source) {
-        target.setProperty("numeric", source.getProperty("numeric"));
-        target.setProperty("binned", source.getProperty("binned"));
-        target.setProperty("summary", source.getProperty("summary"));
-        if (source.hasProperty("date")) {
-            target.setProperty("date", true);
-            target.setProperty("dateUnit", source.getProperty("dateUnit"));
-            target.setProperty("dateFormat", source.getProperty("dateFormat"));
+        target.set("numeric", source.property("numeric"));
+        target.set("binned", source.property("binned"));
+        target.set("summary", source.property("summary"));
+        if (source.isDate()) {
+            target.set("date", true);
+            target.set("dateUnit", source.property("dateUnit"));
+            target.set("dateFormat", source.property("dateFormat"));
         }
     }
 

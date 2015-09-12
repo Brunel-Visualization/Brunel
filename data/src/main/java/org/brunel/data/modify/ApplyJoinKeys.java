@@ -34,15 +34,15 @@ public class ApplyJoinKeys extends DataOperation {
     /* Adds a field "#facetKey" */
     public static Dataset transformParent(Dataset data) {
         Field field = Data.makeIndexingField("#facetKey", null, data.rowCount());
-        field.setProperty("key", true);
-        field.setProperty("numeric", false);
+        field.set("key", true);
+        field.set("numeric", false);
         return Data.appendFields(data, new Field[]{field});
     }
 
     /* Adds a field "#facetReference" referring back to the facetKey in the parent data */
     public static Dataset transformChild(Dataset data, Dataset outerData) {
         Field reference = Data.makeColumnField("#facetReference", null, makeReferenceData(outerData, data.field("#row")));
-        reference.setProperty("numeric", false);
+        reference.set("numeric", false);
         return Data.appendFields(data, new Field[]{reference});
     }
 

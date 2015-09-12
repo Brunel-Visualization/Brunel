@@ -43,10 +43,10 @@ public class Palette {
             if (palette != null) return palette;
         }
 
-        int n = f.getNumericProperty("unique").intValue();
+        int n = f.numericProperty("unique").intValue();
 
         // Ordinal first
-        boolean ordinal = "ordinal".equals(hint) || f.preferCategorical() && f.hasProperty("numeric");
+        boolean ordinal = "ordinal".equals(hint) || f.preferCategorical() && f.isNumeric();
         if (ordinal) return ordinalPalette(n);
 
         // If categorical or binary, use the nominal palette
@@ -55,7 +55,7 @@ public class Palette {
         /// Default to divergent, except for given cases below
         boolean divergent = true;
         if (f.name.startsWith("#")) divergent = false;
-        String summary = f.getStringProperty("summary");
+        String summary = f.stringProperty("summary");
         if ("sum".equals(summary) || "percent".equals(summary)) divergent = false;
 
         if (divergent) return DIVERGING;

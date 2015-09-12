@@ -85,7 +85,7 @@ public class TestSummary {
     public void testSimpleCount() {
         Dataset a = Summarize.transform(data, "count = : count");
         Assert.assertEquals("count|#count|#row -- 25|25|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, …", CannedData.dump(a));
-        assertEquals(true, a.fields[0].hasProperty("numeric"));
+        assertEquals(true, a.fields[0].isNumeric());
 
         a = Summarize.transform(data, "COUNT = : count");
         Assert.assertEquals("COUNT|#count|#row -- 25|25|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, …", CannedData.dump(a));

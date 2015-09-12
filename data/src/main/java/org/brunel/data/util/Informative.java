@@ -29,25 +29,20 @@ public class Informative {
         info.putAll(other.info);
     }
 
-    public Double getNumericProperty(String key) {
-        return Data.asNumeric(getProperty(key));
+    public Double numericProperty(String key) {
+        return Data.asNumeric(property(key));
     }
 
-    public Object getProperty(String key) {
+    public Object property(String key) {
         return info.get(key);
     }
 
-    public String getStringProperty(String key) {
-        Object v = getProperty(key);
+    public String stringProperty(String key) {
+        Object v = property(key);
         return v == null ? null : v.toString();
     }
 
-    public boolean hasProperty(String key) {
-        Object obj = getProperty(key);
-        return obj != null && !Boolean.FALSE.equals(obj);
-    }
-
-    public void setProperty(String key, Object value) {
+    public void set(String key, Object value) {
         if (value == null)
             info.remove(key);
         else

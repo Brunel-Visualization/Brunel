@@ -53,17 +53,17 @@ public class NominalStats {
 
         }
 
-        f.setProperty("n", N);
-        f.setProperty("unique", count.size());
-        f.setProperty("valid", valid);
+        f.set("n", N);
+        f.set("unique", count.size());
+        f.set("valid", valid);
 
         if (modes.isEmpty()) {
-            f.setProperty("mode", null);
+            f.set("mode", null);
         } else {
             // Set the mode to be the middle of the sorted list of modes
             Object[] sortedModes = modes.toArray(new Object[modes.size()]);
             Data.sort(sortedModes);
-            f.setProperty("mode", sortedModes[(int) ((sortedModes.length - 1) / 2)]);
+            f.set("mode", sortedModes[(int) ((sortedModes.length - 1) / 2)]);
         }
 
         Object[] naturalOrder;
@@ -80,11 +80,11 @@ public class NominalStats {
             Data.sort(naturalOrder);
         }
 
-        f.setProperty("categories", naturalOrder);
+        f.set("categories", naturalOrder);
         int[] counts = new int[naturalOrder.length];
         for (int i = 0; i < naturalOrder.length; i++)
             counts[i] = count.get(naturalOrder[i]);
-        f.setProperty("categoryCounts", counts);
+        f.set("categoryCounts", counts);
 
     }
 
