@@ -88,8 +88,7 @@ class ByteOutput {
     }
 
     public ByteOutput addDate(Date date) {
-        addDouble(date == null ? null : Data.asNumeric(date));
-        return this;
+        return addNumber(Data.asNumeric(date));
     }
 
     @JSTranslation(js = {

@@ -51,14 +51,14 @@ class ByteInput {
         } else if (a == 255) {
             return null;
         } else {
-            throw new IllegalStateException("Read an odd number start: " + a);
+            throw new IllegalStateException("Serializing " + a);
         }
 
     }
 
     public Date readDate() {
         // millis since jan 1, 1970
-        return Data.asDate(readDouble());
+        return Data.asDate(readNumber());
     }
 
     private Number readDouble() {
