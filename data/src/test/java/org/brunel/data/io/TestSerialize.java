@@ -48,14 +48,14 @@ public class TestSerialize {
 
     @Test
     public void testSerializeFieldNumericData() {
-        Field a = Data.makeColumnField("a", "b", new Object[]{1.0, 2.0, 9.0});
+        Field a = Data.makeColumnField("a", "b", new Object[]{1.0, 2.0, null, 9.0});
         a = Data.toNumeric(a);
 
         byte[] bytes = Serialize.serializeField(a);
         Field b = (Field) Serialize.deserialize(bytes);
         assertEquals("a", b.name);
         assertEquals("b", b.label);
-        assertEquals(3, b.rowCount());
+        assertEquals(4, b.rowCount());
         assertEquals(4.0, b.numericProperty("mean"), 1e-6);
     }
 
@@ -63,7 +63,7 @@ public class TestSerialize {
     public void testSerializeFieldDateData() {
         Date date1 = new Date();
         Date date2 = new Date(date1.getTime() + 86400000 * 12);
-        Field a = Data.makeColumnField("a", "b", new Object[]{date1, date2});
+        Field a = Data.makeColumnField("a", "b", new Object[]{date1, null, date2});
         a = Data.toDate(a);
         assertTrue(a.isNumeric());
         assertTrue(a.isDate());

@@ -1522,12 +1522,12 @@ V.io_ByteInput.prototype.readNumber = function() {
     } else if (a == 255) {
         return null;
     } else {
-        throw new $.Exception("Read an odd number start: " + a);
+        throw new $.Exception("Serializing " + a);
     }
 };
 
 V.io_ByteInput.prototype.readDate = function() {
-    return V.Data.asDate(this.readDouble());
+    return V.Data.asDate(this.readNumber());
 };
 
 V.io_ByteInput.prototype.readDouble = function() {
@@ -1599,8 +1599,7 @@ V.io_ByteOutput.prototype.addDouble = function(value) {
 };
 
 V.io_ByteOutput.prototype.addDate = function(date) {
-    this.addDouble(date == null ? null : V.Data.asNumeric(date));
-    return this;
+    return this.addNumber(V.Data.asNumeric(date));
 };
 
 V.io_ByteOutput.prototype.addString = function(s) {
