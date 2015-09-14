@@ -102,7 +102,8 @@ class GalleryBuilder {
         String id = tags.get("#id");
         String title = tags.get("#title");
         String description = tags.get("#description");
-        String image = id + ".png";
+        String ext = tags.get("#ext");
+        String image = id + (ext == null ? ".png" : "." + ext);
         String target = String.format("http://brunel.mybluemix.net/gallery_app/renderer?" +
                 "title=%s&brunel_src=%s&description=%s", encode(title), encode(brunel), encode(description));
 
@@ -126,7 +127,7 @@ class GalleryBuilder {
 
         // Move to next item
         column++;
-        if (column == 3 && row % 2 == 0 || column == 2 && row % 2 == 1) {
+        if (column == 3) {
             column = 0;
             row++;
             out.append("</tr>\n");

@@ -41,6 +41,17 @@
 #brunel         data('http://willsfamily.org/files/vis/data/US States.csv')
                 text x(area) y(population) color(dem_rep:red-blue) label(abbr) tooltip(#all) style('font-size:36px;font-family:times')
 
+#id             states2plots
+#ext            gif
+#title          Interactive linked state charts
+#description    Linking from a heatmap of state data to a bubble plot of the states themselves
+#brunel         data('http://willsfamily.org/files/vis/data/US States.csv')
+                x(Income) y(Violent_Crimes) color(#count:blue) label(#selection) bin(violent_crimes, income)
+                legends(none) style('.label {font-size:40px}') interaction(select)
+                | data('http://willsfamily.org/files/vis/data/US States.csv')
+                bubble color(violent_crimes:red)
+                size(population) sort(population) label(abbr) interaction(filter)
+
 #id             airlinesDelay
 #title          Airline delays
 #description    Data from an ASA competition showing a summary of which days are the worst to travel on. Note that
