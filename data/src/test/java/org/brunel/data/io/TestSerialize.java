@@ -21,6 +21,7 @@ import org.brunel.data.CannedData;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.translator.JSTranslation;
 import org.junit.Test;
 
 import java.util.Date;
@@ -80,8 +81,8 @@ public class TestSerialize {
     public void testWhiskeyDataset() {
         Dataset dataset = Dataset.make(CSV.read(CannedData.whiskey));
         byte[] bytes = Serialize.serializeDataset(dataset);
-        assertEquals(2017, bytes.length);
-        assertEquals(Serialize.DATA_SET, bytes[0]);
+        assertEquals(2019, bytes.length);
+        assertEquals(Serialize.VERSION, bytes[0]);
 
         Dataset d = (Dataset) Serialize.deserialize(bytes);
         assertEquals(dataset.rowCount(), d.rowCount());
@@ -94,7 +95,7 @@ public class TestSerialize {
         String DATA = "a,b\n,";
         Dataset dataset = Dataset.make(CSV.read(DATA));
         byte[] bytes = Serialize.serializeDataset(dataset);
-        assertEquals("1 2 2 97 0 65 0 1 3 255 1 0 2 98 0 66 0 1 3 255 1 0", dump(bytes));
+        assertEquals("6 1 1 2 2 97 0 65 0 1 3 255 1 0 2 98 0 66 0 1 3 255 1 0", dump(bytes));
     }
 
     @Test
@@ -102,7 +103,7 @@ public class TestSerialize {
         String DATA = "a,b\n,\né,1.23456789e-213\n\u2026,NaN";
         Dataset dataset = Dataset.make(CSV.read(DATA));
         byte[] bytes = Serialize.serializeDataset(dataset);
-        assertEquals("1 2 2 97 0 65 0 3 4 3 195 169 0 226 128 166 0 3 0 1 2 2 98 0 " +
+        assertEquals("6 1 1 2 2 97 0 65 0 3 4 3 195 169 0 226 128 166 0 3 0 1 2 2 98 0 " +
                 "66 0 3 4 3 49 46 50 51 52 53 54 55 56 57 101 45 50 49 51 0 78 97 78 0 3 0 1 2", dump(bytes));
     }
 
@@ -110,8 +111,8 @@ public class TestSerialize {
     public void testBankDataset() {
         Dataset dataset = Dataset.make(CSV.read(CannedData.bank));
         byte[] bytes = Serialize.serializeDataset(dataset);
-        assertEquals(589, bytes.length);
-        assertEquals(Serialize.DATA_SET, bytes[0]);
+        assertEquals(591, bytes.length);
+        assertEquals(Serialize.VERSION, bytes[0]);
     }
 
     @Test
@@ -223,6 +224,29 @@ public class TestSerialize {
         bytes = new ByteOutput().addNumber(-1.2e200).asBytes();
         assertEquals("254 45 49 46 50 101 50 48 48 0", dump(bytes));
         assertEquals(-1.2e200, new ByteInput(bytes).readNumber().doubleValue(), 1e-6);
+    }
+    
+    //This test does not work when translated to JS
+    @JSTranslation(ignore = true)
+    @Test
+    public void testWrongVersion() {
+    	
+        Dataset dataset = Dataset.make(CSV.read(CannedData.bank));
+        byte[] bytes = Serialize.serializeDataset(dataset);
+        bytes[1] = (byte)0;
+        try {
+        	Object o = Serialize.deserialize(bytes);
+        	
+        }
+        catch (DatasetSerializationException e) {
+        	assertTrue(true);
+        	return;
+        }
+        
+        //Should not get here.  If we did, then this means the serialization exception was not thrown as expected.
+        assertTrue(false);
+        
+    	
     }
 
     private String dump(byte[] bytes) {
