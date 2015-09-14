@@ -115,7 +115,7 @@ public class Dataset extends Informative {
     /**
      * Create a new data set based on this one, with the designated fields binned
      *
-     * @param command the fields to bin, semi-colo separated
+     * @param command the fields to bin, semi-colon separated
      * @return binned data set
      */
     public Dataset bin(String command) {

@@ -44,16 +44,16 @@ configure([project(":data"), project(":core"), project(":etc"), project(":servic
             dirs '../lib', '../lib/rave'
         }
     }
-    
+
     uploadArchives {
 	    repositories {
 	       flatDir {
 	           dirs '../out/java'
 	       }
 	    }
-	}	
-	
-	
+	}
+
+
 	task brunelJar (dependsOn: [build, uploadArchives])  {
 		description "Build and Creation of Brunel JAR/WAR artifacts to brunel/out/java"
 	}
@@ -72,6 +72,16 @@ configure([project(":data"), project(":core"), project(":etc"), project(":servic
 
 }
 
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    minification
+}
+dependencies {
+    minification 'com.google.javascript:closure-compiler:r2388'
+}
 
 //Aggregated Javadocs
 task brunelJavadoc(type: Javadoc) {
@@ -89,25 +99,40 @@ task brunelJS(type: Copy, dependsOn: [project(':core').build, project(':data').b
 	into 'out/javascript'
 }
 
-task build(dependsOn: [project(':core').brunelJar, project(':etc').brunelJar, project(':data').brunelJar, 
+task build(dependsOn: [project(':core').brunelJar, project(':etc').brunelJar, project(':data').brunelJar,
 	project(':service').brunelJar,  brunelJS, brunelJavadoc]) {
 }
 
-task makeZip(type:Zip, dependsOn: build ) {
-    description 'Create a .zip of the contents of the bulid output (/out)'
+task makeMinified(type: JavaExec, dependsOn: build) {
+    print new File(".").absolutePath
+    classpath configurations.minification
+    main = 'com.google.javascript.jscomp.CommandLineRunner'
+    def closureArgs = []
+    closureArgs << "--charset" << "utf-8"
+    closureArgs << "--compilation_level" << "ADVANCED_OPTIMIZATIONS"
+    closureArgs << "--js_output_file" << "out/javascript/brunel.min.js"
+    closureArgs << "--externs" << "service/src/main/resources/compressionImport.js"
+    closureArgs << "out/javascript/BrunelD3.js"
+    closureArgs << "out/javascript/BrunelData.js"
+    closureArgs << "service/src/main/resources/compressionExport.js"
+    args closureArgs
+}
+
+task makeZip(type:Zip, dependsOn: [build, makeMinified] ) {
+    description 'Create a .zip of the contents of the build output (/out)'
 	from ('out/')
 	archiveName distName + ".zip"
 }
 
-task makeTar(type:Tar, dependsOn: build ) {
-    description 'Create a compressed tar of the contents of the bulid output (/out)'
+task makeTar(type:Tar, dependsOn: [build, makeMinified] ) {
+    description 'Create a compressed tar of the contents of the build output (/out)'
 	from ('out/')
-	compression = Compression.GZIP  
+	compression = Compression.GZIP
 	archiveName distName + ".tar.gz"
 }
 
 task makeArchives(dependsOn: [makeZip, makeTar]) {
-    description 'Create both .zip and compressed tar of the contents of the bulid output (/out)'
+    description 'Create both .zip and compressed tar of the contents of the build output (/out)'
 
 }
 
