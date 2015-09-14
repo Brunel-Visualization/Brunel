@@ -112,8 +112,8 @@ public class NumericScale {
 
         // Handle nice ranges that we want to keep very nice
         if (a == 0) {
-            if (b0 <= 1 && b > 1) b = 1;                        // 0 - 1
-            if (b0 <= 100 && b > 100) b = 100;                  // 0 - 100
+            if (b0 <= 1 + 1e-4 && b > 1) b = 1;                       // 0 - 1
+            if (b0 < 100 + 1e-3 && b > 100) b = 100;                  // 0 - 100
         }
 
         // For degenerate data expand out

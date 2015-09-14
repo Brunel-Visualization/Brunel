@@ -687,8 +687,8 @@ V.auto_NumericScale.makeLinearScale = function(f, nice,
     if (a > 0 && a / b <= includeZeroTolerance) a = 0;
     if (b < 0 && b / a <= includeZeroTolerance) b = 0;
     if (a == 0) {
-        if (b0 <= 1 && b > 1) b = 1;
-        if (b0 <= 100 && b > 100) b = 100;
+        if (b0 <= 1 + 1e-4 && b > 1) b = 1;
+        if (b0 < 100 + 1e-3 && b > 100) b = 100;
     }
     if (a + 1e-6 > b) {
         b = Math.max(0, 2 * a);

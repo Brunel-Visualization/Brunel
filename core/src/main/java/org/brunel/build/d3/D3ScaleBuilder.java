@@ -108,7 +108,7 @@ class D3ScaleBuilder {
          */
 
         vAxis.layoutVertically(chartHeight - hAxis.estimatedSimpleSizeWhenHorizontal());
-        hAxis.layoutHorizontally(chartWidth - hAxis.size - legendWidth, allElementsLikeFillingToEdge());
+        hAxis.layoutHorizontally(chartWidth - hAxis.size - legendWidth, elementsFillHorizontal());
 
         // Set the margins
         int marginTop = vAxis.topGutter;                                    // Only the vAxis needs space here
@@ -255,7 +255,7 @@ class D3ScaleBuilder {
     }
 
     public void writeCoordinateScales(D3Interaction interaction) {
-        writePositionScale("x", positionFields.allXFields, getXRange(), allElementsLikeFillingToEdge());
+        writePositionScale("x", positionFields.allXFields, getXRange(), elementsFillHorizontal());
         writePositionScale("y", positionFields.allYFields, getYRange(), false);
         interaction.addScaleInteractivity();
     }
@@ -323,12 +323,6 @@ class D3ScaleBuilder {
         out.endStatement();
     }
 
-    private boolean allElementsLikeFillingToEdge() {
-        // If any element likes padding, it wins
-        for (VisSingle e : element) if (!e.tElement.producesSingleShape) return false;
-        return true;
-    }
-
     private boolean chooseIsDiagram() {
         // Any non-diagram make the chart all non-diagram. Mixing diagrams and non-diagrams will
         // likely be useless at best, but we will not throw an error for it
@@ -382,6 +376,7 @@ class D3ScaleBuilder {
     }
 
     private double getIncludeZeroFraction(Field[] fields, Purpose purpose) {
+
         if (purpose == Purpose.x) return 0.1;               // Really do not want much empty space on color axes
         if (purpose == Purpose.size) return 0.9;            // Almost always want to go to zero
         if (purpose == Purpose.color) return 0.2;           // Color
@@ -401,13 +396,19 @@ class D3ScaleBuilder {
         return 0.2;
     }
 
+    private boolean elementsFillHorizontal() {
+        boolean fillToEdge = true;
+        for (VisSingle e: element)
+            if (e.tElement != VisTypes.Element.line && e.tElement != VisTypes.Element.area) fillToEdge = false;
+        return fillToEdge;
+    }
+
     private double[] getNumericPaddingFraction(Purpose purpose, VisTypes.Coordinates coords) {
         double[] padding = new double[]{0, 0};
-        if (purpose == Purpose.color || purpose == Purpose.size) return padding;                // None for esthetics
+        if (purpose == Purpose.color || purpose == Purpose.size) return padding;                // None for aesthetics
         if (coords == VisTypes.Coordinates.polar) return padding;                               // None for polar angle
         for (VisSingle e : element) {
             boolean noBottomYPadding = e.tElement == VisTypes.Element.bar || e.tElement == VisTypes.Element.area || e.tElement == VisTypes.Element.line;
-            boolean noSidePadding = e.tElement == VisTypes.Element.line || e.tElement == VisTypes.Element.area;
             if (e.tElement == VisTypes.Element.text) {
                 // Text needs lot of padding
                 padding[0] = Math.max(padding[0], 0.1);
@@ -415,8 +416,6 @@ class D3ScaleBuilder {
             } else if (purpose == Purpose.y && noBottomYPadding) {
                 // A little padding on the top only
                 padding[1] = Math.max(padding[1], 0.02);
-            } else if (purpose == Purpose.x && noSidePadding) {
-                // Nothing
             } else {
                 // A little padding
                 padding[0] = Math.max(padding[0], 0.02);
@@ -544,6 +543,13 @@ class D3ScaleBuilder {
         // We util a nice scale only for rectangular coordinates
         boolean nice = (name.equals("x") || name.equals("y")) && coords != VisTypes.Coordinates.polar;
         double[] padding = getNumericPaddingFraction(purpose, coords);
+
+        // Areas and line should fill the horizontal dimension
+        if (purpose == Purpose.x && elementsFillHorizontal()) {
+            nice = false;
+            padding = new double[] {0,0};
+            includeZero = 0;
+        }
 
         NumericScale detail = Auto.makeNumericScale(scaleField, nice, padding, includeZero, 9, false);
         double min = detail.min;
