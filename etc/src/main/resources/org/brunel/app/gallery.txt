@@ -36,7 +36,7 @@
 
 #id             statestext
 #title          Text Scatterplot of state info
-#description    Areas and Popualtions for US states, colored by the percentage difference in votes between
+#description    Areas and Populations for US states, colored by the percentage difference in votes between
                 democrat and republican in the 2012 election.
 #brunel         data('http://willsfamily.org/files/vis/data/US States.csv')
                 text x(area) y(population) color(dem_rep:red-blue) label(abbr) tooltip(#all) style('font-size:36px;font-family:times')
