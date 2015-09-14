@@ -30,8 +30,7 @@ import org.brunel.match.BestMatch;
 import org.brunel.model.VisItem;
 import org.brunel.util.WebDisplay;
 
-import org.apache.cxf.jaxrs.ext.multipart.Attachment;
-import org.apache.cxf.jaxrs.ext.multipart.Multipart;
+
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.Consumes;
@@ -64,21 +63,21 @@ import java.io.InputStream;
 public class BrunelService extends Application {
 
 	//TODO:  Will be removed
-    @POST
-    @Path("data")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
+//    @POST
+//    @Path("data")
+//    @Consumes(MediaType.MULTIPART_FORM_DATA)
     //For data uploading.  Note, data stored in memory for the moment.
 
-    public void addSource(@Multipart("file") Attachment attachment, @Multipart("file_name") String fileName) {
-        try {
-            // The getting part caches it
-            InputStream is = attachment.getObject(InputStream.class);
-            DataCache.get(fileName, is);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
+//    public void addSource(@Multipart("file") Attachment attachment, @Multipart("file_name") String fileName) {
+//        try {
+//            // The getting part caches it
+//            InputStream is = attachment.getObject(InputStream.class);
+//            DataCache.get(fileName, is);
+//        } catch (IOException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
+//    }
 
     @GET
     @Path("match")
@@ -129,6 +128,7 @@ public class BrunelService extends Application {
             builder.build(item, width, height);
             return builder;
         } catch (Exception ex) {
+        	ex.printStackTrace();
             throw makeException("Could not execute Brunel: " + actionText + ": " + ex.getMessage(), Status.BAD_REQUEST.getStatusCode());
         }
     }
