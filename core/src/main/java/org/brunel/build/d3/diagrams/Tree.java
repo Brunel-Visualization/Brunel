@@ -17,9 +17,9 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.D3DataBuilder;
 import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
+import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
@@ -27,7 +27,7 @@ class Tree extends D3Diagram {
 
     private final int pad;          // Amount to pad tree by
 
-    public Tree(VisSingle vis, D3DataBuilder data, ScriptWriter out) {
+    public Tree(VisSingle vis, Dataset data, ScriptWriter out) {
         super(vis, data, out);
         this.pad = 10;
     }

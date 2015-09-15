@@ -21,7 +21,6 @@ import org.brunel.data.CannedData;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
-import org.brunel.translator.JSTranslation;
 import org.junit.Test;
 
 import java.util.Date;
@@ -225,28 +224,26 @@ public class TestSerialize {
         assertEquals("254 45 49 46 50 101 50 48 48 0", dump(bytes));
         assertEquals(-1.2e200, new ByteInput(bytes).readNumber().doubleValue(), 1e-6);
     }
-    
-    //This test does not work when translated to JS
-    @JSTranslation(ignore = true)
+
     @Test
     public void testWrongVersion() {
-    	
+
         Dataset dataset = Dataset.make(CSV.read(CannedData.bank));
         byte[] bytes = Serialize.serializeDataset(dataset);
         bytes[1] = (byte)0;
         try {
         	Object o = Serialize.deserialize(bytes);
-        	
+
         }
         catch (DatasetSerializationException e) {
         	assertTrue(true);
         	return;
         }
-        
+
         //Should not get here.  If we did, then this means the serialization exception was not thrown as expected.
         assertTrue(false);
-        
-    	
+
+
     }
 
     private String dump(byte[] bytes) {

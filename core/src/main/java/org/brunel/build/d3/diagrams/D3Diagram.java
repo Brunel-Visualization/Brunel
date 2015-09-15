@@ -18,21 +18,19 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.action.Param;
-import org.brunel.build.d3.D3DataBuilder;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.util.ElementDetails;
-import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
+import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
-import org.brunel.model.style.StyleTarget;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class D3Diagram {
-    public static D3Diagram make(VisSingle vis, D3DataBuilder data, ScriptWriter out) {
+    public static D3Diagram make(VisSingle vis, Dataset data, ScriptWriter out) {
         if (vis.tDiagram == null) return null;
         if (vis.tDiagram == VisTypes.Diagram.bubble) return new Bubble(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.chord) return new Chord(vis, data, out);
@@ -50,7 +48,7 @@ public abstract class D3Diagram {
     final String[] position;
     private boolean isHierarchy = false;
 
-    D3Diagram(VisSingle vis, D3DataBuilder data, ScriptWriter out) {
+    D3Diagram(VisSingle vis, Dataset data, ScriptWriter out) {
         this.vis = vis;
         this.out = out;
         this.size = vis.fSize.isEmpty() ? null : vis.fSize.get(0);
@@ -96,6 +94,11 @@ public abstract class D3Diagram {
 
         if (!vis.fColor.isEmpty())
             out.add("element.style('fill', function(d) { " + remapAesthetics + "return color(d) })").endStatement();
+
+        if (!vis.fOpacity.isEmpty())
+            out.add("element.style('fill-opacity', function(d) { " + remapAesthetics + "return opacity(d) })")
+                    .addChained("style('stroke-opacity', function(d) { " + remapAesthetics + "return opacity(d) })")
+                    .endStatement();
 
         if (addLabels && labelBuilder.needed()) labelBuilder.addLabels(details, remapLabel);
 

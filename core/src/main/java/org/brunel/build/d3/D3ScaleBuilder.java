@@ -159,12 +159,17 @@ class D3ScaleBuilder {
     public void writeAestheticScales(VisSingle vis) {
         Param color = getColor(vis);
         Param[] size = getSize(vis);
-        if (color == null && size.length == 0) return;
+        Param opacity = getOpacity(vis);
+        if (color == null && opacity == null && size.length == 0) return;
 
         out.onNewLine().comment("Aesthetic Functions");
         if (color != null) {
             addColorScale(color, vis);
             out.onNewLine().add("var color = function(d) { return scale_color(" + D3Util.writeCall(fieldById(color, vis)) + ") }").endStatement();
+        }
+        if (opacity != null) {
+            addOpacityScale(opacity, vis);
+            out.onNewLine().add("var opacity = function(d) { return scale_opacity(" + D3Util.writeCall(fieldById(opacity, vis)) + ") }").endStatement();
         }
         if (size.length == 1) {
             // We have exactly one field and util that for the single size scale, with a root transform by default
@@ -323,6 +328,26 @@ class D3ScaleBuilder {
         out.endStatement();
     }
 
+    private void addOpacityScale(Param p, VisSingle vis) {
+        double min = p.hasModifiers() ? p.firstModifier().asDouble() : 0.2;
+        Field f = fieldById(p, vis);
+
+        scaleWithDomain("opacity", new Field[]{f}, Purpose.color, 2, "linear");
+        if (f.preferCategorical()) {
+            int length = f.categories().length;
+            double[] sizes = new double[length];
+            // degenerate data gets the min value
+            if (length == 1)
+                sizes[0] = min;
+            else
+                for (int i = 0; i < length; i++) sizes[i] = min + (1 - min) * i / (length - 1);
+            out.addChained("range(" + Arrays.toString(sizes) + ")");
+        } else {
+            out.addChained("range([" + min + ", 1])");
+        }
+        out.endStatement();
+    }
+
     private boolean chooseIsDiagram() {
         // Any non-diagram make the chart all non-diagram. Mixing diagrams and non-diagrams will
         // likely be useless at best, but we will not throw an error for it
@@ -357,6 +382,10 @@ class D3ScaleBuilder {
 
     private Param getColor(VisSingle vis) {
         return vis.fColor.isEmpty() ? null : vis.fColor.get(0);
+    }
+
+    private Param getOpacity(VisSingle vis) {
+        return vis.fOpacity.isEmpty() ? null : vis.fOpacity.get(0);
     }
 
     private Field getColorLegendField() {
@@ -398,7 +427,7 @@ class D3ScaleBuilder {
 
     private boolean elementsFillHorizontal() {
         boolean fillToEdge = true;
-        for (VisSingle e: element)
+        for (VisSingle e : element)
             if (e.tElement != VisTypes.Element.line && e.tElement != VisTypes.Element.area) fillToEdge = false;
         return fillToEdge;
     }
@@ -547,7 +576,7 @@ class D3ScaleBuilder {
         // Areas and line should fill the horizontal dimension
         if (purpose == Purpose.x && elementsFillHorizontal()) {
             nice = false;
-            padding = new double[] {0,0};
+            padding = new double[]{0, 0};
             includeZero = 0;
         }
 

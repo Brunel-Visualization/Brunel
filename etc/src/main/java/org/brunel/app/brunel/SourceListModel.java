@@ -22,22 +22,28 @@ import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings("serial")
 class SourceListModel extends DefaultListModel<Field> {
 
+    private final List<Field> fields;
     final Dataset source;
 
     public SourceListModel(Dataset source) {
         this.source = source;
+        this.fields = new ArrayList<Field>();
+        for (Field f : source.fields)
+            if (!f.isSynthetic()) fields.add(f);
     }
 
     public int getSize() {
-        return source.fields.length;
+        return fields.size();
     }
 
     public Field getElementAt(int index) {
-        return source.fields[index];
+        return fields.get(index);
     }
 
 }

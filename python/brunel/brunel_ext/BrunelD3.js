@@ -233,9 +233,11 @@ var BrunelD3 = (function () {
             return boxLoc(target, labeling.method);
     }
 
-    function makeLabel(datum, text, target, labeling, needsRow) {
+    function makeLabel(text, target, labeling, needsRow) {
         return function () {
-            if (!target || !text || needsRow && datum.row == null) return;  // Some labeling only work for rows
+            if (!target || !text) return;                           // Need something to work on
+            var datum = target.__data__;                            // Associated data value
+            if (needsRow && datum.row == null) return;              // Some labeling only work for rows
             var s = labeling.content(datum);                        // If there is no content, we are done
             if (!s) return;
 
@@ -295,7 +297,7 @@ var BrunelD3 = (function () {
             word = words[i];
             content.push(word);
             tspan.textContent = content.join(" ");
-            height = height || text.getBBox().height;
+            height = height || textItem.getBBox().height;
             if (textItem.childNodes.length * height > loc.box.height) {
                 textItem.removeChild(tspan);
                 break;
@@ -344,9 +346,9 @@ var BrunelD3 = (function () {
     // Select the indicated rows
     function select(row, data) {
         var i, j,
-            rows = row.items ? row.items : [row],         // 'row' can be a single integer, or a collection of them
-            sel = data.field("#selection"),                 // Selection field
-            method = "sel";                                 // how to select the data (add, subtract, toggle, select)
+            rows = row ? (row.items ? row.items : [row]) : [],// 'row' can be null, a single integer, or a collection of
+            sel = data.field("#selection"),                     // Selection field
+            method = "sel";                                     // how to select the data (add, subtract, toggle, select)
 
         if (d3.event.altKey) method = d3.event.altKey ? "tog" : "sub";
         else if (d3.event.shiftKey) method = "add";

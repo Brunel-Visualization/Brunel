@@ -39,6 +39,7 @@ flip coords
 ## Aesthetics
 color aesthetic FIELD+
 size aesthetic FIELD+
+opacity aesthetic FIELD
 split aesthetic FIELD+
 key aesthetic FIELD+
 sort aesthetic FIELD+

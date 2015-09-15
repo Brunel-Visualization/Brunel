@@ -17,16 +17,16 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.D3DataBuilder;
 import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
+import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
 
 class Chord extends D3Diagram {
 
-    public Chord(VisSingle vis, D3DataBuilder data, ScriptWriter out) {
+    public Chord(VisSingle vis, Dataset data, ScriptWriter out) {
        super(vis, data, out);
     }
 

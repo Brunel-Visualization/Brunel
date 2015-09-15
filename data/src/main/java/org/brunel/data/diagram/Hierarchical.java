@@ -36,6 +36,10 @@ public class Hierarchical {
         return new Hierarchical(data, sizeField, fields);
     }
 
+    public static int compare(Node a, Node b) {
+        return Data.compare(a.key, b.key);
+    }
+
     public final Node root;
 
     private Hierarchical(Dataset data, String sizeFieldName, String[] fieldNames) {

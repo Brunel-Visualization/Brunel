@@ -22,6 +22,7 @@ import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.PositionFields;
 import org.brunel.build.util.ScriptWriter;
+import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
@@ -36,7 +37,7 @@ class D3ElementBuilder {
     private final D3Diagram diagram;
 
     public D3ElementBuilder(VisSingle vis, ScriptWriter out, D3ScaleBuilder scales,
-                            PositionFields positionFields, D3DataBuilder data) {
+                            PositionFields positionFields, Dataset data) {
         this.vis = vis;
         this.out = out;
         this.scales = scales;
@@ -132,7 +133,8 @@ class D3ElementBuilder {
     private void writeCoordEnter() {
         // Added rounded styling if needed
         ModelUtil.Size size = ModelUtil.getRoundRectangleRadius(vis);
-        if (size != null) out.addChained("attr('rx'," + size.valueInPixels(8) + ").attr('ry', " + size.valueInPixels(8) + ")").ln();
+        if (size != null)
+            out.addChained("attr('rx'," + size.valueInPixels(8) + ").attr('ry', " + size.valueInPixels(8) + ")").ln();
         out.endStatement().onNewLine().ln();
     }
 
@@ -274,6 +276,12 @@ class D3ElementBuilder {
         if (!vis.fSize.isEmpty() && (vis.tElement == VisTypes.Element.line || vis.tElement == VisTypes.Element.edge
                 || vis.tElement == VisTypes.Element.path)) {
             out.addChained("style('stroke-width', size)");
+        }
+
+        // Define opacity
+        if (!vis.fOpacity.isEmpty()) {
+            out.addChained("style('fill-opacity', opacity)")
+                    .addChained("style('stroke-opacity', opacity)");
         }
 
         out.endStatement();

@@ -17,14 +17,14 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.D3DataBuilder;
 import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
+import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
 
 class Cloud extends D3Diagram {
 
-    public Cloud(VisSingle vis, D3DataBuilder data, ScriptWriter out) {
+    public Cloud(VisSingle vis, Dataset data, ScriptWriter out) {
         super(vis, data, out);
     }
 

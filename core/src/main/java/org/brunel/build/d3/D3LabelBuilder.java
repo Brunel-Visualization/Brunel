@@ -22,6 +22,7 @@ import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
+import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
@@ -37,9 +38,9 @@ public class D3LabelBuilder {
 
     private final VisSingle vis;
     private final ScriptWriter out;
-    private final D3DataBuilder data;
+    private final Dataset data;
 
-    public D3LabelBuilder(VisSingle vis, ScriptWriter out, D3DataBuilder data) {
+    public D3LabelBuilder(VisSingle vis, ScriptWriter out, Dataset data) {
         this.vis = vis;
         this.out = out;
         this.data = data;
@@ -61,7 +62,7 @@ public class D3LabelBuilder {
         out.add("BrunelD3.tween(labelGroup,transitionMillis, function(d, i) {")
                 .indentMore().onNewLine()
                 .add(remap == null ? "" : remap)
-                .add("return BrunelD3.makeLabeling(d, this, element[0][i], labeling, true)")
+                .add("return BrunelD3.makeLabeling(this, element[0][i], labeling, true)")
                 .indentLess().onNewLine().add("})").endStatement();
 
         out.add("labelGroup.exit().remove()").endStatement();
@@ -98,7 +99,7 @@ public class D3LabelBuilder {
         out.indentMore().ln().add("where : function(box) { return", where, "}").indentLess();
         out.add("}").endStatement();
 
-        out.add("BrunelD3.tween(treeLabels,transitionMillis, function(d, i) { return BrunelD3.makeLabeling(d, this, element[0][i], treeLabeling, false)})");
+        out.add("BrunelD3.tween(treeLabels,transitionMillis, function(d, i) { return BrunelD3.makeLabeling(this, element[0][i], treeLabeling, false)})");
         out.endStatement();
 
         out.add("treeLabels.exit().remove()").endStatement();
@@ -137,7 +138,7 @@ public class D3LabelBuilder {
         for (int i = 0; i < items.size(); i++) {
             Param p = items.get(i);
             if (!p.isField()) return items;            // Any non-field and we do not prettify
-            Field f = data.fieldById(p.asField());
+            Field f = data.field(p.asField());
             if (i > 0) result.add(Param.makeString(longForm ? "<br/>" : ", "));
             if (longForm)
                 result.add(Param.makeString("<span class=\"title\">" + f.label + ": </span>"));
@@ -160,7 +161,7 @@ public class D3LabelBuilder {
         for (Param p : prettify(items, false)) {
             if (!first) out.add("\n\t\t\t+ ");
             if (p.isField()) {
-                Field f = data.fieldById(p.asField());
+                Field f = data.field(p.asField());
                 if (forTooltip) out.add("'<span class=\"field\">' + ");
                 if (p.hasModifiers()) out.add("BrunelD3.shorten(");
                 out.add("data." + D3Util.baseFieldID(f) + "_f(d)");

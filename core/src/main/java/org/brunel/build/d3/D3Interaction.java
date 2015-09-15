@@ -17,13 +17,15 @@
 
 package org.brunel.build.d3;
 
+import org.brunel.action.Param;
 import org.brunel.build.util.PositionFields;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
-/**sc
+/**
+ * sc
  * Handles adding interactivity to charts
  */
 class D3Interaction {
@@ -32,6 +34,7 @@ class D3Interaction {
         // Only if explicitly requested
         return vis.tInteraction.containsKey(VisTypes.Interaction.select);
     }
+
     private final D3ScaleBuilder scales;       // Scales for the chart
     private final ScriptWriter out;             // Write definitions here
     private final boolean zoomable;             // Same for all elements
@@ -50,8 +53,13 @@ class D3Interaction {
      * This attaches event handlers to the element for click-selection
      */
     public void addElementHandlers(VisSingle vis) {
-        if (isSelectable(vis))
-            out.add("element.on('click', function(d) { BrunelD3.select(data.$row(d), raw); buildAll() } )").endStatement();
+        if (isSelectable(vis)) {
+            Param p = vis.tInteraction.get(VisTypes.Interaction.select);
+            String type = "click";
+            if (p.hasModifiers()) type = p.firstModifier().asString();
+            out.add("element.on('" + type + "', function(d) { BrunelD3.select(data.$row(d), raw); buildAll() } )").endStatement();
+
+        }
 
     }
 

@@ -17,14 +17,14 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.D3DataBuilder;
 import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
+import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
 
 class Treemap extends D3Diagram {
 
-    public Treemap(VisSingle vis, D3DataBuilder data, ScriptWriter out) {
+    public Treemap(VisSingle vis, Dataset data, ScriptWriter out) {
         super(vis, data, out);
     }
 
@@ -35,7 +35,7 @@ class Treemap extends D3Diagram {
         // Create the d3 layout
         out.add("var treemap = d3.layout.treemap().sticky(true)")
                 .addChained("size([geom.inner_width, geom.inner_height])")
-                .addChained("sort(function(a,b) { return a.row-b.row } )")
+                .addChained("sort(BrunelData.diagram_Hierarchical.compare)")
                 .addChained("value(function(d) { return d.value == null || d.value < 0 ? 0 : d.value })")
                 .addChained("padding(function(d) { if (d.depth < 2) return [14,2,2,2]; if (d.depth < 3) return [11,2,2,2];})").endStatement();
         out.add("function keyFunction(d) { return d.key }").endStatement();

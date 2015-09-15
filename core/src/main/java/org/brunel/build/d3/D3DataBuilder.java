@@ -26,6 +26,7 @@ import org.brunel.data.Field;
 import org.brunel.data.summary.FieldRowComparison;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
+import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
@@ -43,22 +44,11 @@ public class D3DataBuilder {
     private final VisSingle vis;
     private final ScriptWriter out;
     private final Dataset data;
-    private final List<String> splitKeyFields;          // Fields to use to split data for multiple lines
 
     public D3DataBuilder(VisSingle vis, ScriptWriter out, Dataset data) {
         this.vis = vis;
         this.out = out;
         this.data = data;
-        this.splitKeyFields = Arrays.asList(vis.aestheticFields());
-    }
-
-    public Field fieldById(String s) {
-        return data.field(s);
-    }
-
-    public String getTableDescription() {
-        if (data.stringProperty("uri") != null) return data.stringProperty("uri");
-        else return data.name();
     }
 
     public void writeDataManipulation(Map<String, Integer> requiredFields) {
@@ -68,21 +58,42 @@ public class D3DataBuilder {
         out.indentLess().onNewLine().add("}").endStatement().ln();
     }
 
-    public void writeRawData(Dataset data) {
+    public static void writeRawData(VisItem main, ScriptWriter out) {
+        Dataset[] datasets = main.getDataSets();
+        if (datasets.length > 1) throw new UnsupportedOperationException("Cannot handle multiple data sets");
+        List<Field> fields = new ArrayList<Field>();
+        Dataset data = datasets[0];
+        addUsedFields(main, data, fields);
+
         out.onNewLine().add("var", "table", "= [").ln().indentMore();
+        int numPerLine = Math.max(1, 12 / fields.size());
         out.add("[ ");
-        for (int i = 0; i < data.fields.length; i++) {
-            String name = data.fields[i].name;
+        for (int i = 0; i < fields.size(); i++) {
+            String name = fields.get(i).name;
             if (name.startsWith("#")) continue;
             if (i > 0) out.add(", ");
             out.add("'").add(name).add("'");
         }
-        out.add(" ],").ln();
+        out.add(" ],");
         for (int r = 0; r < data.rowCount(); r++) {
             if (r > 0) out.add(",");
-            out.onNewLine().add(makeRowText(data, r));
+            if ((r + 1) % numPerLine == 0) out.onNewLine();
+            out.add(makeRowText(fields, r));
         }
         out.indentLess().onNewLine().add("]").endStatement();
+    }
+
+    private static void addUsedFields(VisItem item, Dataset data, List<Field> fields) {
+        if (item.children() == null) {
+            for (String f : item.getSingle().usedFields())
+                if (!f.startsWith("#")) {
+                    Field field = data.field(f, true);                  // Constant fields will not be found
+                    if (field != null)  fields.add(field);
+                }
+        } else {
+            for (VisItem i : item.children())
+                addUsedFields(i, data, fields);
+        }
     }
 
     private void defineKeyFieldFunction(List<String> fields, boolean actsOnRowObject, Map<String, Integer> usedFields) {
@@ -146,12 +157,12 @@ public class D3DataBuilder {
     }
 
     // If the row contains any nulls, return null for the whole row
-    private String makeRowText(Dataset data, int r) {
+    private static String makeRowText(List<Field> fields, int r) {
         StringBuilder row = new StringBuilder();
         D3Util.DateBuilder dateBuilder = new D3Util.DateBuilder();
         row.append("[");
-        for (int i = 0; i < data.fields.length; i++) {
-            Field field = data.fields[i];
+        for (int i = 0; i < fields.size(); i++) {
+            Field field = fields.get(i);
             if (field.name.startsWith("#")) continue;           // Skip special fields
             if (i > 0) row.append(", ");
             Object value = field.value(r);
@@ -219,7 +230,6 @@ public class D3DataBuilder {
 
         writeTransform("stack", params.stackCommand);               // Stack must come after all else
 
-
         if (out.changedSinceMark()) out.endStatement();
         out.add("base = post(base)").endStatement();
         D3Util.addTiming("Data End", out);
@@ -228,8 +238,8 @@ public class D3DataBuilder {
     private void writeHookup(Map<String, Integer> fieldsToIndex) {
 
         // Get the list of fields we need as an array
-        String[] fields =new String[fieldsToIndex.size()];
-        for (Map.Entry<String, Integer> e: fieldsToIndex.entrySet()) {
+        String[] fields = new String[fieldsToIndex.size()];
+        for (Map.Entry<String, Integer> e : fieldsToIndex.entrySet()) {
             fields[e.getValue()] = e.getKey();
         }
 
@@ -262,7 +272,7 @@ public class D3DataBuilder {
         }
         // Add special items
         out.add("_split:").at(24);
-        defineKeyFieldFunction(splitKeyFields, true, fieldsToIndex);
+        defineKeyFieldFunction(Arrays.asList(vis.aestheticFields()), true, fieldsToIndex);
         out.add(",").ln();
         out.add("_rows:").at(24).add("BrunelD3.makeRowsWithKeys(keyFunction, base.rowCount())");
         out.onNewLine().indentLess().add("}").endStatement();

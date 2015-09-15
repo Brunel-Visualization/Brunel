@@ -1242,6 +1242,10 @@ V.diagram_Hierarchical.makeByNestingFields = function(data, sizeField) {
     return new V.diagram_Hierarchical(data, sizeField, fields);
 };
 
+V.diagram_Hierarchical.compare = function(a, b) {
+    return V.Data.compare(a.key, b.key);
+};
+
 V.diagram_Hierarchical.prototype.makeInternalNode = function(name) {
     var node = new V.diagram_Node(null, 0, name == null ? "" : V.Data.format(name, true), new $.List());
     node.temp = new $.Map();

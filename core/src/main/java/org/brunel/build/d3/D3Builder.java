@@ -56,7 +56,6 @@ public class D3Builder extends AbstractBuilder {
     private String chartClass;                  // Current chart parent class
     private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
     private D3Interaction interaction;          // Builder for interactions
-    private Dataset baseData;                   // Base data everything is built off
     private PositionFields positionFields;      // Information on fields used for position
 
     /**
@@ -98,7 +97,6 @@ public class D3Builder extends AbstractBuilder {
         this.visHeight = height;
         this.out = new ScriptWriter();
         this.chartIndex = 0;
-        this.baseData = main.getDataSets()[0];
 
         // Write the class definition function (and flag to use strict mode)
         out.add("function ", className, "(visId) {").ln().indentMore();
@@ -175,7 +173,7 @@ public class D3Builder extends AbstractBuilder {
         scalesBuilder.writeAestheticScales(vis);
         scalesBuilder.writeLegends(vis);
 
-        defineElementBuildFunction(vis, dataBuilder);
+        defineElementBuildFunction(vis, data);
 
         // Expose the methods and variables we want the user to have access to
         addElementExports(vis);
@@ -225,9 +223,9 @@ public class D3Builder extends AbstractBuilder {
         return result;
     }
 
-    private void defineElementBuildFunction(VisSingle vis, D3DataBuilder dataBuilder) {
+    private void defineElementBuildFunction(VisSingle vis, Dataset data) {
 
-        D3ElementBuilder elementBuilder = new D3ElementBuilder(vis, out, scalesBuilder, positionFields, dataBuilder);
+        D3ElementBuilder elementBuilder = new D3ElementBuilder(vis, out, scalesBuilder, positionFields, data);
 
         if (vis.tDiagram == null) {
             elementBuilder.writeCoordinateFunction("x", positionFields.getX(vis), out);
@@ -280,11 +278,7 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}").endStatement();
 
         // Create the initial raw data table
-        VisSingle vis = main.getSingle();
-        D3DataBuilder dataBuilder = new D3DataBuilder(vis, out, baseData);
-        String description = dataBuilder.getTableDescription();
-        out.titleComment(description == null ? "Data Table" : description);
-        dataBuilder.writeRawData(baseData);
+        D3DataBuilder.writeRawData(main, out);
 
         // Call the function on the data
         if (addGenerationCode) {
@@ -395,6 +389,7 @@ public class D3Builder extends AbstractBuilder {
         writeFieldName("y", vis.fY);
         writeFieldName("color", vis.fColor);
         writeFieldName("size", vis.fSize);
+        writeFieldName("opacity", vis.fOpacity);
         out.onNewLine().indentLess().add("}");
         out.indentLess().onNewLine().add("}").endStatement();
     }

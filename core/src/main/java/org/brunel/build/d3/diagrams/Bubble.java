@@ -17,14 +17,14 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.D3DataBuilder;
 import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
+import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
 
 class Bubble extends D3Diagram {
 
-    public Bubble(VisSingle vis, D3DataBuilder data, ScriptWriter out) {
+    public Bubble(VisSingle vis, Dataset data, ScriptWriter out) {
         super(vis, data, out);
     }
 
@@ -34,7 +34,7 @@ class Bubble extends D3Diagram {
         makeHierarchicalTree();
         out.add("var pack = d3.layout.pack().size([geom.inner_width, geom.inner_height])")
                 .addChained("value(function(d) { return d.value == null || d.value < 0 ? 0 : d.value })")
-                .addChained("sort(function(a,b) {return a.row-b.row} )").endStatement();
+                .addChained("sort(BrunelData.diagram_Hierarchical.compare)").endStatement();
         out.add("function keyFunction(d) { return d.key }").endStatement();
         return ElementDetails.makeForDiagram("pack(tree.root)", "circle", "box");
     }
