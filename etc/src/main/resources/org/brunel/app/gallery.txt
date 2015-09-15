@@ -66,3 +66,26 @@
 #brunel         data('http://willsfamily.org/files/vis/data/AirlineDelays.csv')
                 area x(month) y(Count) stack color(result) percent(Count)
 
+#id             whiskey1
+#title          Whiskey Categories and Countries [1]
+#description    Whiskey data as a simple chart
+#brunel         data('http://willsfamily.org/files/vis/data/whiskey.csv')
+                x(country) y(category) color(country) size(#count) sort(#count) label(category) tooltip(#all)
+
+#id             whiskey2
+#title          Whiskey Categories and Countries [2]
+#description    Adding 'chord' to brunel -- no other changes needed to make this a chord diagram
+#brunel         data('http://willsfamily.org/files/vis/data/whiskey.csv')
+                chord x(country) y(category) color(country) size(#count) sort(#count) label(category) tooltip(#all)
+
+#id             whiskey3
+#title          Whiskey Categories and Countries [3]
+#description    Adding 'treemap' to brunel -- no other changes needed to make this a treemap diagram
+#brunel         data('http://willsfamily.org/files/vis/data/whiskey.csv')
+                treemap x(country) y(category) color(country) size(#count) sort(#count) label(category) tooltip(#all)
+
+#id             whiskey4
+#title          Whiskey Categories and Countries [4]
+#description    Adding 'bubble' to brunel -- no other changes needed to make this a bubble diagram
+#brunel         data('http://willsfamily.org/files/vis/data/whiskey.csv')
+                bubble x(country) y(category) color(country) size(#count) sort(#count) label(category) tooltip(#all)
