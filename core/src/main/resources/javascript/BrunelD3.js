@@ -295,7 +295,7 @@ var BrunelD3 = (function () {
             word = words[i];
             content.push(word);
             tspan.textContent = content.join(" ");
-            height = height || tspan.getBBox().height;
+            height = height || textItem.getBBox().height;
             if (textItem.childNodes.length * height > loc.box.height) {
                 textItem.removeChild(tspan);
                 break;

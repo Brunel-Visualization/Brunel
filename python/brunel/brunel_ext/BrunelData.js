@@ -970,23 +970,11 @@ V.Data.quote = function(s) {
 };
 
 V.Data.appendFields = function(dataset, extraFields) {
-    return V.Data.combine(dataset, dataset.fields, extraFields);
-};
-
-V.Data.combine = function(dataset, a, b) {
-    var i, result;
-    var copied = $.Array(a.length + b.length, null);
-    for (i = 0; i < a.length; i++)
-        copied[i] = a[i];
-    for (i = 0; i < b.length; i++)
-        copied[i + a.length] = b[i];
-    result = new V.Dataset(copied);
-    result.copyPropertiesFrom(dataset);
-    return result;
+    return dataset.combine(dataset.fields, extraFields);
 };
 
 V.Data.replaceFields = function(dataset, fields) {
-    return V.Data.combine(dataset, fields, $.Array(0, null));
+    return dataset.combine(fields, $.Array(0, null));
 };
 
 V.Data.order = function(c, ascending) {
@@ -1164,6 +1152,18 @@ V.Dataset.prototype.summarize = function(command) {
     var dataset = V.modify_Summarize.transform(this, command);
     dataset.set("reduced", true);
     return dataset;
+};
+
+V.Dataset.prototype.combine = function(a, b) {
+    var i, result;
+    var copied = $.Array(a.length + b.length, null);
+    for (i = 0; i < a.length; i++)
+        copied[i] = a[i];
+    for (i = 0; i < b.length; i++)
+        copied[i + a.length] = b[i];
+    result = new V.Dataset(copied);
+    result.copyPropertiesFrom(this);
+    return result;
 };
 
 ////////////////////// Chord ///////////////////////////////////////////////////////////////////////////////////////////

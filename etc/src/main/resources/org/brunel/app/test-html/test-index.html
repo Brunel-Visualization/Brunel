@@ -35,8 +35,12 @@
         }
 
         iframe {
-            padding: 5px
+            background-color: white;
+            padding : 5px;
+            border: solid 1px gray
         }
+
+
 
         td {
             border: 1px solid lightgray;
@@ -97,24 +101,15 @@
 
 </head>
 <body>
-<table id="main">
-    <tr>
-        <td>
-            <iframe id="f0" name="a" frameborder=0 seamless width="100%" height="100%" src="test0001.html"></iframe>
-        </td>
-        <td>
-            <iframe id="f1" name="b" frameborder=0 seamless width="100%" height="100%" src="test0002.html"></iframe>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <iframe id="f2" name="c" frameborder=0 seamless width="100%" height="100%" src="test0003.html"></iframe>
-        </td>
-        <td>
-            <iframe id="f3" name="d" frameborder=0 seamless width="100%" height="100%" src="test0004.html"></iframe>
-        </td>
-    </tr>
-</table>
+
+<iframe style="position:absolute; top:1%; left:1%; width:48%; height:48%" id="f0" name="a" frameborder=0
+        src="test0001.html"></iframe>
+<iframe style="position:absolute; top:51%; left:1%; width:48%; height:48%" id="f1" name="a" frameborder=0
+        src="test0002.html"></iframe>
+<iframe style="position:absolute; top:1%; left:51%; width:48%; height:48%" id="f2" name="a" frameborder=0
+        src="test0003.html"></iframe>
+<iframe style="position:absolute; top:51%; left:51%; width:48%; height:48%" id="f3" name="a" frameborder=0
+        src="test0004.html"></iframe>
 
 <div id="controls">
     <button onclick="change(-10000)">&#x25cf</button>
