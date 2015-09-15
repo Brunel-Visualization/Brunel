@@ -53,24 +53,30 @@ public final class SummaryValues {
 
         Field f = Data.makeColumnField("temp", null, data);
 
+        Double mean = f.numericProperty("mean");
         if (summary.equals("percent")) {
+            if (mean == null) return null;
             double sum = percentSums[fieldIndex];
-            return sum > 0 ? 100 * f.numericProperty("mean") * f.numericProperty("valid") / sum : null;
+            return sum > 0 ? 100 * mean * f.numericProperty("valid") / sum : null;
         }
 
         if (summary.equals("range")) {
+            if (mean == null) return null;
             Double low = f.numericProperty("min");
             Double high = f.numericProperty("max");
             return low == null ? null : Range.make(low, high, df);
         }
         if (summary.equals("iqr")) {
+            if (mean == null) return null;
             Double low = f.numericProperty("q1");
             Double high = f.numericProperty("q3");
             return low == null ? null : Range.make(low, high, df);
         }
 
-        if (summary.equals("sum"))
-            return f.numericProperty("mean") * f.numericProperty("valid");
+        if (summary.equals("sum")) {
+            if (mean == null) return null;
+            return mean * f.numericProperty("valid");
+        }
         if (summary.equals("list")) {
             ItemsList categories = new ItemsList((Object[]) f.property("categories"), df);
             if (option != null) {

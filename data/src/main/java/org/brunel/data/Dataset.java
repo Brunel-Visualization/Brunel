@@ -105,7 +105,7 @@ public class Dataset extends Informative {
     public final Field[] fields;
     private final Map<String, Field> fieldByName;
 
-    public Dataset(Field[] fields) {
+    private Dataset(Field[] fields) {
         this.fields = ensureUniqueNames(fields);
         this.fieldByName = new HashMap<String, Field>();
         for (Field f : fields) fieldByName.put(f.name.toLowerCase(), f);
@@ -270,4 +270,22 @@ public class Dataset extends Informative {
         dataset.set("reduced", true); // Data has been reduced to only needed fields
         return dataset;
     }
+
+    /**
+     * Combines two lists of fields, with this data's properties, to form a new data set
+     * @param a first set
+     * @param b second set
+     * @return resulting dataset
+     */
+    Dataset combine(Field[] a, Field[] b) {
+        Field[] copied = new Field[a.length + b.length];
+        for (int i = 0; i < a.length; i++)
+            copied[i] = a[i];
+        for (int i = 0; i < b.length; i++)
+            copied[i + a.length] = b[i];
+        Dataset result = new Dataset(copied);
+        result.copyPropertiesFrom(this);
+        return result;
+    }
+
 }

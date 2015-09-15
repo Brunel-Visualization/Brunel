@@ -117,7 +117,7 @@ public class TestSort {
         Field fb = Data.makeColumnField("b", null, b);
         Field fc = Data.makeColumnField("c", null, c);
 
-        Dataset data = new Dataset(new Field[]{fa, fb, fc});
+        Dataset data = Dataset.make(new Field[]{fa, fb, fc});
         long t1 = System.currentTimeMillis();
         for (int i = 0; i < 5; i++) {
             data.sort("a");

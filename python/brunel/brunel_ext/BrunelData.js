@@ -1799,6 +1799,15 @@ V.io_CSV.isUpper = function(c) {
     return "ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(c) >= 0;
 };
 
+////////////////////// DatasetSerializationException ///////////////////////////////////////////////////////////////////
+
+
+V.io_DatasetSerializationException = function(string) {
+    V.io_DatasetSerializationException.$superConstructor.call(this, string);
+};
+
+$.extend(V.io_DatasetSerializationException, $.Exception);
+
 ////////////////////// Serialize ///////////////////////////////////////////////////////////////////////////////////////
 //
 //   This class serializes data items
@@ -1812,11 +1821,14 @@ V.io_Serialize.FIELD = 2;
 V.io_Serialize.NUMBER = 3;
 V.io_Serialize.STRING = 4;
 V.io_Serialize.DATE = 5;
+V.io_Serialize.VERSION = 6;
+V.io_Serialize.DATASET_VERSION_NUMBER = 1;
 
 V.io_Serialize.serializeDataset = function(data) {
     var _i, f, s;
     data = data.removeSpecialFields();
     s = new V.io_ByteOutput();
+    s.addByte(V.io_Serialize.VERSION).addNumber(V.io_Serialize.DATASET_VERSION_NUMBER);
     s.addByte(V.io_Serialize.DATA_SET).addNumber(data.fields.length);
     for(_i=$.iter(data.fields), f=_i.current; _i.hasNext(); f=_i.next())
         V.io_Serialize.addFieldToOutput(f, s);
@@ -1867,7 +1879,7 @@ V.io_Serialize.deserialize = function(data) {
 };
 
 V.io_Serialize.readFromByteInput = function(d) {
-    var field, fields, i, indices, items, label, len, name, uniqueCount;
+    var field, fields, i, indices, items, label, len, name, uniqueCount, versionNum;
     var b = d.readByte();
     if (b == V.io_Serialize.FIELD) {
         name = d.readString();
@@ -1899,6 +1911,13 @@ V.io_Serialize.readFromByteInput = function(d) {
         for (i = 0; i < len; i++)
             fields[i] = V.io_Serialize.readFromByteInput(d);
         return V.Dataset.make(fields, false);
+    } else if (b == V.io_Serialize.VERSION) {
+        versionNum = d.readNumber();
+        if (versionNum != V.io_Serialize.DATASET_VERSION_NUMBER) {
+            throw new $.Exception(
+                "Serialization version mistmatch.  Serialized version is different from current execution version");
+        }
+        return V.io_Serialize.readFromByteInput(d);
     } else {
         throw new $.Exception("Unknown class: " + b);
     }
@@ -3133,28 +3152,34 @@ V.summary_SummaryValues.prototype.firstRow = function() {
 };
 
 V.summary_SummaryValues.prototype.get = function(fieldIndex, summary, option, df) {
-    var categories, data, displayCount, f, high, i, low, sum;
+    var categories, data, displayCount, f, high, i, low, mean, sum;
     if (summary == "count") return this.rows.size();
     data = $.Array(this.rows.size(), null);
     for (i = 0; i < data.length; i++)
         data[i] = this.fields[fieldIndex].value(this.rows.get(i));
     f = V.Data.makeColumnField("temp", null, data);
+    mean = f.numericProperty("mean");
     if (summary == "percent") {
+        if (mean == null) return null;
         sum = this.percentSums[fieldIndex];
-        return sum > 0 ? 100 * f.numericProperty("mean") * f.numericProperty("valid") / sum : null;
+        return sum > 0 ? 100 * mean * f.numericProperty("valid") / sum : null;
     }
     if (summary == "range") {
+        if (mean == null) return null;
         low = f.numericProperty("min");
         high = f.numericProperty("max");
         return low == null ? null : V.util_Range.make(low, high, df);
     }
     if (summary == "iqr") {
+        if (mean == null) return null;
         low = f.numericProperty("q1");
         high = f.numericProperty("q3");
         return low == null ? null : V.util_Range.make(low, high, df);
     }
-    if (summary == "sum")
-        return f.numericProperty("mean") * f.numericProperty("valid");
+    if (summary == "sum") {
+        if (mean == null) return null;
+        return mean * f.numericProperty("valid");
+    }
     if (summary == "list") {
         categories = new V.util_ItemsList(f.property("categories"), df);
         if (option != null) {

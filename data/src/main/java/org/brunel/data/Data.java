@@ -360,22 +360,11 @@ public class Data {
     }
 
     public static Dataset appendFields(Dataset dataset, Field[] extraFields) {
-        return combine(dataset, dataset.fields, extraFields);
-    }
-
-    private static Dataset combine(Dataset dataset, Field[] a, Field[] b) {
-        Field[] copied = new Field[a.length + b.length];
-        for (int i = 0; i < a.length; i++)
-            copied[i] = a[i];
-        for (int i = 0; i < b.length; i++)
-            copied[i + a.length] = b[i];
-        Dataset result = new Dataset(copied);
-        result.copyPropertiesFrom(dataset);
-        return result;
+        return dataset.combine(dataset.fields, extraFields);
     }
 
     public static Dataset replaceFields(Dataset dataset, Field[] fields) {
-        return combine(dataset, fields, new Field[0]);
+        return dataset.combine(fields, new Field[0]);
     }
 
     @JSTranslation(ignore = true)

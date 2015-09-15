@@ -163,7 +163,7 @@ public class TestStack {
         Field fb = Data.makeColumnField("b", null, b);
         Field fc = Data.makeColumnField("c", null, c);
 
-        Dataset data = new Dataset(new Field[] {fa, fb, fc});
+        Dataset data = Dataset.make(new Field[] {fa, fb, fc});
         long t1 = System.currentTimeMillis();
         data.stack("a; c; b; false");
         long t2 = System.currentTimeMillis();

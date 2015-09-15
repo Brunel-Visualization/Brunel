@@ -18,7 +18,9 @@
 package org.brunel.data.modify;
 
 import org.brunel.data.CannedData;
+import org.brunel.data.Data;
 import org.brunel.data.Dataset;
+import org.brunel.data.Field;
 import org.brunel.data.io.CSV;
 import org.junit.Assert;
 import org.junit.Test;
@@ -63,6 +65,16 @@ public class TestSummary {
         Assert.assertEquals("gender|#percent|#count|#row -- " +
                 "Female|48%|12|3, 4, 8, 9, 10, 11, 14, 20, 21, 23, 24, 25 -- " +
                 "Male|52%|13|1, 2, 5, 6, 7, 12, 13, 15, 16, 17, 18, …", CannedData.dump(a));
+    }
+
+    @Test
+    public void testEmptyData() {
+        Field x = Data.makeColumnField("x", null, new Object[]{1, 2});
+        Field y = Data.makeConstantField("y", null, null, 2);
+        Dataset a = Dataset.make(new Field[]{x, y});
+        a = Summarize.transform(a, "x=x; y1=y:min; y2=y:sum; y3=y:iqr; y4=y:valid; y5=y:median");
+        Assert.assertEquals("x|y1|y2|y3|y4|y5|#count|#row -- " +
+                "1|?|?|?|0|?|1|1 -- 2|?|?|?|0|?|1|2", CannedData.dump(a));
     }
 
     /*
