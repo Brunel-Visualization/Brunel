@@ -43,11 +43,11 @@ class Treemap extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details) {
-        // And the pack layout
         out.addChained("attr('class', function(d) { return (d.children ? 'L' + d.depth : 'leaf element " + element.name() + "') })")
                 .addChained("attr('x', function(d) { return d.x; })")
                 .addChained("attr('y', function(d) { return d.y; })")
                 .addChained("attr('width', function(d) { return d.dx; })")
+                .addChained("style('width', function(d) { return d.dx; })")
                 .addChained("attr('height', function(d) { return d.dy; })").endStatement();
 
         labelBuilder.addTreeInternalLabels(details, "box");
