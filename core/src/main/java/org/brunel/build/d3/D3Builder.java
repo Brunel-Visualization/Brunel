@@ -335,7 +335,7 @@ public class D3Builder extends AbstractBuilder {
 
         // Replace the stack and sort commands with updated versions
         return new DataTransformParameters(params.constantsCommand, params.filterCommand, params.transformCommand, params.summaryCommand,
-                stackCommand, sortCommand, params.seriesCommand, params.usedCommand, params.keyField, params.outerData);
+                stackCommand, sortCommand, params.seriesCommand, params.usedCommand);
     }
 
     private void writeMainGroups() {

@@ -22,7 +22,6 @@ import org.brunel.build.controls.Controls;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
-import org.brunel.data.modify.ApplyJoinKeys;
 import org.brunel.model.VisComposition;
 import org.brunel.model.VisException;
 import org.brunel.model.VisItem;
@@ -137,7 +136,7 @@ public abstract class AbstractBuilder implements Builder {
         VisSingle[] elements = new VisSingle[items.length];
         for (int i = 0; i < items.length; i++) {
             elements[i] = items[i].getSingle().resolve();                       // In future, will do nesting
-            data[i] = buildData(elements[i], false, null);
+            data[i] = buildData(elements[i]);
         }
 
         currentChartID = defineChart(loc, elements, data);
@@ -238,12 +237,10 @@ public abstract class AbstractBuilder implements Builder {
     /**
      * This builds the data and reports the built data to the builder
      *
-     * @param vis       from this we will take all the data commands and the base source data
-     * @param keyField  if true, add a key field to this data
-     * @param outerData data for the outer element this is nested inside
+     * @param vis from this we will take all the data commands and the base source data
      * @return built dataset
      */
-    private Dataset buildData(VisSingle vis, boolean keyField, Dataset outerData) {
+    private Dataset buildData(VisSingle vis) {
         String constantsCommand = makeConstantsCommand(vis);
         String filterCommand = makeFilterCommands(vis);
         String binCommand = makeTransformCommands(vis);
@@ -254,7 +251,7 @@ public abstract class AbstractBuilder implements Builder {
 
         DataTransformParameters params = new DataTransformParameters(constantsCommand,
                 filterCommand, binCommand, summaryCommand, "", sortCommand, seriesYFields,
-                usedFields, keyField, outerData);
+                usedFields);
 
         // Call the engine to see if it has any special needs
         params = modifyParameters(params, vis);
@@ -267,12 +264,6 @@ public abstract class AbstractBuilder implements Builder {
         data = data.series(params.seriesCommand);                                       // convert series
         data = data.sort(params.sortCommand);                                           // sort data
         data = data.stack(params.stackCommand);                                         // stack data
-        if (params.keyField) {
-            if (params.outerData == null)
-                data = ApplyJoinKeys.transformParent(data);
-            else
-                data = ApplyJoinKeys.transformChild(data, params.outerData);
-        }
         if (data.property("reduced") == null) data = data.reduce(params.usedCommand);   // Drop unnecessary fields
         data.set("parameters", params);                                             // Params used to build this
         return data;

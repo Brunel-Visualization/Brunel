@@ -17,8 +17,6 @@
 
 package org.brunel.build;
 
-import org.brunel.data.Dataset;
-
 /**
  * This structure is defined by the base builder and passed to abstract data building methods of that class.
  * The data is actually transformed as part of the building step, and so no action is needed if only the transformed
@@ -59,21 +57,12 @@ public class DataTransformParameters {
      * Command to retain only used fields
      */
     public final String usedCommand;
-    /**
-     * Defines the key field for the data
-     */
-    public final boolean keyField;
-    /**
-     * Defines the data set into which this one will be faceted
-     */
-    public final Dataset outerData;
 
     /**
      * Initialize all the relevant parameters
      */
     public DataTransformParameters(String constantsCommand, String filterCommand, String binCommand, String summaryCommand,
-                                   String stackCommand, String sortCommand, String seriesCommand, String usedCommand,
-                                   boolean keyField, Dataset outerData) {
+                                   String stackCommand, String sortCommand, String seriesCommand, String usedCommand) {
         this.constantsCommand = constantsCommand;
         this.filterCommand = filterCommand;
         this.transformCommand = binCommand;
@@ -82,8 +71,6 @@ public class DataTransformParameters {
         this.sortCommand = sortCommand;
         this.seriesCommand = seriesCommand;
         this.usedCommand = usedCommand;
-        this.keyField = keyField;
-        this.outerData = outerData;
     }
 
 }

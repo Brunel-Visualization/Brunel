@@ -1890,7 +1890,7 @@ V.io_Serialize.readFromByteInput = function(d) {
             else if (b == V.io_Serialize.DATE)
                 items[i] = d.readDate();
             else
-                throw new $.Exception("Unknown data column type " + b);
+                throw new $.Exception("Unknown column type " + b);
         }
         len = d.readNumber();
         indices = $.Array(len, 0);
@@ -1984,65 +1984,6 @@ V.modify_AddConstantFields.transform = function(base, command) {
     for (i = 0; i < base.fields.length; i++)
         fields[i + additional.length] = base.fields[i];
     return V.Data.replaceFields(base, fields);
-};
-
-////////////////////// ApplyJoinKeys ///////////////////////////////////////////////////////////////////////////////////
-//
-//   Add facet information to a dataset.
-//   This is currently not used in the system
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-V.modify_ApplyJoinKeys = function() {
-    V.modify_ApplyJoinKeys.$superConstructor.call(this);
-};
-
-$.extend(V.modify_ApplyJoinKeys, V.modify_DataOperation);
-
-V.modify_ApplyJoinKeys.transformParent = function(data) {
-    var field = V.Data.makeIndexingField("#facetKey", null, data.rowCount());
-    field.set("key", true);
-    field.set("numeric", false);
-    return V.Data.appendFields(data, [field]);
-};
-
-V.modify_ApplyJoinKeys.transformChild = function(data, outerData) {
-    var reference = V.Data.makeColumnField("#facetReference", null,
-        V.modify_ApplyJoinKeys.makeReferenceData(outerData, data.field("#row")));
-    reference.set("numeric", false);
-    return V.Data.appendFields(data, [reference]);
-};
-
-V.modify_ApplyJoinKeys.makeReferenceData = function(referenceTarget, tableKey) {
-    var _i, i, list, o, referenceTargetRow, referenceValues, row, v;
-    var originalRowsToTargetRows = new $.Map();
-    var targetRows = referenceTarget.field("#row");
-    for (i = 0; i < targetRows.rowCount(); i++){
-        o = targetRows.value(i);
-        if (o instanceof V.util_ItemsList) {
-            for(_i=$.iter(o), v=_i.current; _i.hasNext(); v=_i.next())
-                originalRowsToTargetRows.put(v, i + 1);
-        } else {
-            originalRowsToTargetRows.put(o, i + 1);
-        }
-    }
-    referenceValues = $.Array(tableKey.rowCount(), 0);
-    for (i = 0; i < referenceValues.length; i++){
-        o = tableKey.value(i);
-        if (o instanceof V.util_ItemsList) {
-            list = o;
-            referenceTargetRow = originalRowsToTargetRows.get(list.get(0));
-            for(_i=$.iter(list), v=_i.current; _i.hasNext(); v=_i.next()) {
-                row = originalRowsToTargetRows.get(v);
-                if (!$.equals(row, referenceTargetRow))
-                    throw new $.Exception("Incompatible aggregation structure when using 'inside' composition");
-            }
-        } else {
-            referenceTargetRow = originalRowsToTargetRows.get(o);
-        }
-        referenceValues[i] = referenceTargetRow;
-    }
-    return referenceValues;
 };
 
 ////////////////////// ConvertSeries ///////////////////////////////////////////////////////////////////////////////////
