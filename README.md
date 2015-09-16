@@ -23,6 +23,7 @@ For direct Java integrations, see:  `D3Builder` for creating D3 output, `Control
 * `service`  A basic web service to provide Brunel Visualization output
 * `python`  Integration of Brunel Visualization for Jupyter (IPython)
 * `R` Integration of Brunel Visualization for Jupyter (R)
+* `gallery` Source code for the Brunel Gallery web application
 
 ## Builds
 
