@@ -89,6 +89,17 @@ Some examples are given below:
 <p class="examples"><a onClick="showAction(this.text)">color(region, #count) x(summer) size(#count) bin(summer)
     bubble</a></p>
 
+<H3>Opacity</H3>
+<p>
+    Opacity sets how transparent the graphic is; zero means fully transparent and one means fully opaque.
+    An optional parameter on the opacity sets the <i>low</i> value of the opacity -- the high value on the
+    range is always 1. Opacity is very useful in conjunction with <code>#selection</code> to draw attention
+    to the selected items, as shown in the examples
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">x(longitude) y(latitude) style('size:600%; stroke:none') opacity(population:0) color(region) legends(none)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">chord x(boys_name) y(girls_name) color(girls_name) legends(none) interaction(select:mouseover) opacity(#selection:0.03)</a></p>
+
 <H3>Size</H3>
 <p>
     The size aesthetic works very similarly to color, except it modifies the size of the element.

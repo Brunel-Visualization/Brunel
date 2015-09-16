@@ -40,7 +40,7 @@ class Cloud extends D3Diagram {
     public void writeDefinition(ElementDetails details) {
         // Set the given location using the transform
         out.addChained("attr('transform', cloud.transform)").endStatement();
-        addAestheticsAndTooltips(details, null, false);
+        addAestheticsAndTooltips(details, false);
     }
 
     public void writeDiagramEnter() {

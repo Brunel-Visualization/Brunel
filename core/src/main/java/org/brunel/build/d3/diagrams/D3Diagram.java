@@ -85,11 +85,10 @@ public abstract class D3Diagram {
         isHierarchy = true;
     }
 
-    void addAestheticsAndTooltips(ElementDetails details, String remap, boolean addLabels) {
-        String remapAesthetics = remap == null ? "if (d == null || d.row == null) return;" : remap;
-        String remapLabel = remap == null ? "" : remap;
+    void addAestheticsAndTooltips(ElementDetails details, boolean addLabels) {
+        String remapAesthetics =  "if (d == null || d.row == null) return;";
         if (!vis.itemsTooltip.isEmpty()) {
-            labelBuilder.addTooltips(details, remap);
+            labelBuilder.addTooltips(details);
         }
 
         if (!vis.fColor.isEmpty())
@@ -100,7 +99,7 @@ public abstract class D3Diagram {
                     .addChained("style('stroke-opacity', function(d) { " + remapAesthetics + "return opacity(d) })")
                     .endStatement();
 
-        if (addLabels && labelBuilder.needed()) labelBuilder.addLabels(details, remapLabel);
+        if (addLabels && labelBuilder.needed()) labelBuilder.addLabels(details);
 
     }
 

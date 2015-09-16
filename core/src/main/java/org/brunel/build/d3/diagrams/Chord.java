@@ -27,7 +27,7 @@ import org.brunel.model.VisSingle;
 class Chord extends D3Diagram {
 
     public Chord(VisSingle vis, Dataset data, ScriptWriter out) {
-       super(vis, data, out);
+        super(vis, data, out);
     }
 
     public ElementDetails writeDataConstruction() {
@@ -53,16 +53,22 @@ class Chord extends D3Diagram {
     }
 
     public String getRowKey() {
-         return "d.source.index + '|' + d.target.index";
-     }
+        return "d.source.index + '|' + d.target.index";
+    }
 
-     public void writeDefinition(ElementDetails details) {
+    public void writeDiagramEnter() {
+        // Ensure we have a row for each chord, based off the chord start and end points
+        out.endStatement();
+        out.add("element.each(function(d) { d.row = chordData.index(d.target.index, d.target.subindex) })").endStatement();
+    }
+
+    public void writeDefinition(ElementDetails details) {
 
         // The Chords themselves are simple to create
         out.addChained("attr('d', d3.svg.chord().radius(geom.inner_radius-arc_width))")
                 .addChained("attr('class', 'element " + element.name() + "')").endStatement();
 
-        addAestheticsAndTooltips(details, "d = { row: chordData.index(d.target.index, d.target.subindex) } ; ", true);
+        addAestheticsAndTooltips(details, true);
 
         // We now need to add the arcs on the outside for the groups
         out.onNewLine().ln().comment("Add in the arcs on the outside for the groups");

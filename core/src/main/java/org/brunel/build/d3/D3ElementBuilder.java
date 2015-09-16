@@ -51,7 +51,7 @@ class D3ElementBuilder {
 
         ElementDetails details = makeDetails();         // Create the details of what the element should be
         if (details.producesPath) definePath();         // Define paths needed in the element, and make data splits
-        if (labelBuilder.needed()) labelBuilder.defineLabeling(details, vis.itemsLabel, false, null);   // Labels
+        if (labelBuilder.needed()) labelBuilder.defineLabeling(details, vis.itemsLabel, false);   // Labels
 
         if (sizesNeeded()) {
             // Define size functions
@@ -63,7 +63,8 @@ class D3ElementBuilder {
         modifyGroupStyleName();             // Diagrams change the name so CSS style sheets will work well
 
         // Define the data and main element into which shapes will be placed
-        out.add("var d3Data = ", details.dataSource).endStatement();
+        out.add("var d3Data =", details.dataSource).endStatement();
+
         out.add("var element = main.selectAll('*').data(d3Data,", getKeyFunction(), ")").endStatement();
 
         // Define what happens when data is added ('enter')
@@ -286,11 +287,11 @@ class D3ElementBuilder {
 
         out.endStatement();
 
-        labelBuilder.addTooltips(details, null);
+        labelBuilder.addTooltips(details);
 
         // We do not add labels if the element IS a label
         if (labelBuilder.needed() && vis.tElement != VisTypes.Element.text) {
-            labelBuilder.addLabels(details, null);
+            labelBuilder.addLabels(details);
         }
     }
 

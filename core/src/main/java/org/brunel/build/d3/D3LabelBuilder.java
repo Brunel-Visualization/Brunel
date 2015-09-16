@@ -47,7 +47,7 @@ public class D3LabelBuilder {
     }
 
     /* Call this after shapes have been defined to add the labels */
-    public void addLabels(ElementDetails details, String remap) {
+    public void addLabels(ElementDetails details) {
         // We define the transition tween function just to calculate relative to the color shape, wherever it is
         out.add("var labelGroup = labels.selectAll('text').data(" + details.dataSource + ")").endStatement();
         out.add("labelGroup.enter().append('text').attr('dy', '0.3em').attr('class', 'label')");
@@ -61,7 +61,6 @@ public class D3LabelBuilder {
 
         out.add("BrunelD3.tween(labelGroup,transitionMillis, function(d, i) {")
                 .indentMore().onNewLine()
-                .add(remap == null ? "" : remap)
                 .add("return BrunelD3.makeLabeling(this, element[0][i], labeling, true)")
                 .indentLess().onNewLine().add("})").endStatement();
 
@@ -79,11 +78,11 @@ public class D3LabelBuilder {
         }
     }
 
-    public void addTooltips(ElementDetails details, String remap) {
+    public void addTooltips(ElementDetails details) {
         if (vis.itemsTooltip.isEmpty()) return;
         out.onNewLine().ln();
         defineLabeling(details.modifyForTooltip(vis.coords == VisTypes.Coordinates.transposed),
-                prettify(vis.itemsTooltip, true), true, remap);
+                prettify(vis.itemsTooltip, true), true);
         out.add("BrunelD3.addTooltip(element, tooltipLabeling)").endStatement();
     }
 
@@ -106,7 +105,7 @@ public class D3LabelBuilder {
 
     }
 
-    public void defineLabeling(ElementDetails details, List<Param> items, boolean forTooltip, String remap) {
+    public void defineLabeling(ElementDetails details, List<Param> items, boolean forTooltip) {
         String name = forTooltip ? "tooltipLabeling" : "labeling";
         out.add("var", name, "= {").ln().indentMore();
         out.add("method:", out.quote(details.textMethod), ",").ln();
@@ -116,7 +115,6 @@ public class D3LabelBuilder {
 
         // Write it out as a wrapped function
         out.add("content: function(d) {").ln().indentMore();
-        if (remap != null) out.add(remap).endStatement();
 
         out.add("return d.row == null ? null : ");
         writeContent(items, forTooltip);

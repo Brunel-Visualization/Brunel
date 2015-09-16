@@ -69,7 +69,7 @@ class Tree extends D3Diagram {
 
         out.endStatement();
         labelBuilder.addTreeInternalLabels(details, "{ x: box.x + box.width, y: box.y - box.height/2 + 3 }");
-        addAestheticsAndTooltips(details, null, true);
+        addAestheticsAndTooltips(details, true);
 
         // We add the tree edges
         // TODO: if there is an edge definition in the chart, use that instead

@@ -45,6 +45,6 @@ class Bubble extends D3Diagram {
                 .addChained("attr('cx', function(d) { return d.x; })")
                 .addChained("attr('cy', function(d) { return d.y; })")
                 .addChained("attr('r', function(d) { return d.r; })").endStatement();
-        addAestheticsAndTooltips(details, null, true);
+        addAestheticsAndTooltips(details, true);
     }
 }
