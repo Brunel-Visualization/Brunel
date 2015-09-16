@@ -43,9 +43,25 @@ public final class SummaryValues {
      * [numeric] mean, min, max, range, iqr, median, stddev
      * [any] count, mode, unique
      */
-    public Object get(int fieldIndex, MeasureField m) {
+    public Object get(int fieldIndex, MeasureField m, Field[] xFields) {
         String summary = m.measureFunction;
         if (summary.equals("count")) return rows.size();
+
+        if (summary.equals("fit")) {
+            Field x = xFields[0];
+            if (m.fit == null) m.fit = new Regression(m.field, x);
+            return m.fit.get(x.value(rows.get(0)));
+        }
+
+        if (summary.equals("smooth")) {
+            Field x = xFields[0];
+            double windowFactor = 1.0;
+            if (m.option != null) {
+                windowFactor = Double.parseDouble(m.option) / 100;
+            }
+            if (m.fit == null) m.fit = new Smooth(m.field, x, windowFactor);
+            return m.fit.get(x.value(rows.get(0)));
+        }
 
         Object[] data = new Object[rows.size()];
         for (int i = 0; i < data.length; i++)

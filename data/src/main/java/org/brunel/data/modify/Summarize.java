@@ -85,7 +85,9 @@ public class Summarize extends DataOperation {
         Collections.sort(dimensions);
 
         // ensure #count and #row are included
-        if (operations.get("#count") == null) measures.add(new MeasureField(base.field("#count"), "#count", "sum"));
+        if (operations.get("#count") == null) {
+            measures.add(new MeasureField(base.field("#count"), "#count", "sum"));
+        }
         if (operations.get("#row") == null) measures.add(new MeasureField(base.field("#row"), "#row", "list"));
 
         Summarize s = new Summarize(measures, dimensions, percentBase, base.rowCount());
@@ -167,7 +169,7 @@ public class Summarize extends DataOperation {
             // Set the measure values
             for (int i = 0; i < measures.size(); i++) {
                 MeasureField m = measures.get(i);
-                measureData[i][g] = values.get(i, m);
+                measureData[i][g] = values.get(i, m, percentBaseFields);
             }
         }
 

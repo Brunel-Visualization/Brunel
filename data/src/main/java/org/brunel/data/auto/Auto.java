@@ -81,7 +81,7 @@ public class Auto {
             f.set("transform", "linear");
     }
 
-    private static int optimalBinCount(Field f) {
+    public static int optimalBinCount(Field f) {
         // Using Freedman-Diaconis for the optimal bin width OR Scott's normal reference rule
         // Whichever has a large bin size
         double h1 = 2 * (f.numericProperty("q3") - f.numericProperty("q1")) / Math.pow(f.valid(), 0.33333);

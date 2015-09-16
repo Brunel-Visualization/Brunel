@@ -23,6 +23,7 @@ public class MeasureField extends DimensionField {
 
     public final String measureFunction;
     public String option;
+    public Fit fit;
 
     public MeasureField(Field field, String rename, String measureFunction) {
         super(field, rename == null && field == null ? measureFunction : rename);

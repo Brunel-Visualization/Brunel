@@ -76,6 +76,7 @@ q3 data FIELD+
 iqr data FIELD+
 range data FIELD+
 fit data FIELD+
+smooth data FIELD+
 
 # Miscellaneous
 using other dodge interpolate

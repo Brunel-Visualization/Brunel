@@ -2643,8 +2643,9 @@ V.modify_Summarize.transform = function(base, command) {
     }
     $.sort(measures);
     $.sort(dimensions);
-    if (operations.get("#count") == null)
+    if (operations.get("#count") == null) {
         measures.add(new V.summary_MeasureField(base.field("#count"), "#count", "sum"));
+    }
     if (operations.get("#row") == null)
         measures.add(new V.summary_MeasureField(base.field("#row"), "#row", "list"));
     s = new V.modify_Summarize(measures, dimensions, percentBase, base.rowCount());
@@ -2690,7 +2691,7 @@ V.modify_Summarize.prototype.make = function() {
             dimData[i][g] = dimensionFields[i].value(originalRow);
         for (i = 0; i < this.measures.size(); i++){
             m = this.measures.get(i);
-            measureData[i][g] = values.get(i, m);
+            measureData[i][g] = values.get(i, m, percentBaseFields);
         }
     }
     fields = $.Array(dimData.length + measureData.length, null);
@@ -3112,6 +3113,7 @@ V.summary_FieldRowComparison.prototype.makeSortedOrder = function(len) {
 
 V.summary_MeasureField = function(field, rename, measureFunction) {
     this.option = null;
+    this.fit = null;
     V.summary_MeasureField.$superConstructor.call(this, field, rename ==
         null && field == null ? measureFunction : rename);
     if (field != null && (measureFunction == "mean") && !field.isNumeric())
@@ -3140,6 +3142,103 @@ V.summary_MeasureField.prototype.label = function() {
     return a + b + "(" + (this.field == null ? "" : this.field.label) + ")";
 };
 
+////////////////////// Regression //////////////////////////////////////////////////////////////////////////////////////
+//
+//   Calculates a fit function
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+V.summary_Regression = function(y, x) {
+    var i, mx, my, sxx, sxy, xv, yv;
+    this.m = null;
+    this.b = null;
+    var data = V.summary_Regression.asPairs(y, x);
+    var n = data[0].length;
+    if (n == 0) return;
+    my = V.summary_Regression.mean(data[0]);
+    mx = V.summary_Regression.mean(data[1]);
+    sxy = 0;
+    sxx = 0;
+    for (i = 0; i < n; i++){
+        yv = data[0][i];
+        xv = data[1][i];
+        sxy += (xv - mx) * (yv - my);
+        sxx += (xv - mx) * (xv - mx);
+    }
+    if (sxx > 0) {
+        this.m = sxy / sxx;
+        this.b = my - this.m * mx;
+    }
+};
+
+V.summary_Regression.mean = function(values) {
+    var i;
+    var s = 0;
+    for (i = 0; i < values.length; i++)
+        s += values[i];
+    return s / values.length;
+};
+
+V.summary_Regression.asPairs = function(y, x) {
+    var i, order, xv, xx, yv, yy;
+    var xList = new $.List();
+    var yList = new $.List();
+    var n = x.rowCount();
+    for (i = 0; i < n; i++){
+        xv = V.Data.asNumeric(x.value(i));
+        yv = V.Data.asNumeric(y.value(i));
+        if (xv != null && yv != null) {
+            xList.add(xv);
+            yList.add(yv);
+        }
+    }
+    order = V.Data.order(xList.toArray(), true);
+    xx = $.Array(order.length, 0);
+    yy = $.Array(order.length, 0);
+    for (i = 0; i < order.length; i++){
+        xx[i] = xList.get(order[i]);
+        yy[i] = yList.get(order[i]);
+    }
+    return [yy, xx];
+};
+
+V.summary_Regression.prototype.get = function(value) {
+    return this.m == null ? null : this.m * V.Data.asNumeric(value) + this.b;
+};
+
+////////////////////// Smooth //////////////////////////////////////////////////////////////////////////////////////////
+//
+//   Calculates a fit function
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+V.summary_Smooth = function(y, x, windowFactor) {
+    var n = V.auto_Auto.optimalBinCount(x);
+    this.window = windowFactor * 1.5 * (x.max() - x.min()) / n;
+    this.data = V.summary_Regression.asPairs(y, x);
+};
+
+V.summary_Smooth.prototype.get = function(value) {
+    var d, i, sw, sy, w, x, y;
+    var at = V.Data.asNumeric(value);
+    if (at == null) return null;
+    y = this.data[0];
+    x = this.data[1];
+    sy = 0;
+    sw = 0;
+    for (i = 0; i < x.length; i++){
+        d = (x[i] - at) / this.window;
+        if (d < -1) continue;
+        if (d > 1) break;
+        w = 0.75 * (1 - d * d);
+        sw += w;
+        sy += w * y[i];
+    }
+    return sw > 0 ? sy / sw : null;
+};
+
 ////////////////////// SummaryValues ///////////////////////////////////////////////////////////////////////////////////
 
 
@@ -3152,10 +3251,26 @@ V.summary_SummaryValues.prototype.firstRow = function() {
     return this.rows.get(0);
 };
 
-V.summary_SummaryValues.prototype.get = function(fieldIndex, m) {
-    var categories, data, displayCount, f, high, i, low, mean, sum;
+V.summary_SummaryValues.prototype.get = function(fieldIndex, m, xFields) {
+    var categories, data, displayCount, f, high, i, low, mean, sum, windowFactor, x;
     var summary = m.measureFunction;
     if (summary == "count") return this.rows.size();
+    if (summary == "fit") {
+        x = xFields[0];
+        if (m.fit == null)
+            m.fit = new V.summary_Regression(m.field, x);
+        return m.fit.get(x.value(this.rows.get(0)));
+    }
+    if (summary == "smooth") {
+        x = xFields[0];
+        windowFactor = 1.0;
+        if (m.option != null) {
+            windowFactor = Number(m.option) / 100;
+        }
+        if (m.fit == null)
+            m.fit = new V.summary_Smooth(m.field, x, windowFactor);
+        return m.fit.get(x.value(this.rows.get(0)));
+    }
     data = $.Array(this.rows.size(), null);
     for (i = 0; i < data.length; i++)
         data[i] = this.fields[fieldIndex].value(this.rows.get(i));
