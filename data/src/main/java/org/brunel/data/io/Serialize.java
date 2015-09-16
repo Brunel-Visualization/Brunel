@@ -38,9 +38,9 @@ public class Serialize {
     public final static int STRING = 4;
     public final static int DATE = 5;
     public final static int VERSION=6;
-    
+
     public final static int DATASET_VERSION_NUMBER = 1;   //Must be incremented if serialization is changed in an incompatible way
-    
+
 
     /**
      * Return a serialized version of a dataset.
@@ -54,7 +54,7 @@ public class Serialize {
 
         //Add versioning
         s.addByte(VERSION).addNumber(DATASET_VERSION_NUMBER);
-        
+
         // Basics, then each field
         s.addByte(DATA_SET).addNumber(data.fields.length);
         for (Field f : data.fields) addFieldToOutput(f, s);
@@ -134,7 +134,7 @@ public class Serialize {
                 else if (b == DATE)
                     items[i] = d.readDate();
                 else
-                    throw new IllegalStateException("Unknown data column type " + b);
+                    throw new IllegalStateException("Unknown column type " + b);
             }
 
             // Now create the actual data
@@ -153,11 +153,11 @@ public class Serialize {
             Field[] fields = new Field[len];
             for (int i = 0; i < len; i++) fields[i] = (Field) readFromByteInput(d);
             return Dataset.make(fields, false);     // No need to autoconvert
-        } 
+        }
         else if (b == VERSION) {
         	int versionNum = d.readNumber().intValue();
         	if (versionNum != DATASET_VERSION_NUMBER ) {
-        		throw new DatasetSerializationException("Serialization version mistmatch.  Serialized version is different from current execution version");
+        		throw new IllegalStateException("Serialized version differs from current execution version");
         	}
         	return readFromByteInput(d);
         }

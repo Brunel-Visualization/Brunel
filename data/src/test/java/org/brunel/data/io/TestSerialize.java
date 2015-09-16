@@ -233,9 +233,8 @@ public class TestSerialize {
         bytes[1] = (byte)0;
         try {
         	Object o = Serialize.deserialize(bytes);
-
         }
-        catch (DatasetSerializationException e) {
+        catch (IllegalStateException e) {
         	assertTrue(true);
         	return;
         }

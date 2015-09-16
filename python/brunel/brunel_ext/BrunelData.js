@@ -1803,15 +1803,6 @@ V.io_CSV.isUpper = function(c) {
     return "ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(c) >= 0;
 };
 
-////////////////////// DatasetSerializationException ///////////////////////////////////////////////////////////////////
-
-
-V.io_DatasetSerializationException = function(string) {
-    V.io_DatasetSerializationException.$superConstructor.call(this, string);
-};
-
-$.extend(V.io_DatasetSerializationException, $.Exception);
-
 ////////////////////// Serialize ///////////////////////////////////////////////////////////////////////////////////////
 //
 //   This class serializes data items
@@ -1918,8 +1909,7 @@ V.io_Serialize.readFromByteInput = function(d) {
     } else if (b == V.io_Serialize.VERSION) {
         versionNum = d.readNumber();
         if (versionNum != V.io_Serialize.DATASET_VERSION_NUMBER) {
-            throw new $.Exception(
-                "Serialization version mistmatch.  Serialized version is different from current execution version");
+            throw new $.Exception("Serialized version differs from current execution version");
         }
         return V.io_Serialize.readFromByteInput(d);
     } else {
@@ -3218,7 +3208,7 @@ V.summary_Smooth = function(y, x, windowPercent) {
     var n;
     if (windowPercent == null) {
         n = V.auto_Auto.optimalBinCount(x);
-        this.delta = Math.max(2, Math.round((x.valid() / n / 2.0)));
+        this.delta = Math.max(2, Math.round((x.valid() / n)));
     } else {
         this.delta = Math.max(2, Math.floor(x.valid() * windowPercent / 200));
     }
