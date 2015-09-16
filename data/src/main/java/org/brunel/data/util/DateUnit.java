@@ -156,7 +156,6 @@ public enum DateUnit {
         return c.getTime();
     }
 
-    ////// Fields //////////////////////////////////////////////////^n
     public final double approxDaysPerUnit;            // About this many days in this unit
     public final int base;                            // What base to use for these
 

@@ -93,14 +93,6 @@ public class Auto {
             return (int) Math.round((f.max() - f.min()) / h + 0.499);
     }
 
-    public static double domainSimilarity(Field[] f1, Field[] f2) {
-        Domain d1 = new Domain();
-        Domain d2 = new Domain();
-        for (Field f : f1) d1.add(f);
-        for (Field f : f2) d2.add(f);
-        return d1.mergedUnwastedSpace(d2);
-    }
-
     public static Field convert(Field base) {
 
         // Must check this first, otherwise will be converted to numeric values

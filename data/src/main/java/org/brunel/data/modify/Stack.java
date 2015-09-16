@@ -72,7 +72,8 @@ public class Stack extends DataOperation {
         Field[] fields = makeStackedValues(allFields,
                 getField(allFields, yField),
                 getFields(allFields, x), full);
-        return Data.replaceFields(base, fields);
+
+        return base.replaceFields(fields);
     }
 
     private static Field[] addAllCombinations(Field[] baseFields, Field[] keys) {

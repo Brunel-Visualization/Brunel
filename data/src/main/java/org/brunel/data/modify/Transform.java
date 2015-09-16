@@ -56,7 +56,7 @@ public class Transform extends DataOperation {
         for (int i = 0; i < fields.length; i++)
             fields[i] = modify(base.fields[i], operations.get(base.fields[i].name));
 
-        return Data.replaceFields(base, fields);
+        return base.replaceFields(fields);
     }
 
     /*

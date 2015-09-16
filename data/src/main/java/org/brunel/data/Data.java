@@ -359,14 +359,6 @@ public class Data {
         return quoteChar + text + quoteChar;
     }
 
-    public static Dataset appendFields(Dataset dataset, Field[] extraFields) {
-        return dataset.combine(dataset.fields, extraFields);
-    }
-
-    public static Dataset replaceFields(Dataset dataset, Field[] fields) {
-        return dataset.combine(fields, new Field[0]);
-    }
-
     @JSTranslation(ignore = true)
     public static Integer[] order(int[] c, boolean ascending) {
         // In java only, need to convert types

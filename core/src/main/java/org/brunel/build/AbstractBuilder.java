@@ -264,8 +264,7 @@ public abstract class AbstractBuilder implements Builder {
         data = data.series(params.seriesCommand);                                       // convert series
         data = data.sort(params.sortCommand);                                           // sort data
         data = data.stack(params.stackCommand);                                         // stack data
-        if (data.property("reduced") == null) data = data.reduce(params.usedCommand);   // Drop unnecessary fields
-        data.set("parameters", params);                                             // Params used to build this
+        data.set("parameters", params);                                                 // Params used to build this
         return data;
     }
 

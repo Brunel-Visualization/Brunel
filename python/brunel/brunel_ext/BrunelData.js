@@ -501,17 +501,6 @@ V.auto_Auto.optimalBinCount = function(f) {
         return Math.round((f.max() - f.min()) / h + 0.499);
 };
 
-V.auto_Auto.domainSimilarity = function(f1, f2) {
-    var _i, f;
-    var d1 = new V.auto_Domain();
-    var d2 = new V.auto_Domain();
-    for(_i=$.iter(f1), f=_i.current; _i.hasNext(); f=_i.next())
-        d1.add(f);
-    for(_i=$.iter(f2), f=_i.current; _i.hasNext(); f=_i.next())
-        d2.add(f);
-    return d1.mergedUnwastedSpace(d2);
-};
-
 V.auto_Auto.convert = function(base) {
     var asDate, asNumeric, f;
     var fractionDates = V.auto_Auto.countFractionDates(base);
@@ -552,56 +541,6 @@ V.auto_Auto.isYearly = function(asNumeric) {
     if (asNumeric.max() > 2100) return false;
     d = asNumeric.numericProperty("granularity");
     return d != null && d - Math.floor(d) < 1e-6;
-};
-
-////////////////////// Domain //////////////////////////////////////////////////////////////////////////////////////////
-//
-//   This can either be numeric or categorical, and is used to determine what values a field covers
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-V.auto_Domain = function() {
-    this.nominalValues = new $.Set();
-    this.min = null;
-    this.max = null;
-};
-
-V.auto_Domain.prototype.add = function(field) {
-    if (field == null) return this;
-    if (field.preferCategorical())
-        $.addAll(this.nominalValues, field.categories());
-    else {
-        if (this.min == null) {
-            this.min = field.min();
-            this.max = field.max();
-        } else {
-            this.min = Math.min(field.min(), this.min);
-            this.max = Math.max(field.min(), this.max);
-        }
-    }
-    return this;
-};
-
-V.auto_Domain.prototype.mergedUnwastedSpace = function(other) {
-    var combined, similarity, unionMax, unionMin;
-    if ((this.min == null) != (other.min == null)) return 0;
-    if ((this.nominalValues.size() == 0) != (other.nominalValues.size() == 0)) return 0;
-    similarity = 1.0;
-    if (this.min != null) {
-        unionMin = Math.min(this.min, other.min);
-        unionMax = Math.max(this.max, other.max);
-        if (unionMax == unionMin) {
-            similarity *= ($.equals(this.min, other.min) ? 1.0 : 0.0);
-        } else
-            similarity *= Math.max(this.max - this.min, other.max - other.min) / (unionMax - unionMin);
-    }
-    if (this.nominalValues.size() > 0) {
-        combined = new $.Set();
-        combined.addAll(this.nominalValues);
-        combined.addAll(other.nominalValues);
-        similarity *= Math.max(this.nominalValues.size(), other.nominalValues.size()) / combined.size();
-    }
-    return similarity;
 };
 
 ////////////////////// NumericScale ////////////////////////////////////////////////////////////////////////////////////
@@ -969,14 +908,6 @@ V.Data.quote = function(s) {
     return quoteChar + text + quoteChar;
 };
 
-V.Data.appendFields = function(dataset, extraFields) {
-    return dataset.combine(dataset.fields, extraFields);
-};
-
-V.Data.replaceFields = function(dataset, fields) {
-    return dataset.combine(fields, $.Array(0, null));
-};
-
 V.Data.order = function(c, ascending) {
     var v = [];
     for (var i=0; i<c.length; i++) v.push(i);
@@ -1086,11 +1017,12 @@ V.Dataset.prototype.bin = function(command) {
 };
 
 V.Dataset.prototype.removeSpecialFields = function() {
-    var _i, f;
+    var _i, f, fields1;
     var removed = new $.List();
     for(_i=$.iter(this.fields), f=_i.current; _i.hasNext(); f=_i.next())
         if (!$.startsWith(f.name, "#")) removed.add(f);
-    return V.Data.replaceFields(this, removed.toArray());
+    fields1 = removed.toArray();
+    return this.replaceFields(fields1);
 };
 
 V.Dataset.prototype.addConstants = function(command) {
@@ -1114,26 +1046,18 @@ V.Dataset.prototype.filter = function(command) {
     return V.modify_Filter.transform(this, command);
 };
 
+V.Dataset.prototype.replaceFields = function(fields) {
+    var result = new V.Dataset(fields);
+    result.copyPropertiesFrom(this);
+    return result;
+};
+
 V.Dataset.prototype.rowCount = function() {
     return this.fields.length == 0 ? 0 : this.fields[0].rowCount();
 };
 
 V.Dataset.prototype.name = function() {
     return this.stringProperty("name");
-};
-
-V.Dataset.prototype.reduce = function(command) {
-    var _i, array, dataset, f, ff;
-    var names = new $.Set();
-    $.addAll(names, V.modify_DataOperation.parts(command));
-    ff = new $.List();
-    for(_i=$.iter(this.fields), f=_i.current; _i.hasNext(); f=_i.next()) {
-        if ($.startsWith(f.name, "#") || names.contains(f.name)) ff.add(f);
-    }
-    array = ff.toArray();
-    dataset = V.Data.replaceFields(this, array);
-    dataset.set("reduced", true);
-    return dataset;
 };
 
 V.Dataset.prototype.series = function(command) {
@@ -1152,18 +1076,6 @@ V.Dataset.prototype.summarize = function(command) {
     var dataset = V.modify_Summarize.transform(this, command);
     dataset.set("reduced", true);
     return dataset;
-};
-
-V.Dataset.prototype.combine = function(a, b) {
-    var i, result;
-    var copied = $.Array(a.length + b.length, null);
-    for (i = 0; i < a.length; i++)
-        copied[i] = a[i];
-    for (i = 0; i < b.length; i++)
-        copied[i + a.length] = b[i];
-    result = new V.Dataset(copied);
-    result.copyPropertiesFrom(this);
-    return result;
 };
 
 ////////////////////// Chord ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1983,7 +1895,7 @@ V.modify_AddConstantFields.transform = function(base, command) {
     }
     for (i = 0; i < base.fields.length; i++)
         fields[i + additional.length] = base.fields[i];
-    return V.Data.replaceFields(base, fields);
+    return base.replaceFields(fields);
 };
 
 ////////////////////// ConvertSeries ///////////////////////////////////////////////////////////////////////////////////
@@ -2003,7 +1915,7 @@ V.modify_ConvertSeries = function() {
 $.extend(V.modify_ConvertSeries, V.modify_DataOperation);
 
 V.modify_ConvertSeries.transform = function(base, commands) {
-    var N, _i, f, fieldName, indexing, otherFields, resultFields, sections, series, values, yFields;
+    var N, _i, f, fieldName, fields, indexing, otherFields, resultFields, sections, series, values, yFields;
     if ($.isEmpty(commands)) return base;
     sections = V.modify_DataOperation.parts(commands);
     yFields = V.modify_DataOperation.list(sections[0]);
@@ -2021,7 +1933,8 @@ V.modify_ConvertSeries.transform = function(base, commands) {
         f = base.field(fieldName);
         resultFields.add(V.Data.permute(f, indexing, false));
     }
-    return V.Data.replaceFields(base, resultFields.toArray());
+    fields = resultFields.toArray();
+    return base.replaceFields(fields);
 };
 
 V.modify_ConvertSeries.addRequired = function(list) {
@@ -2112,7 +2025,7 @@ V.modify_Filter.transform = function(base, command) {
     results = $.Array(base.fields.length, null);
     for (i = 0; i < results.length; i++)
         results[i] = V.Data.permute(base.fields[i], keep, false);
-    return V.Data.replaceFields(base, results);
+    return base.replaceFields(results);
 };
 
 V.modify_Filter.getRankedObjects = function(field, p1, p2) {
@@ -2210,10 +2123,6 @@ V.modify_Sort = function() {
 $.extend(V.modify_Sort, V.modify_DataOperation);
 
 V.modify_Sort.transform = function(base, command) {
-    return V.modify_Sort.doSort(base, command, true);
-};
-
-V.modify_Sort.doSort = function(base, command, sortCategories) {
     var ascending, dimensions, f, field, fields, i, newOrder, rowOrder, rowRanking;
     var sortFields = V.modify_DataOperation.parts(command);
     if (sortFields == null) return base;
@@ -2230,7 +2139,7 @@ V.modify_Sort.doSort = function(base, command, sortCategories) {
     for (i = 0; i < fields.length; i++){
         newOrder = null;
         field = base.fields[i];
-        if (sortCategories && !field.ordered()) {
+        if (!field.ordered()) {
             if (rowRanking == null)
                 rowRanking = V.modify_Sort.makeRowRanking(rowOrder,
                     new V.summary_FieldRowComparison(dimensions, null, false));
@@ -2240,7 +2149,7 @@ V.modify_Sort.doSort = function(base, command, sortCategories) {
         if (newOrder != null)
             fields[i].setCategories(newOrder);
     }
-    return V.Data.replaceFields(base, fields);
+    return base.replaceFields(fields);
 };
 
 V.modify_Sort.makeRowRanking = function(order, comparison) {
@@ -2328,10 +2237,6 @@ V.modify_Sort.categoriesFromRanks = function(field, rowRanking) {
     return cats;
 };
 
-V.modify_Sort.transformRows = function(base, command) {
-    return V.modify_Sort.doSort(base, command, false);
-};
-
 ////////////////////// Stack ///////////////////////////////////////////////////////////////////////////////////////////
 //
 //   This transform takes a single y field and produces two new fields; a lower and an upper value.
@@ -2368,7 +2273,7 @@ V.modify_Stack.transform = function(base, command) {
     }
     fields = V.modify_Stack.makeStackedValues(allFields, V.modify_Stack.getField(allFields,
         yField), V.modify_Stack.getFields(allFields, x), full);
-    return V.Data.replaceFields(base, fields);
+    return base.replaceFields(fields);
 };
 
 V.modify_Stack.addAllCombinations = function(baseFields, keys) {
@@ -2581,7 +2486,7 @@ V.modify_Summarize.transform = function(base, command) {
         measures.add(new V.summary_MeasureField(base.field("#row"), "#row", "list"));
     s = new V.modify_Summarize(measures, dimensions, percentBase, base.rowCount());
     fields = s.make();
-    return V.Data.replaceFields(base, fields);
+    return base.replaceFields(fields);
 };
 
 V.modify_Summarize.prototype.make = function() {
@@ -2703,7 +2608,7 @@ V.modify_Transform.transform = function(base, command) {
     fields = $.Array(base.fields.length, null);
     for (i = 0; i < fields.length; i++)
         fields[i] = V.modify_Transform.modify(base.fields[i], operations.get(base.fields[i].name));
-    return V.Data.replaceFields(base, fields);
+    return base.replaceFields(fields);
 };
 
 V.modify_Transform.modify = function(field, operation) {

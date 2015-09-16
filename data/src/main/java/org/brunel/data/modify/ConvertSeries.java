@@ -76,7 +76,9 @@ public class ConvertSeries extends DataOperation {
             resultFields.add(Data.permute(f, indexing, false));
         }
 
-        return Data.replaceFields(base, resultFields.toArray(new Field[resultFields.size()]));
+        Field[] fields = resultFields.toArray(new Field[resultFields.size()]);
+
+        return base.replaceFields(fields);
     }
 
     private static String[] addRequired(String[] list) {

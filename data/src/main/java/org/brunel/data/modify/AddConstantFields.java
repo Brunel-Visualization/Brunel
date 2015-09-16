@@ -49,6 +49,7 @@ public class AddConstantFields extends DataOperation {
             fields[i + additional.length] = base.fields[i];
 
         // And done
-        return Data.replaceFields(base, fields);
+
+        return base.replaceFields(fields);
     }
 }

@@ -37,10 +37,6 @@ import java.util.Map;
 public class Sort extends DataOperation {
 
     public static Dataset transform(Dataset base, String command) {
-        return doSort(base, command, true);
-    }
-
-    private static Dataset doSort(Dataset base, String command, boolean sortCategories) {
         String[] sortFields = parts(command);
         if (sortFields == null) return base;
         // Build the dimensional information
@@ -61,7 +57,7 @@ public class Sort extends DataOperation {
         for (int i = 0; i < fields.length; i++) {
             Object[] newOrder = null;
             Field field = base.fields[i];
-            if (sortCategories && !field.ordered()) {
+            if (!field.ordered()) {
                 if (rowRanking == null)
                     rowRanking = makeRowRanking(rowOrder, new FieldRowComparison(dimensions, null, false));
                 newOrder = categoriesFromRanks(field, rowRanking);
@@ -70,7 +66,7 @@ public class Sort extends DataOperation {
             if (newOrder != null) fields[i].setCategories(newOrder);
         }
 
-        return Data.replaceFields(base, fields);
+        return base.replaceFields(fields);
     }
 
     /* Convert an order (possibly with ties) into a ranking for the original rows */
@@ -132,7 +128,7 @@ public class Sort extends DataOperation {
     static Object[] categoriesFromRanks(Field field, double[] rowRanking) {
         double n = field.rowCount();                                                // # rows
         Object[] categories = field.categories();                                   // categories
-        int[] counts = (int[]) field.property("categoryCounts");                 // category counts
+        int[] counts = (int[]) field.property("categoryCounts");                    // category counts
         Double[] means = new Double[counts.length];                                 // sums of ranks
         for (int i = 0; i < means.length; i++) means[i] = i / 100.0 / means.length; // Bias towards current order
 
@@ -158,9 +154,4 @@ public class Sort extends DataOperation {
 
         return cats;
     }
-
-    static Dataset transformRows(Dataset base, String command) {
-        return doSort(base, command, false);
-    }
-
 }

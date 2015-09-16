@@ -20,7 +20,6 @@ package org.brunel.data;
 import org.brunel.data.auto.Auto;
 import org.brunel.data.modify.AddConstantFields;
 import org.brunel.data.modify.ConvertSeries;
-import org.brunel.data.modify.DataOperation;
 import org.brunel.data.modify.Filter;
 import org.brunel.data.modify.Sort;
 import org.brunel.data.modify.Stack;
@@ -31,7 +30,6 @@ import org.brunel.data.values.ColumnProvider;
 import org.brunel.translator.JSTranslation;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -128,7 +126,9 @@ public class Dataset extends Informative {
     public Dataset removeSpecialFields() {
         List<Field> removed = new ArrayList<Field>();
         for (Field f : fields) if (!f.name.startsWith("#")) removed.add(f);
-        return Data.replaceFields(this, removed.toArray(new Field[removed.size()]));
+        Field[] fields1 = removed.toArray(new Field[removed.size()]);
+
+        return replaceFields(fields1);
     }
 
     /**
@@ -175,34 +175,18 @@ public class Dataset extends Informative {
         return Filter.transform(this, command);
     }
 
+    public Dataset replaceFields(Field[] fields) {
+        Dataset result = new Dataset(fields);
+        result.copyPropertiesFrom(this);
+        return result;
+    }
+
     public int rowCount() {
         return fields.length == 0 ? 0 : fields[0].rowCount();
     }
 
     public String name() {
         return stringProperty("name");
-    }
-
-    /**
-     * Keeps only the indicated fields in the data set
-     *
-     * @param command names of the fields to keep
-     * @return reduced data set
-     */
-    public Dataset reduce(String command) {
-        Set<String> names = new HashSet<String>();
-        Collections.addAll(names, DataOperation.parts(command));
-
-        // keep special and used fields
-        List<Field> ff = new ArrayList<Field>();
-        for (Field f : this.fields) {
-            if (f.name.startsWith("#") || names.contains(f.name))
-                ff.add(f);
-        }
-        Field[] array = ff.toArray(new Field[ff.size()]);
-        Dataset dataset = Data.replaceFields(this, array);
-        dataset.set("reduced", true); // Data has been reduced to only needed fields
-        return dataset;
     }
 
     /**
@@ -269,23 +253,6 @@ public class Dataset extends Informative {
         Dataset dataset = Summarize.transform(this, command);
         dataset.set("reduced", true); // Data has been reduced to only needed fields
         return dataset;
-    }
-
-    /**
-     * Combines two lists of fields, with this data's properties, to form a new data set
-     * @param a first set
-     * @param b second set
-     * @return resulting dataset
-     */
-    Dataset combine(Field[] a, Field[] b) {
-        Field[] copied = new Field[a.length + b.length];
-        for (int i = 0; i < a.length; i++)
-            copied[i] = a[i];
-        for (int i = 0; i < b.length; i++)
-            copied[i + a.length] = b[i];
-        Dataset result = new Dataset(copied);
-        result.copyPropertiesFrom(this);
-        return result;
     }
 
 }

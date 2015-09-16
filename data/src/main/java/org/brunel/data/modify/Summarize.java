@@ -92,7 +92,8 @@ public class Summarize extends DataOperation {
 
         Summarize s = new Summarize(measures, dimensions, percentBase, base.rowCount());
         Field[] fields = s.make();
-        return Data.replaceFields(base, fields);
+
+        return base.replaceFields(fields);
     }
 
     private final List<MeasureField> measures;

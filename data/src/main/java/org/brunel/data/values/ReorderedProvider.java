@@ -38,7 +38,7 @@ public class ReorderedProvider implements Provider {
     }
 
     public int expectedSize() {
-        return 24 + order.length*4 + base.expectedSize();
+        return 24 + order.length * 4 + base.expectedSize();
     }
 
     public Provider setValue(Object o, int index) {

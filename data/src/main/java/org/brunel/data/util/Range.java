@@ -42,7 +42,6 @@ public class Range implements Comparable<Range> {
         return df == null ? Data.formatNumeric(v, true) : df.format(Data.asDate(v));
     }
 
-    ////// Fields //////////////////////////////////////////////////^n
     public final double high;
     public final double low;
     private final String name;

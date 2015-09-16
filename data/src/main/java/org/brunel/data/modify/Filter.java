@@ -85,7 +85,8 @@ public class Filter extends DataOperation {
         Field[] results = new Field[base.fields.length];
         for (int i = 0; i < results.length; i++)
             results[i] = Data.permute(base.fields[i], keep, false);
-        return Data.replaceFields(base, results);
+
+        return base.replaceFields(results);
 
     }
 
