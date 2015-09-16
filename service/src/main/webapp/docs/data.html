@@ -71,7 +71,36 @@
     style("opacity:0.1")</a></p>
 <p class="examples"><a onClick="showAction(this.text)">x(summer) y(winter) bin(summer, winter) size(#count)</a></p>
 
+
+<h3>Rank</h3>
+<p>
+    Rank transforms a field into the ranked value of a field, where '1' is the highest ranked.
+    Ties are given an averaged rank.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">x(summer) y(winter) label("#",winter) rank(summer)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">y(dem_rep) label(abbr) rank(dem_rep) axes(x) list(abbr)
+    bin(dem_rep:30) color(dem_rep) legends(none)</a></p>
+
+<h3>Top, Bottom, Inner, Outer</h3>
+<p>
+    These data methods filter the data so only certain values are shown. This can take either or both of a field and a
+    number as parameters, with the default field being the Y field, or an aesthetic field if no Y field exists,
+    and the default number being 10. The data is then filtered to show only the desired top, bottom, inner or outer
+    values for that number of items.
+</p>
+<p class="examples"><a onClick="showAction(this.text)">stack top(5) label(state, " (", population, ")")
+    color(population) legends(none)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">stack bottom(5) label(state, " (", population, ")")
+    color(population) legends(none)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) yrange(income) range(income) inner(income:10) +
+    text x(region) y(income) outer(income:10) label(abbr)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(date) y(longitude) outer(date:10) + line x(date) y(longitude)
+    inner(date:10)</a></p>
+
+
 <h3>Aggregation</h3>
+
 <p>
     In Brunel, data can of course be passed in pre-aggregated (and this is necessary for very large data sets), but
     to get fast local interactivity, we need to be able to aggregate and re-aggregate in the client. We provide a
@@ -82,7 +111,8 @@
         <code>#count</code>
         is used.
     </li>
-    <li>When aggregating, #count and any fields defined by a summary function are treated as responses, and all other
+    <li>When aggregating, #count and any fields defined by a summary function are treated as responses, and all
+        other
         fields are used to define the groups or 'dimensions' for the summaries.
     </li>
     <li>All other fields are dropped</li>
@@ -94,28 +124,47 @@
     <li><b>count</b>: The number of rows in the group</li>
     <li><b>valid</b>: The number of rows that are not missing and (if numeric or date) of the correct format</li>
     <li><b>unique</b>: The number if unique categories or values in that group</li>
-    <li><b>list</b>: A concatenated list of the unique values for the group. Takes an optional integer parameter that
+    <li><b>list</b>: A concatenated list of the unique values for the group. Takes an optional integer parameter
+        that
         limits the number of items to display (this defaults to 12)
     </li>
     <li><b>mode</b>: The most common value (ties broken by the row order)</li>
-    <li><b>mean</b>: The mean value. Note that for categorical data, this silently changes to the mode. Although this is
+    <li><b>mean</b>: The mean value. Note that for categorical data, this silently changes to the mode. Although
+        this is
         unusual, it is very helpful for use when you are unsure if data is numeric or not
     </li>
 </ul>
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) label(#count)</a></p>
-<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(population) count(population) sort(population) label(region:3, ": ", population)</a></p>
-<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(population) valid(population) sort(population) label(region:3, ": ", population)</a></p>
-<p class="examples"><a onClick="showAction(this.text)">bar x(summer) bin(summer) y(region) unique(region) label(region)</a></p>
-<p class="examples"><a onClick="showAction(this.text)">bar y(1) bin(summer) color(summer:red) list(region) label(region) stack axes(none) legends(none)</a></p>
-<p class="examples"><a onClick="showAction(this.text)">bubble label(region:8) list(region) size(summer) bin(summer:20) tooltip(region) </a></p>
-<p class="examples"><a onClick="showAction(this.text)">bar x(summer) bin(summer) y(#count) mode(region) label(region:9)</a></p>
 
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(population) count(population)
+    sort(population)
+    label(region:3, ": ", population)</a></p>
+
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(population) valid(population)
+    sort(population)
+    label(region:3, ": ", population)</a></p>
+
+<p class="examples"><a onClick="showAction(this.text)">bar x(summer) bin(summer) y(region) unique(region)
+    label(region)</a></p>
+
+<p class="examples"><a onClick="showAction(this.text)">bar y(1) bin(summer) color(summer:red) list(region)
+    label(region)
+    stack axes(none) legends(none)</a></p>
+
+<p class="examples"><a onClick="showAction(this.text)">bubble label(region:8) list(region) size(summer)
+    bin(summer:20)
+    tooltip(region) </a></p>
+
+<p class="examples"><a onClick="showAction(this.text)">bar x(summer) bin(summer) y(#count) mode(region)
+    label(region:9)</a></p>
 
 
 <p>The following summary functions produce results only for numeric data </p>
 <ul>
     <li><b>sum</b>: Sum of all values in the group</li>
-    <li><b>percent</b>: The percent of the sum of this group as a percent of the sum of all groups with the same 'x' value</li>
+    <li><b>percent</b>: The percent of the sum of this group as a percent of the sum of all groups with the same 'x'
+        value
+    </li>
     <li><b>median</b>: Median value of the group</li>
     <li><b>min</b>, <b>max</b>: Lower and upper values of the group</li>
     <li><b>range</b>: Distance between min and max values</li>
@@ -123,16 +172,29 @@
     <li><b>iqr</b>:Distance between q1 and q3 -- the interquartile range</li>
     <li><b>stddev</b>, <b>variance</b>, <b>skew</b>,<b>kurtosis</b>: statistical measure for the group</li>
 </ul>
-<p>Note that <code>iqr</code> and <code>range</code> produce a range -- two values. If used with 'y' the result is the
-    distance between them, but if used with 'yrange' it will generate the actual range. See the examples below for how
+<p>Note that <code>iqr</code> and <code>range</code> produce a range -- two values. If used with 'y' the result is
+    the
+    distance between them, but if used with 'yrange' it will generate the actual range. See the examples below for
+    how
     this works</p>
 
-<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(population) sum(population) sort(population)</a></p>
-<p class="examples"><a onClick="showAction(this.text)">bar x(summer) bin(summer) color(region) y(#count) percent(#count) stack label(#count)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(population) sum(population)
+    sort(population)</a>
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">bar x(summer) bin(summer) color(region) y(#count)
+    percent(#count)
+    stack label(#count)</a></p>
+
 <p class="examples"><a onClick="showAction(this.text)">area x(region) y(density) mean(density) sort(density)</a></p>
+
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) y(summer) range(summer) sort(summer)</a></p>
-<p class="examples"><a onClick="showAction(this.text)">bar x(region) yrange(summer) range(summer) sort(summer)</a></p>
-<p class="examples"><a onClick="showAction(this.text)">area x(region) yrange(dem_rep) iqr(dem_rep) + line x(region) y(dem_rep) median(dem_rep)</a></p>
+
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) yrange(summer) range(summer) sort(summer)</a>
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">area x(region) yrange(dem_rep) iqr(dem_rep) + line x(region)
+    y(dem_rep) median(dem_rep)</a></p>
 
 
 
