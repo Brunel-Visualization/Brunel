@@ -24,7 +24,6 @@ import org.brunel.data.summary.DimensionField;
 import org.brunel.data.summary.FieldRowComparison;
 import org.brunel.data.summary.MeasureField;
 import org.brunel.data.summary.SummaryValues;
-import org.brunel.data.util.DateFormat;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -168,9 +167,7 @@ public class Summarize extends DataOperation {
             // Set the measure values
             for (int i = 0; i < measures.size(); i++) {
                 MeasureField m = measures.get(i);
-                String measureFunction = m.measureFunction;
-                DateFormat df = m.isDate() ? (DateFormat) m.getProperty("dateFormat") : null;
-                measureData[i][g] = values.get(i, measureFunction, m.option, df);
+                measureData[i][g] = values.get(i, m);
             }
         }
 

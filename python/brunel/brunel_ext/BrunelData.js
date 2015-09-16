@@ -2653,8 +2653,7 @@ V.modify_Summarize.transform = function(base, command) {
 };
 
 V.modify_Summarize.prototype.make = function() {
-    var df, dimData, f, fields, g, i, m, measureData, measureFunction,
-        originalRow, percentSums, result, row, v, value, values;
+    var dimData, f, fields, g, i, m, measureData, originalRow, percentSums, result, row, v, value, values;
     var dimensionFields = this.getFields(this.dimensions);
     var percentBaseFields = this.percentBase.toArray();
     var measureFields = this.getFields(this.measures);
@@ -2691,9 +2690,7 @@ V.modify_Summarize.prototype.make = function() {
             dimData[i][g] = dimensionFields[i].value(originalRow);
         for (i = 0; i < this.measures.size(); i++){
             m = this.measures.get(i);
-            measureFunction = m.measureFunction;
-            df = m.isDate() ? m.getProperty("dateFormat") : null;
-            measureData[i][g] = values.get(i, measureFunction, m.option, df);
+            measureData[i][g] = values.get(i, m);
         }
     }
     fields = $.Array(dimData.length + measureData.length, null);
@@ -2787,7 +2784,7 @@ V.modify_Transform.modify = function(field, operation) {
         desiredBinCount = option == null ? -1 : Number(option);
         return V.modify_Transform.bin(field, desiredBinCount);
     } else if (name == "rank") {
-        return V.modify_Transform.rank(field, !("descending" == option));
+        return V.modify_Transform.rank(field, ("ascending" == option));
     } else {
         return field;
     }
@@ -3061,8 +3058,8 @@ V.summary_DimensionField.prototype.compareTo = function(o) {
     return V.Data.compare(this.rename, o.rename);
 };
 
-V.summary_DimensionField.prototype.getProperty = function(key) {
-    return this.field == null ? null : this.field.property(key);
+V.summary_DimensionField.prototype.getDateFormat = function() {
+    return this.isDate() ? this.field.property("dateFormat") : null;
 };
 
 V.summary_DimensionField.prototype.isDate = function() {
@@ -3155,8 +3152,9 @@ V.summary_SummaryValues.prototype.firstRow = function() {
     return this.rows.get(0);
 };
 
-V.summary_SummaryValues.prototype.get = function(fieldIndex, summary, option, df) {
+V.summary_SummaryValues.prototype.get = function(fieldIndex, m) {
     var categories, data, displayCount, f, high, i, low, mean, sum;
+    var summary = m.measureFunction;
     if (summary == "count") return this.rows.size();
     data = $.Array(this.rows.size(), null);
     for (i = 0; i < data.length; i++)
@@ -3172,22 +3170,22 @@ V.summary_SummaryValues.prototype.get = function(fieldIndex, summary, option, df
         if (mean == null) return null;
         low = f.numericProperty("min");
         high = f.numericProperty("max");
-        return low == null ? null : V.util_Range.make(low, high, df);
+        return low == null ? null : V.util_Range.make(low, high, m.getDateFormat());
     }
     if (summary == "iqr") {
         if (mean == null) return null;
         low = f.numericProperty("q1");
         high = f.numericProperty("q3");
-        return low == null ? null : V.util_Range.make(low, high, df);
+        return low == null ? null : V.util_Range.make(low, high, m.getDateFormat());
     }
     if (summary == "sum") {
         if (mean == null) return null;
         return mean * f.numericProperty("valid");
     }
     if (summary == "list") {
-        categories = new V.util_ItemsList(f.property("categories"), df);
-        if (option != null) {
-            displayCount = Number(option);
+        categories = new V.util_ItemsList(f.property("categories"), m.getDateFormat());
+        if (m.option != null) {
+            displayCount = Number(m.option);
             categories.setDisplayCount(displayCount);
         }
         return categories;

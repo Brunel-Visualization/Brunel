@@ -19,9 +19,10 @@ package org.brunel.data.summary;
 
 import org.brunel.data.Data;
 import org.brunel.data.Field;
+import org.brunel.data.util.DateFormat;
 
 public class DimensionField implements Comparable<DimensionField> {
-    ////// Fields //////////////////////////////////////////////////^n
+
     public final Field field;
     public final String rename;
 
@@ -34,8 +35,8 @@ public class DimensionField implements Comparable<DimensionField> {
         return Data.compare(rename, o.rename);
     }
 
-    public Object getProperty(String key) {
-        return field == null ? null : field.property(key);
+    public DateFormat getDateFormat() {
+        return isDate() ? (DateFormat) field.property("dateFormat") : null;
     }
 
     public boolean isDate() {

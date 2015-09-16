@@ -19,7 +19,6 @@ package org.brunel.data.summary;
 
 import org.brunel.data.Data;
 import org.brunel.data.Field;
-import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.ItemsList;
 import org.brunel.data.util.Range;
 
@@ -44,7 +43,8 @@ public final class SummaryValues {
      * [numeric] mean, min, max, range, iqr, median, stddev
      * [any] count, mode, unique
      */
-    public Object get(int fieldIndex, String summary, String option, DateFormat df) {
+    public Object get(int fieldIndex, MeasureField m) {
+        String summary = m.measureFunction;
         if (summary.equals("count")) return rows.size();
 
         Object[] data = new Object[rows.size()];
@@ -64,13 +64,13 @@ public final class SummaryValues {
             if (mean == null) return null;
             Double low = f.numericProperty("min");
             Double high = f.numericProperty("max");
-            return low == null ? null : Range.make(low, high, df);
+            return low == null ? null : Range.make(low, high, m.getDateFormat());
         }
         if (summary.equals("iqr")) {
             if (mean == null) return null;
             Double low = f.numericProperty("q1");
             Double high = f.numericProperty("q3");
-            return low == null ? null : Range.make(low, high, df);
+            return low == null ? null : Range.make(low, high, m.getDateFormat());
         }
 
         if (summary.equals("sum")) {
@@ -78,9 +78,9 @@ public final class SummaryValues {
             return mean * f.numericProperty("valid");
         }
         if (summary.equals("list")) {
-            ItemsList categories = new ItemsList((Object[]) f.property("categories"), df);
-            if (option != null) {
-                int displayCount = Integer.parseInt(option);
+            ItemsList categories = new ItemsList((Object[]) f.property("categories"), m.getDateFormat());
+            if (m.option != null) {
+                int displayCount = Integer.parseInt(m.option);
                 categories.setDisplayCount(displayCount);
             }
             return categories;
