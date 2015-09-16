@@ -1,0 +1,238 @@
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+  
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Brunel Visualization Renderer</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+<link rel="stylesheet" href="../dropzone/basic.min.css">
+
+    <style>
+        .display {
+
+            width: $WIDTH$px;
+            height: $HEIGHT$px;
+            padding: 0px;
+            margin: 0;
+            overflow: hidden
+        }
+
+
+        .main {
+            margin-top: 40px;
+            left: 160px;
+            right: 5px;
+
+            position: absolute;
+        }
+
+        #data-name {
+            font-weight: bold;
+        }
+    </style>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js" charset="utf-8"></script>    
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="../dropzone/dropzone.min.js" charset="utf-8"></script>
+</head>
+<body>
+
+<div class="page-header">
+  <h4>Brunel Visualization <small id="title">$TITLE$</small></h4>
+  <div class="pull-right"><a href="https://github.com/Brunel-Visualization/Brunel"><img style="position: absolute; top: 0; right: 0; border: 0; width:100px;height:100px" src="https://camo.githubusercontent.com/e7bbb0521b397edbd5fe43e7f760759336b5e05f/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png"></a></div>
+</div>
+<div class="panel panel-default">
+  <button type="button" class="btn btn-info btn-lg pull-right btn-sm" data-toggle="modal" data-target="#embedModal" onClick="populateEmbedCode()">Embed This Visualization...</button>    
+  <div class="panel-heading" id="description"><small>$DESCRIPTION$</small></div>
+
+  <div class="panel-body">
+    	<iframe class="display" id="actionResult" frameborder="0" seamless="seamless" ></iframe>
+		<BR>
+    	<span class="label label-primary">Edit</span> <small>(Press Enter To Modify):</small>
+    	<span class="pull-right" > <a href="http://brunel.jupyter.ninja:9080/brunel-service/docs/" target="_blank">Brunel Docs</a> </span><BR>
+	    
+	    <textarea id="actionText" rows="2" style="width:100%; height:50px" spellcheck="false" draggable="false">Action...</textarea><BR>	
+	    <span class="label label-primary">Change Data</span><BR>
+	    <div class="row">
+        <div class="col-sm-6">
+		    <div class="input-group" >
+		      <input type="text" class="form-control" id="newDataUrl" placeholder="Enter URL for CSV...">
+		      <span class="input-group-btn">
+		        <button class="btn btn-default" type="button" onClick="newDataByUrl()">Go!</button>
+		      </span>
+		    </div><!-- /input-group -->
+   		 </div>
+		 
+		  <div class="col-sm-1" style="text-align: center;">
+		   <span class="label label-primary" >OR</span>
+		  </div> 
+		  <div class="col-sm-5">
+			  <div class="input-group" style="width: 100%;height:100%">
+				  <form style=" outline-color:gray;outline-style:solid;outline-width:.25px; ;padding: 7px; color:gray" action="../gallery_app/renderer/upload_data"
+		          class="dropzone" id='drop-zone' >
+		          <input class="form-control" id='file-name' type="hidden" name="file_name"/>         
+	    		  </form>
+	    	  </div> 
+    	  </div>
+  		</div>
+  </div>
+</div>
+<small>
+Disclaimer:  This service provided as-is.  No guarantees.  Please submit issue reports on <a href="https://github.com/Brunel-Visualization/Brunel/issues">github</a>.  Do not upload sensitive material.  Uploaded data is cached but not persisted.
+</small>
+
+  <!-- Modal -->
+  <div class="modal fade" id="embedModal" role="dialog">
+    <div class="modal-dialog">
+    
+     
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Embed This Visualization</h4>
+        </div>
+        <div class="modal-body">
+          <p>Copy The Following HTML To Embed This Visualization:</p>
+          <div class="well well-lg"><textarea readonly style="font-family:monospace; width:100%; height:100px" id ="embedCode"></textarea></div>
+        </div>
+        <div class="alert alert-danger" role="alert" id="uploadAlert" style="display:none">Warning:  Uploaded data will only be available until it expires from the cache.</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+<script>
+    
+	//Reduces the size of the visualization to avoid scrollbars
+	var w = $WIDTH$-20;
+	var h = $HEIGHT$-25;
+	var locSize = "&width="+w+"&height="+h;  //appended to REST request to specify visualization size
+	
+	//Initial Brunel syntax
+	var brunelSrc = $BRUNEL_SRC$;
+	
+	//Dropzone config
+    Dropzone.options.dropZone = {
+            dictDefaultMessage: "Drop A CSV File Here (Upload)...",
+            headers: { 	"Accept": "text/plain"},
+            createImageThumbnails: false,
+            init: function () {
+            	
+    			//After upload, get new Brunel & execute
+                this.on("success", function (file, response) {
+                    getBrunel(null, response);
+                    //Make warning about uploaded data visible
+                    $('#uploadAlert').css('display', 'block');
+                    
+                    //Removes the icon after upload
+                    setTimeout(function () {
+                        $('div.dz-success').remove();
+                    }, 1500);
+
+                });
+            },
+
+        };
+
+	
+	//Updates Brunel display iframe with new visualization
+    function showAction(src) {
+
+        var txt = removeLineBreaks(src);
+
+        var loc = "../brunel/interpret/d3?brunel_src="
+                + encodeURIComponent(txt) + locSize;
+        $('#actionResult').attr("src", loc);
+        $('#actionText').val(txt);
+
+    }
+    
+	//handler for new data using URL
+    function newDataByUrl() {
+        $('#uploadAlert').css('display', 'none');
+    	getBrunel( $("#actionText").val(), $("#newDataUrl").val() );
+    }
+    
+	//Calls service to get new Brunel to use new data on current visualization
+    function getBrunel(src, newData) {
+        if (src == null) src = $("#actionText").val();
+        clearTitles();
+
+        $.ajax({
+            type: "GET",
+            dataType: "text",
+            data: {
+	            new_data: newData,
+	            src: src
+         	 },
+	         url: "../brunel/interpret/match",
+	         success: function (brunel) {
+	             showAction(brunel);
+	         }
+        });
+    }
+
+
+	//Press enter handler
+    $('#actionText').keyup(function (e) {
+        var code = e.keyCode || e.which;
+        if (code == 13) {
+            var text = $("#actionText").val();
+            showAction(text);
+        }
+    });
+
+
+	//Remove line breaks from any typed Brunel
+    function removeLineBreaks(text) {
+        return text.replace(/(\r\n|\n|\r)/gm, "");
+    }
+    
+	//Get the base URL for this page
+    function baseUrl() {
+        var fullUrl = window.location.href;
+        return fullUrl.substring(0, fullUrl.indexOf("/gallery"))
+    }
+
+	//Constructs and displays the HTML iframe code
+    function populateEmbedCode() {
+
+        var style = "'margin: 0; margin-top: 40px;width: $WIDTH$px;  height: $HEIGHT$px; padding: 0px; overflow: hidden'";
+        var loc = baseUrl() + "/brunel/interpret/d3?brunel_src=" + encodeURIComponent(removeLineBreaks($("#actionText").val())) +
+                locSize;
+        var embedIFrame = "<iframe style= " + style + " frameborder='0' seamless='seamless' src=" + loc + "></iframe>";
+        console.log(embedIFrame);
+        $("#embedCode").text(embedIFrame);
+
+    }
+    
+	//Empty the original title/description (called when new data provided)
+    function clearTitles() {
+    	$("#title").html("");
+    	$("#description").html("");
+    }
+    
+	//Start by showing current visualization
+    showAction(brunelSrc);
+
+</script>
+</body>
+</html>

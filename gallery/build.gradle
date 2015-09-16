@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2015 IBM Corporation and others.
  *
@@ -16,4 +15,9 @@
  *
  */
 
-include 'data', 'core', 'etc', 'service', 'python', 'gallery'
+task copyWebFiles(type: Copy) {
+ 	description 'Copy Required Web Support Files To Development WebApp Folder'
+    from webFiles
+    exclude '*Test*'
+    into 'src/main/webapp/brunelsupport'
+}

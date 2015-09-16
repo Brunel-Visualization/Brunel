@@ -32,7 +32,7 @@ import javax.ws.rs.ext.Provider;
 import com.google.gson.Gson;
 
 /**
- * So we can write IBM JSON objects
+ * So we can serve GSON object in the web service as JSON
  */
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
