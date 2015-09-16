@@ -86,7 +86,7 @@ public abstract class D3Diagram {
     }
 
     void addAestheticsAndTooltips(ElementDetails details, boolean addLabels) {
-        String remapAesthetics =  "if (d == null || d.row == null) return;";
+        String remapAesthetics =  "if (d == null || d.row == null) return; ";
         if (!vis.itemsTooltip.isEmpty()) {
             labelBuilder.addTooltips(details);
         }

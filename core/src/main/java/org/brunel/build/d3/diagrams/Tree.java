@@ -41,7 +41,7 @@ class Tree extends D3Diagram {
         out.comment("Define tree (hierarchy) data structures");
         makeHierarchicalTree();
         out.add("var treeLayout = d3.layout.tree()")
-                .addChained("sort(function(a,b) { return a.row-b.row } )");
+                .addChained("sort(BrunelData.diagram_Hierarchical.compare)");
         if (vis.coords == VisTypes.Coordinates.polar) {
             out.addChained("size([360, geom.inner_radius-" + pad + "])");
         } else {
@@ -57,15 +57,16 @@ class Tree extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details) {
-        out.addChained("attr('class', function(d) { return (d.children ? 'L' + d.depth : 'leaf element " + element.name() + "') })")
-                .addChained("attr('r', 5)");
+        out.addChained("attr('class', function(d) { return (d.children ? 'L' + d.depth : 'leaf element " + element.name() + "') })");
 
         if (vis.coords == VisTypes.Coordinates.polar) {
             out.addChained("attr('transform', function(d) { return 'rotate(' + (d.x - 90) + ') translate(' + d.y + ')' })");
         } else {
             out.addChained("attr('cx', function(d) { return d.x })")
                     .addChained("attr('cy', function(d) { return d.y })");
+
         }
+        out.addChained("attr('r', function(d) { return d.row == null ? geom.default_point_size : size_x(d) / 2})");
 
         out.endStatement();
         labelBuilder.addTreeInternalLabels(details, "{ x: box.x + box.width, y: box.y - box.height/2 + 3 }");
@@ -89,6 +90,8 @@ class Tree extends D3Diagram {
         }
 
         out.endStatement();
+
+        addAestheticsAndTooltips(details, true);
 
     }
 }

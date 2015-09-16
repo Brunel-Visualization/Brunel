@@ -369,9 +369,9 @@ public class D3Builder extends AbstractBuilder {
         String elementTransform = makeElementTransform(scalesBuilder.coords);
         out.add("var elementGroup = interior.append('g').attr('class', 'element" + (elementIndex + 1) + "')");
         if (elementTransform != null) out.addChained(elementTransform);
-        out.continueOnNextLine(",").add("main = elementGroup.append('g').attr('class', 'main')");
         if (scalesBuilder.isDiagram)
             out.continueOnNextLine(",").add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");
+        out.continueOnNextLine(",").add("main = elementGroup.append('g').attr('class', 'main')");
         out.continueOnNextLine(",").add("labels = elementGroup.append('g').attr('class', 'labels')").endStatement();
     }
 

@@ -281,8 +281,7 @@ class D3ElementBuilder {
 
         // Define opacity
         if (!vis.fOpacity.isEmpty()) {
-            out.addChained("style('fill-opacity', opacity)")
-                    .addChained("style('stroke-opacity', opacity)");
+            out.addChained("style('fill-opacity', opacity)").addChained("style('stroke-opacity', opacity)");
         }
 
         out.endStatement();
