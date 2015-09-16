@@ -55,11 +55,10 @@ public final class SummaryValues {
 
         if (summary.equals("smooth")) {
             Field x = xFields[0];
-            double windowFactor = 1.0;
-            if (m.option != null) {
-                windowFactor = Double.parseDouble(m.option) / 100;
-            }
-            if (m.fit == null) m.fit = new Smooth(m.field, x, windowFactor);
+            Double windowPercent = null;
+            if (m.option != null)
+                windowPercent = Double.parseDouble(m.option);
+            if (m.fit == null) m.fit = new Smooth(m.field, x, windowPercent);
             return m.fit.get(x.value(rows.get(0)));
         }
 

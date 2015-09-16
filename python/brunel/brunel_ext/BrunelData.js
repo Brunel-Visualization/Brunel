@@ -3144,7 +3144,7 @@ V.summary_MeasureField.prototype.label = function() {
 
 ////////////////////// Regression //////////////////////////////////////////////////////////////////////////////////////
 //
-//   Calculates a fit function
+//   Calculates a regression function
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -3209,34 +3209,55 @@ V.summary_Regression.prototype.get = function(value) {
 
 ////////////////////// Smooth //////////////////////////////////////////////////////////////////////////////////////////
 //
-//   Calculates a fit function
+//   Calculates a smooth fit function
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-V.summary_Smooth = function(y, x, windowFactor) {
-    var n = V.auto_Auto.optimalBinCount(x);
-    this.window = windowFactor * 1.5 * (x.max() - x.min()) / n;
+V.summary_Smooth = function(y, x, windowPercent) {
+    var n;
+    if (windowPercent == null) {
+        n = V.auto_Auto.optimalBinCount(x);
+        this.delta = Math.max(2, Math.round((x.valid() / n / 2.0)));
+    } else {
+        this.delta = Math.max(2, Math.floor(x.valid() * windowPercent / 200));
+    }
     this.data = V.summary_Regression.asPairs(y, x);
 };
 
 V.summary_Smooth.prototype.get = function(value) {
-    var d, i, sw, sy, w, x, y;
+    var d, high, i, idx, low, sw, sy, w, window, x, y;
     var at = V.Data.asNumeric(value);
     if (at == null) return null;
     y = this.data[0];
     x = this.data[1];
+    idx = this.search(at, x);
+    low = Math.max(0, idx - this.delta);
+    high = Math.min(idx + this.delta, x.length - 1);
+    window = Math.max(at - x[low], x[high] - at);
     sy = 0;
     sw = 0;
-    for (i = 0; i < x.length; i++){
-        d = (x[i] - at) / this.window;
-        if (d < -1) continue;
-        if (d > 1) break;
+    for (i = low; i <= high; i++){
+        d = (x[i] - at) / window;
         w = 0.75 * (1 - d * d);
         sw += w;
         sy += w * y[i];
     }
     return sw > 0 ? sy / sw : null;
+};
+
+V.summary_Smooth.prototype.search = function(at, x) {
+    var t;
+    var p = 0;
+    var q = x.length - 1;
+    while (q - p > 1) {
+        t = p + q >> 1;
+        if (x[t] <= at) p = t;
+        if (x[t] >= at) q = t;
+    }
+    while (p > 0 && x[p - 1] == at) p--;
+    while (q < x.length - 1 && x[q + 1] == at) q++;
+    return (p + q) >> 1;
 };
 
 ////////////////////// SummaryValues ///////////////////////////////////////////////////////////////////////////////////
@@ -3252,7 +3273,7 @@ V.summary_SummaryValues.prototype.firstRow = function() {
 };
 
 V.summary_SummaryValues.prototype.get = function(fieldIndex, m, xFields) {
-    var categories, data, displayCount, f, high, i, low, mean, sum, windowFactor, x;
+    var categories, data, displayCount, f, high, i, low, mean, sum, windowPercent, x;
     var summary = m.measureFunction;
     if (summary == "count") return this.rows.size();
     if (summary == "fit") {
@@ -3263,12 +3284,11 @@ V.summary_SummaryValues.prototype.get = function(fieldIndex, m, xFields) {
     }
     if (summary == "smooth") {
         x = xFields[0];
-        windowFactor = 1.0;
-        if (m.option != null) {
-            windowFactor = Number(m.option) / 100;
-        }
+        windowPercent = null;
+        if (m.option != null)
+            windowPercent = Number(m.option);
         if (m.fit == null)
-            m.fit = new V.summary_Smooth(m.field, x, windowFactor);
+            m.fit = new V.summary_Smooth(m.field, x, windowPercent);
         return m.fit.get(x.value(this.rows.get(0)));
     }
     data = $.Array(this.rows.size(), null);
