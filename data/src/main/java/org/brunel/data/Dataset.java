@@ -18,6 +18,7 @@
 package org.brunel.data;
 
 import org.brunel.data.auto.Auto;
+import org.brunel.data.io.Serialize;
 import org.brunel.data.modify.AddConstantFields;
 import org.brunel.data.modify.ConvertSeries;
 import org.brunel.data.modify.Filter;
@@ -29,6 +30,9 @@ import org.brunel.data.util.Informative;
 import org.brunel.data.values.ColumnProvider;
 import org.brunel.translator.JSTranslation;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class Dataset extends Informative {
+public class Dataset extends Informative implements Serializable {
 
     /**
      * Make a dataset from rows of data, the first row are field names
@@ -100,8 +104,8 @@ public class Dataset extends Informative {
         return result;
     }
 
-    public final Field[] fields;
-    private final Map<String, Field> fieldByName;
+    public Field[] fields;
+    private Map<String, Field> fieldByName;
 
     private Dataset(Field[] fields) {
         this.fields = ensureUniqueNames(fields);
@@ -254,5 +258,28 @@ public class Dataset extends Informative {
         dataset.set("reduced", true); // Data has been reduced to only needed fields
         return dataset;
     }
+
+
+    @JSTranslation(ignore = true)
+    private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+        out.write(Serialize.serializeDataset(this));
+    }
+
+    @JSTranslation(ignore = true)
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+        ByteArrayOutputStream store = new ByteArrayOutputStream();
+        byte[] block = new byte[10240];
+        for(;;) {
+            int len = in.read(block);
+            if (len <0) break;
+            store.write(block, 0, len);
+        }
+        Dataset d = (Dataset) Serialize.deserialize(store.toByteArray());
+        fields = d.fields;
+        fieldByName = d.fieldByName;
+        copyPropertiesFrom(d);
+    }
+
+
 
 }

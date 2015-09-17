@@ -21,8 +21,15 @@ import org.brunel.data.CannedData;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.translator.JSTranslation;
 import org.junit.Test;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Date;
 
 import static junit.framework.TestCase.assertEquals;
@@ -32,6 +39,27 @@ import static junit.framework.TestCase.assertTrue;
  * Tests data serialization and deserialization
  */
 public class TestSerialize {
+
+    @JSTranslation(ignore = true)
+    @Test
+    public void testJavaSerialization() throws Exception {
+        Dataset dataset = Dataset.make(CSV.read(CannedData.whiskey));
+
+        Path f = Files.createTempFile("data", "ser");
+        FileOutputStream fileOut = new FileOutputStream(f.toFile());
+        ObjectOutputStream out = new ObjectOutputStream(fileOut);
+        out.writeObject(dataset);
+        out.close();
+        fileOut.close();
+
+        FileInputStream fileIn = new FileInputStream(f.toFile());
+        ObjectInputStream in = new ObjectInputStream(fileIn);
+        Dataset copy = (Dataset) in.readObject();
+        in.close();
+        fileIn.close();
+
+        assertEquals(dataset.field("Rating").numericProperty("mean"), copy.field("Rating").numericProperty("mean"));
+    }
 
     @Test
     public void testSerializeFieldBasics() {
@@ -230,18 +258,16 @@ public class TestSerialize {
 
         Dataset dataset = Dataset.make(CSV.read(CannedData.bank));
         byte[] bytes = Serialize.serializeDataset(dataset);
-        bytes[1] = (byte)0;
+        bytes[1] = (byte) 0;
         try {
-        	Object o = Serialize.deserialize(bytes);
-        }
-        catch (IllegalStateException e) {
-        	assertTrue(true);
-        	return;
+            Object o = Serialize.deserialize(bytes);
+        } catch (IllegalStateException e) {
+            assertTrue(true);
+            return;
         }
 
         //Should not get here.  If we did, then this means the serialization exception was not thrown as expected.
         assertTrue(false);
-
 
     }
 

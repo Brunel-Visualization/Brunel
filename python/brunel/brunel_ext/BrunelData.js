@@ -982,7 +982,7 @@ V.Dataset.make = function(fields, autoConvert) {
     fields = V.Dataset.ensureUniqueNames(fields);
     augmented = $.Array(fields.length + 3, null);
     for (i = 0; i < fields.length; i++)
-        augmented[i] = $.equals(false, autoConvert) ? fields[i] : V.auto_Auto.convert(fields[i]);
+        augmented[i] = false == autoConvert ? fields[i] : V.auto_Auto.convert(fields[i]);
     len = fields[0].rowCount();
     augmented[fields.length] = V.Data.makeConstantField("#count", "Count", 1.0, len);
     augmented[fields.length + 1] = V.Data.makeIndexingField("#row", "Row", len);
@@ -1304,15 +1304,15 @@ V.Field.prototype.makeDateStats = function() {
 };
 
 V.Field.prototype.isNumeric = function() {
-    return $.equals(true, this.property("numeric"));
+    return true == this.property("numeric");
 };
 
 V.Field.prototype.isDate = function() {
-    return $.equals(true, this.property("date"));
+    return true == this.property("date");
 };
 
 V.Field.prototype.isBinned = function() {
-    return $.equals(true, this.property("binned"));
+    return true == this.property("binned");
 };
 
 V.Field.prototype.makeNumericStats = function() {
@@ -1357,7 +1357,7 @@ V.Field.prototype.isSynthetic = function() {
 };
 
 V.Field.prototype.preferCategorical = function() {
-    return !this.isNumeric() || $.equals(true, this.property("binned"));
+    return !this.isNumeric() || (true == this.property("binned"));
 };
 
 V.Field.prototype.ordered = function() {
