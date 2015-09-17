@@ -122,7 +122,7 @@ public class TestSerialize {
         String DATA = "a,b\n,";
         Dataset dataset = Dataset.make(CSV.read(DATA));
         byte[] bytes = Serialize.serializeDataset(dataset);
-        assertEquals("6 1 1 2 2 97 0 65 0 1 3 255 1 0 2 98 0 66 0 1 3 255 1 0", dump(bytes));
+        assertEquals("6 1 1 2 2 97 0 65 0 1 4 3 1 0 2 98 0 66 0 1 4 3 1 0", dump(bytes));
     }
 
     @Test

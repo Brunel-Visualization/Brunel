@@ -89,7 +89,22 @@ public class TestDates {
         assertEquals(Data.asDate("February 19, 1975 3:04:25"), DateUnit.increment(d, DateUnit.year, -1));
         assertEquals(Data.asDate("February 19, 1956 3:04:25"), DateUnit.increment(d, DateUnit.decade, -2));
         assertEquals(Data.asDate("February 19, 2276 3:04:25"), DateUnit.increment(d, DateUnit.century, 3));
+    }
 
+    @Test
+    public void testDateParseSpeed() {
+        long t0 = System.currentTimeMillis();
+        int N = 1000;
+
+        int check=0;
+        for (int i = 0; i< N; i++) {
+            Date d = Data.asDate(1900 + (i%100));
+            if (d != null) check++;
+        }
+        assertEquals(N, check);
+
+        long t1 = System.currentTimeMillis();
+        assertEquals(true, t1 -t0 < 100);
     }
 
     @Test

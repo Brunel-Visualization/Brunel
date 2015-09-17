@@ -45,13 +45,13 @@ public class Hierarchical {
     private Hierarchical(Dataset data, String sizeFieldName, String[] fieldNames) {
         Field size = sizeFieldName == null ? null : data.field(sizeFieldName);
         Field[] fields = toFields(data, fieldNames);
-        root = makeInternalNode(null);
+        root = makeInternalNode("");
         makeNodesUsingCollections(data, size, fields);
         replaceCollections(data.field("#row"), root, null);
     }
 
-    private Node makeInternalNode(Object name) {
-        Node node = new Node(null, 0, name == null ? "" : Data.format(name, true), new ArrayList<Node>());
+    private Node makeInternalNode(String label) {
+        Node node = new Node(null, 0, label, new ArrayList<Node>());
         node.temp = new HashMap<String, Object>();
         return node;
     }
@@ -70,7 +70,7 @@ public class Hierarchical {
                 Object v = field.value(row);
                 current = map.get(v);
                 if (current == null) {
-                    current = makeInternalNode(v);
+                    current = makeInternalNode(field.valueFormatted(row));
                     children.add(current);        // add to ordered list
                     map.put(v, current);                                 // add to map
                 }

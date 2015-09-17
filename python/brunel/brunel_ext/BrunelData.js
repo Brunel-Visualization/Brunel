@@ -453,6 +453,7 @@ var V = {
 V.auto_Auto = function() {};
 
 V.auto_Auto.FRACTION_TO_CONVERT = 0.5;
+V.auto_Auto.SKIPS = [7, 47, 283, 2053, 10007, 100000, 10000000];
 
 V.auto_Auto.makeNumericScale = function(f, nice, padFraction, includeZeroTolerance, desiredTickCount, forBinning) {
     var p, scaling;
@@ -502,42 +503,55 @@ V.auto_Auto.optimalBinCount = function(f) {
 };
 
 V.auto_Auto.convert = function(base) {
-    var asDate, asNumeric, f;
-    var fractionDates = V.auto_Auto.countFractionDates(base);
-    if (fractionDates > V.auto_Auto.FRACTION_TO_CONVERT) {
-        f = (fractionDates < 1.0) ? V.Data.toDate(base) : base;
-        f.set("numeric", true);
-        f.set("date", true);
-        return f;
+    var N, asNumeric, i, j, n, nDate, nNumeric, o, order, t;
+    if (base.isSynthetic() || base.isDate()) return base;
+    N = base.valid();
+    order = $.Array(base.rowCount(), 0);
+    for (i = 0; i < order.length; i++)
+        order[i] = i;
+    for (i = 0; i < order.length; i++){
+        j = Math.floor(Math.random() * (order.length - i));
+        t = order[i];
+        order[i] = order[j];
+        order[j] = t;
     }
-    asNumeric = V.Data.toNumeric(base);
-    if (asNumeric.valid() > V.auto_Auto.FRACTION_TO_CONVERT * base.valid()) {
+    if (base.isNumeric()) {
+        asNumeric = base;
+    } else {
+        n = 0;
+        i = 0;
+        nNumeric = 0;
+        while (n < N && n < 50) {
+            o = base.value(order[i++]);
+            if (o == null) continue;
+            n++;
+            if (!(o instanceof Date) && V.Data.asNumeric(o) != null) nNumeric++;
+        }
+        asNumeric = nNumeric > V.auto_Auto.FRACTION_TO_CONVERT * n ? V.Data.toNumeric(base) : null;
+    }
+    if (asNumeric != null) {
         if (V.auto_Auto.isYearly(asNumeric))
             return V.Data.toDate(asNumeric, "year");
         return asNumeric;
     }
-    asDate = V.Data.toDate(base);
-    if (asDate.valid() > V.auto_Auto.FRACTION_TO_CONVERT * base.valid()) return asDate;
-    return base;
-};
-
-V.auto_Auto.countFractionDates = function(f) {
-    var i, o;
-    var n = 0;
-    var s = 0;
-    for (i = 0; i < f.rowCount(); i++){
-        o = f.value(i);
-        if (o != null) {
-            if (o instanceof Date) s++;
-            n++;
-        }
+    n = 0;
+    i = 0;
+    nDate = 0;
+    while (n < N && n < 50) {
+        o = base.value(order[i++]);
+        if (o == null) continue;
+        n++;
+        if (V.Data.asDate(o) != null) nDate++;
     }
-    return s / (n + 1);
+    if (nDate > V.auto_Auto.FRACTION_TO_CONVERT * n)
+        return V.Data.toDate(base);
+    else
+        return base;
 };
 
 V.auto_Auto.isYearly = function(asNumeric) {
     var d;
-    if (asNumeric.min() < 1900) return false;
+    if (asNumeric.min() < 1800) return false;
     if (asNumeric.max() > 2100) return false;
     d = asNumeric.numericProperty("granularity");
     return d != null && d - Math.floor(d) < 1e-6;
@@ -791,7 +805,7 @@ V.Data.toDate = function(f, method) {
         if ("year" == method) {
             v = V.Data.asNumeric(o);
             if (v != null)
-                data[i] = V.Data.asDate(V.Data.format(v, false) + "-1-1");
+                data[i] = V.Data.asDate(V.Data.format(v, false) + "-01-01");
         } else if ("excel" == method) {
             v = V.Data.asNumeric(o);
             if (v != null) data[i] = V.Data.asDate(v - 24107);
@@ -1156,7 +1170,7 @@ V.diagram_Chord.prototype.matrix = function() {
 V.diagram_Hierarchical = function(data, sizeFieldName, fieldNames) {
     var size = sizeFieldName == null ? null : data.field(sizeFieldName);
     var fields = this.toFields(data, fieldNames);
-    this.root = this.makeInternalNode();
+    this.root = this.makeInternalNode("");
     this.makeNodesUsingCollections(data, size, fields);
     this.replaceCollections(data.field("#row"), this.root);
 };
@@ -1170,8 +1184,8 @@ V.diagram_Hierarchical.compare = function(a, b) {
     return V.Data.compare(a.key, b.key);
 };
 
-V.diagram_Hierarchical.prototype.makeInternalNode = function(name) {
-    var node = new V.diagram_Node(null, 0, name == null ? "" : V.Data.format(name, true), new $.List());
+V.diagram_Hierarchical.prototype.makeInternalNode = function(label) {
+    var node = new V.diagram_Node(null, 0, label, new $.List());
     node.temp = new $.Map();
     return node;
 };
@@ -1188,7 +1202,7 @@ V.diagram_Hierarchical.prototype.makeNodesUsingCollections = function(data, size
             v = field.value(row);
             current = map.get(v);
             if (current == null) {
-                current = this.makeInternalNode(v);
+                current = this.makeInternalNode(field.valueFormatted(row));
                 children.add(current);
                 map.put(v, current);
             }

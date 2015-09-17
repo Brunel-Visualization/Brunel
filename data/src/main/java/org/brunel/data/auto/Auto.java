@@ -28,6 +28,7 @@ import java.util.Date;
  */
 public class Auto {
     private static final double FRACTION_TO_CONVERT = 0.5;
+    private static final int[] SKIPS = new int[]{7, 47, 283, 2053, 10007, 100000, 10000000};
 
     /**
      * Create information to build a good scale.
@@ -94,45 +95,61 @@ public class Auto {
     }
 
     public static Field convert(Field base) {
+        if (base.isSynthetic() || base.isDate()) return base;   // Already set
 
-        // Must check this first, otherwise will be converted to numeric values
-        double fractionDates = countFractionDates(base);
-        if (fractionDates > FRACTION_TO_CONVERT) {
-            // If any conversion needed, do so
-            Field f = (fractionDates < 1.0) ? Data.toDate(base) : base;
-            f.set("numeric", true);
-            f.set("date", true);
-            return f;
+        int N = base.valid();
+
+        // Create a random order
+        int[] order = new int[base.rowCount()];
+        for (int i = 0; i < order.length; i++) order[i] = i;
+        for (int i = 0; i < order.length; i++) {
+            int j = (int) Math.floor(Math.random() * (order.length - i));
+            int t = order[i];
+            order[i] = order[j];
+            order[j] = t;
         }
 
-        Field asNumeric = Data.toNumeric(base);
-        if (asNumeric.valid() > FRACTION_TO_CONVERT * base.valid()) {
-            // Check for special numeric range that looks like dates
+        // Try conversion to numeric
+        Field asNumeric;
+        if (base.isNumeric()) {
+            asNumeric = base;
+        } else {
+            int n = 0, i = 0;
+            int nNumeric = 0;
+            while (n < N && n < 50) {
+                Object o = base.value(order[i++]);
+                if (o == null) continue;
+                n++;
+                if (!(o instanceof Date) && Data.asNumeric(o) != null) nNumeric++;
+            }
+            asNumeric = nNumeric > FRACTION_TO_CONVERT * n ? Data.toNumeric(base) : null;
+        }
+
+        if (asNumeric != null) {
+            // See if the numeric results are years
             if (isYearly(asNumeric)) return Data.toDate(asNumeric, "year");
             // Otherwise this is good
             return asNumeric;
         }
-        Field asDate = Data.toDate(base);
-        if (asDate.valid() > FRACTION_TO_CONVERT * base.valid())
-            return asDate;
 
-        return base;
-    }
-
-    private static double countFractionDates(Field f) {
-        double n = 0, s = 0;
-        for (int i = 0; i < f.rowCount(); i++) {
-            Object o = f.value(i);
-            if (o != null) {
-                if (o instanceof Date) s++;
-                n++;
-            }
+        // Try conversion to dates
+        int n = 0, i = 0;
+        int nDate = 0;
+        while (n < N && n < 50) {
+            Object o = base.value(order[i++]);
+            if (o == null) continue;
+            n++;
+            if (Data.asDate(o) != null) nDate++;
         }
-        return s / (n+1);       // Add one to guard against no data
+
+        if (nDate > FRACTION_TO_CONVERT * n)
+            return Data.toDate(base);
+        else
+            return base;
     }
 
     private static boolean isYearly(Field asNumeric) {
-        if (asNumeric.min() < 1900) return false;
+        if (asNumeric.min() < 1800) return false;
         if (asNumeric.max() > 2100) return false;
         Double d = asNumeric.numericProperty("granularity");
         return d != null && d - Math.floor(d) < 1e-6;
