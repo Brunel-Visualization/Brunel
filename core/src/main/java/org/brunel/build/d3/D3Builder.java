@@ -372,6 +372,8 @@ public class D3Builder extends AbstractBuilder {
         if (scalesBuilder.isDiagram)
             out.continueOnNextLine(",").add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");
         out.continueOnNextLine(",").add("main = elementGroup.append('g').attr('class', 'main')");
+        if (scalesBuilder.isDiagram)
+            out.continueOnNextLine(",").add("diagramLabels = elementGroup.append('g').attr('class', 'extras')");
         out.continueOnNextLine(",").add("labels = elementGroup.append('g').attr('class', 'labels')").endStatement();
     }
 
