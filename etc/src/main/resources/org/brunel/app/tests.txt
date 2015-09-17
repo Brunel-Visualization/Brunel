@@ -79,7 +79,7 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - baseball	/ point size(SlugRate) color(Salary) bubble                                                                     :: pass
 - baseball	/ point x(PutOutRate) y(AssistRate) color(SlugRate) size(salary) sort(salary) style('size:300%') tooltip(#all)  :: pass
 - cpi	    / point x(food) y(housing) bin(housing, food) color(#count) style('symbol:rect; border-radius:5px')             :: improve :: less axes spacing at zero
-- baseball  / x(Weight) y(Height) + line x(Weight) y(Height) fit(Height) | x(Weight) y(Height) + line x(Weight) y(Height) smooth(Height) | x(Weight) y(Height) + line x(Weight) y(Height) smooth(Height:10) | x(Weight) y(Height) + line x(Weight) y(Height) smooth(Height:200) :: fail :: bad axes placement
+- baseball  / x(Weight) y(Height) + line x(Weight) y(Height) fit(Height) | x(Weight) y(Height) + line x(Weight) y(Height) smooth(Height) | x(Weight) y(Height) + line x(Weight) y(Height) smooth(Height:10) | x(Weight) y(Height) + line x(Weight) y(Height) smooth(Height:200) :: pass
 
 #### Note
 
