@@ -218,7 +218,7 @@ class D3ScaleBuilder {
                 out.add("axes.select('g.axis.x').append('text').attr('class', 'title')")
                         .addChained("attr('text-anchor', 'middle')")
                         .addChained("attr('x', " + width + "/2)")
-                        .addChained("attr('y', geom.margin_bottom - 6)")
+                        .addChained("attr('y', geom.inner_bottom - 6)")
                         .addChained("text(" + Data.quote(hAxis.title) + ")")
                         .endStatement();
             }
