@@ -71,7 +71,7 @@ public class DataCache {
         //If so, stick it back in the local cache
         if (dataset == null && userCache != null) {
         	dataset = userCache.retrieve(dataKey);
-        	localCache.store(dataKey, dataset);
+        	if (dataset != null) localCache.store(dataKey, dataset);
         }
         
         if (dataset == null) {
