@@ -1062,6 +1062,14 @@ V.Dataset.prototype.name = function() {
 };
 
 V.Dataset.prototype.reduce = function(command) {
+    var _i, f, ff;
+    var names = new $.Set();
+    $.addAll(names, V.modify_DataOperation.parts(command));
+    ff = new $.List();
+    for(_i=$.iter(this.fields), f=_i.current; _i.hasNext(); f=_i.next()) {
+        if ($.startsWith(f.name, "#") || names.contains(f.name)) ff.add(f);
+    }
+    return this.replaceFields(ff.toArray());
 };
 
 V.Dataset.prototype.series = function(command) {

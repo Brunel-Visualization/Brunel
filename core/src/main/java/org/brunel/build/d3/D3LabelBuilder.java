@@ -88,8 +88,8 @@ public class D3LabelBuilder {
 
     /* Call to add labels for internal nodes of trees and treemaps */
     public void addTreeInternalLabels(ElementDetails details, String where) {
-        out.add("diagramExtras.attr('class', 'axis diagram treemap hierarchy')").endStatement();
-        out.add("var treeLabels = diagramExtras.selectAll('text').data(" + details.dataSource + ")").endStatement();
+        out.add("diagramLabels.attr('class', 'axis diagram treemap hierarchy')").endStatement();
+        out.add("var treeLabels = diagramLabels.selectAll('text').data(" + details.dataSource + ")").endStatement();
         out.add("treeLabels.enter().append('text')");
         out.addChained("attr('class', function(d) { return 'axis label L' + d.depth })");
         out.addChained("attr('dx', 2)").addChained("attr('dy', '0.85em')").endStatement();

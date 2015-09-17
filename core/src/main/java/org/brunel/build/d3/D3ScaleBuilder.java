@@ -218,7 +218,7 @@ class D3ScaleBuilder {
                 out.add("axes.select('g.axis.x').append('text').attr('class', 'title')")
                         .addChained("attr('text-anchor', 'middle')")
                         .addChained("attr('x', " + width + "/2)")
-                        .addChained("attr('y', geom.margin_bottom - 6)")
+                        .addChained("attr('y', geom.inner_bottom - 6)")
                         .addChained("text(" + Data.quote(hAxis.title) + ")")
                         .endStatement();
             }
@@ -366,7 +366,9 @@ class D3ScaleBuilder {
                 }
                 data.add(Data.asNumeric(value));
             }
-        return Data.makeColumnField("combined", null, data.toArray(new Object[data.size()]));
+        Field combined = Data.makeColumnField("combined", null, data.toArray(new Object[data.size()]));
+        combined.set("numeric", true);
+        return combined;
     }
 
     private Field fieldById(String fieldName, VisSingle vis) {

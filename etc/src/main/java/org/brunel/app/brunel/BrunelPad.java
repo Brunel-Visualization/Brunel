@@ -168,6 +168,7 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
 
     private void buildGUI() {
 
+
         GridBagConstraints cons = new GridBagConstraints();
         cons.weightx = 1.0;
         cons.weighty = 1.0;
@@ -197,14 +198,16 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
         buildDescription();
         bottom.setOpaque(false);
 
-        final JComponent content = (JComponent) getContentPane();
+        JSplitPane content = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        content.setDividerLocation(0.6666);
+        content.setResizeWeight(0.6666);
+        setContentPane(content);
 
         content.setBorder(BorderFactory.createMatteBorder(Common.BORDER, Common.BORDER,
                 Common.BORDER, Common.BORDER, Color.black));
         content.setBackground(Color.black);
-        content.setLayout(new BorderLayout(Common.BORDER, Common.BORDER));
-        content.add(sourcePanel, BorderLayout.CENTER);
-        content.add(bottom, BorderLayout.SOUTH);
+        content.add(sourcePanel);
+        content.add(bottom);
     }
 
     private void setAction(String text) {
