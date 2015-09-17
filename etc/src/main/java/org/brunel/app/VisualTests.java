@@ -143,11 +143,11 @@ class VisualTests {
     }
 
     private String makeComments(String notes, String result) {
-        return "<p style='" + resultColor(result) + "'>" + result + ": " + notes + "</p>";
+        return "<p style='" + resultColor(result) + ";margin:2px;margin-bottom:6px'>" + result + ": " + notes + "</p>";
     }
 
     private String makeTitle(String id, Action a, String result) {
-        return "<h2 style='text-align:center;" + resultColor(result) + "'>" +
+        return "<h2 style='text-align:center;margin:2px;" + resultColor(result) + "'>" +
                 "<span style='font-style:italic;color:#aaaaaa'>" + id + "</span>&nbsp;&nbsp;&nbsp;&nbsp;" + a.toString() + "</h2>";
     }
 

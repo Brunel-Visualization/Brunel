@@ -366,7 +366,9 @@ class D3ScaleBuilder {
                 }
                 data.add(Data.asNumeric(value));
             }
-        return Data.makeColumnField("combined", null, data.toArray(new Object[data.size()]));
+        Field combined = Data.makeColumnField("combined", null, data.toArray(new Object[data.size()]));
+        combined.set("numeric", true);
+        return combined;
     }
 
     private Field fieldById(String fieldName, VisSingle vis) {
