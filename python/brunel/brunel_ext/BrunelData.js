@@ -955,7 +955,8 @@ V.util_Informative.prototype.set = function(key, value) {
 V.Dataset = function(fields) {
     var _i, f;
     V.Dataset.$superConstructor.call(this);
-    this.fields = V.Dataset.ensureUniqueNames(fields);
+    this.fields = null;
+    this.fieldByName = null;this.fields = V.Dataset.ensureUniqueNames(fields);
     this.fieldByName = new $.Map();
     for(_i=$.iter(fields), f=_i.current; _i.hasNext(); f=_i.next())
         this.fieldByName.put(f.name.toLowerCase(), f);
@@ -1058,6 +1059,9 @@ V.Dataset.prototype.rowCount = function() {
 
 V.Dataset.prototype.name = function() {
     return this.stringProperty("name");
+};
+
+V.Dataset.prototype.reduce = function(command) {
 };
 
 V.Dataset.prototype.series = function(command) {

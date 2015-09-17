@@ -21,6 +21,7 @@ import org.brunel.data.auto.Auto;
 import org.brunel.data.io.Serialize;
 import org.brunel.data.modify.AddConstantFields;
 import org.brunel.data.modify.ConvertSeries;
+import org.brunel.data.modify.DataOperation;
 import org.brunel.data.modify.Filter;
 import org.brunel.data.modify.Sort;
 import org.brunel.data.modify.Stack;
@@ -34,6 +35,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -191,6 +193,24 @@ public class Dataset extends Informative implements Serializable {
 
     public String name() {
         return stringProperty("name");
+    }
+
+    /**
+     * Keeps only the indicated fields in the data set
+     *
+     * @param command names of the fields to keep
+     * @return reduced data set
+     */
+    public Dataset reduce(String command) {
+        Set<String> names = new HashSet<String>();
+        Collections.addAll(names, DataOperation.parts(command));
+        // keep special and used fields
+        List<Field> ff = new ArrayList<Field>();
+        for (Field f : this.fields) {
+            if (f.name.startsWith("#") || names.contains(f.name))
+                ff.add(f);
+        }
+        return replaceFields(ff.toArray(new Field[ff.size()]));
     }
 
     /**
