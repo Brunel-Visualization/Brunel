@@ -216,7 +216,7 @@ public abstract class AbstractBuilder implements Builder {
         } else {
             for (VisItem v : chart.children()) {
                 Param[] result = findFirstBounds(v);
-                if (v != null) return null;
+                if (result != null) return result;
             }
         }
         return null;
