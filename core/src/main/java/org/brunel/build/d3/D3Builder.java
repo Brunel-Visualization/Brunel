@@ -227,12 +227,7 @@ public class D3Builder extends AbstractBuilder {
 
         D3ElementBuilder elementBuilder = new D3ElementBuilder(vis, out, scalesBuilder, positionFields, data);
 
-        if (vis.tDiagram == null) {
-            elementBuilder.writeCoordinateFunction("x", positionFields.getX(vis), positionFields.xCategorical, out);
-            elementBuilder.writeCoordinateFunction("y", positionFields.getY(vis), positionFields.yCategorical, out);
-        }
-
-        // Main method to make a vis
+      // Main method to make a vis
         out.titleComment("Main element build routine");
         out.add("function build(transitionMillis) {").ln().indentMore();
         out.add("transitionMillis = transitionMillis || (data ? transitionTime : 0)")

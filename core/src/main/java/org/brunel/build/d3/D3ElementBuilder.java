@@ -27,9 +27,6 @@ import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
-import java.util.HashSet;
-import java.util.Set;
-
 class D3ElementBuilder {
 
     private final D3LabelBuilder labelBuilder;
@@ -38,7 +35,6 @@ class D3ElementBuilder {
     private final D3ScaleBuilder scales;
     private final PositionFields positionFields;
     private final D3Diagram diagram;
-    private Set<String> dimensionsAsRanges = new HashSet<String>();         // "x" or "y" if ranges on those dimensions
 
     public D3ElementBuilder(VisSingle vis, ScriptWriter out, D3ScaleBuilder scales,
                             PositionFields positionFields, Dataset data) {
@@ -51,18 +47,16 @@ class D3ElementBuilder {
     }
 
     public void generate() {
+
         if (diagram != null) out.onNewLine().comment("Data structures for a", vis.tDiagram, "diagram");
 
-        ElementDetails details = makeDetails();         // Create the details of what the element should be
-        if (details.producesPath) definePath();         // Define paths needed in the element, and make data splits
+        ElementDetails details = makeDetails();                     // Create the details of what the element should be
+        ElementDefinition elementDef = buildElementDefinition();    // And the coordinate definitions
+
+        // Define paths needed in the element, and make data splits
+        if (details.producesPath) definePathsAndSplits(elementDef);
+
         if (labelBuilder.needed()) labelBuilder.defineLabeling(details, vis.itemsLabel, false);   // Labels
-
-        if (sizesNeeded()) {
-            // Define size functions
-            writeElementSize("x", positionFields.getX(vis), scales.getXExtent(), ModelUtil.getElementSize(vis, "width"));
-            writeElementSize("y", positionFields.getY(vis), scales.getYExtent(), ModelUtil.getElementSize(vis, "height"));
-
-        }
 
         modifyGroupStyleName();             // Diagrams change the name so CSS style sheets will work well
 
@@ -80,12 +74,12 @@ class D3ElementBuilder {
 
         // When data changes (including being added) update the items
         // These fire for both 'enter' and 'update' data
-        out.add("BrunelD3.trans(element,transitionMillis)");
 
         if (diagram != null) {
+            out.add("BrunelD3.trans(element,transitionMillis)");
             diagram.writeDefinition(details);
         } else {
-            writeCoordinateDefinition(details);
+            writeCoordinateDefinition(details, elementDef);
             writeCoordinateLabelingAndAesthetics(details);
         }
 
@@ -94,57 +88,145 @@ class D3ElementBuilder {
         out.addChained("style('opacity', 0.5).remove()").endStatement();
     }
 
-    public void writeCoordinateFunction(String name, Field[] f, boolean categorical, ScriptWriter out) {
-        String scaleName = "scale_" + name;
+    private String getSize(String aestheticFunctionCall, ModelUtil.Size size, Field[] fields, String extent) {
 
-        out.onNewLine().add("var", name, "= function(d) { return ");
+        String baseAmount;
+        if (size != null && !size.isPercent()) {
+            // Absolute size overrides everything
+            baseAmount = "" + size.value();
+        } else if (fields == null) {
+            // We do not wish to consider the fields
+            baseAmount = "geom.default_point_size";
+        } else if (fields.length == 0) {
+            // If there are no fields, then fill the extent completely
+            baseAmount = extent;
+        } else {
+            // Use size of categories
+            int categories = scales.getCategories(fields).size();
+            if (categories > 0) {
+                baseAmount = extent + "/" + categories;
+                // Fill a category span (or 90% of it for categorical fields when percent not defined)
+                if ((size == null || !size.isPercent()) && !scales.allNumeric(fields))
+                    baseAmount = "0.9 * " + baseAmount;
+            } else {
+                baseAmount = "geom.default_point_size";
+            }
+        }
 
-        if (f.length == 0) {
-            out.add(scaleName, "(0.5) }").endStatement();            // No field on this dimension -- use a default 0/1 scale
-        } else if (f.length == 1) {
-            // Just one field -- the usual case
-            Field field = f[0];
-            String dataFunction = D3Util.writeCall(f[0]);
+        // If the size definition is a percent, use that to scale by
+        if (size != null && size.isPercent())
+            baseAmount = size.value() + " * " + baseAmount;
+
+        // If no aesthetic, we are done
+        if (aestheticFunctionCall == null) return baseAmount;
+
+        // Otherwise the size needs to be a function
+        return "function(d) { return " + aestheticFunctionCall + " * " + baseAmount + "}";
+
+    }
+
+    private String getOverallSize(ModelUtil.Size size, ElementDefinition def) {
+
+        boolean needsFunction = vis.fSize.size() == 1;
+
+        String definition = needsFunction ? "size(d) * " : "";
+        if (size != null && !size.isPercent()) {
+            // Absolute size overrides everything
+            definition += size.value();
+        } else {
+            String x = def.x.size;
+            String y = def.y.size;
+            if (x.equals(y)) return x;          // If they are both the same, use that
+            String xBody = stripFunction(x);
+            String yBody = stripFunction(x);
+            definition += "Math.min(" + xBody + ", " + yBody + ")";
+
+            // if the body is different from the whole item, we have a function
+            if (!xBody.equals(x) || !yBody.equals(y))
+                needsFunction = true;
+        }
+
+        // If the size definition is a percent, use that to scale by
+        if (size != null && size.isPercent())
+            definition += size.value() + " * ";
+
+        if (needsFunction)
+            return "function(d) { return " + definition + "}";
+        else
+            return definition;
+
+    }
+
+    private String stripFunction(String item) {
+        // remove function wrapper if present
+        int p = item.indexOf("return");
+        int q = item.lastIndexOf("}");
+        if (p > 0 && q > 0)
+            return item.substring(p + 7, q).trim();
+        else
+            return item;
+    }
+
+    private ElementDefinition buildElementDefinition() {
+        ElementDefinition e = new ElementDefinition();
+        Field[] x = positionFields.getX(vis);
+        Field[] y = positionFields.getY(vis);
+        setLocations(e.x, "x", x, positionFields.xCategorical);
+        setLocations(e.y, "y", y, positionFields.yCategorical);
+        e.x.size = getSize(getSizeCall(0), ModelUtil.getElementSize(vis, "width"), x, "geom.inner_width");
+        e.y.size = getSize(getSizeCall(1), ModelUtil.getElementSize(vis, "height"), y, "geom.inner_height");
+
+        e.overallSize = getOverallSize(ModelUtil.getElementSize(vis, "size"), e);
+        return e;
+    }
+
+    private String getSizeCall(int dim) {
+        if (vis.fSize.isEmpty()) return null;                   // No sizing
+        if (vis.fSize.size() == 1) return "size(d)";            // Use this for both
+        return dim == 0 ? "width(d)" : "height(d)";            // Different for x and y dimensions
+    }
+
+    private void setLocations(ElementDefinition.ElementDimensionDefinition dim, String dimName, Field[] fields, boolean categorical) {
+        String scaleName = "scale_" + dimName;
+
+        if (fields.length == 0) {
+            // There are no fields -- we have a notional [0,1] extent, so use the center of that
+            dim.center = scaleName + "(0.5)";
+            dim.left = scaleName + "(0)";
+            dim.right = scaleName + "(1)";
+        } else if (fields.length == 1) {
+            Field field = fields[0];                                // The single field
+            String dataFunction = D3Util.writeCall(field);          // A call to that field using the datum 'd'
+
             if (isRange(field)) {
-                // For a range value which has not been stacked, we use its extent
-                out.add(scaleName, "(" + dataFunction + ".extent()) }").endStatement();
+                // This is a range field, but we have not been asked to show both ends,
+                // so we use the difference between the top and bottom
+                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".extent()) }";
+                // Left and Right are not defined
             } else if (field.isBinned() && !categorical) {
                 // A Binned value on a non-categorical axes
-                // Write both the center AND low and high extents
-                out.add(scaleName, "(" + dataFunction + ".mid()) }").endStatement();
-                out.add("var", name + "0 = function(d) { return ")
-                        .add(scaleName, "(" + dataFunction + ".low) }").endStatement();
-                out.add("var", name + "1 = function(d) { return ")
-                        .add(scaleName, "(" + dataFunction + ".high) }").endStatement();
-                dimensionsAsRanges.add(name);
-            } else {
-                // Nothing unusual
-                out.add(scaleName, "(" + dataFunction + ") }").endStatement();
-            }
+                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".mid()) }";
+                dim.left = "function(d) { return " + scaleName + "(" + dataFunction + ".low) }";
+                dim.right = "function(d) { return " + scaleName + "(" + dataFunction + ".high) }";
 
+            } else {
+                // Nothing unusual -- just define the center
+                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ") }";
+            }
         } else {
             // The dimension contains two fields: a range
+            String lowDataFunc = D3Util.writeCall(fields[0]);          // A call to the low field using the datum 'd'
+            String highDataFunc = D3Util.writeCall(fields[1]);         // A call to the high field using the datum 'd'
 
-            if (name.equals("x")) {
-                // For an 'x' dimension the single-value function averages the upper and lower functions
-                out.add("(" + name + "1(d) + " + name + "0(d)) / 2 }").endStatement();
-            } else {
-                // For a 'y' dimension the single-value function equals the upper function
-                out.add(name + "1(d) }").endStatement();
-            }
+            // When one of the fields is a range, use the outermost value of that
+            if (isRange(fields[0])) lowDataFunc += ".low";
+            if (isRange(fields[1])) highDataFunc += ".high";
 
-            // Define the lower part: scale the value (if it is a range, extract the low part of the range)
-            out.onNewLine().add("var", name + "0 = function(d) { return", scaleName, "(" + D3Util.writeCall(f[0]));
-            if (isRange(f[0])) out.add(".low");
-            out.add(")}").endStatement();
-
-            // Define the upper part: scale the value (if it is a range, extract the high part of the range)
-            out.onNewLine().add("var", name + "1 = function(d) { return", scaleName, "(" + D3Util.writeCall(f[1]));
-            if (isRange(f[1])) out.add(".high");
-            out.add(") }").endStatement();
-
-            dimensionsAsRanges.add(name);
+            dim.left = "function(d) { return " + scaleName + "(" + lowDataFunc + ") }";
+            dim.right = "function(d) { return " + scaleName + "(" + highDataFunc + ") }";
+            dim.center = "function(d) { return " + scaleName + "( (" + highDataFunc + " + " + lowDataFunc + " )/2) }";
         }
+
     }
 
     private void modifyGroupStyleName() {
@@ -169,14 +251,27 @@ class D3ElementBuilder {
         out.add("var splits = BrunelD3.makePathSplits(" + params + ");").ln();
     }
 
-    private void defineCircle() {
-        // X and Y are simple
-        out.addChained("attr('cx',x).attr('cy', y)");
-        // Radius is based on the size available
-        out.addChained("attr('r', function(d) { return Math.min(size_x(d), size_y(d)) / 2})");
+    private void defineCircle(String basicDef, ElementDefinition elementDef) {
+        out.add(basicDef);
+        out.addChained("attr('cx'," + elementDef.x.center + ")");
+        out.addChained("attr('cy'," + elementDef.y.center + ")");
+        out.addChained("attr('r'," + halve(elementDef.overallSize) + ")");
     }
 
-    private void definePath() {
+    private String halve(String sizeText) {
+        // Put the "/2" factor inside the function if needed
+        String body = stripFunction(sizeText);
+        if (body.equals(sizeText))
+            return body + " / 2";
+        else
+            return "function(d) { return " + body + " / 2 }";
+    }
+
+    private void definePathsAndSplits(ElementDefinition elementDef) {
+
+        // Define y or (y0, y1)
+        defineVerticalExtentFunctions(elementDef, false);
+
         // First deal with the case of wedges (polar intervals)
         if (vis.tElement == VisTypes.Element.bar && vis.coords == VisTypes.Coordinates.polar) {
             out.add("var path = d3.svg.arc().outerRadius(geom.inner_radius).innerRadius(0)").ln();
@@ -188,30 +283,53 @@ class D3ElementBuilder {
             out.endStatement();
             return;
         }
+
         // Now actual paths
+
+        // Define the x function
+        out.add("var x =", elementDef.x.center).endStatement();
+
         if (vis.tElement == VisTypes.Element.area) {
             if (vis.fRange == null && !vis.stacked)
                 out.add("var path = d3.svg.area().x(x).y1(y).y0(function(d) { return scale_y(0) })");
             else
                 out.add("var path = d3.svg.area().x(x).y1(y1).y0(y0)");
         } else if (vis.tElement.producesSingleShape) {
-            out.add("var path = d3.svg.line().x(x).y(y)");
+            // Choose the top line if there is a range (say for stacking)
+            if (elementDef.y.right != null)
+                out.add("var path = d3.svg.line().x(x).y(y1)");
+            else
+                out.add("var path = d3.svg.line().x(x).y(y)");
         }
         if (vis.tUsing == VisTypes.Using.interpolate) {
-            out.add(".interpolate('cardinal')");
+            out.add(".interpolate()");
         }
         out.endStatement();
         constructSplitPath();
     }
 
-    private void defineRectCenteredAtY() {
-        out.addChained("attr('y', function(d) { return y(d) - size_y(d)/2 })");
-        out.addChained("attr('height', size_y)");
+    private void defineRect(String basicDef, ElementDefinition elementDef) {
+        defineVerticalExtentFunctions(elementDef, true);
+        defineHorizontalExtentFunctions(elementDef, true);
+        out.add(basicDef);
+        defineHorizontalExtent(elementDef);
+        defineVerticalExtent(elementDef);
     }
 
-    private void defineRectFromYToAxis() {
-        if (vis.fRange == null && !vis.stacked) {
-            // Simple element; drop y to baseline
+    private void defineBar(String basicDef, ElementDefinition elementDef) {
+        if (vis.fRange != null || vis.stacked) {
+            // Stacked or range element goes from higher of the pair of values to the lower
+            out.add("var y0 =", elementDef.y.left).endStatement();
+            out.add("var y1 =", elementDef.y.right).endStatement();
+            defineHorizontalExtentFunctions(elementDef, true);
+            out.add(basicDef);
+            out.addChained("attr('y', function(d) { return Math.min(y0(d), y1(d)) } )");
+            out.addChained("attr('height', function(d) {return Math.abs(y0(d) - y1(d)) })");
+        } else {
+            // Simple element; drop from the upper value to the baseline
+            out.add("var y =", elementDef.y.center).endStatement();
+            defineHorizontalExtentFunctions(elementDef, true);
+            out.add(basicDef);
             if (vis.coords == VisTypes.Coordinates.transposed) {
                 out.addChained("attr('y', 0)")
                         .addChained("attr('height', function(d) { return Math.max(0,y(d)) })");
@@ -219,34 +337,77 @@ class D3ElementBuilder {
                 out.addChained("attr('y', y)")
                         .addChained("attr('height', function(d) {return Math.max(0,geom.inner_height - y(d)) }) ");
             }
-        } else {
-            // Range element goes from higher of the pair of values to the lower
-            // Stacked does the same
-            out.addChained("attr('y', function(d) { return Math.min(y0(d), y1(d)) } )");
-            out.addChained("attr('height', function(d) {return Math.abs(y0(d) - y1(d)) })");
         }
-
+        defineHorizontalExtent(elementDef);
     }
 
-    private void defineRectHorizontalExtent() {
+    private void defineHorizontalExtentFunctions(ElementDefinition elementDef, boolean withWidth) {
+        if (elementDef.x.left != null) {
+            // Use the left and right values
+            out.add("var x0 =", elementDef.x.left).endStatement();
+            out.add("var x1 =", elementDef.x.right).endStatement();
+        } else {
+            out.add("var x =", elementDef.x.center).endStatement();
+            if (withWidth) out.add("var w =", elementDef.x.size).endStatement();
+        }
+    }
+
+    private void defineVerticalExtentFunctions(ElementDefinition elementDef, boolean withHeight) {
+        if (elementDef.y.left != null) {
+            // Use the left and right values
+            out.add("var y0 =", elementDef.y.left).endStatement();
+            out.add("var y1 =", elementDef.y.right).endStatement();
+        } else {
+            out.add("var y =", elementDef.y.center).endStatement();
+            if (withHeight) out.add("var h =", elementDef.y.size).endStatement();
+        }
+    }
+
+    private void defineHorizontalExtent(ElementDefinition elementDef) {
+        String left, width;
+        if (elementDef.x.left != null) {
+            // Use the left and right values
+            left = "function(d) { return Math.min(x0(d), x1(d)) }";
+            width = "function(d) { return Math.abs(x1(d) - x0(d)) }";
+        } else {
+            // The width can either be a function or a numeric value
+            if (elementDef.x.size.startsWith("function"))
+                left = "function(d) { return x(d) - w(d)/2 }";
+            else
+                left = "function(d) { return x(d) - w/2 }";
+            width = "w";
+        }
+        out.addChained("attr('x', ", left, ")");
+
         // Sadly, browsers are inconsistent in how they handle width. It can be considered either a style or a
         // positional attribute, so we need to specify as both to make all browsers happy
-
-        if (dimensionsAsRanges.contains("x")) {
-            // Defined by an extent on this axis
-            out.addChained("attr('x', x0)");
-            out.addChained("attr('width', function(d) { return x1(d) - x0(d) })");
-            out.addChained("style('width', function(d) { return x1(d) - x0(d) })");
-        } else {
-            out.addChained("attr('x', function(d) { return x(d) - size_x(d)/2 })");
-            out.addChained("attr('width', size_x)");
-            out.addChained("style('width', size_x)");
-        }
+        out.addChained("attr('width', ", width, ")");
+        out.addChained("style('width', ", width, ")");
     }
 
-    private void defineText() {
-        // X and Y are simple
-        out.addChained("attr('x',x).attr('y', y).attr('dy', '0.35em').text(labeling.content)");
+    private void defineVerticalExtent(ElementDefinition elementDef) {
+        String top, height;
+        if (elementDef.y.left != null) {
+            // Use the left and right values
+            top = "function(d) { return Math.min(y0(d), y1(d)) }";
+            height = "function(d) { return Math.abs(y1(d) - y0(d)) }";
+        } else {
+            // The height can either be a function or a numeric value
+            if (elementDef.y.size.startsWith("function"))
+                top = "function(d) { return y(d) - h(d)/2 }";
+            else
+                top = "function(d) { return y(d) - h/2 }";
+            height = "h";
+        }
+        out.addChained("attr('y', ", top, ")");
+        out.addChained("attr('height', ", height, ")");
+    }
+
+    private void defineText(String basicDef, ElementDefinition elementDef) {
+        out.add(basicDef);
+        out.addChained("attr('x'," + elementDef.x.center + ")");
+        out.addChained("attr('y'," + elementDef.y.center + ")");
+        out.addChained("attr('dy', '0.35em').text(labeling.content)");
         labelBuilder.addFontSizeAttribute(vis);
     }
 
@@ -274,28 +435,27 @@ class D3ElementBuilder {
         return diagram == null ? ElementDetails.makeForCoordinates(vis, getSymbol()) : diagram.writeDataConstruction();
     }
 
-    private boolean sizesNeeded() {
-        if (diagram != null) return diagram.showsElement();         // Diagrams that show elements need it
-        return vis.tElement != VisTypes.Element.area;               // Only areas cannot util a size at all
-    }
+    private void writeCoordinateDefinition(ElementDetails details, ElementDefinition elementDef) {
 
-    private void writeCoordinateDefinition(ElementDetails details) {
+        // This starts the transition or update going
+        String basicDef = "BrunelD3.trans(element,transitionMillis)";
+
         if (details.splitIntoShapes)
-            out.addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
+            out.add(basicDef).addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
         else if (details.producesPath)
-            out.addChained("attr('d', path)");                              // Simple path -- just util it
+            out.add(basicDef).addChained("attr('d', path)");                              // Simple path -- just util it
         else {
-            // Not a path; one shape per row
-            if (details.elementType.equals("rect"))
-                defineRectHorizontalExtent();
-            if (vis.tElement == VisTypes.Element.bar)
-                defineRectFromYToAxis();
-            else if (details.elementType.equals("rect"))
-                defineRectCenteredAtY();
-            else if (vis.tElement == VisTypes.Element.text)
-                defineText();
-            else
-                defineCircle();
+            if (vis.tElement == VisTypes.Element.text)
+                defineText(basicDef, elementDef);
+            else if (vis.tElement == VisTypes.Element.bar)
+                defineBar(basicDef, elementDef);
+            else {
+                // Must be a point
+                if (details.elementType.equals("rect"))
+                    defineRect(basicDef, elementDef);
+                else
+                    defineCircle(basicDef, elementDef);
+            }
         }
     }
 
@@ -322,49 +482,6 @@ class D3ElementBuilder {
         if (labelBuilder.needed() && vis.tElement != VisTypes.Element.text) {
             labelBuilder.addLabels(details);
         }
-    }
-
-    private void writeElementSize(String name, Field[] fields, String extent, ModelUtil.Size size) {
-
-        out.add("function", "size_" + name + "(d) { return ");
-        // Add in multipliers for size fields, if they are defined
-        if (vis.fSize.size() == 1) {
-            // Both height and width util the same one
-            out.add("size(d) * ");
-        } else if (vis.fSize.size() == 2) {
-            // width and height are different
-            if (name.equals("x")) out.add("width(d) * ");
-            else out.add("height(d) * ");
-        }
-
-        if (size != null && size.isPercent()) {
-            out.add(size.value(), "* ");
-        }
-
-        if (size != null && !size.isPercent()) {
-            // Absolute size overrides everything
-            out.add(size.value());
-        } else if (fields.length == 0) {
-            // If there are no fields, then fill the extent completely
-            out.add(extent);
-        } else {
-            int categories = scales.getCategories(fields).size();
-            if (categories > 0) {
-                // Fill a category span (or 90% of it for categorical fields when percent not defined)
-                if ((size == null || !size.isPercent()) && !scales.allNumeric(fields))
-                    out.add("0.9 * ");
-                out.add(extent, "/", categories);
-            } else {
-                // Need to define size in terms of the spacing -- or default if granularity is too small
-                Double spacing = fields[0].numericProperty("granularity");
-                if (spacing != null && spacing > (fields[0].max() - fields[0].min()) / 20)
-                    out.add("Math.abs(scale_" + name + "(" + spacing + ")-scale_" + name + "(0))");
-                else
-                    out.add("geom.default_point_size");
-            }
-        }
-
-        out.add(" }").endStatement();
     }
 
 }
