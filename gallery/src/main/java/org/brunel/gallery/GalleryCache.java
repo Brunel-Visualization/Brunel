@@ -1,9 +1,3 @@
-package org.brunel.gallery;
-
-import org.brunel.build.util.DatasetCache;
-import org.brunel.data.Dataset;
-import org.brunel.data.io.DatasetSerializationException;
-import org.brunel.data.io.Serialize;
 /*
  * Copyright (c) 2015 IBM Corporation and others.
  *
@@ -20,6 +14,11 @@ import org.brunel.data.io.Serialize;
  * limitations under the License.
  *
  */
+package org.brunel.gallery;
+
+import org.brunel.build.util.DatasetCache;
+import org.brunel.data.Dataset;
+
 
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectMap;
@@ -36,10 +35,12 @@ public class GalleryCache implements DatasetCache {
 
 	@Override
 	public void store(String key, Dataset dataset) {
+		
 		try {
 			Session ogSession = GridConnection.getObjectGrid().getSession();
 			ObjectMap map = ogSession.getMap(GridConnection.MAP_NAME);
-			map.upsert(key, Serialize.serializeDataset(dataset));
+			map.upsert(key, dataset);
+			
 		} catch (TransactionCallbackException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -58,14 +59,13 @@ public class GalleryCache implements DatasetCache {
 			Session ogSession = GridConnection.getObjectGrid().getSession();
 			ObjectMap map = ogSession.getMap(GridConnection.MAP_NAME);
 			map = ogSession.getMap(GridConnection.MAP_NAME);
-			byte[] value = (byte[]) map.get(key);
-			if (value == null)
+			Dataset d = (Dataset) map.get(key);
+			if (d == null)
 				return null;
 			try {
-				Dataset d = (Dataset) Serialize.deserialize(value);
 				return d;
 			}
-			catch (DatasetSerializationException e) {
+			catch (Exception e) {
 				map.remove(key);
 				return null;
 			}

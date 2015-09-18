@@ -29,8 +29,10 @@ import java.io.InputStream;
  */
 public class DataCache {
 
-    // Map from URL to data set -- just keeps a fixed amount of them
-    private static DatasetCache cachedData = new SimpleCache();
+    // Local cache is needed because Brunel needs identical Datasets to be the same instance
+    private static DatasetCache localCache = new SimpleCache();
+    private static DatasetCache userCache =null;
+
 
     /**
      * Specify an alternative cache implementation for storing Datasets by key.
@@ -38,7 +40,7 @@ public class DataCache {
      * @param cache the alternate cache to use
      */
     public static synchronized void useCache(DatasetCache cache) {
-    	cachedData = cache;
+    	userCache = cache;
     }
 
     /**
@@ -63,11 +65,20 @@ public class DataCache {
     public static synchronized Dataset get(String dataKey, InputStream is) throws IOException {
         if (dataKey == null) return null;
 
-        Dataset dataset = cachedData.retrieve(dataKey);
+        Dataset dataset = localCache.retrieve(dataKey);
+        
+        //Not found in local cache check if in user supplied cache.
+        //If so, stick it back in the local cache
+        if (dataset == null && userCache != null) {
+        	dataset = userCache.retrieve(dataKey);
+        	if (dataset != null) localCache.store(dataKey, dataset);
+        }
+        
         if (dataset == null) {
         	String content = is == null ? ContentReader.readContentFromUrl(dataKey) : ContentReader.readContent(is);
             dataset = Dataset.make(CSV.read(content));
-            cachedData.store(dataKey, dataset);
+            localCache.store(dataKey, dataset);
+            if (userCache != null) userCache.store(dataKey, dataset);
         }
         return dataset;
     }

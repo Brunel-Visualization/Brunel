@@ -147,9 +147,9 @@ public abstract class AbstractBuilder implements Builder {
 
     private void buildTiledCharts(int width, int height, VisItem[] charts) {
         // Build independent charts tiled into the same display area
-        double[][] layout = squarify(LAYOUTS[Math.min(charts.length - 1, 4)], width, height);
+        double[][] layout = squarify(LAYOUTS[Math.min(charts.length - 1, 3)], width, height);
         for (int i = 0; i < charts.length; i++) {
-            double[] defaultLoc = layout[Math.min(layout.length, i)];           // Will only work for <= 4 charts
+            double[] defaultLoc = layout[Math.min(layout.length-1, i)];           // Will only work for <= 4 charts
             double[] loc = getLocation(charts[i], defaultLoc);                  // Override with 'at' bounds if provided
 
             VisItem[] items = charts[i].children();
