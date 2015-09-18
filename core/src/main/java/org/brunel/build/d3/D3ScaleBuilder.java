@@ -152,12 +152,15 @@ class D3ScaleBuilder {
         return new ArrayList<Object>(all);
     }
 
-    public String getXExtent() {
-        return coords == VisTypes.Coordinates.polar ? "geom.inner_radius" : "geom.inner_width";
-    }
-
-    public String getYExtent() {
-        return coords == VisTypes.Coordinates.polar ? "Math.PI*2" : "geom.inner_height";
+    public Double getGranularitySuitableForSizing(Field[] ff) {
+        Double r = null;
+        for (Field f : ff) {
+            Double g = f.numericProperty("granularity");
+            if (g != null && g / (f.max()-f.min()) > 0.02) {
+                if (r == null || g < r) r = g;
+            }
+        }
+        return r;
     }
 
     public double[] marginsTLBR() {

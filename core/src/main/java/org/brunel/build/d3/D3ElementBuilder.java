@@ -88,26 +88,27 @@ class D3ElementBuilder {
         out.addChained("style('opacity', 0.5).remove()").endStatement();
     }
 
-    private String getSize(String aestheticFunctionCall, ModelUtil.Size size, Field[] fields, String extent) {
+    private String getSize(String aestheticFunctionCall, ModelUtil.Size size, Field[] fields, String extent, String scaleName) {
 
+        boolean needsFunction = aestheticFunctionCall != null;
         String baseAmount;
         if (size != null && !size.isPercent()) {
             // Absolute size overrides everything
             baseAmount = "" + size.value();
-        } else if (fields == null) {
-            // We do not wish to consider the fields
-            baseAmount = "geom.default_point_size";
         } else if (fields.length == 0) {
             // If there are no fields, then fill the extent completely
             baseAmount = extent;
         } else {
             // Use size of categories
             int categories = scales.getCategories(fields).size();
+            Double granularity = scales.getGranularitySuitableForSizing(fields);
             if (categories > 0) {
-                baseAmount = extent + "/" + categories;
+                baseAmount = (categories == 1) ? extent : extent + "/" + categories;
                 // Fill a category span (or 90% of it for categorical fields when percent not defined)
                 if ((size == null || !size.isPercent()) && !scales.allNumeric(fields))
                     baseAmount = "0.9 * " + baseAmount;
+            } else if (granularity != null) {
+                baseAmount = "Math.abs( " + scaleName + "(" + granularity + ") - " + scaleName + "(0) )";
             } else {
                 baseAmount = "geom.default_point_size";
             }
@@ -117,44 +118,44 @@ class D3ElementBuilder {
         if (size != null && size.isPercent())
             baseAmount = size.value() + " * " + baseAmount;
 
-        // If no aesthetic, we are done
-        if (aestheticFunctionCall == null) return baseAmount;
-
-        // Otherwise the size needs to be a function
-        return "function(d) { return " + aestheticFunctionCall + " * " + baseAmount + "}";
+        // If we need a function, wrap it up as required
+        if (needsFunction) {
+            return "function(d) { return " + aestheticFunctionCall + " * " + baseAmount + "}";
+        } else {
+            return baseAmount;
+        }
 
     }
 
     private String getOverallSize(ModelUtil.Size size, ElementDefinition def) {
-
         boolean needsFunction = vis.fSize.size() == 1;
 
-        String definition = needsFunction ? "size(d) * " : "";
         if (size != null && !size.isPercent()) {
-            // Absolute size overrides everything
-            definition += size.value();
-        } else {
-            String x = def.x.size;
-            String y = def.y.size;
-            if (x.equals(y)) return x;          // If they are both the same, use that
-            String xBody = stripFunction(x);
-            String yBody = stripFunction(x);
-            definition += "Math.min(" + xBody + ", " + yBody + ")";
-
-            // if the body is different from the whole item, we have a function
-            if (!xBody.equals(x) || !yBody.equals(y))
-                needsFunction = true;
+            // Just multiply by the aesthetic if needed
+            if (needsFunction)
+                return "function(d) { return size(d) * " + size.value() + " }";
+            else
+                return "" + size.value();
         }
 
-        // If the size definition is a percent, use that to scale by
-        if (size != null && size.isPercent())
-            definition += size.value() + " * ";
+        // Use the X and Y extents to define the overall one
 
-        if (needsFunction)
-            return "function(d) { return " + definition + "}";
-        else
-            return definition;
+        String x = def.x.size;
+        String y = def.y.size;
+        if (x.equals(y)) return x;          // If they are both the same, use that
 
+        String xBody = stripFunction(x);
+        String yBody = stripFunction(y);
+
+        // This will already have the size function factored in if defined
+        String content = "Math.min(" + xBody + ", " + yBody + ")";
+
+        // if the body is different from the whole item for x or y, then we have a function and must return a function
+        if (!xBody.equals(x) || !yBody.equals(y)) {
+            return "function(d) { return " + content + " }";
+        } else {
+            return content;
+        }
     }
 
     private String stripFunction(String item) {
@@ -173,8 +174,8 @@ class D3ElementBuilder {
         Field[] y = positionFields.getY(vis);
         setLocations(e.x, "x", x, positionFields.xCategorical);
         setLocations(e.y, "y", y, positionFields.yCategorical);
-        e.x.size = getSize(getSizeCall(0), ModelUtil.getElementSize(vis, "width"), x, "geom.inner_width");
-        e.y.size = getSize(getSizeCall(1), ModelUtil.getElementSize(vis, "height"), y, "geom.inner_height");
+        e.x.size = getSize(getSizeCall(0), ModelUtil.getElementSize(vis, "width"), x, "geom.inner_width", "scale_x");
+        e.y.size = getSize(getSizeCall(1), ModelUtil.getElementSize(vis, "height"), y, "geom.inner_height", "scale_y");
 
         e.overallSize = getOverallSize(ModelUtil.getElementSize(vis, "size"), e);
         return e;
@@ -191,9 +192,9 @@ class D3ElementBuilder {
 
         if (fields.length == 0) {
             // There are no fields -- we have a notional [0,1] extent, so use the center of that
-            dim.center = scaleName + "(0.5)";
-            dim.left = scaleName + "(0)";
-            dim.right = scaleName + "(1)";
+            dim.center = "function() { return " + scaleName + "(0.5) }";
+            dim.left = "function() { return " + scaleName + "(0) }";
+            dim.right = "function() { return " + scaleName + "(1) }";
         } else if (fields.length == 1) {
             Field field = fields[0];                                // The single field
             String dataFunction = D3Util.writeCall(field);          // A call to that field using the datum 'd'
