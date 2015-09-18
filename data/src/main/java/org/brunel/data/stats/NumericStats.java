@@ -36,10 +36,10 @@ public class NumericStats {
             Object item = f.value(i);
             if (item != null) {
                 if (item instanceof Range) {
-                    double low = ((Range) item).low;
-                    double high = ((Range) item).high;
-                    if (!Double.isInfinite(low)) valid.add(low);
-                    if (!Double.isInfinite(high)) valid.add(high);
+                    Object low = ((Range) item).low;
+                    Object high = ((Range) item).high;
+                    valid.add(Data.asNumeric(low));
+                    valid.add(Data.asNumeric(high));
                 } else {
                     Double d = Data.asNumeric(item);
                     if (d != null) valid.add(d);

@@ -69,11 +69,11 @@ public class AxisDetails {
     public int bottomGutter;                // Space above and below chart (for vertical chart only)
 
     /* Constructs the axis for the given fields */
-    public AxisDetails(String dimension, Field[] definedFields) {
+    public AxisDetails(String dimension, Field[] definedFields, boolean categorical) {
         this.scale = "scale_" + dimension;
         this.fields = suitable(definedFields);
         this.title = title(fields);
-        this.categorical = fields.length > 0 && fields[0].preferCategorical();
+        this.categorical = categorical;
     }
 
     private Field[] suitable(Field[] fields) {
@@ -124,7 +124,7 @@ public class AxisDetails {
 
         int spaceForOneTick = (int) (availableSpace / tickCount);
 
-        if (tickWidth > spaceForOneTick + 5) {
+        if (categorical && tickWidth > spaceForOneTick + 5) {
             // We must use rotated ticks, and may also need only to show a subset of them
             rotatedTicks = true;
             tickValues = makeSkippingTickValues(availableSpace, tickCount);

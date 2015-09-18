@@ -37,16 +37,18 @@ public class ModelUtil {
      * @param fields fields to analyze
      * @return true if we should be categorical, false if not.
      */
-    public static boolean combinationIsCategorical(Field[] fields) {
-        boolean allCanBeNumeric = true;
+    public static boolean combinationIsCategorical(Field[] fields, boolean preferContinuous) {
         boolean allPreferCategorical = true;
         for (Field f : fields) {
             if (!f.preferCategorical()) allPreferCategorical = false;
-            if (!f.isNumeric()) allCanBeNumeric = false;
+            if (!f.isNumeric()) return true;        // Cannot be numeric, so combination must be categorical
         }
 
-        // If everything wants to be categorical, or some field cannot be, we choose categorical
-        return allPreferCategorical || !allCanBeNumeric;
+        // If we prefer continuous data, do that if at all possible
+        if (preferContinuous) return false;
+
+        // If everything wants to be categorical,we choose categorical
+        return allPreferCategorical;
     }
 
     /**

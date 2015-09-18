@@ -86,8 +86,8 @@ public class Param implements Comparable<Param> {
      * @return name as known in the data set
      */
     public String asField(Dataset data) {
+        String name = content.toString();
         if (type == Type.field) {
-            String name = content.toString();
             if (name.startsWith("#"))
                 return name.toLowerCase();
             else if (data == null)
@@ -97,7 +97,7 @@ public class Param implements Comparable<Param> {
                 if (field == null) throw new IllegalArgumentException("Cannot find field '" + name + "' in the data");
                 return field.name;
             }
-        } else return "'" + asString() + "'";
+        } else return "'" + name + "'";
     }
 
     /**

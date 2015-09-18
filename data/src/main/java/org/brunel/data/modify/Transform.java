@@ -86,13 +86,14 @@ public class Transform extends DataOperation {
         FieldRowComparison comparison = new FieldRowComparison(new Field[]{f}, new boolean[]{ascending}, true);
         int[] order = comparison.makeSortedOrder(N);
 
-        Object[] ranks  = new Object[N];                            // We will put the ranks in here
+        Object[] ranks = new Object[N];                            // We will put the ranks in here
         int p = 0;                                                  // Step through runs of same items
-        while (p<N) {
+        while (p < N) {
             int rowP = order[p];
-            int q = p+1;
-            while (q<N && f.compareRows(rowP, order[q]) == 0) q++;  // Set q to be just past the end of a run
-            for (int i=p; i<q; i++) ranks[order[i]] = (p+q+1)/2.0;  // All tied ranks get the same averaged value
+            int q = p + 1;
+            while (q < N && f.compareRows(rowP, order[q]) == 0) q++;  // Set q to be just past the end of a run
+            for (int i = p; i < q; i++)
+                ranks[order[i]] = (p + q + 1) / 2.0;  // All tied ranks get the same averaged value
             p = q;
         }
         Field result = Data.makeColumnField(f.name, f.label, ranks);// New data
@@ -133,7 +134,7 @@ public class Transform extends DataOperation {
     }
 
     private static Field binNumeric(Field f, int desiredBinCount) {
-        NumericScale scale = Auto.makeNumericScale(f, true, new double[] {0,0}, 0.0, desiredBinCount + 1, true);
+        NumericScale scale = Auto.makeNumericScale(f, true, new double[]{0, 0}, 0.0, desiredBinCount + 1, true);
         Double[] divisions = scale.divisions;
         boolean isDate = f.isDate();
         DateFormat dateFormat = isDate ? (DateFormat) f.property("dateFormat") : null;
@@ -152,11 +153,8 @@ public class Transform extends DataOperation {
         for (int i = 0; i < ranges.length; i++) {
             Double a = divisions[i];
             Double b = divisions[i + 1];
-            if (nameByCenter) {
-                String name = dateFormat == null ? Data.formatNumeric((a + b) / 2, true) : dateFormat.format(Data.asDate((a + b) / 2));
-                ranges[i] = new Range(a, b, name);
-            } else
-                ranges[i] = Range.make(a, b, dateFormat);
+            ranges[i] = (dateFormat == null) ? Range.makeNumeric(a, b, nameByCenter)
+                    : Range.makeDate(a, b, nameByCenter, dateFormat);
         }
         return ranges;
     }

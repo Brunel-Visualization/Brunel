@@ -27,6 +27,9 @@ import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
+import java.util.HashSet;
+import java.util.Set;
+
 class D3ElementBuilder {
 
     private final D3LabelBuilder labelBuilder;
@@ -35,6 +38,7 @@ class D3ElementBuilder {
     private final D3ScaleBuilder scales;
     private final PositionFields positionFields;
     private final D3Diagram diagram;
+    private Set<String> dimensionsAsRanges = new HashSet<String>();         // "x" or "y" if ranges on those dimensions
 
     public D3ElementBuilder(VisSingle vis, ScriptWriter out, D3ScaleBuilder scales,
                             PositionFields positionFields, Dataset data) {
@@ -90,7 +94,7 @@ class D3ElementBuilder {
         out.addChained("style('opacity', 0.5).remove()").endStatement();
     }
 
-    public void writeCoordinateFunction(String name, Field[] f, ScriptWriter out) {
+    public void writeCoordinateFunction(String name, Field[] f, boolean categorical, ScriptWriter out) {
         String scaleName = "scale_" + name;
 
         out.onNewLine().add("var", name, "= function(d) { return ");
@@ -98,9 +102,26 @@ class D3ElementBuilder {
         if (f.length == 0) {
             out.add(scaleName, "(0.5) }").endStatement();            // No field on this dimension -- use a default 0/1 scale
         } else if (f.length == 1) {
-            // A single field on this dimension
-            String modifier = isRange(f[0]) ? ".extent() " : "";
-            out.add(scaleName, "(" + D3Util.writeCall(f[0]) + modifier + ") }").endStatement();
+            // Just one field -- the usual case
+            Field field = f[0];
+            String dataFunction = D3Util.writeCall(f[0]);
+            if (isRange(field)) {
+                // For a range value which has not been stacked, we use its extent
+                out.add(scaleName, "(" + dataFunction + ".extent()) }").endStatement();
+            } else if (field.isBinned() && !categorical) {
+                // A Binned value on a non-categorical axes
+                // Write both the center AND low and high extents
+                out.add(scaleName, "(" + dataFunction + ".mid()) }").endStatement();
+                out.add("var", name + "0 = function(d) { return ")
+                        .add(scaleName, "(" + dataFunction + ".low) }").endStatement();
+                out.add("var", name + "1 = function(d) { return ")
+                        .add(scaleName, "(" + dataFunction + ".high) }").endStatement();
+                dimensionsAsRanges.add(name);
+            } else {
+                // Nothing unusual
+                out.add(scaleName, "(" + dataFunction + ") }").endStatement();
+            }
+
         } else {
             // The dimension contains two fields: a range
 
@@ -113,15 +134,16 @@ class D3ElementBuilder {
             }
 
             // Define the lower part: scale the value (if it is a range, extract the low part of the range)
-            out.onNewLine().add("var", name + "0", "= function(d) { return", scaleName, "(" + D3Util.writeCall(f[0]));
+            out.onNewLine().add("var", name + "0 = function(d) { return", scaleName, "(" + D3Util.writeCall(f[0]));
             if (isRange(f[0])) out.add(".low");
             out.add(")}").endStatement();
 
             // Define the upper part: scale the value (if it is a range, extract the high part of the range)
-            out.onNewLine().add("var", name + "1", "= function(d) { return", scaleName, "(" + D3Util.writeCall(f[1]));
+            out.onNewLine().add("var", name + "1 = function(d) { return", scaleName, "(" + D3Util.writeCall(f[1]));
             if (isRange(f[1])) out.add(".high");
             out.add(") }").endStatement();
 
+            dimensionsAsRanges.add(name);
         }
     }
 
@@ -207,11 +229,19 @@ class D3ElementBuilder {
     }
 
     private void defineRectHorizontalExtent() {
-        out.addChained("attr('x', function(d) { return x(d) - size_x(d)/2 })");
         // Sadly, browsers are inconsistent in how they handle width. It can be considered either a style or a
         // positional attribute, so we need to specify as both to make all browsers happy
-        out.addChained("attr('width', size_x)");
-        out.addChained("style('width', size_x)");
+
+        if (dimensionsAsRanges.contains("x")) {
+            // Defined by an extent on this axis
+            out.addChained("attr('x', x0)");
+            out.addChained("attr('width', function(d) { return x1(d) - x0(d) })");
+            out.addChained("style('width', function(d) { return x1(d) - x0(d) })");
+        } else {
+            out.addChained("attr('x', function(d) { return x(d) - size_x(d)/2 })");
+            out.addChained("attr('width', size_x)");
+            out.addChained("style('width', size_x)");
+        }
     }
 
     private void defineText() {

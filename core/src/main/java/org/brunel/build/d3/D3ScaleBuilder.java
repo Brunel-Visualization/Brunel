@@ -52,7 +52,15 @@ import java.util.Set;
  */
 class D3ScaleBuilder {
 
-    private enum Purpose {x, y, size, color}                // scale purpose
+    /* The purpsoe of a scale */
+    private enum Purpose {
+        x(true), y(true), size(false), color(false);
+        public final boolean isCoord;
+
+        Purpose(boolean isCoord) {
+            this.isCoord = isCoord;
+        }
+    }
 
     final VisTypes.Coordinates coords;                      // Combined coordinate system derived from all elements
     final boolean isDiagram;                                // True id we want to treat it as a diagram coord system
@@ -80,13 +88,13 @@ class D3ScaleBuilder {
         // Set the axis information for each dimension
         AxisDetails xAxis, yAxis;
         if (axes == VisTypes.Axes.all || axes == VisTypes.Axes.x) {
-            xAxis = new AxisDetails("x", positionFields.allXFields);
+            xAxis = new AxisDetails("x", positionFields.allXFields, positionFields.xCategorical);
         } else
-            xAxis = new AxisDetails("x", new Field[0]);
+            xAxis = new AxisDetails("x", new Field[0], positionFields.xCategorical);
         if (axes == VisTypes.Axes.all || axes == VisTypes.Axes.y)
-            yAxis = new AxisDetails("y", positionFields.allYFields);
+            yAxis = new AxisDetails("y", positionFields.allYFields, positionFields.yCategorical);
         else
-            yAxis = new AxisDetails("y", new Field[0]);
+            yAxis = new AxisDetails("y", new Field[0], positionFields.yCategorical);
 
         // Map the dimension to the physical location on screen
         if (coords == VisTypes.Coordinates.transposed) {
@@ -361,10 +369,10 @@ class D3ScaleBuilder {
             for (int i = 0; i < f.rowCount(); i++) {
                 Object value = f.value(i);
                 if (value instanceof Range) {
-                    data.add(((Range) value).low);
-                    data.add(((Range) value).high);
-                }
-                data.add(Data.asNumeric(value));
+                    data.add(Data.asNumeric(((Range) value).low));
+                    data.add(Data.asNumeric(((Range) value).high));
+                } else
+                    data.add(Data.asNumeric(value));
             }
         Field combined = Data.makeColumnField("combined", null, data.toArray(new Object[data.size()]));
         combined.set("numeric", true);
@@ -548,7 +556,7 @@ class D3ScaleBuilder {
         Field field = fields[0];
 
         // Categorical field (includes binned data)
-        if (ModelUtil.combinationIsCategorical(fields)) {
+        if (ModelUtil.combinationIsCategorical(fields, purpose.isCoord)) {
             // Combine all categories in the position after each color
             List<Object> list = getCategories(fields);
             out.add("d3.scale.ordinal()").addChained("domain([").addQuotedCollection(list).add("])");

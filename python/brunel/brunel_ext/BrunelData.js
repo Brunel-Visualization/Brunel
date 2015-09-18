@@ -2710,17 +2710,13 @@ V.modify_Transform.binNumeric = function(f, desiredBinCount) {
 };
 
 V.modify_Transform.makeBinRanges = function(divisions, dateFormat, nameByCenter) {
-    var a, b, i, name;
+    var a, b, i;
     var ranges = $.Array(divisions.length - 1, null);
     for (i = 0; i < ranges.length; i++){
         a = divisions[i];
         b = divisions[i + 1];
-        if (nameByCenter) {
-            name = dateFormat == null ? V.Data.formatNumeric((a + b) / 2, true)
-                : dateFormat.format(V.Data.asDate((a + b) / 2));
-            ranges[i] = new V.util_Range(a, b, name);
-        } else
-            ranges[i] = V.util_Range.make(a, b, dateFormat);
+        ranges[i] = (dateFormat == null) ? V.util_Range.makeNumeric(a, b, nameByCenter)
+            : V.util_Range.makeDate(a, b, nameByCenter, dateFormat);
     }
     return ranges;
 };
@@ -2846,8 +2842,8 @@ V.stats_NumericStats.populate = function(f) {
             if (item instanceof V.util_Range) {
                 low = item.low;
                 high = item.high;
-                if (isFinite(low)) valid.add(low);
-                if (isFinite(high)) valid.add(high);
+                valid.add(V.Data.asNumeric(low));
+                valid.add(V.Data.asNumeric(high));
             } else {
                 d = V.Data.asNumeric(item);
                 if (d != null) valid.add(d);
@@ -3342,21 +3338,31 @@ V.util_ItemsList.prototype.toString = function() {
 ////////////////////// Range ///////////////////////////////////////////////////////////////////////////////////////////
 
 
-V.util_Range = function(low, high, name) {
+V.util_Range = function(low, high, mid, name) {
     this.low = low;
     this.high = high;
+    this.mid = mid;
     this.name = name;
 };
 
-V.util_Range.make = function(low, high, df) {
-    var lowRep = V.util_Range.f(low, df);
-    var highRep = V.util_Range.f(high, df);
-    var name;
-    if (!isFinite(low))
-        name = !isFinite(high) ? "\u2210" : "< " + highRep;
-    else
-        name = !isFinite(high) ? "\u2265 " + lowRep : lowRep + "\u2026" + highRep;
-    return new V.util_Range(low, high, name);
+V.util_Range.make = function(low, high, dateFormat) {
+    return dateFormat == null ? V.util_Range.makeNumeric(low, high, false)
+        : V.util_Range.makeDate(low, high, false, dateFormat);
+};
+
+V.util_Range.makeNumeric = function(low, high, nameAtMid) {
+    var mid = (high + low) / 2;
+    var name = nameAtMid ? V.Data.formatNumeric(mid, true) : V.Data.formatNumeric(low,
+        true) + "\u2026" + V.Data.formatNumeric(high, true);
+    return new V.util_Range(low, high, mid, name);
+};
+
+V.util_Range.makeDate = function(low, high, nameAtMid, df) {
+    var lowDate = V.Data.asDate(low);
+    var highDate = V.Data.asDate(high);
+    var midDate = V.Data.asDate((high + low) / 2);
+    var name = nameAtMid ? df.format(midDate) : df.format(lowDate) + "\u2026" + df.format(highDate);
+    return new V.util_Range(lowDate, highDate, midDate, name);
 };
 
 V.util_Range.f = function(v, df) {
@@ -3368,9 +3374,11 @@ V.util_Range.prototype.compareTo = function(o) {
 };
 
 V.util_Range.prototype.asNumeric = function() {
-    if (!isFinite(this.low))
-        return !isFinite(this.high) ? null : this.high;
-    return !isFinite(this.high) ? this.low : (this.low + this.high) / 2;
+    return (V.Data.asNumeric(this.low) + V.Data.asNumeric(this.high)) / 2.0;
+};
+
+V.util_Range.prototype.extent = function() {
+    return V.Data.asNumeric(this.high) - V.Data.asNumeric(this.low);
 };
 
 V.util_Range.prototype.hashCode = function() {

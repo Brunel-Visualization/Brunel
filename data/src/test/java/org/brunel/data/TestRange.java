@@ -27,25 +27,15 @@ public class TestRange {
 
     @Test
     public void testRepresentations() {
-        Range a = Range.make(0, 4);
+        Range a = Range.make((double) 0, (double) 4, null);
         assertEquals("0\u20264", a.toString());
         assertEquals(2, Data.asNumeric(a), 0.01);
 
-        Range b = Range.make(-200.5, -100);
+        double low = -200.5;
+        double high = -100;
+        Range b = Range.make(low, high, null);
         assertEquals("-200.5\u2026-100", b.toString());
         assertEquals(-150.25, Data.asNumeric(b), 0.01);
-
-        Range c = Range.make(100, Double.POSITIVE_INFINITY);
-        assertEquals("\u2265 100", c.toString());
-        assertEquals(100, Data.asNumeric(c), 0.01);
-
-        Range d = Range.make(Double.NEGATIVE_INFINITY, 100);
-        assertEquals("< 100", d.toString());
-        assertEquals(100, Data.asNumeric(d), 0.01);
-
-        Range e = Range.make(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-        assertEquals("\u2210", e.toString());
-        assertEquals(null, Data.asNumeric(e));
 
         assertNotEquals(a.hashCode(), b.hashCode());
 

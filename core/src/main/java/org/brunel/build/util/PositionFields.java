@@ -61,8 +61,8 @@ public class PositionFields {
         this.allYFields = allY.toArray(new Field[allY.size()]);
 
         // Set ordinal / categorical and derive transforms (if not explicitly set above)
-        this.xCategorical = ModelUtil.combinationIsCategorical(allXFields);
-        this.yCategorical = ModelUtil.combinationIsCategorical(allYFields);
+        this.xCategorical = ModelUtil.combinationIsCategorical(allXFields, true);
+        this.yCategorical = ModelUtil.combinationIsCategorical(allYFields, true);
 
         if (xTransform == null)
             this.xTransform = xCategorical ? "linear" : chooseTransform(allXFields);

@@ -456,7 +456,7 @@ public abstract class AbstractBuilder implements Builder {
         }
 
         // X fields are used for the percentage bases
-        for (Param s : item.fX) spec.put(s.asField(), s + ":base");
+        for (Param s : item.fX) spec.put(s.asField(), s.asField() + ":base");
 
         // Return null if summary is not called for
         if (spec.containsKey("#count") || item.fSummarize.size() > 0) {

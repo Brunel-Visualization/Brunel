@@ -20,35 +20,48 @@ package org.brunel.data.util;
 import org.brunel.data.Data;
 import org.brunel.translator.JSTranslation;
 
+import java.util.Date;
+
 public class Range implements Comparable<Range> {
 
     @JSTranslation(ignore = true)
-    public static Range make(double low, double high) {
+    public static Range make(Double low, Double high) {
         return make(low, high, null);
     }
 
-    public static Range make(double low, double high, DateFormat df) {
-        String lowRep = f(low, df);
-        String highRep = f(high, df);
-        String name;
-        if (Double.isInfinite(low))
-            name = Double.isInfinite(high) ? "\u2210" : "< " + highRep;
-        else name = Double.isInfinite(high) ? "\u2265 " + lowRep : lowRep + "\u2026" + highRep;
+    public static Range make(Double low, Double high, DateFormat dateFormat) {
+        return dateFormat == null ? makeNumeric(low, high, false) : makeDate(low, high, false, dateFormat);
+    }
 
-        return new Range(low, high, name);
+    public static Range makeNumeric(double low, double high, boolean nameAtMid) {
+        double mid = (high + low) / 2;
+        String name = nameAtMid ? Data.formatNumeric(mid, true)
+                : Data.formatNumeric(low, true) + "\u2026" + Data.formatNumeric(high, true);
+        return new Range(low, high, mid, name);
+    }
+
+    public static Range makeDate(double low, double high, boolean nameAtMid, DateFormat df) {
+        Date lowDate = Data.asDate(low);
+        Date highDate = Data.asDate(high);
+        Date midDate = Data.asDate((high + low) / 2);
+        String name = nameAtMid ? df.format(midDate) : df.format(lowDate) + "\u2026" + df.format(highDate);
+        return new Range(lowDate, highDate, midDate, name);
     }
 
     private static String f(double v, DateFormat df) {
         return df == null ? Data.formatNumeric(v, true) : df.format(Data.asDate(v));
     }
 
-    public final double high;
-    public final double low;
+    public final Object high;
+    public final Object mid;
+    public final Object low;
+
     private final String name;
 
-    public Range(double low, double high, String name) {
+    private Range(Object low, Object high, Object mid, String name) {
         this.low = low;
         this.high = high;
+        this.mid = mid;
         this.name = name;
     }
 
@@ -56,17 +69,17 @@ public class Range implements Comparable<Range> {
         return Data.compare(asNumeric(), o.asNumeric());
     }
 
-     public Double asNumeric() {
-        if (Double.isInfinite(low)) return Double.isInfinite(high) ? null : high;
-        return Double.isInfinite(high) ? low : (low + high) / 2;
+    public Double asNumeric() {
+        return (Data.asNumeric(low) + Data.asNumeric(high)) / 2.0;
+    }
+
+    private double extent() {
+        return Data.asNumeric(high) - Data.asNumeric(low);
     }
 
     @JSTranslation(js = {"return this.name;"})
     public int hashCode() {
-        long temp = Double.doubleToLongBits(high);
-        int result = 31 + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(low);
-        return 31 * result + (int) (temp ^ (temp >>> 32));
+        return low.hashCode() + 31 * high.hashCode();
     }
 
     public boolean equals(Object obj) {
