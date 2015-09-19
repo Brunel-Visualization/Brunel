@@ -136,7 +136,8 @@
     fill: none;
 }
 
-.brunel .element.bar, .brunel .element.polygon, .brunel .element.area, .brunel .element.bar {
+.brunel .element.bar, .brunel .element.polygon, .brunel .element.area, .brunel .element.line.filled, .brunel .element.path.filled {
+    fill-rule: nonzero;
     fill: #0b9bdb;
     stroke-width: 1px;
     stroke: #000000;

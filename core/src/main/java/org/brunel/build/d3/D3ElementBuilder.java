@@ -297,10 +297,13 @@ class D3ElementBuilder {
                 out.add("var path = d3.svg.area().x(x).y1(y1).y0(y0)");
         } else if (vis.tElement.producesSingleShape) {
             // Choose the top line if there is a range (say for stacking)
-            if (elementDef.y.right != null)
-                out.add("var path = d3.svg.line().x(x).y(y1)");
-            else
-                out.add("var path = d3.svg.line().x(x).y(y)");
+            String yDef = elementDef.y.right == null ? "y" : "y1";
+            if (vis.fSize.size() == 1) {
+                out.add("var path = BrunelD3.sizedPath().x(x).y(" + yDef + ")");
+                out.addChained("r(" + elementDef.overallSize + ")");
+            } else {
+                out.add("var path = d3.svg.line().x(x).y(" + yDef + ")");
+            }
         }
         if (vis.tUsing == VisTypes.Using.interpolate) {
             out.add(".interpolate()");
@@ -465,10 +468,8 @@ class D3ElementBuilder {
         if (!vis.fColor.isEmpty()) out.addChained("style(" + details.colorAttribute + ", color)");
 
         // Define line width if needed
-        if (!vis.fSize.isEmpty() && (vis.tElement == VisTypes.Element.line || vis.tElement == VisTypes.Element.edge
-                || vis.tElement == VisTypes.Element.path)) {
+        if (details.needsStrokeSize)
             out.addChained("style('stroke-width', size)");
-        }
 
         // Define opacity
         if (!vis.fOpacity.isEmpty()) {

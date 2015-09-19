@@ -32,9 +32,10 @@ public class ElementDetails {
      * The methods 'wedge', 'poly', 'area', 'path', 'box' wrap the text somewhere useful in the center of the shape,
      * and will also remove the label if it does not fit.
      * a box around the shape (and so will work bets for convex shapes like rectangles and circles)
-     * @param dataSource the javascript name of the element's data
+     *
+     * @param dataSource  the javascript name of the element's data
      * @param elementType path, line, text, rect or circle
-     * @param textMethod wedge, poly, area, path, box, left, right, top, bottom
+     * @param textMethod  wedge, poly, area, path, box, left, right, top, bottom
      * @return
      */
     public static ElementDetails makeForDiagram(String dataSource, String elementType, String textMethod) {
@@ -54,10 +55,22 @@ public class ElementDetails {
     public final String textMethod;                     // How to fit text to the shape
     public final boolean textMustFit;                   // If true, text must fit inside
 
+    public boolean needsStrokeSize;                     // If we must define stroke-size using the "size" aesthetic
+
     private ElementDetails(VisSingle vis, String symbol) {
         VisTypes.Element element = vis.tElement;
+        String classList = "element " + element.name();
+
+        // Work out if the element is filled
+        boolean filled = element.filled;
+        if (!vis.fSize.isEmpty() && element == VisTypes.Element.line || element == VisTypes.Element.path) {
+            filled = true;
+            classList += " filled";
+        }
+
+        this.classes = "'" + classList + "'";
         this.splitIntoShapes = element.producesSingleShape;
-        this.colorAttribute = "'" + (element.filled ? "fill" : "stroke") + "'";
+        this.colorAttribute = "'" + (filled ? "fill" : "stroke") + "'";
         this.dataSource = element.producesSingleShape ? "splits" : "data._rows";
         this.producesPath = element.producesSingleShape ||
                 (element == VisTypes.Element.bar && vis.coords == VisTypes.Coordinates.polar);
@@ -71,20 +84,21 @@ public class ElementDetails {
             this.elementType = "rect";
         else
             this.elementType = "rect".equals(symbol) ? "rect" : "circle";
-        this.classes = "'element " + element.name() + "'";
         if (producesPath) {
             if (element == VisTypes.Element.bar) this.textMethod = "wedge";
             else if (element == VisTypes.Element.area) this.textMethod = "area";
-            else if (element.filled) this.textMethod = "poly";
+            else if (filled) this.textMethod = "poly";
             else this.textMethod = "path";
-        } else if (elementType.equals("circle")){
+        } else if (elementType.equals("circle")) {
             this.textMethod = "right";
         } else {
             this.textMethod = "box";
         }
 
-        this.textMustFit = element.filled && element != VisTypes.Element.point;
+        this.textMustFit = filled && element != VisTypes.Element.point;
 
+        // Only edges need the stroke width setting
+        this.needsStrokeSize = !vis.fSize.isEmpty() && vis.tElement == VisTypes.Element.edge;
     }
 
     private ElementDetails(String dataSource, String elementType, String textMethod) {

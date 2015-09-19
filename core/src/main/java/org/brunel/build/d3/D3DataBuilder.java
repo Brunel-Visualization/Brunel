@@ -125,7 +125,7 @@ public class D3DataBuilder {
         if (!vis.fKeys.isEmpty()) return asFields(vis.fKeys);
 
         // If we split by aesthetics, they are the keys
-        if (vis.tElement.producesSingleShape) return Arrays.asList(vis.aestheticFields());
+        if (vis.tElement.producesSingleShape) return makeSplitFields();
 
         // For non-diagrams, try the aesthetics AND x values
         if (vis.tDiagram == null) {
@@ -272,10 +272,24 @@ public class D3DataBuilder {
         }
         // Add special items
         out.add("_split:").at(24);
-        defineKeyFieldFunction(Arrays.asList(vis.aestheticFields()), true, fieldsToIndex);
+        defineKeyFieldFunction(makeSplitFields(), true, fieldsToIndex);
         out.add(",").ln();
         out.add("_rows:").at(24).add("BrunelD3.makeRowsWithKeys(keyFunction, base.rowCount())");
         out.onNewLine().indentLess().add("}").endStatement();
+    }
+
+    private List<String> makeSplitFields() {
+        // Start with all the aesthetics
+        ArrayList<String> splitters = new ArrayList<String>();
+        Collections.addAll(splitters, vis.aestheticFields());
+
+        // We handle sized areas specially -- don't split using the size for them
+        if (vis.tElement == VisTypes.Element.line || vis.tElement == VisTypes.Element.path) {
+            for (Param p : vis.fSize)
+                splitters.remove(p.asField());
+        }
+
+        return splitters;
     }
 
     private void writeTransform(String name, String command) {

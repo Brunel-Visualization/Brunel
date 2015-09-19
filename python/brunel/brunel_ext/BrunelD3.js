@@ -508,6 +508,60 @@ var BrunelD3 = (function () {
         lastTimeDescr = description;
     }
 
+
+    function sizedPath() {
+        // The accessor functions
+        var x = function(d) { return d.x; },
+            y = function(d) { return d.y; },
+            r = function(d) { return d.r; };
+
+        // Convert array to SVG path definition
+        function makePath(array) {
+            if (array.length < 2) return "";		// No content
+            var i, p;
+            for (i=0; i<array.length; i++) {
+                if (i==0) p = "M"; else p+= "L";
+                p += array[i][0] + " " + (array[i][1] + array[i][2]);
+            }
+            for (i=array.length-1; i>=0; i--) {
+                p += "L" + array[i][0] + " " + (array[i][1] - array[i][2]);
+            }
+            return p;
+        }
+
+        // The path we create
+        function path(d) {
+            var p = "";
+            var segment = [];
+            var last=[Number.NaN, Number.NaN];
+            for(var i = 0; i < d.length; i++) {
+                var px = x.call(this, d[i], i),
+                    py = y.call(this, d[i], i),
+                    pr = r.call(this, d[i], i);
+                if (px && py && pr) {
+                    // Ignore duplicates
+                    if (px != last[0] || py != last[1]) {
+                        last = [px,py,pr/2];
+                        segment.push(last);
+                    }
+                } else {
+                    // End of a segment
+                    p += makePath(segment);
+                    segment = [];
+                }
+            }
+            p += makePath(segment);
+            return p + "Z";
+        }
+
+        // Modify or return the accessors
+        path.x = function(v) { if (!arguments.length) return x; x = v; return path };
+        path.y = function(v) { if (!arguments.length) return y; y = v; return path };
+        path.r = function(v) { if (!arguments.length) return r; r = v; return path };
+
+        return path;
+    }
+
     // Expose these methods
     return {
         'geometry': geometries,
@@ -521,6 +575,7 @@ var BrunelD3 = (function () {
         'select': select,
         'shorten': shorten,
         'trans': transition,
+        'sizedPath': sizedPath,
         'tween': transitionTween,
         'time': time
     }
