@@ -106,6 +106,8 @@
                 at(-10, 0, 112, 80) style('stroke:none; fill-opacity:1')
                 + data('http://willsfamily.org/files/vis/data/minard-cities.csv')
                 text x(long) y(lat) label(city) style('fill:black;font-family:Times; font-size:12pt')
+                +  data('http://willsfamily.org/files/vis/data/minard-troops.csv')  size(survivors:0:1250)
+                x(long) y(lat) style('fill-opacity:0;stroke-opacity:0') tooltip(group, survivors, direction)
                 | data('http://willsfamily.org/files/vis/data/minard-temp.csv')
                 line x(long) y(temp) at(0, 60, 110, 100) style('stroke:green')
                 + data('http://willsfamily.org/files/vis/data/minard-temp.csv')

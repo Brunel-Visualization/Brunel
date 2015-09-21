@@ -109,7 +109,9 @@ public class D3LabelBuilder {
     public void defineLabeling(ElementDetails details, List<Param> items, boolean forTooltip) {
         String name = forTooltip ? "tooltipLabeling" : "labeling";
         out.add("var", name, "= {").ln().indentMore();
-        out.add("method:", out.quote(details.textMethod), ",").ln();
+        String textMethod = details.textMethod;
+        if (textMethod.equals("left") || textMethod.equals("right")) textMethod = "top";  // Move to top
+        out.add("method:", out.quote(textMethod), ",").ln();
         out.add("fit:", details.textMustFit, ",").ln();
         if (details.producesPath)
             out.add("path: path,").ln();
