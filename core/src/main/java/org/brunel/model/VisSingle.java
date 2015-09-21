@@ -329,12 +329,20 @@ public class VisSingle extends VisItem implements Cloneable {
         addFieldNames(nonPosFields, false, itemsLabel, itemsTooltip);
         nonPos = nonPosFields.toArray(new String[nonPosFields.size()]);
 
-        // All used fields are: position and non-position fields, also #selection if needed for filtering
+        // All used fields are: position and non-position fields, also #selection and any transform field
         LinkedHashSet<String> all = new LinkedHashSet<String>();
         Collections.addAll(all, pos);
         Collections.addAll(all, nonPos);
         if (tInteraction.containsKey(VisTypes.Interaction.filter)) all.add("#selection");
+
+        addFields(all, fTransform.keySet());
+        addFields(all, fSummarize.keySet());
+
         used = all.toArray(new String[all.size()]);
+    }
+
+    private void addFields(Set<String> all, Set<Param> params) {
+        for (Param p : params) if (p.isField()) all.add(p.asField());
     }
 
     private void addFieldNames(Collection<String> target, boolean forceToBeField, List<Param>... sources) {

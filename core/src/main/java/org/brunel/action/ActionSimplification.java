@@ -25,10 +25,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 class ActionSimplification {
 
@@ -59,18 +57,6 @@ class ActionSimplification {
             result.addAll(process(items.subList(last, items.size())));
 
         return result.toArray(new ActionStep[result.size()]);
-    }
-
-    private Set<Object> accumulateNonDataParameters(ArrayList<ActionStep> base) {
-        HashSet<Object> hashSet = new HashSet<Object>();
-        // Add all parameter content that are not data operations
-        for (ActionStep a : base) {
-            String actionType = grammar.get(a.name).type;
-            if (!actionType.equals("data")) {
-                for (Param p : a.parameters) hashSet.add(p.asString());
-            }
-        }
-        return hashSet;
     }
 
     private boolean canMerge(String name) {
@@ -109,39 +95,6 @@ class ActionSimplification {
                     found = true;
 
         }
-    }
-
-    private void dropDataParametersNotUsedElsewhere(ArrayList<ActionStep> base, Set<Object> usedParameters) {
-        // If an action says bin something, but that something is never used, it is useless
-        for (int i = 0; i < base.size(); i++) {
-            ActionStep a = base.get(i);
-            String actionName = base.get(i).name;
-            String actionType = grammar.get(actionName).type;
-            if (actionType.equals("data")) {
-                Param[] goodParams = keepUsed(a.parameters, usedParameters);
-                if (goodParams == null) {
-                    base.remove(i);
-                    continue;
-                }
-                if (goodParams != a.parameters) {
-                    Arrays.sort(goodParams);
-                    base.set(i, ActionUtil.replaceParameters(a, goodParams));
-                } else if (a.parameters.length > 1) Arrays.sort(a.parameters);
-            }
-        }
-    }
-
-    private Param[] keepUsed(Param[] params, Set<Object> used) {
-        // Deal with common and easy cases first
-        if (params.length == 0) return null;
-        if (params.length == 1) return used.contains(params[0].asString()) ? params : null;
-
-        Set<Param> toKeep = new HashSet<Param>(params.length);
-        for (Param p : params) {
-            if (used.contains(p.asString())) toKeep.add(p);
-        }
-        if (toKeep.size() == params.length) return params;
-        return toKeep.toArray(new Param[toKeep.size()]);
     }
 
     private ActionStep mergeActions(ActionStep a, ActionStep b) {
@@ -190,10 +143,6 @@ class ActionSimplification {
         dropAllExceptLastByName(base, "at");
         orderCanonically(base);
         mergeSimilar(base);
-
-        Set<Object> usedParameters = accumulateNonDataParameters(base);
-        dropDataParametersNotUsedElsewhere(base, usedParameters);
-
         return base;
     }
 
