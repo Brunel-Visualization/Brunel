@@ -34,6 +34,7 @@ class D3ElementBuilder {
     private final ScriptWriter out;
     private final D3ScaleBuilder scales;
     private final PositionFields positionFields;
+    private final Dataset data;
     private final D3Diagram diagram;
 
     public D3ElementBuilder(VisSingle vis, ScriptWriter out, D3ScaleBuilder scales,
@@ -42,6 +43,7 @@ class D3ElementBuilder {
         this.out = out;
         this.scales = scales;
         this.positionFields = positionFields;
+        this.data = data;
         this.labelBuilder = new D3LabelBuilder(vis, out, data);
         this.diagram = D3Diagram.make(vis, data, out);
     }
@@ -424,9 +426,18 @@ class D3ElementBuilder {
     private String getSymbol() {
         String result = ModelUtil.getElementSymbol(vis);
         if (result != null) return result;
-        // We default to a rectangle if all the scales are categorical, otherwise we util a point
-        if (positionFields.allXFields.length == 0 || positionFields.allYFields.length == 0) return "point";
-        return positionFields.xCategorical && positionFields.yCategorical ? "rect" : "point";
+        // We default to a rectangle if all the scales are categorical or binned, otherwise we return a point
+        boolean cat = allShowExtent(vis.positionFields());
+        return cat ? "rect" : "point";
+    }
+
+    private boolean allShowExtent(String[] fields) {
+        // Categorical and numeric fields both show elements as extents on the axis
+        for (String s : fields) {
+            Field field = data.field(s);
+            if (field.isNumeric() && !field.isBinned()) return false;
+        }
+        return true;
     }
 
     private boolean isRange(Field field) {

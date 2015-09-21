@@ -103,12 +103,17 @@ class GalleryBuilder {
         String title = tags.get("#title");
         String description = tags.get("#description");
         String ext = tags.get("#ext");
+        String widthS = tags.get("#width");
+        String heightS = tags.get("#height");
         String image = id + (ext == null ? ".png" : "." + ext);
-        String target = String.format("http://brunel.mybluemix.net/gallery_app/renderer?" +
-                "title=%s&brunel_src=%s&description=%s", encode(title), encode(brunel), encode(description));
 
-        int HEIGHT = 800;
-        int WIDTH = 1000;
+        int WIDTH = widthS == null ? 1000 : Integer.parseInt(widthS);
+        int HEIGHT =  heightS == null ? 800 : Integer.parseInt(heightS);
+
+        String target = String.format("http://brunel.mybluemix.net/gallery_app/renderer?" +
+                "title=%s&brunel_src=%s&description=%s&width=%d&height=%d",
+                encode(title), encode(brunel), encode(description), WIDTH, HEIGHT);
+
         try {
             Action a = Action.parse(brunel);
             VisItem item = a.apply();                       // data description should be included

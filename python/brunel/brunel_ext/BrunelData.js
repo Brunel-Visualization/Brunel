@@ -3365,10 +3365,6 @@ V.util_Range.makeDate = function(low, high, nameAtMid, df) {
     return new V.util_Range(lowDate, highDate, midDate, name);
 };
 
-V.util_Range.f = function(v, df) {
-    return df == null ? V.Data.formatNumeric(v, true) : df.format(V.Data.asDate(v));
-};
-
 V.util_Range.prototype.compareTo = function(o) {
     return V.Data.compare(this.asNumeric(), o.asNumeric());
 };

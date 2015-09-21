@@ -24,11 +24,14 @@
 #description    The chord chart shows which categories of games are rated as suitable for given ages of
                 players. These age ratings are given by the BGG reviewers and are the median responses
                 for each game
+#width          600
+#height         600
 #brunel         data('http://willsfamily.org/files/vis/data/BGG Top 2000 Games.csv')
                 chord x(categories) y(playerage) color(playerage) size(#count) tooltip(#all)
 
 #id             statesbar
 #title          State temperatures
+#height         400
 #description    Differences between winter and summer temperatures, sorted by the latitude of the state.
                 Color encodes the state population.
 #brunel         data('http://willsfamily.org/files/vis/data/US States.csv')
@@ -89,3 +92,22 @@
 #description    Adding 'bubble' to brunel -- no other changes needed to make this a bubble diagram
 #brunel         data('http://willsfamily.org/files/vis/data/whiskey.csv')
                 bubble x(country) y(category) color(country) size(#count) sort(#count) label(category) tooltip(#all)
+
+#id             minard1
+#title          Minard's famous map of Napoleon's advance on Moscow
+#description    This graph shows the catastrophic loss of life in Napoleon's Grand Army as it advanced on, and then
+                retreated from Russia.  The size of the army, initially 422,000 strong, is shown by the width of the path.
+                Below it, aligned with the main chart, is a temperature chart showing the increasingly brutal cold which
+                followed the soldiers' retreat.
+#width          1000
+#height         450
+#brunel         data('http://willsfamily.org/files/vis/data/minard-troops.csv')
+                path x(long) y(lat) color(direction) size(survivors:0:1250) split(group) axes(none) legends(none)
+                at(-10, 0, 112, 80) style('stroke:none; fill-opacity:1')
+                + data('http://willsfamily.org/files/vis/data/minard-cities.csv')
+                text x(long) y(lat) label(city) style('fill:black;font-family:Times; font-size:12pt')
+                | data('http://willsfamily.org/files/vis/data/minard-temp.csv')
+                line x(long) y(temp) at(0, 60, 110, 100) style('stroke:green')
+                + data('http://willsfamily.org/files/vis/data/minard-temp.csv')
+                text x(long) y(temp) label(temp, '°C ', month, ' ', day)
+                style('font-family: Times; font-style:italic; fill:black')
