@@ -48,10 +48,6 @@ public class Range implements Comparable<Range> {
         return new Range(lowDate, highDate, midDate, name);
     }
 
-    private static String f(double v, DateFormat df) {
-        return df == null ? Data.formatNumeric(v, true) : df.format(Data.asDate(v));
-    }
-
     public final Object high;
     public final Object mid;
     public final Object low;

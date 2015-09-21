@@ -159,23 +159,24 @@
     stroke-width: 0;
 }
 
-.brunel .element2 .element {
+.brunel .element2 .element, .brunel .element2 .element.filled {
     fill: #f2574c
 }
 
-.brunel .element3 .element {
+.brunel .element3 .element, .brunel .element2 .element.filled {
     fill: #67b51b
 }
 
-.brunel .element2 .element.line, .brunel .element2 .element.path, .brunel .element2 .element.edge {
+.brunel .element2 .line, .brunel .element2 .path, .brunel .element2 .edge {
     fill: none;
     stroke: #f2574c
 }
 
-.brunel .element3 .element.line, .brunel .element3 .element.path, .brunel .element3 .element.edge {
+.brunel .element3 .line, .brunel .element3 .path, .brunel .element3 .edge {
     fill: none;
     stroke: #67b51b
 }
+
 
 .brunel .horizontal-box {
     -moz-box-orient: horizontal;

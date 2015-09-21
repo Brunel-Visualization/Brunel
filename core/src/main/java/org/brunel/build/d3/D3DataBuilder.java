@@ -32,8 +32,10 @@ import org.brunel.model.VisTypes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -44,11 +46,13 @@ public class D3DataBuilder {
     private final VisSingle vis;
     private final ScriptWriter out;
     private final Dataset data;
+    private final int datasetIndex;
 
-    public D3DataBuilder(VisSingle vis, ScriptWriter out, Dataset data) {
+    public D3DataBuilder(VisSingle vis, ScriptWriter out, Dataset data, int index) {
         this.vis = vis;
         this.out = out;
         this.data = data;
+        datasetIndex = index;
     }
 
     public void writeDataManipulation(Map<String, Integer> requiredFields) {
@@ -60,38 +64,44 @@ public class D3DataBuilder {
 
     public static void writeRawData(VisItem main, ScriptWriter out) {
         Dataset[] datasets = main.getDataSets();
-        if (datasets.length > 1) throw new UnsupportedOperationException("Cannot handle multiple data sets");
-        List<Field> fields = new ArrayList<Field>();
-        Dataset data = datasets[0];
-        addUsedFields(main, data, fields);
+        for (int d = 0; d < datasets.length; d++) {
+            Dataset data = datasets[d];
 
-        out.onNewLine().add("var", "table", "= [").ln().indentMore();
-        int numPerLine = Math.max(1, 12 / fields.size());
-        out.add("[ ");
-        for (int i = 0; i < fields.size(); i++) {
-            String name = fields.get(i).name;
-            if (name.startsWith("#")) continue;
-            if (i > 0) out.add(", ");
-            out.add("'").add(name).add("'");
+            LinkedHashSet<Field> fieldsAsSet = new LinkedHashSet<Field>();
+            addUsedFields(main, data, fieldsAsSet);
+            Field[] fields = fieldsAsSet.toArray(new Field[fieldsAsSet.size()]);
+
+            // Name the table with a numeric suffix for multiple tables
+            out.onNewLine().add("var", "table" + (d + 1), "= [").ln().indentMore();
+            int numPerLine = Math.max(1, 12 / fields.length);
+            out.add("[ ");
+            for (int i = 0; i < fields.length; i++) {
+                String name = fields[i].name;
+                if (name.startsWith("#")) continue;
+                if (i > 0) out.add(", ");
+                out.add("'").add(name).add("'");
+            }
+            out.add(" ],");
+            for (int r = 0; r < data.rowCount(); r++) {
+                if (r > 0) out.add(",");
+                if ((r + 1) % numPerLine == 0) out.onNewLine();
+                out.add(makeRowText(fields, r));
+            }
+            out.indentLess().onNewLine().add("]").endStatement();
         }
-        out.add(" ],");
-        for (int r = 0; r < data.rowCount(); r++) {
-            if (r > 0) out.add(",");
-            if ((r + 1) % numPerLine == 0) out.onNewLine();
-            out.add(makeRowText(fields, r));
-        }
-        out.indentLess().onNewLine().add("]").endStatement();
     }
 
-    private static void addUsedFields(VisItem item, Dataset data, List<Field> fields) {
+    private static void addUsedFields(VisItem item, Dataset data, Collection<Field> fields) {
         if (item.children() == null) {
-            for (String f : item.getSingle().usedFields())
-                if (!f.startsWith("#")) {
+            VisSingle vis = (VisSingle) item;                           // No children => VisSingle
+            if (vis.getDataset() != data) return;                       // Does not use this data set, so ignore it
+            for (String f : vis.usedFields())                           // Yes! Add in the fields to be used
+                if (!f.startsWith("#")) {                               // .. but not synthetic fields
                     Field field = data.field(f, true);                  // Constant fields will not be found
-                    if (field != null)  fields.add(field);
+                    if (field != null) fields.add(field);
                 }
         } else {
-            for (VisItem i : item.children())
+            for (VisItem i : item.children())                           // Pass down to child items
                 addUsedFields(i, data, fields);
         }
     }
@@ -157,12 +167,12 @@ public class D3DataBuilder {
     }
 
     // If the row contains any nulls, return null for the whole row
-    private static String makeRowText(List<Field> fields, int r) {
+    private static String makeRowText(Field[] fields, int r) {
         StringBuilder row = new StringBuilder();
         D3Util.DateBuilder dateBuilder = new D3Util.DateBuilder();
         row.append("[");
-        for (int i = 0; i < fields.size(); i++) {
-            Field field = fields.get(i);
+        for (int i = 0; i < fields.length; i++) {
+            Field field = fields[i];
             if (field.name.startsWith("#")) continue;           // Skip special fields
             if (i > 0) row.append(", ");
             Object value = field.value(r);
@@ -201,7 +211,8 @@ public class D3DataBuilder {
         // The parameters are stored in the data set when it is transformed
         DataTransformParameters params = (DataTransformParameters) data.property("parameters");
         D3Util.addTiming("Data Start", out);
-        out.add("base = pre(raw)").ln();
+        out.add("raw = datasets[" + datasetIndex + "]").endStatement();
+        out.add("base = pre(raw,", datasetIndex, ")").ln();
         out.mark();
         writeTransform("addConstants", params.constantsCommand);
 
@@ -231,7 +242,7 @@ public class D3DataBuilder {
         writeTransform("stack", params.stackCommand);               // Stack must come after all else
 
         if (out.changedSinceMark()) out.endStatement();
-        out.add("base = post(base)").endStatement();
+        out.add("base = post(base,", datasetIndex, ")").endStatement();
         D3Util.addTiming("Data End", out);
     }
 

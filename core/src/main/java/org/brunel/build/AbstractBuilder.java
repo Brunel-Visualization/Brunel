@@ -76,7 +76,7 @@ public abstract class AbstractBuilder implements Builder {
     private String currentElementID;                // Identifier for the element we are building
     private StyleSheet visStyles;                   // Collection of style overrides for this visualization
     private Controls controls;                      // Contains the controls for the current chart
-    private Dataset mainData, fullData;             // Datasets without data and (optionally) with full data
+    private Dataset[] datasets;                     // Data sets ued by the VisItem being built
 
     /**
      * This is the entry point into building. When called, it will clear all existing build state (including control
@@ -88,12 +88,10 @@ public abstract class AbstractBuilder implements Builder {
      */
     public final void build(VisItem main, int width, int height) {
 
-        // For now, manually remove the fields' data -- in future this will be done beforehand
-        fullData = main.getDataSets()[0];
-        mainData = fullData;  // Should be: fullData.removeData();
-
         // Clear existing collections
         visStyles = new StyleSheet();
+
+        datasets = main.getDataSets();
 
         // Create the main visualization area and get an identifier for it.
         currentVisualizationID = defineVisSystem(main, width, height);
@@ -256,7 +254,7 @@ public abstract class AbstractBuilder implements Builder {
         // Call the engine to see if it has any special needs
         params = modifyParameters(params, vis);
 
-        Dataset data = mainData;
+        Dataset data = vis.getDataset();                                                // The data to use
         data = data.addConstants(params.constantsCommand);                              // add constant fields
         data = data.filter(params.filterCommand);                                       // filter data
         data = data.bin(params.transformCommand);                                       // bin data
@@ -292,7 +290,7 @@ public abstract class AbstractBuilder implements Builder {
     private void buildElement(VisSingle vis, Dataset data) {
         try {
             controls.buildControls(vis, data);
-            currentElementID = defineElement(vis, data);
+            currentElementID = defineElement(vis, data, indexOf(vis.getDataset(), datasets));
             if (vis.styles != null) {
                 StyleSheet styles = vis.styles.replaceClass("currentElement", currentElementID);
                 visStyles.add(styles, currentChartID);
@@ -300,6 +298,11 @@ public abstract class AbstractBuilder implements Builder {
         } catch (Exception e) {
             throw VisException.makeBuilding(e, vis);
         }
+    }
+
+    private int indexOf(Dataset data, Dataset[] datasets) {
+        for (int i=0; i<datasets.length;i++) if (data == datasets[i]) return i;
+        throw new IllegalStateException("Could not find data set in array of datasets");
     }
 
     /**
@@ -503,6 +506,6 @@ public abstract class AbstractBuilder implements Builder {
     protected abstract DataTransformParameters modifyParameters(DataTransformParameters params, VisSingle vis);
 
     /* Adds an 'element' in GoG terms -- a bar, line, point, etc. */
-    protected abstract String defineElement(VisSingle vis, Dataset data);
+    protected abstract String defineElement(VisSingle vis, Dataset data, int datasetIndex);
 
 }

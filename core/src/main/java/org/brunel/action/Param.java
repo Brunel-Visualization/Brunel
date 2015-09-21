@@ -71,7 +71,7 @@ public class Param implements Comparable<Param> {
         Param[] combined = new Param[modifiers.length + mods.length];
         System.arraycopy(modifiers, 0, combined, 0, modifiers.length);
         System.arraycopy(mods, 0, combined, modifiers.length, mods.length);
-        return new Param(content, type, mods);
+        return new Param(content, type, combined);
     }
 
     public double asDouble() {

@@ -144,16 +144,23 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
     private void addToHistory(String descr) {
         history.remove(descr);
         history.add(0, descr);
+        String value = historyAsString();
 
-        int n = history.size();
-        List<String> toStore = n <= 15 ? history : history.subList(0, 15);
+        while (history.size() > 15 || value.length() > 8000) {
+            history.remove(history.size() - 1);
+            value = historyAsString();
+        }
 
+        settings.putString("history", value);
+    }
+
+    private String historyAsString() {
         StringBuilder b = new StringBuilder();
-        for (String s : toStore) {
+        for (String s : history) {
             if (b.length() > 0) b.append("|+|");
             b.append(s);
         }
-        settings.putString("history", b.toString());
+        return b.toString();
     }
 
     private void buildDescription() {
@@ -167,7 +174,6 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
     }
 
     private void buildGUI() {
-
 
         GridBagConstraints cons = new GridBagConstraints();
         cons.weightx = 1.0;

@@ -156,7 +156,7 @@ class D3ScaleBuilder {
         Double r = null;
         for (Field f : ff) {
             Double g = f.numericProperty("granularity");
-            if (g != null && g / (f.max()-f.min()) > 0.02) {
+            if (g != null && g / (f.max() - f.min()) > 0.02) {
                 if (r == null || g < r) r = g;
             }
         }
@@ -183,8 +183,9 @@ class D3ScaleBuilder {
             out.onNewLine().add("var opacity = function(d) { return scale_opacity(" + D3Util.writeCall(fieldById(opacity, vis)) + ") }").endStatement();
         }
         if (size.length == 1) {
-            // We have exactly one field and util that for the single size scale, with a root transform by default
-            addSizeScale("size", size[0], vis, "sqrt");
+            // We have exactly one field and util that for the single size scale, with a root transform by default for point elements
+            String defaultTransform = vis.tElement == VisTypes.Element.point ? "sqrt" : "linear";
+            addSizeScale("size", size[0], vis, defaultTransform);
             out.onNewLine().add("var size = function(d) { return scale_size(" + D3Util.writeCall(fieldById(size[0], vis)) + ") }").endStatement();
         } else if (size.length > 1) {
             // We have two field and util them for height and width
@@ -324,7 +325,18 @@ class D3ScaleBuilder {
     }
 
     private void addSizeScale(String name, Param p, VisSingle vis, String defaultTransform) {
-        double max = p.hasModifiers() ? p.firstModifier().asDouble() / 100 : 1.0;
+
+        // Find modifiers for upper and lower values. If one only is specified, it is the upper
+        double min = 0.05, max = 1.0;
+        if (p.modifiers().length == 2) {
+            double v1 = p.modifiers()[0].asDouble() / 100;
+            double v2 = p.modifiers()[1].asDouble() / 100;
+            min = Math.min(v1, v2);
+            max = Math.max(v1, v2);
+        } else if (p.modifiers().length == 1) {
+            max = p.modifiers()[0].asDouble() / 100;
+        }
+
         Field f = fieldById(p, vis);
 
         scaleWithDomain(name, new Field[]{f}, Purpose.size, 2, defaultTransform);
@@ -334,7 +346,7 @@ class D3ScaleBuilder {
             for (int i = 0; i < length; i++) sizes[i] = max * (i + 1.0) / length;
             out.addChained("range(" + Arrays.toString(sizes) + ")");
         } else {
-            out.addChained("range([0.05, " + max + "])");
+            out.addChained("range([", min, ",", max, "])");
         }
         out.endStatement();
     }
@@ -613,7 +625,10 @@ class D3ScaleBuilder {
             String transform = null;
             if (name.equals("x")) transform = positionFields.xTransform;
             if (name.equals("y")) transform = positionFields.yTransform;
-            if (transform == null) {
+
+            // Size must not get a transform as it will seriously distort things
+            if (purpose == Purpose.size) transform = defaultTransform;
+            else if (transform == null) {
                 // We are free to choose -- the user did not specify
                 transform = (String) scaleField.property("transform");
                 if (transform == null) transform = "linear";

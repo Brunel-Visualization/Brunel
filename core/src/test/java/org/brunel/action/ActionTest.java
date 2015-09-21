@@ -47,6 +47,22 @@ public class ActionTest {
     }
 
     @Test
+    public void testMultipleParameters() {
+        Action a = Action.parse("size(b:10:200) x(a) ");
+
+        ActionStep step = a.steps[0];
+        assertEquals("size", step.name);
+        assertEquals(1, step.parameters.length);
+        Param p = step.parameters[0];
+        assertEquals(2, p.modifiers().length);
+        assertEquals(10, p.modifiers()[0].asDouble(), 0.01);
+        assertEquals(200, p.modifiers()[1].asDouble(), 0.01);
+
+        assertEquals("x(a) size(b:10:200)", a.simplify().toString());
+
+    }
+
+    @Test
     public void testSummarizeSimplification() {
         Action a;
 

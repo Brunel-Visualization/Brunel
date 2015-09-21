@@ -206,7 +206,7 @@ class D3ElementBuilder {
                 // Left and Right are not defined
             } else if (field.isBinned() && !categorical) {
                 // A Binned value on a non-categorical axes
-                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".mid()) }";
+                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".mid) }";
                 dim.left = "function(d) { return " + scaleName + "(" + dataFunction + ".low) }";
                 dim.right = "function(d) { return " + scaleName + "(" + dataFunction + ".high) }";
 

@@ -104,9 +104,9 @@ public class D3Builder extends AbstractBuilder {
 
         // Add commonly used definitions
         out.onNewLine().ln();
-        out.add("var raw,").at(39).comment("Dataset for the original data");
-        out.add("    pre = function(d) { return d },").at(39).comment("Default pre-process does nothing");
-        out.add("    post = function(d) { return d },").at(39).comment("Default post-process does nothing");
+        out.add("var datasets = [],").at(39).comment("Array of datasets for the original data");
+        out.add("    pre = function(d, i) { return d },").at(39).comment("Default pre-process does nothing");
+        out.add("    post = function(d, i) { return d },").at(39).comment("Default post-process does nothing");
         out.add("    transitionTime = 200,").at(39).comment("Transition time for animations");
         out.add("    vis = d3.select('#' + visId).attr('class', 'brunel')").comment("the SVG container");
 
@@ -157,17 +157,17 @@ public class D3Builder extends AbstractBuilder {
         return chartClass;
     }
 
-    protected String defineElement(VisSingle vis, Dataset data) {
+    protected String defineElement(VisSingle vis, Dataset data, int datasetIndex) {
         out.titleComment("Closure defining " + (elementIndex + 1));
         String name = "element" + (elementIndex + 1);
         out.add("var", name, "= function() {").indentMore();
 
         // Add data variables used throughout
-        out.onNewLine().add("var base, data;").at(40).comment("The processed data and the data object");
+        out.onNewLine().add("var raw, base, data;").at(40).comment("The processed data and the data object");
         addElementGroups(elementIndex);
 
         // Data transforms
-        D3DataBuilder dataBuilder = new D3DataBuilder(vis, out, data);
+        D3DataBuilder dataBuilder = new D3DataBuilder(vis, out, data, datasetIndex);
         dataBuilder.writeDataManipulation(createResultFields(vis));
 
         scalesBuilder.writeAestheticScales(vis);
@@ -244,8 +244,8 @@ public class D3Builder extends AbstractBuilder {
 
         // Define visualization functions
         out.titleComment("Expose the needed Visualization functions and fields");
-        out.add("function setData(rowData) { raw = BrunelData.Dataset.makeFromRows(rowData) }").endStatement();
-        out.add("function getData() { return raw }").endStatement();
+        out.add("function setData(rowData, i) { datasets[i ||0] = BrunelData.Dataset.makeFromRows(rowData) }").endStatement();
+        out.add("function getData(i) { return datasets[i ||0] }").endStatement();
 
         out.add("var parts = [ ");
         for (int i = 1; i <= chartIndex; i++) {
@@ -254,16 +254,16 @@ public class D3Builder extends AbstractBuilder {
         }
         out.add("]").endStatement();
 
-        out.add("function buildAll(rowData, transitionMillis) {").ln().indentMore()
-                .add("if (rowData) setData(rowData)").endStatement();
-        for (int i = 0; i < chartIndex; i++) out.add("parts[" + i + "].build(transitionMillis); ");
+        out.add("function buildAll() {").ln().indentMore()
+                .add("for (var i=0;i<arguments.length;i++) setData(arguments[i], i)").endStatement();
+        for (int i = 0; i < chartIndex; i++) out.add("parts[" + i + "].build(); ");
         out.ln().indentLess().add("}").endStatement().ln();
 
         // Return the important items
         out.add("return {").indentMore().ln()
                 .add("dataPreProcess:").at(24).add("function(f) { if (f) pre = f; return pre },").ln()
                 .add("dataPostProcess:").at(24).add("function(f) { if (f) post = f; return post },").ln()
-                .add("data:").at(24).add("function(d) { if (d) setData(d); return raw },").ln()
+                .add("data:").at(24).add("function(d,i) { if (d) setData(d,i); return datasets[i||0] },").ln()
                 .add("visId:").at(24).add("visId,").ln()
                 .add("build:").at(24).add("buildAll,").ln()
                 .add("charts:").at(24).add("parts").ln()
@@ -279,7 +279,13 @@ public class D3Builder extends AbstractBuilder {
         if (addGenerationCode) {
             out.titleComment("Call Code to Build the system");
             out.add("var v = new", className, "(" + out.quote(visIdentifier) + ")").endStatement();
-            out.add("v.build(" + dataName + ")").endStatement();
+            int length = main.getDataSets().length;
+            out.add("v.build(");
+            for (int i=0; i<length; i++) {
+                if (i>0) out.add(", ");
+                out.add(dataName + (i+1));
+            }
+            out.add(")").endStatement();
         }
     }
 
