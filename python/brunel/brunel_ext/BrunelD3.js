@@ -508,58 +508,140 @@ var BrunelD3 = (function () {
         lastTimeDescr = description;
     }
 
-
     function sizedPath() {
-        // The accessor functions
-        var x = function(d) { return d.x; },
-            y = function(d) { return d.y; },
-            r = function(d) { return d.r; };
 
-        // Convert array to SVG path definition
-        function makePath(array) {
-            if (array.length < 2) return "";		// No content
-            var i, p;
-            for (i=0; i<array.length; i++) {
-                if (i==0) p = "M"; else p+= "L";
-                p += array[i][0] + " " + (array[i][1] + array[i][2]);
+        var ZERO = -1e-6, ONE = 1 + 1e-6;                // Tolerances added for numeric round-off
+
+        // The accessor functions
+        var x = function (d) {
+                return d.x;
+            },
+            y = function (d) {
+                return d.y;
+            },
+            r = function (d) {
+                return d.r;
+            };
+
+
+        // Create the segment from the sized endpoints p and q, offsetting by the size in the indicated direction
+        function makeSegment(p, q, a) {
+            var cos = Math.cos(a), sin = Math.sin(a);
+            return {
+                a: {x: p.x + p.r * cos, y: p.y + p.r * sin, r: p.r},
+                b: {x: q.x + q.r * cos, y: q.y + q.r * sin, r: q.r}
+            };
+        }
+
+        // Returns null if parallel lines, otherwise an object with hit = true/false and p = point of intersection
+        function intersect(p, q) {
+            var r = subtract(p.b, p.a), s = subtract(q.b, q.a), pq = subtract(q.a, p.a);  // Working vectors
+            var denominator = cross(r, s);                                          // Cross product of segment vectors
+            if (Math.abs(denominator) < 0.01)  return null;                         // Lines are parallel
+
+            // The parametric distances to the intersection point for both lines
+            var t = cross(pq, s) / denominator,
+                u = cross(pq, r) / denominator;
+
+            var hit = (t >= ZERO) && (t <= ONE) && (u >= ZERO) && (u <= ONE);       // Hit point on both segments?
+            var pt = {x: p.a.x + (p.b.x - p.a.x) * t, y: p.a.y + (p.b.y - p.a.y) * t};    // Point of intersection
+            return {hit: hit, p: pt};
+        }
+
+        function cross(a, b) {
+            return a.x * b.y - a.y * b.x;
+        }
+
+        function subtract(a, b) {
+            return {x: a.x - b.x, y: a.y - b.y};
+        }
+
+        function vertex(p, command) {
+            return (command ? command : "") + p.x.toFixed(1) + " " + p.y.toFixed(1);
+        }
+
+        function addHalfPath(segments) {
+            var i, p = segments[0], q, d = vertex(p.a);
+            for (i = 1; i < segments.length; i++) {
+                // We consider the line segments p (the previous one) and q (the current one)
+                // If they intersect, we use that point as the join, otherwise we add a circular arc
+                // Parallel segments, if they ever occur, must have almost touching end points
+                q = segments[i];
+                var sect = intersect(p, q);
+                if (!sect) {
+                    // The segments are parallel -- just jump to the start of the target segment
+                    d += vertex(q.a, "L");
+                } else if (sect.hit) {
+                    // Join to the point of intersection
+                    d += vertex(sect.p, "L");
+                } else {
+                    // Add a circular arc between the end of the first and start of the second segments
+                    var r = q.a.r.toFixed(1);
+                    d += vertex(p.b, "L") + "A" + r + " " + r + " 0 0 1 " + vertex(q.a);
+                }
+                p = q;
             }
-            for (i=array.length-1; i>=0; i--) {
-                p += "L" + array[i][0] + " " + (array[i][1] - array[i][2]);
+            return d + vertex(p.b, "L");
+        }
+
+        function polylineToPath(polyline) {
+            if (polyline.length < 2) return "";		                    // Not long enough to be useful
+            var i, a, seg, p = polyline[0], q, upper = [], lower = [];  // upper and lower are the edges on the path
+
+            for (i = 1; i < polyline.length; i++) {
+                q = polyline[i];
+                // Get a point perpendicular to the direction of travel at the second point
+                a = Math.atan2(p.y - q.y, p.x - q.x) + Math.PI / 2;
+                upper.push(makeSegment(p, q, a));
+                seg = makeSegment(p, q, a + Math.PI);
+                lower.push({a: seg.b, b: seg.a});
+                p = q;
             }
-            return p;
+            lower.reverse();
+
+            // Make the half-paths and join them together
+            return "M " + addHalfPath(upper) + " L " + addHalfPath(lower) + "Z";
         }
 
         // The path we create
-        function path(d) {
-            var p = "";
-            var segment = [];
-            var last=[Number.NaN, Number.NaN];
-            for(var i = 0; i < d.length; i++) {
-                var px = x.call(this, d[i], i),
-                    py = y.call(this, d[i], i),
-                    pr = r.call(this, d[i], i);
+        function makePath(d) {
+            var i, px, py, pr, polyline = [], last = [], path = "";
+            for (i = 0; i < d.length; i++) {
+                px = x.call(this, d[i], i);
+                py = y.call(this, d[i], i);
+                pr = r.call(this, d[i], i);
                 if (px && py && pr) {
-                    // Ignore duplicates
-                    if (px != last[0] || py != last[1]) {
-                        last = [px,py,pr/2];
-                        segment.push(last);
-                    }
+                    // Ignoring duplicated locations, this is the new 'last' item, and add it to the array
+                    if (px != last.x || py != last.y)
+                        polyline.push(last = {x: px, y: py, r: pr / 2});
                 } else {
-                    // End of a segment
-                    p += makePath(segment);
-                    segment = [];
+                    // Missing values signals the end of a segment
+                    path += polylineToPath(polyline);
+                    polyline = [];
                 }
             }
-            p += makePath(segment);
-            return p + "Z";
+            return path + polylineToPath(polyline);
         }
 
-        // Modify or return the accessors
-        path.x = function(v) { if (!arguments.length) return x; x = v; return path };
-        path.y = function(v) { if (!arguments.length) return y; y = v; return path };
-        path.r = function(v) { if (!arguments.length) return r; r = v; return path };
 
-        return path;
+        // Modify or return the accessors
+        makePath.x = function (v) {
+            if (!arguments.length) return x;
+            x = v;
+            return makePath
+        };
+        makePath.y = function (v) {
+            if (!arguments.length) return y;
+            y = v;
+            return makePath
+        };
+        makePath.r = function (v) {
+            if (!arguments.length) return r;
+            r = v;
+            return makePath
+        };
+
+        return makePath;
     }
 
     // Expose these methods
