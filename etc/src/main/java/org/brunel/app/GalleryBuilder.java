@@ -52,7 +52,7 @@ class GalleryBuilder extends DocBuilder {
         if (column != 0) out.append("</row>\n");
         out.append("</table>\n");
         System.out.println(out.toString());
-
+        display.showInBrowser();
 
     }
 

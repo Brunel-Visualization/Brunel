@@ -1,0 +1,26 @@
+#id             fitline
+#title          Linear Fit
+#width          400
+#height         400
+#description    Scatterplot with linear fit line added
+#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv') 
+                point x(Summer) y(Winter) + 
+                data('http://brunel.mybluemix.net/sample_data/US%20States.csv') 
+                line x(Summer) y(Winter) fit(Winter)
+
+#id             rangebars
+#title          Range Bars
+#width          400
+#height         400
+#description    Range of Summer temperatures per Region
+#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+                bar x(Region) yrange(Summer) range(Summer)
+                
+#id             histogram
+#title          Histogram
+#width          600
+#height         400
+#description    Histogram of Summer temperatures
+#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+                bar x(Summer) y(#count) bin(Summer) style("size:100%")
+                

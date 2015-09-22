@@ -18,7 +18,7 @@ package org.brunel.app;
 
 public class CookBookBuilder extends DocBuilder {
 	
-	private static final String ITEM_FORMAT = "**[%s](%s)** %s\n\n`%s`\n";
+	private static final String ITEM_FORMAT = "**[%s](%s)** %s\n\n`%s`\n\n";
 	
 
     private static final String BASIC = "/org/brunel/app/basic.txt";
@@ -26,14 +26,27 @@ public class CookBookBuilder extends DocBuilder {
     private static final String INFO_VIS = "/org/brunel/app/infovis.txt";
 
     public static void main(String[] args) throws Exception {
-        new CookBookBuilder().run(BASIC, ITEM_FORMAT);
+    	
+        new CookBookBuilder().run();
+        
     }
     
-    protected void run(String fileLoc, String itemFormat) throws Exception {
-    	super.run(fileLoc,itemFormat);
-        System.out.println(out.toString());
+    private void run() throws Exception {
+    	out.append("***\n");
+    	out.append("### Basic Charts\n");
+    	run(BASIC, ITEM_FORMAT);
+    	out.append("***\n");
+    	out.append("### Statistical Graphics\n");
+    	run(STATS, ITEM_FORMAT);
+    	out.append("***\n");
+    	out.append("### Information Visualization\n");
+    	run(INFO_VIS, ITEM_FORMAT);
+    	System.out.println(out.toString());
+        display.showInBrowser();
+
 
     }
+    
 
 	@Override
 	protected String format(String itemFormat, String target,

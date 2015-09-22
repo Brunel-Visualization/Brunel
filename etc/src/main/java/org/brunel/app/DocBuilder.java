@@ -63,7 +63,6 @@ public abstract class DocBuilder {
 
         show(tags, itemFormat);
 
-        display.showInBrowser();
 
     }
 

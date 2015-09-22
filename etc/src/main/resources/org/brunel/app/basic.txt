@@ -6,3 +6,59 @@
 #brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
                 bar x(Region) y(#count)
 
+#id             sortedbars
+#title          Bar of Means (sorted)
+#width          400
+#height         400
+#description    Bar chart showing averages for each category sorted by the mean
+#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+                bar x(Region) y(Rain) mean(Rain) sort(Rain)
+                
+#id             horizontalbar
+#title          Horizontal Bars
+#width          600
+#height         400
+#description    Horizontal Bar chart showing averages for each category sorted by the mean
+#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+                bar x(Region) y(Rain) mean(Rain) sort(Rain) transpose
+                
+#id             scatter
+#title          Scatterplot
+#width          400
+#height         400
+#description    Scatterplot of summer vs. winter temperatures
+#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+                x(Summer) y(Winter)
+                
+#id             colorscatter
+#title          Scatterplot with Color
+#width          600
+#height         400
+#description    Scatterplot of population vs. income colored by presidential choice
+#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+                x(Population) y(Income) color(Presidential_Choice)
+                
+#id             line
+#title          Line Plot
+#width          600
+#height         400
+#description    Total number of late flights per month
+#brunel         data('http://brunel.mybluemix.net/sample_data/AirlineDelays.csv')
+                x(Month) y(Late) sum(Late) line 
+                
+                                
+#id             area
+#title          Area Plot
+#width          600
+#height         400
+#description    Total number of flights per month
+#brunel         data('http://brunel.mybluemix.net/sample_data/AirlineDelays.csv')
+                x(Month) y(Count) sum(Count) area 
+                
+#id             pie
+#title          Pie Chart
+#width          400
+#height         400
+#description    Number of States per Region
+#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+                stack polar bar x("const") y(#count) color(region) legends(none) label(region)
