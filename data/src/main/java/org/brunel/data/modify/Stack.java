@@ -24,6 +24,7 @@ import org.brunel.data.summary.FieldRowComparison;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -60,6 +61,7 @@ public class Stack extends DataOperation {
         Field[] keyFields = getFields(base.fields, x, aesthetics, new String[]{yField});
 
         // Get all fields, permuted so they are in the order required by the key
+        // This also removes any rows with null keys
         Field[] allFields = orderRows(base, keyFields);
 
         // When we need full combinations, we expand out our base data
@@ -221,10 +223,20 @@ public class Stack extends DataOperation {
 
     private static Field[] orderRows(Dataset base, Field[] keyFields) {
         Field[] baseFields = base.fields;
-        int[] rowOrder = new FieldRowComparison(keyFields, null, true).makeSortedOrder(base.rowCount());
+        FieldRowComparison comparison = new FieldRowComparison(keyFields, null, true);
+        List<Integer> items = new ArrayList<Integer>();
+        int n = base.rowCount();
+        for (int i=0; i< n; i++) {
+            boolean valid = true;
+            for (Field f : keyFields) if (f.value(i) == null) valid = false;
+            if (valid) items.add(i);
+        }
+        Collections.sort(items, comparison);
+        Integer[] rowOrder = items.toArray(new Integer[items.size()]);
+
         Field[] fields = new Field[baseFields.length];
         for (int i = 0; i < baseFields.length; i++)
-            fields[i] = Data.permute(baseFields[i], rowOrder, true);
+            fields[i] = Data.permute(baseFields[i], Data.toPrimitive(rowOrder), true);
         return fields;
     }
 

@@ -275,7 +275,7 @@ public abstract class AbstractBuilder implements Builder {
                     y1, y2, y3; a1, a2
             Where the fields y1 ... are the fields to makes the series
             and the additional fields a1... are ones required to be kept as-is.
-            #series and #valeus are always generated, so need to retain them additionally
+            #series and #values are always generated, so need to retain them additionally
         */
 
         LinkedHashSet<String> keep = new LinkedHashSet<String>();

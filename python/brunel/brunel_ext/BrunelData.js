@@ -2442,12 +2442,22 @@ V.modify_Stack.nextIndex = function(keys, index) {
 };
 
 V.modify_Stack.orderRows = function(base, keyFields) {
-    var i;
+    var _i, f, fields, i, rowOrder, valid;
     var baseFields = base.fields;
-    var rowOrder = new V.summary_FieldRowComparison(keyFields, null, true).makeSortedOrder(base.rowCount());
-    var fields = $.Array(baseFields.length, null);
+    var comparison = new V.summary_FieldRowComparison(keyFields, null, true);
+    var items = new $.List();
+    var n = base.rowCount();
+    for (i = 0; i < n; i++){
+        valid = true;
+        for(_i=$.iter(keyFields), f=_i.current; _i.hasNext(); f=_i.next())
+            if (f.value(i) == null) valid = false;
+        if (valid) items.add(i);
+    }
+    $.sort(items, comparison);
+    rowOrder = items.toArray();
+    fields = $.Array(baseFields.length, null);
     for (i = 0; i < baseFields.length; i++)
-        fields[i] = V.Data.permute(baseFields[i], rowOrder, true);
+        fields[i] = V.Data.permute(baseFields[i], V.Data.toPrimitive(rowOrder), true);
     return fields;
 };
 
