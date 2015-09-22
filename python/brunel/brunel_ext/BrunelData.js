@@ -2149,7 +2149,7 @@ V.modify_Sort = function() {
 $.extend(V.modify_Sort, V.modify_DataOperation);
 
 V.modify_Sort.transform = function(base, command) {
-    var ascending, dimensions, f, field, fields, i, newOrder, rowOrder, rowRanking;
+    var ascending, dimensions, f, field, fields, i, newOrder, rowOrder;
     var sortFields = V.modify_DataOperation.parts(command);
     if (sortFields == null) return base;
     dimensions = V.modify_Sort.getFields(base, sortFields);
@@ -2160,22 +2160,83 @@ V.modify_Sort.transform = function(base, command) {
         if (f.isBinned() && f.preferCategorical())
             rowOrder = V.modify_Sort.moveCatchAllToEnd(rowOrder, f);
     }
-    rowRanking = null;
     fields = $.Array(base.fields.length, null);
     for (i = 0; i < fields.length; i++){
         newOrder = null;
         field = base.fields[i];
-        if (!field.ordered()) {
-            if (rowRanking == null)
-                rowRanking = V.modify_Sort.makeRowRanking(rowOrder,
-                    new V.summary_FieldRowComparison(dimensions, null, false));
-            newOrder = V.modify_Sort.categoriesFromRanks(field, rowRanking);
-        }
+        if (!field.ordered())
+            newOrder = V.modify_Sort.makeOrder(field, dimensions, ascending);
         fields[i] = V.Data.permute(field, rowOrder, true);
         if (newOrder != null)
             fields[i].setCategories(newOrder);
     }
     return base.replaceFields(fields);
+};
+
+V.modify_Sort.makeOrder = function(field, dimensions, ascending) {
+    var categories, category, dimensionData, i, n, order, r, result, summaries, value;
+    var categorySums = new $.Map();
+    for (i = 0; i < field.rowCount(); i++){
+        category = field.value(i);
+        if (category == null) continue;
+        value = categorySums.get(category);
+        if (value == null) {
+            value = new $.List();
+            categorySums.put(category, value);
+        }
+        value.add(i);
+    }
+    categories = field.categories();
+    n = categories.length;
+    dimensionData = $.Array(dimensions.length, n, null);
+    for (r = 0; r < n; r++){
+        value = categorySums.get(categories[r]);
+        for (i = 0; i < dimensions.length; i++){
+            if (dimensions[i].isNumeric())
+                dimensionData[i][r] = V.modify_Sort.sum(dimensions[i], value);
+            else
+                dimensionData[i][r] = V.modify_Sort.mode(dimensions[i], value);
+        }
+    }
+    summaries = $.Array(dimensions.length, null);
+    for (i = 0; i < dimensions.length; i++){
+        summaries[i] = V.Data.makeColumnField("", null, dimensionData[i]);
+        if (dimensions[i].isNumeric())
+            summaries[i].set("numeric", true);
+    }
+    order = new V.summary_FieldRowComparison(summaries, ascending, true).makeSortedOrder(n);
+    result = $.Array(n, null);
+    for (i = 0; i < n; i++)
+        result[i] = categories[order[i]];
+    return result;
+};
+
+V.modify_Sort.sum = function(field, rows) {
+    var _i, i, v;
+    var sum = 0;
+    for(_i=$.iter(rows), i=_i.current; _i.hasNext(); i=_i.next()) {
+        v = V.Data.asNumeric(field.value(i));
+        if (v != null) sum += v;
+    }
+    return sum;
+};
+
+V.modify_Sort.mode = function(field, rows) {
+    var _i, c, i, v;
+    var mode = null;
+    var max = 0;
+    var count = new $.Map();
+    for(_i=$.iter(rows), i=_i.current; _i.hasNext(); i=_i.next()) {
+        v = field.value(i);
+        c = count.get(v);
+        if (c == null) c = 0;
+        if (++c > max) {
+            max = c;
+            mode = v;
+        }
+        count.put(v, c);
+    }
+    return mode;
 };
 
 V.modify_Sort.makeRowRanking = function(order, comparison) {

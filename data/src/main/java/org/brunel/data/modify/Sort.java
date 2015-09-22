@@ -52,21 +52,83 @@ public class Sort extends DataOperation {
             if (f.isBinned() && f.preferCategorical()) rowOrder = moveCatchAllToEnd(rowOrder, f);
         }
 
-        double[] rowRanking = null;                                    // Create rankings for row when needed only
         Field[] fields = new Field[base.fields.length];
         for (int i = 0; i < fields.length; i++) {
             Object[] newOrder = null;
             Field field = base.fields[i];
-            if (!field.ordered()) {
-                if (rowRanking == null)
-                    rowRanking = makeRowRanking(rowOrder, new FieldRowComparison(dimensions, null, false));
-                newOrder = categoriesFromRanks(field, rowRanking);
-            }
+            if (!field.ordered())
+                newOrder = makeOrder(field, dimensions, ascending);
             fields[i] = Data.permute(field, rowOrder, true);
             if (newOrder != null) fields[i].setCategories(newOrder);
         }
 
         return base.replaceFields(fields);
+    }
+
+    private static Object[] makeOrder(Field field, Field[] dimensions, boolean[] ascending) {
+
+        // Map from field categories to rows for taht field
+        Map<Object, List<Integer>> categorySums = new HashMap<Object, List<Integer>>();
+        for (int i = 0; i < field.rowCount(); i++) {
+            Object category = field.value(i);
+            if (category == null) continue;
+            List<Integer> value = categorySums.get(category);
+            if (value == null) {
+                value = new ArrayList<Integer>();
+                categorySums.put(category, value);
+            }
+            value.add(i);
+        }
+
+        // For each row, create a value
+        Object[] categories = field.categories();
+        int n = categories.length;
+        Object[][] dimensionData = new Object[dimensions.length][n];
+        for (int r = 0; r < n; r++) {
+            List<Integer> value = categorySums.get(categories[r]);
+            for (int i = 0; i < dimensions.length; i++) {
+                if (dimensions[i].isNumeric())
+                    dimensionData[i][r] = sum(dimensions[i], value);
+                else
+                    dimensionData[i][r] = mode(dimensions[i], value);
+            }
+        }
+        Field[] summaries = new Field[dimensions.length];
+        for (int i = 0; i < dimensions.length; i++) {
+            summaries[i] = Data.makeColumnField("", null, dimensionData[i]);
+            if (dimensions[i].isNumeric()) summaries[i].set("numeric", true);
+        }
+        int[] order = new FieldRowComparison(summaries, ascending, true).makeSortedOrder(n);
+        Object[] result = new Object[n];
+        for (int i = 0; i < n; i++) result[i] = categories[order[i]];
+        return result;
+
+    }
+
+    private static Object sum(Field field, List<Integer> rows) {
+        double sum = 0;
+        for (int i : rows) {
+            Double v = Data.asNumeric(field.value(i));
+            if (v != null) sum += v;
+        }
+        return sum;
+    }
+
+    private static Object mode(Field field, List<Integer> rows) {
+        Object mode = null;
+        int max = 0;
+        Map<Object, Integer> count = new HashMap<Object, Integer>();
+        for (int i : rows) {
+            Object v = field.value(i);
+            Integer c = count.get(v);
+            if (c == null) c = 0;
+            if (++c > max) {
+                max = c;
+                mode = v;
+            }
+            count.put(v,c);
+        }
+        return mode;
     }
 
     /* Convert an order (possibly with ties) into a ranking for the original rows */
@@ -124,7 +186,7 @@ public class Sort extends DataOperation {
         return result;
     }
 
-    // Each row gets the mean rank
+    // Each row gets the sum rank
     static Object[] categoriesFromRanks(Field field, double[] rowRanking) {
         double n = field.rowCount();                                                // # rows
         Object[] categories = field.categories();                                   // categories

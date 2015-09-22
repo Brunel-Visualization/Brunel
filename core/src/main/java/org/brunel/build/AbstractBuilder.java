@@ -151,25 +151,25 @@ public abstract class AbstractBuilder implements Builder {
             if (findFirstBounds(chart) == null) nUnplacedCharts++;
 
         // Layout for all unplaced charts
-        double[][] layout = squarify(LAYOUTS[Math.min(nUnplacedCharts, 3)], width, height);
 
         int unplacedCount = 0;
-        for (int i = 0; i < charts.length; i++) {
-            Param[] bounds = findFirstBounds(charts[i]);
+        for (VisItem chart : charts) {
+            Param[] bounds = findFirstBounds(chart);
 
             double[] loc;
-            if (bounds ==null) {
+            if (bounds == null) {
                 // No bounds are given, so use the values from the pattern
-                loc = LAYOUTS[Math.min(nUnplacedCharts-1, i)][unplacedCount++];
+                double[][] layout = squarify(LAYOUTS[Math.min(nUnplacedCharts-1, 3)], width, height);
+                loc = layout[unplacedCount++];
             } else {
                 // Bounds are given so use them
                 loc = getLocation(bounds);
             }
 
-            VisItem[] items = charts[i].children();
+            VisItem[] items = chart.children();
             if (items == null) {
                 // The chart is a single element
-                buildOverlayComposition(new VisItem[]{charts[i]}, loc);
+                buildOverlayComposition(new VisItem[]{chart}, loc);
             } else {
                 buildOverlayComposition(items, loc);
             }

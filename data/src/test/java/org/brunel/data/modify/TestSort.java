@@ -89,7 +89,7 @@ public class TestSort {
 
         a = simple.sort("C:ascending; D:ascending");
         assertEquals("A|B|C|D|#count|#row -- c|y|1|2|1|3 -- a|x|1|4|1|1 -- c|x|2|1|1|4 -- b|x|2|3|1|2", CannedData.dump(a));
-        assertEquals("a, c, b", Data.join(a.fields[0].categories()));       // c is biggest because it has ranks 1+2,
+        assertEquals("a, b, c", Data.join(a.fields[0].categories()));       // c is biggest because it has ranks 1+2,
 
         a = simple.sort("C:descending; D:descending");
         assertEquals("A|B|C|D|#count|#row -- b|x|2|3|1|2 -- c|x|2|1|1|4 -- a|x|1|4|1|1 -- c|y|1|2|1|3", CannedData.dump(a));

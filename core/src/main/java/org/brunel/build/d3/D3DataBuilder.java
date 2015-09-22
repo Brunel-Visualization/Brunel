@@ -73,7 +73,7 @@ public class D3DataBuilder {
 
             // Name the table with a numeric suffix for multiple tables
             out.onNewLine().add("var", "table" + (d + 1), "= [").ln().indentMore();
-            int numPerLine = Math.max(1, 12 / fields.length);
+            int numPerLine =   12 / Math.max(1, Math.max(1, fields.length));
             out.add("[ ");
             for (int i = 0; i < fields.length; i++) {
                 String name = fields[i].name;

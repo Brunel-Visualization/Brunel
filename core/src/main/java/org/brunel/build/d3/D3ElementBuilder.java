@@ -428,14 +428,13 @@ class D3ElementBuilder {
         String result = ModelUtil.getElementSymbol(vis);
         if (result != null) return result;
         // We default to a rectangle if all the scales are categorical or binned, otherwise we return a point
-        boolean cat = allShowExtent(vis.positionFields());
+        boolean cat = allShowExtent(positionFields.allXFields) && allShowExtent(positionFields.allYFields);
         return cat ? "rect" : "point";
     }
 
-    private boolean allShowExtent(String[] fields) {
+    private boolean allShowExtent(Field[] fields) {
         // Categorical and numeric fields both show elements as extents on the axis
-        for (String s : fields) {
-            Field field = data.field(s);
+        for (Field field : fields) {
             if (field.isNumeric() && !field.isBinned()) return false;
         }
         return true;
