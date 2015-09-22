@@ -1,0 +1,8 @@
+#id             barofcounts
+#title          Bar of Counts
+#width          400
+#height         400
+#description    Bar chart showing counts for each category
+#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+                bar x(Region) y(#count)
+
