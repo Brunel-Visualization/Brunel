@@ -1,0 +1,41 @@
+#id             heatmap
+#title          Heatmap
+#width          600
+#height         400
+#description    Heatmap of presidential choices for the states in a region.
+#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+                x(Region) y(Presidential_Choice) color(#count:red) style('symbol:rect; size:100%; stroke:none') sort(#count) label(#count)
+
+#id             sparkline
+#title          Spark Line
+#width          600
+#height         200
+#description    Spark Line of Big Ten Wins since 1950
+#brunel         data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
+                line x(Year) y(Win) sum(Win) axes(none) 
+         
+#id             bubble
+#title          Bubble Chart
+#width          600
+#height         600
+#description    Bubble chart of wins for each Big Ten team
+#brunel         data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
+                bubble x(Team) size(Win) sum(Win) color(Team) label(Team) legends(none) 
+
+#id             tagcloud
+#title          Tag Cloud
+#width          600
+#height         600
+#description    Tag cloud of Big Ten teams sized by number of wins
+#brunel         data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
+                cloud label(Team) size(Win) sum(Win) color(Division) 
+
+
+#id             treemap
+#title          Treemap
+#width          800
+#height         600
+#description    Treemap of Big Ten average points scored, colored by average points allowed (per year)
+#brunel         data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
+                treemap x(Division, Team) label('Scored: ',Points_Scored) size(Points_Scored) color(Points_Allowed:continuous) mean(Points_Scored, Points_Allowed)                        
+               
