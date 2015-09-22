@@ -115,7 +115,7 @@ public abstract class AbstractBuilder implements Builder {
                 buildTiledCharts(width, height, main.children());
                 // If we have a set of compositions, they are placed into the whole area
             } else if (compositionMethod == VisTypes.Composition.overlay) {
-                double[] loc = getLocation(main, LAYOUTS[0][0]);
+                double[] loc = getLocation(findFirstBounds(main));
                 buildOverlayComposition(main.children(), loc);
             } else if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
                 // Nesting not yet implemented, so simply util the first element and pretend it is tiled
@@ -143,12 +143,28 @@ public abstract class AbstractBuilder implements Builder {
         endChart(currentChartID);
     }
 
+    /* Build independent charts tiled into the same display area */
     private void buildTiledCharts(int width, int height, VisItem[] charts) {
-        // Build independent charts tiled into the same display area
-        double[][] layout = squarify(LAYOUTS[Math.min(charts.length - 1, 3)], width, height);
+        // Count the number of unplaced charts (those without bounds definintion)
+        int nUnplacedCharts = 0;
+        for (VisItem chart : charts)
+            if (findFirstBounds(chart) == null) nUnplacedCharts++;
+
+        // Layout for all unplaced charts
+        double[][] layout = squarify(LAYOUTS[Math.min(nUnplacedCharts, 3)], width, height);
+
+        int unplacedCount = 0;
         for (int i = 0; i < charts.length; i++) {
-            double[] defaultLoc = layout[Math.min(layout.length-1, i)];           // Will only work for <= 4 charts
-            double[] loc = getLocation(charts[i], defaultLoc);                  // Override with 'at' bounds if provided
+            Param[] bounds = findFirstBounds(charts[i]);
+
+            double[] loc;
+            if (bounds ==null) {
+                // No bounds are given, so use the values from the pattern
+                loc = LAYOUTS[Math.min(nUnplacedCharts-1, i)][unplacedCount++];
+            } else {
+                // Bounds are given so use them
+                loc = getLocation(bounds);
+            }
 
             VisItem[] items = charts[i].children();
             if (items == null) {
@@ -196,10 +212,9 @@ public abstract class AbstractBuilder implements Builder {
 
     // Calculate the location for the bounds of the chart. We search the children and return the first one that
     // has a bounds definition
-    private double[] getLocation(VisItem chart, double[] pos) {
-        double l = pos[1], t = pos[0], r = pos[3], b = pos[2];
+    private double[] getLocation(Param[] bounds) {
+        double l = 0, t = 0, r = 100, b = 100;
 
-        Param[] bounds = findFirstBounds(chart);
         if (bounds != null && bounds.length > 0) l = bounds[0].asDouble();
         if (bounds != null && bounds.length > 1) t = bounds[1].asDouble();
         if (bounds != null && bounds.length > 2) r = bounds[2].asDouble();
@@ -399,7 +414,7 @@ public abstract class AbstractBuilder implements Builder {
             // Try Y fields then aesthetic fields
             if (vis.fY.size() == 1) {
                 String s = vis.fY.get(0).asField();
-                if (!s.startsWith("'")) return s;           // Do not use a constant
+                if (!s.startsWith("'") && !s.startsWith("#")) return s;       // If it's a real field
             }
             if (vis.aestheticFields().length > 0) return vis.aestheticFields()[0];
             return "#row";      // If all else fails

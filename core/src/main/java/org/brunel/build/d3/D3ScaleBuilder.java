@@ -155,6 +155,7 @@ class D3ScaleBuilder {
     public Double getGranularitySuitableForSizing(Field[] ff) {
         Double r = null;
         for (Field f : ff) {
+            if (f.isDate()) continue;   // No date granularity use
             Double g = f.numericProperty("granularity");
             if (g != null && g / (f.max() - f.min()) > 0.02) {
                 if (r == null || g < r) r = g;

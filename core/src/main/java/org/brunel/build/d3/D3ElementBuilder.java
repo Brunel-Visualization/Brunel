@@ -302,7 +302,8 @@ class D3ElementBuilder {
             String yDef = elementDef.y.right == null ? "y" : "y1";
             if (vis.fSize.size() == 1) {
                 out.add("var path = BrunelD3.sizedPath().x(x).y(" + yDef + ")");
-                out.addChained("r(" + elementDef.overallSize + ")");
+                String size = elementDef.y.size != null ? elementDef.y.size : elementDef.overallSize;
+                out.addChained("r(" + size + ")");
             } else {
                 out.add("var path = d3.svg.line().x(x).y(" + yDef + ")");
             }
