@@ -76,4 +76,27 @@ public class ActionUtil {
         return Arrays.equals(step.parameters, parameters) ? step
                 : new ActionStep(step.name, parameters);
     }
+    
+    /**
+     * Replace the value of any data() parameters with a new data parameter.  If there are 
+     * more data() actions than there are parameters supplied then the last supplied parameter
+     * is repeated.
+     * @param action the original action
+     * @param newData a parameter specifying the replacement data
+     * @return the action with all data() parameters replaced.
+     */
+    public static Action replaceDataParameters(Action action, Param... newData) {
+    	
+    	int dataIndex = 0;
+    	
+    	for (int i=0; i < action.steps.length; i++) {
+    		if (action.steps[i].name.equals("data")) {
+    			action.steps[i] = replaceParameters(action.steps[i], new Param[]{newData[dataIndex]});
+    			dataIndex = Math.min(dataIndex+1, newData.length-1);
+    		}
+    	}
+    	
+    	return action;
+    	
+    }
 }
