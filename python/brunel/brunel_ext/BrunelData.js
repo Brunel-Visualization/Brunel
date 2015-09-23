@@ -2638,6 +2638,8 @@ V.modify_Summarize.prototype.make = function() {
         result = V.Data.makeColumnField(m.rename, m.label(), measureData[i]);
         this.setProperties(result, m.field, m.measureFunction);
         result.set("summary", m.measureFunction);
+        if (m.field != null)
+            result.set("originalLabel", m.field.label);
         fields[dimData.length + i] = result;
     }
     return fields;

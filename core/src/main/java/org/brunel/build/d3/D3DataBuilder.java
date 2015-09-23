@@ -296,7 +296,6 @@ public class D3DataBuilder {
         // Always add splits and color
         for (Param p : vis.fSplits) splitters.add(p.asField());
         for (Param p : vis.fColor) splitters.add(p.asField());
-        Collections.addAll(splitters, vis.aestheticFields());
 
         // We handle sized areas specially -- don't split using the size for them
         if (vis.tElement != VisTypes.Element.line && vis.tElement != VisTypes.Element.path) {

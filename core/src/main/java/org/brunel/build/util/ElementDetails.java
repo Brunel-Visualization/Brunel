@@ -63,7 +63,7 @@ public class ElementDetails {
 
         // Work out if the element is filled
         boolean filled = element.filled;
-        if (!vis.fSize.isEmpty() && element == VisTypes.Element.line || element == VisTypes.Element.path) {
+        if (!vis.fSize.isEmpty() && (element == VisTypes.Element.line || element == VisTypes.Element.path)) {
             filled = true;
             classList += " filled";
         }
