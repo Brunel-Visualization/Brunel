@@ -509,7 +509,7 @@ class D3ScaleBuilder {
         AxisDetails legendAxis = new AxisDetails("color", new Field[] {colorLegendField}, colorLegendField.preferCategorical());
         int spaceNeededForTicks = 32 + legendAxis.maxCategoryWidth();
         int spaceNeededForTitle = colorLegendField.label.length() * 7;                // Assume 7 pixels per character
-        return Math.max(spaceNeededForTicks, spaceNeededForTitle);
+        return 6 + Math.max(spaceNeededForTicks, spaceNeededForTitle);                // Add some spacing
     }
 
     private VisTypes.Axes makeCombinedAxes() {

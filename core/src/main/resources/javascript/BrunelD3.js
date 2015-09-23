@@ -18,7 +18,7 @@
 // A closure for the utilities needed to build Brunel items for D3
 var BrunelD3 = (function () {
 
-    var tooltip, lastTime, lastTimeDescr;        // Div for the tooltip
+    var tooltip, lastTime, lastTimeDescr;
 
     // Return geometries for the given target given the desired margins
     function geometries(target, chart_top, chart_left, chart_bottom, chart_right,
@@ -162,7 +162,7 @@ var BrunelD3 = (function () {
         var box = svgItem.getBBox();
 
         var dx = Math.max(6, box.width / 40),               // We discretize to steps of 'dx' amounts
-            M = Math.max(len / dx, 200),                      // We examine this many points along the path
+            M = Math.max(len / dx, 200),                    // We examine this many points along the path
             N = Math.round(box.width / dx),                 // Size of the vertical raster array
             i, p, x, y, t;
 
@@ -186,7 +186,7 @@ var BrunelD3 = (function () {
             if (lower[i + 1] && lower[i - 1])  t = (2 * t + (upper[i + 1] - lower[i + 1] + upper[i - 1] - lower[i - 1]) / 2) / 3;
             edgeD = Math.min(i, N - i) * dx;
             if (edgeD < margin) t *= 0.01;          // Only add here if we really have to
-            else if (edgeD < 2 * margin) t *= 0.9;   // Prefer further in
+            else if (edgeD < 3 * margin) t *= 0.8;   // Prefer further in
             if (t > heightAtX) {
                 index = i;
                 heightAtX = t;
@@ -343,8 +343,18 @@ var BrunelD3 = (function () {
         return result;
     }
 
-    // Select the indicated rows
-    function select(row, data) {
+    // Calls the function when the target is ready
+    function callWhenReady(func, target) {
+        if (target.__transition__)
+            setTimeout( function() { callWhenReady(func, target), 100});
+        else
+            func.call();
+     }
+
+    // Select the indicated rows of the data. This will wait until any transition is completed, and
+    // will then call the desired rebuild function
+    function select(row, data, target, func) {
+
         var i, j,
             rows = row ? (row.items ? row.items : [row]) : [],// 'row' can be null, a single integer, or a collection of
             sel = data.field("#selection"),                     // Selection field
@@ -363,6 +373,8 @@ var BrunelD3 = (function () {
             else if (method == "sub") sel.setValue('\u2717', j);
             else sel.setValue(sel.value(j) == '\u2717' ? '\u2713' : '\u2717', j);
         }
+
+        callWhenReady(func, target);
     }
 
 

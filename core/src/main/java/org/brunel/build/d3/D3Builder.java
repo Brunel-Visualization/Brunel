@@ -259,6 +259,11 @@ public class D3Builder extends AbstractBuilder {
         for (int i = 0; i < chartIndex; i++) out.add("parts[" + i + "].build(); ");
         out.ln().indentLess().add("}").endStatement().ln();
 
+        out.add("function rebuildAll() {").ln().indentMore();
+        for (int i = 0; i < chartIndex; i++) out.add("parts[" + i + "].build(20); ");
+        out.ln().indentLess().add("}").endStatement().ln();
+
+
         // Return the important items
         out.add("return {").indentMore().ln()
                 .add("dataPreProcess:").at(24).add("function(f) { if (f) pre = f; return pre },").ln()
@@ -266,6 +271,7 @@ public class D3Builder extends AbstractBuilder {
                 .add("data:").at(24).add("function(d,i) { if (d) setData(d,i); return datasets[i||0] },").ln()
                 .add("visId:").at(24).add("visId,").ln()
                 .add("build:").at(24).add("buildAll,").ln()
+                .add("rebuild:").at(24).add("rebuildAll,").ln()
                 .add("charts:").at(24).add("parts").ln()
                 .indentLess().add("}").endStatement();
 
