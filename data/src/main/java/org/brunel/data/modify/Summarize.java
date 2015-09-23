@@ -186,6 +186,7 @@ public class Summarize extends DataOperation {
             Field result = Data.makeColumnField(m.rename, m.label(), measureData[i]);
             setProperties(result, m.field, m.measureFunction);
             result.set("summary", m.measureFunction);
+            result.set("originalLabel", m.field.label);
             fields[dimData.length + i] = result;
         }
         return fields;

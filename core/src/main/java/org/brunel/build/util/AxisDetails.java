@@ -176,17 +176,20 @@ public class AxisDetails {
 
     /* Return the title for the axis */
     private static String title(Field[] fields) {
+
         if (fields.length == 1) {
-            // No title for simple count axis
-            if (fields[0].name.equals("#count")) return null;
+            // Do not title '#row', '#count', "#series", "#values" -- otherwise just use the label
+            return fields[0].isSynthetic() ? null : fields[0].label;
         }
 
-        List<String> titles = new ArrayList<String>();
+        LinkedHashSet<String> titles = new LinkedHashSet<String>();             // All the titles
+        LinkedHashSet<String> originalTitles = new LinkedHashSet<String>();     // Only using names before summary
         for (Field f : fields) {
-            // If a field title is repeated, we only use it once. This might happen for multiple elements
-            // in the same coordinate system or for lower/upper field pairs for ranges
-            if (!titles.contains(f.label)) titles.add(f.label);
+            titles.add(f.label);
+            String originalLabel = (String) f.property("originalLabel");
+            originalTitles.add(originalLabel == null ? f.label : originalLabel);
         }
+        if (originalTitles.size() < titles.size()) titles = originalTitles;     // If shorter, use that
         return titles.isEmpty() ? null : Data.join(titles);
     }
 
