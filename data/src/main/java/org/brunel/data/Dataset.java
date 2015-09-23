@@ -297,6 +297,7 @@ public class Dataset extends Informative implements Serializable {
         Dataset d = (Dataset) Serialize.deserialize(store.toByteArray());
         fields = d.fields;
         fieldByName = d.fieldByName;
+        info = new HashMap<String, Object>(); 
         copyPropertiesFrom(d);
     }
 
