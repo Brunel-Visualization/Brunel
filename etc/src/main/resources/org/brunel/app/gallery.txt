@@ -124,9 +124,9 @@
 #brunel         data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
                 bubble x(Division, Team) size(Win) color(Team) label(Team)  sum(Win) tooltip(#all) legends(none) interaction(select) at(0,-12,60,60) | 
                 data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
-                x(Points_Allowed) y(Points_Scored) interaction(filter) tooltip(Year) at(60,10,100,45) |
+                x(Points_Allowed) y(Points_Scored) interaction(filter) tooltip(Year) at(60,10,100,45) +
                 data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
-                x(Points_Allowed) y(Points_Scored) interaction(filter)  line fit(Points_Scored) axes(none) at(60,10,100,45) | 
+                x(Points_Allowed) y(Points_Scored) interaction(filter)  line fit(Points_Scored)  | 
                 data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv') 
                 x(Year) y(Win) area stack split(Team) opacity(#selection)  style('stroke-width:.5') at(0,50,100,100)  
              
@@ -145,9 +145,9 @@
                 data('http://brunel.mybluemix.net/sample_data/Conferences.csv') 
                 x(As_Home) yrange(Score_Difference:linear) iqr(Score_Difference) bar interaction(filter) at(0,60,50,100) tooltip(#all) +
                 data('http://brunel.mybluemix.net/sample_data/Conferences.csv') 
-                x(As_Home) y(Score_Difference:linear) median(Score_Difference) point style('symbol:rect;border-radius:5') interaction(filter)  tooltip(#all) at(0,60,50,100) |
+                x(As_Home) y(Score_Difference:linear) median(Score_Difference) point style('symbol:rect;border-radius:5') interaction(filter)  tooltip(#all)  |
                 data('http://brunel.mybluemix.net/sample_data/Conferences.csv') 
                 x(As_Visitor) yrange(Score_Difference:linear) bar interaction(filter) iqr(Score_Difference)  tooltip(#all) at(50,60,100,100) +
                 data('http://brunel.mybluemix.net/sample_data/Conferences.csv')
-                x(As_Visitor) y(Score_Difference:linear) median(Score_Difference) point style('symbol:rect;border-radius:5') interaction(filter)  tooltip(#all) at(50,60,100,100) 
+                x(As_Visitor) y(Score_Difference:linear) median(Score_Difference) point style('symbol:rect;border-radius:5') interaction(filter)  tooltip(#all) 
                 
