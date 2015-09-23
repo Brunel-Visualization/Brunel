@@ -45,5 +45,16 @@
 #height         600
 #description    Category of whiskey produced by each country
 #brunel         data('http://brunel.mybluemix.net/sample_data/whiskey.csv')
-                chord x(Country) y(Category) color(#count) tooltip(#all)                 
+                chord x(Country) y(Category) color(#count) tooltip(#all)    
+                
+#id             filter
+#title          Filtered Bar Chart
+#width          600
+#height         600
+#control_height 100
+#description    Average whiskey price per category filtered by age and alcohol content
+#brunel         data('http://brunel.mybluemix.net/sample_data/whiskey.csv')
+                x(Category) y(Price:linear) mean(Price) bar filter(Age, ABV)   
+                
+                
                               

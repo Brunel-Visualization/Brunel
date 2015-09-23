@@ -103,18 +103,22 @@ public class GalleryApplication extends Application {
 			@QueryParam("title") String title,
 			@QueryParam("description") String description,
 			@QueryParam("width") String width,
-			@QueryParam("height") String height) {
+			@QueryParam("height") String height,
+			@QueryParam("control_height") String controlHeight
+			) {
 
 		
 		title = title != null ? title : "";
 		description = description != null ? description : "";
 		width = width != null ? width : "900";
 		height = height != null ? height : "500";
+		controlHeight = controlHeight != null ? controlHeight : "0";
 		String html = HTML.replace("$TITLE$", title);
 		html = html.replace("$BRUNEL_SRC$", Data.quote(brunelSrc));
 		html = html.replace("$DESCRIPTION$", description);
 		html = html.replace("$WIDTH$", width);
 		html = html.replace("$HEIGHT$", height);
+		html = html.replace("$CONTROL_SIZE$", controlHeight);
 		return html;
 	}
 

@@ -44,3 +44,13 @@
 #brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
                 bar x(Summer) y(#count) bin(Summer) style("size:100%")
                 
+#id             brushing
+#title          Brushing/Linking
+#width          1000
+#height         400
+#description    Whiskey price by category linked age and alcohol content (mouse over event)
+#brunel         data('http://brunel.mybluemix.net/sample_data/whiskey.csv') x(Category) y(Price:linear) 
+                mean(Price) bar interaction(select:mouseover)  color(#selection) |  
+                data('http://brunel.mybluemix.net/sample_data/whiskey.csv')  
+                x(ABV) y(Age) color(#selection) size(#selection) 
+                
