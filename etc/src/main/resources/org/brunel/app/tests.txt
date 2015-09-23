@@ -38,7 +38,7 @@ sizedBar cpi Date ALL                               :: pass     :: The data is r
 
 multiline cpi Date food housing health transport                    :: pass
 multiline cpi Date food housing health transport / stack            :: improve :: The stacking is in 'natural order' but should be the order the fields were defined in 'y'
-multiline whiskey country rating abv / label(#series) sort(rating) size(#series:1000)  :: pass :: Note that we have sorted by rating so that line should decrease left-to-right
+multiline whiskey country rating abv / label(#series) sort(rating) size(#series:1000)  split(#series) :: pass :: Note that we have sorted by rating so that line should decrease left-to-right
 multiline whiskey rating country category / point bin(rating)       :: improve :: Very modified "line" chart --  must fix the horizontal axes ticks which overlap
 
 - cpi       / line x(Date) y(CLOTHING, HOUSING)                                 :: pass     :: Should split automatically
