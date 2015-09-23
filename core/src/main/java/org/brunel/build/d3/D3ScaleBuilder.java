@@ -116,7 +116,7 @@ class D3ScaleBuilder {
          */
 
         vAxis.layoutVertically(chartHeight - hAxis.estimatedSimpleSizeWhenHorizontal());
-        hAxis.layoutHorizontally(chartWidth - hAxis.size - legendWidth, elementsFillHorizontal());
+        hAxis.layoutHorizontally(chartWidth - vAxis.size - legendWidth, elementsFillHorizontal());
 
         // Set the margins
         int marginTop = vAxis.topGutter;                                    // Only the vAxis needs space here
@@ -506,7 +506,8 @@ class D3ScaleBuilder {
 
     private int legendWidth() {
         if (colorLegendField == null) return 0;
-        int spaceNeededForTicks = 32 + AxisDetails.maxCategoryWidth(colorLegendField);
+        AxisDetails legendAxis = new AxisDetails("color", new Field[] {colorLegendField}, colorLegendField.preferCategorical());
+        int spaceNeededForTicks = 32 + legendAxis.maxCategoryWidth();
         int spaceNeededForTitle = colorLegendField.label.length() * 7;                // Assume 7 pixels per character
         return Math.max(spaceNeededForTicks, spaceNeededForTitle);
     }

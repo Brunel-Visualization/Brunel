@@ -33,11 +33,11 @@ import java.util.Set;
 public class AxisDetails {
 
     /* Estimate the space needed to show all text categories */
-    public static int maxCategoryWidth(Field... fields) {
+    public int maxCategoryWidth() {
         if (fields.length == 0) return 0;
         int maxCharCount = 1;
         for (Field f : fields) {
-            if (f.preferCategorical()) {
+            if (categorical) {
                 for (Object s : f.categories()) {
                     int length = f.format(s).length();
                     if (s instanceof Range) length++;                       // The ellipsis is often rather long
@@ -45,13 +45,24 @@ public class AxisDetails {
                 }
             } else {
                 // If we have numeric data, we use our scaling to guess the divisions needed
-                Object[] sampleTicks = Auto.makeNumericScale(f, true, new double[]{0,0}, 0, 5, false).divisions;
+                Object[] sampleTicks = Auto.makeNumericScale(f, true, new double[]{0, 0}, 0, 5, false).divisions;
                 for (Object s : sampleTicks)
                     maxCharCount = Math.max(maxCharCount, f.format(s).length());
                 // Always allow room for three characters. We need this because D3 often
                 // adds fractions to what should be integer scales
                 maxCharCount = Math.max(maxCharCount, 3);
             }
+        }
+        return (int) (maxCharCount * 6.5);      // Assume a font with about this character width
+    }
+
+    /* Estimate the space needed to show all text categories */
+    public int maxTickWidth() {
+        int maxCharCount = 1;
+        for (Object s : tickValues) {
+            int length = s.toString().length();
+            if (s instanceof Range) length++;                   // The ellipsis is often rather long
+            maxCharCount = Math.max(maxCharCount, length);
         }
         return (int) (maxCharCount * 6.5);      // Assume a font with about this character width
     }
@@ -78,7 +89,7 @@ public class AxisDetails {
 
     private Field[] suitable(Field[] fields) {
         Set<Field> result = new LinkedHashSet<Field>();
-        for (Field f: fields) {
+        for (Field f : fields) {
             if (f.name.startsWith("'")) continue;           // Do not use constants
             result.add(f);
         }
@@ -102,7 +113,8 @@ public class AxisDetails {
         tickValues = makeSkippingTickValues(availableSpace, tickCount);
 
         // Add 10 pixels for tick marks and gap between title and ticks
-        size = maxCategoryWidth(fields) + estimatedTitleHeight() + 10;
+        size = tickValues == null ? maxCategoryWidth() : maxTickWidth();
+        size += estimatedTitleHeight() + 10;
     }
 
     /**
@@ -114,7 +126,7 @@ public class AxisDetails {
     public void layoutHorizontally(double availableSpace, boolean fillToEdge) {
         if (!exists()) return;
 
-        int tickWidth = maxCategoryWidth(fields);
+        int tickWidth = maxCategoryWidth();
         int tickCount = countTicks(fields);
 
         if (!categorical) fillToEdge = true;        // Numeric ticks may go right to edge
@@ -178,23 +190,23 @@ public class AxisDetails {
         return titles.isEmpty() ? null : Data.join(titles);
     }
 
-    private static int countTicks(Field[] fields) {
+    private int countTicks(Field[] fields) {
         if (fields.length == 0) return 1;                               // To prevent div by zero errors
         int n = 0;
         for (Field f : fields)
-            n += f.preferCategorical() ? f.categories().length : 5;     // Assume 5 ticks for numeric
+            n += categorical ? f.categories().length : 5;     // Assume 5 ticks for numeric
         return n;
     }
 
     // If needed, create ticks that will fit the space nicely
     private Object[] makeSkippingTickValues(double width, int count) {
+        if (!categorical) return null;    // Only good for categorical
         double spacePerTick = width / count;
         int skipFrequency = (int) Math.round(20 / spacePerTick);
         if (skipFrequency < 2) return null;
         List<Object> useThese = new ArrayList<Object>();
         int at = 0;
         for (Field f : fields) {
-            if (!f.preferCategorical()) return null;                    // Only good for categorical
             for (Object s : f.categories())
                 if (at++ % skipFrequency == 0) useThese.add(s);
         }
