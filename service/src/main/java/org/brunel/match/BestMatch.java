@@ -67,8 +67,8 @@ public class BestMatch {
 		Dataset originalDataset = item.getDataSets()[0];
 		Dataset newDataset = DataCache.get(newData);
 		Action a = match(originalDataset, newDataset, action);
-		Action data = Action.parse("data('" + newData + "')");
-		a= a.append(data);
+		Param newDataParam = Param.makeString(newData);
+		a = ActionUtil.replaceDataParameters(a, newDataParam);
 		return a.simplify();
 
 	}
