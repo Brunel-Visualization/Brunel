@@ -353,6 +353,21 @@ fields are used, they will set the red, green and blue components.
     color(region, #count) x(summer) size(#count) bin(summer) bubble
 
 
+### Opacity
+Opacity sets how transparent the graphic is; zero means fully transparent and one means fully
+opaque. An optional parameter on the opacity sets the _low_ value of the opacity -- the high value
+on the range is always 1. Opacity is very useful in conjunction with `#selection` to draw attention
+to the selected items, as shown in the examples
+
+<!-- examples -->
+
+    x(longitude) y(latitude) style('size:600%; stroke:none') opacity(population:0) color(region)
+    legends(none)
+
+    chord x(boys_name) y(girls_name) color(girls_name) legends(none) interaction(select:mouseover)
+    opacity(#selection)
+
+
 ### Size
 The size aesthetic works very similarly to color, except it modifies the size of the element. It can
 be given an optional parameter which is a percentage to increase size by for the maximum value of
@@ -367,8 +382,9 @@ the field. This defaults to 100.
     point x(state) y(density) size(density:1000)
 
 `Size` works differently for different elements; point elements can be sized as you would expect;
-bars are sized on their widths only (so `width` and `size` have the same effect. Lines, paths and
-edges have their stroke sizes modified. Size has no effect on areas and polygons.
+bars are sized on their widths only (so `width` and `size` have the same effect. Edges have their
+stroke sizes modified. Lines and Paths become filled objects with varying widths. Size has no effect
+on areas and polygons.
 
 <!-- examples -->
 
@@ -378,7 +394,7 @@ edges have their stroke sizes modified. Size has no effect on areas and polygons
 
     line x(state) y(density) size(region)
 
-    line x(state) y(density) size(region:1600)
+    line x(state) y(density) size(region:400)
 
 Size can also take two fields. For this definition the two fields modify width and height, so this
 way of specifying size is most suited to a point element with a rectangle type.
@@ -455,6 +471,35 @@ of data rows after binning. Bin has an optional parameter which is the desired n
     x(summer) y(winter) bin(summer, winter) size(#count)
 
 
+### Rank
+Rank transforms a field into the ranked value of a field, where '1' is the highest ranked. Ties are
+given an averaged rank.
+
+<!-- examples -->
+
+    x(summer) y(winter) label("#",winter) rank(summer)
+
+    y(dem_rep) label(abbr) rank(dem_rep) axes(x) list(abbr) bin(dem_rep:30) color(dem_rep) legends(none)
+
+
+### Top, Bottom, Inner, Outer
+These data methods filter the data so only certain values are shown. This can take either or both of
+a field and a number as parameters, with the default field being the Y field, or an aesthetic field
+if no Y field exists, and the default number being 10. The data is then filtered to show only the
+desired top, bottom, inner or outer values for that number of items.
+
+<!-- examples -->
+
+    stack top(5) label(state, " (", population, ")") color(population) legends(none)
+
+    stack bottom(5) label(state, " (", population, ")") color(population) legends(none)
+
+    bar x(region) yrange(income) range(income) inner(income:10) + text x(region) y(income)
+    outer(income:10) label(abbr)
+
+    x(date) y(longitude) outer(date:10) + line x(date) y(longitude) inner(date:10) fit(longitude)
+
+
 ### Aggregation
 In Brunel, data can of course be passed in pre-aggregated (and this is necessary for very large data
 sets), but to get fast local interactivity, we need to be able to aggregate and re-aggregate in the
@@ -504,6 +549,9 @@ The following summary functions produce results only for numeric data
  * **q1**, **q3** : Lower and Upper quartiles
  * **iqr** :Distance between q1 and q3 -- the interquartile range
  * **stddev**, **variance**, **skew**, **kurtosis** : statistical measure for the group
+ * **fit** : Performs a regression on the x values of the chart and returns the predicted y value
+ * **smooth** : Smooths the values using an adaptive kernel. If an optional value is provided, it will
+define the percent of the data to include near each point when smoothing
 
 Note that `iqr` and `range` produce a range -- two values. If used with 'y' the result is the
 distance between them, but if used with 'yrange' it will generate the actual range. See the examples
@@ -522,6 +570,12 @@ below for how this works
     bar x(region) yrange(summer) range(summer) sort(summer)
 
     area x(region) yrange(dem_rep) iqr(dem_rep) + line x(region) y(dem_rep) median(dem_rep)
+
+    line fit(summer) x(latitude) y(summer) + x(latitude) y(summer) text label(abbr)
+
+    line smooth(summer) x(latitude) y(summer) + x(latitude) y(summer) text label(abbr)
+
+    line smooth(summer:50) x(latitude) y(summer) + x(latitude) y(summer) text label(abbr)
 
 
 
@@ -550,7 +604,8 @@ Each data set has a special field `"#selection"` that can be used in the same wa
 -- for color, coordinates, etc. In general this feature not be useful unless you have multiple
 charts and at least one of them states that they use selection interactivity. When clicking on
 elements of that chart, those selections will then be propagated through to the other charts in that
-system.
+system. You can modify the selection to make it apply whenever hovering over the element by adding
+the option 'mouseover'
 
 Selection takes on two possible values, an 'x' for unselected and a check mark for selected. One
 common use case is to map the value to color to show the selected parts from one chart as
@@ -559,7 +614,8 @@ highlighted in the other chart.
 <!-- examples -->
 
     x(winter) y(summer) color(#selection) size(#selection:200) | y(region) size(#count)
-    interaction(select) color(#selection) x('') axes(none) label(region) sort(#count:ascending)
+    interaction(select:mouseover) color(#selection) x('') axes(none) label(region)
+    sort(#count:ascending)
 
     treemap x(region, presidential_choice) tooltip(#all) size(population) color(#selection) label(abbr)
     | bar x(boys_name) y(#count) stack color(#selection) interaction(select) transpose axes(x) | bar
@@ -606,7 +662,7 @@ previous set of rectangles up into smaller ones so as to fill the space complete
     treemap x(region) size(population) sum(population) label(state) list(state) sort(population)
     color(population:green)
 
-    x(region,summer) bin(summer) treemap label(abbr) list(state) size(#count) color(summer:red)
+    x(region,summer) bin(summer) treemap label(abbr) list(abbr) size(#count) color(summer:red)
     legends(none) sort(summer)
 
 
@@ -830,11 +886,12 @@ model for how they work is:
 In the grammar, though, the parentheses are not required, or even allowed. The three composition
 methods are `tile`, `overlay` and `nest`
 
-Composition is a work in progress. Currently `tile` and `overlay` work, but cannot be combined. `nest`
-does not work at all. When completed, and all work well, the precedence of the combinations will be `nest`
-binds tightest, and `tile` weakest. Thus `A | B + C < D | E` will result in three charts: "A", "B +
-C < D" and "E". The middle chart will have one element "B" and the second element "C" will have
-element "D" nested within it.
+Composition is a work in progress. Currently `tile` and `overlay` work, but `nest` does not work.
+Instead the nested element is ignored.
+
+The composition commands have a defined precedence: `nest` binds tightest, and `tile` weakest. Thus `A | B + C < D | E`
+will result in three charts: "A", "B + C < D" and "E". The middle chart will have one element "B"
+and the second element "C" will have element "D" nested within it.
 
 
 ### `|` (tile)
