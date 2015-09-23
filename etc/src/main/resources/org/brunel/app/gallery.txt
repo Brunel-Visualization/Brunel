@@ -131,6 +131,7 @@
 #description    The bubble chart shows the total number of wins for each Big Ten team since 1950, partitioned by the current East/West divisions.
 				Click on a team to see the history of wins per each year as they compare to the rest of the Big Ten teams over time as well as
 				a plot of the number of points allowed vs. the number of points scored for each year--which also includes a fit line to show the trend.
+#ext            gif
 #width          1000
 #height         900
 #brunel         data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
