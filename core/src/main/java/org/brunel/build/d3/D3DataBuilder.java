@@ -292,12 +292,15 @@ public class D3DataBuilder {
     private List<String> makeSplitFields() {
         // Start with all the aesthetics
         ArrayList<String> splitters = new ArrayList<String>();
+
+        // Always add splits and color
+        for (Param p : vis.fSplits) splitters.add(p.asField());
+        for (Param p : vis.fColor) splitters.add(p.asField());
         Collections.addAll(splitters, vis.aestheticFields());
 
         // We handle sized areas specially -- don't split using the size for them
-        if (vis.tElement == VisTypes.Element.line || vis.tElement == VisTypes.Element.path) {
-            for (Param p : vis.fSize)
-                splitters.remove(p.asField());
+        if (vis.tElement != VisTypes.Element.line && vis.tElement != VisTypes.Element.path) {
+            for (Param p : vis.fSize) splitters.add(p.asField());
         }
 
         return splitters;
