@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Informative {
-    private final Map<String, Object> info = new HashMap<String, Object>();                    // Store the info
+    protected  Map<String, Object> info = new HashMap<String, Object>();                    // Store the info
 
     public void copyPropertiesFrom(Informative other) {
         info.putAll(other.info);
