@@ -95,7 +95,7 @@ public class D3DataBuilder {
         if (item.children() == null) {
             VisSingle vis = (VisSingle) item;                           // No children => VisSingle
             if (vis.getDataset() != data) return;                       // Does not use this data set, so ignore it
-            for (String f : vis.usedFields())                           // Yes! Add in the fields to be used
+            for (String f : vis.usedFields(true))                       // Yes! Add in the fields to be used
                 if (!f.startsWith("#")) {                               // .. but not synthetic fields
                     Field field = data.field(f, true);                  // Constant fields will not be found
                     if (field != null) fields.add(field);

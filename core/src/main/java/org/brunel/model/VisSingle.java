@@ -63,8 +63,12 @@ public class VisSingle extends VisItem implements Cloneable {
     public List<String> fData;             // Data sets used
     public Map<VisTypes.Interaction, Param> tInteraction;   // Which interactive features to support (with maps to options)
 
-    private Dataset dataset;                                // Dataset in which dataset fields are to be found (may be null)
-    private String[] used, pos, nonPos, aesthetics;         // The fields used in this visSingle, built when we call resolve()
+    private Dataset dataset;                // Dataset in which dataset fields are to be found (may be null)
+    private String[] used;                  // Data that is used in the vis (does not include filters)
+    private String[] includingFilters;      // All data including filters
+    private String[] aesthetics;            // aesthetics
+    private String[] pos;                   // Position fields only
+    private String[] nonPos;                // non-position fields (but not filters)
 
     public VisSingle() {
         this(null);
@@ -256,7 +260,7 @@ public class VisSingle extends VisItem implements Cloneable {
                 error = addError(error, "when using multiple x fields, the first must be categorical");
         }
 
-        if (fY.size() < 2 && containsSeriesField(usedFields()))
+        if (fY.size() < 2 && containsSeriesField(usedFields(false)))
             error = addError(error, "#series and #values can only be used when there are multiple Y fields");
 
         // Handle cases where the range is defined
@@ -296,10 +300,11 @@ public class VisSingle extends VisItem implements Cloneable {
         return false;
     }
 
-    public String[] usedFields() {
+    public String[] usedFields(boolean withFilters) {
         if (used == null) makeUsedFields();
-        return used;
+        return withFilters ? includingFilters : used;
     }
+
 
     @SuppressWarnings("unchecked")
     private void makeUsedFields() {
@@ -325,7 +330,7 @@ public class VisSingle extends VisItem implements Cloneable {
         aesthetics = nonPosFields.toArray(new String[nonPosFields.size()]);
 
         // Non-Position fields -- does not clear aesthetics as they are included
-        addFieldNames(nonPosFields, true, fSort, fFilter);
+        addFieldNames(nonPosFields, true, fSort);
         addFieldNames(nonPosFields, false, itemsLabel, itemsTooltip);
         nonPos = nonPosFields.toArray(new String[nonPosFields.size()]);
 
@@ -339,6 +344,10 @@ public class VisSingle extends VisItem implements Cloneable {
         addFields(all, fSummarize.keySet());
 
         used = all.toArray(new String[all.size()]);
+
+        // Add the filters
+        addFieldNames(all, true, fFilter);
+        includingFilters = all.toArray(new String[all.size()]);
     }
 
     private void addFields(Set<String> all, Set<Param> params) {

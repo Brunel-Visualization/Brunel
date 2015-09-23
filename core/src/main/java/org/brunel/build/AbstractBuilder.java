@@ -260,7 +260,7 @@ public abstract class AbstractBuilder implements Builder {
         String summaryCommand = buildSummaryCommands(vis);
         String sortCommand = makeFieldCommands(vis.fSort);
         String seriesYFields = makeSeriesCommand(vis);
-        String usedFields = required(vis.usedFields());
+        String usedFields = required(vis.usedFields(true));
 
         DataTransformParameters params = new DataTransformParameters(constantsCommand,
                 filterCommand, binCommand, summaryCommand, "", sortCommand, seriesYFields,
@@ -304,7 +304,8 @@ public abstract class AbstractBuilder implements Builder {
     // Builds controls as needed, then the custom styles, then the visualization
     private void buildElement(VisSingle vis, Dataset data) {
         try {
-            controls.buildControls(vis, data);
+            // Note that controls need the ORIGINAL dataset; the one passed in has been transformed
+            controls.buildControls(vis, vis.getDataset());
             currentElementID = defineElement(vis, data, indexOf(vis.getDataset(), datasets));
             if (vis.styles != null) {
                 StyleSheet styles = vis.styles.replaceClass("currentElement", currentElementID);
@@ -349,7 +350,7 @@ public abstract class AbstractBuilder implements Builder {
 
     private String makeConstantsCommand(VisSingle vis) {
         List<String> toAdd = new ArrayList<String>();
-        for (String f : vis.usedFields()) {
+        for (String f : vis.usedFields(false)) {
             if (!f.startsWith("#") && vis.getDataset().field(f) == null) {
                 // Field does not exist -- assume it is a constant and add it
                 toAdd.add(f);
@@ -450,7 +451,7 @@ public abstract class AbstractBuilder implements Builder {
 
         // We must account for all of these except for the special fields series and values
         // As they will be handled later
-        HashSet<String> fields = new HashSet<String>(Arrays.asList(item.usedFields()));
+        HashSet<String> fields = new HashSet<String>(Arrays.asList(item.usedFields(false)));
         fields.remove("#series");
         fields.remove("#values");
 

@@ -211,7 +211,7 @@ public class D3Builder extends AbstractBuilder {
                 needed.add(y + "$lower");
                 needed.add(y + "$upper");
             }
-            Collections.addAll(needed, vis.usedFields());
+            Collections.addAll(needed, vis.usedFields(true));
         }
 
         // We always want the row field
