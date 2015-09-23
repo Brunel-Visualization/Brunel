@@ -112,12 +112,13 @@ Some examples are given below:
 <p>
     <code>Size</code> works differently for different elements; point elements can be sized as you would expect; bars
     are sized on their widths only (so <code>width</code> and <code>size</code> have the same effect.
-    Lines, paths and edges have their stroke sizes modified. Size has no effect on areas and polygons.
+    Edges have their stroke sizes modified. Lines and Paths become filled objects with
+    varying widths. Size has no effect on areas and polygons.
 </p>
 <p class="examples"><a onClick="showAction(this.text)">point x(state) y(density) size(density)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) y(density) size(#count) mean(density) label(#count)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">line x(state) y(density) size(region)</a></p>
-<p class="examples"><a onClick="showAction(this.text)">line x(state) y(density) size(region:1600)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">line x(state) y(density) size(region:400)</a></p>
 <p>
     Size can also take two fields. For this definition the two fields modify width and height, so this way of specifying
     size is most suited to a point element with a rectangle type.

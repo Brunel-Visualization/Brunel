@@ -45,7 +45,8 @@
     for color, coordinates, etc. In general this feature not be useful unless you have multiple charts and at least one
     of
     them states that they use selection interactivity. When clicking on elements of that chart, those selections
-    will then be propagated through to the other charts in that system.
+    will then be propagated through to the other charts in that system. You can modify the selection to make it
+    apply whenever hovering over the element by adding the option 'mouseover'
 </p>
 <p>
 
@@ -53,7 +54,7 @@
     to map the value to color to show the selected parts from one chart as highlighted in the other chart.
 </p>
 <p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) color(#selection) size(#selection:200) |
-    y(region) size(#count) interaction(select) color(#selection) x('') axes(none)
+    y(region) size(#count) interaction(select:mouseover) color(#selection) x('') axes(none)
     label(region) sort(#count:ascending)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">treemap x(region, presidential_choice) tooltip(#all)
     size(population) color(#selection) label(abbr) | bar x(boys_name) y(#count) stack color(#selection)
