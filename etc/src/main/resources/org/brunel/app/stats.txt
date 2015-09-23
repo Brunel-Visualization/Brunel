@@ -2,25 +2,45 @@
 #title          Linear Fit
 #width          400
 #height         400
-#description    Scatterplot with linear fit line added
+#description    Summer vs winter temperatures of US states with linear fit line
 #brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv') 
                 point x(Summer) y(Winter) + 
                 data('http://brunel.mybluemix.net/sample_data/US%20States.csv') 
                 line x(Summer) y(Winter) fit(Winter)
 
-#id             rangebars
-#title          Range Bars
+#id             binnnedscatter
+#title          Rectangular Binned Scatterplot
 #width          400
 #height         400
-#description    Range of Summer temperatures per Region
-#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
-                bar x(Region) yrange(Summer) range(Summer)
+#description    Distribution of home vs. visitor scores for NCAA Div 1-A football games since 1978
+#brunel         data('http://brunel.mybluemix.net/sample_data/Conferences.csv') 
+                point x(Home_Score) y(Visitor_Score) bin(Home_Score, Visitor_Score) opacity(#count)
+                 
+#id             smooth
+#title          Smooth Line
+#width          600
+#height         400
+#description    Whisky ratings vs. price with smoothed fit line
+#brunel         data('http://brunel.mybluemix.net/sample_data/whiskey.csv')
+                line x(Rating) y(Price) smooth(Price) +
+                data('http://brunel.mybluemix.net/sample_data/whiskey.csv')
+                point x(Rating) y(Price) 
+                
+#id             rangebars
+#title          Median and Inner Quartile Range
+#width          400
+#height         400
+#description    Variations of summer temperatures per Region
+#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv') 
+                bar x(Region) yrange(Summer) iqr(Summer) +
+                data('http://brunel.mybluemix.net/sample_data/US%20States.csv') 
+                point x(Region) y(Summer) median(Summer) style('symbol:rect;height:2')
                 
 #id             histogram
 #title          Histogram
 #width          600
 #height         400
-#description    Histogram of Summer temperatures
+#description    Distribution of summer temperatures
 #brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
                 bar x(Summer) y(#count) bin(Summer) style("size:100%")
                 
