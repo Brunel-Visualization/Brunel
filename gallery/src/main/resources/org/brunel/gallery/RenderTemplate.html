@@ -63,10 +63,15 @@
   <div class="panel-heading" id="description"><small>$DESCRIPTION$</small></div>
 
   <div class="panel-body">
+        <div class="alert alert-danger" role="alert" id="errorAlert" style="display:none">
+	        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+	        <div id = "errorAlertMsg"></div>
+        </div>
+  
     	<iframe class="display" id="actionResult" frameborder="0" seamless="seamless" ></iframe>
 		<BR>
     	<span class="label label-primary">Edit</span> <small>(Press Enter To Modify):</small>
-    	<span class="pull-right" > <a href="http://brunel.jupyter.ninja:9080/brunel-service/docs/" target="_blank">Brunel Docs</a> </span><BR>
+    	<span class="pull-right" > <a href="http://brunel.mybluemix.net/docs" target="_blank">Brunel Docs</a> </span><BR>
 	    
 	    <textarea id="actionText" rows="2" style="width:100%; height:50px" spellcheck="false" draggable="false">Action...</textarea><BR>	
 	    <span class="label label-primary">Change Data</span><BR>
@@ -139,6 +144,8 @@ Disclaimer:  This service provided as-is.  No guarantees.  Please submit issue r
             	
     			//After upload, get new Brunel & execute
                 this.on("success", function (file, response) {
+                	$('#errorAlert').css('display', 'none');
+
                     getBrunel(null, response);
                     //Make warning about uploaded data visible
                     $('#uploadAlert').css('display', 'block');
@@ -157,6 +164,8 @@ Disclaimer:  This service provided as-is.  No guarantees.  Please submit issue r
 	//Updates Brunel display iframe with new visualization
     function showAction(src) {
 
+    	$('#errorAlert').css('display', 'none');
+
         var txt = removeLineBreaks(src);
 
         var loc = "../brunel/interpret/d3?brunel_src="
@@ -168,6 +177,7 @@ Disclaimer:  This service provided as-is.  No guarantees.  Please submit issue r
     
 	//handler for new data using URL
     function newDataByUrl() {
+    	$('#errorAlert').css('display', 'none');
         $('#uploadAlert').css('display', 'none');
     	getBrunel( $("#actionText").val(), $("#newDataUrl").val() );
     }
@@ -187,7 +197,12 @@ Disclaimer:  This service provided as-is.  No guarantees.  Please submit issue r
 	         url: "../brunel/interpret/match",
 	         success: function (brunel) {
 	             showAction(brunel);
-	         }
+	         },
+         	 error: function(xhr, textStatus, errorThrown) {
+                 //Make warning about uploaded data visible
+                 $('#errorAlert').css('display', 'block');
+                 $('#errorAlertMsg').html('<strong>Error!</strong> ' + xhr.responseText);
+         	 }
         });
     }
 

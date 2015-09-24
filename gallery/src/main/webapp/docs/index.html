@@ -19,7 +19,7 @@
 <html>
 
 <head>
-    <link rel="stylesheet" type="text/css" href="../common/brunelapp.css">
+    <link rel="stylesheet" type="text/css" href="../css/brunelapp.css">
 </head>
 
 <body>
@@ -44,7 +44,7 @@
     <a href="Brunel Documentation.md">Docs as Markdown</a><br>
     <a href="Brunel Documentation.pdf">Docs as PDF</a><br>
     <hr/>
-    <a href="play.html">Try for Yourself</a><br>
+    <a href="http://brunel.mybluemix.net/gallery_app/renderer?title=Try Brunel For Yourself&description=Brunel Sample From Documentation&brunel_src=data('http%3A%2F%2Fbrunel.mybluemix.net%2Fsample_data%2FUS%2520States.csv')%20%20x(winter)%20y(summer)%20color(%23selection)%20legends(none)%20%7C%20data('http%3A%2F%2Fbrunel.mybluemix.net%2Fsample_data%2FUS%2520States.csv')%20%20bar%20x(density)%20y(%23count)%20stack%20color(%23selection)%20bin(density)%20interaction(select)%20%7C%20data('http%3A%2F%2Fbrunel.mybluemix.net%2Fsample_data%2FUS%2520States.csv')%20%20bar%20x(region)%20y(%23count)%20interaction(select)%20color(%23selection)%20transpose%20axes(x)%20legends(none)%20stack&width=875&height=475">Try for Yourself</a><br>
 </nav>
 <aside>
     <iframe style="overflow: hidden; width: 410px; height: 410px" id="actionResult" frameborder="0"
@@ -76,6 +76,8 @@
 <footer> Cognitive Visualization Group</footer>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
 <script>
+
+	var tryoutUrl = ''
     function load(name) {
         $('#main').load(name + '.html');
     }
@@ -91,7 +93,7 @@
 
     function showAction(text) {
         var txt = removeLineBreaks(text);
-        var data = baseUrl() + "/data/" + encodeURIComponent("US States.csv");
+        var data = baseUrl() + "/sample_data/" + encodeURIComponent("US States.csv");
         console.log(data);
         var loc = "../brunel/interpret/d3?brunel_src="
                 + encodeURIComponent(txt) + "&width=400&height=370"
