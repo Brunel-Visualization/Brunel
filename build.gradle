@@ -99,8 +99,15 @@ task brunelJS(type: Copy, dependsOn: [project(':core').build, project(':data').b
 	into 'out/javascript'
 }
 
+task brunelSyntaxDoc(type: Copy) {
+	from project(':gallery').file('src/main/webapp/docs/Brunel Documentation.pdf')
+	exclude '*Test*'
+	into 'out'
+}
+
+
 task build(dependsOn: [project(':core').brunelJar, project(':etc').brunelJar, project(':data').brunelJar,
-	project(':service').brunelJar,  brunelJS, brunelJavadoc]) {
+	project(':service').brunelJar,  brunelJS, brunelJavadoc, brunelSyntaxDoc]) {
 }
 
 task makeMinified(type: JavaExec, dependsOn: build) {
