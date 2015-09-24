@@ -59,7 +59,7 @@ public class DataCache {
      * This method will return the value in the cache if it exists, and if not, it will read the data.
      * If the input stream is defined it will be used, otherwise the datakey is assumed to be a URL
      *
-     * @param dataKey the location to read from
+     * @param dataKey the location to read from.  This may be a URL or a UUID for uploaded data.
      * @param is      a stream to read from -- may be null.
      * @return the built data set
      * @throws IOException can happen if the key is not a URL and the content for the key is no longer in the cache
@@ -69,7 +69,7 @@ public class DataCache {
 
         boolean useCache = true;                                    // Unless we ask to refresh, use it!
         URI uri = makeURI(dataKey);
-        if (uri != null) {
+        if (uri != null && uri.getScheme() != null) {
             // We change our URI
             if (uri.getScheme().equals("sample"))
                 uri = makeURI(SAMPLE_DATA_LOCATION + uri.getSchemeSpecificPart());

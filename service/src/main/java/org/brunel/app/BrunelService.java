@@ -167,6 +167,7 @@ public class BrunelService extends Application {
         }
         
         catch (Exception e) {
+        	e.printStackTrace();
             throw makeException("Error matching to new data: " + e.getMessage(), Status.BAD_REQUEST.getStatusCode(), false);
 
         }
