@@ -64,7 +64,7 @@ configure([project(":data"), project(":core"), project(":etc"), project(":servic
 
 
 
-    version = '0.1'
+    version = '0.7'
 
     jar {
         manifest.attributes provider: 'org.brunel'
