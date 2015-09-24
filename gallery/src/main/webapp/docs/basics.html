@@ -17,6 +17,37 @@
 
 <H1>Basic Concepts</H1>
 
+<h3>Data statement: <code>data('...')</code></h3>
+<p>
+    Although some applications may allow you to specify a data set to use through their user interface (or is
+    predefined, like the example data set sued in this guide),
+    the data statement allows you to specify a web location to read data for an element. A different data set can
+    be associated with each element, and we allow two custom location schemes as helpful utilities
+</p>
+<ul>
+    <li><code>sample:???.csv</code> -- using this scheme directly accesses Brunel's sample data files, one of
+        AirlineDelays.csv,
+        BGG Top 2000 Games.csv,
+        BigTenWins.csv,
+        Conferences.csv,
+        minard.csv,
+        minard-cities.csv,
+        minard-temp.csv,
+        minard-troops.csv,
+        US States.csv,
+        whiskey.csv.
+    </li>
+    <li>
+        <code>refresh://???</code> Brunel caches data by URL, so as to speed up multiple accesses. Although this is
+        almost always a good thing, it is not for streaming data, or if you have just edited some online data!
+        Simply replace the <code>http:</code> prefix for your data with <code>refresh:</code> and the resource will
+        be read every time the command is executed.
+    </li>
+</ul>
+
+<p class="examples"><a onClick="showAction(this.text)">data("http://brunel.mybluemix.net/sample_data/minard-troops.csv") x(long) y(lat) size(survivors:600)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">data('sample:minard-troops.csv') path x(long) y(lat) color(direction) size(survivors:600) split(group)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">data('sample:minard-troops.csv') path x(long) y(lat) color(direction) size(survivors:600) split(group) + data('sample:minard-cities.csv') text x(long) y(lat) label(city)</a></p>
 
 <h3>Position Commands: <code>x</code> and <code>y</code></h3>
 <p>

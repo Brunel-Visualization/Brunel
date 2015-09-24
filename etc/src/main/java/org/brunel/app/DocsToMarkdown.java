@@ -37,7 +37,7 @@ public class DocsToMarkdown {
     private static final int LINE_WIDTH = 100;
 
     public static void main(String[] args) throws Exception {
-        String dirName = args.length == 0 ? "service/src/main/webapp/docs" : args[0];
+        String dirName = args.length == 0 ? "gallery/src/main/webapp/docs" : args[0];
         File dir = new File(dirName);
         if (!dir.isDirectory()) throw new IllegalArgumentException("Bad src directory: " + dir.getAbsolutePath());
 
