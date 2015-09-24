@@ -3,32 +3,32 @@
 #width          600
 #height         600
 #description    Number of games for each category and game mechanics.
-#brunel         data('http://brunel.mybluemix.net/sample_data/BGG%20Top%202000%20Games.csv')
-                x(Categories) y(Mechanics) color(#count:red) style('symbol:rect; size:100%; stroke:none') sort(#count) 
+#brunel         data('sample:BGG Top 2000 Games.csv')
+                x(Categories) y(Mechanics) color(#count:red) style('symbol:rect; size:100%; stroke:none') sort(#count)
 
 #id             sparkline
 #title          Spark Line
 #width          600
 #height         200
 #description    All Big Ten Wins since 1950
-#brunel         data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
-                line x(Year) y(Win) sum(Win) axes(none) 
-         
+#brunel         data('sample:BigTenWins.csv')
+                line x(Year) y(Win) sum(Win) axes(none)
+
 #id             bubble
 #title          Bubble Chart
 #width          600
 #height         600
 #description    Number of wins for each Big Ten team since 1950
-#brunel         data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
-                bubble x(Team) size(Win) sum(Win) color(Team) label(Team) legends(none) 
+#brunel         data('sample:BigTenWins.csv')
+                bubble x(Team) size(Win) sum(Win) color(Team) label(Team) legends(none)
 
 #id             tagcloud
 #title          Tag Cloud
 #width          600
 #height         600
 #description    Big Ten team names sized by number of wins
-#brunel         data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
-                cloud label(Team) size(Win) sum(Win) color(Division) 
+#brunel         data('sample:BigTenWins.csv')
+                cloud label(Team) size(Win) sum(Win) color(Division)
 
 
 #id             treemap
@@ -36,25 +36,24 @@
 #width          800
 #height         600
 #description    Big Ten average points scored, colored by average points allowed (per year)
-#brunel         data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
-                treemap x(Division, Team) label('Scored: ',Points_Scored) size(Points_Scored) color(Points_Allowed:continuous) mean(Points_Scored, Points_Allowed)                        
+#brunel         data('sample:BigTenWins.csv')
+                treemap x(Division, Team) label('Scored: ',Points_Scored) size(Points_Scored) color(Points_Allowed:continuous) mean(Points_Scored, Points_Allowed)
 
 #id             chord
 #title          Chord Chart
 #width          600
 #height         600
 #description    Category of whiskey produced by each country
-#brunel         data('http://brunel.mybluemix.net/sample_data/whiskey.csv')
-                chord x(Country) y(Category) color(#count) tooltip(#all)    
-                
+#brunel         data('sample:whiskey.csv')
+                chord x(Country) y(Category) color(#count) tooltip(#all)
+
 #id             filter
 #title          Filtered Bar Chart
 #width          600
 #height         600
 #control_height 100
 #description    Average whiskey price per category filtered by age and alcohol content
-#brunel         data('http://brunel.mybluemix.net/sample_data/whiskey.csv')
-                x(Category) y(Price:linear) mean(Price) bar filter(Age, ABV)   
-                
-                
-                              
+#brunel         data('sample:whiskey.csv')
+                x(Category) y(Price:linear) mean(Price) bar filter(Age, ABV)
+
+

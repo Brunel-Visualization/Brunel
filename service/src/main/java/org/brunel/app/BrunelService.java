@@ -17,7 +17,18 @@
 
 package org.brunel.app;
 
-import java.io.IOException;
+import org.brunel.action.Action;
+import org.brunel.build.Builder;
+import org.brunel.build.controls.ControlWriter;
+import org.brunel.build.controls.Controls;
+import org.brunel.build.d3.D3Builder;
+import org.brunel.build.util.ContentReader;
+import org.brunel.build.util.DataCache;
+import org.brunel.data.Dataset;
+import org.brunel.data.io.CSV;
+import org.brunel.match.BestMatch;
+import org.brunel.model.VisItem;
+import org.brunel.util.WebDisplay;
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.Consumes;
@@ -31,19 +42,8 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-
-import org.brunel.action.Action;
-import org.brunel.build.Builder;
-import org.brunel.build.controls.ControlWriter;
-import org.brunel.build.controls.Controls;
-import org.brunel.build.d3.D3Builder;
-import org.brunel.build.util.ContentReader;
-import org.brunel.build.util.DataCache;
-import org.brunel.data.Dataset;
-import org.brunel.data.io.CSV;
-import org.brunel.match.BestMatch;
-import org.brunel.model.VisItem;
-import org.brunel.util.WebDisplay;
+import java.io.IOException;
+import java.net.URI;
 
 /**
  * Sample JAX-RS web application that produces Brunel visualizations.  Currently only d3 output is supported.
@@ -68,11 +68,11 @@ public class BrunelService extends Application {
      * @param brunelSrc the Brunel syntax defining the visualization
      * @param width the desired width of the resulting visualization
      * @param height the desired height of the resulting visualization
-     * @param visId an identifier to use for the d3 JS to reference the HTML tag containing the visualization on the web page (usually an SVG tag).  
+     * @param visId an identifier to use for the d3 JS to reference the HTML tag containing the visualization on the web page (usually an SVG tag).
      * @return a JSON object containing the css, js, and an object describing interactive controls that require a separate UI
      */
     @POST
-    @Path("d3")							   
+    @Path("d3")
     @Consumes(MediaType.TEXT_PLAIN)        //A CSV file is the payload
     @Produces(MediaType.APPLICATION_JSON)  //JSON object with "js" and "css" entries
     public D3Result createAsD3(String data, @QueryParam("src") String brunelSrc,
@@ -110,7 +110,7 @@ public class BrunelService extends Application {
     ) {
 
     	try {
-	    	String src = brunelSrc != null ? brunelSrc : ContentReader.readContentFromUrl(brunelUrl);
+	    	String src = brunelSrc != null ? brunelSrc : ContentReader.readContentFromUrl(URI.create(brunelUrl));
 
 	        Builder builder = makeD3(readBrunelData(dataUrl), src, width, height, "visualization");
 	        String css = builder.getStyleOverrides();
@@ -128,13 +128,13 @@ public class BrunelService extends Application {
 
     }
 
-    
+
 	/**
 	 * Service that creates new Brunel syntax to use a given visualization with new data.
 	 * @param originalData the original data (as URL or cache identifier)
 	 * @param newData the new data (as URL or cache identifier)
 	 * @param brunelSrc the Brunel syntax that produced the original visualization
-	 * @return Brunel syntax using the new data 
+	 * @return Brunel syntax using the new data
 	 */
     @GET
     @Path("match")

@@ -19,8 +19,7 @@ package org.brunel.build.util;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 
 public class ContentReader {
     public static String readContent(InputStream is) throws IOException {
@@ -35,9 +34,8 @@ public class ContentReader {
         return builder.toString();
     }
 
-    public static String readContentFromUrl(String url) throws IOException {
-
-		//TODO:  Centrally handle security
-    	return readContent( new URL(url).openStream());
+    public static String readContentFromUrl(URI uri) throws IOException {
+        //TODO:  Centrally handle security
+        return readContent(uri.toURL().openStream());
     }
 }

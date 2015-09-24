@@ -75,10 +75,7 @@ public class VisSingle extends VisItem implements Cloneable {
     }
 
     public String toString() {
-        StringBuilder b = new StringBuilder();
-        b.append(tElement == null ? "element" : tElement).append('[');
-        b.append(fX.size()).append("x").append(fY.size()).append(']');
-        return b.toString();
+        return (tElement == null ? "element" : tElement) + "[" + fX.size() + "x" + fY.size() + "]";
     }
 
     @SuppressWarnings("unchecked")

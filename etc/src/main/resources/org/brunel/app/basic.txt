@@ -3,7 +3,7 @@
 #width          400
 #height         400
 #description    Number of states for each region
-#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+#brunel         data('sample:US States.csv')
                 bar x(Region) y(#count)
 
 #id             sortedbars
@@ -11,70 +11,70 @@
 #width          400
 #height         400
 #description    Average rainfall for each region sorted by the average value.
-#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+#brunel         data('sample:US States.csv')
                 bar x(Region) y(Rain) mean(Rain) sort(Rain)
-                
+
 #id             horizontalbar
 #title          Horizontal Bars
 #width          600
 #height         400
 #description    Average rainfall bars shown horizontally
-#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+#brunel         data('sample:US States.csv')
                 bar x(Region) y(Rain) mean(Rain) sort(Rain) transpose
-                
+
 #id             stackedbar
 #title          Stacked Bars
 #width          600
 #height         400
 #description    Regional income totals by presidential choice
-#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+#brunel         data('sample:US States.csv')
                 bar x(Region) y(Income) sum(Income) color(Presidential_Choice) stack
-                
+
 #id             scatter
 #title          Scatterplot
 #width          400
 #height         400
 #description    Summer vs. winter temperatures for the 50 US states
-#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+#brunel         data('sample:US States.csv')
                 x(Summer) y(Winter)
-                
+
 #id             colorscatter
 #title          Scatterplot with Color
 #width          600
 #height         400
 #description    Population vs. income for each US state colored by presidential choice
-#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+#brunel         data('sample:US States.csv')
                 x(Population) y(Income) color(Presidential_Choice)
-                
+
 #id             line
 #title          Line Plot
 #width          600
 #height         400
 #description    Total number of late flights per month
-#brunel         data('http://brunel.mybluemix.net/sample_data/AirlineDelays.csv')
-                x(Month) y(Late) sum(Late) line 
-                
-                
+#brunel         data('sample:AirlineDelays.csv')
+                x(Month) y(Late) sum(Late) line
+
+
 #id             seriesline
 #title          Series Lines
 #width          600
 #height         400
 #description    Big Ten teams total points scored vs. allowed for each season since 1950
-#brunel         data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
+#brunel         data('sample:BigTenWins.csv')
                 x(Year) y(Points_Scored, Points_Allowed) color(#series) line sum(Points_Scored, Points_Allowed)
-                                                
+
 #id             area
 #title          Area Plot
 #width          600
 #height         400
 #description    Total number of flights per month
-#brunel         data('http://brunel.mybluemix.net/sample_data/AirlineDelays.csv')
-                x(Month) y(Count) sum(Count) area 
-                
+#brunel         data('sample:AirlineDelays.csv')
+                x(Month) y(Count) sum(Count) area
+
 #id             pie
 #title          Pie Chart
 #width          400
 #height         400
 #description    Proportion of number of states in each region
-#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+#brunel         data('sample:US States.csv')
                 stack polar bar x("const") y(#count) color(region) legends(none) label(region)

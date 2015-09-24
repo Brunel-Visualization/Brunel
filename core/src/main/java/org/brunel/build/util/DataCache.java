@@ -22,6 +22,7 @@ import org.brunel.data.io.CSV;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 
 /**
  * Brunel's access to Datasets via a cache.  The key must be unique.  If the key is an URL it will
@@ -29,18 +30,19 @@ import java.io.InputStream;
  */
 public class DataCache {
 
+    public static final String SAMPLE_DATA_LOCATION = "http://brunel.mybluemix.net/sample_data/";
     // Local cache is needed because Brunel needs identical Datasets to be the same instance
     private static DatasetCache localCache = new SimpleCache();
-    private static DatasetCache userCache =null;
-
+    private static DatasetCache userCache = null;
 
     /**
      * Specify an alternative cache implementation for storing Datasets by key.
      * This should called once before any use of caching.
+     *
      * @param cache the alternate cache to use
      */
     public static synchronized void useCache(DatasetCache cache) {
-    	userCache = cache;
+        userCache = cache;
     }
 
     /**
@@ -65,24 +67,45 @@ public class DataCache {
     public static synchronized Dataset get(String dataKey, InputStream is) throws IOException {
         if (dataKey == null) return null;
 
-        Dataset dataset = localCache.retrieve(dataKey);
-        
-        //Not found in local cache check if in user supplied cache.
-        //If so, stick it back in the local cache
-        if (dataset == null && userCache != null) {
-        	dataset = userCache.retrieve(dataKey);
-        	if (dataset != null) localCache.store(dataKey, dataset);
+        boolean useCache = true;                                    // Unless we ask to refresh, use it!
+        URI uri = makeURI(dataKey);
+        if (uri != null) {
+            // We change our URI
+            if (uri.getScheme().equals("sample"))
+                uri = makeURI(SAMPLE_DATA_LOCATION + uri.getSchemeSpecificPart());
+            else if (uri.getScheme().equals("refresh")) {
+                uri = makeURI(uri.toString().replace("refresh", "http"));
+                useCache = false;
+            }
         }
-        
-        if (dataset == null) {
-        	String content = is == null ? ContentReader.readContentFromUrl(dataKey) : ContentReader.readContent(is);
-            dataset = Dataset.make(CSV.read(content));
-            localCache.store(dataKey, dataset);
-            if (userCache != null) userCache.store(dataKey, dataset);
+
+        Dataset dataset = useCache ? localCache.retrieve(dataKey) : null;
+        if (dataset != null) return dataset;
+
+        // Not found in local cache check if in user supplied cache.
+        // If so, stick it back in the local cache
+        if (userCache != null && useCache) {
+            dataset = userCache.retrieve(dataKey);
+            if (dataset != null) localCache.store(dataKey, dataset);
         }
+        if (dataset != null) return dataset;
+
+        // Actually read the data
+        String content = is == null ? ContentReader.readContentFromUrl(uri) : ContentReader.readContent(is);
+        dataset = Dataset.make(CSV.read(content));
+        localCache.store(dataKey, dataset);
+        if (userCache != null) userCache.store(dataKey, dataset);
         return dataset;
     }
 
-
+    /* Returns null for invalid URIs */
+    private static URI makeURI(String key) {
+        try {
+            key = key.replaceAll(" ", "%20");
+            return new URI(key);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
 }

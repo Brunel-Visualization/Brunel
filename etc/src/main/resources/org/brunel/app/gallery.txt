@@ -4,7 +4,7 @@
                 The color shows the BGG rating and the size of each bubble represents the number of
                 voters for that game. The data is already sorted by rank, so no sort was needed.
                 Data is from March 2015.
-#brunel         data('http://brunel.mybluemix.net/sample_data/BGG%20Top%202000%20Games.csv')
+#brunel         data('sample:BGG Top 2000 Games.csv')
                 bubble color(rating) size(voters) sort(rating) label(title) tooltip(title, #all)
                 legends(none) style('* {font-size: 7pt}')
 
@@ -15,7 +15,7 @@
                 rating for games in those categories. Tooltips list the titles, and labels give the earliest date
                 for any game in that category.
                 Data is from March 2015.
-#brunel         data('http://brunel.mybluemix.net/sample_data/BGG%20Top%202000%20Games.csv')
+#brunel         data('sample:BGG Top 2000 Games.csv')
                 treemap x(designer, mechanics) color(rating) size(voters) sort(#count) label(published)
                 tooltip(#all, title) sum(voters) mean(rating) min(published) list(title:50)
 
@@ -26,7 +26,7 @@
                 for each game
 #width          600
 #height         600
-#brunel         data('http://brunel.mybluemix.net/sample_data/BGG%20Top%202000%20Games.csv')
+#brunel         data('sample:BGG Top 2000 Games.csv')
                 chord x(categories) y(playerage) color(playerage) size(#count) tooltip(#all)
 
 #id             bggpub
@@ -36,9 +36,9 @@
                 to remove the earliest 100 games, as they are from the early parts fo the century.
 #width          800
 #height         500
-#brunel         data('http://brunel.mybluemix.net/sample_data/BGG%20Top%202000%20Games.csv')
+#brunel         data('sample:BGG Top 2000 Games.csv')
                 path x(published) y(categories) color(categories) size(voters:200) top(published:1800) sum(voters) legends(none)
-                + data('http://brunel.mybluemix.net/sample_data/BGG%20Top%202000%20Games.csv')
+                + data('sample:BGG Top 2000 Games.csv')
                 x(published) y(categories) size(voters:300) tooltip('#', rank, ': ', title) top(published:1800, rating:20)
 
 #id             statesbar
@@ -46,24 +46,24 @@
 #height         400
 #description    Differences between winter and summer temperatures, sorted by the latitude of the state.
                 Color encodes the state population.
-#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+#brunel         data('sample:US States.csv')
                 bar x(state) yrange(summer, winter) color(population) sort(latitude)
 
 #id             statestext
 #title          Text Scatterplot of state info
 #description    Areas and Populations for US states, colored by the percentage difference in votes between
                 democrat and republican in the 2012 election.
-#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+#brunel         data('sample:US States.csv')
                 text x(area) y(population) color(dem_rep:red-blue) label(abbr) tooltip(#all) style('font-size:36px;font-family:times')
 
 #id             states2plots
 #ext            gif
 #title          Interactive linked state charts
 #description    Linking from a heatmap of state data to a bubble plot of the states themselves
-#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+#brunel         data('sample:US States.csv')
                 x(Income) y(Violent_Crimes) color(#count:blue) label(#selection) bin(violent_crimes, income)
                 legends(none) style('.label {font-size:40px}') interaction(select)
-                | data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+                | data('sample:US States.csv')
                 bubble color(violent_crimes:red)
                 size(population) sort(population) label(abbr) interaction(filter)
 
@@ -71,38 +71,38 @@
 #title          Airline delays
 #description    Data from an ASA competition showing a summary of which days are the worst to travel on. Note that
                 the time period 9/11 - 9/15 are outliers due to the impact of cancellations in 2001.
-#brunel         data('http://brunel.mybluemix.net/sample_data/AirlineDelays.csv')
+#brunel         data('sample:AirlineDelays.csv')
                 text x(month) y(day) color(count:red) size(count:200) label(month, '/', day) top(result:1) sum(count) axes(none)
 
 #id             airlinesDelay2
 #title          Airline Overview
 #description    Data from an ASA competition showing a summary of which days are the worst to travel on. This
                 chart shows what happens on a per-month basis
-#brunel         data('http://brunel.mybluemix.net/sample_data/AirlineDelays.csv')
+#brunel         data('sample:AirlineDelays.csv')
                 area x(month) y(Count) stack color(result) percent(Count)
 
 #id             whiskey1
 #title          Whiskey Categories and Countries [1]
 #description    Whiskey data as a simple chart
-#brunel         data('http://brunel.mybluemix.net/sample_data/whiskey.csv')
+#brunel         data('sample:whiskey.csv')
                 x(country) y(category) color(country) size(#count) sort(#count) label(category) tooltip(#all)
 
 #id             whiskey2
 #title          Whiskey Categories and Countries [2]
 #description    Adding 'chord' to brunel -- no other changes needed to make this a chord diagram
-#brunel         data('http://brunel.mybluemix.net/sample_data/whiskey.csv')
+#brunel         data('sample:whiskey.csv')
                 chord x(country) y(category) color(country) size(#count) sort(#count) label(category) tooltip(#all)
 
 #id             whiskey3
 #title          Whiskey Categories and Countries [3]
 #description    Adding 'treemap' to brunel -- no other changes needed to make this a treemap diagram
-#brunel         data('http://brunel.mybluemix.net/sample_data/whiskey.csv')
+#brunel         data('sample:whiskey.csv')
                 treemap x(country) y(category) color(country) size(#count) sort(#count) label(category) tooltip(#all)
 
 #id             whiskey4
 #title          Whiskey Categories and Countries [4]
 #description    Adding 'bubble' to brunel -- no other changes needed to make this a bubble diagram
-#brunel         data('http://brunel.mybluemix.net/sample_data/whiskey.csv')
+#brunel         data('sample:whiskey.csv')
                 bubble x(country) y(category) color(country) size(#count) sort(#count) label(category) tooltip(#all)
 
 #id             minard1
@@ -113,16 +113,16 @@
                 followed the soldiers' retreat.
 #width          1000
 #height         450
-#brunel         data('http://brunel.mybluemix.net/sample_data/minard-troops.csv')
+#brunel         data('sample:minard-troops.csv')
                 path x(long) y(lat) color(direction) size(survivors:0:1250) split(group) axes(none) legends(none)
                 at(-10, 0, 112, 80) style('stroke:none; fill-opacity:1')
-                + data('http://brunel.mybluemix.net/sample_data/minard-cities.csv')
+                + data('sample:minard-cities.csv')
                 text x(long) y(lat) label(city) style('fill:black;font-family:Times; font-size:12pt')
-                +  data('http://brunel.mybluemix.net/sample_data/minard-troops.csv')  size(survivors:0:1250)
+                +  data('sample:minard-troops.csv')  size(survivors:0:1250)
                 x(long) y(lat) style('fill-opacity:0;stroke-opacity:0') tooltip(group, survivors, direction)
-                | data('http://brunel.mybluemix.net/sample_data/minard-temp.csv')
+                | data('sample:minard-temp.csv')
                 line x(long) y(temp) at(0, 60, 110, 100) style('stroke:green')
-                + data('http://brunel.mybluemix.net/sample_data/minard-temp.csv')
+                + data('sample:minard-temp.csv')
                 text x(long) y(temp) label(temp, '°C ', month, ' ', day)
                 style('font-family: Times; font-style:italic; fill:black')
 
@@ -134,13 +134,13 @@
 #ext            gif
 #width          1000
 #height         900
-#brunel         data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
+#brunel         data('sample:BigTenWins.csv')
                 bubble x(Division, Team) size(Win) color(Team) label(Team)  sum(Win) tooltip(#all) legends(none) interaction(select) at(0,-12,60,60) |
-                data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
+                data('sample:BigTenWins.csv')
                 x(Points_Allowed) y(Points_Scored) interaction(filter) tooltip(Year) at(60,10,100,45) +
-                data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
+                data('sample:BigTenWins.csv')
                 x(Points_Allowed) y(Points_Scored) interaction(filter)  line fit(Points_Scored)  |
-                data('http://brunel.mybluemix.net/sample_data/BigTenWins.csv')
+                data('sample:BigTenWins.csv')
                 x(Year) y(Win) area stack split(Team) opacity(#selection) style('stroke-width:.5') at(0,50,100,100)
 
 #id             div1aconf
@@ -151,16 +151,16 @@
   				the home vs. the away team.
 #width          1000
 #height         600
-#brunel         data('http://brunel.mybluemix.net/sample_data/Conferences.csv')
+#brunel         data('sample:Conferences.csv')
                 x(Wins) y(#count:linear) bar  transpose sort(#count: ascending) tooltip(#all) interaction(select) at (0,0,45,50) |
-                data('http://brunel.mybluemix.net/sample_data/Conferences.csv')
+                data('sample:Conferences.csv')
                 chord x(As_Home) y(As_Visitor) color(#count) interaction(filter) tooltip(#all) at (45,0,100,60) |
-                data('http://brunel.mybluemix.net/sample_data/Conferences.csv')
+                data('sample:Conferences.csv')
                 x(As_Home) yrange(Score_Difference:linear) iqr(Score_Difference) bar interaction(filter) at(0,60,50,100) tooltip(#all) +
-                data('http://brunel.mybluemix.net/sample_data/Conferences.csv')
+                data('sample:Conferences.csv')
                 x(As_Home) y(Score_Difference:linear) median(Score_Difference) point style('symbol:rect;border-radius:5') interaction(filter)  tooltip(#all)  |
-                data('http://brunel.mybluemix.net/sample_data/Conferences.csv')
+                data('sample:Conferences.csv')
                 x(As_Visitor) yrange(Score_Difference:linear) bar interaction(filter) iqr(Score_Difference)  tooltip(#all) at(50,60,100,100) +
-                data('http://brunel.mybluemix.net/sample_data/Conferences.csv')
+                data('sample:Conferences.csv')
                 x(As_Visitor) y(Score_Difference:linear) median(Score_Difference) point style('symbol:rect;border-radius:5') interaction(filter)  tooltip(#all)
 

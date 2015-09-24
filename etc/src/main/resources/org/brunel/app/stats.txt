@@ -3,9 +3,9 @@
 #width          400
 #height         400
 #description    Summer vs winter temperatures of US states with linear fit line
-#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv') 
-                point x(Summer) y(Winter) + 
-                data('http://brunel.mybluemix.net/sample_data/US%20States.csv') 
+#brunel         data('sample:US States.csv')
+                point x(Summer) y(Winter) +
+                data('sample:US States.csv')
                 line x(Summer) y(Winter) fit(Winter)
 
 #id             binnnedscatter
@@ -13,44 +13,44 @@
 #width          400
 #height         400
 #description    Distribution of home vs. visitor scores for NCAA Div 1-A football games since 1978
-#brunel         data('http://brunel.mybluemix.net/sample_data/Conferences.csv') 
+#brunel         data('sample:Conferences.csv')
                 point x(Home_Score) y(Visitor_Score) bin(Home_Score, Visitor_Score) opacity(#count)
-                 
+
 #id             smooth
 #title          Smooth Line
 #width          600
 #height         400
 #description    Whisky ratings vs. price with smoothed fit line
-#brunel         data('http://brunel.mybluemix.net/sample_data/whiskey.csv')
+#brunel         data('sample:whiskey.csv')
                 line x(Rating) y(Price) smooth(Price) +
-                data('http://brunel.mybluemix.net/sample_data/whiskey.csv')
-                point x(Rating) y(Price) 
-                
+                data('sample:whiskey.csv')
+                point x(Rating) y(Price)
+
 #id             rangebars
 #title          Median and Inner Quartile Range
 #width          400
 #height         400
 #description    Variations of summer temperatures per Region
-#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv') 
+#brunel         data('sample:US States.csv')
                 bar x(Region) yrange(Summer) iqr(Summer) +
-                data('http://brunel.mybluemix.net/sample_data/US%20States.csv') 
+                data('sample:US States.csv')
                 point x(Region) y(Summer) median(Summer) style('symbol:rect;height:2')
-                
+
 #id             histogram
 #title          Histogram
 #width          600
 #height         400
 #description    Distribution of summer temperatures
-#brunel         data('http://brunel.mybluemix.net/sample_data/US%20States.csv')
+#brunel         data('sample:US States.csv')
                 bar x(Summer) y(#count) bin(Summer) style("size:100%")
-                
+
 #id             brushing
 #title          Brushing/Linking
 #width          1000
 #height         400
 #description    Whiskey price by category linked age and alcohol content (mouse over event)
-#brunel         data('http://brunel.mybluemix.net/sample_data/whiskey.csv') x(Category) y(Price:linear) 
-                mean(Price) bar interaction(select:mouseover)  color(#selection) |  
-                data('http://brunel.mybluemix.net/sample_data/whiskey.csv')  
-                x(ABV) y(Age) color(#selection) size(#selection) 
-                
+#brunel         data('sample:whiskey.csv') x(Category) y(Price:linear)
+                mean(Price) bar interaction(select:mouseover)  color(#selection) |
+                data('sample:whiskey.csv')
+                x(ABV) y(Age) color(#selection) size(#selection)
+
