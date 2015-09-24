@@ -10,7 +10,7 @@ Gradle can be used to deploy Brunel to TomEE and start the web server.  From `/b
 
 To confirm it is working, navigate to:
 
-    http://localhost:8080/brunel-service/docs
+    http://localhost:8080/brunel-service/brunel/interpret/d3?brunel_src=data('http%3A%2F%2Fbrunel.mybluemix.net%2Fsample_data%2FBGG%2520Top%25202000%2520Games.csv')%20chord%20x(categories)%20y(playerage)%20color(playerage)%20size(%23count)%20tooltip(%23all)&width=575&height=575
   
 #### REST methods   
 The REST methods are defined in `BrunelService.java`.  The main REST calls are:
