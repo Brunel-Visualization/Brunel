@@ -64,6 +64,9 @@ public class BestMatch {
 
 		Action action = Action.parse(brunel);
 		VisItem item = action.apply(null);
+		if (item.getDataSets().length != 1) {
+			throw new IllegalStateException("Data matching currently only supports Brunel syntax with a single data source. Could not match for Brunel: " + brunel);
+		}
 		Dataset originalDataset = item.getDataSets()[0];
 		Dataset newDataset = DataCache.get(newData);
 		Action a = match(originalDataset, newDataset, action);

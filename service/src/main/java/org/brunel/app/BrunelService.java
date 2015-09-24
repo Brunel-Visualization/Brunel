@@ -60,6 +60,14 @@ import org.brunel.util.WebDisplay;
 @ApplicationPath("brunel")
 @Path("interpret")
 public class BrunelService extends Application {
+	
+	private static final String ERROR_TEMPLATE = "<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css'>\n" +
+			"<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css'>\n" +
+			"<script src='//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js' charset='utf-8'></script>\n" +  
+			"<script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js'></script>\n" + 
+			"<div class='alert alert-danger'>\n"+
+			"<strong>Error!</strong> %s\n" +
+			"</div>";	
 
     /**
      * Generates all JS/CSS using D3 to produce a visualization.  The data can be on the payload or it can be specified using
@@ -79,7 +87,7 @@ public class BrunelService extends Application {
                                @QueryParam("width") int width,
                                @QueryParam("height") int height,
                                @QueryParam("visid") String visId) {
-        Builder builder = makeD3(makeBrunelData(data), brunelSrc, width, height, visId);
+        Builder builder = makeD3(makeBrunelData(data, false), brunelSrc, width, height, visId, false);
         D3Result result = new D3Result();
         result.css = builder.getStyleOverrides();
         result.js = builder.getVisualization().toString();
@@ -112,7 +120,7 @@ public class BrunelService extends Application {
     	try {
 	    	String src = brunelSrc != null ? brunelSrc : ContentReader.readContentFromUrl(brunelUrl);
 
-	        Builder builder = makeD3(readBrunelData(dataUrl), src, width, height, "visualization");
+	        Builder builder = makeD3(readBrunelData(dataUrl, true), src, width, height, "visualization", true);
 	        String css = builder.getStyleOverrides();
 	        String js = (String) builder.getVisualization();
 	        Controls controls = builder.getControls();
@@ -123,7 +131,7 @@ public class BrunelService extends Application {
 	        return WebDisplay.writeHtml(css, js, width, height, filesLoc, null, controls, "");
     	}
     	catch (IOException ex) {
-    		 throw makeException("Could not read brunel from: " + brunelUrl, Status.BAD_REQUEST.getStatusCode());
+    		 throw makeException("Could not read brunel from: " + brunelUrl, Status.BAD_REQUEST.getStatusCode(), true);
     	}
 
     }
@@ -154,14 +162,19 @@ public class BrunelService extends Application {
         	}
         } catch (IOException e) {
             // You would have to be really unlucky to get this -- the cache would have to be flushed and then the
-            // the remote fle fail to be read.
-            throw makeException("Could not read data for match: " + e.getMessage(), Status.BAD_REQUEST.getStatusCode());
+            // the remote file fail to be read.
+            throw makeException("Could not read data for match: " + e.getMessage(), Status.BAD_REQUEST.getStatusCode(), false);
+        }
+        
+        catch (Exception e) {
+            throw makeException("Error matching to new data: " + e.getMessage(), Status.BAD_REQUEST.getStatusCode(), false);
+
         }
     }
 
 
     //Creates a D3Builder to produce the d3 output
-    private Builder makeD3(Dataset data, String actionText, int width, int height, String visId) {
+    private Builder makeD3(Dataset data, String actionText, int width, int height, String visId, boolean formatError) {
 
         try {
             D3Builder builder = new D3Builder(visId);
@@ -170,26 +183,26 @@ public class BrunelService extends Application {
             return builder;
         } catch (Exception ex) {
         	ex.printStackTrace();
-            throw makeException("Could not execute Brunel: " + actionText + ": " + ex.getMessage(), Status.BAD_REQUEST.getStatusCode());
+            throw makeException("Could not execute Brunel: " + actionText + ": " + ex.getMessage(), Status.BAD_REQUEST.getStatusCode(), formatError);
         }
     }
 
     //Create a Dataset instance given CSV
-    private Dataset makeBrunelData(String data) {
+    private Dataset makeBrunelData(String data, boolean formattedError) {
         try {
             return  Dataset.make(CSV.read(data));
         } catch (Exception e) {
-            throw makeException("Could not create data as CSV from content", Status.BAD_REQUEST.getStatusCode());
+            throw makeException("Could not create data as CSV from content", Status.BAD_REQUEST.getStatusCode(), formattedError);
         }
     }
 
 
     //Get a Dataset instance given a URL.  The content will be loaded if not present in the cache.
-    private Dataset readBrunelData(String url) {
+    private Dataset readBrunelData(String url, boolean formattedError) {
         try {
             return DataCache.get(url);
         } catch (Exception e) {
-            throw makeException("Could not read data as CSV from: " + url, Status.BAD_REQUEST.getStatusCode());
+            throw makeException("Could not read data as CSV from: " + url, Status.BAD_REQUEST.getStatusCode(), formattedError);
         }
     }
 
@@ -199,12 +212,18 @@ public class BrunelService extends Application {
         return action.apply(brunel);
     }
 
-    //Simple web exception handling
-    private WebApplicationException makeException(String message, int code) {
-
+    //Simple web exception handling.  A bootstrap HTML formatted message is returned for <iframe> requests.
+    private WebApplicationException makeException(String message, int code, boolean formatted) {
+    	
+    	String t = MediaType.TEXT_PLAIN;
+    	if (formatted) {
+    		t = MediaType.TEXT_HTML;
+    		message = String.format(ERROR_TEMPLATE, message);
+    	}
+    	
         return new WebApplicationException(
                 Response.status(Status.fromStatusCode(code))
-                        .entity(message).type(MediaType.TEXT_PLAIN).build());
+                        .entity(message).type(t).build());
     }
 
 
