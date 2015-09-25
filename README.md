@@ -1,5 +1,8 @@
 # Brunel Visualization [![Build Status](https://travis-ci.org/Brunel-Visualization/Brunel.svg?branch=master)](https://travis-ci.org/Brunel-Visualization/Brunel)
 
+![Brunel Visualization](https://raw.github.com/Brunel-Visualization/Brunel/master/brunel.png)
+
+
 ## Zero to Visualization in Sixty Seconds
 
 * [Try it out online](http://brunel.mybluemix.net/gallery_app/renderer?title=Bubble+chart+of+2000+games&brunel_src=data%28%27http%3A%2F%2Fwillsfamily.org%2Ffiles%2Fvis%2Fdata%2FBGG+Top+2000+Games.csv%27%29+bubble+color%28rating%29+size%28voters%29+sort%28rating%29+label%28title%29+tooltip%28title%2C+%23all%29+legends%28none%29+style%28%27*+%7Bfont-size%3A+7pt%7D%27%29&description=A+simple+bubble+chart+showing+the+top+ranked+games.+The+color+shows+the+BGG+rating+and+the+size+of+each+bubble+represents+the+number+of+voters+for+that+game.+The+data+is+already+sorted+by+rank%2C+so+no+sort+was+needed.+Data+is+from+March+2015) (and add your own data)
