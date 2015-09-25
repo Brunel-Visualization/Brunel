@@ -22,7 +22,7 @@ except:
 
 setup(
     name='brunel',
-    version='0.1',
+    version='0.7',
     packages=['brunel'],
     install_requires= ['pandas', 'jinja2', 'ipython', 'jupyter-pip'],
     package_data= {
