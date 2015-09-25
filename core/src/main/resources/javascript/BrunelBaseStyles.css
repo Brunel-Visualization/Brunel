@@ -218,6 +218,20 @@ div.brunel.tooltip {
     visibility: hidden;
 }
 
+div.brunel.tooltip:before {
+    content: '\25b2';
+    position: absolute;
+    display: inline;
+    left: 0;
+    top: 0;
+    width: 100%;
+    color: black;
+    margin-top: -10px;
+    font-size: 12px;
+    line-height: 1;
+    text-align: center;
+}
+
 div.brunel.tooltip:after {
     content: '\25bc';
     position: absolute;
@@ -230,6 +244,14 @@ div.brunel.tooltip:after {
     font-size: 12px;
     line-height: 1;
     text-align: center;
+}
+
+div.brunel.tooltip.above:before {
+   visibility: hidden;
+}
+
+div.brunel.tooltip.below:after {
+    visibility: hidden;
 }
 
 .brunel.tooltip .title {

@@ -346,10 +346,12 @@ var BrunelD3 = (function () {
     // Calls the function when the target is ready
     function callWhenReady(func, target) {
         if (target.__transition__)
-            setTimeout( function() { callWhenReady(func, target), 100});
+            setTimeout(function () {
+                callWhenReady(func, target), 100
+            });
         else
             func.call();
-     }
+    }
 
     // Select the indicated rows of the data. This will wait until any transition is completed, and
     // will then call the desired rebuild function
@@ -469,27 +471,35 @@ var BrunelD3 = (function () {
         d3Target.on('mouseover', function (d) {
             var content = labeling.content(d);                              // To set html content
             if (!content) return;                                           // No tooltips if no data
-            var p = getScreenTipPosition(this);                             // get absolute location of the target
+
             if (!tooltip) {
                 tooltip = document.createElement('div');                    // The tooltip div
-                tooltip.setAttribute('class', 'brunel tooltip');            // Get the correct styles
                 document.body.appendChild(tooltip);                         // add to document
             }
             tooltip.innerHTML = content;                                    // set html content
             tooltip.style.visibility = 'visible';                           // make visible
             tooltip.style.width = null;										// Allow free width (for now)
 
-            // Ensure not too wide
             var max_width = geom['inner_width'] / 3;                        // One third width at most
-            if (tooltip.offsetWidth > max_width)
+            if (tooltip.offsetWidth > max_width)                            // If too wide, set a width for the div
                 tooltip.style.width = max_width + "px";
 
+            var p = getScreenTipPosition(this);                             // get absolute location of the target
+            var top = p.y - 10 - tooltip.offsetHeight;                      // top location
 
-            // Ensure not too wide
-            if (tooltip.offsetWidth > 100) tooltip.width = 100;
+            if (top < 2 && p.y < geom['inner_height'] / 2) {                // We are in top half up AND overflow top
+                var old = labeling.method;                                  // save the original method
+                labeling.method = "bottom";                                 // switch to finding lower position
+                p = getScreenTipPosition(this);                             // get modified location of the target
+                labeling.method = old;                                      // restore old method
+                top = p.y + 10;
+                tooltip.setAttribute('class', 'brunel tooltip below');      // Show style for BELOW the target
+            } else {
+                tooltip.setAttribute('class', 'brunel tooltip above');      // Show style for ABOVE the target
+            }
 
-            tooltip.style.top = (p.y - 10 - tooltip.offsetHeight) + 'px';   // locate relative to the div center notch
-            tooltip.style.left = (p.x - tooltip.offsetWidth / 2) + 'px';
+            tooltip.style.left = (p.x - tooltip.offsetWidth / 2) + 'px';    // Set to be centered on target
+            tooltip.style.top = top + 'px';   // locate relative to the div center notch
         });
 
         d3Target.on('mouseout', function () {
