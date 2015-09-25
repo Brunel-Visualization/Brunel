@@ -83,7 +83,7 @@ public class D3LabelBuilder {
         out.onNewLine().ln();
         defineLabeling(details.modifyForTooltip(vis.coords == VisTypes.Coordinates.transposed),
                 prettify(vis.itemsTooltip, true), true);
-        out.add("BrunelD3.addTooltip(element, tooltipLabeling)").endStatement();
+        out.add("BrunelD3.addTooltip(element, tooltipLabeling, geom)").endStatement();
     }
 
     /* Call to add labels for internal nodes of trees and treemaps */

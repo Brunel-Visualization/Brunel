@@ -461,8 +461,8 @@ var BrunelD3 = (function () {
         }
     }
 
-
-    function makeTooltip(d3Target, labeling) {
+    // Parameters are: a D3 selection target, labeling info struct and the brunel geom object
+    function makeTooltip(d3Target, labeling, geom) {
         var svg = d3Target.node().ownerSVGElement;                          // Owning SVG
         var pt = svg.createSVGPoint();                                      // For matrix calculations
 
@@ -477,6 +477,17 @@ var BrunelD3 = (function () {
             }
             tooltip.innerHTML = content;                                    // set html content
             tooltip.style.visibility = 'visible';                           // make visible
+            tooltip.style.width = null;										// Allow free width (for now)
+
+            // Ensure not too wide
+            var max_width = geom['inner_width'] / 3;                        // One third width at most
+            if (tooltip.offsetWidth > max_width)
+                tooltip.style.width = max_width + "px";
+
+
+            // Ensure not too wide
+            if (tooltip.offsetWidth > 100) tooltip.width = 100;
+
             tooltip.style.top = (p.y - 10 - tooltip.offsetHeight) + 'px';   // locate relative to the div center notch
             tooltip.style.left = (p.x - tooltip.offsetWidth / 2) + 'px';
         });
