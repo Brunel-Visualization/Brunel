@@ -10,35 +10,35 @@
 #title          Spark Line
 #width          600
 #height         200
-#description    All Big Ten Wins since 1950
-#brunel         data('sample:BigTenWins.csv')
-                line x(Year) y(Win) sum(Win) axes(none)
+#description    US Consumer Price Index 2005-2015
+#brunel         data('sample:cpi.csv')
+                line x(#row) y(Value) axes(none)
 
 #id             bubble
 #title          Bubble Chart
 #width          600
 #height         600
-#description    Number of wins for each Big Ten team since 1950
-#brunel         data('sample:BigTenWins.csv')
-                bubble x(Team) size(Win) sum(Win) color(Team) label(Team) legends(none)
+#description    Game playing time totals per game category
+#brunel         data('sample:BGG Top 2000 Games.csv')
+                bubble x(Categories) color(Categories) size(PlayingTime) label(Categories) sum(PlayingTime) legends(none)
 
 #id             tagcloud
 #title          Tag Cloud
 #width          600
 #height         600
-#description    Big Ten team names sized by number of wins
-#brunel         data('sample:BigTenWins.csv')
-                cloud label(Team) size(Win) sum(Win) color(Division)
+#description    US Regions sized by average rainfall
+#brunel         data('sample:US States.csv')
+                cloud color(Region) size(Rain) label(Region) mean(Rain) legends(none)
 
 
 #id             treemap
 #title          Treemap
 #width          800
 #height         600
-#description    Big Ten average points scored, colored by average points allowed (per year)
-#brunel         data('sample:BigTenWins.csv')
-                treemap x(Division, Team) label('Scored: ',Points_Scored) size(Points_Scored) color(Points_Allowed:continuous) mean(Points_Scored, Points_Allowed)
-
+#description    Game category within median 'language used' sized by average game rating and colored by average player age.
+#brunel         data('sample:BGG Top 2000 Games.csv')
+                treemap x(Language, Categories) color(PlayerAge:continuous) size(Rating) label("Rating: ", Rating) mean(PlayerAge, Rating)
+                 
 #id             chord
 #title          Chord Chart
 #width          600

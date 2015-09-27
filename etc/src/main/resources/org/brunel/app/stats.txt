@@ -12,9 +12,9 @@
 #title          Rectangular Binned Scatterplot
 #width          400
 #height         400
-#description    Distribution of home vs. visitor scores for NCAA Div 1-A football games since 1978
-#brunel         data('sample:Conferences.csv')
-                point x(Home_Score) y(Visitor_Score) bin(Home_Score, Visitor_Score) opacity(#count)
+#description    Distribution of whiskey ratings vs. age
+#brunel         data('sample:whiskey.csv')   
+                point x(Rating) y(Age) bin(Rating,Age) opacity(#count)
 
 #id             smooth
 #title          Smooth Line

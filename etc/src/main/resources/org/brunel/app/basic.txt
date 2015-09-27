@@ -59,9 +59,9 @@
 #title          Series Lines
 #width          600
 #height         400
-#description    Big Ten teams total points scored vs. allowed for each season since 1950
-#brunel         data('sample:BigTenWins.csv')
-                x(Year) y(Points_Scored, Points_Allowed) color(#series) line sum(Points_Scored, Points_Allowed)
+#description    Unemployment Rates 2005-2015 Men/Women over 20 yrs of age
+#brunel         data('sample:Unemployment.csv')
+                x(#row) y(Women, Men) color(#series) line 
 
 #id             area
 #title          Area Plot

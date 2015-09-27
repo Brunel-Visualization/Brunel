@@ -126,41 +126,21 @@
                 text x(long) y(temp) label(temp, '°C ', month, ' ', day)
                 style('font-family: Times; font-style:italic; fill:black')
 
-#id             bigtenwins
-#title          Big Ten Football Wins
-#description    The bubble chart shows the total number of wins for each Big Ten team since 1950, partitioned by the current East/West divisions.
-				Click on a team to see the history of wins per each year as they compare to the rest of the Big Ten teams over time as well as
-				a plot of the number of points allowed vs. the number of points scored for each year--which also includes a fit line to show the trend.
+#id             whiskeydd
+#title          Whiskey Drill-Down
+#description    The bubble chart shows the total number whiskeys per country.
+				Click on a country to see a comparison of price by age of whiskeys for the given country as well as the categories of whiskey produced by that country colored by the
+				average rating.
 #ext            gif
 #width          1000
 #height         900
-#brunel         data('sample:BigTenWins.csv')
-                bubble x(Division, Team) size(Win) color(Team) label(Team)  sum(Win) tooltip(#all) legends(none) interaction(select) at(0,-12,60,60) |
-                data('sample:BigTenWins.csv')
-                x(Points_Allowed) y(Points_Scored) interaction(filter) tooltip(Year) at(60,10,100,45) +
-                data('sample:BigTenWins.csv')
-                x(Points_Allowed) y(Points_Scored) interaction(filter)  line fit(Points_Scored)  |
-                data('sample:BigTenWins.csv')
-                x(Year) y(Win) area stack split(Team) opacity(#selection) style('stroke-width:.5') at(0,50,100,100)
+#brunel         data('sample:whiskey.csv')
+                bubble x(Country) color(Country) size(#count) label(Country) tooltip(#all) legends(none) at(0,0, 60, 50) interaction(select) |
+                data('sample:whiskey.csv')
+                x(Price) y(Age) tooltip(Name) at(60, 10, 100, 45) interaction(filter)  +
+                data('sample:whiskey.csv')
+                line x(Price) y(Age) fit(Age) interaction(filter)   |
+                data('sample:whiskey.csv')
+                cloud color(Rating:continuous) label(Category) mean(Rating) interaction(filter)   at(0, 50, 100, 100)
 
-#id             div1aconf
-#title          NCAA Division 1-A Conference Wins
-#description    The bar chart shows the total number of wins each conference has against opposing conferences since 1978.  Clicking on a bar
-  				shows a chord chart of victories for the selected conference against opponents in other conferences.  Darker blue indicates a greater number of
-  				victories.  The bottom two charts show the spread of the point differentials (difference between final game scores) when the selected conference is
-  				the home vs. the away team.
-#width          1000
-#height         600
-#brunel         data('sample:Conferences.csv')
-                x(Wins) y(#count:linear) bar  transpose sort(#count: ascending) tooltip(#all) interaction(select) at (0,0,45,50) |
-                data('sample:Conferences.csv')
-                chord x(As_Home) y(As_Visitor) color(#count) interaction(filter) tooltip(#all) at (45,0,100,60) |
-                data('sample:Conferences.csv')
-                x(As_Home) yrange(Score_Difference:linear) iqr(Score_Difference) bar interaction(filter) at(0,60,50,100) tooltip(#all) +
-                data('sample:Conferences.csv')
-                x(As_Home) y(Score_Difference:linear) median(Score_Difference) point style('symbol:rect;border-radius:5') interaction(filter)  tooltip(#all)  |
-                data('sample:Conferences.csv')
-                x(As_Visitor) yrange(Score_Difference:linear) bar interaction(filter) iqr(Score_Difference)  tooltip(#all) at(50,60,100,100) +
-                data('sample:Conferences.csv')
-                x(As_Visitor) y(Score_Difference:linear) median(Score_Difference) point style('symbol:rect;border-radius:5') interaction(filter)  tooltip(#all)
 
