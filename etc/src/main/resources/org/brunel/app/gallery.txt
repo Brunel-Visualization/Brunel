@@ -123,7 +123,7 @@
                 | data('sample:minard-temp.csv')
                 line x(long) y(temp) at(0, 60, 110, 100) style('stroke:green')
                 + data('sample:minard-temp.csv')
-                text x(long) y(temp) label(temp, '°C ', month, ' ', day)
+                text x(long) y(temp) label(temp, 'C ', month, ' ', day)
                 style('font-family: Times; font-style:italic; fill:black')
 
 #id             whiskeydd
