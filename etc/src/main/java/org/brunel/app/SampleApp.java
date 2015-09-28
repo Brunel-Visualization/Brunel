@@ -1,4 +1,4 @@
-package org.brunel.describe;
+package org.brunel.app;
 
 import org.brunel.action.Action;
 import org.brunel.model.VisItem;
