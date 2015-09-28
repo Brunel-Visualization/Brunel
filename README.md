@@ -10,6 +10,7 @@
 * Check out the [Brunel Visualization Cookbook](https://github.com/Brunel-Visualization/Brunel/wiki/Brunel-Visualization-Cookbook)
 * Use the interactive [language tutorial](http://brunel.mybluemix.net/docs)
 * Download the [latest build](https://github.com/Brunel-Visualization/Brunel/releases)
+* Sample ["Hello World"](https://github.com/Brunel-Visualization/Brunel/blob/master/etc/src/main/java/org/brunel/app/SampleApp.java) App
 
 ## Details
 
