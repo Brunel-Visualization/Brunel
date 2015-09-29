@@ -53,7 +53,7 @@ public class D3Builder extends AbstractBuilder {
 
     public String makeImports() {
 
-        String pattern = "<script src=\"%s\" chartset=\"utf-8\"></script>\n";
+        String pattern = "<script src=\"%s\" charset=\"utf-8\"></script>\n";
 
         String base = COPYRIGHT_COMMENTS +
                 String.format(pattern, "http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js");
@@ -66,13 +66,32 @@ public class D3Builder extends AbstractBuilder {
         if (options.localResources == null) {
             return base + String.format(pattern, "http://brunelvis.org/js/brunel." + options.version + ".min.js");
         } else {
-            return base
+            base = base
                     + String.format(pattern, options.localResources + "/BrunelData.js")
-                    + String.format(pattern, options.localResources + "/BrunelD3.js")
+                    + String.format(pattern, options.localResources + "/BrunelD3.js");
+            if (getControls().isNeeded()) base = base
                     + String.format(pattern, options.localResources + "/BrunelEventHandlers.js")
                     + String.format(pattern, options.localResources + "/BrunelJQueryControlFactory.js")
-                    + String.format(pattern, options.localResources + "/sumoselect/jquery.sumoselect.min.js");
+                    + String.format(pattern, options.localResources + "http://brunelvis.org/js/jquery.sumoselect.min.js");
+            return base;
         }
+    }
+
+    public String makeStyleSheets() {
+        String pattern = "<link rel=\"stylesheet\" type=\"text/css\" href=\"%s\" charset=\"utf-8\"></script>\n";
+
+        String base;
+        if (options.localResources == null) {
+            base = String.format(pattern, "http://brunelvis.org/js/brunel." + options.version + ".css");
+        } else {
+            base = String.format(pattern, options.localResources + "/BrunelBaseStyles.css");
+        }
+
+        if (getControls().isNeeded()) {
+            base = base + String.format(pattern, "http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css")
+                    + String.format(pattern, "http://brunelvis.org/js/sumoselect.css");
+        }
+        return base;
     }
 
     /**

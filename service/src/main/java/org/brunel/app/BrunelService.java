@@ -19,6 +19,7 @@ package org.brunel.app;
 
 import org.brunel.action.Action;
 import org.brunel.build.d3.D3Builder;
+import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ContentReader;
 import org.brunel.build.util.DataCache;
 import org.brunel.data.Dataset;
@@ -117,7 +118,7 @@ public class BrunelService extends Application {
     	try {
 	    	String src = brunelSrc != null ? brunelSrc : ContentReader.readContentFromUrl(URI.create(brunelUrl));
 	        D3Builder builder = makeD3(readBrunelData(dataUrl, true), src, width, height, "visualization", true);
-	        return WebDisplay.writeHtml(builder, width, height, filesLoc, null, builder.getControls().isNeeded(), "");
+	        return WebDisplay.writeHtml(builder, width, height, null, "");
     	}
     	catch (IOException ex) {
     		 throw makeException("Could not read brunel from: " + brunelUrl, Status.BAD_REQUEST.getStatusCode(), true);
@@ -167,7 +168,9 @@ public class BrunelService extends Application {
     private D3Builder makeD3(Dataset data, String actionText, int width, int height, String visId, boolean formatError) {
 
         try {
-            D3Builder builder = D3Builder.make();
+            BuilderOptions options = new BuilderOptions();
+            options.visIdentifier = visId;
+            D3Builder builder = D3Builder.make(options);
             VisItem item = makeVisItem(data, actionText);
             builder.build(item, width, height);
             return builder;

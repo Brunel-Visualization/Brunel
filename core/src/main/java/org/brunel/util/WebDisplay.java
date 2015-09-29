@@ -21,7 +21,6 @@ package org.brunel.util;
 import org.brunel.build.Builder;
 import org.brunel.build.d3.D3Builder;
 import org.brunel.build.util.BuilderOptions;
-import org.brunel.build.util.ModelUtil;
 import org.brunel.data.Data;
 import org.brunel.model.VisItem;
 
@@ -50,25 +49,24 @@ public class WebDisplay {
     private static final String NAV_BASE = new Scanner(WebDisplay.class.getResourceAsStream(NAV_LOCATION), "UTF-8").useDelimiter("\\A").next();
     private static final String BASE = new Scanner(WebDisplay.class.getResourceAsStream(SINGLE_LOCATION), "UTF-8").useDelimiter("\\A").next();
 
-
-    public static String writeHtml(D3Builder builder, int width, int height, String baseDir, java.util.List<String> moreHeaders, boolean controlsNeeded, String... titles) {
+    public static String writeHtml(D3Builder builder, int width, int height, java.util.List<String> moreHeaders, String... titles) {
         String css = builder.getStyleOverrides();
         String js = (String) builder.getVisualization();
         String imports = builder.makeImports();
         if (width < 5) width = 800;
         if (height < 5) height = 600;
 
-        String sumoDir = baseDir + "/sumoselect";
         String title = constructTitle(titles);
-        String top = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + baseDir + "/BrunelBaseStyles.css\">\n" +
-                "<link rel=\"stylesheet\" type=\"text/css\" href=\"http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css\">\n" +
-                "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + sumoDir + "/sumoselect.css\">\n";
+
+        String stylesheets = builder.makeStyleSheets();
+
+        // This is a bit of a hack, throwing them on here
         if (moreHeaders != null)
-            for (String s : moreHeaders) top += s + "\n";
+            for (String s : moreHeaders) stylesheets += s + "\n";
         String result = BASE
                 .replace("$WIDTH$", Data.formatNumeric((double) width, true))
                 .replace("$HEIGHT$", Data.formatNumeric((double) height, true))
-                .replace("$CSS$", top)
+                .replace("$CSS$", stylesheets)
                 .replace("$TITLE$", title).replace("$STYLES$", css.trim()).replace("$SCRIPT$", js);
 
         result = result.replace("$IMPORTS$", imports);
@@ -167,7 +165,7 @@ public class WebDisplay {
         options.localResources = "../out";
         D3Builder builder = D3Builder.make(options);
         builder.build(target, width, height);
-        String html = writeHtml(builder, width, height, "../out", headers, ModelUtil.hasFilters(target), titles);
+        String html = writeHtml(builder, width, height, headers, titles);
         writeToFile(file, html);
     }
 
