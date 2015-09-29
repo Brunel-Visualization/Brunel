@@ -27,7 +27,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * A style sheet
@@ -154,11 +156,12 @@ public class StyleSheet {
             writer.write(e.selector.toString());
             writer.write(" {");
             writer.append('\n');
-            for (Map.Entry<String, String> o : e.options.entrySet()) {
+            Set<String> keys = new TreeSet<String>(e.options.keySet());
+            for (String key : keys) {
                 writer.write("\t");
-                writer.write(o.getKey());
+                writer.write(key);
                 writer.write(": ");
-                writer.write(o.getValue());
+                writer.write(e.options.get(key));
                 writer.write(";\n");
             }
             writer.write("}\n");

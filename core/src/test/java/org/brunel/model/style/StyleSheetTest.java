@@ -36,13 +36,13 @@ public class StyleSheetTest {
     public void testWriting() {
         StyleSheet sheet = StyleFactory.instance().makeStyleSheet("a {x:1; y:2} .c {x:2; z:4}");
         assertEquals("a {\n" +
-                "\ty: 2;\n" +
                 "\tx: 1;\n" +
+                "\ty: 2;\n" +
                 "}\n" +
                 "\n" +
                 ".c {\n" +
-                "\tz: 4;\n" +
                 "\tx: 2;\n" +
+                "\tz: 4;\n" +
                 "}\n", sheet.toString());
 
         String output = StyleFactory.instance().makeStyleSheet(SAMPLE).toString("top");
