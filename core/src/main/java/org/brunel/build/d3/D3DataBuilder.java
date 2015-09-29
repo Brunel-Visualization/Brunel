@@ -19,6 +19,7 @@ package org.brunel.build.d3;
 
 import org.brunel.action.Param;
 import org.brunel.build.DataTransformParameters;
+import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
@@ -62,18 +63,30 @@ public class D3DataBuilder {
         out.indentLess().onNewLine().add("}").endStatement().ln();
     }
 
-    public static void writeRawData(VisItem main, ScriptWriter out) {
+    public static void writeTables(VisItem main, ScriptWriter out, BuilderOptions options) {
+        if (options.includeData == BuilderOptions.DataMethod.none) return;
+        if (options.includeData == BuilderOptions.DataMethod.minimal) {
+            throw new UnsupportedOperationException("Cannot make minimal data yet");
+        }
+
         Dataset[] datasets = main.getDataSets();
         for (int d = 0; d < datasets.length; d++) {
             Dataset data = datasets[d];
+            Field[] fields;
 
-            LinkedHashSet<Field> fieldsAsSet = new LinkedHashSet<Field>();
-            addUsedFields(main, data, fieldsAsSet);
-            Field[] fields = fieldsAsSet.toArray(new Field[fieldsAsSet.size()]);
+            if (options.includeData == BuilderOptions.DataMethod.columns) {
+                // Only the fields needed by the vis items
+                LinkedHashSet<Field> fieldsAsSet = new LinkedHashSet<Field>();
+                addUsedFields(main, data, fieldsAsSet);
+                fields = fieldsAsSet.toArray(new Field[fieldsAsSet.size()]);
+            } else {
+                // All the fields
+                fields = data.fields;
+            }
 
             // Name the table with a numeric suffix for multiple tables
-            out.onNewLine().add("var", "table" + (d + 1), "= [").ln().indentMore();
-            int numPerLine =   12 / Math.max(1, Math.max(1, fields.length));
+            out.onNewLine().add("var", String.format(options.dataName, d + 1), "= [").ln().indentMore();
+            int numPerLine = 12 / Math.max(1, Math.max(1, fields.length));
             out.add("[ ");
             for (int i = 0; i < fields.length; i++) {
                 String name = fields[i].name;

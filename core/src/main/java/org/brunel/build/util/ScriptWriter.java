@@ -17,7 +17,6 @@
 
 package org.brunel.build.util;
 
-
 import org.brunel.data.Data;
 
 import java.io.PrintWriter;
@@ -32,7 +31,7 @@ import java.util.Set;
  */
 public class ScriptWriter {
 
-    private static final int LINE_WIDTH = 100;
+    private final int lineMaxLength;
     private static final Set<Character> NO_SPACE_BEFORE = new HashSet<Character>(Arrays.asList(':', ',', ';', '(', ')'));
     private static final String INDENT = "  ";
     private final PrintWriter out;
@@ -40,15 +39,21 @@ public class ScriptWriter {
     private int consecutiveNewLines = 0;
     private int indentLevel = 0;
     private boolean changed;
+    public boolean readable = false;
 
-    public ScriptWriter() {
+    public ScriptWriter(boolean readableJavascript) {
+        readable = readableJavascript;
+        lineMaxLength = readable ? 100 : 400;
         base = new StringWriter();
         out = new PrintWriter(base);
         consecutiveNewLines = 1;
     }
 
     public ScriptWriter addChained(Object... items) {
-        return indentMore().onNewLine().add(".").add(items).indentLess();
+        if (readable)
+            return indentMore().onNewLine().add(".").add(items).indentLess();
+        else
+            return add(".").add(items);
     }
 
     public boolean changedSinceMark() {
@@ -56,9 +61,9 @@ public class ScriptWriter {
     }
 
     public ScriptWriter continueOnNextLine(String... before) {
-        for (String s: before) out.print(s);
+        for (String s : before) out.print(s);
         ln();
-        out.print(INDENT);
+        if (readable) out.print(INDENT);
         return this;
     }
 
@@ -69,7 +74,7 @@ public class ScriptWriter {
 
     public ScriptWriter add(Object... items) {
         // Add indentation if needed
-        if (consecutiveNewLines > 0)
+        if (readable && consecutiveNewLines > 0)
             for (int i = 0; i < indentLevel; i++) out.print(INDENT);
 
         // Add items
@@ -119,7 +124,7 @@ public class ScriptWriter {
     public ScriptWriter addQuoted(Object... items) {
         indentMore().indentMore();
         for (int i = 0; i < items.length; i++) {
-            if (i > 0) out.print(", ");
+            if (i > 0) out.print(readable ? ", " : ",");
             if (currentColumn() > 77) ln();
             add(quote(items[i]));
         }
@@ -145,7 +150,7 @@ public class ScriptWriter {
         boolean first = true;
         for (Object o : items) {
             if (!first) out.print(", ");
-            if (currentColumn() > LINE_WIDTH - 4) ln();
+            if (currentColumn() > lineMaxLength - 4) ln();
             add(quote(o));
             first = false;
         }
@@ -160,13 +165,17 @@ public class ScriptWriter {
      * @return this
      */
     public ScriptWriter at(int n) {
-        for (int i = currentColumn(); i < n; i++) add(" ");
+        if (readable)
+            for (int i = currentColumn(); i < n; i++) add(" ");
         return this;
     }
 
     public ScriptWriter comment(Object... items) {
-        if (consecutiveNewLines == 0) add(" ");
-        add("// ").add(items).ln();
+        if (readable) {
+            if (consecutiveNewLines == 0) add(" ");
+            add("// ").add(items);
+        }
+        ln();
         return this;
     }
 
@@ -181,13 +190,16 @@ public class ScriptWriter {
 
     public ScriptWriter titleComment(Object... items) {
         ensureBlankLine();
-        add("// ").add(items).add(" ");
-        for (int i = currentColumn(); i < LINE_WIDTH; i++) add("/");
-        ensureBlankLine();
+        if (readable) {
+            add("// ").add(items).add(" ");
+            for (int i = currentColumn(); i < lineMaxLength; i++) add("/");
+            ensureBlankLine();
+        }
         return this;
     }
 
     private void ensureBlankLine() {
-        while (consecutiveNewLines < 2) ln();
+        if (readable) while (consecutiveNewLines < 2) ln();
+        else if (consecutiveNewLines == 0) ln();
     }
 }

@@ -19,9 +19,9 @@
 package org.brunel.util;
 
 import org.brunel.build.Builder;
-import org.brunel.build.controls.ControlWriter;
-import org.brunel.build.controls.Controls;
 import org.brunel.build.d3.D3Builder;
+import org.brunel.build.util.BuilderOptions;
+import org.brunel.build.util.ModelUtil;
 import org.brunel.data.Data;
 import org.brunel.model.VisItem;
 
@@ -45,17 +45,19 @@ public class WebDisplay {
 
     private static final String NAV_LOCATION = "/org/brunel/util/webdisplay-navigation.html";
     private static final String SINGLE_LOCATION = "/org/brunel/util/webdisplay-single.html";
-    private static final String COPYRIGHT_COMMENTS = "<!--\n" +
-            "\tD3 Copyright © 2012, Michael Bostock\n" +
-            "\tjQuery Copyright © 2010 by The jQuery Project\n" +
-            "\tsumoselect Copyright © 2014 Hemant Negi\n " +
-            "-->\n";
 
     // Read the static HTML resources to add in
     private static final String NAV_BASE = new Scanner(WebDisplay.class.getResourceAsStream(NAV_LOCATION), "UTF-8").useDelimiter("\\A").next();
     private static final String BASE = new Scanner(WebDisplay.class.getResourceAsStream(SINGLE_LOCATION), "UTF-8").useDelimiter("\\A").next();
 
-    public static String writeHtml(String css, String js, int width, int height, String baseDir, java.util.List<String> moreHeaders, Controls controls, String... titles) {
+
+    public static String writeHtml(D3Builder builder, int width, int height, String baseDir, java.util.List<String> moreHeaders, boolean controlsNeeded, String... titles) {
+        String css = builder.getStyleOverrides();
+        String js = (String) builder.getVisualization();
+        String imports = builder.makeImports();
+        if (width < 5) width = 800;
+        if (height < 5) height = 600;
+
         String sumoDir = baseDir + "/sumoselect";
         String title = constructTitle(titles);
         String top = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + baseDir + "/BrunelBaseStyles.css\">\n" +
@@ -68,26 +70,8 @@ public class WebDisplay {
                 .replace("$HEIGHT$", Data.formatNumeric((double) height, true))
                 .replace("$CSS$", top)
                 .replace("$TITLE$", title).replace("$STYLES$", css.trim()).replace("$SCRIPT$", js);
-        if (controls.filters.isEmpty()) {
-            // Controls are not needed, so we need fewer libraries
-            result = result.replace("$IMPORTS$", COPYRIGHT_COMMENTS + D3Builder.imports(
-                    "http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js",
-                    baseDir + "/BrunelData.js",
-                    baseDir + "/BrunelD3.js"
-            ));
-        } else {
-            // Controls are needed, so we need more libraries
-            result = result.replace("$IMPORTS$", COPYRIGHT_COMMENTS + D3Builder.imports(
-                    "http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js",
-                    "http://code.jquery.com/jquery-1.10.2.js",
-                    "http://code.jquery.com/ui/1.11.4/jquery-ui.js",
-                    baseDir + "/BrunelData.js",
-                    baseDir + "/BrunelD3.js",
-                    baseDir + "/BrunelEventHandlers.js",
-                    baseDir + "/BrunelJQueryControlFactory.js",
-                    sumoDir + "/jquery.sumoselect.min.js"
-            ));
-        }
+
+        result = result.replace("$IMPORTS$", imports);
         return result;
     }
 
@@ -179,13 +163,11 @@ public class WebDisplay {
     }
 
     public void buildSingle(VisItem target, int width, int height, String file, String... titles) {
-        D3Builder builder = new D3Builder("visualization");
+        BuilderOptions options = new BuilderOptions();
+        options.localResources = "../out";
+        D3Builder builder = D3Builder.make(options);
         builder.build(target, width, height);
-        String css = builder.getStyleOverrides();
-        String js = (String) builder.getVisualization();
-        Controls controls = builder.getControls();
-        js += new ControlWriter("controls", "BrunelJQueryControlFactory").write(controls);
-        String html = writeHtml(css, js, width, height, "../out", headers, controls, titles);
+        String html = writeHtml(builder, width, height, "../out", headers, ModelUtil.hasFilters(target), titles);
         writeToFile(file, html);
     }
 

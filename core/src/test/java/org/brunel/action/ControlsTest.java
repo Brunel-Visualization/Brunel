@@ -17,9 +17,8 @@
 
 package org.brunel.action;
 
-import org.brunel.build.Builder;
 import org.brunel.build.controls.Controls;
-import org.brunel.build.controls.Filter;
+import org.brunel.build.controls.FilterControl;
 import org.brunel.build.d3.D3Builder;
 import org.brunel.data.CannedData;
 import org.brunel.data.Dataset;
@@ -38,21 +37,21 @@ public class ControlsTest {
 
     @Test
     public void testCategoricalFilter() {
-        D3Builder builder = new D3Builder("tmp");
+        D3Builder builder = (D3Builder) D3Builder.make();
         Controls controls = getControls(bank, "x(gender) y(salary) filter(gender)", builder);
         assertTrue(controls.filters.size() > 0);
 
-        List<Filter> filters = controls.filters;
+        List<FilterControl> filters = controls.filters;
         assertTrue(filters.size() == 1);
 
-        Filter genderFilter = filters.get(0);
+        FilterControl genderFilter = filters.get(0);
 
         assertTrue(genderFilter.categories != null);
         assertEquals(genderFilter.label, "Gender");
 
     }
 
-    private static Controls getControls(Dataset data, String actionText, Builder builder) {
+    private static Controls getControls(Dataset data, String actionText, D3Builder builder) {
         Action action = Action.parse(actionText);
         VisItem item = action.apply(data);
         builder.build(item, 100, 100);
@@ -61,13 +60,13 @@ public class ControlsTest {
 
     @Test
     public void testContinuousFilter() {
-        D3Builder builder = new D3Builder("tmp");
+        D3Builder builder = (D3Builder) D3Builder.make();
         Controls controls = getControls(bank, "x(gender) y(salary) filter(salary)", builder);
         assertTrue(controls.filters.size() > 0);
 
-        List<Filter> filters = controls.filters;
+        List<FilterControl> filters = controls.filters;
         assertTrue(filters.size() == 1);
-        Filter salaryFilter = filters.get(0);
+        FilterControl salaryFilter = filters.get(0);
 
         assertTrue(salaryFilter.min != null);
         assertEquals(salaryFilter.label, "Salary");
@@ -78,7 +77,7 @@ public class ControlsTest {
     public void testNoFilter() {
 
         //Builder doesn't matter for controls
-        D3Builder builder = new D3Builder("tmp");
+        D3Builder builder = (D3Builder) D3Builder.make();
         Controls controls = getControls(bank, "x(gender) y(salary)", builder);
         assertTrue(controls.filters.isEmpty());
     }

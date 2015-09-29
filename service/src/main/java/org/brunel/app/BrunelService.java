@@ -18,9 +18,6 @@
 package org.brunel.app;
 
 import org.brunel.action.Action;
-import org.brunel.build.Builder;
-import org.brunel.build.controls.ControlWriter;
-import org.brunel.build.controls.Controls;
 import org.brunel.build.d3.D3Builder;
 import org.brunel.build.util.ContentReader;
 import org.brunel.build.util.DataCache;
@@ -60,14 +57,14 @@ import java.net.URI;
 @ApplicationPath("brunel")
 @Path("interpret")
 public class BrunelService extends Application {
-	
+
 	private static final String ERROR_TEMPLATE = "<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css'>\n" +
 			"<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css'>\n" +
-			"<script src='//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js' charset='utf-8'></script>\n" +  
-			"<script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js'></script>\n" + 
+			"<script src='//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js' charset='utf-8'></script>\n" +
+			"<script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js'></script>\n" +
 			"<div class='alert alert-danger'>\n"+
 			"<strong>Error!</strong> %s\n" +
-			"</div>";	
+			"</div>";
 
     /**
      * Generates all JS/CSS using D3 to produce a visualization.  The data can be on the payload or it can be specified using
@@ -87,7 +84,7 @@ public class BrunelService extends Application {
                                @QueryParam("width") int width,
                                @QueryParam("height") int height,
                                @QueryParam("visid") String visId) {
-        Builder builder = makeD3(makeBrunelData(data, false), brunelSrc, width, height, visId, false);
+        D3Builder builder = makeD3(makeBrunelData(data, false), brunelSrc, width, height, visId, false);
         D3Result result = new D3Result();
         result.css = builder.getStyleOverrides();
         result.js = builder.getVisualization().toString();
@@ -119,16 +116,8 @@ public class BrunelService extends Application {
 
     	try {
 	    	String src = brunelSrc != null ? brunelSrc : ContentReader.readContentFromUrl(URI.create(brunelUrl));
-
-	        Builder builder = makeD3(readBrunelData(dataUrl, true), src, width, height, "visualization", true);
-	        String css = builder.getStyleOverrides();
-	        String js = (String) builder.getVisualization();
-	        Controls controls = builder.getControls();
-	        js += new ControlWriter("controls", "BrunelJQueryControlFactory").write(controls);
-	        if (filesLoc == null) filesLoc = "../../brunelsupport";
-	        if (width < 5) width = 800;
-	        if (height < 5) height = 600;
-	        return WebDisplay.writeHtml(css, js, width, height, filesLoc, null, controls, "");
+	        D3Builder builder = makeD3(readBrunelData(dataUrl, true), src, width, height, "visualization", true);
+	        return WebDisplay.writeHtml(builder, width, height, filesLoc, null, builder.getControls().isNeeded(), "");
     	}
     	catch (IOException ex) {
     		 throw makeException("Could not read brunel from: " + brunelUrl, Status.BAD_REQUEST.getStatusCode(), true);
@@ -165,7 +154,7 @@ public class BrunelService extends Application {
             // the remote file fail to be read.
             throw makeException("Could not read data for match: " + e.getMessage(), Status.BAD_REQUEST.getStatusCode(), false);
         }
-        
+
         catch (Exception e) {
         	e.printStackTrace();
             throw makeException("Error matching to new data: " + e.getMessage(), Status.BAD_REQUEST.getStatusCode(), false);
@@ -175,10 +164,10 @@ public class BrunelService extends Application {
 
 
     //Creates a D3Builder to produce the d3 output
-    private Builder makeD3(Dataset data, String actionText, int width, int height, String visId, boolean formatError) {
+    private D3Builder makeD3(Dataset data, String actionText, int width, int height, String visId, boolean formatError) {
 
         try {
-            D3Builder builder = new D3Builder(visId);
+            D3Builder builder = D3Builder.make();
             VisItem item = makeVisItem(data, actionText);
             builder.build(item, width, height);
             return builder;
@@ -215,13 +204,13 @@ public class BrunelService extends Application {
 
     //Simple web exception handling.  A bootstrap HTML formatted message is returned for <iframe> requests.
     private WebApplicationException makeException(String message, int code, boolean formatted) {
-    	
+
     	String t = MediaType.TEXT_PLAIN;
     	if (formatted) {
     		t = MediaType.TEXT_HTML;
     		message = String.format(ERROR_TEMPLATE, message);
     	}
-    	
+
         return new WebApplicationException(
                 Response.status(Status.fromStatusCode(code))
                         .entity(message).type(t).build());

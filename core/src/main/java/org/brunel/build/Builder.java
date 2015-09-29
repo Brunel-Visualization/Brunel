@@ -17,7 +17,7 @@
 
 package org.brunel.build;
 
-import org.brunel.build.controls.Controls;
+import org.brunel.build.util.BuilderOptions;
 import org.brunel.model.VisItem;
 
 /*
@@ -27,6 +27,7 @@ import org.brunel.model.VisItem;
  */
 public interface Builder {
 
+
     /**
      * Builds the visualization
      *
@@ -35,14 +36,6 @@ public interface Builder {
      * @param height pixel height of the rectangle into which the visualization is to be put
      */
     void build(VisItem target, int width, int height);
-
-    /**
-     * When the visualization specified that controls were needed (for example, for filtering)
-     * then this returns a description of them
-     *
-     * @return JSON representation of the controls. Will not be null, but may be empty.
-     */
-    Controls getControls();
 
     /**
      * Some visualizations may re-define or add to the standard styles. This will be a CSS-compatible
@@ -61,4 +54,11 @@ public interface Builder {
      * @return non-null visualization artifact
      */
     Object getVisualization();
+
+    /**
+     * Returns the options used for building the visualization
+     * @return options used
+     */
+    BuilderOptions getOptions();
+
 }

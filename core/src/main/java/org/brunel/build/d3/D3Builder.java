@@ -20,6 +20,8 @@ package org.brunel.build.d3;
 import org.brunel.action.Param;
 import org.brunel.build.AbstractBuilder;
 import org.brunel.build.DataTransformParameters;
+import org.brunel.build.controls.Controls;
+import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.PositionFields;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
@@ -39,16 +41,54 @@ import java.util.Map;
  */
 public class D3Builder extends AbstractBuilder {
 
-    public static String imports(String... jsScriptLocations) {
-        String result = "";
-        for (String s : jsScriptLocations) result += "<script src=\"" + s + "\" charset=\"utf-8\"></script>\n";
-        return result;
+    private static final String COPYRIGHT_COMMENTS = "<!--\n" +
+            "\tD3 Copyright © 2012, Michael Bostock\n" +
+            "\tjQuery Copyright © 2010 by The jQuery Project\n" +
+            "\tsumoselect Copyright © 2014 Hemant Negi\n " +
+            "-->\n";
+
+    private D3Builder(BuilderOptions options) {
+        super(options);
     }
 
-    private final String visIdentifier;         // Identifier for the HTML element
-    private final String dataName;              // Name of the row data to use
-    private final String className;             // Name of the brunel function to create
-    private final boolean addGenerationCode;    // If true, we add a call to the build at the end of the definitions
+    public String makeImports() {
+
+        String pattern = "<script src=\"%s\" chartset=\"utf-8\"></script>\n";
+
+        String base = COPYRIGHT_COMMENTS +
+                String.format(pattern, "http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js");
+
+        if (getControls().isNeeded()) {
+            base = base + String.format(pattern, "http://code.jquery.com/jquery-1.10.2.js")
+                    + String.format(pattern, "http://code.jquery.com/ui/1.11.4/jquery-ui.js");
+        }
+
+        if (options.localResources == null) {
+            return base + String.format(pattern, "http://brunelvis.org/js/brunel." + options.version + ".min.js");
+        } else {
+            return base
+                    + String.format(pattern, options.localResources + "/BrunelData.js")
+                    + String.format(pattern, options.localResources + "/BrunelD3.js")
+                    + String.format(pattern, options.localResources + "/BrunelEventHandlers.js")
+                    + String.format(pattern, options.localResources + "/BrunelJQueryControlFactory.js")
+                    + String.format(pattern, options.localResources + "/sumoselect/jquery.sumoselect.min.js");
+        }
+    }
+
+    /**
+     * Return the required builder
+     */
+    public static D3Builder make(BuilderOptions options) {
+        return new D3Builder(options);
+    }
+
+    /**
+     * Return the required builder with default options
+     */
+    public static D3Builder make() {
+        return make(new BuilderOptions());
+    }
+
     private ScriptWriter out;                   // Where to write code
     private int chartIndex;                     // Current chart index
     private int elementIndex;                   // Current element index
@@ -58,48 +98,19 @@ public class D3Builder extends AbstractBuilder {
     private D3Interaction interaction;          // Builder for interactions
     private PositionFields positionFields;      // Information on fields used for position
 
-    /**
-     * Create a new d3 builder that will assign the "visId" JS variable to the supplied
-     * value.  This should be the value of the HTML element (likely SVG element) that holds the
-     * d3 content.
-     *
-     * @param visIdentifier the id to use.
-     */
-
-    public D3Builder(String visIdentifier) {
-        this(visIdentifier, "table", "BrunelVis", true);
-    }
-
-    /**
-     * Create a new d3 builder that will assign the "visId" JS variable to the supplied
-     * value.  This should be the value of the HTML element (likely SVG element) that holds the
-     * d3 content.
-     *
-     * @param visIdentifier     the id to use.
-     * @param dataName          Name of the row data to use
-     * @param className         Name of the brunel class to create
-     * @param addGenerationCode if true, code will be added to generate the chart
-     */
-
-    public D3Builder(String visIdentifier, String dataName, String className, boolean addGenerationCode) {
-        this.visIdentifier = visIdentifier;
-        this.dataName = dataName;
-        this.className = className;
-        this.addGenerationCode = addGenerationCode;
-    }
-
     public Object getVisualization() {
         return out.content();
+
     }
 
     protected String defineVisSystem(VisItem main, int width, int height) {
         this.visWidth = width;
         this.visHeight = height;
-        this.out = new ScriptWriter();
+        this.out = new ScriptWriter(options.readableJavascript);
         this.chartIndex = 0;
 
         // Write the class definition function (and flag to use strict mode)
-        out.add("function ", className, "(visId) {").ln().indentMore();
+        out.add("function ", options.className, "(visId) {").ln().indentMore();
         out.add("\"use strict\";").comment("Strict Mode");
 
         // Add commonly used definitions
@@ -110,7 +121,7 @@ public class D3Builder extends AbstractBuilder {
         out.add("    transitionTime = 200,").at(39).comment("Transition time for animations");
         out.add("    vis = d3.select('#' + visId).attr('class', 'brunel')").comment("the SVG container");
 
-        return visIdentifier;
+        return options.visIdentifier;
     }
 
     protected String defineChart(double[] location, VisSingle[] elements, Dataset[] elementData) {
@@ -227,7 +238,7 @@ public class D3Builder extends AbstractBuilder {
 
         D3ElementBuilder elementBuilder = new D3ElementBuilder(vis, out, scalesBuilder, positionFields, data);
 
-      // Main method to make a vis
+        // Main method to make a vis
         out.titleComment("Main element build routine");
         out.add("function build(transitionMillis) {").ln().indentMore();
         out.add("transitionMillis = transitionMillis || (data ? transitionTime : 0)")
@@ -263,7 +274,6 @@ public class D3Builder extends AbstractBuilder {
         for (int i = 0; i < chartIndex; i++) out.add("parts[" + i + "].build(20); ");
         out.ln().indentLess().add("}").endStatement().ln();
 
-
         // Return the important items
         out.add("return {").indentMore().ln()
                 .add("dataPreProcess:").at(24).add("function(f) { if (f) pre = f; return pre },").ln()
@@ -279,20 +289,28 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}").endStatement();
 
         // Create the initial raw data table
-        D3DataBuilder.writeRawData(main, out);
+        D3DataBuilder.writeTables(main, out, options);
 
         // Call the function on the data
-        if (addGenerationCode) {
+        if (options.generateBuildCode) {
             out.titleComment("Call Code to Build the system");
-            out.add("var v = new", className, "(" + out.quote(visIdentifier) + ")").endStatement();
+            out.add("var v = new", options.className, "(" + out.quote(options.visIdentifier) + ")").endStatement();
             int length = main.getDataSets().length;
             out.add("v.build(");
-            for (int i=0; i<length; i++) {
-                if (i>0) out.add(", ");
-                out.add(dataName + (i+1));
+            for (int i = 0; i < length; i++) {
+                if (i > 0) out.add(", ");
+                out.add(String.format(options.dataName, i + 1));
             }
             out.add(")").endStatement();
         }
+
+        // Add controls code
+        controls.write(out);
+
+    }
+
+    public Controls getControls() {
+        return controls;
     }
 
     protected void endChart(String currentChartID) {
@@ -386,7 +404,7 @@ public class D3Builder extends AbstractBuilder {
 
     // returns an id that is unique to the chart and the visualization
     private String clipID() {
-        return "clip_" + visIdentifier + "_" + chartIndex;
+        return "clip_" + options.visIdentifier + "_" + chartIndex;
     }
 
     private void addElementExports(VisSingle vis) {
@@ -419,10 +437,6 @@ public class D3Builder extends AbstractBuilder {
     private void writeFieldName(String name, List<Param> fieldNames) {
         if (!fieldNames.isEmpty())
             out.onNewLine().add(name, ":").at(24).add("[").addQuotedCollection(fieldNames).add("],");
-    }
-
-    protected String getVisId() {
-        return this.visIdentifier;
     }
 
 }

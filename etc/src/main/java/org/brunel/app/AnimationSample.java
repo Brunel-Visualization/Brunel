@@ -20,11 +20,12 @@ package org.brunel.app;
 
 import org.brunel.action.Action;
 import org.brunel.build.d3.D3Builder;
+import org.brunel.build.util.BuilderOptions;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.io.CSV;
-import org.brunel.util.WebDisplay;
 import org.brunel.model.VisItem;
+import org.brunel.util.WebDisplay;
 
 import java.awt.*;
 import java.io.File;
@@ -36,7 +37,7 @@ import java.util.Scanner;
 
 public class AnimationSample {
 
-//        public static final String COMMAND = "bar treemap x(origin, year, mpg) color(year) size(weight) sum(weight) bin(year, mpg) label(mpg) tooltip(#all)";
+    //        public static final String COMMAND = "bar treemap x(origin, year, mpg) color(year) size(weight) sum(weight) bin(year, mpg) label(mpg) tooltip(#all)";
 //    public static final String COMMAND = " x(year) y(horsepower) color(#selection)| bar x(cylinders) y(#count) mean(mpg) bin(cylinders)";
 //    public static final String COMMAND = " bar x(origin) y(#count) color(#selection)";
     private static final String COMMAND = " x(year) color(cylinders) y(mpg) sum(mpg) label(mpg) tooltip(#all) bar stack";
@@ -52,9 +53,12 @@ public class AnimationSample {
         Action action = Action.parse(text);
         VisItem item = action.apply(data);
 
-        D3Builder builder = new D3Builder("vis", "table", "Vis", false);
+        BuilderOptions options = new BuilderOptions();
+        options.visIdentifier = "vis";
+        options.className = "Vis";
+        D3Builder builder = D3Builder.make(options);
         builder.build(item, 800, 600);
-        AnimationSample sample = new AnimationSample("Animation Samples", text, builder.getStyleOverrides(), (String) builder.getVisualization());
+        AnimationSample sample = new AnimationSample("Animation Samples", text, builder);
         sample.showInBrowser("index.html");
 
     }
@@ -78,14 +82,18 @@ public class AnimationSample {
     private final File displayBaseDir;
 
     /* Pass in the subdirectory name to util */
-    private AnimationSample(String dirName, String action, String css, String js) {
+    private AnimationSample(String dirName, String action, D3Builder builder) {
         WebDisplay display = new WebDisplay("Animation Sample");
         displayBaseDir = display.makeDir(dirName);
+
+        String css = builder.getStyleOverrides();
+        String js= (String) builder.getVisualization();
+        String imports = builder.makeImports();
 
         StringBuilder html = new StringBuilder();
         html.append("<html><head><meta charset=\"UTF-8\"><title>Animation Sample</title>\n");
         html.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"../out/BrunelBaseStyles.css\">\n");
-        html.append(D3Builder.imports("http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js","../out/BrunelData.js", "../out/BrunelD3.js"));
+        html.append(imports);
         html.append("\n<style>\n").append(css).append("\n</style>\n");
         html.append("</head><body>\n<h1>").append(action).append("</h1>\n");
         html.append("<svg id=\"vis\" width=800 height=600></svg>\n");

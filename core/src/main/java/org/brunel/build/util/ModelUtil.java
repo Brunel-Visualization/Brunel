@@ -18,6 +18,7 @@
 package org.brunel.build.util;
 
 import org.brunel.data.Field;
+import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.style.StyleSheet;
 import org.brunel.model.style.StyleTarget;
@@ -136,6 +137,12 @@ public class ModelUtil {
     private static String getStyle(VisSingle vis, StyleTarget target, String key) {
         String result = vis.styles == null ? null : vis.styles.get(target, key);
         return result == null ? StyleSheet.getBrunelDefault(target, key) : result;
+    }
+
+    public static boolean hasFilters(VisItem target) {
+        if (target.children() == null) return !target.getSingle().fFilter.isEmpty();
+        for (VisItem v : target.children()) if (hasFilters(v)) return true;
+        return false;
     }
 
     // Split a string into the numeric and unit parts

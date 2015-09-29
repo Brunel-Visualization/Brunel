@@ -1,6 +1,8 @@
 package org.brunel.build.controls;
 
+import com.google.gson.Gson;
 import org.brunel.action.Param;
+import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
 
@@ -15,16 +17,61 @@ import java.util.List;
 public class Controls {
 
     public final String visId;
-    public final List<Filter> filters;
+    public final List<FilterControl> filters;
 
     public Controls(String visId) {
         this.visId = visId;
-        this.filters = new ArrayList<Filter>();
+        this.filters = new ArrayList<FilterControl>();
     }
 
     public void buildControls(VisSingle vis, Dataset data) {
         for (Param f : vis.fFilter) {
-            filters.add(Filter.makeForField(data, f.asField(data)));
+            filters.add(FilterControl.makeForField(data, f.asField(data)));
+        }
+    }
+
+    public boolean isNeeded() {
+        return !filters.isEmpty();
+    }
+
+    public void write(ScriptWriter out) {
+        write("controls", "BrunelJQueryControlFactory", out);
+    }
+
+    public void write(String controlId, String uiFactoryClass, ScriptWriter out) {
+        if (filters.isEmpty()) return;
+        out.titleComment("Create and wire controls");
+        out.add("$(function() {").ln().indentMore();
+        createFilters(controlId, uiFactoryClass, out);
+
+        out.indentLess().ln();
+        out.add("})").endStatement();
+
+        out.add("BrunelEventHandlers.make_filter_handler(v)").endStatement();
+    }
+
+    private void createFilters(String controlId, String uiFactoryClass, ScriptWriter out) {
+        Gson gson = new Gson();
+
+        for (FilterControl filter : filters) {
+            String fieldId = filter.id;
+            String label = filter.label;
+            Object[] categories = filter.categories;
+            Double min = filter.min;
+            Double max = filter.max;
+
+            //Range filter
+            if (categories == null) {
+                out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_range_slider(", out.quote(visId), ",",
+                        out.quote(fieldId), ",", out.quote(label), ",", min, ",", max, "))").endStatement();
+            }
+
+            //Category filter
+            else {
+                out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_category_filter(", out.quote(visId), ",",
+                        out.quote(fieldId), ",", out.quote(label), ",", gson.toJson(categories), "))").endStatement();
+            }
+
         }
     }
 }

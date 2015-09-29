@@ -8,7 +8,7 @@ import org.brunel.data.Field;
  *
  * @author drope, gwills
  */
-public class Filter {
+public class FilterControl {
 
     public final String data;
     public final String id;
@@ -17,7 +17,7 @@ public class Filter {
     public final Double min;
     public final Double max;
 
-    private Filter(String data, String id, String label, Object[] categories, Double min, Double max) {
+    private FilterControl(String data, String id, String label, Object[] categories, Double min, Double max) {
         this.data = data;
         this.id = id;
         this.label = label;
@@ -32,12 +32,12 @@ public class Filter {
      * @param fieldID identifier of the field to filter using
      * @return built Filter description
      */
-    public static Filter makeForField(Dataset data, String fieldID) {
+    public static FilterControl makeForField(Dataset data, String fieldID) {
         Field field = data.field(fieldID);
         if (field.preferCategorical())
-            return new Filter(data.name(), fieldID, field.label, field.categories(), null, null);
+            return new FilterControl(data.name(), fieldID, field.label, field.categories(), null, null);
         else
-            return new Filter(data.name(), fieldID, field.label, null, field.min(), field.max());
+            return new FilterControl(data.name(), fieldID, field.label, null, field.min(), field.max());
 
 
     }

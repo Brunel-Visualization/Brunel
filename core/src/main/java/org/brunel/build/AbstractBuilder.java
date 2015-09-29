@@ -19,6 +19,7 @@ package org.brunel.build;
 
 import org.brunel.action.Param;
 import org.brunel.build.controls.Controls;
+import org.brunel.build.util.BuilderOptions;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
@@ -71,12 +72,21 @@ public abstract class AbstractBuilder implements Builder {
             {{0, 0, 100, 50}, {0, 50, 50, 100}, {50, 50, 100, 100}},                                     // Three charts
             {{0, 0, 50, 50}, {0, 50, 50, 100}, {50, 0, 100, 50}, {50, 50, 100, 100}},                    // Four charts
     };
+    protected final BuilderOptions options;
     private String currentVisualizationID;          // ID of the main visualization (e.g. the div's ID)
     private String currentChartID;                  // Identifier for the chart we are building
     private String currentElementID;                // Identifier for the element we are building
     private StyleSheet visStyles;                   // Collection of style overrides for this visualization
-    private Controls controls;                      // Contains the controls for the current chart
-    private Dataset[] datasets;                     // Data sets ued by the VisItem being built
+    protected Controls controls;                      // Contains the controls for the current chart
+    private Dataset[] datasets;                     // Data sets used by the VisItem being built
+
+    public AbstractBuilder(BuilderOptions options) {
+        this.options = options;
+    }
+
+    public final BuilderOptions getOptions() {
+        return options;
+    }
 
     /**
      * This is the entry point into building. When called, it will clear all existing build state (including control
@@ -128,6 +138,8 @@ public abstract class AbstractBuilder implements Builder {
 
     }
 
+    public abstract String makeImports();
+
     private void buildOverlayComposition(VisItem[] items, double[] loc) {
         // Assemble the elements and data
         Dataset[] data = new Dataset[items.length];
@@ -159,7 +171,7 @@ public abstract class AbstractBuilder implements Builder {
             double[] loc;
             if (bounds == null) {
                 // No bounds are given, so use the values from the pattern
-                double[][] layout = squarify(LAYOUTS[Math.min(nUnplacedCharts-1, 3)], width, height);
+                double[][] layout = squarify(LAYOUTS[Math.min(nUnplacedCharts - 1, 3)], width, height);
                 loc = layout[unplacedCount++];
             } else {
                 // Bounds are given so use them
@@ -175,13 +187,6 @@ public abstract class AbstractBuilder implements Builder {
             }
 
         }
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public Controls getControls() {
-        return controls;
     }
 
     /**
@@ -317,7 +322,7 @@ public abstract class AbstractBuilder implements Builder {
     }
 
     private int indexOf(Dataset data, Dataset[] datasets) {
-        for (int i=0; i<datasets.length;i++) if (data == datasets[i]) return i;
+        for (int i = 0; i < datasets.length; i++) if (data == datasets[i]) return i;
         throw new IllegalStateException("Could not find data set in array of datasets");
     }
 
