@@ -1,8 +1,14 @@
 package org.brunel.app;
 
 import org.brunel.action.Action;
+import org.brunel.build.d3.D3Builder;
+import org.brunel.build.util.BuilderOptions;
 import org.brunel.model.VisItem;
-import org.brunel.util.WebDisplay;
+
+import java.awt.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 
 /**
  * A demonstration application that shows hwo to use Brunel rapidly
@@ -16,7 +22,7 @@ public class SampleApp {
      * When run it will build a HTML page with the full Brunel in it, and display it in the default browser
      * @param args specify the command
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
         // Process the commands:
         String command = "bubble size(#count) color(country) label(country, #count) tooltip(brand) list(brand)";
@@ -32,10 +38,38 @@ public class SampleApp {
         Action action = Action.parse(fullCommand);
         VisItem vis = action.apply();
 
-        // Write out the HTML to show the vis item, and then call the system browser to show it
-        WebDisplay display = new WebDisplay("sample-app");
-        display.buildSingle(vis, 800, 600, "index.html", "0.7", "Brunel Sample Application");
-        display.showInBrowser();
+        // Define a builder using online library version 0.7
+        BuilderOptions options = new BuilderOptions();
+        options.version = "0.7";
+        D3Builder builder = D3Builder.make(options);
+
+        // Build the visualization into a 600x600 area
+        builder.build(vis, 600, 600);
+
+        // Write the results out as a HTML page
+        File file = new File("BrunelSample.html");
+        PrintWriter out = new PrintWriter(new FileWriter(file));
+
+        out.println("<HTML><HEAD>");
+        out.println("<title>Brunel SampleApp Output</title>");
+
+        // Add in style sheet definitions
+        out.println(builder.makeStyleSheets());
+        out.println("</HEAD><BODY>");
+        out.println("<svg id=\"visualization\" width=\"600\" height=\"600\"></svg>");
+
+        // Add in the imports needed
+        out.println(builder.makeImports());
+        out.println("<script>");
+
+        // Add in the Javascript generated
+        out.println(builder.getVisualization());
+        out.println("</script>");
+        out.println("</BODY></HTML>");
+
+        // Finish up and show the results
+        out.close();
+        Desktop.getDesktop().browse(file.toURI());
 
     }
 }
