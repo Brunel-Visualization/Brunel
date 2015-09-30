@@ -42,9 +42,9 @@ import java.util.Set;
 
 /**
  * Adds scales and axes; also guesses the right size to leave for axes
- * <p/>
+ *
  * IMPORTANT NOTE:
- * <p/>
+ *
  * The terms 'x' and 'y' both apply to the theoretical location. Whe we transpose a chart we move
  * axes and dimensions around, so we cannot always say 'x' runs horizontally. So in the code below
  * 'x' and 'y' are used only for the untransformed locations. We use left, right, top, bottom, h and v

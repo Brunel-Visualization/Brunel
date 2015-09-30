@@ -18,8 +18,8 @@
 package org.brunel.action;
 
 import org.brunel.data.Dataset;
-import org.brunel.model.VisException;
 import org.brunel.model.VisComposition;
+import org.brunel.model.VisException;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 
@@ -31,7 +31,7 @@ import java.util.List;
  * An Action is an immutable object that contains a sequence of commands that can be used to build a visualization.
  * The usual lifecycle is to util <code>Action.parse(...)</code> to create an Action,
  * and then call <code>Action.apply(data)</code> to make a <code>VisItem</code> from a <code>DataSet</code>.
- * <p/>
+ *
  * An Action has hashcode, equals, and compare all defined and so can be used in collections freely.
  * The <code>toString()</code> version is in the same format as the input pares text, so you can util it as if it
  * were the input.

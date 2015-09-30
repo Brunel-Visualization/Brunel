@@ -42,9 +42,9 @@ import java.util.Map;
 /**
  * The abstract builder does as much work as possible in building the visualizations. A descendant of this class
  * must define the specific methods that will define the main artifacts.
- * <p/>
+ *
  * A rough flow of the build process is as follows:
- * <p/>
+ *
  * <ul>
  * <li> A 'visualization' is created; this may consist of multiple charts each with different parts in it,
  * but the entire system is defined within one area. This is equivalent to being within a single 'div'
@@ -56,7 +56,7 @@ import java.util.Map;
  * <li> build the data for that element
  * <li> call 'createSingle' to build the single visualization (e.g. a bar in combination bar/line chart).
  * </ul>
- * <p/>
+ *
  * A builder may be called multiple times; every call to 'build' will reset the state and start from new
  */
 public abstract class AbstractBuilder implements Builder {
@@ -140,7 +140,6 @@ public abstract class AbstractBuilder implements Builder {
 
     public abstract String makeImports();
 
-
     private void buildOverlayComposition(VisItem[] items, double[] loc) {
         // Assemble the elements and data
         Dataset[] data = new Dataset[items.length];
@@ -190,9 +189,6 @@ public abstract class AbstractBuilder implements Builder {
         }
     }
 
-    /**
-     * @inheritDoc
-     */
     public String getStyleOverrides() {
         return visStyles.toString("#" + currentVisualizationID + ".brunel");
     }

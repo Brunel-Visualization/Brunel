@@ -31,7 +31,7 @@ import java.util.List;
  * They are each initialized using a field, a boolean 'nice' to indicate whether to expand the range to nice numbers,
  * a fractional amount to pad the field's domain by (e.g. 0.02) and a desired number of ticks,
  * as well as other parameters for specific scales.
- * <p/>
+ *
  * When called, the effect is to return a NumericScale that has all properties set to useful values
  */
 public class NumericScale {

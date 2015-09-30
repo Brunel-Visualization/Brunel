@@ -563,7 +563,6 @@ V.auto_Auto.isYearly = function(asNumeric) {
 //   They are each initialized using a field, a boolean 'nice' to indicate whether to expand the range to nice numbers,
 //   a fractional amount to pad the field's domain by (e.g. 0.02) and a desired number of ticks,
 //   as well as other parameters for specific scales.
-//   <p/>
 //   When called, the effect is to return a NumericScale that has all properties set to useful values
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2008,7 +2007,6 @@ V.modify_ConvertSeries.makeIndexing = function(m, reps) {
 //
 //   This transform takes data and removes rows based on filter commands
 //   Commands are one of the following:
-//   <p/>
 //   FIELD is a,b ...                -- one of those values
 //   FIELD not a,b, ...              -- not one of those values
 //   FIELD in a,b                    -- in that range of values (exactly two)
@@ -2136,7 +2134,6 @@ V.modify_Filter.matchAny = function(v, params) {
 //
 //   This transform sorts a dataset into an order determined bya  set of fields.
 //   Each field can be defined as "increasing" or "decreasing" and the order of fields is important!
-//   <p/>
 //   This class may sort categories of data if the data type allows it (i.e. it is categorical, not ordinal)
 //   It will always sort the rows of the data (so a PATH element will use that order, for example)
 //
@@ -2680,14 +2677,12 @@ V.modify_Summarize.prototype.setProperties = function(to, from, summary) {
 //   on the fields as given
 //   The fields are given in the command as semi-colon separated items. Each item has the form a=b
 //   which means the field a will have the transform b applied to it. The transforms are
-//   <p/>
 //   bin  -- with an optional parameter for
 //   each field determining the desired number of bins. For example "salary=bin; age=bin:10" will ask for standard
 //   binning for salary, and about 10 bins for age.
 //   rank -- ranks the data, optional parameter "descending" has the largest as #1
 //   inner/outer - keeps or removes data that lies within the inter-quartile range. An optional integer parameter gives the
 //   percentage of data we would expect to keep or remove if the data were normal (so inner:5% would remove the outer 5%)
-//   <p/>
 //   Note that this transform does not aggregate the data -- it replaces fields with transformed values for each field.
 //   Only inner/outer modify the actual data set values, removing rows
 //

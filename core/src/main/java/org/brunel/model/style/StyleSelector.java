@@ -19,13 +19,13 @@ package org.brunel.model.style;
 
 /**
  * StyleSelector matches against a CSS-like style key. It supports the following CSS syntax.
- * <p/>
+ *
  * *               anything
  * .class          class
  * element         element like text, rect, circle, path
  * e1, e2          element e1 and e2
  * e1 e2           element e1 inside and element e1 [descendent]
- * <p/>
+ *
  * Note that the comma operator is taken care of outside of this class
  */
 public abstract class StyleSelector implements Comparable<StyleSelector> {

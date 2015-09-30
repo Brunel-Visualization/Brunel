@@ -166,9 +166,9 @@ public class Dataset extends Informative implements Serializable {
 
     /**
      * Create a new data set based on this one, with some rows filtered out
-     * <p/>
+     *
      * Commands are one of the following:
-     * <p/>
+     *
      * FIELD is a,b ...                -- one of those values                      [type 1]
      * FIELD not a,b, ...              -- not one of those values                  [type 2]
      * FIELD in a,b                    -- in that range of values (exactly two)    [type 3]
@@ -226,7 +226,7 @@ public class Dataset extends Informative implements Serializable {
 
     /**
      * Create a new data set based on this one, but applying a sort
-     * <p/>
+     *
      * The sort is based on the fields indicated, and is applied both to the rows and to the categories
      * of each categorical fields
      *
@@ -239,7 +239,7 @@ public class Dataset extends Informative implements Serializable {
 
     /**
      * Returns a new data set which applies stacking to the data.
-     * <p/>
+     *
      * Stacking is a complex operation which creates two new fields for the Y field, these are
      * lower and upper values of the stacking. These are created by running through the data
      * (sorting by x and aesthetics) so that all the Y values at an x location are 'stacked'.
@@ -261,12 +261,12 @@ public class Dataset extends Informative implements Serializable {
 
     /**
      * Create a new data set based on this one by summarizing (aggregating) the data
-     * <p/>
-     * Each command generates a new field, using onr of the following syntax statements:<br/>
-     * OUTPUT_FIELD = INPUT_FIELD                   -- define a field as group (measure)<br/>
-     * OUTPUT_FIELD = INPUT_FIELD : base            -- define a field as group (measure) and use as base for percent<br/>
-     * OUTPUT_FIELD = INPUT_FIELD : ????            -- define a field as a calculated value (measure)<br/>
-     * <p/>
+     *
+     * Each command generates a new field, using onr of the following syntax statements:
+     * OUTPUT_FIELD = INPUT_FIELD                   -- define a field as group (measure)
+     * OUTPUT_FIELD = INPUT_FIELD : base            -- define a field as group (measure) and use as base for percent
+     * OUTPUT_FIELD = INPUT_FIELD : ????            -- define a field as a calculated value (measure)
+     *
      * The calculation transforms allowed include the following: count, sum, mean, min, max, median, mode, q1, q3, iqr,
      * valid, list, range
      *
@@ -297,7 +297,7 @@ public class Dataset extends Informative implements Serializable {
         Dataset d = (Dataset) Serialize.deserialize(store.toByteArray());
         fields = d.fields;
         fieldByName = d.fieldByName;
-        info = new HashMap<String, Object>(); 
+        info = new HashMap<String, Object>();
         copyPropertiesFrom(d);
     }
 

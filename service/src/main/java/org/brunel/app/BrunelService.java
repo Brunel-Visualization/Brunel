@@ -47,11 +47,11 @@ import java.net.URI;
  * Sample JAX-RS web application that produces Brunel visualizations.  Currently only d3 output is supported.
  * Service methods are provided to create the raw Brunel content (JS/CSS) or a full HTML page.  An additional service
  * method can generate Brunel that shows a given visualization on new data.
- * <p/>
+ *
  * REST pattern for raw content is:
- * <p/>
- * POST /brunel/interpret/d3?src={brunel}&width=..&height=..
- * <p/>
+ *
+ * POST /brunel/interpret/d3?src={brunel}&amp;width=..&amp;height=..
+ *
  * Payload is expected to be CSV as TEXT/PLAIN.
  */
 

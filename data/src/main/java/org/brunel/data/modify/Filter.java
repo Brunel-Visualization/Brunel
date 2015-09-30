@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * This transform takes data and removes rows based on filter commands
  * Commands are one of the following:
- * <p/>
+ *
  * FIELD is a,b ...                -- one of those values
  * FIELD not a,b, ...              -- not one of those values
  * FIELD in a,b                    -- in that range of values (exactly two)

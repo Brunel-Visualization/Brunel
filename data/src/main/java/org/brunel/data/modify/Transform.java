@@ -34,14 +34,14 @@ import java.util.Map;
  * on the fields as given
  * The fields are given in the command as semi-colon separated items. Each item has the form a=b
  * which means the field a will have the transform b applied to it. The transforms are
- * <p/>
+ *
  * bin  -- with an optional parameter for
  * each field determining the desired number of bins. For example "salary=bin; age=bin:10" will ask for standard
  * binning for salary, and about 10 bins for age.
  * rank -- ranks the data, optional parameter "descending" has the largest as #1
  * inner/outer - keeps or removes data that lies within the inter-quartile range. An optional integer parameter gives the
  * percentage of data we would expect to keep or remove if the data were normal (so inner:5% would remove the outer 5%)
- * <p/>
+ *
  * Note that this transform does not aggregate the data -- it replaces fields with transformed values for each field.
  * Only inner/outer modify the actual data set values, removing rows
  */

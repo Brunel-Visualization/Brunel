@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * This transform sorts a dataset into an order determined bya  set of fields.
  * Each field can be defined as "increasing" or "decreasing" and the order of fields is important!
- * <p/>
+ *
  * This class may sort categories of data if the data type allows it (i.e. it is categorical, not ordinal)
  * It will always sort the rows of the data (so a PATH element will use that order, for example)
  */

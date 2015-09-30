@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * Generates a set of the best alternate ActionParameters for a given Action based on scores.  Non field Actions and synthetic fields are preserved as is from
  * the original.  Dual encoded field actions will retain an index to the first use of the field in the original action.
- * <p/>
+ *
  * Scoring is currently done by comparing the field names as well as the categorical preference and the number of unique values.  Continous fields are
  * matched using closeness of their distribution properties (variance, skewness and kurtosis).
  *
@@ -114,7 +114,7 @@ class BestActionParameterSet {
 
         return false;
     }
-    
+
     //Non field actions left in place.
     private boolean addNonFieldChoice(Param parm) {
         if (!parm.isField()) {
