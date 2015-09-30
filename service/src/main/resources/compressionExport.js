@@ -30,10 +30,12 @@ function exportPrototype(parent, items) {
 }
 
 exportStatic(window, {'BrunelData': BrunelData, 'BrunelD3': BrunelD3});
-exportStatic(BrunelData, {'Data': BrunelData.Data, 'Dataset': BrunelData.Dataset, 'Hierarchical': BrunelData.Hierarchical});
+exportStatic(BrunelData, {'Data': BrunelData.Data, 'Dataset': BrunelData.Dataset, 'Hierarchical': BrunelData.diagram_Hierarchical});
 exportStatic(BrunelData.Dataset, {'makeFromRows': BrunelData.Dataset.makeFromRows});
-exportStatic(BrunelData.Hierarchical, {'compare': BrunelData.Hierarchical.compare,
-    'makeFromRows': BrunelData.Hierarchical.makeFromRows});
+exportStatic(BrunelData.diagram_Hierarchical, {
+    'compare': BrunelData.diagram_Hierarchical.compare,
+    'makeFromRows': BrunelData.diagram_Hierarchical.makeFromRows
+    });
 
 exportPrototype(BrunelData.Dataset, {
     // Information on the data set

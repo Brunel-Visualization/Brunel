@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Build Closure Compiler Externs for D3 & SVG</title>
+
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
+
+</head>
+<body>
+
+<script>
+
+    var TABS = ["", "  ", "    ", "      ", "        "];
+
+    function w(s) {
+        document.write(s);
+    }
+
+    function wln(s) {
+        document.writeln(s || "");
+    }
+
+    function writeContent(item, name, depth, functions) {
+        var i, s, t = typeof(item), first = true;
+        if (t == 'function') {
+            // Simple function
+            w("function() {}");
+            functions[name] = item;
+        } else if (item && t == 'object') {
+            // Object we need to follow down
+            wln("{");
+            for (i in item) {
+                if (!first) wln(",");
+                first = false;
+                w(TABS[depth]);
+                w("'" + i + "': ");
+                writeContent(item[i], name + "." + i, depth + 1, functions);
+            }
+            w(TABS[depth - 1]);
+            w("}");
+        } else {
+            w("{}");
+        }
+    }
+
+    function writePrototype(name, item) {
+        var i, n, items = [], first = true;
+        var propertyNames = Object.getOwnPropertyNames(item);
+        if (propertyNames.length < 2) return;
+        wln(name + ".prototype = {");
+        for (i in propertyNames) {
+            n = propertyNames[i];
+            if (n == 'constructor') continue;
+            if (!first) wln(",");
+            first = false;
+            w("  '" + n + "' : function() {}");
+        }
+        wln();
+        wln("};");
+    }
+
+    function buildExternsFor(item, name) {
+        var i, functions = {};
+        w("var " + name + " = ");
+        writeContent(item, name, 1, functions);
+        wln();
+
+        for (i in functions) {
+            var p = functions[i].prototype;
+            wln(i + ".prototype = function() {};");
+            writePrototype(name, p);
+        }
+
+    }
+
+    function buildExternsForPrototypeOwner(item, name) {
+        wln("var " + name + " =  function() {}");
+        writePrototype(name, item.prototype);
+    }
+
+    var svgElement = document.getElementById("rect1");
+
+    w("<p><pre>");
+
+    wln("// D3 ////////////////////////////////////////////////");
+    wln();
+    buildExternsFor(d3, 'd3');
+    wln();
+    wln();
+
+    wln("// SVG ///////////////////////////////////////////////");
+    wln();
+    buildExternsForPrototypeOwner(SVGElementInstance, 'SVGElementInstance');
+    buildExternsForPrototypeOwner(SVGColor, 'SVGColor');
+    buildExternsForPrototypeOwner(SVGElement, 'SVGElement');
+    buildExternsForPrototypeOwner(SVGElementInstanceList, 'SVGElementInstanceList');
+    buildExternsForPrototypeOwner(SVGFontElement, 'SVGFontElement');
+    buildExternsForPrototypeOwner(SVGLength, 'SVGLength');
+    buildExternsForPrototypeOwner(SVGMatrix, 'SVGMatrix');
+
+    w("</pre></p>");
+
+
+</script>
+
+</body>
+</html>

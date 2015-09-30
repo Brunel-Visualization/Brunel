@@ -135,7 +135,7 @@ class VisualTests {
         int HEIGHT = 350;
         int WIDTH = 500;
         try {
-            display.buildSingle(a.apply(base), WIDTH, HEIGHT, id + ".html", makeTitle(name, a, result), makeComments(comments, result));
+            display.buildSingle(a.apply(base), WIDTH, HEIGHT, id + ".html", true, makeTitle(name, a, result), makeComments(comments, result));
         } catch (Exception e) {
             System.err.println("Error running test: " + test);
             e.printStackTrace();

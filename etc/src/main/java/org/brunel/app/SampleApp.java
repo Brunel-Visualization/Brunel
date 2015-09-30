@@ -34,7 +34,7 @@ public class SampleApp {
 
         // Write out the HTML to show the vis item, and then call the system browser to show it
         WebDisplay display = new WebDisplay("sample-app");
-        display.buildSingle(vis, 800, 600, "index.html", "Brunel Sample Application");
+        display.buildSingle(vis, 800, 600, "index.html", false, "Brunel Sample Application");
         display.showInBrowser();
 
     }

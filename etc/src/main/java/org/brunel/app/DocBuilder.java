@@ -17,19 +17,19 @@
 
 package org.brunel.app;
 
-import java.awt.Dimension;
+import org.brunel.action.Action;
+import org.brunel.model.VisItem;
+import org.brunel.util.WebDisplay;
+
+import java.awt.*;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-import org.brunel.action.Action;
-import org.brunel.model.VisItem;
-import org.brunel.util.WebDisplay;
-
 public abstract class DocBuilder {
-	
+
     protected final WebDisplay display = new WebDisplay("Full Tests");
     protected final StringBuilder out = new StringBuilder();
 
@@ -90,7 +90,7 @@ public abstract class DocBuilder {
         try {
             Action a = Action.parse(brunel);
             VisItem item = a.apply();                       // data description should be included
-            display.buildOneOfMultiple(item, "all", id, new Dimension(WIDTH, HEIGHT));
+            display.buildOneOfMultiple(item, "all", id, new Dimension(WIDTH, HEIGHT), false);
         } catch (Exception e) {
             System.err.println("Error running gallery item: " + tags);
             e.printStackTrace();
@@ -105,7 +105,7 @@ public abstract class DocBuilder {
     private String encode(String title) throws UnsupportedEncodingException {
         return URLEncoder.encode(title, "utf-8");
     }
-    
+
     abstract protected String format(String itemFormat, String target, String description, String image, String title, String brunel);
 
 

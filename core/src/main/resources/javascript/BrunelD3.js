@@ -346,9 +346,7 @@ var BrunelD3 = (function () {
     // Calls the function when the target is ready
     function callWhenReady(func, target) {
         if (target.__transition__)
-            setTimeout(function () {
-                callWhenReady(func, target), 100
-            });
+            setTimeout(function () {callWhenReady(func, target)}, 100);
         else
             func.call();
     }
