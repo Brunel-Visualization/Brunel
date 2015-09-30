@@ -24,7 +24,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.InputStream;
 
-class Common {
+public class Common {
 
     /* Font */
     public static final Font MEDIUM = new Font("Inconsolata, Arial", Font.PLAIN, 12);
@@ -68,5 +68,16 @@ class Common {
         } catch (Exception ex) {
             throw new RuntimeException("Error reading resource: " + name, ex);
         }
+    }
+
+    /**
+     * Gets a version defined in the arguments
+     */
+    public static String getVersion(String[] args) {
+        for (int i = 0; i < args.length - 1; i++) {
+            if (args[i].equals("-v") || args[i].equals("-version"))
+                return args[i + 1];
+        }
+        return null;
     }
 }

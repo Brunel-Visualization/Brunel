@@ -18,6 +18,7 @@
 package org.brunel.app;
 
 import org.brunel.action.Action;
+import org.brunel.app.brunel.Common;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
@@ -41,8 +42,10 @@ class VisualTests {
     private final Dataset baseball, cpi, whiskey, simple;             // Data sets to use
     private final Library library;                          // Library we build
     private final WebDisplay display;
+    private final String version;
 
-    private VisualTests() {
+    private VisualTests(String version) {
+        this.version = version;
         baseball = serializeCheck(Dataset.make(readResourceAsCSV("baseball2004.csv")));
         cpi = serializeCheck(Dataset.make(readResourceAsCSV("UK_CPI.csv")));
         whiskey = serializeCheck(Dataset.make(readResourceAsCSV("whiskey.csv")));
@@ -135,7 +138,7 @@ class VisualTests {
         int HEIGHT = 350;
         int WIDTH = 500;
         try {
-            display.buildSingle(a.apply(base), WIDTH, HEIGHT, id + ".html", true, makeTitle(name, a, result), makeComments(comments, result));
+            display.buildSingle(a.apply(base), WIDTH, HEIGHT, id + ".html", version, makeTitle(name, a, result), makeComments(comments, result));
         } catch (Exception e) {
             System.err.println("Error running test: " + test);
             e.printStackTrace();
@@ -185,7 +188,7 @@ class VisualTests {
     }
 
     public static void main(String[] args) throws Exception {
-        VisualTests tests = new VisualTests();
+        VisualTests tests = new VisualTests(Common.getVersion(args));
         tests.run();
     }
 

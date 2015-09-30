@@ -25,7 +25,7 @@ public class SampleApp {
         String source = "http://brunel.mybluemix.net/sample_data/whiskey.csv";
         if (args.length > 1) source = args[1];
 
-        // Assembe the two parts into one complete brunel command, with data and visualziation actions
+        // Assemble the two parts into one complete brunel command, with data and visualziation actions
         String fullCommand = "data('" + source + "') " + command;
 
         // Build the action and apply it to create the VisItem
@@ -34,7 +34,7 @@ public class SampleApp {
 
         // Write out the HTML to show the vis item, and then call the system browser to show it
         WebDisplay display = new WebDisplay("sample-app");
-        display.buildSingle(vis, 800, 600, "index.html", false, "Brunel Sample Application");
+        display.buildSingle(vis, 800, 600, "index.html", "0.7", "Brunel Sample Application");
         display.showInBrowser();
 
     }

@@ -41,26 +41,30 @@ import java.util.List;
 @SuppressWarnings("serial")
 public class BrunelPad extends JFrame implements AppEventListener, SourceTransfer.Droppable {
 
+    /* use '-v version' to use a minified online library version */
     public static void main(String[] args) {
+        String definedVersion = Common.getVersion(args);
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (final Exception ignored) {
             // I guess we won't have anything nice
         }
 
-        new BrunelPad().start();
+        new BrunelPad(definedVersion).start();
     }
 
     private final Settings settings;
     private final ActionEditorPane actionEditor;
     private final SourcePanel sourcePanel;
     private final List<String> history = new ArrayList<String>();
+    private final String version;
     private Dataset base;
     private org.brunel.action.Action action;
     private org.brunel.action.Action transitory;
 
-    private BrunelPad() {
+    private BrunelPad(String version) {
         super("BrunelPad");
+        this.version = version;
         settings = new Settings("BrunelPad");
         settings.persistWindowLocation(this, "main", 50, 50, 800, 800);
         setTitle(null);
@@ -262,7 +266,7 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
             Dimension size = new Dimension(width, (int) (width / 1.618));
 
             WebDisplay display = new WebDisplay("BrunelPad");
-            display.buildSingle(item, size.width, size.height, "index.html", true,  "<h2><center>" + a.toString() + "</center></h2>");
+            display.buildSingle(item, size.width, size.height, "index.html", version,  "<h2><center>" + a.toString() + "</center></h2>");
             display.showInBrowser();
 
             if (transitory == null) addToHistory(descr);

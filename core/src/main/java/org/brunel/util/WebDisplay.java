@@ -143,7 +143,7 @@ public class WebDisplay {
         new File(out, "/sumoselect").mkdirs();
     }
 
-    public void buildOneOfMultiple(VisItem target, String groupName, String name, Dimension size, boolean localFiles) {
+    public void buildOneOfMultiple(VisItem target, String groupName, String name, Dimension size, String version) {
         if (count == 0) writeToFile("index.html", NAV_BASE.replace("$TITLE$", displayBaseDir.getName()));
         String file = count + ".html";
 
@@ -153,16 +153,20 @@ public class WebDisplay {
 
         try {
             count++;
-            buildSingle(target, size.width, size.height, file, localFiles, name);
+            buildSingle(target, size.width, size.height, file, version, name);
         } catch (Exception ex) {
             ex.printStackTrace();
             buildError(file);
         }
     }
 
-    public void buildSingle(VisItem target, int width, int height, String file, boolean localFiles, String... titles) {
+    public void buildSingle(VisItem target, int width, int height, String file, String remoteVersion, String... titles) {
         BuilderOptions options = new BuilderOptions();
-        if (localFiles) options.localResources = "../out";
+        if (remoteVersion == null) {
+            options.localResources = "../out";
+        } else {
+            options.version = remoteVersion;
+        }
         D3Builder builder = D3Builder.make(options);
         builder.build(target, width, height);
         String html = writeHtml(builder, width, height, headers, titles);
