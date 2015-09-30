@@ -90,7 +90,7 @@ public abstract class DocBuilder {
         try {
             Action a = Action.parse(brunel);
             VisItem item = a.apply();                       // data description should be included
-            display.buildOneOfMultiple(item, "all", id, new Dimension(WIDTH, HEIGHT), false);
+            display.buildOneOfMultiple(item, "all", id, new Dimension(WIDTH, HEIGHT), true);
         } catch (Exception e) {
             System.err.println("Error running gallery item: " + tags);
             e.printStackTrace();
