@@ -1,7 +1,16 @@
 # Brunel Visualization [![Build Status](https://travis-ci.org/Brunel-Visualization/Brunel.svg?branch=master)](https://travis-ci.org/Brunel-Visualization/Brunel)
-
 ![Brunel Visualization](https://raw.github.com/Brunel-Visualization/Brunel/master/brunel.png)
 
+## What is Brunel?
+
+Brunel defines a highly succinct and novel language that defines interactive data visualizations
+based on tabular data.  The language is well suited for both data scientists and more aggressive business users.
+The system interprets the language and produces visualizations using the user's choice of existing lower-level
+visualization technologies typically used by application engineers such as RAVE or D3.
+It can operate stand-alone and integrated into Jupyter (iPython) notebooks with further integrations as well as other low-level
+rendering support depending on the desires of the community.
+
+Articles and notes on Brunel can be found in the [brunelvis.org blog](http://brunelvis.org).
 
 ## Zero to Visualization in Sixty Seconds
 
@@ -11,6 +20,42 @@
 * Use the interactive [language tutorial](http://brunel.mybluemix.net/docs)
 * Download the [latest build](https://github.com/Brunel-Visualization/Brunel/releases)
 * Sample ["Hello World"](https://github.com/Brunel-Visualization/Brunel/blob/master/etc/src/main/java/org/brunel/app/SampleApp.java) App
+* Read how to [Build and deploy the code](https://github.com/Brunel-Visualization/Brunel/wiki/Project-Structure-and-Builds)
+
+## Core Features of Brunel
+
+* Automatically chooses good transforms, mappings, and formatting for your data
+* Allows multiple combinations of visualization “elements” — overlay points, bars, lines, paths, areas and text freely and in a coordinated space.
+* Handles building structures for D3 diagram like hierarchies, treemaps and chords
+* Handles data ranges, binning and stacking automatically
+* Automatically wraps and fits text, even when animating
+* Intelligently works out a good layout for the chart aspects, taking into account the data (so you don’t have to guess axis sizes, for example)
+* Provides flexible interactivity including tooltips, pan/zoom and interactive brushing
+* Coordinates multiple visualizations in the same space, including interactive brushing
+* Adds features such as Word clouds and paths with smoothly varying size
+* Data engine is in the Javascript code, so high-speed interactivity works with binning, aggregation and filtering
+
+## How to use Brunel
+
+### Online; no coding required
+The simplest way to get started to go to the [online builder application](http://brunel.mybluemix.net/gallery_app/renderer?title=Bubble+chart+of+2000+games&brunel_src=data%28%27http%3A%2F%2Fwillsfamily.org%2Ffiles%2Fvis%2Fdata%2FBGG+Top+2000+Games.csv%27%29+bubble+color%28rating%29+size%28voters%29+sort%28rating%29+label%28title%29+tooltip%28title%2C+%23all%29+legends%28none%29+style%28%27*+%7Bfont-size%3A+7pt%7D%27%29&description=A+simple+bubble+chart+showing+the+top+ranked+games.+The+color+shows+the+BGG+rating+and+the+size+of+each+bubble+represents+the+number+of+voters+for+that+game.+The+data+is+already+sorted+by+rank%2C+so+no+sort+was+needed.+Data+is+from+March+2015),
+drop in your own data or reference your data via a URL and build a custom visualization. Once you have a chart you want to share, you can:
+* Just take a screenshot of the page or download the SVG to get a cool picture
+* Copy the Javascript directly into wherever you want to be completely independent of the Brunel service -- this is a
+ great way to rapidly generate D3 Javascript ready for you to modify and deploy.
+* Take the HTML iframe snippet and embed it in a HTML page to have a live call to the Brunel Service
+
+If you are writing an application, you can use the web service to generate Javascript for you on the fly, just as the
+iframe snippet does -- copy that format and use the call to the Brunel service from your application.
+
+### Using the code
+If you want to use Brunel from Java, download the [latest build](https://github.com/Brunel-Visualization/Brunel/releases)
+and get started! You can also set up your own web server, or add Brunel to an existing one. More details can be found
+[here](https://github.com/Brunel-Visualization/Brunel/wiki/Project-Structure-and-Builds).
+
+Of course, the purpose of github is for you to grab and modify the code easily -- do that anyway you want!
+
+If you do something cool and fun, consider contributing it back!
 
 ## License
 
@@ -24,70 +69,3 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-## Details
-
-The Brunel Visualization project defines a highly succinct and novel language that defines interactive data visualizations based on tabular data.  The language is well suited for both data scientists and more aggressive business users.  The system interprets the language and produces visualizations using the user's choice of existing lower-level visualization technologies typically used by application engineers such as RAVE or D3 .  It can operate stand-alone and integrated into iPython notebooks with further integrations as well as other low-level rendering support depending on the desires of the community.
-
-For Jupyter notebook integrations, Brunel Visualization supplies a REST API interprets the Brunel Visualization language and generates the required Javascript to display the visualization in a web browser.  Any app server that supports JAX-RS should work.  Simply deploy the brunel `.war` file.  Both  [Apache TomEE w/JAX-RS](http://tomee.apache.org/apache-tomee.html) and [IBM Liberty](https://developer.ibm.com/wasdev/downloads/) are known to work.  Instructions for setting up Brunel Visualization using TomEE are below.  We are working on improving and generalizing this.
-
-For direct Java integrations, see:  `D3Builder` for creating D3 output, `ControlWriter` for adding interactive controls and `WebDisplay` as an example using these.  `BrunelService` also contains a usage example.
-
-## Sub-Projects and Folders
-* `core` Primary support for Brunel Visualization
-* `data` The Brunel Visualization data processing engine
-* `etc`  Examples and supporting utilities
-* `lib`  Dependent .jars
-* `service`  A basic web service to provide Brunel Visualization output
-* `python`  Integration of Brunel Visualization for Jupyter (IPython)
-* `R` Integration of Brunel Visualization for Jupyter (R)
-* `gallery` Source code for the Brunel Gallery web application
-
-## Builds
-
-
-### Build using Gradle
-
-#### Dependencies
-* Install [Apache TomEE w/JAX-RS](http://tomee.apache.org/apache-tomee.html)
-* Install [Gradle](https://gradle.org/).
-* Install Python 3 and also install `nose` using `pip install nose` (used for unit tests during build)
-
-#### Set local environment variables:
-
-    BRUNEL_SERVER=http://localhost:8080/brunel-service
-    TOMCAT_HOME=[root dir of TomEE]
-
-#### For a complete build:
-
-```gradle build```
-
-This will build all Java (including the '.war' file), run all tests, create Javadocs, collect all required Javascript and place all of this into `/brunel/out`
-
-Note: `gradle assemble` can be used to produce only the Java `.jar` files and likely does not require TomEE or Python to be installed.  The resulting .jars will appear in the `/build` folder for each Java project.
-
-#### To start the Brunel server
-
-Gradle can be used to deploy Brunel to TomEE and start the web server:
-
-```gradle cargoRunLocal```
-
-To confirm it is working, try calling the service:
-
-    http://localhost:8080/brunel-service/brunel/interpret/d3?brunel_src=data('http%3A%2F%2Fbrunel.mybluemix.net%2Fsample_data%2FBGG%2520Top%25202000%2520Games.csv')%20chord%20x(categories)%20y(playerage)%20color(playerage)%20size(%23count)%20tooltip(%23all)&width=575&height=575
-
-#### Next:
-
-* Explore the docs to learn more
-* Run `VisualTests` located in `/etc` to view a few Brunel syntax test examples
-* See the `/python` and `/R` folders for instructions on how to use Brunel with Jupyter (IPython)
-* For Java integrations, explore the javadocs generated by the Gradle build in `/out`
-
-#### Details regarding JS/CSS files and locations:
-
-Brunel uses a mix of static, translated and generated Javascript.
-
-* Non-translated JS/CSS for Brunel is in `/core`.  These are expected to be edited by developers.
-* The translated `BrunelData.js` is created during the build of the `data` project.  Do not edit this file.
-* `VisualTests.java` (in `/etc`) will copy the JS/CSS upon execution so they are in the expected locations
-* Builds for `/service` will copy the JS/CSS in the correct locations for the .war file.  Additionally, the task `copyWebFiles` copies the JS/CSS in the expected place for execution directly from the src.
-* Builds for `/python`, will copy the JS/CSS into a folder that also contains JS that is specific for the Jupyter integration
