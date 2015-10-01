@@ -281,7 +281,7 @@ class D3ScaleBuilder {
     public void writeLegends(VisSingle vis) {
         if (vis.fColor.isEmpty() || colorLegendField == null) return;
         if (!vis.fColor.get(0).asField().equals(colorLegendField.name)) return;
-        String legendTicks;
+        String legendTicks, legendLabels = null;
         if (colorLegendField.preferCategorical()) {
             // Categorical data can just grab it from the domain
             legendTicks = "scale_color.domain()";
@@ -301,13 +301,30 @@ class D3ScaleBuilder {
                 divisions[divisions.length - 1 - i] = divisions[i];
                 divisions[i] = t;
             }
-            legendTicks = "[" + Data.join(divisions) + "]";
+
+            if (colorLegendField.isDate()) {
+                // Convert to dates
+                DateFormat dateFormat = (DateFormat) colorLegendField.property("dateFormat");
+                D3Util.DateBuilder dateBuilder = new D3Util.DateBuilder();
+                String[] divs = new String[divisions.length];
+                String[] labels = new String[divisions.length];
+                for (int i = 0; i < divs.length; i++) {
+                    divs[i] = dateBuilder.make(Data.asDate(divisions[i]), dateFormat, true);
+                    labels[i] = "'" + colorLegendField.format(divisions[i]) + "'";
+                }
+                legendTicks = "[" + Data.join(divs) + "]";
+                legendLabels = "[" + Data.join(labels) + "]";
+            } else {
+                legendTicks = "[" + Data.join(divisions) + "]";
+            }
         }
 
         String title = colorLegendField.label;
         if (title == null) title = colorLegendField.name;
 
-        out.add("BrunelD3.addLegend(legends, " + out.quote(title) + ", scale_color, " + legendTicks + ")").endStatement();
+        out.add("BrunelD3.addLegend(legends, " + out.quote(title) + ", scale_color, " + legendTicks);
+        if (legendLabels != null) out.add(", ").add(legendLabels);
+        out.add(")").endStatement();
     }
 
     private void addColorScale(Param p, VisSingle vis) {
@@ -506,7 +523,7 @@ class D3ScaleBuilder {
 
     private int legendWidth() {
         if (colorLegendField == null) return 0;
-        AxisDetails legendAxis = new AxisDetails("color", new Field[] {colorLegendField}, colorLegendField.preferCategorical());
+        AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical());
         int spaceNeededForTicks = 32 + legendAxis.maxCategoryWidth();
         int spaceNeededForTitle = colorLegendField.label.length() * 7;                // Assume 7 pixels per character
         return 6 + Math.max(spaceNeededForTicks, spaceNeededForTitle);                // Add some spacing

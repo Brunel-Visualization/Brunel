@@ -28,7 +28,6 @@ import java.util.Date;
  */
 public class Auto {
     private static final double FRACTION_TO_CONVERT = 0.5;
-    private static final int[] SKIPS = new int[]{7, 47, 283, 2053, 10007, 100000, 10000000};
 
     /**
      * Create information to build a good scale.

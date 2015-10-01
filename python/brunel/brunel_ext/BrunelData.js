@@ -453,7 +453,6 @@ var V = {
 V.auto_Auto = function() {};
 
 V.auto_Auto.FRACTION_TO_CONVERT = 0.5;
-V.auto_Auto.SKIPS = [7, 47, 283, 2053, 10007, 100000, 10000000];
 
 V.auto_Auto.makeNumericScale = function(f, nice, padFraction, includeZeroTolerance, desiredTickCount, forBinning) {
     var p, scaling;
@@ -864,6 +863,7 @@ V.Data.copyBaseProperties = function(target, source) {
     target.set("numeric", source.property("numeric"));
     target.set("binned", source.property("binned"));
     target.set("summary", source.property("summary"));
+    target.set("transform", source.property("transform"));
     if (source.isDate()) {
         target.set("date", true);
         target.set("dateUnit", source.property("dateUnit"));
@@ -2774,6 +2774,7 @@ V.modify_Transform.binNumeric = function(f, desiredBinCount) {
     if (f.isDate()) result.set("date", true);
     result.set("numeric", true);
     result.set("categories", ranges);
+    result.set("transform", f.property("transform"));
     return result;
 };
 
