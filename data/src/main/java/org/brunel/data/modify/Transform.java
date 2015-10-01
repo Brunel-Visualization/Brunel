@@ -145,6 +145,7 @@ public class Transform extends DataOperation {
             result.set("date", true);       // We do not simply use the date format and unit -- different now!
         result.set("numeric", true);        // But it IS numeric!
         result.set("categories", ranges);   // Include all bins in the categories, not just those that exist
+        result.set("transform", f.property("transform"));   // Include all bins in the categories, not just those that exist
         return result;
     }
 

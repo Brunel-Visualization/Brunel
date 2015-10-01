@@ -310,6 +310,7 @@ public class Data {
         target.set("numeric", source.property("numeric"));
         target.set("binned", source.property("binned"));
         target.set("summary", source.property("summary"));
+        target.set("transform", source.property("transform"));
         if (source.isDate()) {
             target.set("date", true);
             target.set("dateUnit", source.property("dateUnit"));
