@@ -12,6 +12,18 @@
 * Download the [latest build](https://github.com/Brunel-Visualization/Brunel/releases)
 * Sample ["Hello World"](https://github.com/Brunel-Visualization/Brunel/blob/master/etc/src/main/java/org/brunel/app/SampleApp.java) App
 
+## License
+
+Brunel is licensed under the Apache License, Version 2.0 (the "License")
+You may obtain a copy of the License at
+[http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
 ## Details
 
 The Brunel Visualization project defines a highly succinct and novel language that defines interactive data visualizations based on tabular data.  The language is well suited for both data scientists and more aggressive business users.  The system interprets the language and produces visualizations using the user's choice of existing lower-level visualization technologies typically used by application engineers such as RAVE or D3 .  It can operate stand-alone and integrated into iPython notebooks with further integrations as well as other low-level rendering support depending on the desires of the community.
@@ -31,6 +43,7 @@ For direct Java integrations, see:  `D3Builder` for creating D3 output, `Control
 * `gallery` Source code for the Brunel Gallery web application
 
 ## Builds
+
 
 ### Build using Gradle
 
