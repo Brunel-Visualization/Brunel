@@ -82,7 +82,7 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - baseball  / x(Weight) y(Height) + line x(Weight) y(Height) fit(Height) | x(Weight) y(Height) + line x(Weight) y(Height) smooth(Height) | x(Weight) y(Height) + line x(Weight) y(Height) smooth(Height:10) | x(Weight) y(Height) + line x(Weight) y(Height) smooth(Height:200) :: pass
 
 - cpi       / x(food) y(housing) color(DATE) + line  x(food) y(housing) fit(housing) :: pass
-
+- whiskey   / bubble color(#count) size(#count) sort(#count) label(brand:1) | bubble color(#count) size(#count) sort(#count:ascending) label(brand:1) :: pass :: Two different sort orders
 
 #### Note
 

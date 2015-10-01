@@ -37,7 +37,8 @@ public class Hierarchical {
     }
 
     public static int compare(Node a, Node b) {
-        return Data.compare(a.key, b.key);
+        int d = a.row - b.row;
+        return d != 0 ? d : Data.compare(a.key, b.key);
     }
 
     public final Node root;

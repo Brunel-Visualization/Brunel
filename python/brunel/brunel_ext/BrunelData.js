@@ -1180,7 +1180,8 @@ V.diagram_Hierarchical.makeByNestingFields = function(data, sizeField) {
 };
 
 V.diagram_Hierarchical.compare = function(a, b) {
-    return V.Data.compare(a.key, b.key);
+    var d = a.row - b.row;
+    return d != 0 ? d : V.Data.compare(a.key, b.key);
 };
 
 V.diagram_Hierarchical.prototype.makeInternalNode = function(label) {
