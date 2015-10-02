@@ -1680,9 +1680,12 @@ V.io_CSV.makeFields = function(data) {
 };
 
 V.io_CSV.identifier = function(text) {
-    var c, d, i;
-    var result = "";
-    var last = "X";
+    var c, d, i, last, result;
+    var parenthesis = text.indexOf('(');
+    if (parenthesis > 0)
+        text = text.substring(0, parenthesis).trim();
+    result = "";
+    last = "X";
     for (i = 0; i < $.len(text); i++){
         c = text.substring(i, i + 1);
         if (V.io_CSV.isDigit(c)) {

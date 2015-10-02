@@ -64,7 +64,9 @@ public class D3Builder extends AbstractBuilder {
         }
 
         if (options.localResources == null) {
-            return base + String.format(pattern, "http://brunelvis.org/js/brunel." + options.version + ".min.js");
+            base =  base + String.format(pattern, "http://brunelvis.org/js/brunel." + options.version + ".min.js");
+            if (getControls().isNeeded())
+            base =  base + String.format(pattern, "http://brunelvis.org/js/brunel.controls." + options.version + ".min.js");
         } else {
             base = base
                     + String.format(pattern, options.localResources + "/BrunelData.js")
@@ -73,8 +75,8 @@ public class D3Builder extends AbstractBuilder {
                     + String.format(pattern, options.localResources + "/BrunelEventHandlers.js")
                     + String.format(pattern, options.localResources + "/BrunelJQueryControlFactory.js")
                     + String.format(pattern, options.localResources + "http://brunelvis.org/js/jquery.sumoselect.min.js");
-            return base;
         }
+        return base;
     }
 
     public String makeStyleSheets() {
