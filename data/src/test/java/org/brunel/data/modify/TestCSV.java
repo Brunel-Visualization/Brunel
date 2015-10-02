@@ -91,7 +91,7 @@ public class TestCSV {
         assertEquals("hello_all", CSV.identifier("hello all"));
         assertEquals("_123", CSV.identifier("123"));
         assertEquals("yo_1_2_3", CSV.identifier("yo 1 2 3"));
-        assertEquals("ff0_a_b_", CSV.identifier("ff0(?a,b)?"));
+        assertEquals("ff0", CSV.identifier("ff0(?a,b)?"));
 
     }
 

@@ -167,6 +167,9 @@ public class CSV {
     }
 
     public static String identifier(String text) {
+        int parenthesis = text.indexOf('(');
+        if (parenthesis >0) text = text.substring(0,parenthesis).trim();
+
         String result = "";
         String last = "X";
         for (int i = 0; i < text.length(); i++) {
