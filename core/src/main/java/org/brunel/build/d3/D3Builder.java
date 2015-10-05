@@ -74,7 +74,7 @@ public class D3Builder extends AbstractBuilder {
             if (getControls().isNeeded()) base = base
                     + String.format(pattern, options.localResources + "/BrunelEventHandlers.js")
                     + String.format(pattern, options.localResources + "/BrunelJQueryControlFactory.js")
-                    + String.format(pattern, options.localResources + "http://brunelvis.org/js/jquery.sumoselect.min.js");
+                    + String.format(pattern, options.localResources + "/sumoselect/jquery.sumoselect.min.js");
         }
         return base;
     }
