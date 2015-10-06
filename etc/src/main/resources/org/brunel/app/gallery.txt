@@ -143,4 +143,13 @@
                 data('sample:whiskey.csv')
                 cloud color(Rating:continuous) label(Category) mean(Rating) interaction(filter)   at(0, 50, 100, 100)
 
-
+#id             moby
+#title          Word Frequencies in "Moby Dick"
+#description    A Tag Cloud depicting the frequencies of common words in "Moby Dick".  Here, Brunel is given the results of the 
+                word frequencies to plot.
+#width          800
+#height         800
+#brunel         data('sample:mobydickcounts.csv')
+                cloud color(occurrence) size(occurrence) sort(occurrence)   label(word)  
+                style(':nth-child(odd) { font-family:Impact;font-style:normal') 
+                style(':nth-child(even) { font-family:Times; font-style:italic;font-size:200px')  legends(none)

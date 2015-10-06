@@ -399,12 +399,37 @@ var BrunelD3 = (function () {
                 && b.x + b.width / 2 >= a.x - a.width / 2;
         }
 
+        function ascender(txt) {
+            // 1 == ascender, 2 == descender, 3 == both
+            var i, c, type = 0;
+            for (i = 0; i< txt.length; i++) {
+                c = txt.charAt(i);
+                if ("bdfhiklt1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(c) >= 0) type |= 1;
+                else if ("gjpqy,".indexOf(c) >= 0) type |= 2;
+                else if ("acemnorsuvwxz.-".indexOf(c) < 0) return 3;
+            }
+            return type;
+        }
+
         function place(svg, index) {
             if (placed.length > index) return placed[index];                // Placed already, just return
             var r = svg.getBBox();
-            var item = {width: r.width + 4, height: r.height};                // Our trial item (with slight x padding)
-            var rotated = index % 3 == 1;
-            if (rotated) item = {height: r.width + 4, width: r.height};
+            var dd = -r.y/3, ht = r.height, oy = 0;
+            var ascDesc = ascender(svg.textContent);
+            if (ascDesc == 1) {
+                // Ascender only
+                ht -= dd;
+                oy += dd/2;
+            } else if (ascDesc == 2) {
+                // Descender only
+                ht -= dd;
+            }  if (ascDesc == 0) {
+                // Neither
+                ht -= 2*dd;
+            }
+            var item = {width: r.width+4, height: ht, ox:0, oy:oy};                // Our trial item (with slight x padding)
+            var rotated = (index % 5) % 2 == 1;
+            if (rotated) item = {height: item.width, width: item.height, oy:0 , ox: oy};
             var i, hit = true, theta = 0;                                      // Start at center and ensure we loop
 
             item.title = svg.textContent;
@@ -436,7 +461,7 @@ var BrunelD3 = (function () {
             if (index == data.rowCount() - 1) transformToFill(svg);
 
 
-            var s = "translate(" + item.x + "," + item.y + ")";
+            var s = "translate(" + (item.x - item.ox) + "," + (item.y+item.oy) + ")";
             if (rotated) s += "rotate(90, 0, 0) ";
             return s;
         }
