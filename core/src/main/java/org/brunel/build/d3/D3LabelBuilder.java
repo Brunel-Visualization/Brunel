@@ -48,12 +48,22 @@ public class D3LabelBuilder {
 
     /* Call this after shapes have been defined to add the labels */
     public void addLabels(ElementDetails details) {
+
+        String method = details.textMethod;
+
+        // Offset to ensure text does not hit the shape to which it is attached
+        String yOffset;
+        if (method.equals("top")) yOffset = "-0.3em";
+        else if (method.equals("bottom")) yOffset = "0.7em";
+        else yOffset = "0.3em";
+
         // We define the transition tween function just to calculate relative to the color shape, wherever it is
         out.add("var labelGroup = labels.selectAll('text').data(" + details.dataSource + ")").endStatement();
-        out.add("labelGroup.enter().append('text').attr('dy', '0.3em').attr('class', 'label')");
-        if (details.textMethod.equals("left"))
+
+        out.add("labelGroup.enter().append('text').attr('dy', '" + yOffset + "').attr('class', 'label')");
+        if (method.equals("left"))
             out.addChained("style('text-anchor', 'end')");
-        else if (details.textMethod.equals("right"))
+        else if (method.equals("right"))
             out.addChained("style('text-anchor', 'start')");
         else
             out.addChained("style('text-anchor', 'middle')");
@@ -110,7 +120,7 @@ public class D3LabelBuilder {
         String name = forTooltip ? "tooltipLabeling" : "labeling";
         out.add("var", name, "= {").ln().indentMore();
         String textMethod = details.textMethod;
-        if (textMethod.equals("left") || textMethod.equals("right")) textMethod = "top";  // Move to top
+        if (forTooltip && (textMethod.equals("left") || textMethod.equals("right"))) textMethod = "top";  // Move to top
         out.add("method:", out.quote(textMethod), ",").ln();
         out.add("fit:", details.textMustFit, ",").ln();
         if (details.producesPath)

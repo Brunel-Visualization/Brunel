@@ -84,7 +84,11 @@ public class ElementDetails {
             this.elementType = "rect";
         else
             this.elementType = "rect".equals(symbol) ? "rect" : "circle";
-        if (producesPath) {
+
+        String textLocation = ModelUtil.getLabelPosition(vis);
+        if (textLocation != null) {
+            this.textMethod = textLocation;
+        } else if (producesPath) {
             if (element == VisTypes.Element.bar) this.textMethod = "wedge";
             else if (element == VisTypes.Element.area) this.textMethod = "area";
             else if (filled) this.textMethod = "poly";

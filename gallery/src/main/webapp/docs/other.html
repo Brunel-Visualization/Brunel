@@ -85,6 +85,11 @@
     override any other definition. So if you do <code>style('* {fill:blue}')</code> it will turn all of brunel blue ...</li>
     <li>SVG CSS is used, so we do not use "color" for color -- instead use "fill" or "stroke"</li>
 </ul>
+<p>
+    Brunel also extends these CSS defintions with <code>size</code>, which allows you to set the size of SVG elements, and
+    <code>label-location</code>, which can be defined for either an element or a label, and allows you to change where a label is
+    located relative to the shape. The valid values are: <code>left, right, top, bottom, middle</code>.
+</p>
 
 <p class="examples"><a onClick="showAction(this.text)"><p class="examples"><a onClick="showAction(this.text)">line x(state) y(summer) style('stroke:red') + line x(state)
     y(winter) style('stroke:blue')</a></p>

@@ -251,7 +251,7 @@ public class VisSingle extends VisItem implements Cloneable {
         if (tDiagram != null && stacked) error = addError(error, "diagrams cannot be stacked");
 
         Dataset dataset = getDataset();
-        if (fX.size() > 1) {
+        if (fX.size() > 1 && tElement != VisTypes.Element.edge) {
             Field x = dataset.field(fX.get(0).asField(dataset));
             if (!x.preferCategorical() && !"bin".equals(fTransform.get(fX.get(0))))
                 error = addError(error, "when using multiple x fields, the first must be categorical");
@@ -301,7 +301,6 @@ public class VisSingle extends VisItem implements Cloneable {
         if (used == null) makeUsedFields();
         return withFilters ? includingFilters : used;
     }
-
 
     @SuppressWarnings("unchecked")
     private void makeUsedFields() {
@@ -397,16 +396,21 @@ public class VisSingle extends VisItem implements Cloneable {
         boolean containsAll = replacement.size() != used.length;
 
         boolean addSeriesSplit = false;
+        boolean convertYsToRange = false;
         if (fY.size() > 1) {
-            addSeriesSplit = true;
-            for (String s : aestheticFields()) if (s.equals("#series")) addSeriesSplit = false;
+            if (tElement == VisTypes.Element.edge)
+                convertYsToRange = true;
+            else {
+                addSeriesSplit = true;
+                for (String s : aestheticFields()) if (s.equals("#series")) addSeriesSplit = false;
+            }
         }
 
         // See if we need to add a Y field to stack with
         boolean addY = stacked && fY.isEmpty() && fRange == null;
 
         // If no changes, we can return this vis
-        if (tElement != null && !addY && !containsAll && !addSeriesSplit) return this;
+        if (tElement != null && !addY && !containsAll && !addSeriesSplit && !convertYsToRange) return this;
 
         VisSingle result;
         try {
@@ -416,6 +420,10 @@ public class VisSingle extends VisItem implements Cloneable {
         }
 
         if (addSeriesSplit) result.split(Param.makeField("#series"));
+        if (convertYsToRange) {
+            result.fRange = new Param[] {fY.get(0), fY.get(1)};
+            result.fY = Collections.EMPTY_LIST;
+        }
 
         // Set the default element
         if (tElement == null) {

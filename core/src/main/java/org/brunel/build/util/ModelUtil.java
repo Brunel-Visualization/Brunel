@@ -91,6 +91,18 @@ public class ModelUtil {
     }
 
     /**
+     * Returns the label position
+     *
+     * @param vis the visualization to look for definitions in
+     * @return null if not defined
+     */
+    public static String getLabelPosition(VisSingle vis) {
+        String s = getStyle(vis, new StyleTarget(null, STYLE_ELEMENT, "element"), "label-location");
+        if (s != null) return s;
+        return getStyle(vis, new StyleTarget(null, STYLE_ELEMENT, "label"), "label-location");
+    }
+
+    /**
      * Returns the font size of the label for the axis as defined by the style
      *
      * @param vis the visualization to look for definitions in

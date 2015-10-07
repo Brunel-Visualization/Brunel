@@ -254,6 +254,14 @@ class D3ElementBuilder {
         out.add("var splits = BrunelD3.makePathSplits(" + params + ");").ln();
     }
 
+    private void defineEdge(String basicDef, ElementDefinition elementDef) {
+        out.add(basicDef);
+        out.addChained("attr('x1'," + elementDef.x.left + ")");
+        out.addChained("attr('y1'," + elementDef.y.left + ")");
+        out.addChained("attr('x2'," + elementDef.x.right + ")");
+        out.addChained("attr('y2'," + elementDef.y.right + ")");
+    }
+
     private void defineCircle(String basicDef, ElementDefinition elementDef) {
         out.add(basicDef);
         out.addChained("attr('cx'," + elementDef.x.center + ")");
@@ -464,6 +472,8 @@ class D3ElementBuilder {
                 defineText(basicDef, elementDef);
             else if (vis.tElement == VisTypes.Element.bar)
                 defineBar(basicDef, elementDef);
+            else if (vis.tElement == VisTypes.Element.edge)
+                defineEdge(basicDef, elementDef);
             else {
                 // Must be a point
                 if (details.elementType.equals("rect"))
