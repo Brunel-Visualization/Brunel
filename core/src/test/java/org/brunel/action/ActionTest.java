@@ -59,7 +59,6 @@ public class ActionTest {
         assertEquals(200, p.modifiers()[1].asDouble(), 0.01);
 
         assertEquals("x(a) size(b:10:200)", a.simplify().toString());
-
     }
 
     @Test

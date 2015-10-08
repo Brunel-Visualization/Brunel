@@ -19,6 +19,7 @@ package org.brunel.build.util;
 
 import org.brunel.data.Dataset;
 import org.brunel.data.io.CSV;
+import org.brunel.util.GeneratedData;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -76,6 +77,9 @@ public class DataCache {
             else if (uri.getScheme().equals("refresh")) {
                 uri = makeURI(uri.toString().replace("refresh", "http"));
                 useCache = false;
+            } else if (uri.getScheme().equals("generate")) {
+                Dataset data = GeneratedData.make(uri.getSchemeSpecificPart());
+                localCache.store(dataKey, data);
             }
         }
 

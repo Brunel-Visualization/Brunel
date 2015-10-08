@@ -219,14 +219,13 @@ public class D3Builder extends AbstractBuilder {
         return order;
     }
 
-    protected String defineElement(VisSingle vis, Dataset data, int datasetIndex) {
+    protected String defineElement(VisSingle vis, Dataset data, int datasetIndex, Integer elementDependedOn) {
         out.titleComment("Define element #" + (elementIndex + 1));
-        String name = "elements[" + elementIndex + "]";
-        out.add(name, "= function() {").indentMore();
+        out.add("elements[" + elementIndex + "] = function() {").indentMore();
 
         // Add data variables used throughout
         out.onNewLine().add("var raw, base, data;").at(40).comment("The processed data and the data object");
-        addElementGroups(elementIndex);
+        addElementGroups();
 
         // Data transforms
         D3DataBuilder dataBuilder = new D3DataBuilder(vis, out, data, datasetIndex);
@@ -235,14 +234,13 @@ public class D3Builder extends AbstractBuilder {
         scalesBuilder.writeAestheticScales(vis);
         scalesBuilder.writeLegends(vis);
 
-        defineElementBuildFunction(vis, data);
+        defineElementBuildFunction(vis, data, elementDependedOn);
 
         // Expose the methods and variables we want the user to have access to
         addElementExports(vis);
 
         out.indentLess().onNewLine().add("}()").endStatement().ln();
-        elementIndex++;
-        return name;
+        return "element" + (++elementIndex);
     }
 
     /*
@@ -285,9 +283,9 @@ public class D3Builder extends AbstractBuilder {
         return result;
     }
 
-    private void defineElementBuildFunction(VisSingle vis, Dataset data) {
+    private void defineElementBuildFunction(VisSingle vis, Dataset data, Integer elementDependedOn) {
 
-        D3ElementBuilder elementBuilder = new D3ElementBuilder(vis, out, scalesBuilder, positionFields, data);
+        D3ElementBuilder elementBuilder = new D3ElementBuilder(vis, out, scalesBuilder, positionFields, data, elementDependedOn);
 
         // Main method to make a vis
         out.titleComment("Main element build routine");
@@ -360,7 +358,8 @@ public class D3Builder extends AbstractBuilder {
     protected void endChart(String currentChartID) {
         out.onNewLine().add("function build(transitionMillis) {").indentMore();
         if (scalesBuilder.needsAxes()) out.onNewLine().add("buildAxes(); ");
-        out.onNewLine().add("elements.forEach(function(x) {x.build(transitionMillis)})").endStatement();
+        for (int i : elementBuildOrder)
+            out.onNewLine().add("elements[" + i + "].build(transitionMillis);");
         out.indentLess().onNewLine().add("}").endStatement().ln();
 
         out.comment("Expose the following components of the chart");
@@ -430,7 +429,7 @@ public class D3Builder extends AbstractBuilder {
 
     }
 
-    private void addElementGroups(int elementIndex) {
+    private void addElementGroups() {
         String elementTransform = makeElementTransform(scalesBuilder.coords);
         out.add("var elementGroup = interior.append('g').attr('class', 'element" + (elementIndex + 1) + "')");
         if (elementTransform != null) out.addChained(elementTransform);

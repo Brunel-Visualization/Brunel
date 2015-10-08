@@ -326,7 +326,7 @@ public class VisSingle extends VisItem implements Cloneable {
         aesthetics = nonPosFields.toArray(new String[nonPosFields.size()]);
 
         // Non-Position fields -- does not clear aesthetics as they are included
-        addFieldNames(nonPosFields, true, fSort);
+        addFieldNames(nonPosFields, true, fSort, fKeys);
         addFieldNames(nonPosFields, false, itemsLabel, itemsTooltip);
         nonPos = nonPosFields.toArray(new String[nonPosFields.size()]);
 

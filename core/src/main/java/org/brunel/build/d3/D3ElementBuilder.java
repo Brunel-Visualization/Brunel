@@ -29,21 +29,24 @@ import org.brunel.model.VisTypes;
 
 class D3ElementBuilder {
 
-    private final D3LabelBuilder labelBuilder;
-    private final VisSingle vis;
-    private final ScriptWriter out;
-    private final D3ScaleBuilder scales;
-    private final PositionFields positionFields;
-    private final Dataset data;
-    private final D3Diagram diagram;
+    private final ScriptWriter out;                             // To write code out to
+    private final VisSingle vis;                                // Element definition
+    private final Dataset data;                                 // Data this element uses
+    private final Integer elementDependedOn;                    // Our keys link to keys in this element
+
+    private final PositionFields positionFields;                // Defines how our positions work
+    private final D3ScaleBuilder scales;                        // Helper to build scales
+    private final D3LabelBuilder labelBuilder;                  // Helper to build labels
+    private final D3Diagram diagram;                            // Helper to build diagrams
 
     public D3ElementBuilder(VisSingle vis, ScriptWriter out, D3ScaleBuilder scales,
-                            PositionFields positionFields, Dataset data) {
+                            PositionFields positionFields, Dataset data, Integer elementDependedOn) {
         this.vis = vis;
         this.out = out;
         this.scales = scales;
         this.positionFields = positionFields;
         this.data = data;
+        this.elementDependedOn = elementDependedOn;
         this.labelBuilder = new D3LabelBuilder(vis, out, data);
         this.diagram = D3Diagram.make(vis, data, out);
     }
@@ -174,8 +177,10 @@ class D3ElementBuilder {
         ElementDefinition e = new ElementDefinition();
         Field[] x = positionFields.getX(vis);
         Field[] y = positionFields.getY(vis);
-        setLocations(e.x, "x", x, positionFields.xCategorical);
-        setLocations(e.y, "y", y, positionFields.yCategorical);
+        Field[] keys = new Field[vis.fKeys.size()];
+        for (int i = 0; i < keys.length; i++) keys[i] = data.field(vis.fKeys.get(i).asField());
+        setLocations(e.x, "x", x, keys, positionFields.xCategorical);
+        setLocations(e.y, "y", y, keys, positionFields.yCategorical);
         e.x.size = getSize(getSizeCall(0), ModelUtil.getElementSize(vis, "width"), x, "geom.inner_width", "scale_x");
         e.y.size = getSize(getSizeCall(1), ModelUtil.getElementSize(vis, "height"), y, "geom.inner_height", "scale_y");
         e.overallSize = getOverallSize(ModelUtil.getElementSize(vis, "size"), e);
@@ -188,10 +193,22 @@ class D3ElementBuilder {
         return dim == 0 ? "width(d)" : "height(d)";            // Different for x and y dimensions
     }
 
-    private void setLocations(ElementDefinition.ElementDimensionDefinition dim, String dimName, Field[] fields, boolean categorical) {
+    private void setLocations(ElementDefinition.ElementDimensionDefinition dim, String dimName, Field[] fields, Field[] keys, boolean categorical) {
+
         String scaleName = "scale_" + dimName;
 
-        if (fields.length == 0) {
+        if (elementDependedOn != null) {
+            // Use the keys to get the X and Y locations from other items
+            if (keys.length == 1) {
+                // One key gives the center
+                dim.center = "function(d) { return " + scaleName + "(" + getDimValueFromOtherElement(dimName, keys[0]) + ") }";
+            } else {
+                // Two keys give ends
+                dim.left = "function(d) { return " + scaleName + "(" + getDimValueFromOtherElement(dimName, keys[0]) + ") }";
+                dim.right = "function(d) { return " + scaleName + "(" + getDimValueFromOtherElement(dimName, keys[1]) + ") }";
+                dim.center = "function() { return " + scaleName + "(0.5) }";        // Not sure what is best here -- should not get used
+            }
+        } else if (fields.length == 0) {
             // There are no fields -- we have a notional [0,1] extent, so use the center of that
             dim.center = "function() { return " + scaleName + "(0.5) }";
             dim.left = "function() { return " + scaleName + "(0) }";
@@ -229,6 +246,11 @@ class D3ElementBuilder {
             dim.center = "function(d) { return " + scaleName + "( (" + highDataFunc + " + " + lowDataFunc + " )/2) }";
         }
 
+    }
+
+    private String getDimValueFromOtherElement(String dimName, Field key) {
+        String idToPointName = "elements[" + elementDependedOn + "].internalData()._idToPoint(";
+        return idToPointName + D3Util.writeCall(key) + ")." + dimName;
     }
 
     private void modifyGroupStyleName() {
