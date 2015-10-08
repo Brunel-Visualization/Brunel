@@ -32,7 +32,7 @@ import java.util.Set;
 public class ScriptWriter {
 
     private final int lineMaxLength;
-    private static final Set<Character> NO_SPACE_BEFORE = new HashSet<Character>(Arrays.asList(':', ',', ';', '(', ')'));
+    private static final Set<Character> NO_SPACE_BEFORE = new HashSet<Character>(Arrays.asList(':', ',', ';', '(', ')', ']'));
     private static final String INDENT = "  ";
     private final PrintWriter out;
     private final StringWriter base;

@@ -52,6 +52,10 @@ import java.util.Set;
  */
 class D3ScaleBuilder {
 
+    public boolean needsAxes() {
+        return hAxis.exists() || vAxis.exists();
+    }
+
     /* The purpsoe of a scale */
     private enum Purpose {
         x(true), y(true), size(false), color(false);

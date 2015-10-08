@@ -36,7 +36,6 @@ public class ElementDetails {
      * @param dataSource  the javascript name of the element's data
      * @param elementType path, line, text, rect or circle
      * @param textMethod  wedge, poly, area, path, box, left, right, top, bottom
-     * @return
      */
     public static ElementDetails makeForDiagram(String dataSource, String elementType, String textMethod) {
         return new ElementDetails(dataSource, elementType, textMethod);

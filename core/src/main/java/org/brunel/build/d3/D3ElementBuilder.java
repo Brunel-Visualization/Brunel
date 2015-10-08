@@ -178,7 +178,6 @@ class D3ElementBuilder {
         setLocations(e.y, "y", y, positionFields.yCategorical);
         e.x.size = getSize(getSizeCall(0), ModelUtil.getElementSize(vis, "width"), x, "geom.inner_width", "scale_x");
         e.y.size = getSize(getSizeCall(1), ModelUtil.getElementSize(vis, "height"), y, "geom.inner_height", "scale_y");
-
         e.overallSize = getOverallSize(ModelUtil.getElementSize(vis, "size"), e);
         return e;
     }

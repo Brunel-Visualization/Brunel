@@ -278,9 +278,12 @@ public class D3DataBuilder {
             else out.add(",");
         }
         out.indentLess();
+
+        // Define the key function
         out.add("var keyFunction = ");
         defineKeyFieldFunction(makeKeyFields(), false, fieldsToIndex);
         out.endStatement();
+
         out.add("return {").ln().indentMore();
 
         // Add field definitions
@@ -299,6 +302,15 @@ public class D3DataBuilder {
         defineKeyFieldFunction(makeSplitFields(), true, fieldsToIndex);
         out.add(",").ln();
         out.add("_rows:").at(24).add("BrunelD3.makeRowsWithKeys(keyFunction, base.rowCount())");
+
+        if (vis.fKeys.size() == 1 && vis.fX.size() == 1 && vis.fY.size() == 1) {
+            out.add(",").ln();
+            String id = "f" + fieldsToIndex.get(vis.fKeys.get(0).asField());
+            String x = "f" + fieldsToIndex.get(vis.fX.get(0).asField());
+            String y = "f" + fieldsToIndex.get(vis.fY.get(0).asField());
+            out.add("_idToPoint:").at(24).add("BrunelD3.locate(" + id, ", ", x, ",", y, ", base.rowCount())");
+        }
+
         out.onNewLine().indentLess().add("}").endStatement();
     }
 

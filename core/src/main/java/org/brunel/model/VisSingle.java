@@ -233,7 +233,7 @@ public class VisSingle extends VisItem implements Cloneable {
     }
 
     public String validate() {
-        final boolean elementNeeds2Fields = tElement == VisTypes.Element.area || tElement == VisTypes.Element.line || tElement == VisTypes.Element.edge;
+        final boolean elementNeeds2Fields = tElement == VisTypes.Element.area || tElement == VisTypes.Element.line;
         final boolean diagramNeeds2Fields = tDiagram == VisTypes.Diagram.chord;
         final int fields = fX.size() + fY.size() + (fRange == null ? 0 : 1);
         String error = null;

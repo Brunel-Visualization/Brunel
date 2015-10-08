@@ -30,7 +30,10 @@ import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -64,9 +67,9 @@ public class D3Builder extends AbstractBuilder {
         }
 
         if (options.localResources == null) {
-            base =  base + String.format(pattern, "http://brunelvis.org/js/brunel." + options.version + ".min.js");
+            base = base + String.format(pattern, "http://brunelvis.org/js/brunel." + options.version + ".min.js");
             if (getControls().isNeeded())
-            base =  base + String.format(pattern, "http://brunelvis.org/js/brunel.controls." + options.version + ".min.js");
+                base = base + String.format(pattern, "http://brunelvis.org/js/brunel.controls." + options.version + ".min.js");
         } else {
             base = base
                     + String.format(pattern, options.localResources + "/BrunelData.js")
@@ -118,6 +121,7 @@ public class D3Builder extends AbstractBuilder {
     private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
     private D3Interaction interaction;          // Builder for interactions
     private PositionFields positionFields;      // Information on fields used for position
+    private Integer[] elementBuildOrder;        // Order to build the elements
 
     public Object getVisualization() {
         return out.content();
@@ -136,10 +140,11 @@ public class D3Builder extends AbstractBuilder {
 
         // Add commonly used definitions
         out.onNewLine().ln();
-        out.add("var datasets = [],").at(39).comment("Array of datasets for the original data");
-        out.add("    pre = function(d, i) { return d },").at(39).comment("Default pre-process does nothing");
-        out.add("    post = function(d, i) { return d },").at(39).comment("Default post-process does nothing");
-        out.add("    transitionTime = 200,").at(39).comment("Transition time for animations");
+        out.add("var datasets = [],").at(40).comment("Array of datasets for the original data");
+        out.add("    pre = function(d, i) { return d },").at(40).comment("Default pre-process does nothing");
+        out.add("    post = function(d, i) { return d },").at(40).comment("Default post-process does nothing");
+        out.add("    transitionTime = 200,").at(40).comment("Transition time for animations");
+        out.add("    charts = [],").at(40).comment("The charts in the system");
         out.add("    vis = d3.select('#' + visId).attr('class', 'brunel')").comment("the SVG container");
 
         return options.visIdentifier;
@@ -148,11 +153,11 @@ public class D3Builder extends AbstractBuilder {
     protected String defineChart(double[] location, VisSingle[] elements, Dataset[] elementData) {
 
         this.positionFields = new PositionFields(elements, elementData);
+        this.elementBuildOrder = makeBuildOrder(elements);
 
-        chartIndex++;
         elementIndex = 0;
 
-        chartClass = "chart" + chartIndex;
+        chartClass = "chart" + (chartIndex + 1);
         double[] chartMargins = new double[]{
                 (visHeight * location[0] / 100), (visWidth * location[1] / 100),
                 (visHeight * (1 - location[2] / 100)), (visWidth * (1 - location[3] / 100))
@@ -160,7 +165,7 @@ public class D3Builder extends AbstractBuilder {
 
         // Write the class definition function
         out.titleComment("Define chart #" + chartIndex, "in the visualization");
-        out.add("function chart" + chartIndex, "() {").ln();
+        out.add("charts[" + chartIndex, "] = function() {").ln();
         out.indentMore();
 
         // Define scales and geometry (we need the scales to get axes sizes, which determines geometry)
@@ -173,6 +178,9 @@ public class D3Builder extends AbstractBuilder {
         // Transpose if needed
         if (scalesBuilder.coords == VisTypes.Coordinates.transposed) out.add("geom.transpose()").endStatement();
 
+        // Define the list of elements
+        out.add("var elements = [];").at(40).comment("Array of elements in this chart");
+
         // Now build the main groups
         out.titleComment("Define groups for the chart parts");
         interaction = new D3Interaction(elements, positionFields, scalesBuilder, out);
@@ -183,16 +191,38 @@ public class D3Builder extends AbstractBuilder {
         scalesBuilder.writeCoordinateScales(interaction);
 
         // Define the Axes
-        out.titleComment("Axes");
-        scalesBuilder.writeAxes();
-
+        if (scalesBuilder.needsAxes()) {
+            out.titleComment("Axes");
+            scalesBuilder.writeAxes();
+        }
+        chartIndex++;
         return chartClass;
     }
 
+    /*
+            If we have a dependency between elements, for example, between a node and edge chart,
+            we will need to build taking that into account -- the nodes first, then the edges
+     */
+    private Integer[] makeBuildOrder(final VisSingle[] elements) {
+        // Start with the default order
+        Integer[] order = new Integer[elements.length];
+        for (int i = 0; i < order.length; i++) order[i] = i;
+
+        // Sort so elements with most keys go last
+        // This works at least for nodes and links at least; when we add new cases, we'll need a more complex function
+        Arrays.sort(order, new Comparator<Integer>() {
+            public int compare(Integer a, Integer b) {
+                return elements[a].fKeys.size() - elements[b].fKeys.size();
+            }
+        });
+
+        return order;
+    }
+
     protected String defineElement(VisSingle vis, Dataset data, int datasetIndex) {
-        out.titleComment("Closure defining " + (elementIndex + 1));
-        String name = "element" + (elementIndex + 1);
-        out.add("var", name, "= function() {").indentMore();
+        out.titleComment("Define element #" + (elementIndex + 1));
+        String name = "elements[" + elementIndex + "]";
+        out.add(name, "= function() {").indentMore();
 
         // Add data variables used throughout
         out.onNewLine().add("var raw, base, data;").at(40).comment("The processed data and the data object");
@@ -262,8 +292,7 @@ public class D3Builder extends AbstractBuilder {
         // Main method to make a vis
         out.titleComment("Main element build routine");
         out.add("function build(transitionMillis) {").ln().indentMore();
-        out.add("transitionMillis = transitionMillis || (data ? transitionTime : 0)")
-                .comment("// No transition for first call");
+        out.add("if (!data) transitionMillis = 0").comment("// No transition for first call");
         out.add("if (!data || transitionMillis>0) data = buildData()").endStatement();
 
         elementBuilder.generate();
@@ -276,23 +305,17 @@ public class D3Builder extends AbstractBuilder {
 
         // Define visualization functions
         out.titleComment("Expose the needed Visualization functions and fields");
-        out.add("function setData(rowData, i) { datasets[i ||0] = BrunelData.Dataset.makeFromRows(rowData) }").endStatement();
-        out.add("function getData(i) { return datasets[i ||0] }").endStatement();
+        out.add("function setData(rowData, i) { datasets[i||0] = BrunelData.Dataset.makeFromRows(rowData) }").endStatement();
+        out.add("function getData(i) { return datasets[i||0] }").endStatement();
 
-        out.add("var parts = [ ");
-        for (int i = 1; i <= chartIndex; i++) {
-            out.add("chart" + i + "()");
-            if (i < chartIndex) out.add(", ");
-        }
-        out.add("]").endStatement();
-
-        out.add("function buildAll() {").ln().indentMore()
-                .add("for (var i=0;i<arguments.length;i++) setData(arguments[i], i)").endStatement();
-        for (int i = 0; i < chartIndex; i++) out.add("parts[" + i + "].build(); ");
+        out.add("function buildSystem() {").ln().indentMore()
+                .add("for (var i=0;i<arguments.length;i++) setData(arguments[i], i)").endStatement()
+                .add("charts.forEach(function(x) {x.build(transitionTime)})").endStatement();
         out.ln().indentLess().add("}").endStatement().ln();
 
-        out.add("function rebuildAll() {").ln().indentMore();
-        for (int i = 0; i < chartIndex; i++) out.add("parts[" + i + "].build(20); ");
+        out.add("function rebuildSystem(time) {").ln().indentMore()
+                .add("time = time || 20").endStatement()
+                .add("charts.forEach(function(x) {x.build(time)})").endStatement();
         out.ln().indentLess().add("}").endStatement().ln();
 
         // Return the important items
@@ -301,9 +324,9 @@ public class D3Builder extends AbstractBuilder {
                 .add("dataPostProcess:").at(24).add("function(f) { if (f) post = f; return post },").ln()
                 .add("data:").at(24).add("function(d,i) { if (d) setData(d,i); return datasets[i||0] },").ln()
                 .add("visId:").at(24).add("visId,").ln()
-                .add("build:").at(24).add("buildAll,").ln()
-                .add("rebuild:").at(24).add("rebuildAll,").ln()
-                .add("charts:").at(24).add("parts").ln()
+                .add("build:").at(24).add("buildSystem,").ln()
+                .add("rebuild:").at(24).add("rebuildSystem,").ln()
+                .add("charts:").at(24).add("charts").ln()
                 .indentLess().add("}").endStatement();
 
         // Finish the outer class definition
@@ -336,21 +359,17 @@ public class D3Builder extends AbstractBuilder {
 
     protected void endChart(String currentChartID) {
         out.onNewLine().add("function build(transitionMillis) {").indentMore();
-        if (!scalesBuilder.isDiagram) out.onNewLine().add("buildAxes(); ");
-        for (int i = 0; i < elementIndex; i++)
-            out.onNewLine().add("element" + (i + 1) + ".build(transitionMillis);");
+        if (scalesBuilder.needsAxes()) out.onNewLine().add("buildAxes(); ");
+        out.onNewLine().add("elements.forEach(function(x) {x.build(transitionMillis)})").endStatement();
         out.indentLess().onNewLine().add("}").endStatement().ln();
 
         out.comment("Expose the following components of the chart");
         out.add("return {").indentMore()
                 .onNewLine().add("build : build,")
-                .onNewLine().add("elements : [");
-        for (int i = 0; i < elementIndex; i++)
-            out.add(i == 0 ? "" : ", ").add(" element" + (i + 1));
-        out.add("]");
-        out.onNewLine().indentLess().add("}").endStatement();
+                .onNewLine().add("elements : elements")
+                .onNewLine().indentLess().add("}").endStatement();
         // Finish the chart method
-        out.indentLess().add("}").endStatement().ln();
+        out.indentLess().add("}()").endStatement().ln();
     }
 
     protected DataTransformParameters modifyParameters(DataTransformParameters params, VisSingle vis) {
@@ -431,6 +450,7 @@ public class D3Builder extends AbstractBuilder {
     private void addElementExports(VisSingle vis) {
         out.add("return {").indentMore();
         out.onNewLine().add("builtData:").at(24).add("function() { return base },");
+        out.onNewLine().add("internalData:").at(24).add("function() { return data },");
         out.onNewLine().add("build:").at(24).add("build,");
         out.onNewLine().add("fields: {").indentMore();
         writeFieldName("x", vis.fX);
@@ -456,8 +476,10 @@ public class D3Builder extends AbstractBuilder {
     }
 
     private void writeFieldName(String name, List<Param> fieldNames) {
+        List<String> names = new ArrayList<String>();
+        for (Param p : fieldNames) names.add(p.asField());
         if (!fieldNames.isEmpty())
-            out.onNewLine().add(name, ":").at(24).add("[").addQuotedCollection(fieldNames).add("],");
+            out.onNewLine().add(name, ":").at(24).add("[").addQuotedCollection(names).add("],");
     }
 
 }

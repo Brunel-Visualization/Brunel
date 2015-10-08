@@ -64,7 +64,7 @@ var BrunelD3 = (function () {
                 return 'translate(-20,' + (25 + i * 20) + ')';
             });
         legend.append('rect').attr('x', 6).attr('width', 14).attr('height', 14).style('fill', scale);
-        legend.append('text').attr('y', 7).attr('dy', '.35em').style('text-anchor', 'end').text(function (d,i) {
+        legend.append('text').attr('y', 7).attr('dy', '.35em').style('text-anchor', 'end').text(function (d, i) {
             return labels ? labels[i] : BrunelData.Data.format(d, true);
         })
     }
@@ -346,7 +346,9 @@ var BrunelD3 = (function () {
     // Calls the function when the target is ready
     function callWhenReady(func, target) {
         if (target.__transition__)
-            setTimeout(function () {callWhenReady(func, target)}, 100);
+            setTimeout(function () {
+                callWhenReady(func, target)
+            }, 100);
         else
             func.call();
     }
@@ -402,7 +404,7 @@ var BrunelD3 = (function () {
         function ascender(txt) {
             // 1 == ascender, 2 == descender, 3 == both
             var i, c, type = 0;
-            for (i = 0; i< txt.length; i++) {
+            for (i = 0; i < txt.length; i++) {
                 c = txt.charAt(i);
                 if ("bdfhiklt1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(c) >= 0) type |= 1;
                 else if ("gjpqy,".indexOf(c) >= 0) type |= 2;
@@ -414,22 +416,23 @@ var BrunelD3 = (function () {
         function place(svg, index) {
             if (placed.length > index) return placed[index];                // Placed already, just return
             var r = svg.getBBox();
-            var dd = -r.y/3, ht = r.height, oy = 0;
+            var dd = -r.y / 3, ht = r.height, oy = 0;
             var ascDesc = ascender(svg.textContent);
             if (ascDesc == 1) {
                 // Ascender only
                 ht -= dd;
-                oy += dd/2;
+                oy += dd / 2;
             } else if (ascDesc == 2) {
                 // Descender only
                 ht -= dd;
-            }  if (ascDesc == 0) {
-                // Neither
-                ht -= 2*dd;
             }
-            var item = {width: r.width+4, height: ht, ox:0, oy:oy};                // Our trial item (with slight x padding)
+            if (ascDesc == 0) {
+                // Neither
+                ht -= 2 * dd;
+            }
+            var item = {width: r.width + 4, height: ht, ox: 0, oy: oy};                // Our trial item (with slight x padding)
             var rotated = (index % 5) % 2 == 1;
-            if (rotated) item = {height: item.width, width: item.height, oy:0 , ox: oy};
+            if (rotated) item = {height: item.width, width: item.height, oy: 0, ox: oy};
             var i, hit = true, theta = 0;                                      // Start at center and ensure we loop
 
             item.title = svg.textContent;
@@ -461,7 +464,7 @@ var BrunelD3 = (function () {
             if (index == data.rowCount() - 1) transformToFill(svg);
 
 
-            var s = "translate(" + (item.x - item.ox) + "," + (item.y+item.oy) + ")";
+            var s = "translate(" + (item.x - item.ox) + "," + (item.y + item.oy) + ")";
             if (rotated) s += "rotate(90, 0, 0) ";
             return s;
         }
@@ -700,11 +703,29 @@ var BrunelD3 = (function () {
         return makePath;
     }
 
+    // Define a mapping from IDs of a data source to X, Y locations
+    var idToPoint = function (idField, xField, yField, n) {
+        // Build the map
+        var map = {};
+        var i, id, x, y;
+        for (i = 0; i < n; i++) {
+            id = idField.value(i);
+            x = xField.value(i);
+            y = yField.value(i);
+            if (id != null) map[id] = [x, y]
+        }
+        // Return mapping function
+        return function (x) {
+            return map[x]
+        }
+    };
+
     // Expose these methods
     return {
         'geometry': geometries,
         'addTooltip': makeTooltip,
         'makePathSplits': split,
+        'locate': idToPoint,
         'addLegend': colorLegend,
         'centerInWedge': centerInArc,
         'makeRowsWithKeys': makeRowsWithKeys,
