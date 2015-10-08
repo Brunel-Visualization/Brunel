@@ -117,7 +117,12 @@ public class ElementDetails {
 
     /* Modify the method to give better text location for tooltips */
     public ElementDetails modifyForTooltip(boolean transposed) {
-        String method = textMethod.equals("box") ? (transposed ? "left" : "top") : textMethod;
+        String method = textMethod.equals("box") ? "top" : textMethod;
+        if (method.equals("left") || method.equals("right")) method = "top";
+        if (transposed) {
+            if (method.equals("top")) method = "left";
+            if (method.equals("bottom")) method = "right";
+        }
         return new ElementDetails(dataSource, elementType, method);
     }
 }

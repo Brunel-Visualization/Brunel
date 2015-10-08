@@ -84,17 +84,22 @@ public class D3DataBuilder {
                 fields = data.fields;
             }
 
+            if (fields.length == 0) {
+                // A Chart that doesn't actually use the data ... just meta values
+                fields = new Field[] { Data.makeConstantField("_dummy_", "Dummy", 1.0, data.rowCount())};
+            }
+
             // Name the table with a numeric suffix for multiple tables
             out.onNewLine().add("var", String.format(options.dataName, d + 1), "= [").ln().indentMore();
             int numPerLine = 12 / Math.max(1, Math.max(1, fields.length));
-            out.add("[ ");
+            out.add("[");
             for (int i = 0; i < fields.length; i++) {
                 String name = fields[i].name;
                 if (name.startsWith("#")) continue;
                 if (i > 0) out.add(", ");
                 out.add("'").add(name).add("'");
             }
-            out.add(" ],");
+            out.add("],");
             for (int r = 0; r < data.rowCount(); r++) {
                 if (r > 0) out.add(",");
                 if ((r + 1) % numPerLine == 0) out.onNewLine();

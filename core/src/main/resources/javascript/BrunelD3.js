@@ -502,9 +502,10 @@ var BrunelD3 = (function () {
                 tooltip = document.createElement('div');                    // The tooltip div
                 document.body.appendChild(tooltip);                         // add to document
             }
-            tooltip.innerHTML = content;                                    // set html content
+            tooltip.setAttribute('class', 'brunel tooltip above');      // Base style
             tooltip.style.visibility = 'visible';                           // make visible
-            tooltip.style.width = null;										// Allow free width (for now)
+            tooltip.style.width = null;   								    // Allow free width (for now)
+            tooltip.innerHTML = content;                                    // set html content
 
             var max_width = geom['inner_width'] / 3;                        // One third width at most
             if (tooltip.offsetWidth > max_width)                            // If too wide, set a width for the div
@@ -520,8 +521,6 @@ var BrunelD3 = (function () {
                 labeling.method = old;                                      // restore old method
                 top = p.y + 10;
                 tooltip.setAttribute('class', 'brunel tooltip below');      // Show style for BELOW the target
-            } else {
-                tooltip.setAttribute('class', 'brunel tooltip above');      // Show style for ABOVE the target
             }
 
             tooltip.style.left = (p.x - tooltip.offsetWidth / 2) + 'px';    // Set to be centered on target

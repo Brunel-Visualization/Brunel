@@ -126,7 +126,7 @@ public class Sort extends DataOperation {
                 max = c;
                 mode = v;
             }
-            count.put(v,c);
+            count.put(v, c);
         }
         return mode;
     }
@@ -168,8 +168,10 @@ public class Sort extends DataOperation {
                 if (p.equalsIgnoreCase("ascending")) ascending[i] = true;
                 else if (p.equalsIgnoreCase("descending")) ascending[i] = false;
                 else throw new IllegalArgumentException("Sort options must be 'ascending' or 'descending'");
-            } else
-                ascending[i] = !dimensions[i].isNumeric();
+            } else {
+                // Dates and categories default to ascending. General numeric values default to descending
+                ascending[i] = dimensions[i].isDate() || !dimensions[i].isNumeric();
+            }
         }
         return ascending;
     }
