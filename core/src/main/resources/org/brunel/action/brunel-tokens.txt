@@ -22,6 +22,7 @@ cloud diagram
 pack diagram
 tree diagram
 treemap diagram
+network diagram
 
 ## X and Y locations
 x position FIELD/LIT+

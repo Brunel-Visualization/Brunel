@@ -37,6 +37,7 @@ public abstract class D3Diagram {
         if (vis.tDiagram == VisTypes.Diagram.cloud) return new Cloud(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.tree) return new Tree(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.treemap) return new Treemap(vis, data, out);
+        if (vis.tDiagram == VisTypes.Diagram.network) return new Network(vis, data, out);
         throw new IllegalStateException("Unknown diagram: " + vis.tDiagram);
     }
 

@@ -86,9 +86,9 @@ public class TestBin {
     public void testBinningNominal() {
         Field base = data1.fields[10];
         Field binned = Transform.bin(base, 2);
-        Assert.assertEquals("Contemporary Fiction|Science Fiction|…|", binsToString(binned));
+        Assert.assertEquals("Contemporary Fiction|Science Fiction|\u2026|", binsToString(binned));
         binned = Transform.bin(base, 3);
-        Assert.assertEquals("Contemporary Fiction|Historical Fiction|Science Fiction|…|", binsToString(binned));
+        Assert.assertEquals("Contemporary Fiction|Historical Fiction|Science Fiction|\u2026|", binsToString(binned));
         binned = Transform.bin(base, -1);
         assertEquals(base, binned);
     }
