@@ -19,17 +19,18 @@ Articles and notes on Brunel can be found in the [brunelvis.org blog](http://bru
 * Check out the [Brunel Visualization Cookbook](https://github.com/Brunel-Visualization/Brunel/wiki/Brunel-Visualization-Cookbook)
 * Use the interactive [language tutorial](http://brunel.mybluemix.net/docs)
 * Download the [latest build](https://github.com/Brunel-Visualization/Brunel/releases)
-* Sample ["Hello World"](https://github.com/Brunel-Visualization/Brunel/blob/master/etc/src/main/java/org/brunel/app/SampleApp.java) App
+* Sample Java ["Hello World"](https://github.com/Brunel-Visualization/Brunel/blob/master/etc/src/main/java/org/brunel/app/SampleApp.java) App
+* Sample Javascript ["Hello World"](https://github.com/Brunel-Visualization/Brunel/blob/master/etc/src/main/resources/html/SampleJSApp.html) App
 * Read how to [Build and deploy the code](https://github.com/Brunel-Visualization/Brunel/wiki/Project-Structure-and-Builds)
 
 ## Core Features of Brunel
 
 * Automatically chooses good transforms, mappings, and formatting for your data
-* Allows multiple combinations of visualization “elements” — overlay points, bars, lines, paths, areas and text freely and in a coordinated space.
+* Allows multiple combinations of visualization â€œelementsâ€� â€” overlay points, bars, lines, paths, areas and text freely and in a coordinated space.
 * Handles building structures for D3 diagram like hierarchies, treemaps and chords
 * Handles data ranges, binning and stacking automatically
 * Automatically wraps and fits text, even when animating
-* Intelligently works out a good layout for the chart aspects, taking into account the data (so you don’t have to guess axis sizes, for example)
+* Intelligently works out a good layout for the chart aspects, taking into account the data (so you donâ€™t have to guess axis sizes, for example)
 * Provides flexible interactivity including tooltips, pan/zoom and interactive brushing
 * Coordinates multiple visualizations in the same space, including interactive brushing
 * Adds features such as Word clouds and paths with smoothly varying size
