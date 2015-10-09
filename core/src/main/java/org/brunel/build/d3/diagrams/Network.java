@@ -50,14 +50,15 @@ class Network extends D3Diagram {
                 edgeDataset, ",", a, ",", b, ")").endStatement();
 
         // No layout yet ... here's a simulation!
-        out.add("for (var i in graph.nodes) { graph.nodes[i].x = 100 + i * 20; graph.nodes[i].y = 100 }").endStatement();
+        out.add("for (var i in graph.nodes) { graph.nodes[i].x = 0.5 + 0.3 * Math.cos(i*Math.PI/3); graph.nodes[i].y = 0.5 + 0.3*Math.sin(i*Math.PI/3) }").endStatement();
+        out.add("data._graph = graph").endStatement();
 
         return ElementDetails.makeForDiagram("graph.nodes", "circle", "box");
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
-        out.addChained("attr('cx', function(d) { return d.x })")
-                .addChained("attr('cy', function(d) { return d.y })")
+        out.addChained("attr('cx', function(d) { return scale_x(d.x) })")
+                .addChained("attr('cy', function(d) { return scale_y(d.y) })")
                 .addChained("attr('r',", elementDef.overallSize, ")");
 
         out.endStatement();

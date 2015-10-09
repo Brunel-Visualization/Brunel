@@ -3,6 +3,7 @@ package org.brunel.build;
 import org.brunel.build.d3.D3Util;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
+import org.brunel.model.VisTypes;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -12,7 +13,7 @@ import java.util.Set;
  */
 public class ElementDependency {
 
-    private final int sourceIndex;
+    public final int sourceIndex;
     private final Set<VisSingle> linked = new LinkedHashSet<VisSingle>();
     private final VisSingle[] elements;
 
@@ -48,6 +49,16 @@ public class ElementDependency {
     }
 
     /**
+     * Returns true if this element is defined by a node-edge graph, and this is the edge element
+     *
+     * @param vis target visualization
+     * @return true if we can use graph layout links for this element's position
+     */
+    public boolean isEdge(VisSingle vis) {
+        return getEdgeElement() == vis && elements[sourceIndex].tDiagram == VisTypes.Diagram.network;
+    }
+
+    /**
      * Create the Javascript that gives us the required location on a given dimension in data units
      *
      * @param dimName "x" or "y"
@@ -59,6 +70,10 @@ public class ElementDependency {
         return idToPointName + D3Util.writeCall(key) + ")." + dimName;
     }
 
+
+    public VisSingle sourceElement() {
+        return sourceIndex < 0 ? null : elements[sourceIndex];
+    }
     /**
      * Create the Javascript that access the linked data
      *

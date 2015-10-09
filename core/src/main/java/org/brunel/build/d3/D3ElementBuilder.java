@@ -204,7 +204,12 @@ class D3ElementBuilder {
 
         String scaleName = "scale_" + dimName;
 
-        if (dependency.isDependent(vis)) {
+        if (dependency.isEdge(vis)) {
+            // These are edges in a network layout
+            String data = dependency.linkedDataReference(dependency.sourceElement());
+            dim.left = "function(d) { return scale_" + dimName + "(d.source." + dimName + ") }";
+            dim.right = "function(d) { return scale_" + dimName + "(d.target." + dimName + ") }";
+        } else if (dependency.isDependent(vis)) {
             // Use the keys to get the X and Y locations from other items
             if (keys.length == 1) {
                 // One key gives the center
@@ -478,7 +483,13 @@ class D3ElementBuilder {
 
     private ElementDetails makeDetails() {
         // When we create diagrams this has the side effect of writing the data calls needed
-        return diagram == null ? ElementDetails.makeForCoordinates(vis, getSymbol()) : diagram.writeDataConstruction();
+        if (dependency.isEdge(vis)) {
+            String dataDef = "elements[" + dependency.sourceIndex + "].internal()._graph.links";
+            return ElementDetails.makeForDiagram(dataDef, "line", "box");
+        } else if (diagram == null)
+            return ElementDetails.makeForCoordinates(vis, getSymbol());
+        else
+            return diagram.writeDataConstruction();
     }
 
     private void writeCoordinateDefinition(ElementDetails details, ElementDefinition elementDef) {
