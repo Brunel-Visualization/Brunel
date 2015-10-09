@@ -18,7 +18,9 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.action.Param;
+import org.brunel.build.ElementDependency;
 import org.brunel.build.d3.D3LabelBuilder;
+import org.brunel.build.d3.ElementDefinition;
 import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
@@ -30,14 +32,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class D3Diagram {
-    public static D3Diagram make(VisSingle vis, Dataset data, ScriptWriter out) {
+    public static D3Diagram make(VisSingle vis, Dataset data, ScriptWriter out, ElementDependency dependency) {
         if (vis.tDiagram == null) return null;
         if (vis.tDiagram == VisTypes.Diagram.bubble) return new Bubble(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.chord) return new Chord(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.cloud) return new Cloud(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.tree) return new Tree(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.treemap) return new Treemap(vis, data, out);
-        if (vis.tDiagram == VisTypes.Diagram.network) return new Network(vis, data, out);
+        if (vis.tDiagram == VisTypes.Diagram.network) return new Network(vis, data, dependency, out);
         throw new IllegalStateException("Unknown diagram: " + vis.tDiagram);
     }
 
@@ -76,7 +78,7 @@ public abstract class D3Diagram {
 
     public abstract ElementDetails writeDataConstruction();
 
-    public abstract void writeDefinition(ElementDetails details);
+    public abstract void writeDefinition(ElementDetails details, ElementDefinition elementDef);
 
     void makeHierarchicalTree() {
         String[] positionFields = vis.positionFields();
@@ -104,7 +106,7 @@ public abstract class D3Diagram {
 
     }
 
-    private String quoted(String[] items) {
+    protected String quoted(String... items) {
         List<String> p = new ArrayList<String>();
         for (String s : items) p.add(Data.quote(s));
         return Data.join(p);

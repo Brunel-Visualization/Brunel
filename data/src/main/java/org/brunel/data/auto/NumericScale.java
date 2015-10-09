@@ -188,7 +188,7 @@ public class NumericScale {
         return div.toArray(new Double[div.size()]);
     }
 
-    public static NumericScale makeLogScale(Field f, boolean nice, double[] padFraction, double includeZeroTolerance) {
+    public static NumericScale makeLogScale(Field f, boolean nice, double[] padFraction, double includeZeroTolerance, int desiredTickCount) {
         double a = Math.log(f.min()) / Math.log(10);
         double b = Math.log(f.max()) / Math.log(10);
 
@@ -203,11 +203,24 @@ public class NumericScale {
             b = Math.ceil(b);
         }
 
+        double n = b - a + 1;
+        boolean add5 = n < desiredTickCount * 0.666;
+        double factor = n > desiredTickCount * 1.66 ? 100 : 10;
+
         List<Double> d = new ArrayList<Double>();
-        for (int i = (int) Math.ceil(a); i <= b + 1e-6; i++)
-            d.add(Math.pow(10, i));
+        double low = Math.pow(10, a);
+        double high = Math.pow(10, b);
+        if (add5 && high / 2 > f.max()) high /= 2;
+        double x = Math.pow(10, Math.ceil(a));
+        double tolerantHigh = high * 1.001;
+        while (x < tolerantHigh) {
+            d.add(x);
+            if (add5 && x * 5 < tolerantHigh) d.add(x * 5);
+            x *= factor;
+        }
+
         Double[] data = d.toArray(new Double[d.size()]);
-        return new NumericScale("log", Math.pow(10, a), Math.pow(10, b), data, false);
+        return new NumericScale("log", low, high, data, false);
     }
 
     public final Double[] divisions;

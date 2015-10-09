@@ -21,6 +21,7 @@ import org.brunel.data.CannedData;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.data.auto.Auto;
 import org.brunel.data.io.CSV;
 import org.brunel.data.util.Range;
 import org.junit.Assert;
@@ -60,6 +61,22 @@ public class TestBin {
 
     }
 
+    @Test
+    public void testBinLog() {
+        Field f = Auto.convert(Data.makeColumnField("a", null, new Object[]{3, 4, 5, 14, 201, 1003}));
+        f.set("transform", "log");
+        Field binned;
+
+        binned = Transform.bin(f, 4);
+        Assert.assertEquals("1|10|100|1000|10,000", binsToString(binned));
+
+        binned = Transform.bin(f, 2);
+        Assert.assertEquals("1|100|10,000", binsToString(binned));
+
+        binned = Transform.bin(f, 8);
+        Assert.assertEquals("1|5|10|50|100|500|1000|5000", binsToString(binned));
+
+    }
 
     private String binsToString(Field f) {
         String s = "";

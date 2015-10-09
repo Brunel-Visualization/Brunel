@@ -17,6 +17,7 @@
 
 package org.brunel.build.d3.diagrams;
 
+import org.brunel.build.d3.ElementDefinition;
 import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
@@ -28,7 +29,7 @@ class Tree extends D3Diagram {
     private final int pad;          // Amount to pad tree by
 
     public Tree(VisSingle vis, Dataset data, ScriptWriter out) {
-        super(vis, data, out);
+        super(vis, data , out);
         this.pad = 10;
     }
 
@@ -56,7 +57,7 @@ class Tree extends D3Diagram {
         return ElementDetails.makeForDiagram("treeLayout(tree.root)", "circle", "box");
     }
 
-    public void writeDefinition(ElementDetails details) {
+    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
         out.addChained("attr('class', function(d) { return (d.children ? 'L' + d.depth : 'leaf element " + element.name() + "') })");
 
         if (vis.coords == VisTypes.Coordinates.polar) {

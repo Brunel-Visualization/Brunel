@@ -20,6 +20,7 @@ package org.brunel.build.d3;
 import org.brunel.action.Param;
 import org.brunel.build.AbstractBuilder;
 import org.brunel.build.DataTransformParameters;
+import org.brunel.build.ElementDependency;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.PositionFields;
@@ -219,12 +220,12 @@ public class D3Builder extends AbstractBuilder {
         return order;
     }
 
-    protected String defineElement(VisSingle vis, Dataset data, int datasetIndex, Integer elementDependedOn) {
+    protected String defineElement(VisSingle vis, Dataset data, int datasetIndex, ElementDependency dependency) {
         out.titleComment("Define element #" + (elementIndex + 1));
         out.add("elements[" + elementIndex + "] = function() {").indentMore();
 
         // Add data variables used throughout
-        out.onNewLine().add("var raw, base, data;").at(40).comment("The processed data and the data object");
+        out.onNewLine().add("var raw, base, data;").at(40).comment("input data, processed data and usable object");
         addElementGroups();
 
         // Data transforms
@@ -234,7 +235,7 @@ public class D3Builder extends AbstractBuilder {
         scalesBuilder.writeAestheticScales(vis);
         scalesBuilder.writeLegends(vis);
 
-        defineElementBuildFunction(vis, data, elementDependedOn);
+        defineElementBuildFunction(vis, data, dependency);
 
         // Expose the methods and variables we want the user to have access to
         addElementExports(vis);
@@ -283,18 +284,14 @@ public class D3Builder extends AbstractBuilder {
         return result;
     }
 
-    private void defineElementBuildFunction(VisSingle vis, Dataset data, Integer elementDependedOn) {
+    private void defineElementBuildFunction(VisSingle vis, Dataset data, ElementDependency dependency) {
 
-        D3ElementBuilder elementBuilder = new D3ElementBuilder(vis, out, scalesBuilder, positionFields, data, elementDependedOn);
+        D3ElementBuilder elementBuilder = new D3ElementBuilder(vis, out, scalesBuilder, positionFields, data, dependency);
 
         // Main method to make a vis
-        out.titleComment("Main element build routine");
+        out.titleComment("Build element (data has been built)");
         out.add("function build(transitionMillis) {").ln().indentMore();
-        out.add("if (!data) transitionMillis = 0").comment("// No transition for first call");
-        out.add("if (!data || transitionMillis>0) data = buildData()").endStatement();
-
         elementBuilder.generate();
-
         interaction.addElementHandlers(vis);
         out.indentLess().onNewLine().add("}").endStatement().ln();
     }
@@ -312,7 +309,7 @@ public class D3Builder extends AbstractBuilder {
         out.ln().indentLess().add("}").endStatement().ln();
 
         out.add("function rebuildSystem(time) {").ln().indentMore()
-                .add("time = time || 20").endStatement()
+                .add("time = (time == null) ? 20 : time").endStatement()
                 .add("charts.forEach(function(x) {x.build(time)})").endStatement();
         out.ln().indentLess().add("}").endStatement().ln();
 
@@ -356,10 +353,23 @@ public class D3Builder extends AbstractBuilder {
     }
 
     protected void endChart(String currentChartID) {
-        out.onNewLine().add("function build(transitionMillis) {").indentMore();
+        out.onNewLine().add("function build(time) {").indentMore();
+        out.onNewLine().add("var first = elements[0].data() == null").endStatement();
+        out.add("if (first) time = 0;").comment("No transition for first call");
+
         if (scalesBuilder.needsAxes()) out.onNewLine().add("buildAxes(); ");
+
+        out.onNewLine().add("if (first || time>0) ");
+        if (elementBuildOrder.length > 1) {
+            out.add("{").indentMore();
+            for (int i : elementBuildOrder)
+                out.onNewLine().add("elements[" + i + "].makeData();");
+            out.indentLess().onNewLine().add("}").endStatement();
+        } else {
+            out.add("elements[0].makeData()").endStatement();
+        }
         for (int i : elementBuildOrder)
-            out.onNewLine().add("elements[" + i + "].build(transitionMillis);");
+            out.onNewLine().add("elements[" + i + "].build(time);");
         out.indentLess().onNewLine().add("}").endStatement().ln();
 
         out.comment("Expose the following components of the chart");
@@ -448,8 +458,9 @@ public class D3Builder extends AbstractBuilder {
 
     private void addElementExports(VisSingle vis) {
         out.add("return {").indentMore();
-        out.onNewLine().add("builtData:").at(24).add("function() { return base },");
-        out.onNewLine().add("internalData:").at(24).add("function() { return data },");
+        out.onNewLine().add("data:").at(24).add("function() { return base },");
+        out.onNewLine().add("internal:").at(24).add("function() { return data },");
+        out.onNewLine().add("makeData:").at(24).add("makeData,");
         out.onNewLine().add("build:").at(24).add("build,");
         out.onNewLine().add("fields: {").indentMore();
         writeFieldName("x", vis.fX);

@@ -17,6 +17,7 @@
 
 package org.brunel.build.d3.diagrams;
 
+import org.brunel.build.d3.ElementDefinition;
 import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
@@ -62,7 +63,7 @@ class Chord extends D3Diagram {
         out.add("element.each(function(d) { d.row = chordData.index(d.target.index, d.target.subindex) })").endStatement();
     }
 
-    public void writeDefinition(ElementDetails details) {
+    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
 
         // The Chords themselves are simple to create
         out.addChained("attr('d', d3.svg.chord().radius(geom.inner_radius-arc_width))")

@@ -463,7 +463,7 @@ V.auto_Auto.makeNumericScale = function(f, nice, padFraction, includeZeroToleran
         return V.auto_NumericScale.makeDateScale(f, nice, padFraction, desiredTickCount);
     p = f.stringProperty("transform");
     if (p == "log")
-        return V.auto_NumericScale.makeLogScale(f, nice, padFraction, includeZeroTolerance);
+        return V.auto_NumericScale.makeLogScale(f, nice, padFraction, includeZeroTolerance, desiredTickCount);
     if (p == "root") {
         if (f.min() > 0) {
             scaling = (f.min() / f.max()) / (Math.sqrt(f.min()) / Math.sqrt(f.max()));
@@ -702,8 +702,8 @@ V.auto_NumericScale.makeGranularDivisions = function(min, max, granularity, nice
     return div.toArray();
 };
 
-V.auto_NumericScale.makeLogScale = function(f, nice, padFraction, includeZeroTolerance) {
-    var d, data, i;
+V.auto_NumericScale.makeLogScale = function(f, nice, padFraction, includeZeroTolerance, desiredTickCount) {
+    var add5, d, data, factor, high, low, n, tolerantHigh, x;
     var a = Math.log(f.min()) / Math.log(10);
     var b = Math.log(f.max()) / Math.log(10);
     a -= padFraction[0] * (b - a);
@@ -713,11 +713,22 @@ V.auto_NumericScale.makeLogScale = function(f, nice, padFraction, includeZeroTol
         a = Math.floor(a);
         b = Math.ceil(b);
     }
+    n = b - a + 1;
+    add5 = n < desiredTickCount * 0.666;
+    factor = n > desiredTickCount * 1.66 ? 100 : 10;
     d = new $.List();
-    for (i = Math.ceil(a); i <= b + 1e-6; i++)
-        d.add(Math.pow(10, i));
+    low = Math.pow(10, a);
+    high = Math.pow(10, b);
+    if (add5 && high / 2 > f.max()) high /= 2;
+    x = Math.pow(10, Math.ceil(a));
+    tolerantHigh = high * 1.001;
+    while (x < tolerantHigh) {
+        d.add(x);
+        if (add5 && x * 5 < tolerantHigh) d.add(x * 5);
+        x *= factor;
+    }
     data = d.toArray();
-    return new V.auto_NumericScale("log", Math.pow(10, a), Math.pow(10, b), data, false);
+    return new V.auto_NumericScale("log", low, high, data, false);
 };
 
 ////////////////////// Data ////////////////////////////////////////////////////////////////////////////////////////////
@@ -1158,6 +1169,58 @@ V.diagram_Chord.prototype.matrix = function() {
     return this.mtx;
 };
 
+////////////////////// Edge ////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   A hierarchical edges with values named such that they can easily be used by D3
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+V.diagram_Edge = function(a, b, row) {
+    this.row = row;
+    this.source = a;
+    this.target = b;
+    this.key = a.key + "--" + b.key;
+};
+
+////////////////////// Graph ///////////////////////////////////////////////////////////////////////////////////////////
+//
+//   A graph layout coordinates graphs and links
+//   This class takes the data in standard format and converts it into a form that D3 can use
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+V.diagram_Graph = function(nd, a, b) {
+    var i, lks, n, o, s, t;
+    var nodeByID = new $.Map();
+    var nds = new $.List();
+    for (i = 0; i < nd.rowCount(); i++){
+        o = nd.value(i);
+        if (o != null) {
+            n = new V.diagram_Node(i, 1, o.toString(), null);
+            n.key = o;
+            nds.add(n);
+            nodeByID.put(o, n);
+        }
+    }
+    lks = new $.List();
+    for (i = 0; i < a.rowCount(); i++){
+        s = nodeByID.get(a.value(i));
+        t = nodeByID.get(b.value(i));
+        if (s != null && t != null) lks.add(new V.diagram_Edge(s, t, i));
+    }
+    this.nodes = nds.toArray();
+    this.links = lks.toArray();
+};
+
+V.diagram_Graph.make = function(nodeData, nodeID, edgeData, fromField, toField) {
+    var nodes = nodeData.field(nodeID);
+    var a = edgeData.field(fromField);
+    var b = edgeData.field(toField);
+    return new V.diagram_Graph(nodes, a, b);
+};
+
 ////////////////////// Hierarchical ////////////////////////////////////////////////////////////////////////////////////
 //
 //   An hierarchical diagram shows a tree-like display of nodes (and possibly links)
@@ -1235,15 +1298,16 @@ V.diagram_Hierarchical.prototype.toFields = function(data, fieldNames) {
 
 ////////////////////// Node ////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   A hierarchical node with values named such that they can easily be used by D3
+//   A  node with values named such that they can easily be used by D3 in hierarchies
+//   This is also usd in Node/Edge layouts, but most of the fields are unused
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 V.diagram_Node = function(row, value, innerNodeName, children) {
+    this.key = null;
     this.children = null;
-    this.temp = null;
-    this.key = null;this.row = row;
+    this.temp = null;this.row = row;
     this.value = value;
     this.innerNodeName = innerNodeName;
     this.children = children;
@@ -2279,8 +2343,9 @@ V.modify_Sort.getAscending = function(dimensions, names) {
                 ascending[i] = false;
             else
                 throw new $.Exception("Sort options must be 'ascending' or 'descending'");
-        } else
-            ascending[i] = !dimensions[i].isNumeric();
+        } else {
+            ascending[i] = dimensions[i].isDate() || !dimensions[i].isNumeric();
+        }
     }
     return ascending;
 };

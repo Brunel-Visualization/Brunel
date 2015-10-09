@@ -17,6 +17,7 @@
 
 package org.brunel.build.d3;
 
+import org.brunel.build.ElementDependency;
 import org.brunel.build.d3.diagrams.D3Diagram;
 import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ModelUtil;
@@ -32,7 +33,7 @@ class D3ElementBuilder {
     private final ScriptWriter out;                             // To write code out to
     private final VisSingle vis;                                // Element definition
     private final Dataset data;                                 // Data this element uses
-    private final Integer elementDependedOn;                    // Our keys link to keys in this element
+    private final ElementDependency dependency;                    // Our keys link to keys in this element
 
     private final PositionFields positionFields;                // Defines how our positions work
     private final D3ScaleBuilder scales;                        // Helper to build scales
@@ -40,15 +41,15 @@ class D3ElementBuilder {
     private final D3Diagram diagram;                            // Helper to build diagrams
 
     public D3ElementBuilder(VisSingle vis, ScriptWriter out, D3ScaleBuilder scales,
-                            PositionFields positionFields, Dataset data, Integer elementDependedOn) {
+                            PositionFields positionFields, Dataset data, ElementDependency dependency) {
         this.vis = vis;
         this.out = out;
         this.scales = scales;
         this.positionFields = positionFields;
         this.data = data;
-        this.elementDependedOn = elementDependedOn;
+        this.dependency = dependency;
         this.labelBuilder = new D3LabelBuilder(vis, out, data);
-        this.diagram = D3Diagram.make(vis, data, out);
+        this.diagram = D3Diagram.make(vis, data, out, dependency);
     }
 
     public void generate() {
@@ -82,7 +83,7 @@ class D3ElementBuilder {
 
         if (diagram != null) {
             out.add("BrunelD3.trans(element,transitionMillis)");
-            diagram.writeDefinition(details);
+            diagram.writeDefinition(details, elementDef);
         } else {
             writeCoordinateDefinition(details, elementDef);
             writeCoordinateLabelingAndAesthetics(details);
@@ -107,6 +108,11 @@ class D3ElementBuilder {
             // Use size of categories
             int categories = scales.getCategories(fields).size();
             Double granularity = scales.getGranularitySuitableForSizing(fields);
+            if (vis.tDiagram != null) {
+                // Diagrams do not define these things
+                granularity = null;
+                categories = 0;
+            }
             if (categories > 0) {
                 baseAmount = (categories == 1) ? extent : extent + "/" + categories;
                 // Fill a category span (or 90% of it for categorical fields when percent not defined)
@@ -132,7 +138,8 @@ class D3ElementBuilder {
 
     }
 
-    private String getOverallSize(ModelUtil.Size size, ElementDefinition def) {
+    public static String getOverallSize(VisSingle vis, ElementDefinition def) {
+        ModelUtil.Size size = ModelUtil.getElementSize(vis, "size");
         boolean needsFunction = vis.fSize.size() == 1;
 
         if (size != null && !size.isPercent()) {
@@ -163,7 +170,7 @@ class D3ElementBuilder {
         }
     }
 
-    private String stripFunction(String item) {
+    private static String stripFunction(String item) {
         // remove function wrapper if present
         int p = item.indexOf("return");
         int q = item.lastIndexOf("}");
@@ -183,7 +190,7 @@ class D3ElementBuilder {
         setLocations(e.y, "y", y, keys, positionFields.yCategorical);
         e.x.size = getSize(getSizeCall(0), ModelUtil.getElementSize(vis, "width"), x, "geom.inner_width", "scale_x");
         e.y.size = getSize(getSizeCall(1), ModelUtil.getElementSize(vis, "height"), y, "geom.inner_height", "scale_y");
-        e.overallSize = getOverallSize(ModelUtil.getElementSize(vis, "size"), e);
+        e.overallSize = getOverallSize(vis, e);
         return e;
     }
 
@@ -197,15 +204,15 @@ class D3ElementBuilder {
 
         String scaleName = "scale_" + dimName;
 
-        if (elementDependedOn != null) {
+        if (dependency.isDependent(vis)) {
             // Use the keys to get the X and Y locations from other items
             if (keys.length == 1) {
                 // One key gives the center
-                dim.center = "function(d) { return " + scaleName + "(" + getDimValueFromOtherElement(dimName, keys[0]) + ") }";
+                dim.center = "function(d) { return " + scaleName + "(" + dependency.keyedLocation(dimName, keys[0]) + ") }";
             } else {
                 // Two keys give ends
-                dim.left = "function(d) { return " + scaleName + "(" + getDimValueFromOtherElement(dimName, keys[0]) + ") }";
-                dim.right = "function(d) { return " + scaleName + "(" + getDimValueFromOtherElement(dimName, keys[1]) + ") }";
+                dim.left = "function(d) { return " + scaleName + "(" + dependency.keyedLocation(dimName, keys[0]) + ") }";
+                dim.right = "function(d) { return " + scaleName + "(" + dependency.keyedLocation(dimName, keys[1]) + ") }";
                 dim.center = "function() { return " + scaleName + "(0.5) }";        // Not sure what is best here -- should not get used
             }
         } else if (fields.length == 0) {
@@ -246,11 +253,6 @@ class D3ElementBuilder {
             dim.center = "function(d) { return " + scaleName + "( (" + highDataFunc + " + " + lowDataFunc + " )/2) }";
         }
 
-    }
-
-    private String getDimValueFromOtherElement(String dimName, Field key) {
-        String idToPointName = "elements[" + elementDependedOn + "].internalData()._idToPoint(";
-        return idToPointName + D3Util.writeCall(key) + ")." + dimName;
     }
 
     private void modifyGroupStyleName() {

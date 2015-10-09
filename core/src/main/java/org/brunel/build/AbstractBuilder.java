@@ -149,21 +149,11 @@ public abstract class AbstractBuilder implements Builder {
             data[i] = buildData(elements[i]);
         }
 
+        ElementDependency dependency = new ElementDependency(elements);         // Characterize inter-element dependency
         currentChartID = defineChart(loc, elements, data);
         for (int i = 0; i < elements.length; i++)
-            buildElement(elements[i], data[i], findElementDependedOn(elements[i], elements));
+            buildElement(elements[i], data[i], dependency);
         endChart(currentChartID);
-    }
-
-    // Some elements depend on others; e.g. links need nodes to attach to
-    private Integer findElementDependedOn(VisSingle vis, VisSingle[] all) {
-        // To have a dependency we must have all our positions defined by keys
-        if (vis.fKeys.isEmpty() || vis.positionFields().length > 0) return null;
-        for (int i=0; i<all.length; i++) {
-            // Find an element with a single key that we can use
-            if (all[i].fKeys.size() == 1 && all[i].positionFields().length > 0)  return i;
-        }
-        return null;
     }
 
     /* Build independent charts tiled into the same display area */
@@ -315,11 +305,11 @@ public abstract class AbstractBuilder implements Builder {
     }
 
     // Builds controls as needed, then the custom styles, then the visualization
-    private void buildElement(VisSingle vis, Dataset data, Integer elementDependedOn) {
+    private void buildElement(VisSingle vis, Dataset data, ElementDependency dependency) {
         try {
             // Note that controls need the ORIGINAL dataset; the one passed in has been transformed
             controls.buildControls(vis, vis.getDataset());
-            currentElementID = defineElement(vis, data, indexOf(vis.getDataset(), datasets), elementDependedOn);
+            currentElementID = defineElement(vis, data, indexOf(vis.getDataset(), datasets), dependency);
             if (vis.styles != null) {
                 StyleSheet styles = vis.styles.replaceClass("currentElement", currentElementID);
                 visStyles.add(styles, currentChartID);
@@ -535,6 +525,6 @@ public abstract class AbstractBuilder implements Builder {
     protected abstract DataTransformParameters modifyParameters(DataTransformParameters params, VisSingle vis);
 
     /* Adds an 'element' in GoG terms -- a bar, line, point, etc. */
-    protected abstract String defineElement(VisSingle vis, Dataset data, int datasetIndex, Integer elementDependedOn);
+    protected abstract String defineElement(VisSingle vis, Dataset data, int datasetIndex, ElementDependency dependency);
 
 }

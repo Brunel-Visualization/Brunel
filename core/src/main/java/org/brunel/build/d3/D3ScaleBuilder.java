@@ -621,12 +621,13 @@ class D3ScaleBuilder {
         boolean nice = (name.equals("x") || name.equals("y")) && coords != VisTypes.Coordinates.polar;
         double[] padding = getNumericPaddingFraction(purpose, coords);
 
-        // Areas and line should fill the horizontal dimension
-        if (purpose == Purpose.x && elementsFillHorizontal()) {
+        // Areas and line should fill the horizontal dimension, as should any binned field
+        if (scaleField.isBinned() || purpose == Purpose.x && elementsFillHorizontal()) {
             nice = false;
             padding = new double[]{0, 0};
             includeZero = 0;
         }
+
 
         NumericScale detail = Auto.makeNumericScale(scaleField, nice, padding, includeZero, 9, false);
         double min = detail.min;

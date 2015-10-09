@@ -18,15 +18,17 @@
 package org.brunel.data.diagram;
 
 /**
- * A hierarchical node with values named such that they can easily be used by D3
+ * A  node with values named such that they can easily be used by D3 in hierarchies
+ * This is also usd in Node/Edge layouts, but most of the fields are unused
  */
 public class Node {
     public final Integer row;                       // Row this came from
     public final double value;                      // "size" measure
+    public Object key;                              // Key name for transitions
+
+    public final String innerNodeName;              // Name for a non-leaf node
     public Object children;                         // Initially a List, then an array
     public Object temp;                             // Temporary storage for building
-    public final String innerNodeName;              // Name for a non-leaf node
-    public Object key;                              // Key name for transitions
 
     public Node(Integer row, double value, String innerNodeName, Object children) {
         this.row = row;

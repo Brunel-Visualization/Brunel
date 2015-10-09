@@ -17,6 +17,7 @@
 
 package org.brunel.build.d3.diagrams;
 
+import org.brunel.build.d3.ElementDefinition;
 import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
@@ -39,7 +40,7 @@ class Bubble extends D3Diagram {
         return ElementDetails.makeForDiagram("pack(tree.root)", "circle", "box");
     }
 
-    public void writeDefinition(ElementDetails details) {
+    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
         // Simple circles, with classes defined for CSS
         out.addChained("attr('class', function(d) { return (d.children ? 'L' + d.depth : 'leaf element " + element.name() + "') })")
                 .addChained("attr('cx', function(d) { return d.x; })")

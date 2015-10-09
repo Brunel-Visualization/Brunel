@@ -57,7 +57,7 @@ public class D3DataBuilder {
     }
 
     public void writeDataManipulation(Map<String, Integer> requiredFields) {
-        out.onNewLine().ln().add("function buildData() {").ln().indentMore();
+        out.onNewLine().ln().add("function makeData() {").ln().indentMore();
         writeDataTransforms();
         writeHookup(requiredFields);
         out.indentLess().onNewLine().add("}").endStatement().ln();
@@ -289,7 +289,7 @@ public class D3DataBuilder {
         defineKeyFieldFunction(makeKeyFields(), false, fieldsToIndex);
         out.endStatement();
 
-        out.add("return {").ln().indentMore();
+        out.add("data = {").ln().indentMore();
 
         // Add field definitions
         for (int fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {

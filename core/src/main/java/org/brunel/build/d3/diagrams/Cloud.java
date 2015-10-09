@@ -17,6 +17,7 @@
 
 package org.brunel.build.d3.diagrams;
 
+import org.brunel.build.d3.ElementDefinition;
 import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
@@ -37,7 +38,7 @@ class Cloud extends D3Diagram {
 
     }
 
-    public void writeDefinition(ElementDetails details) {
+    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
         // Set the given location using the transform
         out.addChained("attr('transform', cloud.transform)").endStatement();
         addAestheticsAndTooltips(details, false);
