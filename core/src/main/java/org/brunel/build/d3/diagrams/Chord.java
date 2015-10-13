@@ -36,7 +36,7 @@ class Chord extends D3Diagram {
         String f2 = position[1];
 
         out.comment("Define chord data structures");
-        out.add("var chordData = BrunelData.diagram_Chord.make(base,");
+        out.add("var chordData = BrunelData.diagram_Chord.make(processed,");
 
         // Always need from and to, but the size may be empty when building the chord data
         if (size == null) out.addQuoted(f1, f2);
@@ -60,7 +60,7 @@ class Chord extends D3Diagram {
     public void writeDiagramEnter() {
         // Ensure we have a row for each chord, based off the chord start and end points
         out.endStatement();
-        out.add("element.each(function(d) { d.row = chordData.index(d.target.index, d.target.subindex) })").endStatement();
+        out.add("selection.each(function(d) { d.row = chordData.index(d.target.index, d.target.subindex) })").endStatement();
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {

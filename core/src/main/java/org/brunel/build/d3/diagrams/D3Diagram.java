@@ -84,7 +84,7 @@ public abstract class D3Diagram {
         String[] positionFields = vis.positionFields();
         String fieldsList = positionFields.length == 0 ? "" : ", " + quoted(positionFields);
         String sizeParam = size == null ? null : Data.quote(size.asField());
-        out.add("var tree = BrunelData.diagram_Hierarchical.makeByNestingFields(base, " + sizeParam + fieldsList + ")").endStatement();
+        out.add("var tree = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, " + sizeParam + fieldsList + ")").endStatement();
         isHierarchy = true;
     }
 
@@ -95,10 +95,10 @@ public abstract class D3Diagram {
         }
 
         if (!vis.fColor.isEmpty())
-            out.add("element.style('fill', function(d) { " + remapAesthetics + "return color(d) })").endStatement();
+            out.add("selection.style('fill', function(d) { " + remapAesthetics + "return color(d) })").endStatement();
 
         if (!vis.fOpacity.isEmpty())
-            out.add("element.style('fill-opacity', function(d) { " + remapAesthetics + "return opacity(d) })")
+            out.add("selection.style('fill-opacity', function(d) { " + remapAesthetics + "return opacity(d) })")
                     .addChained("style('stroke-opacity', function(d) { " + remapAesthetics + "return opacity(d) })")
                     .endStatement();
 

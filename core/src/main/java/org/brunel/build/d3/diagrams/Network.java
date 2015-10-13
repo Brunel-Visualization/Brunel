@@ -46,7 +46,7 @@ class Network extends D3Diagram {
         String a = quoted(links.fKeys.get(0).asField());
         String b = quoted(links.fKeys.get(1).asField());
 
-        out.add("var graph = BrunelData.diagram_Graph.make(base,", nodeField, ",",
+        out.add("var graph = BrunelData.diagram_Graph.make(processed,", nodeField, ",",
                 edgeDataset, ",", a, ",", b, ")").endStatement();
 
         // No layout yet ... here's a simulation!

@@ -23,10 +23,10 @@ public class ElementDependency {
         for (int i = 0; i < elements.length; i++) {
             VisSingle v = elements[i];
             if (v.fKeys.isEmpty()) continue;                // Must have keys to be involved
-            if (v.positionFields().length > 0) {
+            if (v.positionFields().length > 0 || v.tDiagram != null) {
                 if (src < 0) src = i;                       // Defines positions so it is the source (first one wins)
             } else {
-                linked.add(v);                          // Does not define positions -- dependent
+                linked.add(v);                              // Does not define positions -- dependent
             }
         }
         if (src < 0) linked.clear();                        // Must have a source for anything to link to

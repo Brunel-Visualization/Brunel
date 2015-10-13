@@ -229,8 +229,8 @@ public class D3DataBuilder {
         // The parameters are stored in the data set when it is transformed
         DataTransformParameters params = (DataTransformParameters) data.property("parameters");
         D3Util.addTiming("Data Start", out);
-        out.add("raw = datasets[" + datasetIndex + "]").endStatement();
-        out.add("base = pre(raw,", datasetIndex, ")").ln();
+        out.add("original = datasets[" + datasetIndex + "]").endStatement();
+        out.add("processed = pre(original,", datasetIndex, ")");
         out.mark();
         writeTransform("addConstants", params.constantsCommand);
 
@@ -259,8 +259,8 @@ public class D3DataBuilder {
 
         writeTransform("stack", params.stackCommand);               // Stack must come after all else
 
-        if (out.changedSinceMark()) out.endStatement();
-        out.add("base = post(base,", datasetIndex, ")").endStatement();
+        out.endStatement();
+        out.add("processed = post(processed,", datasetIndex, ")").endStatement();
         D3Util.addTiming("Data End", out);
     }
 
@@ -278,7 +278,7 @@ public class D3DataBuilder {
         for (int i = 0; i < fields.length; i++) {
             if (i > 0) out.onNewLine();
             else out.indentMore();
-            out.add("f" + i, "= base.field(" + out.quote(fields[i]) + ")");
+            out.add("f" + i, "= processed.field(" + out.quote(fields[i]) + ")");
             if (i == fields.length - 1) out.endStatement();
             else out.add(",");
         }
@@ -306,14 +306,14 @@ public class D3DataBuilder {
         out.add("_split:").at(24);
         defineKeyFieldFunction(makeSplitFields(), true, fieldsToIndex);
         out.add(",").ln();
-        out.add("_rows:").at(24).add("BrunelD3.makeRowsWithKeys(keyFunction, base.rowCount())");
+        out.add("_rows:").at(24).add("BrunelD3.makeRowsWithKeys(keyFunction, processed.rowCount())");
 
         if (vis.fKeys.size() == 1 && vis.fX.size() == 1 && vis.fY.size() == 1) {
             out.add(",").ln();
             String id = "f" + fieldsToIndex.get(vis.fKeys.get(0).asField());
             String x = "f" + fieldsToIndex.get(vis.fX.get(0).asField());
             String y = "f" + fieldsToIndex.get(vis.fY.get(0).asField());
-            out.add("_idToPoint:").at(24).add("BrunelD3.locate(" + id, ", ", x, ",", y, ", base.rowCount())");
+            out.add("_idToPoint:").at(24).add("BrunelD3.locate(" + id, ", ", x, ",", y, ", processed.rowCount())");
         }
 
         out.onNewLine().indentLess().add("}").endStatement();

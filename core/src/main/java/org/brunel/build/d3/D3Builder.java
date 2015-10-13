@@ -223,9 +223,15 @@ public class D3Builder extends AbstractBuilder {
     protected String defineElement(VisSingle vis, Dataset data, int datasetIndex, ElementDependency dependency) {
         out.titleComment("Define element #" + (elementIndex + 1));
         out.add("elements[" + elementIndex + "] = function() {").indentMore();
+        out.onNewLine().add("var original, processed,").at(40).comment("data sets passed in and then transformed")
+                .indentMore()
+                .onNewLine().add("element,").at(40).comment("Brunel element information")
+                .onNewLine().add("data, layout,").at(40).comment("Brunel data and layout method")
+                .onNewLine().add("d3Data, d3Layout,").at(40).comment("D3 versions")
+                .onNewLine().add("selection;").at(40).comment("D3 selection")
+                .indentLess();
 
         // Add data variables used throughout
-        out.onNewLine().add("var raw, base, data;").at(40).comment("input data, processed data and usable object");
         addElementGroups();
 
         // Data transforms
@@ -291,7 +297,7 @@ public class D3Builder extends AbstractBuilder {
         // Main method to make a vis
         out.titleComment("Build element (data has been built)");
         out.add("function build(transitionMillis) {").ln().indentMore();
-        elementBuilder.generate();
+        elementBuilder.generate(elementIndex);
         interaction.addElementHandlers(vis);
         out.indentLess().onNewLine().add("}").endStatement().ln();
     }
@@ -458,7 +464,7 @@ public class D3Builder extends AbstractBuilder {
 
     private void addElementExports(VisSingle vis) {
         out.add("return {").indentMore();
-        out.onNewLine().add("data:").at(24).add("function() { return base },");
+        out.onNewLine().add("data:").at(24).add("function() { return processed },");
         out.onNewLine().add("internal:").at(24).add("function() { return data },");
         out.onNewLine().add("makeData:").at(24).add("makeData,");
         out.onNewLine().add("build:").at(24).add("build,");

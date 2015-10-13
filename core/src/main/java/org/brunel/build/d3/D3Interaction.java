@@ -57,7 +57,7 @@ class D3Interaction {
             Param p = vis.tInteraction.get(VisTypes.Interaction.select);
             String type = "click";
             if (p.hasModifiers()) type = p.firstModifier().asString();
-            out.add("element.on('" + type + "', function(d) { BrunelD3.select(data.$row(d), raw, this, rebuildSystem) } )").endStatement();
+            out.add("selection.on('" + type + "', function(d) { BrunelD3.select(data.$row(d), original, this, rebuildSystem) } )").endStatement();
 
         }
     }

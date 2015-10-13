@@ -52,7 +52,7 @@ class D3ElementBuilder {
         this.diagram = D3Diagram.make(vis, data, out, dependency);
     }
 
-    public void generate() {
+    public void generate(int elementIndex) {
 
         if (diagram != null) out.onNewLine().comment("Data structures for a", vis.tDiagram, "diagram");
 
@@ -66,13 +66,13 @@ class D3ElementBuilder {
 
         modifyGroupStyleName();             // Diagrams change the name so CSS style sheets will work well
 
-        // Define the data and main element into which shapes will be placed
-        out.add("var d3Data =", details.dataSource).endStatement();
-
-        out.add("var element = main.selectAll('*').data(d3Data,", getKeyFunction(), ")").endStatement();
+        // Set the values of things known to this element
+        out.add("element = elements[" + elementIndex + "]").endStatement();
+        out.add("d3Data =", details.dataSource).endStatement();
+        out.add("selection = main.selectAll('*').data(d3Data,", getKeyFunction(), ")").endStatement();
 
         // Define what happens when data is added ('enter')
-        out.add("element.enter().append('" + details.elementType + "')");
+        out.add("selection.enter().append('" + details.elementType + "')");
         out.add(".attr('class', ", details.classes, ")");
 
         if (diagram != null) diagram.writeDiagramEnter();
@@ -82,7 +82,7 @@ class D3ElementBuilder {
         // These fire for both 'enter' and 'update' data
 
         if (diagram != null) {
-            out.add("BrunelD3.trans(element,transitionMillis)");
+            out.add("BrunelD3.trans(selection,transitionMillis)");
             diagram.writeDefinition(details, elementDef);
         } else {
             writeCoordinateDefinition(details, elementDef);
@@ -90,7 +90,7 @@ class D3ElementBuilder {
         }
 
         // This fires when items leave the system
-        out.onNewLine().ln().add("BrunelD3.trans(element.exit(),transitionMillis/3)");
+        out.onNewLine().ln().add("BrunelD3.trans(selection.exit(),transitionMillis/3)");
         out.addChained("style('opacity', 0.5).remove()").endStatement();
     }
 
@@ -102,8 +102,13 @@ class D3ElementBuilder {
             // Absolute size overrides everything
             baseAmount = "" + size.value();
         } else if (fields.length == 0) {
-            // If there are no fields, then fill the extent completely
-            baseAmount = extent;
+            if (vis.tDiagram != null) {
+                // Default point size for diagrams
+                baseAmount = "geom.default_point_size";
+            } else {
+                // If there are no fields, then fill the extent completely
+                baseAmount = extent;
+            }
         } else {
             // Use size of categories
             int categories = scales.getCategories(fields).size();
@@ -495,7 +500,7 @@ class D3ElementBuilder {
     private void writeCoordinateDefinition(ElementDetails details, ElementDefinition elementDef) {
 
         // This starts the transition or update going
-        String basicDef = "BrunelD3.trans(element,transitionMillis)";
+        String basicDef = "BrunelD3.trans(selection,transitionMillis)";
 
         if (details.splitIntoShapes)
             out.add(basicDef).addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
