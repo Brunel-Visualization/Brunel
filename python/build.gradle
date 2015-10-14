@@ -40,6 +40,14 @@ task copyWebFilesToNbextensions(type: Copy, dependsOn: copyWebFiles) {
     into nbextensionsPath + '/brunel_ext'
 }
 
+task copyJarFiles(type: Copy, dependsOn: [project(':core').build, project(':data').build]) {
+	description 'Copies required .jar files needed for execution'
+	from project(':core').configurations.runtime.files {it.name == "gson"}
+	from project(':core').jar.archivePath
+	from project(':data').jar.archivePath
+	into 'brunel/lib'
+}
+
 // Makes a local output with all that is needed for the notebook to run
 task makeNotebooks(type: Copy, dependsOn: copyWebFilesToNbextensions) {
     description 'Builds a local notebook directory'
@@ -65,7 +73,7 @@ test.finalizedBy ':service:cargoStopLocal'
 //task build(dependsOn: [copyWebFiles, test]) {
 //}
 
-task build(dependsOn: [copyWebFiles]) {
+task build(dependsOn: [copyWebFiles, copyJarFiles]) {
 }
 
 defaultTasks 'build', 'makeNotebooks'

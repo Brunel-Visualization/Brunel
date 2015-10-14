@@ -24,9 +24,9 @@ setup(
     name='brunel',
     version='0.7',
     packages=['brunel'],
-    install_requires= ['pandas', 'jinja2', 'ipython', 'jupyter-pip'],
+    install_requires= ['pandas', 'jinja2', 'ipython', 'jupyter-pip', 'JPype1-py3'],
     package_data= {
-        'brunel': ['*.js', '*.html']
+        'brunel': ['*.js', '*.html', 'lib/*.jar']
     },
     description='Brunel for IPython',
     keywords=['visualization', 'grammar of graphics'],
