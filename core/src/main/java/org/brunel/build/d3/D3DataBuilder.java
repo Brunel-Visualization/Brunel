@@ -152,6 +152,19 @@ public class D3DataBuilder {
         // If we have defined keys, util them
         if (!vis.fKeys.isEmpty()) return asFields(vis.fKeys);
 
+        if (vis.tDiagram == VisTypes.Diagram.chord) {
+            List<String> result = new ArrayList<String>();
+            Collections.addAll(result, vis.positionFields());
+            Collections.addAll(result, vis.aestheticFields());
+            if (suitableForKey(result)) return result;
+        }
+
+        if (vis.tDiagram == VisTypes.Diagram.tree || vis.tDiagram == VisTypes.Diagram.treemap || vis.tDiagram == VisTypes.Diagram.map) {
+            // Positions are the keys for trees and treemaps
+            return Arrays.asList(vis.positionFields());
+        }
+
+
         // If we split by aesthetics, they are the keys
         if (vis.tElement.producesSingleShape) return makeSplitFields();
 
@@ -162,17 +175,6 @@ public class D3DataBuilder {
             if (suitableForKey(result)) return result;
         }
 
-        if (vis.tDiagram == VisTypes.Diagram.chord) {
-            List<String> result = new ArrayList<String>();
-            Collections.addAll(result, vis.positionFields());
-            Collections.addAll(result, vis.aestheticFields());
-            if (suitableForKey(result)) return result;
-        }
-
-        if (vis.tDiagram == VisTypes.Diagram.tree || vis.tDiagram == VisTypes.Diagram.treemap) {
-            // Positions are the keys for trees and treemaps
-            return Arrays.asList(vis.positionFields());
-        }
 
         // Otherwise just use the row
         return Collections.singletonList("#row");

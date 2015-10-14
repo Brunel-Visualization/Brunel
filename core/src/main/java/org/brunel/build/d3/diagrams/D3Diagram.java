@@ -39,6 +39,7 @@ public abstract class D3Diagram {
         if (vis.tDiagram == VisTypes.Diagram.cloud) return new Cloud(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.tree) return new Tree(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.treemap) return new Treemap(vis, data, out);
+        if (vis.tDiagram == VisTypes.Diagram.map) return new GeoMap(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.network) return new Network(vis, data, dependency, out);
         throw new IllegalStateException("Unknown diagram: " + vis.tDiagram);
     }
@@ -50,9 +51,11 @@ public abstract class D3Diagram {
     final D3LabelBuilder labelBuilder;
     final String[] position;
     private boolean isHierarchy = false;
+    protected final Dataset data;
 
     D3Diagram(VisSingle vis, Dataset data, ScriptWriter out) {
         this.vis = vis;
+        this.data = data;
         this.out = out;
         this.size = vis.fSize.isEmpty() ? null : vis.fSize.get(0);
         this.position = vis.positionFields();
