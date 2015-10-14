@@ -82,9 +82,7 @@ function loadBrunelJS(brunel_src, width, height, visid, csv) {
             visid: visid,		//id for <svg> tag
      	 };
 	
-	//We are assuming this page is served from the same domain as the Brunel service
-	//Otherwise one must work around any CORS issues.
-    var url = "./brunel/interpret/d3?" + $.param(queryParam);
+    var url = "https://brunel.mybluemix.net/brunel/interpret/d3?" + $.param(queryParam);
 
     $.ajax({
         type: "POST",
