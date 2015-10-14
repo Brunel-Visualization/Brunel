@@ -132,6 +132,7 @@ task makeMinifiedControls(type: JavaExec, dependsOn: build) {
     closureArgs << "--charset" << "utf-8"
     closureArgs << "--compilation_level" << "SIMPLE_OPTIMIZATIONS"
     closureArgs << "--js_output_file" << "out/javascript/brunel.controls.0.7.min.js"
+    closureArgs << "out/javascript/sumoselect/jquery.sumoselect.min.js"
     closureArgs << "out/javascript/BrunelEventHandlers.js"
     closureArgs << "out/javascript/BrunelJQueryControlFactory.js"
     args closureArgs

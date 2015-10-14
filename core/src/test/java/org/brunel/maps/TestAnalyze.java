@@ -19,7 +19,7 @@ public class TestAnalyze {
         assertEquals(1, a.files.length);
         assertEquals("WesternEurope", a.files[0]);
         assertEquals(a.unmatched.toString(), 0, a.unmatched.size());
-        assertEquals("France:[0, 77] Germany:[0, 61] Lux.:[0, 137]", dump(a.mapping));
+        assertEquals("France:[0, 56] Germany:[0, 42] Lux.:[0, 98]", dump(a.mapping));
     }
 
     private String dump(Map<Object, int[]> mapping) {
@@ -51,6 +51,6 @@ public class TestAnalyze {
         assertEquals("WesternEurope", a.files[1]);
         assertEquals(1, a.unmatched.size());
         assertEquals("Nowhere", a.unmatched.get(0));
-        assertEquals("AL:[0, 51] FRA:[1, 77] GER:[1, 61] IA:[0, 62] IL:[0, 64] IN:[0, 65] NY:[0, 84] TX:[0, 93]", dump(a.mapping));
+        assertEquals("AL:[0, 29] FRA:[1, 56] GER:[1, 42] IA:[0, 16] IL:[0, 34] IN:[0, 35] NY:[0, 47] TX:[0, 23]", dump(a.mapping));
     }
 }
