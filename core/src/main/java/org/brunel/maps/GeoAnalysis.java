@@ -1,4 +1,4 @@
-package org.brunel.maps.analyze;
+package org.brunel.maps;
 
 import org.brunel.build.util.ScriptWriter;
 

@@ -490,7 +490,7 @@ class D3ElementBuilder {
         // When we create diagrams this has the side effect of writing the data calls needed
         if (dependency.isEdge(vis)) {
             String dataDef = "elements[" + dependency.sourceIndex + "].internal()._graph.links";
-            return ElementDetails.makeForDiagram(dataDef, "line", "box");
+            return ElementDetails.makeForDiagram(dataDef, "line", "edge", "box", false);
         } else if (diagram == null)
             return ElementDetails.makeForCoordinates(vis, getSymbol());
         else

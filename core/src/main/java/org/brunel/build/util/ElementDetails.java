@@ -35,10 +35,12 @@ public class ElementDetails {
      *
      * @param dataSource  the javascript name of the element's data
      * @param elementType path, line, text, rect or circle
+     * @param elementClass the name of the element class for CSS purposes (polygon, path, point, etc.)
      * @param textMethod  wedge, poly, area, path, box, left, right, top, bottom
+     * @param textFits true if text must fit within the shape
      */
-    public static ElementDetails makeForDiagram(String dataSource, String elementType, String textMethod) {
-        return new ElementDetails(dataSource, elementType, textMethod);
+    public static ElementDetails makeForDiagram(String dataSource, String elementType, String elementClass, String textMethod, boolean textFits) {
+        return new ElementDetails(dataSource, elementType, elementClass, textMethod, textFits);
     }
 
     public static ElementDetails makeForCoordinates(VisSingle vis, String symbol) {
@@ -98,21 +100,21 @@ public class ElementDetails {
             this.textMethod = "box";
         }
 
-        this.textMustFit = filled && element != VisTypes.Element.point || "box".equals(textLocation)  || "poly".equals(textLocation) ;
+        this.textMustFit = filled && element != VisTypes.Element.point || "box".equals(textLocation);
 
         // Only edges need the stroke width setting
         this.needsStrokeSize = !vis.fSize.isEmpty() && vis.tElement == VisTypes.Element.edge;
     }
 
-    private ElementDetails(String dataSource, String elementType, String textMethod) {
+    private ElementDetails(String dataSource, String elementType, String elementClass, String textMethod, boolean textFits) {
         this.splitIntoShapes = false;
         this.colorAttribute = "fill";
         this.dataSource = dataSource;
         this.producesPath = false;
         this.elementType = elementType;
-        this.classes = "'element " + elementType + "'";
+        this.classes = "'element " + elementClass + "'";
         this.textMethod = textMethod;
-        this.textMustFit = true;
+        this.textMustFit = textFits;
     }
 
     /* Modify the method to give better text location for tooltips */
@@ -123,6 +125,6 @@ public class ElementDetails {
             if (method.equals("top")) method = "left";
             if (method.equals("bottom")) method = "right";
         }
-        return new ElementDetails(dataSource, elementType, method);
+        return makeForDiagram(dataSource, elementType, "point", method, false);
     }
 }

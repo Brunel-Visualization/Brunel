@@ -53,7 +53,7 @@ class Network extends D3Diagram {
         out.add("for (var i in graph.nodes) { graph.nodes[i].x = 0.5 + 0.3 * Math.cos(i*Math.PI/3); graph.nodes[i].y = 0.5 + 0.3*Math.sin(i*Math.PI/3) }").endStatement();
         out.add("data._graph = graph").endStatement();
 
-        return ElementDetails.makeForDiagram("graph.nodes", "circle", "box");
+        return ElementDetails.makeForDiagram("graph.nodes", "circle", "point", "box", false);
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {

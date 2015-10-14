@@ -122,7 +122,7 @@ public class D3LabelBuilder {
         String textMethod = details.textMethod;
         out.add("method:", out.quote(textMethod), ",").ln();
         out.add("fit:", details.textMustFit, ",").ln();
-        if (details.producesPath)
+        if (textMethod.equals("path"))
             out.add("path: path,").ln();
 
         // Write it out as a wrapped function

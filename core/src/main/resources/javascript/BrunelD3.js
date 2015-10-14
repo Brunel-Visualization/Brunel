@@ -137,7 +137,7 @@ var BrunelD3 = (function () {
         // Find the centroid
         var c = path.centroid(d);
         var b = svgItem.getBBox();
-        return {x: c.x, y: c.y, box: shrink(b)}
+        return {x: c[0], y: c[1], box: shrink(b)}
     }
 
     function pathLoc(svgItem) {

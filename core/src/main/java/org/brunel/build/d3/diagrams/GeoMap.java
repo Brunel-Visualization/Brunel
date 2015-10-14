@@ -23,8 +23,8 @@ import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
-import org.brunel.maps.analyze.GeoAnalysis;
-import org.brunel.maps.analyze.GeoMapping;
+import org.brunel.maps.GeoAnalysis;
+import org.brunel.maps.GeoMapping;
 import org.brunel.model.VisSingle;
 
 class GeoMap extends D3Diagram {
@@ -54,14 +54,15 @@ class GeoMap extends D3Diagram {
         out.onNewLine().add("return;");
         out.indentLess().onNewLine().add("}").endStatement();
 
-        out.comment("Add feature data to each row");
-        out.add("for (var i=0;i<data._rows.length; i++)").indentMore().ln();
-        out.add("data._rows[i].feature = data._features[ data.")
-                .add(D3Util.canonicalFieldName(x)).add("(data._rows[i]) ]");
-        out.indentLess().endStatement();
+        out.comment("Add feature geometry to each row");
+        out.add("for (var i=0;i<data._rows.length; i++) {").indentMore().ln();
+        out.add("var row = data._rows[i],")
+                .add("feature = data._features[ data.").add(D3Util.canonicalFieldName(x)).add("(row) ]").endStatement();
+        out.add("row.geometry = feature.geometry; row.type = feature.type; row.properties = feature.properties").endStatement();
+        out.indentLess().onNewLine().add("}").endStatement();
 
         // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
-        return ElementDetails.makeForDiagram("data._rows", "path", "poly");
+        return ElementDetails.makeForDiagram("data._rows", "path", "polygon", "path", false);
 
     }
 
@@ -87,7 +88,7 @@ class GeoMap extends D3Diagram {
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
         // Set the given location using the transform
-        out.addChained("attr('d', function(d) { return path(d.feature) } )").endStatement();
+        out.addChained("attr('d', path )").endStatement();
         addAestheticsAndTooltips(details, true);
     }
 

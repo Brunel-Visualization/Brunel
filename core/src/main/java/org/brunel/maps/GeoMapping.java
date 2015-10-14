@@ -1,4 +1,4 @@
-package org.brunel.maps.analyze;
+package org.brunel.maps;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,9 +45,6 @@ public class GeoMapping {
                 for (int[] i : item) {
                     Integer file = i[0];
                     List<FeatureDetail> content = contained.get(file);
-
-                    System.out.println(s + ": " + geoAnalysis.geoFiles[i[0]] + " @ "+ i[1]);
-
                     if (content == null) {
                         content = new ArrayList<FeatureDetail>();
                         contained.put(file, content);
