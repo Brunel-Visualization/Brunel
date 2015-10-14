@@ -81,13 +81,15 @@ public class BrunelService extends Application {
     @Path("d3")
     @Consumes(MediaType.TEXT_PLAIN)        //A CSV file is the payload
     @Produces(MediaType.APPLICATION_JSON)  //JSON object with "js" and "css" entries
-    public BrunelD3Result createAsD3(String data, @QueryParam("src") String brunelSrc,
+    public Response createAsD3(String data, @QueryParam("src") String brunelSrc,
                                @QueryParam("width") int width,
                                @QueryParam("height") int height,
                                @QueryParam("visid") String visId) {
 
     	try {
-    		return D3Integration.createBrunelResult(data, brunelSrc, width, height, visId);
+    		BrunelD3Result result = D3Integration.createBrunelResult(data, brunelSrc, width, height, visId);
+    		return Response.ok(result).header("Access-Control-Allow-Origin", "*").build();
+
     	}
     	catch (Exception ex) {
     		this.makeException(ex.getMessage(),Status.BAD_REQUEST.getStatusCode(), false);
@@ -110,7 +112,7 @@ public class BrunelService extends Application {
     @GET
     @Path("d3")
     @Produces(MediaType.TEXT_HTML)
-    public String createAsD3Html(@QueryParam("brunel_src") String brunelSrc,
+    public Response createAsD3Html(@QueryParam("brunel_src") String brunelSrc,
     							 @QueryParam("brunel_url") String brunelUrl,
                                  @QueryParam("width") int width,
                                  @QueryParam("height") int height,
@@ -121,7 +123,8 @@ public class BrunelService extends Application {
     	try {
 	    	String src = brunelSrc != null ? brunelSrc : ContentReader.readContentFromUrl(URI.create(brunelUrl));
 	        D3Builder builder = D3Integration.makeD3(readBrunelData(dataUrl, true), src, width, height, "visualization");
-	        return WebDisplay.writeHtml(builder, width, height, null, "");
+	        String response = WebDisplay.writeHtml(builder, width, height, null, "");
+    		return Response.ok(response).header("Access-Control-Allow-Origin", "*").build();
     	}
     	catch (IOException ex) {
     		 throw makeException("Could not read brunel from: " + brunelUrl, Status.BAD_REQUEST.getStatusCode(), true);
