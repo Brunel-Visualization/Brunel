@@ -80,6 +80,9 @@ public class DataCache {
             } else if (uri.getScheme().equals("generate")) {
                 Dataset data = GeneratedData.make(uri.getSchemeSpecificPart());
                 localCache.store(dataKey, data);
+            }else if (uri.getScheme().equals("raw")) {
+                Dataset data = Dataset.make(CSV.read(dataKey.substring(4).replaceAll(";", "\n")));
+                localCache.store(dataKey, data);
             }
         }
 

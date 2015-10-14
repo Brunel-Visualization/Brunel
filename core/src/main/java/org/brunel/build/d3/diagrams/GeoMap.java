@@ -46,7 +46,7 @@ class GeoMap extends D3Diagram {
         out.add("var path = d3.geo.path()").endStatement();
         out.add("path.projection()")
                 .addChained("translate([geom.inner_width/2,geom.inner_height/2])")
-                .addChained("scale(geom.inner_width)")
+                .addChained("scale(1.2*geom.inner_width)")
                 .endStatement();
         out.comment("Read in the feature data and call build again when done");
         out.add("if (!data._features) {").indentMore().ln();
@@ -58,7 +58,8 @@ class GeoMap extends D3Diagram {
         out.add("for (var i=0;i<data._rows.length; i++) {").indentMore().ln();
         out.add("var row = data._rows[i],")
                 .add("feature = data._features[ data.").add(D3Util.canonicalFieldName(x)).add("(row) ]").endStatement();
-        out.add("row.geometry = feature.geometry; row.type = feature.type; row.properties = feature.properties").endStatement();
+        out.add("if (feature) {row.geometry = feature.geometry; row.type = feature.type}").ln();
+        out.add("else data._rows.splice(i--, 1)").endStatement();
         out.indentLess().onNewLine().add("}").endStatement();
 
         // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
