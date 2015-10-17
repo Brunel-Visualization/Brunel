@@ -20,16 +20,10 @@ import inspect
 import fnmatch
 import jpype
 import brunel.brunelWidgets as brunelWidgets
+import brunel.brunel_util as brunel_util
 import jinja2 as jin
 from IPython.display import Javascript, HTML
 from IPython.display import display as ipydisplay
-
-#Forces jpype to use a specifc PATH to the JVM
-def set_jvm_path(path):
-    global JVM_PATH
-    JVM_PATH= path
-
-set_jvm_path("")
 
 
 # JS & HTML Files.
@@ -107,10 +101,11 @@ def start_JVM():
 
         try:
             #First use explicit path if provided
-            if JVM_PATH != "":
-                jpype.startJVM(JVM_PATH, lib_ext)
-            #Try jpype's default way
-            jpype.startJVM(jpype.getDefaultJVMPath(),lib_ext)
+            if brunel_util.JVM_PATH != "":
+                jpype.startJVM(brunel_util.JVM_PATH, lib_ext)
+            else:
+                #Try jpype's default way
+                jpype.startJVM(jpype.getDefaultJVMPath(),lib_ext)
         except:
             #jpype could not find JVM (this happens currently for IBM JDK)
             #Try to find the JVM starting from JAVA_HOME either as a .dll or a .so
@@ -118,7 +113,10 @@ def start_JVM():
             if (not jvms):
                 jvms = find_file('libjvm.so', os.environ['JAVA_HOME'])
             if (not jvms):
-                raise ValueError("No JVM was found.  Be sure the JAVA_HOME environment variable has been properly set.  To manually set, use:  brunel.set_jvm_path(path). ")
+                raise ValueError("No JVM was found.  First be sure the JAVA_HOME environment variable has been properly "
+                                 "set before starting IPython.  If it still fails, try to manually set the JVM using:  "
+                                 "brunel.brunel_util.JVM_PATH=[path]. Where 'path' is the location of the JVM file (not "
+                                 "directory). Typically this is the full path to 'jvm.dll' on Windows or 'libjvm.so' on Unix ")
             jpype.startJVM(jvms[0],lib_ext)
 
 #Take the JVM startup hit once
