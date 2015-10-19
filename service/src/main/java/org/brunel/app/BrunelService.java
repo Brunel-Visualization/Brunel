@@ -31,6 +31,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
 import org.brunel.action.Action;
@@ -92,9 +93,8 @@ public class BrunelService extends Application {
 
     	}
     	catch (Exception ex) {
-    		this.makeException(ex.getMessage(),Status.BAD_REQUEST.getStatusCode(), false);
     		ex.printStackTrace();
-    		return null;
+    		throw makeException(ex.getMessage(),Status.BAD_REQUEST.getStatusCode(), false);
     	}
     }
 
@@ -192,11 +192,12 @@ public class BrunelService extends Application {
     		t = MediaType.TEXT_HTML;
     		message = String.format(ERROR_TEMPLATE, message);
     	}
-
-        return new WebApplicationException(
-                Response.status(Status.fromStatusCode(code))
-                        .entity(message).type(t).build());
-    }
+    	
+    	ResponseBuilder rb = Response.status(Status.fromStatusCode(code)).header("Access-Control-Allow-Origin", "*").
+                        entity(message).type(t);;
+                       
+        return new WebApplicationException(rb.build());
+	}
 
 
 }
