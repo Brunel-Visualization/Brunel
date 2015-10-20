@@ -19,6 +19,7 @@ import brunel.brunel as brunel
 
 ipy = get_ipython()
 
+
 @magics_class
 class BrunelMagics(Magics):
     @line_cell_magic
@@ -99,7 +100,6 @@ class BrunelMagics(Magics):
             for j in names2:
                 if str(i).lower() == str(j).lower(): n += 1
         return -n
-
 
 # Register with IPython
 ipy.register_magics(BrunelMagics)

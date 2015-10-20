@@ -17,16 +17,8 @@
 
 package org.brunel.app;
 
-import org.brunel.action.Action;
-import org.brunel.build.d3.D3Builder;
-import org.brunel.build.util.BuilderOptions;
-import org.brunel.build.util.ContentReader;
-import org.brunel.build.util.DataCache;
-import org.brunel.data.Dataset;
-import org.brunel.data.io.CSV;
-import org.brunel.match.BestMatch;
-import org.brunel.model.VisItem;
-import org.brunel.util.WebDisplay;
+import java.io.IOException;
+import java.net.URI;
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.Consumes;
@@ -39,9 +31,18 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
-import java.io.IOException;
-import java.net.URI;
+
+import org.brunel.action.Action;
+import org.brunel.build.d3.D3Builder;
+import org.brunel.build.util.ContentReader;
+import org.brunel.build.util.DataCache;
+import org.brunel.data.Dataset;
+import org.brunel.match.BestMatch;
+import org.brunel.util.BrunelD3Result;
+import org.brunel.util.D3Integration;
+import org.brunel.util.WebDisplay;
 
 /**
  * Sample JAX-RS web application that produces Brunel visualizations.  Currently only d3 output is supported.
@@ -81,16 +82,20 @@ public class BrunelService extends Application {
     @Path("d3")
     @Consumes(MediaType.TEXT_PLAIN)        //A CSV file is the payload
     @Produces(MediaType.APPLICATION_JSON)  //JSON object with "js" and "css" entries
-    public D3Result createAsD3(String data, @QueryParam("src") String brunelSrc,
+    public Response createAsD3(String data, @QueryParam("src") String brunelSrc,
                                @QueryParam("width") int width,
                                @QueryParam("height") int height,
                                @QueryParam("visid") String visId) {
-        D3Builder builder = makeD3(makeBrunelData(data, false), brunelSrc, width, height, visId, false);
-        D3Result result = new D3Result();
-        result.css = builder.getStyleOverrides();
-        result.js = builder.getVisualization().toString();
-        result.controls = builder.getControls();
-        return result;
+
+    	try {
+    		BrunelD3Result result = D3Integration.createBrunelResult(data, brunelSrc, width, height, visId);
+    		return Response.ok(result).header("Access-Control-Allow-Origin", "*").build();
+
+    	}
+    	catch (Exception ex) {
+    		ex.printStackTrace();
+    		throw makeException(ex.getMessage(),Status.BAD_REQUEST.getStatusCode(), false);
+    	}
     }
 
     /**
@@ -107,7 +112,7 @@ public class BrunelService extends Application {
     @GET
     @Path("d3")
     @Produces(MediaType.TEXT_HTML)
-    public String createAsD3Html(@QueryParam("brunel_src") String brunelSrc,
+    public Response createAsD3Html(@QueryParam("brunel_src") String brunelSrc,
     							 @QueryParam("brunel_url") String brunelUrl,
                                  @QueryParam("width") int width,
                                  @QueryParam("height") int height,
@@ -117,11 +122,16 @@ public class BrunelService extends Application {
 
     	try {
 	    	String src = brunelSrc != null ? brunelSrc : ContentReader.readContentFromUrl(URI.create(brunelUrl));
-	        D3Builder builder = makeD3(readBrunelData(dataUrl, true), src, width, height, "visualization", true);
-	        return WebDisplay.writeHtml(builder, width, height, null, "");
+	        D3Builder builder = D3Integration.makeD3(readBrunelData(dataUrl, true), src, width, height, "visualization");
+	        String response = WebDisplay.writeHtml(builder, width, height, null, "");
+    		return Response.ok(response).header("Access-Control-Allow-Origin", "*").build();
     	}
     	catch (IOException ex) {
     		 throw makeException("Could not read brunel from: " + brunelUrl, Status.BAD_REQUEST.getStatusCode(), true);
+    	}
+    	catch (Exception ex) {
+   		 	 throw makeException(ex.getMessage(), Status.BAD_REQUEST.getStatusCode(), true);
+
     	}
 
     }
@@ -164,32 +174,6 @@ public class BrunelService extends Application {
     }
 
 
-    //Creates a D3Builder to produce the d3 output
-    private D3Builder makeD3(Dataset data, String actionText, int width, int height, String visId, boolean formatError) {
-
-        try {
-            BuilderOptions options = new BuilderOptions();
-            options.visIdentifier = visId;
-            D3Builder builder = D3Builder.make(options);
-            VisItem item = makeVisItem(data, actionText);
-            builder.build(item, width, height);
-            return builder;
-        } catch (Exception ex) {
-        	ex.printStackTrace();
-            throw makeException("Could not execute Brunel: " + actionText + ": " + ex.getMessage(), Status.BAD_REQUEST.getStatusCode(), formatError);
-        }
-    }
-
-    //Create a Dataset instance given CSV
-    private Dataset makeBrunelData(String data, boolean formattedError) {
-        try {
-            return  Dataset.make(CSV.read(data));
-        } catch (Exception e) {
-            throw makeException("Could not create data as CSV from content", Status.BAD_REQUEST.getStatusCode(), formattedError);
-        }
-    }
-
-
     //Get a Dataset instance given a URL.  The content will be loaded if not present in the cache.
     private Dataset readBrunelData(String url, boolean formattedError) {
         try {
@@ -199,11 +183,6 @@ public class BrunelService extends Application {
         }
     }
 
-    //Create the VisItem instance for the given Brunel
-    private VisItem makeVisItem(Dataset brunel, String actionText) {
-        Action action = Action.parse(actionText);
-        return action.apply(brunel);
-    }
 
     //Simple web exception handling.  A bootstrap HTML formatted message is returned for <iframe> requests.
     private WebApplicationException makeException(String message, int code, boolean formatted) {
@@ -213,11 +192,12 @@ public class BrunelService extends Application {
     		t = MediaType.TEXT_HTML;
     		message = String.format(ERROR_TEMPLATE, message);
     	}
-
-        return new WebApplicationException(
-                Response.status(Status.fromStatusCode(code))
-                        .entity(message).type(t).build());
-    }
+    	
+    	ResponseBuilder rb = Response.status(Status.fromStatusCode(code)).header("Access-Control-Allow-Origin", "*").
+                        entity(message).type(t);;
+                       
+        return new WebApplicationException(rb.build());
+	}
 
 
 }

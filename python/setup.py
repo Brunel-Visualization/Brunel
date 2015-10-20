@@ -13,6 +13,14 @@
 # limitations under the License.
 
 from setuptools import setup
+from os import path
+from codecs import open
+
+here = path.abspath(path.dirname(__file__))
+
+# Get the long description from the README file
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+    long_description = f.read()
 
 try:
     from jupyterpip import cmdclass
@@ -22,14 +30,20 @@ except:
 
 setup(
     name='brunel',
-    version='0.7',
+    version='0.7.0',
     packages=['brunel'],
-    install_requires= ['pandas', 'jinja2', 'ipython', 'jupyter-pip'],
+    install_requires= ['pandas', 'jinja2', 'ipython', 'jupyter-pip', 'JPype1-py3'],
     package_data= {
-        'brunel': ['*.js', '*.html']
+        'brunel': ['*.js', '*.html', 'lib/*.jar', 'brunel_ext/*.*']
     },
-    description='Brunel for IPython',
+    description='Brunel Visualization For Jupyter/IPython Notebooks',
+    long_description=long_description,
     keywords=['visualization', 'grammar of graphics'],
     include_package_data=True,
+    license='Apache Software License 2.0',
+    classifiers=[
+        "License :: OSI Approved :: Apache Software License",
+        "Development Status :: 4 - Beta"
+    ],
     cmdclass=cmdclass('brunel/brunel_ext')
 )

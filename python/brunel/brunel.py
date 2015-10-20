@@ -13,32 +13,17 @@
 # limitations under the License.
 
 import json
-import time
-import urllib.request
-import urllib.parse
 import io
 import uuid
 import os
-
-
+import inspect
+import fnmatch
+import jpype
 import brunel.brunelWidgets as brunelWidgets
+import brunel.brunel_util as brunel_util
 import jinja2 as jin
-from urllib.error import HTTPError
-from IPython.display import Image, Javascript, HTML
+from IPython.display import Javascript, HTML
 from IPython.display import display as ipydisplay
-
-
-# The server can be set manually, or read from the BRUNEL_SERVER environment variable.
-# If that is null, it defaults to the presumed Brunel liberty deployment location.
-def set_brunel_service_url (server_url) :
-    global BRUNEL_BASEURL
-    BRUNEL_BASEURL= server_url + '/brunel/interpret'
-
-server = os.environ.get('BRUNEL_SERVER')
-if server is None:
-    set_brunel_service_url("http://localhost:8080/BrunelServices")
-else:
-    set_brunel_service_url(server)
 
 
 # JS & HTML Files.
@@ -51,50 +36,36 @@ templateEnv = jin.Environment(loader=templateLoader)
 D3_TEMPLATE = templateEnv.get_template(D3_TEMPLATE_FILE)
 D3_TEMPLATE_HTML = templateEnv.get_template(D3_TEMPLATE_HTML_FILE)
 
+#Directory containing the Brunel .jar files
+lib_dir = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), "lib")
+
 
 def display(brunel, data, width=800, height=600, output='d3'):
-    # Query Parameters for service
-    queryParams = {'width': width, 'height': height, 'src': brunel}
 
     # CSV to pass to service
     csvIO = io.StringIO()
     data.to_csv(csvIO, index=False)
-    csv = csvIO.getvalue().encode('utf-8')
+    csv = csvIO.getvalue()
 
     # unique identifier for HTML tags
     visid = "visid" + str(uuid.uuid1())
 
-    # submit request and process response for given output
     # D3 is currently the only supported renderer
     if output == 'd3':
-        queryParams['visid'] = visid
-        response = brunel_service_call(BRUNEL_BASEURL + '/d3?', queryParams, csv)
-        return d3_output(response, visid, width, height)
+        result = brunel_jpype_call(csv, brunel, width, height, visid)
+        return d3_output(result, visid, width, height)
     else:
         raise ValueError("Valid Output Choices Are:   d3")
 
-
-# Calls the appropriate Brunel REST method
-def brunel_service_call(baseURL, queryParams, data, attempts=3, sleep=0.5):
-    url = baseURL + urllib.parse.urlencode(queryParams)
-    headers = {'Content-Type': 'text/plain'}
-    try:
-        req = urllib.request.Request(url, data, headers)
-        response = urllib.request.urlopen(req)
-        return response
-    except HTTPError as e:
-        print('[HTTP ERROR:', e.code, ']: ' , sep='', end='')
-        print (e.read())
-        if attempts > 1:
-            time.sleep(sleep)
-            return brunel_service_call(baseURL, queryParams, data, attempts - 1, sleep)
-        else:
-            raise
-
+#Uses jpype to call the main Brunel D3 integration method
+def brunel_jpype_call(data, brunel_src, width, height, visid):
+    start_JVM()
+    brunel_util = jpype.JPackage("org.brunel.util")
+    return brunel_util.D3Integration.createBrunelJSON(data, brunel_src, int(width), int(height), visid)
 
 # D3 response should contain the D3 JS and D3 CSS
 def d3_output(response, visid, width, height):
-    results = json.loads(response.read().decode('utf-8'));
+    results = json.loads(response)
     d3js = results["js"]
     d3css = results["css"]
     controls = results["controls"]
@@ -110,5 +81,43 @@ def d3_output(response, visid, width, height):
         js = D3_TEMPLATE.render({'d3js': d3js, 'controls': ""})
         return Javascript(js)
 
+#File search given a path.  Used to find the JVM if needed
+def find_file(pattern, path):
+    result = []
+    for root, dirs, files in os.walk(path):
+        for name in files:
+            if fnmatch.fnmatch(name, pattern):
+                result.append(os.path.join(root, name))
+    return result
 
+#Start the JVM using jpype
+def start_JVM():
 
+    #only start JVM once since it is expensive
+    if (not jpype.isJVMStarted()):
+
+        #Use Brunel .jar files
+        lib_ext = "-Djava.ext.dirs=" + lib_dir
+
+        try:
+            #First use explicit path if provided
+            if brunel_util.JVM_PATH != "":
+                jpype.startJVM(brunel_util.JVM_PATH, lib_ext)
+            else:
+                #Try jpype's default way
+                jpype.startJVM(jpype.getDefaultJVMPath(),lib_ext)
+        except:
+            #jpype could not find JVM (this happens currently for IBM JDK)
+            #Try to find the JVM starting from JAVA_HOME either as a .dll or a .so
+            jvms = find_file('jvm.dll', os.environ['JAVA_HOME'])
+            if (not jvms):
+                jvms = find_file('libjvm.so', os.environ['JAVA_HOME'])
+            if (not jvms):
+                raise ValueError("No JVM was found.  First be sure the JAVA_HOME environment variable has been properly "
+                                 "set before starting IPython.  If it still fails, try to manually set the JVM using:  "
+                                 "brunel.brunel_util.JVM_PATH=[path]. Where 'path' is the location of the JVM file (not "
+                                 "directory). Typically this is the full path to 'jvm.dll' on Windows or 'libjvm.so' on Unix ")
+            jpype.startJVM(jvms[0],lib_ext)
+
+#Take the JVM startup hit once
+start_JVM()

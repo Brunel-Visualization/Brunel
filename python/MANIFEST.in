@@ -1,0 +1,6 @@
+include README.rst
+
+include brunel/*.js
+include brunel/*.html
+recursive-include brunel/brunel_ext *
+include brunel/lib/*.*
