@@ -498,7 +498,7 @@ var BrunelD3 = (function () {
             var content = labeling.content(d);                              // To set html content
             if (!content) return;                                           // No tooltips if no data
 
-            if (!tooltip) {
+            if (!tooltip) {0
                 tooltip = document.createElement('div');                    // The tooltip div
                 document.body.appendChild(tooltip);                         // add to document
             }
