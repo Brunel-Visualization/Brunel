@@ -25,6 +25,7 @@ import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.maps.GeoAnalysis;
 import org.brunel.maps.GeoMapping;
+import org.brunel.maps.GeoProjection;
 import org.brunel.model.VisSingle;
 
 class GeoMap extends D3Diagram {
@@ -42,15 +43,29 @@ class GeoMap extends D3Diagram {
         } else {
             x = vis.fKeys.get(0).asField();
         }
+        Field key = data.field(x);
+        GeoMapping mapping = GeoAnalysis.instance().make(key.categories());
 
-        out.add("var path = d3.geo.path()").endStatement();
-        out.add("path.projection()")
-                .addChained("translate([geom.inner_width/2,geom.inner_height/2])")
-                .addChained("scale(1.2*geom.inner_width)")
-                .endStatement();
+        // Calculate a suitable projection
+        GeoProjection projection = new GeoProjection("geom.inner_width", "geom.inner_height", "winkel3");
+        String projectionDescription = projection.makeProjection(mapping.totalBounds());
+        out.indentMore();
+        out.add("var ");
+        out.indentMore();
+        if (projectionDescription.contains("winkel3")) {
+            String[] strings = GeoProjection.WinkelD3Function;
+            out.add("winkel3 =", strings[0]);
+            for (int i = 1; i < strings.length; i++)
+                out.onNewLine().add(strings[i]);
+            out.add(",");
+        }
+        out.onNewLine().add("projection =", projectionDescription).add(",");
+        out.onNewLine().add("path = d3.geo.path().projection(projection)").endStatement();
+        out.indentLess();
+
         out.comment("Read in the feature data and call build again when done");
         out.add("if (!data._features) {").indentMore().ln();
-        writeFeatureHookup(x);
+        writeFeatureHookup(mapping);
         out.onNewLine().add("return;");
         out.indentLess().onNewLine().add("}").endStatement();
 
@@ -67,16 +82,14 @@ class GeoMap extends D3Diagram {
 
     }
 
-    private void writeFeatureHookup(String x) {
-        Field key = data.field(x);
-        GeoMapping mapping = GeoAnalysis.instance().make(key.categories());
+    private void writeFeatureHookup(GeoMapping mapping) {
         if (mapping.files.length == 0) throw new IllegalStateException("No suitable map found");
         if (mapping.files.length > 1) throw new IllegalStateException("Multiple sources not yet implemented");
         out.add("var geomapping = ");
         GeoAnalysis.writeMapping(out, mapping);
         out.endStatement();
         out.add("var that = this").endStatement();
-        out.add("d3.json('http://brunelvis.org/geo/0.7/" + mapping.files[0] + ".json', function (error, x) {");
+        out.add("d3.json('http://brunelvis.org/geo/0.7/" + mapping.files[0].name + ".json', function (error, x) {");
         out.indentMore().ln();
         out.add("var i, fmap={}, all = x.features").endStatement();
         out.add("for (i=0;i<all.length; i++) fmap[all[i].properties.a] = all[i]").endStatement();

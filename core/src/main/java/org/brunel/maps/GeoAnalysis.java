@@ -53,8 +53,7 @@ public class GeoAnalysis {
     }
 
     final Map<String, int[][]> featureMap;                // For each feature, a pair of [fileIndex,featureIndex]
-    final String[] geoFiles;                              // Feature files we can use
-    final int[] sizes;                                    // File sizes
+    final GeoFile[] geoFiles;                             // Feature files we can use
 
     private GeoAnalysis() {
         try {
@@ -64,12 +63,10 @@ public class GeoAnalysis {
 
             // Read the names of the files and their sizes (in K)
             String[] fileLine = rdr.readLine().split("\\|");
-            int n = (fileLine.length - 1) / 2;
-            geoFiles = new String[n];
-            sizes = new int[n];
+            int n = fileLine.length / 3;
+            geoFiles = new GeoFile[n];
             for (int i = 0; i < n; i++) {
-                geoFiles[i] = fileLine[2 * i + 1];
-                sizes[i] = Integer.parseInt(fileLine[2 * i + 2]);
+                geoFiles[i] = new GeoFile(fileLine[3*i],fileLine[3*i+1],fileLine[3*i+2]);
             }
 
             // Read the features

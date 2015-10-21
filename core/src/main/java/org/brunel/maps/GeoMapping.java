@@ -13,7 +13,7 @@ import java.util.TreeMap;
  */
 public class GeoMapping {
 
-    public final String[] files;                                                    // The files to use
+    public final GeoFile[] files;                                                   // The files to use
     public final Map<Object, int[]> mapping = new TreeMap<Object, int[]>();         // Feature -> [file, featureKey]
     public final List<Object> unmatched = new ArrayList<Object>();                  // Features we did not map
 
@@ -30,9 +30,20 @@ public class GeoMapping {
 
         // Return the best collection of files for those features.
         // Side effect: sets the mappings
-        List<String> fileList = makeBestMatches(geoAnalysis, potential);
+        List<GeoFile> fileList = makeBestMatches(geoAnalysis, potential);
 
-        files = fileList.toArray(new String[fileList.size()]);
+        files = fileList.toArray(new GeoFile[fileList.size()]);
+    }
+
+    public double[] totalBounds() {
+        double[] bounds = files[0].bounds.clone();
+        for (int i=1; i<files.length; i++) {
+            bounds[0] = Math.min(bounds[0], files[i].bounds[0]);
+            bounds[1] = Math.max(bounds[1], files[i].bounds[1]);
+            bounds[2] = Math.min(bounds[2], files[i].bounds[2]);
+            bounds[3] = Math.max(bounds[3], files[i].bounds[3]);
+        }
+        return bounds;
     }
 
     private Map<Integer, List<FeatureDetail>> findAllMappings(Object[] names, GeoAnalysis geoAnalysis) {
@@ -56,7 +67,7 @@ public class GeoMapping {
         return contained;
     }
 
-    private Integer findBest(Map<Integer, List<FeatureDetail>> contained, int[] sizes) {
+    private Integer findBest(Map<Integer, List<FeatureDetail>> contained, GeoFile[] files) {
         // The best item has the most items in it. In case of tie, use smallest file
         Integer best = null;
         int bestContentCount = 0;
@@ -67,8 +78,8 @@ public class GeoMapping {
                 // Wins by having more items
                 best = k;
                 bestContentCount = v.size();
-            } else if (v.size() == bestContentCount && sizes[k] < sizes[best]) {
-                // Wins by having same number of items, but smaller size
+            } else if (v.size() == bestContentCount && files[k].isBetter(files[best])) {
+                // Wins by having same number of items, but "is better"
                 best = k;
                 bestContentCount = v.size();
             }
@@ -88,13 +99,13 @@ public class GeoMapping {
         return featureMap.get(s);
     }
 
-    private List<String> makeBestMatches(GeoAnalysis geoAnalysis, Map<Integer, List<FeatureDetail>> potential) {
-        List<String> fileList = new ArrayList<String>();
+    private List<GeoFile> makeBestMatches(GeoAnalysis geoAnalysis, Map<Integer, List<FeatureDetail>> potential) {
+        List<GeoFile> fileList = new ArrayList<GeoFile>();
 
         // We find the best file, and remove any potential matches for it as they are now actually matched
         // Keep doing this until there are no potential matches left
         while (!potential.isEmpty()) {
-            Integer sourceIndex = findBest(potential, geoAnalysis.sizes);   // Best index among source files
+            Integer sourceIndex = findBest(potential, geoAnalysis.geoFiles);   // Best index among source files
             int resultIndex = fileList.size();                              // The index into this output file
             fileList.add(geoAnalysis.geoFiles[sourceIndex]);                // We will use this file
             List<FeatureDetail> features = potential.remove(sourceIndex);   // We will use these details (now actual)
