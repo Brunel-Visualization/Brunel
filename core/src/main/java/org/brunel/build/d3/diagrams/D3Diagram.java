@@ -83,6 +83,10 @@ public abstract class D3Diagram {
 
     public abstract void writeDefinition(ElementDetails details, ElementDefinition elementDef);
 
+    public void writePreDefinition(ElementDetails details, ElementDefinition elementDef) {
+        // By Default, do nothing
+    }
+
     void makeHierarchicalTree() {
         String[] positionFields = vis.positionFields();
         String fieldsList = positionFields.length == 0 ? "" : ", " + quoted(positionFields);

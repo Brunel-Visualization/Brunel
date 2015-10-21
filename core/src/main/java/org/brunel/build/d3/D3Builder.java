@@ -295,7 +295,8 @@ public class D3Builder extends AbstractBuilder {
         D3ElementBuilder elementBuilder = new D3ElementBuilder(vis, out, scalesBuilder, positionFields, data, dependency);
 
         // Main method to make a vis
-        out.titleComment("Build element (data has been built)");
+        out.titleComment("Build element from data");
+
         out.add("function build(transitionMillis) {").ln().indentMore();
         elementBuilder.generate(elementIndex);
         interaction.addElementHandlers(vis);

@@ -42,7 +42,7 @@ public class GeoProjection {
         double x1 = bounds[0], x2 = bounds[1], y1 = bounds[2], y2 = bounds[3];
 
         // Are we USA only?
-        if (x1 < -70 && y1 > 17 && y2 > 35 && y2 < 72) {
+        if (x1 < -100 && y1 > 17 && y2 > 35 && y2 < 73) {
             // If we need Alaska and/or Hawaii
             if (x1 < -120) return makeAlbersUSA();
             else return makeMercator(x1, x2, y1, y2);
@@ -72,8 +72,10 @@ public class GeoProjection {
 
         // The center in screen coords
         String translateToCenter = ".translate([" + width + "/2, " + height + "/2])";
+        String scale = ".scale(Math.min(" + width + "/0.96, " + height + "/0.48))";
 
         return "d3.geo.albersUsa()"
+                + LN + scale
                 + LN + translateToCenter;
 
     }

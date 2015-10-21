@@ -51,7 +51,6 @@ class D3ElementBuilder {
         this.labelBuilder = new D3LabelBuilder(vis, out, data);
         this.diagram = D3Diagram.make(vis, data, out, dependency);
     }
-
     public void generate(int elementIndex) {
 
         if (diagram != null) out.onNewLine().comment("Data structures for a", vis.tDiagram, "diagram");
@@ -82,6 +81,7 @@ class D3ElementBuilder {
         // These fire for both 'enter' and 'update' data
 
         if (diagram != null) {
+            diagram.writePreDefinition(details, elementDef);
             out.add("BrunelD3.trans(selection,transitionMillis)");
             diagram.writeDefinition(details, elementDef);
         } else {

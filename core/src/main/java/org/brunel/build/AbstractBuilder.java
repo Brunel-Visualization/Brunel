@@ -158,7 +158,7 @@ public abstract class AbstractBuilder implements Builder {
 
     /* Build independent charts tiled into the same display area */
     private void buildTiledCharts(int width, int height, VisItem[] charts) {
-        // Count the number of unplaced charts (those without bounds definintion)
+        // Count the number of unplaced charts (those without bounds definition)
         int nUnplacedCharts = 0;
         for (VisItem chart : charts)
             if (findFirstBounds(chart) == null) nUnplacedCharts++;
