@@ -51,6 +51,11 @@ class D3ElementBuilder {
         this.labelBuilder = new D3LabelBuilder(vis, out, data);
         this.diagram = D3Diagram.make(vis, data, out, dependency);
     }
+
+    public void addElementGlobals() {
+        if (diagram != null) diagram.addElementGlobals();
+    }
+
     public void generate(int elementIndex) {
 
         if (diagram != null) out.onNewLine().comment("Data structures for a", vis.tDiagram, "diagram");

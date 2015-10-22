@@ -176,12 +176,14 @@ public abstract class Projection {
         public double[] inverse(double x, double y) {
             double r1y = r1 - y;
             double lon = Math.atan2(x, r1y) / n;
-            double lat = Math.asin((C - (x * x + r1y * r1y) * n * n) / (2 * n));
+            double v = (C - (x * x + r1y * r1y) * n * n) / (2 * n);
+            double lat = Math.asin(Math.min(1,Math.max(-1, v)));
             return new double[]{
                     Math.toDegrees(lon) - rotation,
                     Math.toDegrees(lat)
             };
         }
+
     }
 
 }

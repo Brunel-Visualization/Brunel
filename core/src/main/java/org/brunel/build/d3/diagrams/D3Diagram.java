@@ -64,6 +64,10 @@ public abstract class D3Diagram {
 
     }
 
+    public void addElementGlobals() {
+        // Do noting by default
+    }
+
     public String getRowKey() {
         return "d.key";
     }

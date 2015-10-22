@@ -53,8 +53,8 @@ public class GeoProjection {
         // Mercator if the distortion is tolerable
         if (distortion <= 1.8) return makeMercator(x1, x2, y1, y2);
 
-        // If we cover a wide range of longitudes, use winkel triple
-        if (x2 - x1 > 180) return makeWinkelTripel(x1, x2, y1, y2);
+        // If we cover a wide area, use winkel triple
+        if (x2 - x1 > 180 && y2-y1 > 90) return makeWinkelTripel(x1, x2, y1, y2);
 
         // Otherwise albers is our best bet
         return makeAlbers(x1, x2, y1, y2);
@@ -69,7 +69,6 @@ public class GeoProjection {
     }
 
     private String makeAlbersUSA() {
-
         // The center in screen coords
         String translateToCenter = ".translate([" + width + "/2, " + height + "/2])";
         String scale = ".scale(Math.min(" + width + "/0.96, " + height + "/0.48))";
@@ -77,7 +76,6 @@ public class GeoProjection {
         return "d3.geo.albersUsa()"
                 + LN + scale
                 + LN + translateToCenter;
-
     }
 
     private String makeMercator(double x1, double x2, double y1, double y2) {

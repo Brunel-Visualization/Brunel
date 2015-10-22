@@ -31,25 +31,24 @@ import org.brunel.model.VisSingle;
 
 class GeoMap extends D3Diagram {
 
+    private final String idField;               // Field used for identifiers
+    private final GeoMapping mapping;           // Mapping of identifiers to features
+
     public GeoMap(VisSingle vis, Dataset data, ScriptWriter out) {
         super(vis, data, out);
-    }
-
-    public void writeDiagramEnter() {
-        super.writeDiagramEnter();
-    }
-
-    public ElementDetails writeDataConstruction() {
-        String x;
         if (vis.fKeys.isEmpty()) {
             if (vis.positionFields().length == 0)
                 throw new IllegalStateException("Maps need either a position field or key with the feature names");
-            x = vis.positionFields()[0];
+            idField = vis.positionFields()[0];
         } else {
-            x = vis.fKeys.get(0).asField();
+            idField = vis.fKeys.get(0).asField();
         }
-        Field key = data.field(x);
-        GeoMapping mapping = GeoAnalysis.instance().make(key.categories());
+        Field key = data.field(idField);
+        mapping = GeoAnalysis.instance().make(key.categories());
+    }
+
+    public void addElementGlobals() {
+        out.comment("Define the projection");
 
         // Calculate a suitable projection
         GeoProjection projection = new GeoProjection("geom.inner_width", "geom.inner_height", "winkel3");
@@ -57,31 +56,57 @@ class GeoMap extends D3Diagram {
         out.indentMore();
         out.add("var ");
         out.indentMore();
+
+        // Define Winkel Tripel function if needed
         if (projectionDescription[0].contains("winkel3")) {
             String[] strings = GeoProjection.WinkelD3Function;
             out.add("winkel3 =", strings[0]);
+            out.indentMore();
             for (int i = 1; i < strings.length; i++)
                 out.onNewLine().add(strings[i]);
             out.add(",").onNewLine();
+            out.indentLess();
+
         }
+
+        // Define the projection
         out.add("projection =", projectionDescription[0].trim());
+        out.indentMore();
         for (int i = 1; i < projectionDescription.length; i++)
             out.onNewLine().add(projectionDescription[i].trim());
-        out.add(",").onNewLine()
-                .add("path = d3.geo.path().projection(projection)").endStatement();
+        out.add(",").onNewLine();
+        out.indentLess();
+
+        // Always add pan/zoom for now -- should check to see if turned off
+        out.add("zoom = d3.behavior.zoom()")
+                .addChained("scale(projection.scale()).translate(projection.translate())")
+                .addChained("on('zoom', function() {").onNewLine();
+        out.indentMore();
+        out.add("projection.translate(zoom.translate()).scale(zoom.scale())").endStatement();
+        out.add("element.build(0)").endStatement();
+        out.indentLess().add("})");
+        out.endStatement();
+        out.indentLess();
+        out.add("vis.call(zoom)").endStatement();
+    }
+
+    public void writeDiagramEnter() {
+        super.writeDiagramEnter();
+    }
+
+    public ElementDetails writeDataConstruction() {
+        out.add("var path = d3.geo.path().projection(projection)").endStatement();
         out.indentLess();
 
         out.comment("Read in the feature data and call build again when done");
-        writeFeatureHookup(mapping, x);
+        writeFeatureHookup(mapping, idField);
 
         // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
         return ElementDetails.makeForDiagram("data._rows", "path", "polygon", "path", false);
-
     }
 
     private void writeFeatureHookup(GeoMapping mapping, String idField) {
         if (mapping.files.length == 0) throw new IllegalStateException("No suitable map found");
-//        if (mapping.files.length > 1) throw new IllegalStateException("Multiple sources not yet implemented");
 
         out.add("var features = ");
         GeoAnalysis.writeMapping(out, mapping);
