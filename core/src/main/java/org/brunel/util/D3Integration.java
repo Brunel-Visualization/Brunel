@@ -93,6 +93,7 @@ public class D3Integration {
 
     //Create a Dataset instance given CSV
     private static Dataset makeBrunelData(String data) {
+    	if (data.isEmpty()) return null;
     	try {
             return  Dataset.make(CSV.read(data));
     	 } catch (Exception e) {
@@ -105,6 +106,7 @@ public class D3Integration {
     //Create the VisItem instance for the given Brunel
     private static VisItem makeVisItem(Dataset brunel, String actionText) {
         Action action = Action.parse(actionText);
+        if (brunel == null) return action.apply();
         return action.apply(brunel);
     }
 

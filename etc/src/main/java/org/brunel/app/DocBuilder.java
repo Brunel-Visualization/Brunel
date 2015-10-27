@@ -28,9 +28,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
+//Note, this class is extended in project "gallery" to supply the cookbook/gallery as part of the web service
+//Be sure to verify any changes do not break the service if you do not have that project locally.
 public abstract class DocBuilder {
 
-    protected final WebDisplay display = new WebDisplay("Full Tests");
+    protected WebDisplay display; // Creating on-demand since this is now used to provide the gallery/cookbook via the service;
     protected final StringBuilder out = new StringBuilder();
 
 
@@ -67,6 +69,7 @@ public abstract class DocBuilder {
     }
 
     protected void show(Map<String, String> tags, String itemFormat) throws UnsupportedEncodingException {
+    	if (display == null) display = new WebDisplay("Full Tests");
         if (tags.isEmpty()) return;                                                     // Nothing defined yet
 
         String brunel = tags.get("#brunel");

@@ -36,7 +36,11 @@ import org.brunel.build.util.ContentReader;
 import org.brunel.build.util.DataCache;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
+import org.brunel.data.Field;
 import org.brunel.data.io.CSV;
+import org.brunel.util.Library;
+
+import com.ibm.json.java.JSONObject;
 
 /**
  * A simple gallery web application for Brunel. This app is expected to be
@@ -51,9 +55,13 @@ import org.brunel.data.io.CSV;
 public class GalleryApplication extends Application {
 
 	private static final String INDEX_LOCATION = "/org/brunel/gallery/RenderTemplate.html";
+	private static final String INDEX_LOCATION2 = "/org/brunel/gallery/RenderTemplate2.html";
 	private static final GalleryCache GALLERY_CACHE = new GalleryCache();
 	private static final String HTML = new Scanner(
 			GalleryApplication.class.getResourceAsStream(INDEX_LOCATION),
+			"UTF-8").useDelimiter("\\A").next();
+	private static final String HTML2 = new Scanner(
+			GalleryApplication.class.getResourceAsStream(INDEX_LOCATION2),
 			"UTF-8").useDelimiter("\\A").next();
 	
 	static {
@@ -87,6 +95,8 @@ public class GalleryApplication extends Application {
 			return null;
 		}
 	}
+	
+	
 
 	/**
 	 * Create the gallery HTML page given Brunel syntax for a visualization
@@ -104,22 +114,55 @@ public class GalleryApplication extends Application {
 			@QueryParam("description") String description,
 			@QueryParam("width") String width,
 			@QueryParam("height") String height,
-			@QueryParam("control_height") String controlHeight
+			@QueryParam("control_height") String controlHeight,
+			@QueryParam("version") String version
 			) {
 
 		
 		title = title != null ? title : "";
 		description = description != null ? description : "";
-		width = width != null ? width : "900";
-		height = height != null ? height : "500";
+		width = width != null ? width : "800";
+		height = height != null ? height : "450";
 		controlHeight = controlHeight != null ? controlHeight : "0";
-		String html = HTML.replace("$TITLE$", title);
+		brunelSrc = brunelSrc != null ? brunelSrc : "data('sample:US States.csv') bubble label(abbr) size(population) color(dem_rep)";
+		
+		String htmlVersion = (version != null && !version.trim().equals("2")) ? HTML : HTML2;
+		
+		String html = htmlVersion.replace("$TITLE$", title);
 		html = html.replace("$BRUNEL_SRC$", Data.quote(brunelSrc));
 		html = html.replace("$DESCRIPTION$", description);
 		html = html.replace("$WIDTH$", width);
 		html = html.replace("$HEIGHT$", height);
 		html = html.replace("$CONTROL_SIZE$", controlHeight);
 		return html;
+	}
+	
+	@GET
+	@Path("univariates")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject getBrunelUnivariates(@QueryParam("id") String dataId) {
+		Dataset d = GALLERY_CACHE.retrieve(dataId);
+		JSONObject results = new JSONObject();
+		if (d != null) {
+			for (Field f : d.fields) {
+				if (!f.isSynthetic()) results.put(f.label, Library.choose(f).toString());
+			}			
+		}
+		return results;
+	}
+	
+	@GET
+	@Path("gallery")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject getGalleryJson() {
+		return ExampleBuilder.GALLERY;
+	}
+	
+	@GET
+	@Path("cookbook")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject getCookBookJson() {
+		return ExampleBuilder.COOKBOOK;
 	}
 
 }

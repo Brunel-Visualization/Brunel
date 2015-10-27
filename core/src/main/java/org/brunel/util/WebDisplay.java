@@ -49,7 +49,7 @@ public class WebDisplay {
     private static final String NAV_BASE = new Scanner(WebDisplay.class.getResourceAsStream(NAV_LOCATION), "UTF-8").useDelimiter("\\A").next();
     private static final String BASE = new Scanner(WebDisplay.class.getResourceAsStream(SINGLE_LOCATION), "UTF-8").useDelimiter("\\A").next();
 
-    public static String writeHtml(D3Builder builder, int width, int height, java.util.List<String> moreHeaders, String... titles) {
+    public static String writeHtml(D3Builder builder, int width, int height, java.util.List<String> moreHeaders, String brunel, String... titles) {
         String css = builder.getStyleOverrides();
         String js = (String) builder.getVisualization();
         String imports = builder.makeImports();
@@ -57,6 +57,7 @@ public class WebDisplay {
         if (height < 5) height = 600;
 
         String title = constructTitle(titles);
+        String brunelTitle = constructBrunelTitle(brunel);
 
         String stylesheets = builder.makeStyleSheets();
 
@@ -67,10 +68,17 @@ public class WebDisplay {
                 .replace("$WIDTH$", Data.formatNumeric((double) width, true))
                 .replace("$HEIGHT$", Data.formatNumeric((double) height, true))
                 .replace("$CSS$", stylesheets)
-                .replace("$TITLE$", title).replace("$STYLES$", css.trim()).replace("$SCRIPT$", js);
+                .replace("$TITLE$", title).replace("$BRUNEL$", brunelTitle).replace("$STYLES$", css.trim()).replace("$SCRIPT$", js);
 
         result = result.replace("$IMPORTS$", imports);
         return result;
+    }
+    
+    private static String constructBrunelTitle(String brunel) {
+    	if (brunel == null) return "";
+    	StringBuilder builder = new StringBuilder();    	
+    	builder.append("<small>").append(brunel).append("</small>");
+    	return builder.toString();
     }
 
     private static String constructTitle(String[] titles) {
@@ -169,7 +177,7 @@ public class WebDisplay {
         }
         D3Builder builder = D3Builder.make(options);
         builder.build(target, width, height);
-        String html = writeHtml(builder, width, height, headers, titles);
+        String html = writeHtml(builder, width, height, headers,null, titles);
         writeToFile(file, html);
     }
 
