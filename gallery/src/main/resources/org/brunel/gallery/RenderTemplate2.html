@@ -431,7 +431,7 @@
 		clearTitles();
 		currentData = d;
         if ($('#apply_match').is(':checked')) getBrunel();
-    	loadFields();
+        loadFields();
 	}
     
 	//handler for new data using URL
@@ -665,14 +665,16 @@
 	function makeFields(results) {
 		
 		var html = "";
-		var firstfield = null
+		var firstfield = null;
 		for (field in results) {
 			if (!firstfield) firstfield = field;
 			html += "<a onclick='showUnivariate(\"" + results[field] + "\")' >" + field + "</a> ";
 		}
 		
-		$('#univariates').html(html);
-		if (! $('#apply_match').is(':checked')) showUnivariate(results[firstfield]);
+		if (firstfield) {
+			$('#univariates').html(html);
+			if (! $('#apply_match').is(':checked')) showUnivariate(results[firstfield]);
+		}
 	}
 	
 	function loadFields() {

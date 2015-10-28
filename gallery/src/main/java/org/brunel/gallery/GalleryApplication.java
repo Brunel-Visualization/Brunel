@@ -18,6 +18,7 @@ package org.brunel.gallery;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Scanner;
 import java.util.UUID;
 
@@ -142,7 +143,12 @@ public class GalleryApplication extends Application {
 	@Path("univariates")
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject getBrunelUnivariates(@QueryParam("id") String dataId) {
-		Dataset d = GALLERY_CACHE.retrieve(dataId);
+		Dataset d = null;
+		try {
+			d = DataCache.get(dataId);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		JSONObject results = new JSONObject();
 		if (d != null) {
 			for (Field f : d.fields) {
