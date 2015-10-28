@@ -119,6 +119,7 @@ public class GalleryApplication extends Application {
 			) {
 
 		
+		version = version != null ? version : "1";
 		title = title != null ? title : "";
 		description = description != null ? description : "";
 		width = width != null ? width : "800";
@@ -126,7 +127,7 @@ public class GalleryApplication extends Application {
 		controlHeight = controlHeight != null ? controlHeight : "0";
 		brunelSrc = brunelSrc != null ? brunelSrc : "data('sample:US States.csv') bubble label(abbr) size(population) color(dem_rep)";
 		
-		String htmlVersion = (version != null && !version.trim().equals("2")) ? HTML : HTML2;
+		String htmlVersion = (!version.trim().equals("2")) ? HTML : HTML2;
 		
 		String html = htmlVersion.replace("$TITLE$", title);
 		html = html.replace("$BRUNEL_SRC$", Data.quote(brunelSrc));

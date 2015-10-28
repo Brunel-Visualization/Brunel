@@ -416,6 +416,9 @@
 
         var loc = "../brunel/interpret/d3?brunel_src="
                 + encodeURIComponent(txt) + locSize;
+		var loading = "<span style='font-family: Monaco; font-size: 18pt; font-weight: bold;color: #888888;'>Loading... </span>";
+		$('#actionResult').contents().find("body").html(loading);
+
         $('#actionResult').attr("src", loc);
         $('#actionText').val(txt);
         
