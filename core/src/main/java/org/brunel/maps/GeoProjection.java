@@ -54,18 +54,11 @@ public class GeoProjection {
         if (distortion <= 1.8) return makeMercator(x1, x2, y1, y2);
 
         // If we cover a wide area, use winkel triple
-        if (x2 - x1 > 180 && y2-y1 > 90) return makeWinkelTripel(x1, x2, y1, y2);
+        if (x2 - x1 > 180 && y2 - y1 > 90) return makeWinkelTripel(x1, x2, y1, y2);
 
         // Otherwise albers is our best bet
         return makeAlbers(x1, x2, y1, y2);
 
-    }
-
-    private double getDistortion(double x1, double x2, double y1, double y2) {
-        if (y1 < -89 || y2 > 89) return 100;
-        double a = MERCATOR.getTissotArea((x1 + x2) / 2, y1);
-        double b = MERCATOR.getTissotArea((x1 + x2) / 2, y2);
-        return a < b / 100 || b < a / 100 ? 100 : Math.max(b / a, a / b);
     }
 
     private String makeAlbersUSA() {
@@ -99,8 +92,11 @@ public class GeoProjection {
                 + LN + center;
     }
 
-    private String makeScaleForProjectedDimensions(double wid, double ht) {
-        return ".scale(Math.min((" + width + "-4)/" + F.format(wid) + ", (" + height + "-4)/" + F.format(ht) + "))";
+    private double getDistortion(double x1, double x2, double y1, double y2) {
+        if (y1 < -89 || y2 > 89) return 100;
+        double a = MERCATOR.getTissotArea((x1 + x2) / 2, y1);
+        double b = MERCATOR.getTissotArea((x1 + x2) / 2, y2);
+        return a < b / 100 || b < a / 100 ? 100 : Math.max(b / a, a / b);
     }
 
     private String makeWinkelTripel(double x1, double x2, double y1, double y2) {
@@ -176,5 +172,9 @@ public class GeoProjection {
                 + LN + parallels
                 + LN + scale
                 + LN + rotate;
+    }
+
+    private String makeScaleForProjectedDimensions(double wid, double ht) {
+        return ".scale(Math.min((" + width + "-4)/" + F.format(wid) + ", (" + height + "-4)/" + F.format(ht) + "))";
     }
 }

@@ -111,15 +111,16 @@ public abstract class Projection {
     }
 
     public final static class Mercator extends Projection {
-        public double[] inverse(double x, double y) {
-            double a = Math.toDegrees(x);
-            double b = Math.toDegrees(2 * Math.atan(Math.exp(y)) - Math.PI / 2);
-            return new double[]{a, b};
-        }        public double[] transform(double lon, double lat) {
+        public double[] transform(double lon, double lat) {
             double a = asRadians(lon);
             double b = asRadians(lat);
             return new double[]{a, Math.log(Math.tan(Math.PI / 4 + b / 2))};
+        }        public double[] inverse(double x, double y) {
+            double a = Math.toDegrees(x);
+            double b = Math.toDegrees(2 * Math.atan(Math.exp(y)) - Math.PI / 2);
+            return new double[]{a, b};
         }
+
 
 
     }
@@ -177,7 +178,7 @@ public abstract class Projection {
             double r1y = r1 - y;
             double lon = Math.atan2(x, r1y) / n;
             double v = (C - (x * x + r1y * r1y) * n * n) / (2 * n);
-            double lat = Math.asin(Math.min(1,Math.max(-1, v)));
+            double lat = Math.asin(Math.min(1, Math.max(-1, v)));
             return new double[]{
                     Math.toDegrees(lon) - rotation,
                     Math.toDegrees(lat)

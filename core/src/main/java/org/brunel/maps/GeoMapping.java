@@ -19,10 +19,11 @@ public class GeoMapping {
 
     /**
      * Builds itself on construction, setting all the required information fields
-     * @param names names to use
+     *
+     * @param names       names to use
      * @param geoAnalysis shared analysis information to match features against
      */
-     GeoMapping(Object[] names, GeoAnalysis geoAnalysis) {
+    GeoMapping(Object[] names, GeoAnalysis geoAnalysis) {
         // Search our feature files for potential maps
         // For each feature name, we have a list of information on where it is defined
         // Side effect: Records unmatched features
@@ -30,20 +31,9 @@ public class GeoMapping {
 
         // Return the best collection of files for those features.
         // Side effect: sets the mappings
-        List<GeoFile> fileList = makeBestMatches(geoAnalysis, potential);
+        List<GeoFile> fileList = chooseFiles(potential, geoAnalysis.geoFiles);
 
         files = fileList.toArray(new GeoFile[fileList.size()]);
-    }
-
-    public double[] totalBounds() {
-        double[] bounds = files[0].bounds.clone();
-        for (int i=1; i<files.length; i++) {
-            bounds[0] = Math.min(bounds[0], files[i].bounds[0]);
-            bounds[1] = Math.max(bounds[1], files[i].bounds[1]);
-            bounds[2] = Math.min(bounds[2], files[i].bounds[2]);
-            bounds[3] = Math.max(bounds[3], files[i].bounds[3]);
-        }
-        return bounds;
     }
 
     private Map<Integer, List<FeatureDetail>> findAllMappings(Object[] names, GeoAnalysis geoAnalysis) {
@@ -67,24 +57,32 @@ public class GeoMapping {
         return contained;
     }
 
-    private Integer findBest(Map<Integer, List<FeatureDetail>> contained, GeoFile[] files) {
-        // The best item has the most items in it. In case of tie, use smallest file
-        Integer best = null;
-        int bestContentCount = 0;
-        for (Map.Entry<Integer, List<FeatureDetail>> e : contained.entrySet()) {
-            Integer k = e.getKey();
-            List<FeatureDetail> v = e.getValue();
-            if (v.size() > bestContentCount) {
-                // Wins by having more items
-                best = k;
-                bestContentCount = v.size();
-            } else if (v.size() == bestContentCount && files[k].isBetter(files[best])) {
-                // Wins by having same number of items, but "is better"
-                best = k;
-                bestContentCount = v.size();
-            }
+    private List<GeoFile> chooseFiles(Map<Integer, List<FeatureDetail>> potential, GeoFile[] files) {
+        List<GeoFile> fileList = new ArrayList<GeoFile>();          // The currently chosen files
+        double[] bounds = null;                                     // The bounds of those files
+
+        // We find the best file, and remove any potential matches for it as they are now actually matched
+        // Keep doing this until there are no potential matches left
+        while (!potential.isEmpty()) {
+            Integer idx = findBest(potential, files, bounds);       // Best index among source files
+            bounds = union(bounds, files[idx].bounds);              // Update total bounds
+            int resultIndex = fileList.size();                      // The index into this output file
+            fileList.add(files[idx]);                               // We will use this file
+            List<FeatureDetail> features = potential.remove(idx);   // We will use these details (now actual)
+            removeItems(potential, features);                       // Remove any matches from other lists
+            for (FeatureDetail s : features)                        // Record match information
+                mapping.put(s.name, new int[]{resultIndex, s.indexWithinFile});
         }
-        return best;
+        return fileList;
+    }
+
+    private double[] union(double[] a, double[] b) {
+        if (a == null) return b;
+        if (b == null) return a;
+        return new double[]{
+                Math.min(a[0], b[0]), Math.max(a[1], b[1]),
+                Math.min(a[2], b[2]), Math.max(a[3], b[3])
+        };
     }
 
     // Find a match, if necessary by removing accent marks and periods
@@ -99,21 +97,30 @@ public class GeoMapping {
         return featureMap.get(s);
     }
 
-    private List<GeoFile> makeBestMatches(GeoAnalysis geoAnalysis, Map<Integer, List<FeatureDetail>> potential) {
-        List<GeoFile> fileList = new ArrayList<GeoFile>();
+    private Integer findBest(Map<Integer, List<FeatureDetail>> contained, GeoFile[] files, double[] bounds) {
+        // The best score is a ratio of the "goodness" (number of features) divided by the "badness" -- increase in bounds size
 
-        // We find the best file, and remove any potential matches for it as they are now actually matched
-        // Keep doing this until there are no potential matches left
-        while (!potential.isEmpty()) {
-            Integer sourceIndex = findBest(potential, geoAnalysis.geoFiles);   // Best index among source files
-            int resultIndex = fileList.size();                              // The index into this output file
-            fileList.add(geoAnalysis.geoFiles[sourceIndex]);                // We will use this file
-            List<FeatureDetail> features = potential.remove(sourceIndex);   // We will use these details (now actual)
-            removeItems(potential, features);                               // remove any matches from other lists
-            for (FeatureDetail s : features)                                // Record match information
-                mapping.put(s.name, new int[]{resultIndex, s.indexWithinFile});
+        Integer best = null;
+        double bestScore = 0;
+        for (Map.Entry<Integer, List<FeatureDetail>> e : contained.entrySet()) {
+            Integer k = e.getKey();
+            List<FeatureDetail> v = e.getValue();
+
+            double good = v.size();                                     // Features we want
+            double[] increasedBounds = union(bounds, files[k].bounds);
+            double sizeDelta = Math.pow(area(increasedBounds) - area(bounds), 0.5);
+
+            double d = Math.pow(good,2) / sizeDelta;
+            if (d > bestScore) {
+                best = k;
+                bestScore = d;
+            }
         }
-        return fileList;
+        return best;
+    }
+
+    private double area(double[] bounds) {
+        return bounds == null ? 0 : (bounds[1] - bounds[0]) * (bounds[3] - bounds[2]);
     }
 
     private void removeItems(Map<Integer, List<FeatureDetail>> contained, List<FeatureDetail> removeThese) {
@@ -123,6 +130,12 @@ public class GeoMapping {
             list.removeAll(removeThese);
             if (list.isEmpty()) contained.remove(k);
         }
+    }
+
+    public double[] totalBounds() {
+        double[] bounds = null;
+        for (GeoFile i : files) bounds = union(bounds, i.bounds);
+        return bounds;
     }
 
     private static class FeatureDetail {

@@ -18,8 +18,8 @@ import java.util.regex.Pattern;
  */
 public class GeoAnalysis {
 
-    private static GeoAnalysis INSTANCE;                                                         // The singleton
     private static final Pattern PATTERN = Pattern.compile("\\p{InCombiningDiacriticalMarks}+"); // Removes diacretics
+    private static GeoAnalysis INSTANCE;                                                         // The singleton
 
     /**
      * Gets the singleton instance
@@ -31,27 +31,17 @@ public class GeoAnalysis {
         return INSTANCE;
     }
 
-    /**
-     * For a set of features, returns the mappping to use for them
-     *
-     * @param names feature names
-     * @return resulting mapping
-     */
-    public GeoMapping make(Object[] names) {
-        return new GeoMapping(names, this);
+    public static void writeMapping(ScriptWriter out, GeoMapping map) {
+        // We assume only one file for now -- will change later
+        out.add("{").indentMore();
+        int i = 0;
+        for (Map.Entry<Object, int[]> s : map.mapping.entrySet()) {
+            if (i++ > 0) out.add(", ");
+            if (i % 5 == 0) out.onNewLine();
+            out.add("'").add(s.getKey()).add("':").add(s.getValue()[1]);
+        }
+        out.indentLess().onNewLine().add("}");
     }
-
-    static String removeAccents(String s) {
-        String decomposed = Normalizer.normalize(s, Normalizer.Form.NFD);
-        return PATTERN.matcher(decomposed).replaceAll("");
-    }
-
-    static String removePeriods(String s) {
-        // Do not remove from XX.YY pattern
-        if (s.length() == 5 && s.charAt(2) == '.') return s;
-        return s.replaceAll("\\.", "");
-    }
-
     final Map<String, int[][]> featureMap;                // For each feature, a pair of [fileIndex,featureIndex]
     final GeoFile[] geoFiles;                             // Feature files we can use
 
@@ -66,7 +56,7 @@ public class GeoAnalysis {
             int n = fileLine.length / 3;
             geoFiles = new GeoFile[n];
             for (int i = 0; i < n; i++) {
-                geoFiles[i] = new GeoFile(fileLine[3*i],fileLine[3*i+1],fileLine[3*i+2]);
+                geoFiles[i] = new GeoFile(fileLine[3 * i], fileLine[3 * i + 1], fileLine[3 * i + 2]);
             }
 
             // Read the features
@@ -103,15 +93,24 @@ public class GeoAnalysis {
         }
     }
 
-    public static void writeMapping(ScriptWriter out, GeoMapping map) {
-        // We assume only one file for now -- will change later
-        out.add("{").indentMore();
-        int i = 0;
-        for (Map.Entry<Object, int[]> s : map.mapping.entrySet()) {
-            if (i++ > 0) out.add(", ");
-            if (i%5 ==0) out.onNewLine();
-            out.add("'").add(s.getKey()).add("':").add(s.getValue()[1]);
-        }
-        out.indentLess().onNewLine().add("}");
+    static String removeAccents(String s) {
+        String decomposed = Normalizer.normalize(s, Normalizer.Form.NFD);
+        return PATTERN.matcher(decomposed).replaceAll("");
+    }
+
+    static String removePeriods(String s) {
+        // Do not remove from XX.YY pattern
+        if (s.length() == 5 && s.charAt(2) == '.') return s;
+        return s.replaceAll("\\.", "");
+    }
+
+    /**
+     * For a set of features, returns the mapping to use for them
+     *
+     * @param names feature names
+     * @return resulting mapping
+     */
+    public GeoMapping make(Object[] names) {
+        return new GeoMapping(names, this);
     }
 }

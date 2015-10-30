@@ -12,7 +12,7 @@ public class GeoFile {
         this.name = name;
         this.size = Integer.parseInt(sizeString);
         String[] b = boundsString.split(",");
-        this.bounds = new double[] {
+        this.bounds = new double[]{
                 Double.parseDouble(b[0]),
                 Double.parseDouble(b[1]),
                 Double.parseDouble(b[2]),
@@ -26,5 +26,9 @@ public class GeoFile {
 
     private double maxDimension() {
         return Math.max(bounds[1] - bounds[0], bounds[3] - bounds[2]);
+    }
+
+    public String toString() {
+        return name;
     }
 }
