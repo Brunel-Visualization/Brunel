@@ -114,8 +114,7 @@ class GeoMap extends D3Diagram {
 
         String id = D3Util.canonicalFieldName(idField);
 
-        String source = Data.quote("http://brunelvis.org/geo/0.7/" + mapping.files[0].name + ".json");
-        out.add("if (BrunelD3.addFeatures(data,", source, ", features, data." + id, ", this, transitionMillis)) return").endStatement();
+        out.add("if (BrunelD3.addFeatures(data, features, data." + id, ", this, transitionMillis)) return").endStatement();
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {

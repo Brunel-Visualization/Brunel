@@ -33,10 +33,6 @@ class Network extends D3Diagram {
         this.dependency = dependency;
     }
 
-    public boolean showsElement() {
-        return true;                    // Yup, apply all usual element rules
-    }
-
     public ElementDetails writeDataConstruction() {
 
         String nodeField = quoted(vis.fKeys.get(0).asField());

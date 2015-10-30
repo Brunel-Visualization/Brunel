@@ -1,6 +1,7 @@
 package org.brunel.maps;
 
 import org.brunel.build.util.ScriptWriter;
+import org.brunel.data.Data;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -8,8 +9,10 @@ import java.io.LineNumberReader;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 /**
@@ -32,16 +35,40 @@ public class GeoAnalysis {
     }
 
     public static void writeMapping(ScriptWriter out, GeoMapping map) {
-        // We assume only one file for now -- will change later
-        out.add("{").indentMore();
-        int i = 0;
-        for (Map.Entry<Object, int[]> s : map.mapping.entrySet()) {
-            if (i++ > 0) out.add(", ");
-            if (i % 5 == 0) out.onNewLine();
-            out.add("'").add(s.getKey()).add("':").add(s.getValue()[1]);
+
+        // Overall combined map from file name -> (Map of data name to feature index in that file)
+        Map<String, Map<Object, Integer>> combined = new LinkedHashMap<String, Map<Object, Integer>>();
+        for (GeoFile geo : map.files) combined.put(geo.name, new TreeMap<Object, Integer>());
+
+        for (Map.Entry<Object, int[]> e : map.mapping.entrySet()) {
+            Object dataName = e.getKey();
+            int[] indices = e.getValue();               // [FILE INDEX, FEATURE KEY]
+            String fileName = map.files[indices[0]].name;
+            Map<Object, Integer> features = combined.get(fileName);
+            features.put(dataName, indices[1]);
         }
+
+        // Write out the resulting structure
+        out.add("{").indentMore();
+        GeoFile[] files = map.files;
+        for (int k = 0; k < files.length; k++) {
+            if (k>0) out.add(",").onNewLine();
+            String fileName = files[k].name;
+            String source = Data.quote("http://brunelvis.org/geo/0.7/" + fileName + ".json");
+            out.onNewLine().add(source, ":{").indentMore();
+            int i = 0;
+            Map<Object, Integer> features = combined.get(fileName);
+            for (Map.Entry<Object, Integer> s : features.entrySet()) {
+                if (i++ > 0) out.add(", ");
+                if (i % 5 == 0) out.onNewLine();
+                out.add("'").add(s.getKey()).add("':").add(s.getValue());
+            }
+            out.indentLess().onNewLine().add("}");
+        }
+
         out.indentLess().onNewLine().add("}");
     }
+
     final Map<String, int[][]> featureMap;                // For each feature, a pair of [fileIndex,featureIndex]
     final GeoFile[] geoFiles;                             // Feature files we can use
 

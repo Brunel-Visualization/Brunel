@@ -498,7 +498,7 @@ var BrunelD3 = (function () {
             var content = labeling.content(d);                              // To set html content
             if (!content) return;                                           // No tooltips if no data
 
-            if (!tooltip) {0
+            if (!tooltip) {
                 tooltip = document.createElement('div');                    // The tooltip div
                 document.body.appendChild(tooltip);                         // add to document
             }
@@ -723,45 +723,61 @@ var BrunelD3 = (function () {
     /*
      Reads feature data from a geojson file and adds to the data's rows
      data:      Brunel's data structure
-     src:       Source file to read from (must be CORS-compliant)
-     mapping:   Maps from features to their indices
+     locations: Maps from source file -> map of data names to their geo file indices
      idFunc:    Function to return the element ID
      element:   The element we are loading data into
      millis:    Time to use for transitioning in the next build
      returns true if we have started loading, but not added the data in yet
      */
-    function makeMap(data, src, mapping, idFunc, element, millis) {
+    function makeMap(data, locations, idFunc, element, millis) {
+
+        // locations looks like { "http://../world.json":{'FR':23, 'GE':123, ...} , ... }
 
         function read() {
-            // Read in the features and attach to the data
-            d3.json(src, function (error, x) {
-                element._features = {};       // Map from names to features
-                x.features.forEach(function (d, i) {
-                    element._features[d.properties.a] = d;
-                    d.key = '#' + i
-                });
-                element.build(millis);       // When data ready, build again
-            });
+            element._features = {};             // Maps names in data to GeoJSON features
+            element._featureExtras = [];        // Other, unused, features
+
+            var fileIndex = 1, src,
+                remaining = Object.keys(locations).length;          // Number of files to download
+
+            // Read in the features and attach to the data, defining each in a closure
+            for (src in locations) {
+                new function (url, mapping, idx) {
+                    d3.json(url, function (error, x) {
+                        var i, id, rev = {};                        // reverse mapping
+                        for (i in mapping) rev[mapping[i]] = i;     // 'rev' maps from feature ID to data name
+                        x.features.forEach(function (d, i) {
+                            id = rev[d.properties.a];               // The data name for this
+                            if (id)
+                                element._features[id] = d;          // Remember it by data name
+                            else {
+                                element._featureExtras.push(d);     // Store as an unused element
+                                d.key = '#' + idx + "-" + i;        // With a unique key
+                                console.log("Adding extra feature = " + d.key + " : " + d.properties.a);
+
+                            }
+                        });
+                        if (!--remaining) element.build(millis);    // When data ready, build again
+                    });
+                }(src, locations[src], fileIndex++);
+            }
         }
 
         function build() {
+            console.log("Drawing extra features = " + element._featureExtras.length);
             // Add feature geometry to each row
-            var i, used = {},
-                rows = [], back = [],                                           // rows and 'background item' rows
-                fmap = element._features;                                       // Built map of features
+            var i, rows = [];
             for (i = 0; i < data._rows.length; i++) {
                 var row = data._rows[i],                                        // The data row
                     fname = idFunc(row),                                        // The ID for that row
-                    feature = fmap[mapping[fname]];                             // The feature for that name
+                    feature = element._features[fname];                         // The feature for that name
                 if (feature) {
                     row.geometry = feature.geometry;
                     row.type = feature.type;
-                    used[fname] = true;
                     rows.push(row);
                 }
             }
-            for (i in fmap) if (!used[i]) back.push(fmap[i]);                   // The non-data items
-            data._rows = back.concat(rows);                                     // non data underneath data
+            data._rows = element._featureExtras.concat(rows);                   // non data before (underneath) data
         }
 
         if (!element._features) {
@@ -773,7 +789,7 @@ var BrunelD3 = (function () {
         }
     }
 
-    // Expose these methods
+// Expose these methods
     return {
         'geometry': geometries,
         'addTooltip': makeTooltip,
@@ -793,4 +809,5 @@ var BrunelD3 = (function () {
         'time': time
     }
 
-})();
+})
+();

@@ -51,11 +51,9 @@ public abstract class D3Diagram {
     final D3LabelBuilder labelBuilder;
     final String[] position;
     private boolean isHierarchy = false;
-    protected final Dataset data;
 
     D3Diagram(VisSingle vis, Dataset data, ScriptWriter out) {
         this.vis = vis;
-        this.data = data;
         this.out = out;
         this.size = vis.fSize.isEmpty() ? null : vis.fSize.get(0);
         this.position = vis.positionFields();
@@ -76,11 +74,6 @@ public abstract class D3Diagram {
         // Define the classes for this group; note that we flag hierarchies specially also
         String classes = "diagram " + vis.tDiagram.name();
         return "'" + (isHierarchy ? classes + " hierarchy" : classes) + "'";
-    }
-
-    /* Most diagrams control their element sizes directly */
-    public boolean showsElement() {
-        return false;
     }
 
     public abstract ElementDetails writeDataConstruction();

@@ -33,11 +33,6 @@ class Tree extends D3Diagram {
         this.pad = 10;
     }
 
-    public boolean showsElement() {
-        // Tree diagram shows element items at the tree locations
-        return true;
-    }
-
     public ElementDetails writeDataConstruction() {
         out.comment("Define tree (hierarchy) data structures");
         makeHierarchicalTree();
