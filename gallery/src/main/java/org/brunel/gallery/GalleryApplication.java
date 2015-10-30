@@ -56,15 +56,11 @@ import com.ibm.json.java.JSONObject;
 public class GalleryApplication extends Application {
 
 	private static final String INDEX_LOCATION = "/org/brunel/gallery/RenderTemplate.html";
-	private static final String INDEX_LOCATION2 = "/org/brunel/gallery/RenderTemplate2.html";
 	private static final GalleryCache GALLERY_CACHE = new GalleryCache();
 	private static final String HTML = new Scanner(
 			GalleryApplication.class.getResourceAsStream(INDEX_LOCATION),
 			"UTF-8").useDelimiter("\\A").next();
-	private static final String HTML2 = new Scanner(
-			GalleryApplication.class.getResourceAsStream(INDEX_LOCATION2),
-			"UTF-8").useDelimiter("\\A").next();
-	
+		
 	static {
 		DataCache.useCache(GALLERY_CACHE); // Use the Bluemix Data Cache service
 											// when Brunel stores/retrieves data
@@ -115,12 +111,10 @@ public class GalleryApplication extends Application {
 			@QueryParam("description") String description,
 			@QueryParam("width") String width,
 			@QueryParam("height") String height,
-			@QueryParam("control_height") String controlHeight,
-			@QueryParam("version") String version
+			@QueryParam("control_height") String controlHeight
 			) {
 
 		
-		version = version != null ? version : "1";
 		title = title != null ? title : "";
 		description = description != null ? description : "";
 		width = width != null ? width : "800";
@@ -128,7 +122,7 @@ public class GalleryApplication extends Application {
 		controlHeight = controlHeight != null ? controlHeight : "0";
 		brunelSrc = brunelSrc != null ? brunelSrc : "data('sample:US States.csv') bubble label(abbr) size(population) color(dem_rep)";
 		
-		String htmlVersion = (!version.trim().equals("2")) ? HTML : HTML2;
+		String htmlVersion =HTML;
 		
 		String html = htmlVersion.replace("$TITLE$", title);
 		html = html.replace("$BRUNEL_SRC$", Data.quote(brunelSrc));
