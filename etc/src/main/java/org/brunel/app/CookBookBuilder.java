@@ -21,9 +21,9 @@ public class CookBookBuilder extends DocBuilder {
 	private static final String ITEM_FORMAT = "**[%s](%s)** %s\n\n`%s`\n\n";
 	
 
-    private static final String BASIC = "/org/brunel/app/basic.txt";
-    private static final String STATS = "/org/brunel/app/stats.txt";
-    private static final String INFO_VIS = "/org/brunel/app/infovis.txt";
+    public static final String BASIC = "/org/brunel/app/basic.txt";
+    public static final String STATS = "/org/brunel/app/stats.txt";
+    public static final String INFO_VIS = "/org/brunel/app/infovis.txt";
 
     public static void main(String[] args) throws Exception {
     	

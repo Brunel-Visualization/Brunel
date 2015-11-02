@@ -20,7 +20,7 @@ package org.brunel.app;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
-class GalleryBuilder extends DocBuilder {
+public class GalleryBuilder extends DocBuilder {
 
     private static final String ITEM_FORMAT = "<td width=\"33%%\">\n" +
             "  <a href=\"%s\"><img title=\"%s\" src=\"https://raw.github.com/Brunel-Visualization/Brunel/master/etc/src/main/resources/gallery/%s\"/></a>\n" +
@@ -35,7 +35,7 @@ class GalleryBuilder extends DocBuilder {
         %s - title              ... Title for the first one
      */
 
-    private static final String GALLERY = "/org/brunel/app/gallery.txt";
+    public static final String GALLERY = "/org/brunel/app/gallery.txt";
     private int row = 0;
     private int column = 0;
 

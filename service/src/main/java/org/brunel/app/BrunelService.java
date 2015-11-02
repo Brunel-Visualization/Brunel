@@ -104,6 +104,9 @@ public class BrunelService extends Application {
      * @param brunelUrl (optional) a URL to a file containing the Brunel syntax
      * @param width the desired width of the resulting visualization
      * @param height the desired height of the resulting visualization
+     * @param title (optional) title to include with the visualization
+     * @param description (optional) description to include with the visualization
+     * @param show_brunel (option) footer including the brunel syntax
      * @param dataUrl a URL pointing to the CSV to use for the visualization's data.  Note if the Brunel contains a data()
      *  function, then this will be used instead
      * @param filesLoc (optional) an alternate location for the main Brunel javascript
@@ -116,14 +119,22 @@ public class BrunelService extends Application {
     							 @QueryParam("brunel_url") String brunelUrl,
                                  @QueryParam("width") int width,
                                  @QueryParam("height") int height,
+                                 @QueryParam("title") String title,
+                                 @QueryParam("description") String description,
+                                 @QueryParam("show_brunel") String showBrunel,
                                  @QueryParam("data") String dataUrl,
                                  @QueryParam("files") String filesLoc
     ) {
 
     	try {
+    		if (title == null) title = "";
+    		if (description == null) description = "";
+    		String brunelStr = new Boolean(showBrunel) ? brunelSrc : "";
+    		
+    		String[] titles = new String[] {title, description};
 	    	String src = brunelSrc != null ? brunelSrc : ContentReader.readContentFromUrl(URI.create(brunelUrl));
 	        D3Builder builder = D3Integration.makeD3(readBrunelData(dataUrl, true), src, width, height, "visualization");
-	        String response = WebDisplay.writeHtml(builder, width, height, null, "");
+	        String response = WebDisplay.writeHtml(builder, width, height, null, brunelStr, titles);
     		return Response.ok(response).header("Access-Control-Allow-Origin", "*").build();
     	}
     	catch (IOException ex) {

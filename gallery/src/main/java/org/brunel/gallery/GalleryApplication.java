@@ -18,6 +18,7 @@ package org.brunel.gallery;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Scanner;
 import java.util.UUID;
 
@@ -36,7 +37,11 @@ import org.brunel.build.util.ContentReader;
 import org.brunel.build.util.DataCache;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
+import org.brunel.data.Field;
 import org.brunel.data.io.CSV;
+import org.brunel.util.Library;
+
+import com.ibm.json.java.JSONObject;
 
 /**
  * A simple gallery web application for Brunel. This app is expected to be
@@ -55,7 +60,7 @@ public class GalleryApplication extends Application {
 	private static final String HTML = new Scanner(
 			GalleryApplication.class.getResourceAsStream(INDEX_LOCATION),
 			"UTF-8").useDelimiter("\\A").next();
-	
+		
 	static {
 		DataCache.useCache(GALLERY_CACHE); // Use the Bluemix Data Cache service
 											// when Brunel stores/retrieves data
@@ -87,6 +92,8 @@ public class GalleryApplication extends Application {
 			return null;
 		}
 	}
+	
+	
 
 	/**
 	 * Create the gallery HTML page given Brunel syntax for a visualization
@@ -110,16 +117,53 @@ public class GalleryApplication extends Application {
 		
 		title = title != null ? title : "";
 		description = description != null ? description : "";
-		width = width != null ? width : "900";
-		height = height != null ? height : "500";
+		width = width != null ? width : "800";
+		height = height != null ? height : "450";
 		controlHeight = controlHeight != null ? controlHeight : "0";
-		String html = HTML.replace("$TITLE$", title);
+		brunelSrc = brunelSrc != null ? brunelSrc : "data('sample:US States.csv') bubble label(abbr) size(population) color(dem_rep)";
+		
+		String htmlVersion =HTML;
+		
+		String html = htmlVersion.replace("$TITLE$", title);
 		html = html.replace("$BRUNEL_SRC$", Data.quote(brunelSrc));
 		html = html.replace("$DESCRIPTION$", description);
 		html = html.replace("$WIDTH$", width);
 		html = html.replace("$HEIGHT$", height);
 		html = html.replace("$CONTROL_SIZE$", controlHeight);
 		return html;
+	}
+	
+	@GET
+	@Path("univariates")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject getBrunelUnivariates(@QueryParam("id") String dataId) {
+		Dataset d = null;
+		try {
+			d = DataCache.get(dataId);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		JSONObject results = new JSONObject();
+		if (d != null) {
+			for (Field f : d.fields) {
+				if (!f.isSynthetic()) results.put(f.label, Library.choose(f).toString());
+			}			
+		}
+		return results;
+	}
+	
+	@GET
+	@Path("gallery")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject getGalleryJson() {
+		return ExampleBuilder.GALLERY;
+	}
+	
+	@GET
+	@Path("cookbook")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject getCookBookJson() {
+		return ExampleBuilder.COOKBOOK;
 	}
 
 }
