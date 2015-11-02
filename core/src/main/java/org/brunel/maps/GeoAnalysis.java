@@ -83,7 +83,7 @@ public class GeoAnalysis {
             int n = fileLine.length / 3;
             geoFiles = new GeoFile[n];
             for (int i = 0; i < n; i++) {
-                geoFiles[i] = new GeoFile(fileLine[3 * i], fileLine[3 * i + 1], fileLine[3 * i + 2]);
+                geoFiles[i] = new GeoFile(fileLine[3 * i], i, fileLine[3 * i + 1], fileLine[3 * i + 2]);
             }
 
             // Read the features

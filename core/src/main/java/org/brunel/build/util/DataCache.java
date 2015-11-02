@@ -80,7 +80,9 @@ public class DataCache {
             } else if (uri.getScheme().equals("generate")) {
                 Dataset data = GeneratedData.make(uri.getSchemeSpecificPart());
                 localCache.store(dataKey, data);
-            }else if (uri.getScheme().equals("raw")) {
+            } else if (uri.getScheme().equals("raw")) {
+                // Raw data is simply a CSV file with newlines replaced by semi-colons. This is intended for quick
+                // testing and not as a production facility -- complex CSV will likely fail.
                 Dataset data = Dataset.make(CSV.read(dataKey.substring(4).replaceAll(";", "\n")));
                 localCache.store(dataKey, data);
             }

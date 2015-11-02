@@ -30,10 +30,19 @@ public class GeoMapping {
         Map<Integer, List<FeatureDetail>> potential = findAllMappings(names, geoAnalysis);
 
         // Return the best collection of files for those features.
-        // Side effect: sets the mappings
         List<GeoFile> fileList = chooseFiles(potential, geoAnalysis.geoFiles);
-
         files = fileList.toArray(new GeoFile[fileList.size()]);
+
+        // Build mapping and unmatched details from the files
+        buildMapping(potential);
+    }
+
+    private void buildMapping(Map<Integer, List<FeatureDetail>> potential) {
+        for (int i = 0; i < files.length; i++) {
+            List<FeatureDetail> use = potential.get(files[i].index);        // Features used in this file
+            for (FeatureDetail s : use)                                     // Record match information
+                mapping.put(s.name, new int[]{i, s.indexWithinFile});
+        }
     }
 
     private Map<Integer, List<FeatureDetail>> findAllMappings(Object[] names, GeoAnalysis geoAnalysis) {
@@ -57,21 +66,22 @@ public class GeoMapping {
         return contained;
     }
 
+
     private List<GeoFile> chooseFiles(Map<Integer, List<FeatureDetail>> potential, GeoFile[] files) {
         List<GeoFile> fileList = new ArrayList<GeoFile>();          // The currently chosen files
         double[] bounds = null;                                     // The bounds of those files
 
+        // Copy the potential list to those that we have not yet matched (initially, all of them)
+        Map<Integer, List<FeatureDetail>> unfound = new HashMap<Integer, List<FeatureDetail>>(potential);
+
         // We find the best file, and remove any potential matches for it as they are now actually matched
         // Keep doing this until there are no potential matches left
-        while (!potential.isEmpty()) {
-            Integer idx = findBest(potential, files, bounds);       // Best index among source files
+        while (!unfound.isEmpty()) {
+            Integer idx = findBest(unfound, files, bounds);       // Best index among source files
             bounds = union(bounds, files[idx].bounds);              // Update total bounds
-            int resultIndex = fileList.size();                      // The index into this output file
             fileList.add(files[idx]);                               // We will use this file
-            List<FeatureDetail> features = potential.remove(idx);   // We will use these details (now actual)
-            removeItems(potential, features);                       // Remove any matches from other lists
-            for (FeatureDetail s : features)                        // Record match information
-                mapping.put(s.name, new int[]{resultIndex, s.indexWithinFile});
+            List<FeatureDetail> features = unfound.remove(idx);   // We will use these details (now actual)
+            removeItems(unfound, features);                       // Remove any matches from other lists
         }
         return fileList;
     }
@@ -108,9 +118,9 @@ public class GeoMapping {
 
             double good = v.size();                                     // Features we want
             double[] increasedBounds = union(bounds, files[k].bounds);
-            double sizeDelta = Math.pow(area(increasedBounds) - area(bounds), 0.5);
+            double sizeDelta = Math.pow(area(increasedBounds) - area(bounds), 0.4)+ 0.001;
 
-            double d = Math.pow(good,2) / sizeDelta;
+            double d = Math.pow(good, 2) / sizeDelta;
             if (d > bestScore) {
                 best = k;
                 bestScore = d;
