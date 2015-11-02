@@ -753,7 +753,6 @@ var BrunelD3 = (function () {
                             else {
                                 element._featureExtras.push(d);     // Store as an unused element
                                 d.key = '#' + idx + "-" + i;        // With a unique key
-                                console.log("Adding extra feature = " + d.key + " : " + d.properties.a);
 
                             }
                         });
@@ -764,7 +763,6 @@ var BrunelD3 = (function () {
         }
 
         function build() {
-            console.log("Drawing extra features = " + element._featureExtras.length);
             // Add feature geometry to each row
             var i, rows = [];
             for (i = 0; i < data._rows.length; i++) {
