@@ -52,7 +52,7 @@ public class GeoAnalysis {
         out.add("{").indentMore();
         GeoFile[] files = map.files;
         for (int k = 0; k < files.length; k++) {
-            if (k>0) out.add(",").onNewLine();
+            if (k > 0) out.add(",").onNewLine();
             String fileName = files[k].name;
             String source = Data.quote("http://brunelvis.org/geo/0.7/" + fileName + ".json");
             out.onNewLine().add(source, ":{").indentMore();
@@ -83,7 +83,7 @@ public class GeoAnalysis {
             int n = fileLine.length / 3;
             geoFiles = new GeoFile[n];
             for (int i = 0; i < n; i++) {
-                geoFiles[i] = new GeoFile(fileLine[3 * i], fileLine[3 * i + 1], fileLine[3 * i + 2]);
+                geoFiles[i] = new GeoFile(fileLine[3 * i], i, fileLine[3 * i + 1], fileLine[3 * i + 2]);
             }
 
             // Read the features

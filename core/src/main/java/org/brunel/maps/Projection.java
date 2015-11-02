@@ -115,13 +115,13 @@ public abstract class Projection {
             double a = asRadians(lon);
             double b = asRadians(lat);
             return new double[]{a, Math.log(Math.tan(Math.PI / 4 + b / 2))};
-        }        public double[] inverse(double x, double y) {
+        }
+
+        public double[] inverse(double x, double y) {
             double a = Math.toDegrees(x);
             double b = Math.toDegrees(2 * Math.atan(Math.exp(y)) - Math.PI / 2);
             return new double[]{a, b};
         }
-
-
 
     }
 
