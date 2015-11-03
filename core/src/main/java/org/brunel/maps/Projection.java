@@ -3,7 +3,7 @@ package org.brunel.maps;
 /**
  * Created by graham on 10/15/15.
  */
-public abstract class Projection {
+abstract class Projection {
 
     public static void main(String[] args) {
         Projection a = new Mercator();
@@ -64,7 +64,7 @@ public abstract class Projection {
      * @param lon1 degrees
      * @param lon2 degrees
      * @param lat  degrees, common for both latitudes
-     * @return distance in screen units, >= 0
+     * @return distance in screen units
      */
     public final double distanceX(double lon1, double lon2, double lat) {
         double[] p = transform(lon1, lat);
@@ -78,7 +78,7 @@ public abstract class Projection {
      * @param lat1 degrees
      * @param lat2 degrees
      * @param lon  degrees, common for both latitudes
-     * @return distance in screen units, >= 0
+     * @return distance in screen units
      */
     public final double distanceY(double lat1, double lat2, double lon) {
         double[] p = transform(lon, lat1);

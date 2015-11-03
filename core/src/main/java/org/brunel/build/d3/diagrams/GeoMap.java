@@ -21,7 +21,6 @@ import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.ElementDefinition;
 import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.maps.GeoAnalysis;
@@ -106,7 +105,7 @@ class GeoMap extends D3Diagram {
     }
 
     private void writeFeatureHookup(GeoMapping mapping, String idField) {
-        if (mapping.files.length == 0) throw new IllegalStateException("No suitable map found");
+        if (mapping.fileCount() == 0) throw new IllegalStateException("No suitable map found");
 
         out.add("var features = ");
         GeoAnalysis.writeMapping(out, mapping);

@@ -1,10 +1,12 @@
 package org.brunel.maps;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,9 +17,13 @@ import java.util.TreeMap;
  */
 public class GeoMapping {
 
-    public final GeoFile[] files;                                                   // The files to use
+    private final GeoFile[] targetFiles;                                            // The files that match features we care about
+    private final List<FeatureDetail>[] targetFeatures;                             // The features contained in each target file
     public final Map<Object, int[]> mapping = new TreeMap<Object, int[]>();         // Feature -> [file, featureKey]
     public final List<Object> unmatched = new ArrayList<Object>();                  // Features we did not map
+
+    private GeoFileGroup best;                                                    // We search to determine this
+    public final GeoFile[] result;                                                  // The files to use
 
     /**
      * Builds itself on construction, setting all the required information fields
@@ -25,23 +31,39 @@ public class GeoMapping {
      * @param names       names to use
      * @param geoAnalysis shared analysis information to match features against
      */
+    @SuppressWarnings("unchecked")
     GeoMapping(Object[] names, GeoAnalysis geoAnalysis) {
         // Search our feature files for potential maps
-        // For each feature name, we have a list of information on where it is defined
-        // Side effect: Records unmatched features
         Map<Integer, List<FeatureDetail>> potential = findAllMappings(names, geoAnalysis);
+        targetFiles = new GeoFile[potential.size()];
+        targetFeatures = new List[potential.size()];
+        int index = 0;
+        for (Map.Entry<Integer, List<FeatureDetail>> e : potential.entrySet()) {
+            targetFiles[index] = geoAnalysis.geoFiles[e.getKey()];
+            targetFeatures[index] = e.getValue();
+            index++;
+        }
 
-        // Return the best collection of files for those features.
-        Set<GeoFile> fileList = chooseBestSetOfFiles(potential, geoAnalysis.geoFiles);
-        files = fileList.toArray(new GeoFile[fileList.size()]);
+        // Calculate the best collection of files for those features.
+        searchForBestSubset();
+        result = best.files.toArray(new GeoFile[best.files.size()]);
+        Arrays.sort(result);
 
-        // Build mapping and unmatched details from the files
-        buildMapping(potential);
+        // Build mapping
+        for (int i = 0; i < result.length; i++) {
+            List<FeatureDetail> use = potential.get(result[i].index);        // Features used in this file
+            for (FeatureDetail s : use)                                     // Record match information
+                mapping.put(s.name, new int[]{i, s.indexWithinFile});
+        }
+    }
+
+    public int fileCount() {
+        return result.length;
     }
 
     public double[] totalBounds() {
         double[] bounds = null;
-        for (GeoFile i : files) bounds = union(bounds, i.bounds);
+        for (GeoFile i : result) bounds = union(bounds, i.bounds);
         return bounds;
     }
 
@@ -54,25 +76,25 @@ public class GeoMapping {
         };
     }
 
-    private void buildMapping(Map<Integer, List<FeatureDetail>> potential) {
-        for (int i = 0; i < files.length; i++) {
-            List<FeatureDetail> use = potential.get(files[i].index);        // Features used in this file
-            for (FeatureDetail s : use)                                     // Record match information
-                mapping.put(s.name, new int[]{i, s.indexWithinFile});
-        }
-    }
-
-    private Set<GeoFile> chooseBestSetOfFiles(Map<Integer, List<FeatureDetail>> potential, GeoFile[] files) {
+    private void searchForBestSubset() {
         //Count the number of features we can match
         Set<FeatureDetail> unmatched = new HashSet<FeatureDetail>();
-        for (List<FeatureDetail> f : potential.values())
+        for (List<FeatureDetail> f : targetFeatures)
             unmatched.addAll(f);
 
         int N = unmatched.size();
+        best = new GeoFileGroup(N, Collections.<GeoFile>emptySet(), Collections.emptySet());
 
-        PotentialGroup best = new PotentialGroup(N, Collections.<GeoFile>emptySet(), Collections.emptySet());
-        best = searchForBestAdditions(best, best, potential, files);
-        return best.files;
+        // Create list of possible ones to use, sorted with the most features first
+
+        List<Integer> possibles = new ArrayList<Integer>();
+        for (int i = 0; i < targetFiles.length; i++) possibles.add(i);
+        Collections.sort(possibles, new Comparator<Integer>() {
+            public int compare(Integer a, Integer b) {
+                return targetFeatures[b].size() - targetFeatures[a].size();
+            }
+        });
+        searchForBestAdditions(best, possibles);
     }
 
     private Map<Integer, List<FeatureDetail>> findAllMappings(Object[] names, GeoAnalysis geoAnalysis) {
@@ -109,24 +131,18 @@ public class GeoMapping {
     }
 
     // Recursively search for the best files to add
-    private PotentialGroup searchForBestAdditions(PotentialGroup bestSoFar, PotentialGroup current, Map<Integer, List<FeatureDetail>> potential, GeoFile[] files) {
-        if (current == null) return bestSoFar;                          // Cannot do anything better
-        if (current.isBetter(bestSoFar)) bestSoFar = current;           // If we are the best, update
-        if (current.complete()) return bestSoFar;                       // If we are complete, cannot add anything
+    private void searchForBestAdditions(GeoFileGroup current, List<Integer> possibles) {
+        if (current.isBetter(best)) best = current;                     // If we are the best, update
+        if (possibles.isEmpty()) return;                                // No more we can do
+        int maxImprovement = targetFeatures[possibles.get(0)].size();   // Additions can at best add this many
+        if (current.cannotImprove(best, maxImprovement)) return;        // If we cannot get better, be done
+        LinkedList<Integer> working = new LinkedList<Integer>(possibles);
 
-        Map<Integer, List<FeatureDetail>> tryThese = new LinkedHashMap<Integer, List<FeatureDetail>>(potential);
-
-        while (!tryThese.isEmpty()) {
-            int k = tryThese.keySet().iterator().next();
-            List<FeatureDetail> features = tryThese.remove(k);
-            PotentialGroup g = current.add(files[k], features);
-            PotentialGroup bestForG = searchForBestAdditions(bestSoFar, g, tryThese, files);
-            if (bestForG.isBetter(bestSoFar))
-                bestSoFar = bestForG;
+        while (!working.isEmpty()) {
+            int k = working.removeFirst();
+            GeoFileGroup trial = current.add(targetFiles[k], targetFeatures[k]);
+            if (trial != null) searchForBestAdditions(trial, working);
         }
-
-        return bestSoFar;
-
     }
 
     private static class FeatureDetail {

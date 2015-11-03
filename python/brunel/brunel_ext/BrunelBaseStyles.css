@@ -177,6 +177,7 @@
     stroke: #67b51b
 }
 
+.brunel .element.polygon.nondata {fill:#f2f2f2; stroke:#c0c0c0}
 
 .brunel .horizontal-box {
     -moz-box-orient: horizontal;

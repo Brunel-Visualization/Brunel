@@ -39,7 +39,7 @@ public class ActionParameterChoice extends ScoredChoice {
 	/**
 	 * Use when the ActionParameter is for a field that is dual encoded.  The index is the location
 	 * in an array of ActionParameter for the original.
-	 * @param dualEncodedLinkIndex
+	 * @param dualEncodedLinkIndex not sure ...
 	 */
 	public ActionParameterChoice(int dualEncodedLinkIndex, Param originalParm) {
 		super(1.0);

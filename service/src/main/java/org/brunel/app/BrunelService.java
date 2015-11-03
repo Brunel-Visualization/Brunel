@@ -17,8 +17,15 @@
 
 package org.brunel.app;
 
-import java.io.IOException;
-import java.net.URI;
+import org.brunel.action.Action;
+import org.brunel.build.d3.D3Builder;
+import org.brunel.build.util.ContentReader;
+import org.brunel.build.util.DataCache;
+import org.brunel.data.Dataset;
+import org.brunel.match.BestMatch;
+import org.brunel.util.BrunelD3Result;
+import org.brunel.util.D3Integration;
+import org.brunel.util.WebDisplay;
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.Consumes;
@@ -33,16 +40,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
-
-import org.brunel.action.Action;
-import org.brunel.build.d3.D3Builder;
-import org.brunel.build.util.ContentReader;
-import org.brunel.build.util.DataCache;
-import org.brunel.data.Dataset;
-import org.brunel.match.BestMatch;
-import org.brunel.util.BrunelD3Result;
-import org.brunel.util.D3Integration;
-import org.brunel.util.WebDisplay;
+import java.io.IOException;
+import java.net.URI;
 
 /**
  * Sample JAX-RS web application that produces Brunel visualizations.  Currently only d3 output is supported.
@@ -106,7 +105,6 @@ public class BrunelService extends Application {
      * @param height the desired height of the resulting visualization
      * @param title (optional) title to include with the visualization
      * @param description (optional) description to include with the visualization
-     * @param show_brunel (option) footer including the brunel syntax
      * @param dataUrl a URL pointing to the CSV to use for the visualization's data.  Note if the Brunel contains a data()
      *  function, then this will be used instead
      * @param filesLoc (optional) an alternate location for the main Brunel javascript
@@ -130,7 +128,7 @@ public class BrunelService extends Application {
     		if (title == null) title = "";
     		if (description == null) description = "";
     		String brunelStr = new Boolean(showBrunel) ? brunelSrc : "";
-    		
+
     		String[] titles = new String[] {title, description};
 	    	String src = brunelSrc != null ? brunelSrc : ContentReader.readContentFromUrl(URI.create(brunelUrl));
 	        D3Builder builder = D3Integration.makeD3(readBrunelData(dataUrl, true), src, width, height, "visualization");
@@ -203,10 +201,10 @@ public class BrunelService extends Application {
     		t = MediaType.TEXT_HTML;
     		message = String.format(ERROR_TEMPLATE, message);
     	}
-    	
+
     	ResponseBuilder rb = Response.status(Status.fromStatusCode(code)).header("Access-Control-Allow-Origin", "*").
                         entity(message).type(t);;
-                       
+
         return new WebApplicationException(rb.build());
 	}
 

@@ -34,23 +34,29 @@ public class GeoAnalysis {
         return INSTANCE;
     }
 
+    /**
+     * Given a geomapping, assembles the Javascript needed to use it
+     *
+     * @param out destination for the Javascript
+     * @param map the mapping to output
+     */
     public static void writeMapping(ScriptWriter out, GeoMapping map) {
 
         // Overall combined map from file name -> (Map of data name to feature index in that file)
         Map<String, Map<Object, Integer>> combined = new LinkedHashMap<String, Map<Object, Integer>>();
-        for (GeoFile geo : map.files) combined.put(geo.name, new TreeMap<Object, Integer>());
+        for (GeoFile geo : map.result) combined.put(geo.name, new TreeMap<Object, Integer>());
 
         for (Map.Entry<Object, int[]> e : map.mapping.entrySet()) {
             Object dataName = e.getKey();
             int[] indices = e.getValue();               // [FILE INDEX, FEATURE KEY]
-            String fileName = map.files[indices[0]].name;
+            String fileName = map.result[indices[0]].name;
             Map<Object, Integer> features = combined.get(fileName);
             features.put(dataName, indices[1]);
         }
 
         // Write out the resulting structure
         out.add("{").indentMore();
-        GeoFile[] files = map.files;
+        GeoFile[] files = map.result;
         for (int k = 0; k < files.length; k++) {
             if (k > 0) out.add(",").onNewLine();
             String fileName = files[k].name;

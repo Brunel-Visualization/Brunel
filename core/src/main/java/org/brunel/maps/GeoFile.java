@@ -3,7 +3,7 @@ package org.brunel.maps;
 /**
  * Keeps basic information on a geo file
  */
-public class GeoFile {
+class GeoFile implements Comparable<GeoFile> {
     public final String name;           // File name
     public final int index;             // index within the global list of files
     public final double size;           // Size in Kbytes
@@ -20,6 +20,10 @@ public class GeoFile {
                 Double.parseDouble(b[2]),
                 Double.parseDouble(b[3])
         };
+    }
+
+    public int compareTo(GeoFile o) {
+        return name.compareTo(o.name);
     }
 
     public String toString() {

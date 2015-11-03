@@ -44,7 +44,7 @@ public class ActionChoice extends ScoredChoice {
 	 * overall score for the resulting Action.
 	 * @param originalAction An originating action to replace the parameters
 	 * @param chosenParms A set of action parameter choices to use for the new Action.
-	 * @return
+	 * @return suitable action
 	 */
 	public static ActionChoice makeActionChoice(Action originalAction, ActionParameterChoice[] chosenParms) {
 

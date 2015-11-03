@@ -9,32 +9,38 @@ import java.util.Set;
 /**
  * A set of files that could potentially cover the mapping we need
  */
-public class PotentialGroup {
+class GeoFileGroup {
+    private static final int MAX_FILES = 3;                 // No more files than this
     public final Set<GeoFile> files;
     private final int requiredFeatureCount;
     private final Set<Object> featureSet;
     private Double area;
 
-    public PotentialGroup(int requiredFeatureCount, Collection<GeoFile> files, Collection<?> features) {
+    public GeoFileGroup(int requiredFeatureCount, Collection<GeoFile> files, Collection<?> features) {
         this.requiredFeatureCount = requiredFeatureCount;
         this.files = new LinkedHashSet<GeoFile>(files);
         this.featureSet = new HashSet<Object>(features);
     }
 
-    public PotentialGroup add(GeoFile file, List<?> features) {
+    public GeoFileGroup add(GeoFile file, List<?> features) {
         if (files.contains(file)) return null;                      // Already included
         Set<Object> combinedFeatures = new HashSet<Object>(featureSet);
         if (!combinedFeatures.addAll(features)) return null;        // if not change, don't use this
         Set<GeoFile> combinedFiles = new HashSet<GeoFile>(files);
         combinedFiles.add(file);
-        return new PotentialGroup(requiredFeatureCount, combinedFiles, combinedFeatures);
+        return new GeoFileGroup(requiredFeatureCount, combinedFiles, combinedFeatures);
     }
 
-    public boolean complete() {
-        return featureSet.size() == requiredFeatureCount;
+    public boolean cannotImprove(GeoFileGroup best, int maxFeaturesPerFile) {
+        if (featureSet.size() == requiredFeatureCount) return true;         // Nothing new can get added
+        if (files.size() == MAX_FILES) return true;                         // Limited number of files
+
+        // An upper bound on the number of features we could add
+        int upperFeatureBound = featureSet.size() + (MAX_FILES - files.size()) * maxFeaturesPerFile;
+        return upperFeatureBound < best.featureSet.size();
     }
 
-    public boolean isBetter(PotentialGroup o) {
+    public boolean isBetter(GeoFileGroup o) {
         if (o == this) return false;
 
         // More features are better
@@ -67,4 +73,7 @@ public class PotentialGroup {
         };
     }
 
+    public String toString() {
+        return files + ":" + featureSet.size() + "/" + requiredFeatureCount;
+    }
 }

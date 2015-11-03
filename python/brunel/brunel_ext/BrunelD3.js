@@ -137,7 +137,7 @@ var BrunelD3 = (function () {
         // Find the centroid
         var c = path.centroid(d);
         var b = svgItem.getBBox();
-        return {x: c.x, y: c.y, box: shrink(b)}
+        return {x: c[0], y: c[1], box: shrink(b)}
     }
 
     function pathLoc(svgItem) {
@@ -502,7 +502,7 @@ var BrunelD3 = (function () {
                 tooltip = document.createElement('div');                    // The tooltip div
                 document.body.appendChild(tooltip);                         // add to document
             }
-            tooltip.setAttribute('class', 'brunel tooltip above');      // Base style
+            tooltip.setAttribute('class', 'brunel tooltip above');          // Base style
             tooltip.style.visibility = 'visible';                           // make visible
             tooltip.style.width = null;   								    // Allow free width (for now)
             tooltip.innerHTML = content;                                    // set html content
@@ -511,13 +511,13 @@ var BrunelD3 = (function () {
             if (tooltip.offsetWidth > max_width)                            // If too wide, set a width for the div
                 tooltip.style.width = max_width + "px";
 
-            var p = getScreenTipPosition(this);                             // get absolute location of the target
+            var p = getScreenTipPosition(this, d);                          // get absolute location of the target
             var top = p.y - 10 - tooltip.offsetHeight;                      // top location
 
             if (top < 2 && p.y < geom['inner_height'] / 2) {                // We are in top half up AND overflow top
                 var old = labeling.method;                                  // save the original method
                 labeling.method = "bottom";                                 // switch to finding lower position
-                p = getScreenTipPosition(this);                             // get modified location of the target
+                p = getScreenTipPosition(this, d);                          // get modified location of the target
                 labeling.method = old;                                      // restore old method
                 top = p.y + 10;
                 tooltip.setAttribute('class', 'brunel tooltip below');      // Show style for BELOW the target
@@ -531,8 +531,8 @@ var BrunelD3 = (function () {
             if (tooltip) tooltip.style.visibility = 'hidden';
         });   // hide it
 
-        function getScreenTipPosition(item) {
-            var labelPos = makeLoc(item, labeling);
+        function getScreenTipPosition(item, d) {
+            var labelPos = makeLoc(item, labeling, '', d);
             pt.x = labelPos.x + (document.documentElement.scrollLeft || document.body.scrollLeft);
             pt.y = labelPos.y + (document.documentElement.scrollTop || document.body.scrollTop);
             return pt.matrixTransform(item.getScreenCTM());
@@ -720,7 +720,74 @@ var BrunelD3 = (function () {
         }
     };
 
-    // Expose these methods
+    /*
+     Reads feature data from a geojson file and adds to the data's rows
+     data:      Brunel's data structure
+     locations: Maps from source file -> map of data names to their geo file indices
+     idFunc:    Function to return the element ID
+     element:   The element we are loading data into
+     millis:    Time to use for transitioning in the next build
+     returns true if we have started loading, but not added the data in yet
+     */
+    function makeMap(data, locations, idFunc, element, millis) {
+
+        // locations looks like { "http://../world.json":{'FR':23, 'GE':123, ...} , ... }
+
+        function read() {
+            element._features = {};             // Maps names in data to GeoJSON features
+            element._featureExtras = [];        // Other, unused, features
+
+            var fileIndex = 1, src,
+                remaining = Object.keys(locations).length;          // Number of files to download
+
+            // Read in the features and attach to the data, defining each in a closure
+            for (src in locations) {
+                new function (url, mapping, idx) {
+                    d3.json(url, function (error, x) {
+                        var i, id, rev = {};                        // reverse mapping
+                        for (i in mapping) rev[mapping[i]] = i;     // 'rev' maps from feature ID to data name
+                        x.features.forEach(function (d, i) {
+                            id = rev[d.properties.a];               // The data name for this
+                            if (id)
+                                element._features[id] = d;          // Remember it by data name
+                            else {
+                                element._featureExtras.push(d);     // Store as an unused element
+                                d.key = '#' + idx + "-" + i;        // With a unique key
+
+                            }
+                        });
+                        if (!--remaining) element.build(millis);    // When data ready, build again
+                    });
+                }(src, locations[src], fileIndex++);
+            }
+        }
+
+        function build() {
+            // Add feature geometry to each row
+            var i, rows = [];
+            for (i = 0; i < data._rows.length; i++) {
+                var row = data._rows[i],                                        // The data row
+                    fname = idFunc(row),                                        // The ID for that row
+                    feature = element._features[fname];                         // The feature for that name
+                if (feature) {
+                    row.geometry = feature.geometry;
+                    row.type = feature.type;
+                    rows.push(row);
+                }
+            }
+            data._rows = element._featureExtras.concat(rows);                   // non data before (underneath) data
+        }
+
+        if (!element._features) {
+            read();
+            return true
+        } else {
+            build();
+            return false
+        }
+    }
+
+// Expose these methods
     return {
         'geometry': geometries,
         'addTooltip': makeTooltip,
@@ -736,7 +803,9 @@ var BrunelD3 = (function () {
         'trans': transition,
         'sizedPath': sizedPath,
         'tween': transitionTween,
+        'addFeatures': makeMap,
         'time': time
     }
 
-})();
+})
+();
