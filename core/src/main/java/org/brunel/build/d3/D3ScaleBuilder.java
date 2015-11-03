@@ -18,11 +18,12 @@
 package org.brunel.build.d3;
 
 import org.brunel.action.Param;
-import org.brunel.build.Palette;
 import org.brunel.build.util.AxisDetails;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.PositionFields;
 import org.brunel.build.util.ScriptWriter;
+import org.brunel.color.ColorMapping;
+import org.brunel.color.Palette;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
@@ -333,9 +334,9 @@ class D3ScaleBuilder {
 
     private void addColorScale(Param p, VisSingle vis) {
         Field f = fieldById(p, vis);
-        scaleWithDomain("color", new Field[]{f}, Purpose.color, 9, "linear");
-        Object[] palette = Palette.makePalette(f, p.hasModifiers() ? p.firstModifier().asString() : null);
-        out.addChained("range([ ").addQuoted(palette).add("])").endStatement();
+        ColorMapping palette = Palette.makeColorMapping(f, p.modifiers());
+        scaleWithDomain("color", new Field[]{f}, Purpose.color, palette.values.length, "linear", palette.values);
+        out.addChained("range([ ").addQuoted(palette.colors).add("])").endStatement();
     }
 
     private void addRotateTicks() {
@@ -361,7 +362,7 @@ class D3ScaleBuilder {
 
         Field f = fieldById(p, vis);
 
-        scaleWithDomain(name, new Field[]{f}, Purpose.size, 2, defaultTransform);
+        scaleWithDomain(name, new Field[]{f}, Purpose.size, 2, defaultTransform, null);
         if (f.preferCategorical()) {
             int length = f.categories().length;
             double[] sizes = new double[length];
@@ -377,7 +378,7 @@ class D3ScaleBuilder {
         double min = p.hasModifiers() ? p.firstModifier().asDouble() : 0.2;
         Field f = fieldById(p, vis);
 
-        scaleWithDomain("opacity", new Field[]{f}, Purpose.color, 2, "linear");
+        scaleWithDomain("opacity", new Field[]{f}, Purpose.color, 2, "linear", null);
         if (f.preferCategorical()) {
             int length = f.categories().length;
             double[] sizes = new double[length];
@@ -582,7 +583,8 @@ class D3ScaleBuilder {
         return a.name.equals(b.name) && a.preferCategorical() == b.preferCategorical();
     }
 
-    private int scaleWithDomain(String name, Field[] fields, Purpose purpose, int numericDomainDivs, String defaultTransform) {
+    private int scaleWithDomain(String name, Field[] fields, Purpose purpose, int numericDomainDivs, String defaultTransform, Object[] partitionPoints) {
+
         out.onNewLine().add("var", "scale_" + name, "= ");
 
         // No position for this dimension, so util a default [0,1] scale
@@ -596,6 +598,7 @@ class D3ScaleBuilder {
         // Categorical field (includes binned data)
         if (ModelUtil.combinationIsCategorical(fields, purpose.isCoord)) {
             // Combine all categories in the position after each color
+            // We use all the categories in the data; we do not need the partition points
             List<Object> list = getCategories(fields);
             out.add("d3.scale.ordinal()").addChained("domain([").addQuotedCollection(list).add("])");
             return list.size();
@@ -628,7 +631,6 @@ class D3ScaleBuilder {
             includeZero = 0;
         }
 
-
         NumericScale detail = Auto.makeNumericScale(scaleField, nice, padding, includeZero, 9, false);
         double min = detail.min;
         double max = detail.max;
@@ -638,7 +640,11 @@ class D3ScaleBuilder {
             DateFormat dateFormat = (DateFormat) field.property("dateFormat");
             D3Util.DateBuilder dateBuilder = new D3Util.DateBuilder();
             for (int i = 0; i < divs.length; i++) {
-                double v = min + (max - min) * i / (numericDomainDivs - 1);
+                Object v;
+                if (partitionPoints == null)
+                    v = min + (max - min) * i / (numericDomainDivs - 1);
+                else
+                    v = partitionPoints[i];
                 divs[i] = dateBuilder.make(Data.asDate(v), dateFormat, true);
             }
             out.add("d3.time.scale()");
@@ -660,14 +666,19 @@ class D3ScaleBuilder {
             }
             if (transform.equals("root")) transform = "sqrt";                   // D3 uses this name
             out.add("d3.scale." + transform + "()");
-            for (int i = 0; i < divs.length; i++) divs[i] = min + (max - min) * i / (numericDomainDivs - 1);
+            for (int i = 0; i < divs.length; i++) {
+                if (partitionPoints == null)
+                    divs[i] = min + (max - min) * i / (numericDomainDivs - 1);
+                else
+                    divs[i] = partitionPoints[i];
+            }
         }
         out.addChained("domain([").add(Data.join(divs)).add("])");
         return -1;
     }
 
     private void writePositionScale(String name, Field[] fields, String range, boolean fillToEdge) {
-        int categories = scaleWithDomain(name, fields, Purpose.valueOf(name), 2, "linear");
+        int categories = scaleWithDomain(name, fields, Purpose.valueOf(name), 2, "linear", null);
 
         if (fields.length == 0) {
             out.addChained("range(" + range + ")");
