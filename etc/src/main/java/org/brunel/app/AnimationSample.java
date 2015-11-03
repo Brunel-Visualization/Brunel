@@ -37,7 +37,7 @@ import java.util.Scanner;
 
 public class AnimationSample {
 
-    //        public static final String COMMAND = "bar treemap x(origin, year, mpg) color(year) size(weight) sum(weight) bin(year, mpg) label(mpg) tooltip(#all)";
+//            public static final String COMMAND = "bar treemap x(origin, year, mpg) color(year) size(weight) sum(weight) bin(year, mpg) label(mpg) tooltip(#all)";
 //    public static final String COMMAND = " x(year) y(horsepower) color(#selection)| bar x(cylinders) y(#count) mean(mpg) bin(cylinders)";
 //    public static final String COMMAND = " bar x(origin) y(#count) color(#selection)";
     private static final String COMMAND = " x(year) color(cylinders) y(mpg) sum(mpg) label(mpg) tooltip(#all) bar stack";
@@ -56,6 +56,7 @@ public class AnimationSample {
         BuilderOptions options = new BuilderOptions();
         options.visIdentifier = "vis";
         options.className = "Vis";
+        options.generateBuildCode = false;
         D3Builder builder = D3Builder.make(options);
         builder.build(item, 800, 600);
         AnimationSample sample = new AnimationSample("Animation Samples", text, builder);
@@ -116,29 +117,31 @@ public class AnimationSample {
 
     private void addDriverCode(StringBuilder html) {
         html.append("var anim=200, id=null, brunel=Vis('vis');\n");
-        html.append("brunel.build(table);\n\n");
+        html.append("brunel.build(table1);\n\n");
 
-        html.append("function run(f) { if (id) stop(); id = setInterval(function() {f(); brunel.build(table);}, anim) };\n");
+        html.append("function run(f) { if (id) stop(); id = setInterval(function() {f(); brunel.data(table1); brunel.rebuild(150);}, anim) };\n");
         html.append("function stop() { clearInterval(id); id = null};\n");
 
         html.append("function randomSwaps(fType) {\n");
-        html.append("  var fieldName = brunel.charts[0].elements[0].fields[fType];\n");
+        html.append("  var element = brunel.charts[0].elements[0];\n");
+        html.append("  var fieldName = element.fields[fType];\n");
         html.append("  var index = -1;\n");
-        html.append("  if (fieldName) { index=0; while (brunel.data().fields[index].name != fieldName) index++; }\n");
+        html.append("  if (fieldName) { index=0; while (element.data().fields[index].name != fieldName) index++; }\n");
         html.append("  run(function() {\n");
         html.append("     for (var i=0; i<30; i++) {\n");
-        html.append("       var a = Math.floor(Math.random()*(table.length-1)) + 1;\n");
-        html.append("       var b = Math.floor(Math.random()*(table.length-1)) + 1;\n");
-        html.append("       var c = index >= 0 ? index : Math.floor(Math.random()*(table[0].length));\n");
-        html.append("       var t = table[a][c]; table[a][c] = table[b][c]; table[b][c] = t;\n");
+        html.append("       var a = Math.floor(Math.random()*(table1.length-1)) + 1;\n");
+        html.append("       var b = Math.floor(Math.random()*(table1.length-1)) + 1;\n");
+        html.append("       var c = index >= 0 ? index : Math.floor(Math.random()*(table1[0].length));\n");
+        html.append("       var t = table1[a][c]; table1[a][c] = table1[b][c]; table1[b][c] = t;\n");
         html.append("     }\n");
         html.append("  });\n");
         html.append("};\n\n");
 
         html.append("function filter(fType) {\n");
-        html.append("  var fieldName = brunel.charts[0].fields[fType];\n");
+        html.append("  var element = brunel.charts[0].elements[0];\n");
+        html.append("  var fieldName = element.fields[fType];\n");
         html.append("  if (!fieldName) return; else fieldName = fieldName[0];\n");
-        html.append("  var field = brunel.data().field(fieldName);\n");
+        html.append("  var field = element.data().field(fieldName);\n");
         html.append("  var start = 0, increment=0.1, window=0.2;\n");
         html.append("  run(function() {\n");
         html.append("       if (start+window > 1) start = 0;\n");
