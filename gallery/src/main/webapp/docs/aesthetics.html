@@ -44,34 +44,46 @@
     There are three different classes of mapping used:
 <ul>
     <li><b>nominal</b>: Used by default for categorical data, this mapping has no order and tries to create a spread of
-        different hues to distinguish as many different hues as possible
+        different hues to distinguish as many different hues as possible.
     </li>
     <li><b>diverging</b>: Used by default for most numeric data, this mapping assumes that high and low values are of
-        interest
-        and so creates a two-ended color range that highlights those values
+        interest and so creates a two-ended color range that highlights those values
     </li>
-    <li><b>continuous</b>: Used for counts and binned data, this mapping goes from low to high with one range of color
+    <li><b>sequential</b>: Used for counts and binned data, this mapping goes from low to high with one range of color
     </li>
 </ul>
-Some examples are given below:
+You can explicitly request the type of mapping you want to use, as shown below:
 </p>
 
 <p class="examples"><a onClick="showAction(this.text)">color(winter:nominal) bar x(winter) y(#count) bin(winter)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">color(winter:diverging) bar x(winter) y(#count) bin(winter)</a>
 </p>
-<p class="examples"><a onClick="showAction(this.text)">color(winter:continuous) bar x(winter) y(#count) bin(winter)</a>
+<p class="examples"><a onClick="showAction(this.text)">color(winter:sequential) bar x(winter) y(#count) bin(winter)</a>
 </p>
 
 <p>
-    In addition to these classes of mappings, explicit color mappings can be used from the following list:
-    <code>blue</code>,<code>green</code>,<code>red</code>,<code>yellow</code>,<code>gray</code>,
-    <code>blue-red</code>,<code>green-red</code>,<code>green-blue</code>, <code>white-black</code>,
-    <code>red-blue</code>,<code>red-green</code>,<code>blue-green</code>, <code>black-white</code>:
+    For detailed color mapping specification, you can specify a sequential scale by name (<i>Green</i>,
+    <i>PurpleBlue</i>,<i>BlueGreen</i>,<i>Red</i>,<i>Purple</i>,<i>GreenYellow</i>,<i>BlueYellow</i>,<i>Brown</i>).
+    These are scales that mix hues to create a good scale with the named colors as the dominant ones. You can also
+    specify a scale going from white to a defined color by specifying the CSS name of the color, or the #RRGGBB code:
 </p>
-<p class="examples"><a onClick="showAction(this.text)">color(winter:gray) x(winter) y(summer) style("size:200%")</a></p>
-<p class="examples"><a onClick="showAction(this.text)">color(winter:blue-red) x(winter) y(summer) style("size:200%")</a>
+<p class="examples"><a onClick="showAction(this.text)">color(winter:Blue) x(winter) y(summer) style("size:200%")</a></p>
+<p class="examples"><a onClick="showAction(this.text)">color(winter:black) x(winter) y(summer) style("size:200%")</a>
 </p>
-<p class="examples"><a onClick="showAction(this.text)">color(winter:green) x(winter) y(summer) style("size:200%")</a>
+<p class="examples"><a onClick="showAction(this.text)">color(winter:#800800) x(winter) y(summer) style("size:200%")</a>
+</p>
+
+<p>
+    You can specify a divergent color scale by naming two sequential scales to use at either ends. If the data is
+    numeric, you can specify a mid-point for the neutral center tone. Note also that in one example we add an asterisk
+    at the end of the scale. You can add as many of these as you like to any scale. They act to mute the strengths
+    of the colors, making them less vivid and more suitable for large areas
+</p>
+<p class="examples"><a onClick="showAction(this.text)">color(winter:black-yellow) x(winter) y(summer) style("size:200%")</a></p>
+<p class="examples"><a onClick="showAction(this.text)">color(winter:black-50-yellow) x(winter) y(summer) style("size:200%")</a></p>
+<p class="examples"><a onClick="showAction(this.text)">color(winter:Magenta-Lime*) x(winter) y(summer) style("size:200%")</a>
+</p>
+<p class="examples"><a onClick="showAction(this.text)">color(winter:#800800-white) x(winter) y(summer) style("size:200%")</a>
 </p>
 
 

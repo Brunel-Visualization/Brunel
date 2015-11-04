@@ -127,7 +127,7 @@ public class TestSerialize {
 
     @Test
     public void testNastyData() {
-        String DATA = "a,b\n,\né,1.23456789e-213\n\u2026,NaN";
+        String DATA = "a,b\n,\n\u00e9,1.23456789e-213\n\u2026,NaN";
         Dataset dataset = Dataset.make(CSV.read(DATA));
         byte[] bytes = Serialize.serializeDataset(dataset);
         assertEquals("6 1 1 2 2 97 0 65 0 3 4 3 195 169 0 226 128 166 0 3 0 1 2 2 98 0 " +

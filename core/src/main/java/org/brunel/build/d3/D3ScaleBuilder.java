@@ -290,6 +290,8 @@ class D3ScaleBuilder {
         if (colorLegendField.preferCategorical()) {
             // Categorical data can just grab it from the domain
             legendTicks = "scale_color.domain()";
+            // Binned data reads in opposite direction (bottom to top)
+            if (colorLegendField.isBinned()) legendTicks += ".reverse()";
         } else {
             // Numeric must calculate a nice range
             NumericScale details = Auto.makeNumericScale(colorLegendField, true, new double[]{0, 0}, 0.25, 7, false);
@@ -334,7 +336,17 @@ class D3ScaleBuilder {
 
     private void addColorScale(Param p, VisSingle vis) {
         Field f = fieldById(p, vis);
-        ColorMapping palette = Palette.makeColorMapping(f, p.modifiers());
+
+        // Determine if the element fills a big area
+        boolean largeElement = vis.tElement == VisTypes.Element.area || vis.tElement == VisTypes.Element.bar
+                || vis.tElement == VisTypes.Element.polygon;
+        if (vis.tDiagram == VisTypes.Diagram.map || vis.tDiagram == VisTypes.Diagram.treemap)
+            largeElement = true;
+
+        if (vis.tElement == VisTypes.Element.path && !vis.fSize.isEmpty())
+            largeElement = true;
+
+        ColorMapping palette = Palette.makeColorMapping(f, p.modifiers(), largeElement);
         scaleWithDomain("color", new Field[]{f}, Purpose.color, palette.values.length, "linear", palette.values);
         out.addChained("range([ ").addQuoted(palette.colors).add("])").endStatement();
     }
