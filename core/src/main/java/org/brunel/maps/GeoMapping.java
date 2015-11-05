@@ -57,6 +57,18 @@ public class GeoMapping {
         }
     }
 
+    public GeoMapping(double[] bounds, GeoAnalysis geoAnalysis) {
+        // Really simple -- just find the one file that fits best
+        GeoFile best = null;
+        for (GeoFile f : geoAnalysis.geoFiles) {
+            if (best == null) best = f;
+            else if (best.fitExcess(bounds) > f.fitExcess(bounds)) best = f;
+        }
+        targetFiles = new GeoFile[] { best};
+        targetFeatures = new List[0];
+        result = targetFiles;
+    }
+
     public int fileCount() {
         return result.length;
     }
@@ -67,7 +79,7 @@ public class GeoMapping {
         return bounds;
     }
 
-    private double[] union(double[] a, double[] b) {
+    public static double[] union(double[] a, double[] b) {
         if (a == null) return b;
         if (b == null) return a;
         return new double[]{

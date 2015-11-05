@@ -18,6 +18,7 @@
 package org.brunel.build.d3;
 
 import org.brunel.action.Param;
+import org.brunel.build.d3.diagrams.GeoMap;
 import org.brunel.build.util.AxisDetails;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.PositionFields;
@@ -31,6 +32,7 @@ import org.brunel.data.auto.Auto;
 import org.brunel.data.auto.NumericScale;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
+import org.brunel.maps.GeoMapping;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
@@ -53,6 +55,10 @@ import java.util.Set;
  */
 class D3ScaleBuilder {
 
+    public boolean isGeo() {
+        return geo != null;
+    }
+
     public boolean needsAxes() {
         return hAxis.exists() || vAxis.exists();
     }
@@ -68,14 +74,16 @@ class D3ScaleBuilder {
     }
 
     final VisTypes.Coordinates coords;                      // Combined coordinate system derived from all elements
-    final boolean isDiagram;                                // True id we want to treat it as a diagram coord system
+    final boolean isDiagram;                                // True if we want to treat it as a diagram coord system
+
+    private final GeoMapping[] geo;                         // Geographic mappings
 
     private final Field colorLegendField;                   // Field to use for the color legend
     private final AxisDetails hAxis, vAxis;                 // The same as the above, but at the physical location
     private final double[] marginTLBR;                      // Margins between the coordinate area and the chart space
     private final VisSingle[] element;                      // The elements ...
     private final Dataset[] elementData;                    // ... and their data
-    private final PositionFields positionFields;
+    final PositionFields positionFields;                    // Details on positions
     private final ScriptWriter out;                         // Write definitions to here
 
     public D3ScaleBuilder(VisSingle[] element, Dataset[] elementData, PositionFields positionFields, double chartWidth, double chartHeight, ScriptWriter out) {
@@ -130,6 +138,19 @@ class D3ScaleBuilder {
         int marginRight = Math.max(hAxis.rightGutter, legendWidth);         // Overflow for hAxis, or legend
         marginTLBR = new double[]{marginTop, marginLeft, marginBottom, marginRight};
 
+        geo = makeGeoMappings(element, elementData, positionFields);
+    }
+
+    // The whole array returned will be null if nothing is a map
+    private GeoMapping[] makeGeoMappings(VisSingle[] element, Dataset[] elementData, PositionFields positionFields) {
+        GeoMapping[] maps = null;
+        for (int i = 0; i < element.length; i++) {
+            if (element[i].tDiagram == VisTypes.Diagram.map) {
+                if (maps == null) maps = new GeoMapping[element.length];
+                maps[i] = GeoMap.makeMapping(element[i], elementData[i], positionFields);
+            }
+        }
+        return maps;
     }
 
     /**
@@ -283,6 +304,19 @@ class D3ScaleBuilder {
         interaction.addScaleInteractivity();
     }
 
+    public void writeProjection(D3Interaction interaction) {
+        // Calculate the full bounds
+        double[] bounds = null;
+        for (GeoMapping g : geo) {
+            if (g == null) continue;
+            if (bounds == null) bounds = g.totalBounds();
+            else bounds = GeoMapping.union(bounds, g.totalBounds());
+        }
+
+        // Write the projection for that
+        GeoMap.writeProjection(out, bounds);
+    }
+
     public void writeLegends(VisSingle vis) {
         if (vis.fColor.isEmpty() || colorLegendField == null) return;
         if (!vis.fColor.get(0).asField().equals(colorLegendField.name)) return;
@@ -407,10 +441,10 @@ class D3ScaleBuilder {
     }
 
     private boolean chooseIsDiagram() {
-        // Any non-diagram make the chart all non-diagram. Mixing diagrams and non-diagrams will
+        // Any diagram make the chart all diagram. Mixing diagrams and non-diagrams will
         // likely be useless at best, but we will not throw an error for it
-        for (VisSingle e : element) if (e.tDiagram == null) return false;
-        return true;
+        for (VisSingle e : element) if (e.tDiagram != null) return true;
+        return false;
     }
 
     private Field combineNumericFields(Field[] ff) {

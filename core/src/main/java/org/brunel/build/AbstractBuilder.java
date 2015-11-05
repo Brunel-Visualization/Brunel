@@ -77,7 +77,7 @@ public abstract class AbstractBuilder implements Builder {
     private String currentChartID;                  // Identifier for the chart we are building
     private String currentElementID;                // Identifier for the element we are building
     private StyleSheet visStyles;                   // Collection of style overrides for this visualization
-    protected Controls controls;                      // Contains the controls for the current chart
+    protected Controls controls;                    // Contains the controls for the current chart
     private Dataset[] datasets;                     // Data sets used by the VisItem being built
 
     public AbstractBuilder(BuilderOptions options) {

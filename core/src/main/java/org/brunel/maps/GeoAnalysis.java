@@ -146,4 +146,8 @@ public class GeoAnalysis {
     public GeoMapping make(Object[] names) {
         return new GeoMapping(names, this);
     }
+
+    public GeoMapping makeForSpace(double[] bounds) {
+        return new GeoMapping(bounds, this);
+    }
 }

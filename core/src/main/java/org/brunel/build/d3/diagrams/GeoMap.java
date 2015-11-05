@@ -20,6 +20,7 @@ package org.brunel.build.d3.diagrams;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.ElementDefinition;
 import org.brunel.build.util.ElementDetails;
+import org.brunel.build.util.PositionFields;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
@@ -28,30 +29,64 @@ import org.brunel.maps.GeoMapping;
 import org.brunel.maps.GeoProjection;
 import org.brunel.model.VisSingle;
 
-class GeoMap extends D3Diagram {
+public class GeoMap extends D3Diagram {
 
     private final String idField;               // Field used for identifiers
     private final GeoMapping mapping;           // Mapping of identifiers to features
 
-    public GeoMap(VisSingle vis, Dataset data, ScriptWriter out) {
-        super(vis, data, out);
-        if (vis.fKeys.isEmpty()) {
-            if (vis.positionFields().length == 0)
-                throw new IllegalStateException("Maps need either a position field or key with the feature names");
-            idField = vis.positionFields()[0];
-        } else {
-            idField = vis.fKeys.get(0).asField();
-        }
-        Field key = data.field(idField);
-        mapping = GeoAnalysis.instance().make(key.categories());
+    public static GeoMapping makeMapping(VisSingle vis, Dataset data, PositionFields positions) {
+        String idField = getIDField(vis);
+
+        if (idField != null)
+            return GeoAnalysis.instance().make(data.field(idField).categories());
+
+        double[] bounds = getPositionsBounds(positions);
+
+        if (bounds != null)
+            return GeoAnalysis.instance().makeForSpace(bounds);
+        return null;
     }
 
-    public void addElementGlobals() {
+    public GeoMap(VisSingle vis, Dataset data, PositionFields positions, ScriptWriter out) {
+        super(vis, data, out);
+        idField = getIDField(vis);
+        mapping = makeMapping(vis, data, positions);
+        if (mapping == null)
+            throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
+    }
+
+    private static double[] getPositionsBounds(PositionFields positions) {
+        // Find the bounding box around the coordinates
+        double[] result = new double[]{Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY};
+        for (Field f : positions.allXFields) {
+            if (!f.isNumeric()) continue;
+            result[0] = Math.min(result[0], f.min());
+            result[1] = Math.max(result[1], f.max());
+        }
+        for (Field f : positions.allYFields) {
+            if (!f.isNumeric()) continue;
+            result[2] = Math.min(result[2], f.min());
+            result[3] = Math.max(result[3], f.max());
+        }
+        return (result[1] >= result[0] && result[3] >= result[2]) ? result : null;
+    }
+
+    private static String getIDField(VisSingle vis) {
+        if (vis.fKeys.isEmpty()) {
+            if (vis.positionFields().length == 0)
+                return null;
+            return vis.positionFields()[0];
+        } else {
+            return vis.fKeys.get(0).asField();
+        }
+    }
+
+    public static void writeProjection(ScriptWriter out, double[] bounds) {
         out.comment("Define the projection");
 
         // Calculate a suitable projection
         GeoProjection projection = new GeoProjection("geom.inner_width", "geom.inner_height", "winkel3");
-        String[] projectionDescription = projection.makeProjection(mapping.totalBounds()).split("\n");
+        String[] projectionDescription = projection.makeProjection(bounds).split("\n");
         out.indentMore();
         out.add("var ");
         out.indentMore();
@@ -82,7 +117,7 @@ class GeoMap extends D3Diagram {
                 .addChained("on('zoom', function() {").onNewLine();
         out.indentMore();
         out.add("projection.translate(zoom.translate()).scale(zoom.scale())").endStatement();
-        out.add("element.build(0)").endStatement();
+        out.add("rebuildSystem(0)").endStatement();
         out.indentLess().add("})");
         out.endStatement();
         out.indentLess();
@@ -111,9 +146,8 @@ class GeoMap extends D3Diagram {
         GeoAnalysis.writeMapping(out, mapping);
         out.endStatement();
 
-        String id = D3Util.canonicalFieldName(idField);
-
-        out.add("if (BrunelD3.addFeatures(data, features, data." + id, ", this, transitionMillis)) return").endStatement();
+        String idName = idField == null ? "null" : "data." + D3Util.canonicalFieldName(idField);
+        out.add("if (BrunelD3.addFeatures(data, features,", idName, ", this, transitionMillis)) return").endStatement();
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {

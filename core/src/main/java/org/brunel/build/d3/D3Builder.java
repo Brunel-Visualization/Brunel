@@ -126,7 +126,6 @@ public class D3Builder extends AbstractBuilder {
 
     public Object getVisualization() {
         return out.content();
-
     }
 
     protected String defineVisSystem(VisItem main, int width, int height) {
@@ -188,14 +187,22 @@ public class D3Builder extends AbstractBuilder {
         writeMainGroups();
 
         // Define scales and access functions
-        out.titleComment("Scales");
-        scalesBuilder.writeCoordinateScales(interaction);
+        if (scalesBuilder.isGeo()) {
+            out.titleComment("Projection");
+            scalesBuilder.writeProjection(interaction);
 
-        // Define the Axes
-        if (scalesBuilder.needsAxes()) {
-            out.titleComment("Axes");
-            scalesBuilder.writeAxes();
+        } else {
+
+            out.titleComment("Scales");
+            scalesBuilder.writeCoordinateScales(interaction);
+
+            // Define the Axes
+            if (scalesBuilder.needsAxes()) {
+                out.titleComment("Axes");
+                scalesBuilder.writeAxes();
+            }
         }
+
         chartIndex++;
         return chartClass;
     }
@@ -296,9 +303,6 @@ public class D3Builder extends AbstractBuilder {
 
         // Main method to make a vis
         out.titleComment("Build element from data");
-
-        // Anything that needs to be defined outside the build routine (and retained between builds)
-        elementBuilder.addElementGlobals();
 
         out.add("function build(transitionMillis) {").ln().indentMore();
         elementBuilder.generate(elementIndex);

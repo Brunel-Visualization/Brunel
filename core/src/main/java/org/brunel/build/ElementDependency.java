@@ -16,6 +16,7 @@ public class ElementDependency {
     public final int sourceIndex;
     private final Set<VisSingle> linked = new LinkedHashSet<VisSingle>();
     private final VisSingle[] elements;
+    private boolean usesMapProjection;
 
     public ElementDependency(VisSingle[] elements) {
         this.elements = elements;
@@ -28,10 +29,13 @@ public class ElementDependency {
             } else {
                 linked.add(v);                              // Does not define positions -- dependent
             }
+            if (v.tDiagram == VisTypes.Diagram.map) usesMapProjection = true;
         }
         if (src < 0) linked.clear();                        // Must have a source for anything to link to
         sourceIndex = src;
     }
+
+
 
     /**
      * Find an element suitable for use as an edge element linking nodes

@@ -22,6 +22,7 @@ import org.brunel.build.ElementDependency;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.ElementDefinition;
 import org.brunel.build.util.ElementDetails;
+import org.brunel.build.util.PositionFields;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
@@ -32,14 +33,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class D3Diagram {
-    public static D3Diagram make(VisSingle vis, Dataset data, ScriptWriter out, ElementDependency dependency) {
+    public static D3Diagram make(VisSingle vis, Dataset data, ScriptWriter out, ElementDependency dependency, PositionFields positionFields) {
         if (vis.tDiagram == null) return null;
         if (vis.tDiagram == VisTypes.Diagram.bubble) return new Bubble(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.chord) return new Chord(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.cloud) return new Cloud(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.tree) return new Tree(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.treemap) return new Treemap(vis, data, out);
-        if (vis.tDiagram == VisTypes.Diagram.map) return new GeoMap(vis, data, out);
+        if (vis.tDiagram == VisTypes.Diagram.map) return new GeoMap(vis, data, positionFields, out);
         if (vis.tDiagram == VisTypes.Diagram.network) return new Network(vis, data, dependency, out);
         throw new IllegalStateException("Unknown diagram: " + vis.tDiagram);
     }
@@ -60,10 +61,6 @@ public abstract class D3Diagram {
         this.element = vis.tElement;
         this.labelBuilder = new D3LabelBuilder(vis, out, data);
 
-    }
-
-    public void addElementGlobals() {
-        // Do noting by default
     }
 
     public String getRowKey() {

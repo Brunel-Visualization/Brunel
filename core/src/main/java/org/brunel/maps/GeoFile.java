@@ -26,6 +26,20 @@ class GeoFile implements Comparable<GeoFile> {
         return name.compareTo(o.name);
     }
 
+    /**
+     * Return the extra space between our bounds and the defined one.
+     *
+     * @param r space to fit around
+     * @return extra space around. If we do not fit, this will be very large
+     */
+    public double fitExcess(double[] r) {
+        return fit(r[0] - bounds[0]) + fit(bounds[1] - r[1]) + fit(r[2] - bounds[2]) + fit(bounds[3] - r[3]);
+    }
+
+    private double fit(double v) {
+        return v > 0 ? v : -1e6 * v;
+    }
+
     public String toString() {
         return name;
     }

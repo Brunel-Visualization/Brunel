@@ -49,11 +49,7 @@ class D3ElementBuilder {
         this.data = data;
         this.dependency = dependency;
         this.labelBuilder = new D3LabelBuilder(vis, out, data);
-        this.diagram = D3Diagram.make(vis, data, out, dependency);
-    }
-
-    public void addElementGlobals() {
-        if (diagram != null) diagram.addElementGlobals();
+        this.diagram = D3Diagram.make(vis, data, out, dependency, scales.positionFields);
     }
 
     public void generate(int elementIndex) {
@@ -196,12 +192,64 @@ class D3ElementBuilder {
         Field[] y = positionFields.getY(vis);
         Field[] keys = new Field[vis.fKeys.size()];
         for (int i = 0; i < keys.length; i++) keys[i] = data.field(vis.fKeys.get(i).asField());
-        setLocations(e.x, "x", x, keys, positionFields.xCategorical);
-        setLocations(e.y, "y", y, keys, positionFields.yCategorical);
-        e.x.size = getSize(getSizeCall(0), ModelUtil.getElementSize(vis, "width"), x, "geom.inner_width", "scale_x");
-        e.y.size = getSize(getSizeCall(1), ModelUtil.getElementSize(vis, "height"), y, "geom.inner_height", "scale_y");
+        ModelUtil.Size sizeWidth = ModelUtil.getElementSize(vis, "width");
+        ModelUtil.Size sizeHeight = ModelUtil.getElementSize(vis, "height");
+        if (scales.isGeo()) {
+            setGeoLocations(e, x, y, keys);
+            // Just use the default point size
+            e.x.size = getSize(getSizeCall(0), sizeWidth, new Field[0], "geom.default_point_size", null);
+            e.y.size = getSize(getSizeCall(1), sizeHeight,  new Field[0], "geom.default_point_size", null);
+        } else {
+            setLocations(e.x, "x", x, keys, positionFields.xCategorical);
+            setLocations(e.y, "y", y, keys, positionFields.yCategorical);
+            e.x.size = getSize(getSizeCall(0), sizeWidth, x, "geom.inner_width", "scale_x");
+            e.y.size = getSize(getSizeCall(1), sizeHeight, y, "geom.inner_height", "scale_y");
+        }
         e.overallSize = getOverallSize(vis, e);
         return e;
+    }
+
+    private void setGeoLocations(ElementDefinition def, Field[] x, Field[] y, Field[] keys) {
+
+        int n = x.length;
+        if (y.length != n)
+            throw new IllegalStateException("X and Y dimensions do not match in geographic maps");
+        if (dependency.isEdge(vis)) {
+            throw new IllegalStateException("Cannot handle edged dependencies in geographic maps");
+        } else if (dependency.isDependent(vis)) {
+            throw new IllegalStateException("Cannot handle positional dependencies in geographic maps");
+        }
+
+
+        if (n == 0) {
+            def.x.center = "null";
+            def.y.center = "null";
+        } else if (n == 1) {
+            String xFunction = D3Util.writeCall(x[0]);
+            String yFunction = D3Util.writeCall(y[0]);
+            def.x.center = "function(d) { return projection([" + xFunction + "," + yFunction + "])[0] }";
+            def.y.center = "function(d) { return projection([" + xFunction + "," + yFunction + "])[1] }";
+        } else if (n == 2) {
+            String xLow = D3Util.writeCall(x[0]);          // A call to the low field using the datum 'd'
+            String xHigh = D3Util.writeCall(x[1]);         // A call to the high field using the datum 'd'
+
+            // When one of the fields is a range, use the outermost value of that
+            if (isRange(x[0])) xLow += ".low";
+            if (isRange(x[1])) xHigh += ".high";
+
+            String yLow = D3Util.writeCall(y[0]);          // A call to the low field using the datum 'd'
+            String yHigh = D3Util.writeCall(y[1]);         // A call to the high field using the datum 'd'
+
+            // When one of the fields is a range, use the outermost value of that
+            if (isRange(y[0])) yLow += ".low";
+            if (isRange(y[1])) yHigh += ".high";
+
+            def.x.left = "function(d) { return projection([" + xLow + "," + yLow + "])[0] }";
+            def.x.right = "function(d) { return projection([" + xHigh + "," + yHigh + "])[0] }";
+            def.y.left = "function(d) { return projection([" + xLow + "," + yLow + "])[1] }";
+            def.y.right = "function(d) { return projection([" + xHigh + "," + yHigh + "])[1] }";
+        }
+
     }
 
     private String getSizeCall(int dim) {
@@ -216,7 +264,6 @@ class D3ElementBuilder {
 
         if (dependency.isEdge(vis)) {
             // These are edges in a network layout
-            String data = dependency.linkedDataReference(dependency.sourceElement());
             dim.left = "function(d) { return scale_" + dimName + "(d.source." + dimName + ") }";
             dim.right = "function(d) { return scale_" + dimName + "(d.target." + dimName + ") }";
         } else if (dependency.isDependent(vis)) {
