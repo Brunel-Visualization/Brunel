@@ -120,15 +120,14 @@ public class D3LabelBuilder {
         String name = forTooltip ? "tooltipLabeling" : "labeling";
         out.add("var", name, "= {").ln().indentMore();
         String textMethod = details.textMethod;
-        out.add("method:", out.quote(textMethod), ",").ln();
-        out.add("fit:", details.textMustFit, ",").ln();
-        if (textMethod.equals("path"))
-            out.add("path: path,").ln();
+        out.add("method:", out.quote(textMethod), ", fit:", details.textMustFit, ",");
+        if (textMethod.equals("path") || textMethod.equals("wedge"))
+            out.add("path: path,");
 
         // Write it out as a wrapped function
-        out.add("content: function(d) {").ln().indentMore();
+        out.onNewLine().add("content: function(d) {").indentMore();
 
-        out.add("return d.row == null ? null : ");
+        out.onNewLine().add("return d.row == null ? null : ");
         writeContent(items, forTooltip);
         out.indentLess().onNewLine().add("}");
 
