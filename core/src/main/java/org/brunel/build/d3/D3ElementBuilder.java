@@ -355,7 +355,7 @@ class D3ElementBuilder {
             }
         }
         if (vis.tUsing == VisTypes.Using.interpolate) {
-            out.add(".interpolate()");
+            out.add(".interpolate('basis')");
         }
         out.endStatement();
         constructSplitPath();
