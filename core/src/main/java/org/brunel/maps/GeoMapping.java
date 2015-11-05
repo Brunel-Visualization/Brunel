@@ -58,15 +58,41 @@ public class GeoMapping {
     }
 
     public GeoMapping(double[] bounds, GeoAnalysis geoAnalysis) {
-        // Really simple -- just find the one file that fits best
-        GeoFile best = null;
+        // Expand the bounds a bit
+
+        // Find all the files that intersect the area
+        List<GeoFile> best = new ArrayList<GeoFile>();
+        final Map<GeoFile, Double> quality = new HashMap<GeoFile, Double>();
         for (GeoFile f : geoAnalysis.geoFiles) {
-            if (best == null) best = f;
-            else if (best.fitExcess(bounds) > f.fitExcess(bounds)) best = f;
+            double v = goodIntersection(f.bounds, bounds);
+            if (v>0) {
+                best.add(f);
+                quality.put(f,v);
+            }
         }
-        targetFiles = new GeoFile[] { best};
+
+        Collections.sort(best, new Comparator<GeoFile>() {
+            public int compare(GeoFile o1, GeoFile o2) {
+                return Double.compare(quality.get(o2), quality.get(o1));
+            }
+        });
+
+        // Must be a better way ...
+        if (best.size() > 3) best = best.subList(0,3);
+        targetFiles = best.toArray(new GeoFile[best.size()]);
         targetFeatures = new List[0];
         result = targetFiles;
+    }
+
+    private double goodIntersection(double[] a, double[] b) {
+        double x1 = Math.max(a[0], b[0]);
+        double x2 = Math.min(a[1], b[1]);
+        double y1 = Math.max(a[2], b[2]);
+        double y2 = Math.min(a[3], b[3]);
+
+        double xFrac = (x2 - x1) / (a[1] - a[0]);
+        double yFrac = (y2 - y1) / (a[3] - a[2]);
+        return Math.min(xFrac, yFrac);
     }
 
     public int fileCount() {

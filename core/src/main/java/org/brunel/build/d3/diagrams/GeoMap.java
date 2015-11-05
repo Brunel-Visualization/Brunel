@@ -36,12 +36,10 @@ public class GeoMap extends D3Diagram {
 
     public static GeoMapping makeMapping(VisSingle vis, Dataset data, PositionFields positions) {
         String idField = getIDField(vis);
-
         if (idField != null)
             return GeoAnalysis.instance().make(data.field(idField).categories());
 
         double[] bounds = getPositionsBounds(positions);
-
         if (bounds != null)
             return GeoAnalysis.instance().makeForSpace(bounds);
         return null;
