@@ -107,7 +107,15 @@
  				 	<a class="dropdown-toggle" data-toggle="dropdown" href="#">
                         Gallery  <i class="fa fa-caret-down"></i>
                     </a>
-                    <div class="dropdown-menu" id="gallery_dropdown" style="overflow-y: scroll; max-height: 600px;"> </div>
+                    <div class="dropdown-menu""> 
+                    	<div  id="gallery_dropdown" style="overflow-y: scroll; max-height: 600px;">
+                    	</div>
+                    	<hr>
+                    	<div class="checkbox pull-right" >
+						  <label><input type="checkbox" disabled="true" id="apply_gallery_match" value="">Apply Chosen Visualization to Current Data &nbsp </label>
+						</div>
+                    </div>
+
  				</li>
  				<li class="dropdown">
  				 	<a class="dropdown-toggle" data-toggle="dropdown" href="#">
@@ -127,9 +135,14 @@
                     			<td style="vertical-align: top" id='info_vis'></td>
                     		</tr></tbody>
                     	</table>
+                    	<hr>
+                    	<div class="checkbox pull-right" >
+						  <label><input type="checkbox" disabled="true" id="apply_cookbook_match" value="">Apply Chosen Visualization to Current Data &nbsp  </label>
+						</div>
                     </div>
                     
 				</li>
+
 			</ul>
  </nav>
 <div class="page-header" style="margin-top:0;margin-bottom:0">
@@ -159,7 +172,7 @@
 					    		  </form>
 					    	   </div> 
 					    	   <div class="checkbox">
-								  <label><input type="checkbox" checked="checked" id="apply_match" value="">Apply new data to existing visualization</label>
+								  <label><input type="checkbox" checked="checked" id="apply_match" value="">Apply New Data to Current Visualization</label>
 								</div>
                             </li>
                             </ul>
@@ -428,11 +441,21 @@
 
     }
 	
+	
 	function newData(d) {
 		clearTitles();
 		currentData = d;
         if ($('#apply_match').is(':checked')) getBrunel();
         loadFields();
+
+        enableMatchCheckboxes(true);
+	}
+	
+	//Set the state of the gallery/cookbook match checkboxes (these need to stay in sync)
+	function enableMatchCheckboxes(enable) {
+        
+        $('#apply_gallery_match').attr('disabled', !enable);
+        $('#apply_cookbook_match').attr('disabled', !enable);
 	}
     
 	//handler for new data using URL
@@ -443,8 +466,8 @@
     }
     
 	//Calls service to get new Brunel to use new data on current visualization
-    function getBrunel() {
-        var src = $("#actionText").val();
+    function getBrunel(src) {
+        if (!src) src = $("#actionText").val();
 
         $.ajax({
             type: "GET",
@@ -612,6 +635,7 @@
 		}
 		
 		html += "</tr></table>";
+		
 		$(html).appendTo('#gallery_dropdown');
 	}
 	
@@ -638,6 +662,16 @@
 		$(infovis).appendTo('#info_vis');
 	}
 	
+	//Keep checkboxes for gallery/cookbook matching in sync
+	$('#apply_gallery_match').click(function () {
+		$('#apply_cookbook_match').prop('checked',  $('#apply_gallery_match').is(':checked'));
+	});
+
+	$('#apply_cookbook_match').click(function () {
+		$('#apply_gallery_match').prop('checked',  $('#apply_cookbook_match').is(':checked'));
+	});
+
+	
 	//Show a gallery item
 	function showGalleryItem(index) {
 		showItem(galleryJson.gallery[index]);
@@ -655,8 +689,19 @@
 		if (item.control_height) {
 			setControlHeight(false,item.control_height);
 		}
-		showAction(item.brunel, item.title, item.description);
-		$('#univariates').html("");
+		
+		//Apply the selected visualization to 'currentData'
+		//Eiher checkbox should work since they are supposed to be in sync
+		if ( $('#apply_gallery_match').is(':checked') ) {
+			getBrunel(item.brunel); 
+		}
+		//Show the selected visualization as is
+		//Univariates removed since they are likely no longer applicable
+		else {
+			showAction(item.brunel, item.title, item.description);
+			$('#univariates').html("");
+		}
+
 	}
 	
 	function showUnivariate(brunel) {
@@ -702,6 +747,12 @@
 	
 	//Load up cookbook items in drop down
 	loadExamples("../gallery_app/renderer/cookbook", makeCookbookTable);
+	
+	//Can't do matching without current data
+	enableMatchCheckboxes(false);
+	$('#apply_cookbook_match').prop('checked', false);
+	$('#apply_gallery_match').prop('checked',  false);
+
 	
 	//Start by showing current visualization
     showAction(brunelSrc);
