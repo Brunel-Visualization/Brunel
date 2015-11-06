@@ -7,7 +7,7 @@ public class Rect {
     /* Coordinates */
     public final double x1, y1, x2, y2;
 
-    private Rect(double x1, double x2, double y1, double y2) {
+    public Rect(double x1, double x2, double y1, double y2) {
         this.x1 = x1;
         this.y1 = y1;
         this.x2 = x2;
@@ -17,6 +17,17 @@ public class Rect {
 
     public final double area() {
         return (x2 - x1) * (y2 - y1);
+    }
+
+    /**
+     * Return eight points on the boundary of the rectangle
+     * @return array of eight [x,y] pairs
+     */
+    public double[][] makeBoundaryPoints() {
+        return new double[][]{
+                {x1, y1}, {cx(), y1}, {x2, y1}, {x2, cy()},
+                {x2, y2}, {cx(), y2}, {x1, y2}, {x1, cy()},
+        };
     }
 
     public double width() {
@@ -165,11 +176,11 @@ public class Rect {
     }
 
     public Rect intersection(Rect o) {
-        double newX = Math.max(x1, o.x1);
-        double newY = Math.max(y1, o.y1);
-        double newWidth = Math.min(x2, o.x2) - newX;
-        double newHeight = Math.min(y2, o.y2) - newY;
-        return newWidth > 0 && newHeight > 0 ? createRect(newX, newY, newWidth, newHeight) : null;
+        double a1 = Math.max(x1, o.x1);
+        double b1 = Math.max(y1, o.y1);
+        double a2 = Math.min(x2, o.x2);
+        double b2 = Math.min(y2, o.y2);
+        return a2 > a1 && b2 > b1 ? new Rect(a1, a2, b1, b2) : null;
     }
 
     public static Rect createRect(double x, double y, double width, double height) {
@@ -183,12 +194,11 @@ public class Rect {
     public Rect union(Rect o) {
         if (o == null || contains(o)) return this;
         if (o.contains(this)) return o;
-        return Rect.fromPoints(Math.min(x1, o.x1), Math.max(x2, o.x2), Math.min(y1, o.y1),
-                Math.max(y2, o.y2));
+        return new Rect(Math.min(x1, o.x1), Math.max(x2, o.x2), Math.min(y1, o.y1), Math.max(y2, o.y2));
     }
 
-    public static Rect fromPoints(double x1, double x2, double y1, double y2) {
-        return new Rect(x1, x2, y1, y2);
+    public String toString() {
+        return "[" + x1 + ", " + x2 + " : " + y1 + ", " + y2 + ")]";
     }
 
 }

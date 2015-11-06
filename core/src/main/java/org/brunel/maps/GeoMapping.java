@@ -76,20 +76,44 @@ public class GeoMapping {
             }
         });
 
-        // Remove ones that do not improve the overlap amount
+        // We want to cover all the boundary points plus the center point
+        Set<double[]> pointsToInclude = new HashSet<double[]>();
+        Collections.addAll(pointsToInclude, bounds.makeBoundaryPoints());
+        pointsToInclude.add(new double[] { bounds.cx(), bounds.cy()});
+
+        List<GeoFile> useful = new ArrayList<GeoFile>();
+        for (GeoFile f : best) {
+            int n = pointsToInclude.size();
+            if (n == 0) break;                          // We have covered them all
+            for (Iterator<double[]> iterator = pointsToInclude.iterator(); iterator.hasNext(); ) {
+                double[] p = iterator.next();
+                if (f.covers(p[0], p[1])) iterator.remove();
+            }
+            if (n != pointsToInclude.size()) {
+                System.out.println(f + " covered " + (n -pointsToInclude.size()) + " points");
+                // We covered at least one new point
+                useful.add(f);
+            }
+        }
+
+
         Rect covered = null;
+        System.out.println("Trying to cover " + bounds);
         for (Iterator<GeoFile> iterator = best.iterator(); iterator.hasNext(); ) {
             GeoFile f = iterator.next();
             if (covered == null) {
                 // Always include the first one
                 covered = f.bounds;
+                System.out.println(f + " included: " + covered);
             } else {
                 // This is the bounds we would get if we added in the file
                 Rect trial = covered.union(f.bounds);
                 if (intersectionSize(bounds, trial) <= intersectionSize(bounds, covered)) {
-                    // Useless --remove it
+                    // Useless -- remove it
                     iterator.remove();
+                    System.out.println(f + " was useless: " + trial);
                 } else {
+                    System.out.println(f + " included: " + trial);
                     covered = trial;
                 }
 

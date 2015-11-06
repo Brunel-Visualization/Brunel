@@ -87,12 +87,7 @@ abstract class Projection {
     }
 
     public Rect maxExtents(Rect b) {
-        double xm = b.cx();
-        double ym = b.cy();
-        double[][] pts = new double[][]{
-                {b.x1, b.y1}, {xm, b.y1}, {b.x2, b.y1}, {b.x2, ym},
-                {b.x2, b.y2}, {xm, b.y2}, {b.x1, b.y2}, {b.x1, ym},
-        };
+        double[][] pts = b.makeBoundaryPoints();
 
         double minX = 0, maxX = 0, minY = 0, maxY = 0;
         for (int i = 0; i < pts.length; i++) {
@@ -107,7 +102,7 @@ abstract class Projection {
                 maxY = Math.max(maxY, p[1]);
             }
         }
-        return Rect.fromPoints(minX, maxX, minY, maxY);
+        return new Rect(minX, maxX, minY, maxY);
     }
 
     public final static class Mercator extends Projection {

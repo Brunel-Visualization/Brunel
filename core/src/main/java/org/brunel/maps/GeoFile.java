@@ -14,15 +14,15 @@ class GeoFile implements Comparable<GeoFile> {
         this.index = index;
         this.size = Integer.parseInt(sizeString);
         String[] b = boundsString.split(",");
-        this.bounds = Rect.fromPoints(
-                Double.parseDouble(b[0]),
-                Double.parseDouble(b[1]),
-                Double.parseDouble(b[2]),
-                Double.parseDouble(b[3]));
+        this.bounds = new Rect(Double.parseDouble(b[0]), Double.parseDouble(b[1]), Double.parseDouble(b[2]), Double.parseDouble(b[3]));
     }
 
     public int compareTo(GeoFile o) {
         return name.compareTo(o.name);
+    }
+
+    public boolean covers(double x, double y) {
+        return bounds.contains(x,y);
     }
 
     public String toString() {

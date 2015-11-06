@@ -67,7 +67,7 @@ public class GeoMap extends D3Diagram {
             minY = Math.min(minY, f.min());
             maxY = Math.max(maxY, f.max());
         }
-        return (maxX >= minX && maxY >= minY) ? Rect.fromPoints(minX, maxX, minY, maxY) : null;
+        return (maxX >= minX && maxY >= minY) ? new Rect(minX, maxX, minY, maxY) : null;
     }
 
     private static String getIDField(VisSingle vis) {
