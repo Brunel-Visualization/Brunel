@@ -59,18 +59,25 @@ public class GeoMapping {
 
     public GeoMapping(Rect bounds, GeoAnalysis geoAnalysis) {
         // Create a list of all GeoFiles that intersect the required area
+        // Keep the whole world one separate
+        GeoFile world = null;
+
         List<GeoFile> base = new ArrayList<GeoFile>();
         for (GeoFile f : geoAnalysis.geoFiles)
-            if (f.bounds.intersects(bounds)) base.add(f);
+            if (f.name.equalsIgnoreCase("world")) world = f;
+            else if (f.bounds.intersects(bounds)) base.add(f);
 
         // Create a grid of nine points covering the target area. We want all of them to be included
         Set<double[]> pointsToInclude = new HashSet<double[]>();
+
+        // Shrink the bounds a little
+
         Collections.addAll(pointsToInclude, bounds.makeBoundaryPoints());
-        pointsToInclude.add(new double[] { bounds.cx(), bounds.cy()});
+        pointsToInclude.add(new double[]{bounds.cx(), bounds.cy()});
 
         // Find which points are covered
         final Map<GeoFile, List<double[]>> contained = new HashMap<GeoFile, List<double[]>>();
-        for (GeoFile f: base) {
+        for (GeoFile f : base) {
             List<double[]> good = new ArrayList<double[]>();
             for (double[] p : pointsToInclude) if (f.covers(p[0], p[1])) good.add(p);
             contained.put(f, good);
@@ -79,35 +86,41 @@ public class GeoMapping {
         // Sort the most likely useful first
         Collections.sort(base, new Comparator<GeoFile>() {
             public int compare(GeoFile a, GeoFile b) {
-                double scoreA  = contained.get(a).size() / a.bounds.area();
-                double scoreB  = contained.get(b).size() / b.bounds.area();
+                double scoreA = Math.pow(contained.get(a).size(), 2) / Math.pow(a.bounds.area(), 1);
+                double scoreB = Math.pow(contained.get(b).size(), 2) / Math.pow(b.bounds.area(), 1);
                 return Double.compare(scoreB, scoreA);
             }
         });
 
         // In order add if they cover a new point
         List<GeoFile> best = new ArrayList<GeoFile>();
-        for (GeoFile f: base) {
+        for (GeoFile f : base) {
             boolean worthwhile = false;
             for (Iterator<double[]> it = pointsToInclude.iterator(); it.hasNext(); ) {
-                double[] p =  it.next();
+                double[] p = it.next();
                 if (f.covers(p[0], p[1])) {
                     worthwhile = true;
                     it.remove();
                 }
             }
             if (worthwhile) best.add(f);
+            if (best.size() == 3) break;            // No more than three files
         }
 
-
-        // Sort so the largest area files are first (will eb on the bottom)
+        // Sort so the largest area files are first (will be on the bottom)
         Collections.sort(best, new Comparator<GeoFile>() {
             public int compare(GeoFile o1, GeoFile o2) {
                 return Double.compare(o2.bounds.area(), o1.bounds.area());
             }
         });
 
-        targetFiles = best.toArray(new GeoFile[best.size()]);
+        if (pointsToInclude.size() > 3) {
+            // Missing 4+ points -- use the whole world
+            targetFiles = new GeoFile[]{world};
+        } else {
+            // The smaller set fits well
+            targetFiles = best.toArray(new GeoFile[best.size()]);
+        }
         targetFeatures = new List[0];
         result = targetFiles;
     }
