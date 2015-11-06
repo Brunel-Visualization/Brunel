@@ -58,67 +58,54 @@ public class GeoMapping {
     }
 
     public GeoMapping(Rect bounds, GeoAnalysis geoAnalysis) {
-        // Find all the files that intersect the area
-        List<GeoFile> best = new ArrayList<GeoFile>();
-        final Map<GeoFile, Double> quality = new HashMap<GeoFile, Double>();
-        for (GeoFile f : geoAnalysis.geoFiles) {
-            double v = intersectionSize(f.bounds, bounds);
-            if (v > 0) {
-                best.add(f);
-                quality.put(f, v / f.bounds.area());
-            }
-        }
+        // Create a list of all GeoFiles that intersect the required area
+        List<GeoFile> base = new ArrayList<GeoFile>();
+        for (GeoFile f : geoAnalysis.geoFiles)
+            if (f.bounds.intersects(bounds)) base.add(f);
 
-        // Sort so the best is first
-        Collections.sort(best, new Comparator<GeoFile>() {
-            public int compare(GeoFile o1, GeoFile o2) {
-                return Double.compare(quality.get(o2), quality.get(o1));
-            }
-        });
-
-        // We want to cover all the boundary points plus the center point
+        // Create a grid of nine points covering the target area. We want all of them to be included
         Set<double[]> pointsToInclude = new HashSet<double[]>();
         Collections.addAll(pointsToInclude, bounds.makeBoundaryPoints());
         pointsToInclude.add(new double[] { bounds.cx(), bounds.cy()});
 
-        List<GeoFile> useful = new ArrayList<GeoFile>();
-        for (GeoFile f : best) {
-            int n = pointsToInclude.size();
-            if (n == 0) break;                          // We have covered them all
-            for (Iterator<double[]> iterator = pointsToInclude.iterator(); iterator.hasNext(); ) {
-                double[] p = iterator.next();
-                if (f.covers(p[0], p[1])) iterator.remove();
-            }
-            if (n != pointsToInclude.size()) {
-                System.out.println(f + " covered " + (n -pointsToInclude.size()) + " points");
-                // We covered at least one new point
-                useful.add(f);
-            }
+        // Find which points are covered
+        final Map<GeoFile, List<double[]>> contained = new HashMap<GeoFile, List<double[]>>();
+        for (GeoFile f: base) {
+            List<double[]> good = new ArrayList<double[]>();
+            for (double[] p : pointsToInclude) if (f.covers(p[0], p[1])) good.add(p);
+            contained.put(f, good);
         }
 
+        // Sort the most likely useful first
+        Collections.sort(base, new Comparator<GeoFile>() {
+            public int compare(GeoFile a, GeoFile b) {
+                double scoreA  = contained.get(a).size() / a.bounds.area();
+                double scoreB  = contained.get(b).size() / b.bounds.area();
+                return Double.compare(scoreB, scoreA);
+            }
+        });
 
-        Rect covered = null;
-        System.out.println("Trying to cover " + bounds);
-        for (Iterator<GeoFile> iterator = best.iterator(); iterator.hasNext(); ) {
-            GeoFile f = iterator.next();
-            if (covered == null) {
-                // Always include the first one
-                covered = f.bounds;
-                System.out.println(f + " included: " + covered);
-            } else {
-                // This is the bounds we would get if we added in the file
-                Rect trial = covered.union(f.bounds);
-                if (intersectionSize(bounds, trial) <= intersectionSize(bounds, covered)) {
-                    // Useless -- remove it
-                    iterator.remove();
-                    System.out.println(f + " was useless: " + trial);
-                } else {
-                    System.out.println(f + " included: " + trial);
-                    covered = trial;
+        // In order add if they cover a new point
+        List<GeoFile> best = new ArrayList<GeoFile>();
+        for (GeoFile f: base) {
+            boolean worthwhile = false;
+            for (Iterator<double[]> it = pointsToInclude.iterator(); it.hasNext(); ) {
+                double[] p =  it.next();
+                if (f.covers(p[0], p[1])) {
+                    worthwhile = true;
+                    it.remove();
                 }
-
             }
+            if (worthwhile) best.add(f);
         }
+
+
+        // Sort so the largest area files are first (will eb on the bottom)
+        Collections.sort(best, new Comparator<GeoFile>() {
+            public int compare(GeoFile o1, GeoFile o2) {
+                return Double.compare(o2.bounds.area(), o1.bounds.area());
+            }
+        });
 
         targetFiles = best.toArray(new GeoFile[best.size()]);
         targetFeatures = new List[0];

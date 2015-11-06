@@ -85,18 +85,22 @@ public class GeoAnalysis {
             LineNumberReader rdr = new LineNumberReader(new InputStreamReader(is, "utf-8"));
 
             // Read the names of the files and their sizes (in K)
-            String[] fileLine = rdr.readLine().split("\\|");
-            int n = fileLine.length / 3;
-            geoFiles = new GeoFile[n];
-            for (int i = 0; i < n; i++) {
-                geoFiles[i] = new GeoFile(fileLine[3 * i], i, fileLine[3 * i + 1], fileLine[3 * i + 2]);
+            List<GeoFile> list = new ArrayList<GeoFile>();
+            for (; ; ) {
+                String[] fileLine = rdr.readLine().split("\\|");
+                if (fileLine.length != 4) break;                            // End of the file definitions
+                GeoFile f = new GeoFile(fileLine[0], list.size(), fileLine[1], fileLine[2], fileLine[3]);
+                list.add(f);
             }
+
+            geoFiles = list.toArray(new GeoFile[list.size()]);
 
             // Read the features
             featureMap = new HashMap<String, int[][]>();
             while (true) {
                 String line = rdr.readLine();
-                if (line == null) break;
+                if (line == null) break;                                    // End of file
+                if (line.trim().length() == 0) continue;                    // Skip blank lines (should be at top)
                 String[] featureLine = line.split("\\|");
                 String name = featureLine[0];
                 int m = featureLine.length - 1;
