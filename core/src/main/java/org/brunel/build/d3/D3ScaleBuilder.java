@@ -33,6 +33,7 @@ import org.brunel.data.auto.NumericScale;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
 import org.brunel.maps.GeoMapping;
+import org.brunel.maps.Rect;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
@@ -306,11 +307,10 @@ class D3ScaleBuilder {
 
     public void writeProjection(D3Interaction interaction) {
         // Calculate the full bounds
-        double[] bounds = null;
+        Rect bounds = null;
         for (GeoMapping g : geo) {
             if (g == null) continue;
-            if (bounds == null) bounds = g.totalBounds();
-            else bounds = GeoMapping.union(bounds, g.totalBounds());
+            else bounds = g.totalBounds().union(bounds);
         }
 
         // Write the projection for that

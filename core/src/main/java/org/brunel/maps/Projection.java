@@ -1,7 +1,7 @@
 package org.brunel.maps;
 
 /**
- * Created by graham on 10/15/15.
+ * A map projection
  */
 abstract class Projection {
 
@@ -86,12 +86,12 @@ abstract class Projection {
         return Math.abs(p[1] - q[1]);
     }
 
-    public double[] maxExtents(double x1, double x2, double y1, double y2) {
-        double xm = (x1 + x2) / 2;
-        double ym = (y1 + y2) / 2;
+    public Rect maxExtents(Rect b) {
+        double xm = b.cx();
+        double ym = b.cy();
         double[][] pts = new double[][]{
-                {x1, y1}, {xm, y1}, {x2, y1}, {x2, ym},
-                {x2, y2}, {xm, y2}, {x1, y2}, {x1, ym},
+                {b.x1, b.y1}, {xm, b.y1}, {b.x2, b.y1}, {b.x2, ym},
+                {b.x2, b.y2}, {xm, b.y2}, {b.x1, b.y2}, {b.x1, ym},
         };
 
         double minX = 0, maxX = 0, minY = 0, maxY = 0;
@@ -107,7 +107,7 @@ abstract class Projection {
                 maxY = Math.max(maxY, p[1]);
             }
         }
-        return new double[]{minX, maxX, minY, maxY};
+        return Rect.fromPoints(minX, maxX, minY, maxY);
     }
 
     public final static class Mercator extends Projection {

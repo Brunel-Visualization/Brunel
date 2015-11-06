@@ -195,10 +195,12 @@ class D3ElementBuilder {
         ModelUtil.Size sizeWidth = ModelUtil.getElementSize(vis, "width");
         ModelUtil.Size sizeHeight = ModelUtil.getElementSize(vis, "height");
         if (scales.isGeo()) {
-            setGeoLocations(e, x, y, keys);
+            // Maps with feature data do not need the geo coordinates set
+            if (vis.tDiagram != VisTypes.Diagram.map)
+                setGeoLocations(e, x, y, keys);
             // Just use the default point size
             e.x.size = getSize(getSizeCall(0), sizeWidth, new Field[0], "geom.default_point_size", null);
-            e.y.size = getSize(getSizeCall(1), sizeHeight,  new Field[0], "geom.default_point_size", null);
+            e.y.size = getSize(getSizeCall(1), sizeHeight, new Field[0], "geom.default_point_size", null);
         } else {
             setLocations(e.x, "x", x, keys, positionFields.xCategorical);
             setLocations(e.y, "y", y, keys, positionFields.yCategorical);
@@ -219,7 +221,6 @@ class D3ElementBuilder {
         } else if (dependency.isDependent(vis)) {
             throw new IllegalStateException("Cannot handle positional dependencies in geographic maps");
         }
-
 
         if (n == 0) {
             def.x.center = "null";

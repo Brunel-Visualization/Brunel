@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -17,13 +18,12 @@ import java.util.TreeMap;
  */
 public class GeoMapping {
 
-    private final GeoFile[] targetFiles;                                            // The files that match features we care about
-    private final List<FeatureDetail>[] targetFeatures;                             // The features contained in each target file
     public final Map<Object, int[]> mapping = new TreeMap<Object, int[]>();         // Feature -> [file, featureKey]
     public final List<Object> unmatched = new ArrayList<Object>();                  // Features we did not map
-
-    private GeoFileGroup best;                                                    // We search to determine this
     public final GeoFile[] result;                                                  // The files to use
+    private final GeoFile[] targetFiles;                                            // The files that match features we care about
+    private final List<FeatureDetail>[] targetFeatures;                             // The features contained in each target file
+    private GeoFileGroup best;                                                    // We search to determine this
 
     /**
      * Builds itself on construction, setting all the required information fields
@@ -57,82 +57,63 @@ public class GeoMapping {
         }
     }
 
-    public GeoMapping(double[] bounds, GeoAnalysis geoAnalysis) {
-        // Expand the bounds a bit
-
+    public GeoMapping(Rect bounds, GeoAnalysis geoAnalysis) {
         // Find all the files that intersect the area
         List<GeoFile> best = new ArrayList<GeoFile>();
         final Map<GeoFile, Double> quality = new HashMap<GeoFile, Double>();
         for (GeoFile f : geoAnalysis.geoFiles) {
-            double v = goodIntersection(f.bounds, bounds);
-            if (v>0) {
+            double v = intersectionSize(f.bounds, bounds);
+            if (v > 0) {
                 best.add(f);
-                quality.put(f,v);
+                quality.put(f, v / f.bounds.area());
             }
         }
 
+        // Sort so the best is first
         Collections.sort(best, new Comparator<GeoFile>() {
             public int compare(GeoFile o1, GeoFile o2) {
                 return Double.compare(quality.get(o2), quality.get(o1));
             }
         });
 
-        // Must be a better way ...
-        if (best.size() > 3) best = best.subList(0,3);
+        // Remove ones that do not improve the overlap amount
+        Rect covered = null;
+        for (Iterator<GeoFile> iterator = best.iterator(); iterator.hasNext(); ) {
+            GeoFile f = iterator.next();
+            if (covered == null) {
+                // Always include the first one
+                covered = f.bounds;
+            } else {
+                // This is the bounds we would get if we added in the file
+                Rect trial = covered.union(f.bounds);
+                if (intersectionSize(bounds, trial) <= intersectionSize(bounds, covered)) {
+                    // Useless --remove it
+                    iterator.remove();
+                } else {
+                    covered = trial;
+                }
+
+            }
+        }
+
         targetFiles = best.toArray(new GeoFile[best.size()]);
         targetFeatures = new List[0];
         result = targetFiles;
     }
 
-    private double goodIntersection(double[] a, double[] b) {
-        double x1 = Math.max(a[0], b[0]);
-        double x2 = Math.min(a[1], b[1]);
-        double y1 = Math.max(a[2], b[2]);
-        double y2 = Math.min(a[3], b[3]);
-
-        double xFrac = (x2 - x1) / (a[1] - a[0]);
-        double yFrac = (y2 - y1) / (a[3] - a[2]);
-        return Math.min(xFrac, yFrac);
+    private double intersectionSize(Rect a, Rect b) {
+        Rect r = a.intersection(b);
+        return r == null ? -1 : r.area();
     }
 
     public int fileCount() {
         return result.length;
     }
 
-    public double[] totalBounds() {
-        double[] bounds = null;
-        for (GeoFile i : result) bounds = union(bounds, i.bounds);
+    public Rect totalBounds() {
+        Rect bounds = null;
+        for (GeoFile i : result) bounds = i.bounds.union(bounds);
         return bounds;
-    }
-
-    public static double[] union(double[] a, double[] b) {
-        if (a == null) return b;
-        if (b == null) return a;
-        return new double[]{
-                Math.min(a[0], b[0]), Math.max(a[1], b[1]),
-                Math.min(a[2], b[2]), Math.max(a[3], b[3])
-        };
-    }
-
-    private void searchForBestSubset() {
-        //Count the number of features we can match
-        Set<FeatureDetail> unmatched = new HashSet<FeatureDetail>();
-        for (List<FeatureDetail> f : targetFeatures)
-            unmatched.addAll(f);
-
-        int N = unmatched.size();
-        best = new GeoFileGroup(N, Collections.<GeoFile>emptySet(), Collections.emptySet());
-
-        // Create list of possible ones to use, sorted with the most features first
-
-        List<Integer> possibles = new ArrayList<Integer>();
-        for (int i = 0; i < targetFiles.length; i++) possibles.add(i);
-        Collections.sort(possibles, new Comparator<Integer>() {
-            public int compare(Integer a, Integer b) {
-                return targetFeatures[b].size() - targetFeatures[a].size();
-            }
-        });
-        searchForBestAdditions(best, possibles);
     }
 
     private Map<Integer, List<FeatureDetail>> findAllMappings(Object[] names, GeoAnalysis geoAnalysis) {
@@ -181,6 +162,27 @@ public class GeoMapping {
             GeoFileGroup trial = current.add(targetFiles[k], targetFeatures[k]);
             if (trial != null) searchForBestAdditions(trial, working);
         }
+    }
+
+    private void searchForBestSubset() {
+        //Count the number of features we can match
+        Set<FeatureDetail> unmatched = new HashSet<FeatureDetail>();
+        for (List<FeatureDetail> f : targetFeatures)
+            unmatched.addAll(f);
+
+        int N = unmatched.size();
+        best = new GeoFileGroup(N, Collections.<GeoFile>emptySet(), Collections.emptySet());
+
+        // Create list of possible ones to use, sorted with the most features first
+
+        List<Integer> possibles = new ArrayList<Integer>();
+        for (int i = 0; i < targetFiles.length; i++) possibles.add(i);
+        Collections.sort(possibles, new Comparator<Integer>() {
+            public int compare(Integer a, Integer b) {
+                return targetFeatures[b].size() - targetFeatures[a].size();
+            }
+        });
+        searchForBestAdditions(best, possibles);
     }
 
     private static class FeatureDetail {

@@ -27,6 +27,7 @@ import org.brunel.data.Field;
 import org.brunel.maps.GeoAnalysis;
 import org.brunel.maps.GeoMapping;
 import org.brunel.maps.GeoProjection;
+import org.brunel.maps.Rect;
 import org.brunel.model.VisSingle;
 
 public class GeoMap extends D3Diagram {
@@ -39,7 +40,7 @@ public class GeoMap extends D3Diagram {
         if (idField != null)
             return GeoAnalysis.instance().make(data.field(idField).categories());
 
-        double[] bounds = getPositionsBounds(positions);
+        Rect bounds = getPositionsBounds(positions);
         if (bounds != null)
             return GeoAnalysis.instance().makeForSpace(bounds);
         return null;
@@ -53,20 +54,20 @@ public class GeoMap extends D3Diagram {
             throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
     }
 
-    private static double[] getPositionsBounds(PositionFields positions) {
+    private static Rect getPositionsBounds(PositionFields positions) {
         // Find the bounding box around the coordinates
-        double[] result = new double[]{Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY};
+        double minX =Double.POSITIVE_INFINITY, maxX= Double.NEGATIVE_INFINITY, minY=Double.POSITIVE_INFINITY, maxY=Double.NEGATIVE_INFINITY;
         for (Field f : positions.allXFields) {
             if (!f.isNumeric()) continue;
-            result[0] = Math.min(result[0], f.min());
-            result[1] = Math.max(result[1], f.max());
+            minX = Math.min(minX, f.min());
+            maxX = Math.max(maxX, f.max());
         }
         for (Field f : positions.allYFields) {
             if (!f.isNumeric()) continue;
-            result[2] = Math.min(result[2], f.min());
-            result[3] = Math.max(result[3], f.max());
+            minY = Math.min(minY, f.min());
+            maxY = Math.max(maxY, f.max());
         }
-        return (result[1] >= result[0] && result[3] >= result[2]) ? result : null;
+        return (maxX >= minX && maxY >= minY) ? Rect.fromPoints(minX, maxX, minY, maxY) : null;
     }
 
     private static String getIDField(VisSingle vis) {
@@ -79,7 +80,7 @@ public class GeoMap extends D3Diagram {
         }
     }
 
-    public static void writeProjection(ScriptWriter out, double[] bounds) {
+    public static void writeProjection(ScriptWriter out,Rect bounds) {
         out.comment("Define the projection");
 
         // Calculate a suitable projection

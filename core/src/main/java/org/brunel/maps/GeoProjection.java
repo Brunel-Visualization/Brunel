@@ -38,26 +38,25 @@ public class GeoProjection {
         this.winkelTripleFunctionName = winkelTripleFunctionName;
     }
 
-    public String makeProjection(double[] bounds) {
-        double x1 = bounds[0], x2 = bounds[1], y1 = bounds[2], y2 = bounds[3];
+    public String makeProjection(Rect bounds) {
 
         // Are we USA only?
-        if (x1 < -100 && y1 > 17 && y2 > 35 && y2 < 73) {
+        if (bounds.x1 < -100 && bounds.y1 > 17 && bounds.y2 > 35 && bounds.y2 < 73) {
             // If we need Alaska and/or Hawaii
-            if (x1 < -120) return makeAlbersUSA();
-            else return makeMercator(x1, x2, y1, y2);
+            if (bounds.x1 < -120) return makeAlbersUSA();
+            else return makeMercator(bounds);
 
         }
-        double distortion = getDistortion(x1, x2, y1, y2);
+        double distortion = getDistortion(bounds);
 
         // Mercator if the distortion is tolerable
-        if (distortion <= 1.8) return makeMercator(x1, x2, y1, y2);
+        if (distortion <= 1.8) return makeMercator(bounds);
 
         // If we cover a wide area, use winkel triple
-        if (x2 - x1 > 180 && y2 - y1 > 90) return makeWinkelTripel(x1, x2, y1, y2);
+        if (bounds.x2 - bounds.x1 > 180 && bounds.y2 - bounds.y1 > 90) return makeWinkelTripel(bounds);
 
         // Otherwise albers is our best bet
-        return makeAlbers(x1, x2, y1, y2);
+        return makeAlbers(bounds);
 
     }
 
@@ -71,9 +70,9 @@ public class GeoProjection {
                 + LN + translateToCenter;
     }
 
-    private String makeMercator(double x1, double x2, double y1, double y2) {
-        double[] p1 = MERCATOR.transform(x1, y1);
-        double[] p2 = MERCATOR.transform(x2, y2);
+    private String makeMercator(Rect b) {
+        double[] p1 = MERCATOR.transform(b.x1, b.y1);
+        double[] p2 = MERCATOR.transform(b.x2, b.y2);
 
         double wd = Math.abs(p1[0] - p2[0]);
         double ht = Math.abs(p1[1] - p2[1]);
@@ -92,42 +91,38 @@ public class GeoProjection {
                 + LN + center;
     }
 
-    private double getDistortion(double x1, double x2, double y1, double y2) {
-        if (y1 < -89 || y2 > 89) return 100;
-        double a = MERCATOR.getTissotArea((x1 + x2) / 2, y1);
-        double b = MERCATOR.getTissotArea((x1 + x2) / 2, y2);
+    private double getDistortion(Rect bounds) {
+        if (bounds.y1 < -89 || bounds.y2 > 89) return 100;
+        double a = MERCATOR.getTissotArea(bounds.cx(), bounds.y1);
+        double b = MERCATOR.getTissotArea(bounds.cx(), bounds.y2);
         return a < b / 100 || b < a / 100 ? 100 : Math.max(b / a, a / b);
     }
 
-    private String makeWinkelTripel(double x1, double x2, double y1, double y2) {
+    private String makeWinkelTripel(Rect bounds) {
 
-        double[] ext = WINKEL3.maxExtents(x1, x2, y1, y2);
+        Rect ext = WINKEL3.maxExtents(bounds);
 
-        double wd = ext[1] - ext[0];
-        double ht = ext[3] - ext[2];
-        String scale = makeScaleForProjectedDimensions(wd, ht);
+        String scale = makeScaleForProjectedDimensions(ext.width(), ext.height());
 
         // The center in screen coords
         String translateToCenter = ".translate([" + width + "/2, " + height + "/2])";
 
         // Finding the center is tricky because we cannot invert the transform
         // so we have to search for it
-        double projectedCenterY = (ext[2] + ext[3]) / 2;
         double y = 0, dy = 9e99;
         for (int i = -90; i < 90; i++) {
-            double[] p = WINKEL3.transform((x1 + x2) / 2, i);
-            double dp = Math.abs(p[1] - projectedCenterY);
+            double[] p = WINKEL3.transform(bounds.cx(), i);
+            double dp = Math.abs(p[1] - ext.cy());
             if (dp < dy) {
                 dy = dp;
                 y = i;
             }
         }
 
-        double projectedCenterX = (ext[0] + ext[1]) / 2;
         double x = 0, dx = 9e99;
         for (int i = -180; i < 180; i++) {
             double[] p = WINKEL3.transform(i, y);
-            double dp = Math.abs(p[0] - projectedCenterX);
+            double dp = Math.abs(p[0] - ext.cx());
             if (dp < dx) {
                 dx = dp;
                 x = i;
@@ -141,29 +136,27 @@ public class GeoProjection {
                 + LN + center;
     }
 
-    private String makeAlbers(double x1, double x2, double y1, double y2) {
+    private String makeAlbers(Rect b) {
 
         // Parallels at 1/6 and 5/6 of the latitude
-        double parallelA = (y1 + y2 * 5) / 6;           // Parallels at 1/6 and 5/6
-        double parallelB = (y1 * 5 + y2) / 6;           // Parallels at 1/6 and 5/6
-        double angle = -(x1 + x2) / 2;                  // Rotation angle
+        double parallelA = (b.y1 + b.y2 * 5) / 6;           // Parallels at 1/6 and 5/6
+        double parallelB = (b.y1 * 5 + b.y2) / 6;           // Parallels at 1/6 and 5/6
+        double angle = -b.cx();                             // Rotation angle
 
         Projection projection = new Projection.Albers(parallelA, parallelB, angle);
 
         String parallels = ".parallels([" + F.format(parallelA) + "," + F.format(parallelB) + "])";
         String rotate = ".rotate([" + F.format(angle) + ",0,0])";
 
-        double[] ext = projection.maxExtents(x1, x2, y1, y2);
+        Rect ext = projection.maxExtents(b);
 
-        double wd = ext[1] - ext[0];
-        double ht = ext[3] - ext[2];
-        String scale = makeScaleForProjectedDimensions(wd, ht);
+        String scale = makeScaleForProjectedDimensions(ext.width(), ext.height());
 
         // The center in screen coords
         String translateToCenter = ".translate([" + width + "/2, " + height + "/2])";
 
         // We find the center in projected space, and then invert the projection
-        double[] c = projection.inverse((ext[0] + ext[1]) / 2, (ext[2] + ext[3]) / 2);
+        double[] c = projection.inverse(ext.cx(), ext.cy());
         String center = ".center([0, " + F.format(c[1]) + "])";
 
         return "d3.geo.albers()"

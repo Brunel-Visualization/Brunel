@@ -14,7 +14,7 @@ class GeoFileGroup {
     public final Set<GeoFile> files;
     private final int requiredFeatureCount;
     private final Set<Object> featureSet;
-    private Double area;
+    private Rect totalBounds;
 
     public GeoFileGroup(int requiredFeatureCount, Collection<GeoFile> files, Collection<?> features) {
         this.requiredFeatureCount = requiredFeatureCount;
@@ -56,21 +56,10 @@ class GeoFileGroup {
 
     private double area() {
         if (files.isEmpty()) return 0;
-        if (area == null) {
-            double[] bounds = null;
-            for (GeoFile f : files) bounds = union(bounds, f.bounds);
-            area = (bounds[1] - bounds[0]) * (bounds[3] - bounds[2]);
+        if (totalBounds == null) {
+            for (GeoFile f : files) totalBounds = f.bounds.union(totalBounds);
         }
-        return area;
-    }
-
-    private double[] union(double[] a, double[] b) {
-        if (a == null) return b;
-        if (b == null) return a;
-        return new double[]{
-                Math.min(a[0], b[0]), Math.max(a[1], b[1]),
-                Math.min(a[2], b[2]), Math.max(a[3], b[3])
-        };
+        return totalBounds.area();
     }
 
     public String toString() {
