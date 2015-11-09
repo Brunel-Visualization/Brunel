@@ -80,7 +80,7 @@ public class GeoMap extends D3Diagram {
         }
     }
 
-    public static void writeProjection(ScriptWriter out,Rect bounds) {
+    public static void writeProjection(ScriptWriter out, Rect bounds) {
         out.comment("Define the projection");
 
         // Calculate a suitable projection

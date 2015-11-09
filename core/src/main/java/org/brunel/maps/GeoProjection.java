@@ -71,18 +71,15 @@ public class GeoProjection {
     }
 
     private String makeMercator(Rect b) {
-        double[] p1 = MERCATOR.transform(b.x1, b.y1);
-        double[] p2 = MERCATOR.transform(b.x2, b.y2);
+        Rect ext = MERCATOR.maxExtents(b);
 
-        double wd = Math.abs(p1[0] - p2[0]);
-        double ht = Math.abs(p1[1] - p2[1]);
-        String scale = makeScaleForProjectedDimensions(wd, ht);
+        String scale = makeScaleForProjectedDimensions(ext.width(), ext.height());
 
         // The center in screen coords
         String translateToCenter = ".translate([" + width + "/2, " + height + "/2])";
 
         // We find the center in projected space, and then invert the projection
-        double[] c = MERCATOR.inverse((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2);
+        double[] c = MERCATOR.inverse(ext.cx(), ext.cy());
         String center = ".center([" + F.format(c[0]) + ", " + F.format(c[1]) + "])";
 
         return "d3.geo.mercator()"

@@ -46,7 +46,7 @@ public class D3Util {
         if (c == '#')
             return '$' + s.substring(1);                // #count -> $count
         if (c == '\'') {
-            return s.replaceAll("['.+\\-]", "_");          // transform numeric symbols and quotes
+            return s.replaceAll("['.+\\- ]", "_");          // transform numeric symbols and quotes
         }
 
         return s;                                       // As it is

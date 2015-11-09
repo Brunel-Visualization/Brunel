@@ -77,7 +77,7 @@ class D3ScaleBuilder {
     final VisTypes.Coordinates coords;                      // Combined coordinate system derived from all elements
     final boolean isDiagram;                                // True if we want to treat it as a diagram coord system
 
-    private final GeoMapping[] geo;                         // Geographic mappings
+    private final GeoMapping[] geo;                         // Geographic mappings, one per element
 
     private final Field colorLegendField;                   // Field to use for the color legend
     private final AxisDetails hAxis, vAxis;                 // The same as the above, but at the physical location
@@ -307,14 +307,43 @@ class D3ScaleBuilder {
 
     public void writeProjection(D3Interaction interaction) {
         // Calculate the full bounds
-        Rect bounds = null;
-        for (GeoMapping g : geo) {
-            if (g == null) continue;
-            else bounds = g.totalBounds().union(bounds);
+        Rect bounds = makePositionBounds(positionFields.allXFields, positionFields.allYFields);
+        for (int i = 0; i < geo.length; i++) {
+            // Do not use bounds for maps that are reference only
+            if (geo[i] != null && containsData(element[i]))
+                bounds = geo[i].totalBounds().union(bounds);
         }
 
         // Write the projection for that
         GeoMap.writeProjection(out, bounds);
+    }
+
+    private Rect makePositionBounds(Field[] xFields, Field[] yFields) {
+        double[] rx = getRange(xFields);
+        double[] ry = getRange(yFields);
+        return rx == null || ry == null ? null : new Rect(rx[0], rx[1], ry[0], ry[1]);
+    }
+
+    private double[] getRange(Field[] xFields) {
+        Double min = null, max = null;
+        for (Field x: xFields) {
+            if (x.isNumeric()) {
+                if (min == null) {
+                    min = x.min();
+                    max = x.max();
+                }
+                else {
+                    min= Math.min(min, x.min());
+                    max= Math.min(max, x.max());
+                }
+            }
+        }
+        return min == null ? null : new double[] {min, max};
+    }
+
+    private boolean containsData(VisSingle vis) {
+        // Positional data or keys are real data; otherwise we are likely a background map
+        return vis.positionFields().length > 0 || !vis.fKeys.isEmpty();
     }
 
     public void writeLegends(VisSingle vis) {

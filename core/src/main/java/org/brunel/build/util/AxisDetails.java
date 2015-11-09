@@ -25,7 +25,6 @@ import org.brunel.data.util.Range;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Calculates information on how to display axes
@@ -82,19 +81,19 @@ public class AxisDetails {
     /* Constructs the axis for the given fields */
     public AxisDetails(String dimension, Field[] definedFields, boolean categorical) {
         this.scale = "scale_" + dimension;
-        this.fields = suitable(definedFields);
+        this.fields = definedFields; // suitable(definedFields);
         this.title = title(fields);
         this.categorical = categorical;
     }
 
-    private Field[] suitable(Field[] fields) {
-        Set<Field> result = new LinkedHashSet<Field>();
-        for (Field f : fields) {
-            if (f.name.startsWith("'")) continue;           // Do not use constants
-            result.add(f);
-        }
-        return result.toArray(new Field[result.size()]);
-    }
+//    private Field[] suitable(Field[] fields) {
+//        Set<Field> result = new LinkedHashSet<Field>();
+//        for (Field f : fields) {
+//            if (f.name.startsWith("'")) continue;           // Do not use constants
+//            result.add(f);
+//        }
+//        return result.toArray(new Field[result.size()]);
+//    }
 
     public boolean isLog() {
         return fields.length > 0 && "log".equals(fields[0].property("transform"));
