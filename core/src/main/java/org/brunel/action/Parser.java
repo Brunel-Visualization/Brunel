@@ -125,12 +125,18 @@ public class Parser {
 
                 throw new IllegalStateException("Unknown action '" + s + "'");
             }
-            if (definition.parameter == null && definition.options == null) {
+
+            // A parameter ending in ! is optional, and so if there is no parenthesis following, we treat it as no parameter
+            String param = definition.parameter;
+            if (param != null && param.endsWith("!") && !tokens.get(at + 1).content.equals("(")) param = null;
+            boolean noParametersExpected = definition.options == null &&  param == null;
+
+            if (noParametersExpected) {
                 // This item has no form of parameters at all
                 action = new ActionStep(s.content);
             } else {
                 // Has parameters
-                expect("(", tokens.get(++at));
+                expect("(",  tokens.get(++at));
                 int parametersEnd = findParametersEnd(tokens, ++at);
                 if (parametersEnd < at + 1) throw new IllegalArgumentException("Empty parameters in " + s);
                 Stack<Param> params = new Stack<Param>();
@@ -272,6 +278,14 @@ public class Parser {
                 Double d = Data.asNumeric(content);
                 if (d != null) return Param.makeNumber(d);
                 return parseField(content, "Could not parse as field");
+            }
+
+            if (def.startsWith("LIT")) {
+                if (Data.isQuoted(content))
+                    return Param.makeString(Data.deQuote(content));
+                Double d = Data.asNumeric(content);
+                if (d != null) return Param.makeNumber(d);
+                return parseField(content, "Could not parse as literal");
             }
 
             throw new IllegalStateException("Internal error: Strange definition for " + definition.name);

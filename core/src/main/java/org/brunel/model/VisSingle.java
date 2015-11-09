@@ -55,6 +55,7 @@ public class VisSingle extends VisItem implements Cloneable {
     public VisTypes.Axes tAxes;            // Which axes to display
     public VisTypes.Using tUsing;          // Any element modifications?
     public VisTypes.Diagram tDiagram;      // If defined, the layout to use instead of dimensions and axes
+    public Param[] tDiagramParameters;     // If defined diagram parameters
     public VisTypes.Element tElement;      // Element util (bar, line, point, ...)
     public VisTypes.Legends tLegends;      // Which legends to display (when aesthetic present)
     public boolean flipX;
@@ -147,8 +148,9 @@ public class VisSingle extends VisItem implements Cloneable {
         return this;
     }
 
-    public VisSingle diagram(VisTypes.Diagram type) {
+    public VisSingle diagram(VisTypes.Diagram type, Param[] parameters) {
         tDiagram = type;
+        tDiagramParameters = parameters;
         return this;
     }
 

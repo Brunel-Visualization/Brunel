@@ -1,5 +1,6 @@
 package org.brunel.maps;
 
+import org.brunel.action.Param;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 
@@ -147,11 +148,25 @@ public class GeoAnalysis {
      * @param names feature names
      * @return resulting mapping
      */
-    public GeoMapping make(Object[] names) {
-        return new GeoMapping(names, this);
+    public GeoMapping make(Object[] names, Param[] geoParameters) {
+        return new GeoMapping(names, makeRequiredFiles(geoParameters), this);
     }
 
-    public GeoMapping makeForPoints(PointCollection points) {
-        return new GeoMapping(points, this);
+    public GeoMapping makeForPoints(PointCollection points, Param[] geoParameters) {
+        return new GeoMapping(points, makeRequiredFiles(geoParameters), this);
+    }
+
+    private List<GeoFile> makeRequiredFiles(Param[] params) {
+        if (params.length == 0) return null;
+        List<GeoFile> result = new ArrayList<GeoFile>();
+        for (String s : params[0].asString().split(",")) {
+            for (GeoFile f: geoFiles) {
+                if (f.name.equalsIgnoreCase(s)) {
+                    result.add(f);
+                    break;
+                }
+            }
+        }
+        return result;
     }
 }

@@ -151,7 +151,7 @@ class ActionStep {
                 }
             for (VisTypes.Diagram t : VisTypes.Diagram.values())
                 if (t.name().equals(name)) {
-                    item.diagram(t);
+                    item.diagram(t, parameters);
                     return item;
                 }
 

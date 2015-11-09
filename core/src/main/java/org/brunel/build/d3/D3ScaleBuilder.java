@@ -308,15 +308,20 @@ class D3ScaleBuilder {
     public void writeProjection(D3Interaction interaction) {
         // Calculate the full bounds
         Rect bounds = makePositionBounds(positionFields.allXFields, positionFields.allYFields);
-        if (bounds != null) bounds = bounds.expand(0.05);
-        for (int i = 0; i < geo.length; i++) {
-            if (geo[i] == null) continue;
-            Rect trial = bounds.union(geo[i].totalBounds());
+        if (bounds == null) {
+            // All we have are reference maps -- so just use them
+            for (GeoMapping g : geo) if (g != null) bounds = g.totalBounds().union(bounds);
+        } else {
+            bounds = bounds.expand(0.05);
+            for (int i = 0; i < geo.length; i++) {
+                if (geo[i] == null) continue;
+                Rect trial = geo[i].totalBounds().union(bounds);
 
-            // Increase bounds if the element had actual data (which we obviously want to show)
-            // or it is a reference map, but massively bigger than the target area
-            if (containsData(element[i]) || bounds.area() > 0.1 * trial.area())
-                bounds = trial;
+                // Increase bounds if the element had actual data (which we obviously want to show)
+                // or it is a reference map, but massively bigger than the target area
+                if (containsData(element[i]) || bounds.area() > 0.1 * trial.area())
+                    bounds = trial;
+            }
         }
 
         // Write the projection for that
@@ -331,19 +336,18 @@ class D3ScaleBuilder {
 
     private double[] getRange(Field[] xFields) {
         Double min = null, max = null;
-        for (Field x: xFields) {
+        for (Field x : xFields) {
             if (x.isNumeric()) {
                 if (min == null) {
                     min = x.min();
                     max = x.max();
-                }
-                else {
-                    min= Math.min(min, x.min());
-                    max= Math.min(max, x.max());
+                } else {
+                    min = Math.min(min, x.min());
+                    max = Math.min(max, x.max());
                 }
             }
         }
-        return min == null ? null : new double[] {min, max};
+        return min == null ? null : new double[]{min, max};
     }
 
     private boolean containsData(VisSingle vis) {

@@ -38,12 +38,16 @@ public class PointCollection {
         bounds = makeBounds();
     }
 
-    private boolean makeConvexHull() {
+    private void makeConvexHull() {
         // Get points, sorted by Y and then X
         Point[] points = sortedPoints();
 
         // Stack to manipulate hull with
         Stack<Point> stack = new Stack<Point>();
+        if (points.length == 0) {
+            hull = new Point[0];
+            return;
+        }
 
         // Sort so bottom left is the first
         Point p0 = points[0];
@@ -56,7 +60,7 @@ public class PointCollection {
         // find next different point - p1
         int i = 1;
         while (i < N && p0.equals(points[i])) i++;
-        if (i == N) return true;
+        if (i == N) return;
         Point p1 = points[i];
 
         // find next point not collinear with p0,p1
@@ -75,7 +79,6 @@ public class PointCollection {
 
         this.hull = stack.toArray(new Point[stack.size()]);
         if (!isConvex()) throw new IllegalStateException("NOT CONVEX!");
-        return false;
     }
 
     private Rect makeBounds() {

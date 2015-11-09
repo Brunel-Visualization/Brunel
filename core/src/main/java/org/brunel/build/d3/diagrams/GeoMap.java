@@ -38,13 +38,9 @@ public class GeoMap extends D3Diagram {
     public static GeoMapping makeMapping(VisSingle vis, Dataset data, PositionFields positions) {
         String idField = getIDField(vis);
         if (idField != null)
-            return GeoAnalysis.instance().make(data.field(idField).categories());
-
+            return GeoAnalysis.instance().make(data.field(idField).categories(), vis.tDiagramParameters);
         PointCollection p = positions.getAllPoints();
-
-        if (!p.isEmpty())
-            return GeoAnalysis.instance().makeForPoints(p);
-        return null;
+            return GeoAnalysis.instance().makeForPoints(p, vis.tDiagramParameters);
     }
 
     public GeoMap(VisSingle vis, Dataset data, PositionFields positions, ScriptWriter out) {

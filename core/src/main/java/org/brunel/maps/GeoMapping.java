@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -28,24 +29,39 @@ public class GeoMapping {
      * Builds itself on construction, setting all the required information fields
      *
      * @param names       names to use
+     * @param required    files the user required us to use
      * @param geoAnalysis shared analysis information to match features against
      */
     @SuppressWarnings("unchecked")
-    GeoMapping(Object[] names, GeoAnalysis geoAnalysis) {
+    GeoMapping(Object[] names, List<GeoFile> required, GeoAnalysis geoAnalysis) {
         // Search our feature files for potential maps
         Map<GeoFile, List> potential = mapFeaturesToFiles(names, geoAnalysis);
+        filter(potential, required);
         setTargets(potential);
 
         // Calculate the best collection of files for those features.
         searchForBestSubset();
-        result = best.files.toArray(new GeoFile[best.files.size()]);
-        Arrays.sort(result);
+        if (required == null) {
+            result = best.files.toArray(new GeoFile[best.files.size()]);
+            Arrays.sort(result);
+        } else {
+            result = required.toArray(new GeoFile[required.size()]);
+        }
 
         // Build mapping
         for (int i = 0; i < result.length; i++) {
             List<FeatureDetail> use = potential.get(result[i]);        // Features used in this file
             for (FeatureDetail s : use)                                // Record match information
                 mapping.put(s.name, new int[]{i, s.indexWithinFile});
+        }
+    }
+
+    // Remove any not mentioned by the user's required list
+    private void filter(Map<GeoFile, List> desired, List<GeoFile> required) {
+        if (required == null) return;
+        for (Iterator<Map.Entry<GeoFile, List>> it = desired.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<GeoFile, List> next = it.next();
+            if (required.contains(next.getKey())) it.remove();
         }
     }
 
@@ -60,22 +76,28 @@ public class GeoMapping {
         }
     }
 
-    public GeoMapping(PointCollection points, GeoAnalysis geoAnalysis) {
+    public GeoMapping(PointCollection points, List<GeoFile> required, GeoAnalysis geoAnalysis) {
 
         // Create a map of all GeoFiles that intersect the required area
         Map<GeoFile, List> potential = mapBoundsToFiles(points, geoAnalysis);
+        filter(potential, required);
         setTargets(potential);
 
         // Calculate the best collection of files for those features.
         searchForBestSubset();
-        result = best.files.toArray(new GeoFile[best.files.size()]);
-        Arrays.sort(result);
+        if (required == null) {
+            result = best.files.toArray(new GeoFile[best.files.size()]);
+            Arrays.sort(result);
+        } else {
+            result = required.toArray(new GeoFile[required.size()]);
+        }
         targetFeatures = new List[0];
     }
 
     // Create a map from Geofile index to the points that file contains.
     private Map<GeoFile, List> mapBoundsToFiles(PointCollection points, GeoAnalysis geoAnalysis) {
         HashMap<GeoFile, List> map = new HashMap<GeoFile, List>();
+        if (points.isEmpty()) return map;
         Rect bounds = points.bounds();
         GeoFile[] geoFiles = geoAnalysis.geoFiles;
         for (GeoFile f : geoFiles) {
@@ -87,7 +109,6 @@ public class GeoMapping {
         }
         return map;
     }
-
 
     public int fileCount() {
         return result.length;
@@ -134,9 +155,9 @@ public class GeoMapping {
 
     // Recursively search for the best files to add
     private void searchForBestAdditions(GeoFileGroup current, List<Integer> possibles) {
-        System.out.println("Searching w/ current=" + current + ", base=" +  best+ ", possibles=" + possibles);
+        // System.out.println("Searching w/ current=" + current + ", base=" +  best+ ", possibles=" + possibles);
         if (current.isBetter(best)) {
-            System.out.println(" *** improved");
+            // System.out.println(" *** improved");
             best = current;                     // If we are the best, update
         }
         if (possibles.isEmpty()) return;                                // No more we can do

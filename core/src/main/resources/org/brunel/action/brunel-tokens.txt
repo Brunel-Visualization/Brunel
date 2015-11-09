@@ -23,7 +23,7 @@ pack diagram
 tree diagram
 treemap diagram
 network diagram
-map diagram
+map diagram LIT!
 
 ## X and Y locations
 x position FIELD/LIT+
