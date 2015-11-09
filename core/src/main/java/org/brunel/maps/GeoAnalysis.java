@@ -151,7 +151,7 @@ public class GeoAnalysis {
         return new GeoMapping(names, this);
     }
 
-    public GeoMapping makeForSpace(Rect bounds) {
-        return new GeoMapping(bounds, this);
+    public GeoMapping makeForPoints(PointCollection points) {
+        return new GeoMapping(points, this);
     }
 }

@@ -23,10 +23,10 @@ import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.PositionFields;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
-import org.brunel.data.Field;
 import org.brunel.maps.GeoAnalysis;
 import org.brunel.maps.GeoMapping;
 import org.brunel.maps.GeoProjection;
+import org.brunel.maps.PointCollection;
 import org.brunel.maps.Rect;
 import org.brunel.model.VisSingle;
 
@@ -40,9 +40,10 @@ public class GeoMap extends D3Diagram {
         if (idField != null)
             return GeoAnalysis.instance().make(data.field(idField).categories());
 
-        Rect bounds = getPositionsBounds(positions);
-        if (bounds != null)
-            return GeoAnalysis.instance().makeForSpace(bounds);
+        PointCollection p = positions.getAllPoints();
+
+        if (!p.isEmpty())
+            return GeoAnalysis.instance().makeForPoints(p);
         return null;
     }
 
@@ -52,22 +53,6 @@ public class GeoMap extends D3Diagram {
         mapping = makeMapping(vis, data, positions);
         if (mapping == null)
             throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
-    }
-
-    private static Rect getPositionsBounds(PositionFields positions) {
-        // Find the bounding box around the coordinates
-        double minX =Double.POSITIVE_INFINITY, maxX= Double.NEGATIVE_INFINITY, minY=Double.POSITIVE_INFINITY, maxY=Double.NEGATIVE_INFINITY;
-        for (Field f : positions.allXFields) {
-            if (!f.isNumeric()) continue;
-            minX = Math.min(minX, f.min());
-            maxX = Math.max(maxX, f.max());
-        }
-        for (Field f : positions.allYFields) {
-            if (!f.isNumeric()) continue;
-            minY = Math.min(minY, f.min());
-            maxY = Math.max(maxY, f.max());
-        }
-        return (maxX >= minX && maxY >= minY) ? new Rect(minX, maxX, minY, maxY) : null;
     }
 
     private static String getIDField(VisSingle vis) {

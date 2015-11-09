@@ -19,8 +19,13 @@ public class Rect {
         return (x2 - x1) * (y2 - y1);
     }
 
+    public Rect expand(double v) {
+        return new Rect(x1 - width() * v, x2 + width() * v, y1 - height() * v, y2 + height() * v);
+    }
+
     /**
      * Return eight points on the boundary of the rectangle
+     *
      * @return array of eight [x,y] pairs
      */
     public double[][] makeBoundaryPoints() {
@@ -28,6 +33,11 @@ public class Rect {
                 {x1, y1}, {cx(), y1}, {x2, y1}, {x2, cy()},
                 {x2, y2}, {cx(), y2}, {x1, y2}, {x1, cy()},
         };
+    }
+
+    public Rect union(double x, double y) {
+        if (contains(x, y)) return this;
+        return new Rect(Math.min(x, x1), Math.max(x, x2), Math.min(y, y1), Math.max(y, y2));
     }
 
     public double width() {

@@ -308,10 +308,15 @@ class D3ScaleBuilder {
     public void writeProjection(D3Interaction interaction) {
         // Calculate the full bounds
         Rect bounds = makePositionBounds(positionFields.allXFields, positionFields.allYFields);
+        if (bounds != null) bounds = bounds.expand(0.05);
         for (int i = 0; i < geo.length; i++) {
-            // Do not use bounds for maps that are reference only
-            if (geo[i] != null && containsData(element[i]))
-                bounds = geo[i].totalBounds().union(bounds);
+            if (geo[i] == null) continue;
+            Rect trial = bounds.union(geo[i].totalBounds());
+
+            // Increase bounds if the element had actual data (which we obviously want to show)
+            // or it is a reference map, but massively bigger than the target area
+            if (containsData(element[i]) || bounds.area() > 0.1 * trial.area())
+                bounds = trial;
         }
 
         // Write the projection for that

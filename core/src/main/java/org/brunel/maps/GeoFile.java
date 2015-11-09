@@ -19,6 +19,7 @@ class GeoFile implements Comparable<GeoFile> {
         this.hull = parse(hullString);
     }
 
+
     private double[][] parse(String hullString) {
         String[] parts = hullString.split(";");
         double[][] result = new double[parts.length][];
@@ -27,6 +28,10 @@ class GeoFile implements Comparable<GeoFile> {
             result[i] = new double[]{Double.parseDouble(p[0]), Double.parseDouble(p[1])};
         }
         return result;
+    }
+
+    public boolean covers(Point p) {
+        return covers(p.x, p.y);
     }
 
     public int compareTo(GeoFile o) {
