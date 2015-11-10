@@ -29,26 +29,26 @@ import java.util.Set;
  */
 class GeoFileGroup {
     private static final int MAX_FILES = 3;                     // No more files than this allowed in a group
-    private final Map<GeoFile, List> itemsMap;                  // Map form files to contained items
+
+    /**
+     * Make an empty group that wants to contain a defined number of items
+     *
+     * @param containedItems Map form files to those items we want groups to contain
+     * @return empty group
+     */
+    public static GeoFileGroup makeEmpty(Map<GeoFile, List<Object>> containedItems) {
+        // Count the number of features we can match
+        Set<Object> all = new HashSet<Object>();
+        for (List<Object> f : containedItems.values()) all.addAll(f);
+        return new GeoFileGroup(all.size(), containedItems, Collections.<GeoFile>emptySet(), Collections.emptySet());
+    }
+    public final Set<GeoFile> files;                            // These are the files
+    private final Map<GeoFile, List<Object>> itemsMap;          // Map form files to contained items
     private final int requiredContentCount;                     // We want to match this many features
     private final Set<Object> content;                          // These are items we do contain
     private Rect totalBounds;                                   // bounds for all the group
 
-    public final Set<GeoFile> files;                            // These are the files
-
-    /**
-     * Make an empty group that wants to contain a defined number of items
-     * @param containedItems Map form files to those items we want groups to contain
-     * @return empty group
-     */
-    public static GeoFileGroup makeEmpty(Map<GeoFile, List> containedItems) {
-        // Count the number of features we can match
-        Set all = new HashSet();
-        for (List f : containedItems.values()) all.addAll(f);
-        return new GeoFileGroup(all.size(), containedItems, Collections.<GeoFile>emptySet(), Collections.emptySet());
-    }
-
-    private GeoFileGroup(int requiredCount, Map<GeoFile, List> itemsMap, Collection<GeoFile> files, Collection<?> features) {
+    private GeoFileGroup(int requiredCount, Map<GeoFile, List<Object>> itemsMap, Collection<GeoFile> files, Collection<?> features) {
         this.requiredContentCount = requiredCount;
         this.itemsMap = itemsMap;
         this.files = new LinkedHashSet<GeoFile>(files);
@@ -57,6 +57,7 @@ class GeoFileGroup {
 
     /**
      * Attempts to add the required file to the current set of files
+     *
      * @param file file to add
      * @return null if adding was no help, otherwise a new group
      */

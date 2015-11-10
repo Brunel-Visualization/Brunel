@@ -41,15 +41,6 @@ public class PointCollection {
         return bounds;
     }
 
-    public Point[] convexHull() {
-        if (hull == null) build();
-        return hull;
-    }
-
-    public boolean isEmpty() {
-        return points.isEmpty();
-    }
-
     private void build() {
         makeConvexHull();                       // Build the points
         bounds = makeBounds();                  // use that for the bounds
@@ -123,6 +114,15 @@ public class PointCollection {
         for (int i = 0; i < N; i++)
             if (Point.ccw(hull[i], hull[(i + 1) % N], hull[(i + 2) % N]) <= 0) return false;
         return true;
+    }
+
+    public Point[] convexHull() {
+        if (hull == null) build();
+        return hull;
+    }
+
+    public boolean isEmpty() {
+        return points.isEmpty();
     }
 
     private class PolarComparator implements Comparator<Point> {

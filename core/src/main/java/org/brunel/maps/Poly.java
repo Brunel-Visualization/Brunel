@@ -20,10 +20,11 @@ package org.brunel.maps;
  * Very simple polygon class
  */
 public class Poly {
-    public final Point[] points;                // The points
+    private final Point[] points;                // The points
 
     /**
      * A polygons is a list of points
+     *
      * @param points constituent parts
      */
     public Poly(Point[] points) {
@@ -33,6 +34,7 @@ public class Poly {
     /**
      * See if the polygon contains the point.
      * This uses the winding number technique
+     *
      * @param p point to test
      * @return true if it does
      */

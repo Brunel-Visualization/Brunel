@@ -25,7 +25,7 @@ import java.text.NumberFormat;
 public class GeoProjection {
 
     /**
-     * This function defiens a D3 projection to do the Winkel Tripel projection for a whole-earth projection
+     * This function defines a D3 projection to do the Winkel Tripel projection for a whole-earth projection
      */
     public static final String[] WinkelD3Function = new String[]{
             "function () {",
@@ -37,15 +37,13 @@ public class GeoProjection {
             "}"
     };
 
-    public static final Projection MERCATOR = new Projection.Mercator();            // Mercator projection
-    public static final Projection WINKEL3 = new Projection.WinkelTripel();         // Winkel Tripel
-
+    private static final Projection MERCATOR = new Projection.Mercator();           // Mercator projection
+    private static final Projection WINKEL3 = new Projection.WinkelTripel();        // Winkel Tripel
+    private static final String LN = "\n\t\t";                                      // for output formatting
     private final String width;                                                     // JS name of width
     private final String height;                                                    // JS name of height
     private final String winkelTripleFunctionName;                                  // In JS, this will be the name
-
-    public static final String LN = "\n\t\t";                                       // for output formatting
-    private NumberFormat F = new DecimalFormat("#.####");                           // for output formatting
+    private final NumberFormat F = new DecimalFormat("#.####");                     // for output formatting
 
     /**
      * GeoProjection chooses good projections for D3 to use for a amp
@@ -97,10 +95,6 @@ public class GeoProjection {
                 + LN + translateDefinition()
                 + LN + scaleDefinition(ext)
                 + LN + center;
-    }
-
-    private String translateDefinition() {
-        return ".translate([" + width + "/2, " + height + "/2])";
     }
 
     /**
@@ -174,6 +168,10 @@ public class GeoProjection {
                 + LN + parallels
                 + LN + scaleDefinition(ext)
                 + LN + rotate;
+    }
+
+    private String translateDefinition() {
+        return ".translate([" + width + "/2, " + height + "/2])";
     }
 
     private String scaleDefinition(Rect extent) {

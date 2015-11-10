@@ -39,39 +39,6 @@ public class Rect {
         return new Point(cx(), cy());
     }
 
-    public Rect expand(double v) {
-        return new Rect(x1 - width() * v, x2 + width() * v, y1 - height() * v, y2 + height() * v);
-    }
-
-    /**
-     * Return eight points on the boundary of the rectangle
-     *
-     * @return array of eight [x,y] points on the boundary
-     */
-    public Point[] makeBoundaryPoints() {
-        return new Point[]{
-                new Point(x1, y1), new Point(cx(), y1), new Point(x2, y1), new Point(x2, cy()),
-                new Point(x2, y2), new Point(cx(), y2), new Point(x1, y2), new Point(x1, cy()),
-        };
-    }
-
-    public Rect union(Point p) {
-        if (contains(p)) return this;
-        return new Rect(Math.min(p.x, x1), Math.max(p.x, x2), Math.min(p.y, y1), Math.max(p.y, y2));
-    }
-
-    public double width() {
-        return x2 - x1;
-    }
-
-    public double height() {
-        return y2 - y1;
-    }
-
-    public final boolean contains(Point p) {
-        return p.x >= x1 && p.y >= y1 && p.x <= x2 && p.y <= y2;
-    }
-
     /**
      * Returns the x coordinate of the center of the rect
      *
@@ -152,7 +119,7 @@ public class Rect {
         return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
     }
 
-    public final boolean contains(Rect o) {
+    private boolean contains(Rect o) {
         return o.x1 >= x1 && o.x2 <= x2 && o.y1 >= y1 && o.y2 <= y2;
     }
 
@@ -205,6 +172,18 @@ public class Rect {
         }
     }
 
+    public Rect expand(double v) {
+        return new Rect(x1 - width() * v, x2 + width() * v, y1 - height() * v, y2 + height() * v);
+    }
+
+    public double width() {
+        return x2 - x1;
+    }
+
+    public double height() {
+        return y2 - y1;
+    }
+
     public Rect intersection(Rect o) {
         double a1 = Math.max(x1, o.x1);
         double b1 = Math.max(y1, o.y1);
@@ -217,14 +196,35 @@ public class Rect {
         return y2 >= other.y1 && y1 <= other.y2 && x2 >= other.x1 && x1 <= other.x2;
     }
 
-    public Rect union(Rect o) {
-        if (o == null || contains(o)) return this;
-        if (o.contains(this)) return o;
-        return new Rect(Math.min(x1, o.x1), Math.max(x2, o.x2), Math.min(y1, o.y1), Math.max(y2, o.y2));
+    /**
+     * Return eight points on the boundary of the rectangle
+     *
+     * @return array of eight [x,y] points on the boundary
+     */
+    public Point[] makeBoundaryPoints() {
+        return new Point[]{
+                new Point(x1, y1), new Point(cx(), y1), new Point(x2, y1), new Point(x2, cy()),
+                new Point(x2, y2), new Point(cx(), y2), new Point(x1, y2), new Point(x1, cy()),
+        };
     }
 
     public String toString() {
         return "[" + x1 + ", " + x2 + " : " + y1 + ", " + y2 + ")]";
+    }
+
+    public Rect union(Point p) {
+        if (contains(p)) return this;
+        return new Rect(Math.min(p.x, x1), Math.max(p.x, x2), Math.min(p.y, y1), Math.max(p.y, y2));
+    }
+
+    public final boolean contains(Point p) {
+        return p.x >= x1 && p.y >= y1 && p.x <= x2 && p.y <= y2;
+    }
+
+    public Rect union(Rect o) {
+        if (o == null || contains(o)) return this;
+        if (o.contains(this)) return o;
+        return new Rect(Math.min(x1, o.x1), Math.max(x2, o.x2), Math.min(y1, o.y1), Math.max(y2, o.y2));
     }
 
 }

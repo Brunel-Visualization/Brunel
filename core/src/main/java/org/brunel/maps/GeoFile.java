@@ -23,7 +23,7 @@ class GeoFile implements Comparable<GeoFile> {
     public final String name;           // File name
     public final double size;           // Size in Kbytes
     public final Rect bounds;           // longitude min, max; latitude min,max
-    public final Poly hull;             // Convex points in lat/long
+    private final Poly hull;            // Convex points in lat/long
 
     /**
      * Defines a GeoFile
@@ -64,6 +64,7 @@ class GeoFile implements Comparable<GeoFile> {
     /**
      * Returns true if the point is likely to be covered
      * This is not exact as it uses the convex hull, and many feature files are not very convex
+     *
      * @param p test point
      * @return true if it is likely to be inside. False means it definitely is not
      */

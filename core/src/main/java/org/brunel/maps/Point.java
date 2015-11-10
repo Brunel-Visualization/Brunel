@@ -54,12 +54,12 @@ public class Point implements Comparable<Point> {
         return d == 0 ? Double.compare(x, p.x) : d;
     }
 
-    public String toString() {
-        return "(" + f(x) + "," + f(y) + ")";
+    public final double dist(Point o) {
+        return Math.sqrt(dist2(o));
     }
 
-    private static double f(double y) {
-        return ((int) (y * 100)) / 100.0;
+    private double dist2(Point o) {
+        return (o.x - x) * (o.x - x) + (o.y - y) * (o.y - y);
     }
 
     public int hashCode() {
@@ -76,15 +76,15 @@ public class Point implements Comparable<Point> {
 
     }
 
-    public final double dist2(Point o) {
-        return (o.x - x) * (o.x - x) + (o.y - y) * (o.y - y);
+    public String toString() {
+        return "(" + f(x) + "," + f(y) + ")";
     }
 
-    public final double dist(Point o) {
-        return Math.sqrt(dist2(o));
+    private static double f(double v) {
+        return ((int) (v * 100)) / 100.0;
     }
 
     public Point translate(double dx, double dy) {
-        return new Point(x+dx, y+dy);
+        return new Point(x + dx, y + dy);
     }
 }

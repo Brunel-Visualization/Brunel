@@ -167,10 +167,6 @@ public class GeoAnalysis {
         return GeoMapping.createGeoMapping(names, makeRequiredFiles(geoParameters), this);
     }
 
-    public GeoMapping makeForPoints(PointCollection points, Param[] geoParameters) {
-        return GeoMapping.createGeoMapping(points, makeRequiredFiles(geoParameters), this);
-    }
-
     private List<GeoFile> makeRequiredFiles(Param[] params) {
         if (params.length == 0) return null;
         List<GeoFile> result = new ArrayList<GeoFile>();
@@ -185,5 +181,9 @@ public class GeoAnalysis {
             }
         }
         return result;
+    }
+
+    public GeoMapping makeForPoints(PointCollection points, Param[] geoParameters) {
+        return GeoMapping.createGeoMapping(points, makeRequiredFiles(geoParameters), this);
     }
 }

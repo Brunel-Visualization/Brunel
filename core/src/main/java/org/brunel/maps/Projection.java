@@ -21,6 +21,20 @@ package org.brunel.maps;
  */
 abstract class Projection {
 
+    private static double asRadians(double lon) {
+        return Math.toRadians(lon);
+    }
+
+    /**
+     * Rough estimate of the area of a small rectangle at the given location, when projected
+     */
+    public double getTissotArea(Point p) {
+        double h = 5e-4;            // About 50m at the equator
+        double dx = Math.abs(transform(p.translate(-h, 0)).x - transform(p.translate(h, 0)).x);
+        double dy = Math.abs(transform(p.translate(0, -h)).y - transform(p.translate(0, h)).y);
+        return dx * dy;
+    }
+
     /**
      * Projects forward
      *
@@ -37,24 +51,11 @@ abstract class Projection {
      */
     public abstract Point inverse(Point p);
 
-    private static double asRadians(double lon) {
-        return Math.toRadians(lon);
-    }
-
-    /**
-     * Rough estimate of the area of a small rectangle at the given location, when projected
-     */
-    public double getTissotArea(Point p) {
-        double h = 5e-4;            // About 50m at the equator
-        double dx = Math.abs(transform(p.translate(-h, 0)).x - transform(p.translate(h, 0)).x);
-        double dy = Math.abs(transform(p.translate(0, -h)).y - transform(p.translate(0, h)).y);
-        return dx * dy;
-    }
-
     /**
      * Provides a good guess at the size of a projected rectangle
-     * @param b
-     * @return
+     *
+     * @param b rectangle to project
+     * @return size in projected coordinate space
      */
     public Rect projectedExtent(Rect b) {
         Rect bounds = null;
