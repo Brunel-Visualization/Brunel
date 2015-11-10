@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -28,22 +29,28 @@ import java.util.Set;
  */
 class GeoFileGroup {
     private static final int MAX_FILES = 3;                     // No more files than this allowed in a group
-    public final Set<GeoFile> files;                            // These are the files
+    private final Map<GeoFile, List> itemsMap;                  // Map form files to contained items
     private final int requiredContentCount;                     // We want to match this many features
     private final Set<Object> content;                          // These are items we do contain
     private Rect totalBounds;                                   // bounds for all the group
 
+    public final Set<GeoFile> files;                            // These are the files
+
     /**
      * Make an empty group that wants to contain a defined number of items
-     * @param requiredContentCount items to try to include
+     * @param containedItems Map form files to those items we want groups to contain
      * @return empty group
      */
-    public static GeoFileGroup makeEmpty(int requiredContentCount) {
-        return new GeoFileGroup(requiredContentCount, Collections.<GeoFile>emptySet(), Collections.emptySet());
+    public static GeoFileGroup makeEmpty(Map<GeoFile, List> containedItems) {
+        // Count the number of features we can match
+        Set all = new HashSet();
+        for (List f : containedItems.values()) all.addAll(f);
+        return new GeoFileGroup(all.size(), containedItems, Collections.<GeoFile>emptySet(), Collections.emptySet());
     }
 
-    private GeoFileGroup(int requiredCount, Collection<GeoFile> files, Collection<?> features) {
+    private GeoFileGroup(int requiredCount, Map<GeoFile, List> itemsMap, Collection<GeoFile> files, Collection<?> features) {
         this.requiredContentCount = requiredCount;
+        this.itemsMap = itemsMap;
         this.files = new LinkedHashSet<GeoFile>(files);
         this.content = new HashSet<Object>(features);
     }
@@ -51,21 +58,20 @@ class GeoFileGroup {
     /**
      * Attempts to add the required file to the current set of files
      * @param file file to add
-     * @param features
-     * @return
+     * @return null if adding was no help, otherwise a new group
      */
-    public GeoFileGroup add(GeoFile file, List<?> features) {
-        if (files.contains(file)) return null;                      // Already included
+    public GeoFileGroup add(GeoFile file) {
+        if (files.contains(file)) return null;                              // Already included so no need to add
         Set<Object> combinedFeatures = new HashSet<Object>(content);
-        if (!combinedFeatures.addAll(features)) return null;        // if not change, don't use this
+        if (!combinedFeatures.addAll(itemsMap.get(file))) return null;      // Failed to add features
         Set<GeoFile> combinedFiles = new HashSet<GeoFile>(files);
         combinedFiles.add(file);
-        return new GeoFileGroup(requiredContentCount, combinedFiles, combinedFeatures);
+        return new GeoFileGroup(requiredContentCount, itemsMap, combinedFiles, combinedFeatures);
     }
 
     public boolean cannotImprove(GeoFileGroup best, int maxFeaturesPerFile) {
-        if (content.size() == requiredContentCount) return true;         // Nothing new can get added
-        if (files.size() == MAX_FILES) return true;                         // Limited number of files
+        if (content.size() == requiredContentCount) return true;                // Nothing new can get added
+        if (files.size() == MAX_FILES) return true;                             // Limited number of files
 
         // An upper bound on the number of features we could add
         int upperFeatureBound = content.size() + (MAX_FILES - files.size()) * maxFeaturesPerFile;
@@ -88,9 +94,8 @@ class GeoFileGroup {
 
     private double area() {
         if (files.isEmpty()) return 0;
-        if (totalBounds == null) {
+        if (totalBounds == null)
             for (GeoFile f : files) totalBounds = f.bounds.union(totalBounds);
-        }
         return totalBounds.area();
     }
 

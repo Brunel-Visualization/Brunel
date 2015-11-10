@@ -21,12 +21,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -161,25 +159,21 @@ public class GeoMapping {
             // System.out.println(" *** improved");
             best = current;                     // If we are the best, update
         }
-        if (possibles.isEmpty()) return;                                // No more we can do
-        int maxImprovement = potential.get(possibles.get(0)).size();   // Additions can at best add this many
-        if (current.cannotImprove(best, maxImprovement)) return;        // If we cannot get better, be done
-        LinkedList<GeoFile> working = new LinkedList<GeoFile>(possibles);
+        if (possibles.isEmpty()) return;                                    // No more we can do
+        int maxImprovement = potential.get(possibles.get(0)).size();        // Additions can at best add this many
+        if (current.cannotImprove(best, maxImprovement)) return;            // If we cannot get better, stop searching
 
+        // recurse to search for best combination
+        LinkedList<GeoFile> working = new LinkedList<GeoFile>(possibles);
         while (!working.isEmpty()) {
             GeoFile k = working.removeFirst();
-            GeoFileGroup trial = current.add(k, potential.get(k));
+            GeoFileGroup trial = current.add(k);                            // Will be null if known to be useless
             if (trial != null) searchForBestAdditions(trial, working);
         }
     }
 
     private void searchForBestSubset() {
-        //Count the number of features we can match
-        Set<FeatureDetail> unmatched = new HashSet<FeatureDetail>();
-        for (List f : potential.values())
-            unmatched.addAll(f);
-
-        best = GeoFileGroup.makeEmpty(unmatched.size());
+        best = GeoFileGroup.makeEmpty(potential);
 
         // Create list of possible ones to use, sorted with the most features first
         List<GeoFile> possibles = new ArrayList<GeoFile>(potential.keySet());
