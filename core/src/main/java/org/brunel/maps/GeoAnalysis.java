@@ -52,7 +52,7 @@ public class GeoAnalysis {
     }
 
     /**
-     * Given a geomapping, assembles the Javascript needed to use it
+     * Given a GeoMapping, assembles the Javascript needed to use it
      *
      * @param out destination for the Javascript
      * @param map the mapping to output
@@ -61,19 +61,19 @@ public class GeoAnalysis {
 
         // Overall combined map from file name -> (Map of data name to feature index in that file)
         Map<String, Map<Object, Integer>> combined = new LinkedHashMap<String, Map<Object, Integer>>();
-        for (GeoFile geo : map.result) combined.put(geo.name, new TreeMap<Object, Integer>());
+        for (GeoFile geo : map.getFiles()) combined.put(geo.name, new TreeMap<Object, Integer>());
 
-        for (Map.Entry<Object, int[]> e : map.mapping.entrySet()) {
+        for (Map.Entry<Object, int[]> e : map.getFeatureMap().entrySet()) {
             Object dataName = e.getKey();
-            int[] indices = e.getValue();               // [FILE INDEX, FEATURE KEY]
-            String fileName = map.result[indices[0]].name;
+            int[] indices = e.getValue();                               // [FILE INDEX, FEATURE KEY]
+            String fileName = map.getFiles()[indices[0]].name;
             Map<Object, Integer> features = combined.get(fileName);
             features.put(dataName, indices[1]);
         }
 
         // Write out the resulting structure
         out.add("{").indentMore();
-        GeoFile[] files = map.result;
+        GeoFile[] files = map.getFiles();
         for (int k = 0; k < files.length; k++) {
             if (k > 0) out.add(",").onNewLine();
             String fileName = files[k].name;
@@ -164,11 +164,11 @@ public class GeoAnalysis {
      * @return resulting mapping
      */
     public GeoMapping make(Object[] names, Param[] geoParameters) {
-        return new GeoMapping(names, makeRequiredFiles(geoParameters), this);
+        return GeoMapping.createGeoMapping(names, makeRequiredFiles(geoParameters), this);
     }
 
     public GeoMapping makeForPoints(PointCollection points, Param[] geoParameters) {
-        return new GeoMapping(points, makeRequiredFiles(geoParameters), this);
+        return GeoMapping.createGeoMapping(points, makeRequiredFiles(geoParameters), this);
     }
 
     private List<GeoFile> makeRequiredFiles(Param[] params) {

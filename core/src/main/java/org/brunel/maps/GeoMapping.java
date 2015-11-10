@@ -18,13 +18,15 @@ package org.brunel.maps;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -32,69 +34,73 @@ import java.util.TreeMap;
  */
 public class GeoMapping {
 
-    public final Map<Object, int[]> mapping = new TreeMap<Object, int[]>();         // Feature -> [file, featureKey]
-    public final List<Object> unmatched = new ArrayList<Object>();                  // Features we did not map
-    public final GeoFile[] result;                                                  // The files to use
+    public static GeoMapping createGeoMapping(PointCollection points, List<GeoFile> required, GeoAnalysis geoAnalysis) {
+        HashSet<Object> unmatched = new HashSet<Object>();
+        Map<GeoFile, List> map = mapBoundsToFiles(points, geoAnalysis);
+        return new GeoMapping(required, unmatched, map);
+    }
+
+    static GeoMapping createGeoMapping(Object[] names, List<GeoFile> required, GeoAnalysis geoAnalysis) {
+        HashSet<Object> unmatched = new HashSet<Object>();
+        Map<GeoFile, List> map = mapFeaturesToFiles(names, geoAnalysis, unmatched);
+        GeoMapping mapping = new GeoMapping(required, unmatched, map);
+        mapping.buildFeatureMap();
+        return mapping;
+    }
+
+    private final Map<Object, int[]> featureMap = new TreeMap<Object, int[]>();     // Feature -> [file, featureKey]
+    private final Set<Object> unmatched;                                            // Features we did not map
+    private final GeoFile[] result;                                                 // The files to use
     private GeoFileGroup best;                                                      // We search to determine this
-    private Map<GeoFile, List> potential;                                           // Files that contain wanted items
+    private final Map<GeoFile, List> potential;                                     // Files that contain wanted items
 
-    /**
-     * Builds itself on construction, setting all the required information fields
-     *
-     * @param names       names to use
-     * @param required    files the user required us to use
-     * @param geoAnalysis shared analysis information to match features against
-     */
-    @SuppressWarnings("unchecked")
-    GeoMapping(Object[] names, List<GeoFile> required, GeoAnalysis geoAnalysis) {
-        // Search our feature files for potential maps
-        potential = mapFeaturesToFiles(names, geoAnalysis);
-        filter(potential, required);
+    GeoMapping(List<GeoFile> required, Set<Object> unmatched, Map<GeoFile, List> potential) {
+        this.potential = filter(potential, required);   // If required is defined, filter to only show those files
+        this.unmatched = unmatched;                     // Unmatched items
+        searchForBestSubset();                          // Calculate the best collection of files for those features.
 
-        // Calculate the best collection of files for those features.
-        searchForBestSubset();
-        if (required == null) {
+        // Define the desired files to use
+        if (required != null) {
+            result = required.toArray(new GeoFile[required.size()]);
+        } else {
             result = best.files.toArray(new GeoFile[best.files.size()]);
             Arrays.sort(result);
-        } else {
-            result = required.toArray(new GeoFile[required.size()]);
         }
+    }
 
-        // Build mapping
+    void buildFeatureMap() {
+        // Build featureMap -- only needed for features, not points
         for (int i = 0; i < result.length; i++) {
             List<FeatureDetail> use = potential.get(result[i]);        // Features used in this file
             for (FeatureDetail s : use)                                // Record match information
-                mapping.put(s.name, new int[]{i, s.indexWithinFile});
+                featureMap.put(s.name, new int[]{i, s.indexWithinFile});
         }
+    }
+
+    public Map<Object, int[]> getFeatureMap() {
+        return featureMap;
+    }
+
+    public GeoFile[] getFiles() {
+        return result;
+    }
+
+    public Set<Object> getUnmatched() {
+        return unmatched;
     }
 
     // Remove any not mentioned by the user's required list
-    private void filter(Map<GeoFile, List> desired, List<GeoFile> required) {
-        if (required == null) return;
-        for (Iterator<Map.Entry<GeoFile, List>> it = desired.entrySet().iterator(); it.hasNext(); ) {
-            Map.Entry<GeoFile, List> next = it.next();
-            if (required.contains(next.getKey())) it.remove();
-        }
-    }
+    private Map<GeoFile, List> filter(Map<GeoFile, List> desired, List<GeoFile> required) {
+        if (required == null || required.isEmpty()) return desired;
 
-    public GeoMapping(PointCollection points, List<GeoFile> required, GeoAnalysis geoAnalysis) {
-
-        // Create a map of all GeoFiles that intersect the required area
-        potential = mapBoundsToFiles(points, geoAnalysis);
-        filter(potential, required);
-
-        // Calculate the best collection of files for those features.
-        searchForBestSubset();
-        if (required == null) {
-            result = best.files.toArray(new GeoFile[best.files.size()]);
-            Arrays.sort(result);
-        } else {
-            result = required.toArray(new GeoFile[required.size()]);
-        }
+        Map<GeoFile, List> filtered = new HashMap<GeoFile, List>();
+        for (Map.Entry<GeoFile, List> e : desired.entrySet())
+            if (required.contains(e.getKey())) filtered.put(e.getKey(), e.getValue());
+        return filtered;
     }
 
     // Create a map from Geofile index to the points that file contains.
-    private Map<GeoFile, List> mapBoundsToFiles(PointCollection points, GeoAnalysis geoAnalysis) {
+    private static Map<GeoFile, List> mapBoundsToFiles(PointCollection points, GeoAnalysis geoAnalysis) {
         HashMap<GeoFile, List> map = new HashMap<GeoFile, List>();
         if (points.isEmpty()) return map;
         Rect bounds = points.bounds();
@@ -119,7 +125,7 @@ public class GeoMapping {
         return bounds;
     }
 
-    private Map<GeoFile, List> mapFeaturesToFiles(Object[] names, GeoAnalysis geoAnalysis) {
+    private static Map<GeoFile, List> mapFeaturesToFiles(Object[] names, GeoAnalysis geoAnalysis, Collection<Object> unmatched) {
         Map<GeoFile, List> contained = new HashMap<GeoFile, List>();
         for (Object s : names) {
             int[][] item = findFeature(s, geoAnalysis.featureMap);
@@ -141,7 +147,7 @@ public class GeoMapping {
     }
 
     // Find a match, if necessary by removing accent marks and periods
-    private int[][] findFeature(Object key, Map<String, int[][]> featureMap) {
+    private static int[][] findFeature(Object key, Map<String, int[][]> featureMap) {
         String s = key.toString().toLowerCase();
         int[][] result = featureMap.get(s);
         if (result != null) return result;

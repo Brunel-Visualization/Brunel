@@ -52,13 +52,13 @@ class GeoFile implements Comparable<GeoFile> {
     }
 
     /**
-     * Sorts by name
+     * Sorts by area covered, largest first
      *
      * @param o other file
      * @return -1, 0, 1 depending on sort order
      */
     public int compareTo(GeoFile o) {
-        return name.compareTo(o.name);
+        return Double.compare(o.bounds.area(), bounds.area());
     }
 
     /**

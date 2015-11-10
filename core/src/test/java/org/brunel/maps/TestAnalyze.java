@@ -33,10 +33,10 @@ public class TestAnalyze {
     @Test
     public void testExamples() {
         GeoMapping a = GeoAnalysis.instance().make("France,Germany,Lux.".split(","), new Param[0]);
-        assertEquals(1, a.result.length);
-        assertEquals("WesternEurope", a.result[0].name);
-        assertEquals(a.unmatched.toString(), 0, a.unmatched.size());
-        assertEquals("France:[0, 73] Germany:[0, 58] Lux.:[0, 131]", dump(a.mapping));
+        assertEquals(1, a.getFiles().length);
+        assertEquals("WesternEurope", a.getFiles()[0].name);
+        assertEquals(a.getUnmatched().toString(), 0, a.getUnmatched().size());
+        assertEquals("France:[0, 73] Germany:[0, 58] Lux.:[0, 131]", dump(a.getFeatureMap()));
     }
 
     private String dump(Map<Object, int[]> mapping) {
@@ -54,20 +54,20 @@ public class TestAnalyze {
     @Test
     public void testExamples2() {
         GeoMapping a = GeoAnalysis.instance().make("france,germany,UK,IRE".split(","), new Param[0]);
-        assertEquals(1, a.result.length);
-        assertEquals("Europe", a.result[0].name);
-        assertEquals(a.unmatched.toString(), 0, a.unmatched.size());
-        assertEquals("IRE:[0, 102] UK:[0, 77] france:[0, 73] germany:[0, 58]", dump(a.mapping));
+        assertEquals(1, a.getFiles().length);
+        assertEquals("Europe", a.getFiles()[0].name);
+        assertEquals(a.getUnmatched().toString(), 0, a.getUnmatched().size());
+        assertEquals("IRE:[0, 102] UK:[0, 77] france:[0, 73] germany:[0, 58]", dump(a.getFeatureMap()));
     }
 
     @Test
     public void testExamples3() {
         GeoMapping a = GeoAnalysis.instance().make("FRA,GER,NY,TX,IA,AL,IN,IL,Nowhere".split(","), new Param[0]);
-        assertEquals(2, a.result.length);
-        assertEquals("USAMain", a.result[0].name);
-        assertEquals("WesternEurope", a.result[1].name);
-        assertEquals(1, a.unmatched.size());
-        assertEquals("Nowhere", a.unmatched.get(0));
-        assertEquals("AL:[0, 3482] FRA:[1, 73] GER:[1, 58] IA:[0, 3470] IL:[0, 3487] IN:[0, 3488] NY:[0, 3500] TX:[0, 3477]", dump(a.mapping));
+        assertEquals(2, a.getFiles().length);
+        assertEquals("USAMain", a.getFiles()[0].name);
+        assertEquals("WesternEurope", a.getFiles()[1].name);
+        assertEquals(1, a.getUnmatched().size());
+        assertEquals("Nowhere", a.getUnmatched().iterator().next());
+        assertEquals("AL:[0, 3482] FRA:[1, 73] GER:[1, 58] IA:[0, 3470] IL:[0, 3487] IN:[0, 3488] NY:[0, 3500] TX:[0, 3477]", dump(a.getFeatureMap()));
     }
 }
