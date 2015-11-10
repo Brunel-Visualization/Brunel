@@ -24,6 +24,9 @@ import java.text.NumberFormat;
  */
 public class GeoProjection {
 
+    /**
+     * This function defiens a D3 projection to do the Winkel Tripel projection for a whole-earth projection
+     */
     public static final String[] WinkelD3Function = new String[]{
             "function () {",
             "  function w(x, y) {",
@@ -34,19 +37,22 @@ public class GeoProjection {
             "}"
     };
 
-    public static final Projection MERCATOR = new Projection.Mercator();
-    public static final Projection WINKEL3 = new Projection.WinkelTripel();
-    public static final String LN = "\n\t\t";
-    private final String width;
-    private final String height;
-    private final String winkelTripleFunctionName;
-    private NumberFormat F = new DecimalFormat("#.####");
+    public static final Projection MERCATOR = new Projection.Mercator();            // Mercator projection
+    public static final Projection WINKEL3 = new Projection.WinkelTripel();         // Winkel Tripel
+
+    private final String width;                                                     // JS name of width
+    private final String height;                                                    // JS name of height
+    private final String winkelTripleFunctionName;                                  // In JS, this will be the name
+
+    public static final String LN = "\n\t\t";                                       // for output formatting
+    private NumberFormat F = new DecimalFormat("#.####");                           // for output formatting
 
     /**
      * GeoProjection chooses good projections for D3 to use for a amp
      *
-     * @param widthName  name of a Javascript variable that will contain the display width
-     * @param heightName name of a Javascript variable that will contain the display height
+     * @param widthName                name of a Javascript variable that will contain the display width
+     * @param heightName               name of a Javascript variable that will contain the display height
+     * @param winkelTripleFunctionName the name to define as the winkel triple function
      */
     public GeoProjection(String widthName, String heightName, String winkelTripleFunctionName) {
         this.width = widthName;
@@ -55,18 +61,15 @@ public class GeoProjection {
     }
 
     public String makeProjection(Rect bounds) {
-
         // Are we USA only?
         if (bounds.x1 < -100 && bounds.y1 > 17 && bounds.y2 > 35 && bounds.y2 < 73) {
-            // If we need Alaska and/or Hawaii
+            // If we need Alaska and/or Hawaii use the AlbersUSA, otherwise plain Mercator
             if (bounds.x1 < -120) return makeAlbersUSA();
             else return makeMercator(bounds);
-
         }
-        double distortion = getDistortion(bounds);
 
         // Mercator if the distortion is tolerable
-        if (distortion <= 1.8) return makeMercator(bounds);
+        if (getMercatorDistortion(bounds) <= 1.8) return makeMercator(bounds);
 
         // If we cover a wide area, use winkel triple
         if (bounds.x2 - bounds.x1 > 180 && bounds.y2 - bounds.y1 > 90) return makeWinkelTripel(bounds);
@@ -77,55 +80,53 @@ public class GeoProjection {
     }
 
     private String makeAlbersUSA() {
-        // The center in screen coords
-        String translateToCenter = ".translate([" + width + "/2, " + height + "/2])";
-        String scale = ".scale(Math.min(" + width + "/0.96, " + height + "/0.48))";
-
+        // Everything is well known, so easy to define with fixed details
         return "d3.geo.albersUsa()"
-                + LN + scale
-                + LN + translateToCenter;
+                + LN + ".scale(Math.min(" + width + "/0.96, " + height + "/0.48))"
+                + LN + translateDefinition();
     }
 
     private String makeMercator(Rect b) {
-        Rect ext = MERCATOR.maxExtents(b);
-
-        String scale = makeScaleForProjectedDimensions(ext.width(), ext.height());
-
-        // The center in screen coords
-        String translateToCenter = ".translate([" + width + "/2, " + height + "/2])";
+        Rect ext = MERCATOR.projectedExtent(b);
 
         // We find the center in projected space, and then invert the projection
-        double[] c = MERCATOR.inverse(ext.cx(), ext.cy());
-        String center = ".center([" + F.format(c[0]) + ", " + F.format(c[1]) + "])";
+        Point c = MERCATOR.inverse(ext.center());
+        String center = ".center([" + F.format(c.x) + ", " + F.format(c.y) + "])";
 
         return "d3.geo.mercator()"
-                + LN + translateToCenter
-                + LN + scale
+                + LN + translateDefinition()
+                + LN + scaleDefinition(ext)
                 + LN + center;
     }
 
-    private double getDistortion(Rect bounds) {
+    private String translateDefinition() {
+        return ".translate([" + width + "/2, " + height + "/2])";
+    }
+
+    /**
+     * The distortion is the ratio of the projected areas of a small rectangle between the top and bottom
+     * of the projected area.
+     *
+     * @param bounds area to look at
+     * @return Ratio always greater than 1
+     */
+    private double getMercatorDistortion(Rect bounds) {
         if (bounds.y1 < -89 || bounds.y2 > 89) return 100;
-        double a = MERCATOR.getTissotArea(bounds.cx(), bounds.y1);
-        double b = MERCATOR.getTissotArea(bounds.cx(), bounds.y2);
+        double a = MERCATOR.getTissotArea(new Point(bounds.cx(), bounds.y1));
+        double b = MERCATOR.getTissotArea(new Point(bounds.cx(), bounds.y2));
         return a < b / 100 || b < a / 100 ? 100 : Math.max(b / a, a / b);
     }
 
     private String makeWinkelTripel(Rect bounds) {
 
-        Rect ext = WINKEL3.maxExtents(bounds);
+        Rect ext = WINKEL3.projectedExtent(bounds);
 
-        String scale = makeScaleForProjectedDimensions(ext.width(), ext.height());
-
-        // The center in screen coords
-        String translateToCenter = ".translate([" + width + "/2, " + height + "/2])";
-
-        // Finding the center is tricky because we cannot invert the transform
-        // so we have to search for it
+        // Finding the center is tricky because we cannot invert the transform so we have to search for it
+        // We just do a grid search; slow, but simple. First by y, then by x
         double y = 0, dy = 9e99;
         for (int i = -90; i < 90; i++) {
-            double[] p = WINKEL3.transform(bounds.cx(), i);
-            double dp = Math.abs(p[1] - ext.cy());
+            Point p = WINKEL3.transform(new Point(bounds.cx(), i));
+            double dp = Math.abs(p.y - ext.cy());
             if (dp < dy) {
                 dy = dp;
                 y = i;
@@ -134,8 +135,8 @@ public class GeoProjection {
 
         double x = 0, dx = 9e99;
         for (int i = -180; i < 180; i++) {
-            double[] p = WINKEL3.transform(i, y);
-            double dp = Math.abs(p[0] - ext.cx());
+            Point p = WINKEL3.transform(new Point(i, y));
+            double dp = Math.abs(p.x - ext.cx());
             if (dp < dx) {
                 dx = dp;
                 x = i;
@@ -144,8 +145,8 @@ public class GeoProjection {
 
         String center = ".center([" + F.format(x) + ", " + F.format(y) + "])";
         return winkelTripleFunctionName + "()"
-                + LN + translateToCenter
-                + LN + scale
+                + LN + translateDefinition()
+                + LN + scaleDefinition(ext)
                 + LN + center;
     }
 
@@ -161,26 +162,22 @@ public class GeoProjection {
         String parallels = ".parallels([" + F.format(parallelA) + "," + F.format(parallelB) + "])";
         String rotate = ".rotate([" + F.format(angle) + ",0,0])";
 
-        Rect ext = projection.maxExtents(b);
-
-        String scale = makeScaleForProjectedDimensions(ext.width(), ext.height());
-
-        // The center in screen coords
-        String translateToCenter = ".translate([" + width + "/2, " + height + "/2])";
+        Rect ext = projection.projectedExtent(b);
 
         // We find the center in projected space, and then invert the projection
-        double[] c = projection.inverse(ext.cx(), ext.cy());
-        String center = ".center([0, " + F.format(c[1]) + "])";
+        Point c = projection.inverse(ext.center());
+        String center = ".center([0, " + F.format(c.y) + "])";
 
         return "d3.geo.albers()"
-                + LN + translateToCenter
+                + LN + translateDefinition()
                 + LN + center
                 + LN + parallels
-                + LN + scale
+                + LN + scaleDefinition(ext)
                 + LN + rotate;
     }
 
-    private String makeScaleForProjectedDimensions(double wid, double ht) {
-        return ".scale(Math.min((" + width + "-4)/" + F.format(wid) + ", (" + height + "-4)/" + F.format(ht) + "))";
+    private String scaleDefinition(Rect extent) {
+        return ".scale(Math.min((" + width + "-4)/" + F.format(extent.width())
+                + ", (" + height + "-4)/" + F.format(extent.height()) + "))";
     }
 }

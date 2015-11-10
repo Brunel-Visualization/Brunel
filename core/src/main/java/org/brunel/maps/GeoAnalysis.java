@@ -103,11 +103,10 @@ public class GeoAnalysis {
 
             // Read the names of the files and their sizes (in K)
             List<GeoFile> list = new ArrayList<GeoFile>();
-            for (; ; ) {
+            while (true) {
                 String[] fileLine = rdr.readLine().split("\\|");
                 if (fileLine.length != 4) break;                            // End of the file definitions
-                GeoFile f = new GeoFile(fileLine[0], list.size(), fileLine[1], fileLine[2], fileLine[3]);
-                list.add(f);
+                list.add(new GeoFile(fileLine[0], fileLine[1], fileLine[2], fileLine[3]));
             }
 
             geoFiles = list.toArray(new GeoFile[list.size()]);
@@ -176,7 +175,9 @@ public class GeoAnalysis {
         if (params.length == 0) return null;
         List<GeoFile> result = new ArrayList<GeoFile>();
         for (String s : params[0].asString().split(",")) {
-            for (GeoFile f: geoFiles) {
+            if (s.equalsIgnoreCase("uk")) s = "UnitedKingdom";
+            if (s.equalsIgnoreCase("usa")) s = "UnitedStatesofAmerica";
+            for (GeoFile f : geoFiles) {
                 if (f.name.equalsIgnoreCase(s)) {
                     result.add(f);
                     break;

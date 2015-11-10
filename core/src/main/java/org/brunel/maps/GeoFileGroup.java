@@ -17,6 +17,7 @@
 package org.brunel.maps;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -26,41 +27,56 @@ import java.util.Set;
  * A set of files that could potentially cover the mapping we need
  */
 class GeoFileGroup {
-    private static final int MAX_FILES = 3;                 // No more files than this
-    public final Set<GeoFile> files;
-    private final int requiredFeatureCount;
-    private final Set<Object> featureSet;
-    private Rect totalBounds;
+    private static final int MAX_FILES = 3;                     // No more files than this allowed in a group
+    public final Set<GeoFile> files;                            // These are the files
+    private final int requiredContentCount;                     // We want to match this many features
+    private final Set<Object> content;                          // These are items we do contain
+    private Rect totalBounds;                                   // bounds for all the group
 
-    public GeoFileGroup(int requiredFeatureCount, Collection<GeoFile> files, Collection<?> features) {
-        this.requiredFeatureCount = requiredFeatureCount;
-        this.files = new LinkedHashSet<GeoFile>(files);
-        this.featureSet = new HashSet<Object>(features);
+    /**
+     * Make an empty group that wants to contain a defined number of items
+     * @param requiredContentCount items to try to include
+     * @return empty group
+     */
+    public static GeoFileGroup makeEmpty(int requiredContentCount) {
+        return new GeoFileGroup(requiredContentCount, Collections.<GeoFile>emptySet(), Collections.emptySet());
     }
 
+    private GeoFileGroup(int requiredCount, Collection<GeoFile> files, Collection<?> features) {
+        this.requiredContentCount = requiredCount;
+        this.files = new LinkedHashSet<GeoFile>(files);
+        this.content = new HashSet<Object>(features);
+    }
+
+    /**
+     * Attempts to add the required file to the current set of files
+     * @param file file to add
+     * @param features
+     * @return
+     */
     public GeoFileGroup add(GeoFile file, List<?> features) {
         if (files.contains(file)) return null;                      // Already included
-        Set<Object> combinedFeatures = new HashSet<Object>(featureSet);
+        Set<Object> combinedFeatures = new HashSet<Object>(content);
         if (!combinedFeatures.addAll(features)) return null;        // if not change, don't use this
         Set<GeoFile> combinedFiles = new HashSet<GeoFile>(files);
         combinedFiles.add(file);
-        return new GeoFileGroup(requiredFeatureCount, combinedFiles, combinedFeatures);
+        return new GeoFileGroup(requiredContentCount, combinedFiles, combinedFeatures);
     }
 
     public boolean cannotImprove(GeoFileGroup best, int maxFeaturesPerFile) {
-        if (featureSet.size() == requiredFeatureCount) return true;         // Nothing new can get added
+        if (content.size() == requiredContentCount) return true;         // Nothing new can get added
         if (files.size() == MAX_FILES) return true;                         // Limited number of files
 
         // An upper bound on the number of features we could add
-        int upperFeatureBound = featureSet.size() + (MAX_FILES - files.size()) * maxFeaturesPerFile;
-        return upperFeatureBound < best.featureSet.size();
+        int upperFeatureBound = content.size() + (MAX_FILES - files.size()) * maxFeaturesPerFile;
+        return upperFeatureBound < best.content.size();
     }
 
     public boolean isBetter(GeoFileGroup o) {
         if (o == this) return false;
 
         // More features are better
-        int d = featureSet.size() - o.featureSet.size();
+        int d = content.size() - o.content.size();
         if (d < 0) return false;
         if (d > 0) return true;
 
@@ -79,6 +95,6 @@ class GeoFileGroup {
     }
 
     public String toString() {
-        return files + ":" + featureSet.size() + "/" + requiredFeatureCount;
+        return files + ":" + content.size() + "/" + requiredContentCount;
     }
 }

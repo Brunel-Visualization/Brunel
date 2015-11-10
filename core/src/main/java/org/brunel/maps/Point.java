@@ -17,15 +17,24 @@
 package org.brunel.maps;
 
 /**
- * A simple point
+ * An X,Y location
  */
 public class Point implements Comparable<Point> {
 
+    /**
+     * Determines if the points a->b->c turns clockwise or counterclockwise
+     *
+     * @param a first point
+     * @param b second point
+     * @param c third point
+     * @return +1,-1, 0 for counterclockwise, clockwise and collinear
+     */
     public static int ccw(Point a, Point b, Point c) {
         double area2 = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
         return area2 < 0 ? -1 : (area2 > 0 ? 1 : 0);
     }
 
+    /* Coordinates */
     public final double x, y;
 
     public Point(double x, double y) {
@@ -33,8 +42,14 @@ public class Point implements Comparable<Point> {
         this.y = y;
     }
 
-    public int compareTo(Point o) {
-        Point p = (Point) o;
+    /**
+     * Compare points -- used to sort by y location, then by x
+     * The first point will be the LOWEST point. If there are ties for Y, it will be the LEFTMOST of those
+     *
+     * @param p other point
+     * @return -1 if to be sorted lower, +1 higher, 0 if identical
+     */
+    public int compareTo(Point p) {
         int d = Double.compare(y, p.y);
         return d == 0 ? Double.compare(x, p.x) : d;
     }
@@ -43,32 +58,33 @@ public class Point implements Comparable<Point> {
         return "(" + f(x) + "," + f(y) + ")";
     }
 
-    public Point toWinkelTripel() {
-        double lambda = Math.toRadians(x);
-        double phi = Math.toRadians(y);
-        double a = Math.acos(Math.cos(phi) * Math.cos(lambda / 2));
-        double sinca = Math.abs(a) < 1e-6 ? 1 : Math.sin(a) / a;
-        return new Point(Math.cos(phi) * Math.sin(lambda / 2) / sinca + lambda / Math.PI, (Math.sin(phi) * sinca + phi) / 2);
-    }
-
-    private double f(double y) {
+    private static double f(double y) {
         return ((int) (y * 100)) / 100.0;
     }
 
     public int hashCode() {
-        int result;
         long temp = Double.doubleToLongBits(x);
-        result = (int) (temp ^ (temp >>> 32));
+        int result = (int) (temp ^ (temp >>> 32));
         temp = Double.doubleToLongBits(y);
         return 31 * result + (int) (temp ^ (temp >>> 32));
     }
 
-    // Unsafe -- only works for non-null Points
     public boolean equals(Object o) {
-        return dist2((Point) o) == 0;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return ((Point) o).x == x && ((Point) o).y == y;
+
     }
 
-    public double dist2(Point o) {
+    public final double dist2(Point o) {
         return (o.x - x) * (o.x - x) + (o.y - y) * (o.y - y);
+    }
+
+    public final double dist(Point o) {
+        return Math.sqrt(dist2(o));
+    }
+
+    public Point translate(double dx, double dy) {
+        return new Point(x+dx, y+dy);
     }
 }

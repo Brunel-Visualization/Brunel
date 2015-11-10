@@ -35,6 +35,10 @@ public class Rect {
         return (x2 - x1) * (y2 - y1);
     }
 
+    public Point center() {
+        return new Point(cx(), cy());
+    }
+
     public Rect expand(double v) {
         return new Rect(x1 - width() * v, x2 + width() * v, y1 - height() * v, y2 + height() * v);
     }
@@ -42,18 +46,18 @@ public class Rect {
     /**
      * Return eight points on the boundary of the rectangle
      *
-     * @return array of eight [x,y] pairs
+     * @return array of eight [x,y] points on the boundary
      */
-    public double[][] makeBoundaryPoints() {
-        return new double[][]{
-                {x1, y1}, {cx(), y1}, {x2, y1}, {x2, cy()},
-                {x2, y2}, {cx(), y2}, {x1, y2}, {x1, cy()},
+    public Point[] makeBoundaryPoints() {
+        return new Point[]{
+                new Point(x1, y1), new Point(cx(), y1), new Point(x2, y1), new Point(x2, cy()),
+                new Point(x2, y2), new Point(cx(), y2), new Point(x1, y2), new Point(x1, cy()),
         };
     }
 
-    public Rect union(double x, double y) {
-        if (contains(x, y)) return this;
-        return new Rect(Math.min(x, x1), Math.max(x, x2), Math.min(y, y1), Math.max(y, y2));
+    public Rect union(Point p) {
+        if (contains(p)) return this;
+        return new Rect(Math.min(p.x, x1), Math.max(p.x, x2), Math.min(p.y, y1), Math.max(p.y, y2));
     }
 
     public double width() {
@@ -64,8 +68,8 @@ public class Rect {
         return y2 - y1;
     }
 
-    public final boolean contains(double px, double py) {
-        return px >= x1 && py >= y1 && px <= x2 && py <= y2;
+    public final boolean contains(Point p) {
+        return p.x >= x1 && p.y >= y1 && p.x <= x2 && p.y <= y2;
     }
 
     /**
@@ -207,10 +211,6 @@ public class Rect {
         double a2 = Math.min(x2, o.x2);
         double b2 = Math.min(y2, o.y2);
         return a2 > a1 && b2 > b1 ? new Rect(a1, a2, b1, b2) : null;
-    }
-
-    public static Rect createRect(double x, double y, double width, double height) {
-        return new Rect(x, x + width, y, y + height);
     }
 
     public final boolean intersects(Rect other) {

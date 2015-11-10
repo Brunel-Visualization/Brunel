@@ -21,44 +21,21 @@ package org.brunel.maps;
  */
 abstract class Projection {
 
-    public static void main(String[] args) {
-        Projection a = new Mercator();
-        Projection b = new Albers(22, 66, 34);
-        for (int i = 1; i < 60; i++)
-            for (int j = 1; j < 60; j++) {
-                double lon = i * 6 - 180;
-                double lat = i * 3 - 90;
-                testTransform(a, lon, lat);
-                testTransform(b, lon, lat);
-            }
-    }
-
-    private static void testTransform(Projection a, double lon, double lat) {
-        double[] pa = a.transform(lon, lat);
-        double[] ia = a.inverse(pa[0], pa[1]);
-        double da = Math.max(Math.abs(lon - ia[0]), Math.abs(lat - ia[1]));
-        if (da > 0.0001) {
-            throw new IllegalStateException("Bad transforms for " + a.getClass().getSimpleName() + " at " + lon + ", " + lat);
-        }
-    }
-
     /**
      * Projects forward
      *
-     * @param lon degrees longitude
-     * @param lat degrees latitude
+     * @param p point in lat/long coordinates
      * @return 2D screen coordinates
      */
-    public abstract double[] transform(double lon, double lat);
+    public abstract Point transform(Point p);
 
     /**
      * Projects backwards
      *
-     * @param x screen coordinates
-     * @param y screen coordinates
+     * @param p the projected point
      * @return 2D longitude, latitude
      */
-    public abstract double[] inverse(double x, double y);
+    public abstract Point inverse(Point p);
 
     private static double asRadians(double lon) {
         return Math.toRadians(lon);
@@ -67,88 +44,56 @@ abstract class Projection {
     /**
      * Rough estimate of the area of a small rectangle at the given location, when projected
      */
-    public double getTissotArea(double lon, double lat) {
+    public double getTissotArea(Point p) {
         double h = 5e-4;            // About 50m at the equator
-        double dx = distanceX(lon - h, lon + h, lat);
-        double dy = distanceY(lat - h, lat + h, lon);
+        double dx = Math.abs(transform(p.translate(-h, 0)).x - transform(p.translate(h, 0)).x);
+        double dy = Math.abs(transform(p.translate(0, -h)).y - transform(p.translate(0, h)).y);
         return dx * dy;
     }
 
     /**
-     * Screen distance between points when projected
-     *
-     * @param lon1 degrees
-     * @param lon2 degrees
-     * @param lat  degrees, common for both latitudes
-     * @return distance in screen units
+     * Provides a good guess at the size of a projected rectangle
+     * @param b
+     * @return
      */
-    public final double distanceX(double lon1, double lon2, double lat) {
-        double[] p = transform(lon1, lat);
-        double[] q = transform(lon2, lat);
-        return Math.abs(p[0] - q[0]);
-    }
-
-    /**
-     * Screen distance between points when projected
-     *
-     * @param lat1 degrees
-     * @param lat2 degrees
-     * @param lon  degrees, common for both latitudes
-     * @return distance in screen units
-     */
-    public final double distanceY(double lat1, double lat2, double lon) {
-        double[] p = transform(lon, lat1);
-        double[] q = transform(lon, lat2);
-        return Math.abs(p[1] - q[1]);
-    }
-
-    public Rect maxExtents(Rect b) {
-        double[][] pts = b.makeBoundaryPoints();
-
-        double minX = 0, maxX = 0, minY = 0, maxY = 0;
-        for (int i = 0; i < pts.length; i++) {
-            double[] p = transform(pts[i][0], pts[i][1]);
-            if (i == 0) {
-                minX = maxX = p[0];
-                minY = maxY = p[1];
-            } else {
-                minX = Math.min(minX, p[0]);
-                maxX = Math.max(maxX, p[0]);
-                minY = Math.min(minY, p[1]);
-                maxY = Math.max(maxY, p[1]);
-            }
+    public Rect projectedExtent(Rect b) {
+        Rect bounds = null;
+        for (Point pt : b.makeBoundaryPoints()) {
+            Point p = transform(pt);
+            if (bounds == null) bounds = new Rect(p.x, p.x, p.y, p.y);
+            else bounds = bounds.union(p);
         }
-        return new Rect(minX, maxX, minY, maxY);
+        return bounds;
     }
 
     public final static class Mercator extends Projection {
-        public double[] transform(double lon, double lat) {
-            double a = asRadians(lon);
-            double b = asRadians(lat);
-            return new double[]{a, Math.log(Math.tan(Math.PI / 4 + b / 2))};
+        public Point transform(Point p) {
+            double a = asRadians(p.x);
+            double b = asRadians(p.y);
+            return new Point(a, Math.log(Math.tan(Math.PI / 4 + b / 2)));
         }
 
-        public double[] inverse(double x, double y) {
-            double a = Math.toDegrees(x);
-            double b = Math.toDegrees(2 * Math.atan(Math.exp(y)) - Math.PI / 2);
-            return new double[]{a, b};
+        public Point inverse(Point p) {
+            double a = Math.toDegrees(p.x);
+            double b = Math.toDegrees(2 * Math.atan(Math.exp(p.y)) - Math.PI / 2);
+            return new Point(a, b);
         }
 
     }
 
     public final static class WinkelTripel extends Projection {
-        public double[] transform(double lon, double lat) {
-            double x = asRadians(lon);
-            double y = asRadians(lat);
+        public Point transform(Point p) {
+            double x = asRadians(p.x);
+            double y = asRadians(p.y);
 
             double a = Math.acos(Math.cos(y) * Math.cos(x / 2));
             double sinca = Math.abs(a) < 1e-6 ? 1 : Math.sin(a) / a;
 
-            return new double[]{Math.cos(y) * Math.sin(x / 2) / sinca + x / Math.PI,
-                    (Math.sin(y) * sinca + y) / 2};
+            return new Point(Math.cos(y) * Math.sin(x / 2) / sinca + x / Math.PI,
+                    (Math.sin(y) * sinca + y) / 2);
         }
 
-        public double[] inverse(double x, double y) {
+        public Point inverse(Point p) {
             throw new UnsupportedOperationException("Inverse not available for Winkel Triple");
         }
 
@@ -162,38 +107,30 @@ abstract class Projection {
 
         public Albers(double parallelA, double parallelB, double rotation) {
             this.rotation = rotation;
-
             double s1 = asRadians(parallelA);
             double s2 = asRadians(parallelB);
-
             sin1 = Math.sin(s1);
             sin2 = Math.sin(s2);
-
             n = (sin1 + sin2) / 2;
             C = 1 + sin1 * (2 * n - sin1);
             r1 = Math.sqrt(C) / n;
 
         }
 
-        public double[] transform(double lon, double lat) {
-            double a = asRadians(lon + rotation);
-            double b = asRadians(lat);
+        public Point transform(Point p) {
+            double a = asRadians(p.x + rotation);
+            double b = asRadians(p.y);
             double r = Math.sqrt(C - 2 * n * Math.sin(b)) / n;
-            return new double[]{
-                    r * Math.sin(a * n),
-                    r1 - r * Math.cos(a * n)
-            };
+            return new Point(r * Math.sin(a * n), r1 - r * Math.cos(a * n));
         }
 
-        public double[] inverse(double x, double y) {
-            double r1y = r1 - y;
-            double lon = Math.atan2(x, r1y) / n;
-            double v = (C - (x * x + r1y * r1y) * n * n) / (2 * n);
+        @SuppressWarnings("SuspiciousNameCombination")
+        public Point inverse(Point p) {
+            double r1y = r1 - p.y;
+            double lon = Math.atan2(p.x, r1y) / n;
+            double v = (C - (p.x * p.x + r1y * r1y) * n * n) / (2 * n);
             double lat = Math.asin(Math.min(1, Math.max(-1, v)));
-            return new double[]{
-                    Math.toDegrees(lon) - rotation,
-                    Math.toDegrees(lat)
-            };
+            return new Point(Math.toDegrees(lon) - rotation, Math.toDegrees(lat));
         }
 
     }

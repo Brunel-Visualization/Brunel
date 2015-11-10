@@ -17,22 +17,23 @@
 package org.brunel.maps;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
 
 /**
- * Collects points so as to make both bounds and a convex hull
+ * Collects points so as to make both bounds and a convex points
  */
 public class PointCollection {
 
-    private final Set<Point> points = new HashSet<Point>();
-    private Rect bounds;
-    private Point[] hull;
+    private final Set<Point> points = new HashSet<Point>();         // Collect the points as they come in
+    private Rect bounds;                                            // Create the bounds
+    private Point[] hull;                                           // The convex points
 
     public void add(double x, double y) {
-        points.add(new Point(x,y));
+        points.add(new Point(x, y));
     }
 
     public Rect bounds() {
@@ -40,7 +41,7 @@ public class PointCollection {
         return bounds;
     }
 
-    public Point[]convexHull() {
+    public Point[] convexHull() {
         if (hull == null) build();
         return hull;
     }
@@ -50,15 +51,17 @@ public class PointCollection {
     }
 
     private void build() {
-        makeConvexHull();
-        bounds = makeBounds();
+        makeConvexHull();                       // Build the points
+        bounds = makeBounds();                  // use that for the bounds
+        points.clear();                         // Throw away old points
+        Collections.addAll(points, hull);       // All we need is the points
     }
 
     private void makeConvexHull() {
         // Get points, sorted by Y and then X
         Point[] points = sortedPoints();
 
-        // Stack to manipulate hull with
+        // Stack to manipulate points with
         Stack<Point> stack = new Stack<Point>();
         if (points.length == 0) {
             hull = new Point[0];
@@ -82,7 +85,7 @@ public class PointCollection {
         // find next point not collinear with p0,p1
         i++;
         while (i < N && Point.ccw(p0, p1, points[i]) == 0) i++;
-        stack.push(points[i - 1]);        // This is the second point on the hull
+        stack.push(points[i - 1]);        // This is the second point on the points
 
         // The main Graham Scan loop -- keep trying to add a new point to the end
         while (i < N) {
@@ -101,7 +104,7 @@ public class PointCollection {
         Rect bounds = null;
         for (Point p : hull) {
             if (bounds == null) bounds = new Rect(p.x, p.x, p.y, p.y);
-            else bounds = bounds.union(p.x, p.y);
+            else bounds = bounds.union(p);
         }
         return bounds;
     }
@@ -112,14 +115,13 @@ public class PointCollection {
         return pts;
     }
 
-    // check that boundary of hull is strictly convex
+    // Check that boundary of points is strictly convex
     private boolean isConvex() {
+        // pretty simple -- we should just keep going anti-clockwise all the time
         int N = hull.length;
         if (N <= 2) return true;
         for (int i = 0; i < N; i++)
-            if (Point.ccw(hull[i], hull[(i + 1) % N], hull[(i + 2) % N]) <= 0) {
-                return false;
-            }
+            if (Point.ccw(hull[i], hull[(i + 1) % N], hull[(i + 2) % N]) <= 0) return false;
         return true;
     }
 

@@ -37,9 +37,8 @@ public class GeoMapping {
     public final Map<Object, int[]> mapping = new TreeMap<Object, int[]>();         // Feature -> [file, featureKey]
     public final List<Object> unmatched = new ArrayList<Object>();                  // Features we did not map
     public final GeoFile[] result;                                                  // The files to use
-    private GeoFile[] targetFiles;                                                  // The files that match features we care about
-    private List[] targetFeatures;                                                  // The features contained in each target file
     private GeoFileGroup best;                                                      // We search to determine this
+    private Map<GeoFile, List> potential;                                           // Files that contain wanted items
 
     /**
      * Builds itself on construction, setting all the required information fields
@@ -51,9 +50,8 @@ public class GeoMapping {
     @SuppressWarnings("unchecked")
     GeoMapping(Object[] names, List<GeoFile> required, GeoAnalysis geoAnalysis) {
         // Search our feature files for potential maps
-        Map<GeoFile, List> potential = mapFeaturesToFiles(names, geoAnalysis);
+        potential = mapFeaturesToFiles(names, geoAnalysis);
         filter(potential, required);
-        setTargets(potential);
 
         // Calculate the best collection of files for those features.
         searchForBestSubset();
@@ -81,23 +79,11 @@ public class GeoMapping {
         }
     }
 
-    private void setTargets(Map<GeoFile, List> potential) {
-        targetFiles = new GeoFile[potential.size()];
-        targetFeatures = new List[potential.size()];
-        int index = 0;
-        for (Map.Entry<GeoFile, List> e : potential.entrySet()) {
-            targetFiles[index] = e.getKey();
-            targetFeatures[index] = e.getValue();
-            index++;
-        }
-    }
-
     public GeoMapping(PointCollection points, List<GeoFile> required, GeoAnalysis geoAnalysis) {
 
         // Create a map of all GeoFiles that intersect the required area
-        Map<GeoFile, List> potential = mapBoundsToFiles(points, geoAnalysis);
+        potential = mapBoundsToFiles(points, geoAnalysis);
         filter(potential, required);
-        setTargets(potential);
 
         // Calculate the best collection of files for those features.
         searchForBestSubset();
@@ -107,7 +93,6 @@ public class GeoMapping {
         } else {
             result = required.toArray(new GeoFile[required.size()]);
         }
-        targetFeatures = new List[0];
     }
 
     // Create a map from Geofile index to the points that file contains.
@@ -170,20 +155,20 @@ public class GeoMapping {
     }
 
     // Recursively search for the best files to add
-    private void searchForBestAdditions(GeoFileGroup current, List<Integer> possibles) {
+    private void searchForBestAdditions(GeoFileGroup current, List<GeoFile> possibles) {
         // System.out.println("Searching w/ current=" + current + ", base=" +  best+ ", possibles=" + possibles);
         if (current.isBetter(best)) {
             // System.out.println(" *** improved");
             best = current;                     // If we are the best, update
         }
         if (possibles.isEmpty()) return;                                // No more we can do
-        int maxImprovement = targetFeatures[possibles.get(0)].size();   // Additions can at best add this many
+        int maxImprovement = potential.get(possibles.get(0)).size();   // Additions can at best add this many
         if (current.cannotImprove(best, maxImprovement)) return;        // If we cannot get better, be done
-        LinkedList<Integer> working = new LinkedList<Integer>(possibles);
+        LinkedList<GeoFile> working = new LinkedList<GeoFile>(possibles);
 
         while (!working.isEmpty()) {
-            int k = working.removeFirst();
-            GeoFileGroup trial = current.add(targetFiles[k], targetFeatures[k]);
+            GeoFile k = working.removeFirst();
+            GeoFileGroup trial = current.add(k, potential.get(k));
             if (trial != null) searchForBestAdditions(trial, working);
         }
     }
@@ -191,19 +176,16 @@ public class GeoMapping {
     private void searchForBestSubset() {
         //Count the number of features we can match
         Set<FeatureDetail> unmatched = new HashSet<FeatureDetail>();
-        for (List<FeatureDetail> f : targetFeatures)
+        for (List f : potential.values())
             unmatched.addAll(f);
 
-        int N = unmatched.size();
-        best = new GeoFileGroup(N, Collections.<GeoFile>emptySet(), Collections.emptySet());
+        best = GeoFileGroup.makeEmpty(unmatched.size());
 
         // Create list of possible ones to use, sorted with the most features first
-
-        List<Integer> possibles = new ArrayList<Integer>();
-        for (int i = 0; i < targetFiles.length; i++) possibles.add(i);
-        Collections.sort(possibles, new Comparator<Integer>() {
-            public int compare(Integer a, Integer b) {
-                return targetFeatures[b].size() - targetFeatures[a].size();
+        List<GeoFile> possibles = new ArrayList<GeoFile>(potential.keySet());
+        Collections.sort(possibles, new Comparator<GeoFile>() {
+            public int compare(GeoFile a, GeoFile b) {
+                return potential.get(b).size() - potential.get(a).size();
             }
         });
         searchForBestAdditions(best, possibles);

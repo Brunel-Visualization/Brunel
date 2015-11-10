@@ -16,6 +16,7 @@
 
 package org.brunel.maps;
 
+import org.brunel.action.Param;
 import org.brunel.data.Data;
 import org.junit.Test;
 
@@ -31,7 +32,7 @@ import static junit.framework.TestCase.assertEquals;
 public class TestAnalyze {
     @Test
     public void testExamples() {
-        GeoMapping a = GeoAnalysis.instance().make("France,Germany,Lux.".split(","), null);
+        GeoMapping a = GeoAnalysis.instance().make("France,Germany,Lux.".split(","), new Param[0]);
         assertEquals(1, a.result.length);
         assertEquals("WesternEurope", a.result[0].name);
         assertEquals(a.unmatched.toString(), 0, a.unmatched.size());
@@ -52,7 +53,7 @@ public class TestAnalyze {
 
     @Test
     public void testExamples2() {
-        GeoMapping a = GeoAnalysis.instance().make("france,germany,UK,IRE".split(","), null);
+        GeoMapping a = GeoAnalysis.instance().make("france,germany,UK,IRE".split(","), new Param[0]);
         assertEquals(1, a.result.length);
         assertEquals("Europe", a.result[0].name);
         assertEquals(a.unmatched.toString(), 0, a.unmatched.size());
@@ -61,7 +62,7 @@ public class TestAnalyze {
 
     @Test
     public void testExamples3() {
-        GeoMapping a = GeoAnalysis.instance().make("FRA,GER,NY,TX,IA,AL,IN,IL,Nowhere".split(","), null);
+        GeoMapping a = GeoAnalysis.instance().make("FRA,GER,NY,TX,IA,AL,IN,IL,Nowhere".split(","), new Param[0]);
         assertEquals(2, a.result.length);
         assertEquals("USAMain", a.result[0].name);
         assertEquals("WesternEurope", a.result[1].name);
