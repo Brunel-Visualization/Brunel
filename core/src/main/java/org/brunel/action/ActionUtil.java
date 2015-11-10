@@ -5,14 +5,13 @@
  * You may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.brunel.action;
@@ -76,9 +75,9 @@ public class ActionUtil {
         return Arrays.equals(step.parameters, parameters) ? step
                 : new ActionStep(step.name, parameters);
     }
-    
+
     /**
-     * Replace the value of any data() parameters with a new data parameter.  If there are 
+     * Replace the value of any data() parameters with a new data parameter.  If there are
      * more data() actions than there are parameters supplied then the last supplied parameter
      * is repeated.
      * @param action the original action
@@ -86,17 +85,17 @@ public class ActionUtil {
      * @return the action with all data() parameters replaced.
      */
     public static Action replaceDataParameters(Action action, Param... newData) {
-    	
+
     	int dataIndex = 0;
-    	
+
     	for (int i=0; i < action.steps.length; i++) {
     		if (action.steps[i].name.equals("data")) {
     			action.steps[i] = replaceParameters(action.steps[i], new Param[]{newData[dataIndex]});
     			dataIndex = Math.min(dataIndex+1, newData.length-1);
     		}
     	}
-    	
+
     	return action;
-    	
+
     }
 }
