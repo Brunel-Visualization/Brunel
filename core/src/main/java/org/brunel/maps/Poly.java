@@ -65,7 +65,7 @@ public class Poly {
                 // two horizontal lines won't intersect (and if they do we don't want to increment anyway)
             } else {
                 if (Math.abs(m) > 1e6) {
-                    // Vertical line.
+                    // Vertical line.`
                     double iy = p.y;
 
                     if ((iy > yi && iy < yj)

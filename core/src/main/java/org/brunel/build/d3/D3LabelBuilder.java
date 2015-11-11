@@ -119,7 +119,14 @@ public class D3LabelBuilder {
         String name = forTooltip ? "tooltipLabeling" : "labeling";
         out.add("var", name, "= {").ln().indentMore();
         String textMethod = details.textMethod;
-        out.add("method:", out.quote(textMethod), ", fit:", details.textMustFit, ",");
+        if (textMethod.equals("geo")) {
+            // We define a function to extract the coordinates from the geo, and project them
+            String func = "function(box,text,d) {var p = projection([d.geo_properties.c, d.geo_properties.d]); return {box:box, x:p[0], y:p[1]}}";
+            out.add("where:", func, ",").onNewLine();
+        } else {
+            out.add("method:", out.quote(textMethod), ", ");
+        }
+        out.add("fit:", details.textMustFit, ",");
         if (textMethod.equals("path") || textMethod.equals("wedge"))
             out.add("path: path,");
 

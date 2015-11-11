@@ -115,7 +115,7 @@ public class GeoMap extends D3Diagram {
         writeFeatureHookup(mapping, idField);
 
         // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
-        return ElementDetails.makeForDiagram("data._rows", "path", "polygon", "path", false);
+        return ElementDetails.makeForDiagram("data._rows", "path", "polygon", "geo", false);
     }
 
     private void writeFeatureHookup(GeoMapping mapping, String idField) {

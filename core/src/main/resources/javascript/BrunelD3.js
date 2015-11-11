@@ -215,7 +215,7 @@ var BrunelD3 = (function () {
     function makeLoc(target, labeling, s, datum) {
         if (labeling.where) {
             var box = target.getBBox();
-            var p = labeling.where(box, s);
+            var p = labeling.where(box, s, datum);
             return {x: p.x, y: p.y, box: box};
         } else if (labeling.method == 'wedge')
             return wedgeLoc(labeling.path, datum);
@@ -771,6 +771,7 @@ var BrunelD3 = (function () {
                 if (feature) {
                     row.geometry = feature.geometry;
                     row.type = feature.type;
+                    row.geo_properties = feature.properties;
                     rows.push(row);
                 }
             }
