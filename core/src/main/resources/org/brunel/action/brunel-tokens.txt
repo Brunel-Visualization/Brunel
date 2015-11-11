@@ -23,12 +23,12 @@ pack diagram
 tree diagram
 treemap diagram
 network diagram
-map diagram LIT!
+map diagram - STRING labels
 
 ## X and Y locations
-x position FIELD/LIT+
-y position FIELD/LIT+
-yrange position FIELD/LIT+
+x position FIELD+ NUMBER+ STRING+
+y position FIELD+ NUMBER+ STRING+
+yrange position FIELD+ NUMBER+ STRING+
 
 
 ## Coords
@@ -39,15 +39,15 @@ flipx coords
 flip coords
 
 ## Aesthetics
-color aesthetic FIELD+
-size aesthetic FIELD+
+color aesthetic FIELD+ NUMBER+ STRING+
+size aesthetic FIELD+ NUMBER+ STRING+
 opacity aesthetic FIELD
 split aesthetic FIELD+
 key aesthetic FIELD+
 sort aesthetic FIELD+
 filter aesthetic FIELD+
-label aesthetic FIELD/LIT+
-tooltip aesthetic FIELD/LIT+
+label aesthetic FIELD+ NUMBER+ STRING+
+tooltip aesthetic FIELD+ NUMBER+ STRING+
 
 ## Data transform operations
 bin transform FIELD+

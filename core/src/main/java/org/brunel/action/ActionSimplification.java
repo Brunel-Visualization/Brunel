@@ -61,7 +61,7 @@ class ActionSimplification {
     private boolean canMerge(String name) {
         // We cannot merge "color" commands, but otherwise anything that allows multiple parameters
         GrammarItem def = grammar.get(name);
-        return !def.type.equals("color") && def.parameter != null && def.parameter.endsWith("+");
+        return !def.type.equals("color") && def.allowsMultiples();
     }
 
     private void dropAllExceptLast(ArrayList<ActionStep> base, String type, boolean ignoreParameters) {

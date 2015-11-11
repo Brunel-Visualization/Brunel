@@ -125,26 +125,30 @@ public class Parser {
                 throw new IllegalStateException("Unknown action '" + s + "'");
             }
 
-            // A parameter ending in ! is optional, and so if there is no parenthesis following, we treat it as no parameter
-            String param = definition.parameter;
-            if (param != null && param.endsWith("!") && !tokens.get(at + 1).content.equals("(")) param = null;
-            boolean noParametersExpected = definition.options == null &&  param == null;
-
-            if (noParametersExpected) {
-                // This item has no form of parameters at all
-                action = new ActionStep(s.content);
+            // Peek at next token to see if it is an opening parenthesis
+            boolean openingParenthesisNext = at < tokens.size() - 1 && tokens.get(at + 1).content.equals("(");
+            if (!openingParenthesisNext) {
+                if (definition.mayHaveNoContent())
+                    action = new ActionStep(s.content);
+                else
+                    throw new IllegalStateException("Expected parameter list for " + s.content + ", but there was none");
+            } else if (definition.hasNoContent()) {
+                throw new IllegalStateException("Unexpected parameter list for " + s.content + " -- this command has no parameters");
             } else {
-                // Has parameters
-                expect("(",  tokens.get(++at));
+                // It is allowed to have parameters, and indeed it has them
+                expect("(", tokens.get(++at));
                 int parametersEnd = findParametersEnd(tokens, ++at);
                 if (parametersEnd < at + 1) throw new IllegalArgumentException("Empty parameters in " + s);
                 Stack<Param> params = new Stack<Param>();
 
-                boolean expectParameter = true;              // false if we expect a colon or comma
+                boolean expectParameter = true;                     // false if we expect a colon or comma
+                boolean foundOption = false, foundParam = false;    // set t true when we find oen in the list already
                 for (int i = at; i < parametersEnd; i++) {
                     BrunelToken token = tokens.get(i);
                     if (expectParameter) {
-                        Param p = parseParameter(token, definition, i == at);
+                        Param p = parseParameter(token, definition, foundOption, foundParam);
+                        if (p.type() == Param.Type.option) foundOption = true;
+                        else foundParam = true;
                         token.parsedType = p.type().toString();
                         params.push(p);
                         expectParameter = false;
@@ -231,64 +235,50 @@ public class Parser {
         return startChar == ',' || startChar == '(' || startChar == ')' || startChar == ':';
     }
 
-    private Param parseParameter(BrunelToken token, GrammarItem definition, boolean first) {
+    private Param parseParameter(BrunelToken token, GrammarItem definition, boolean foundOption, boolean foundParameter) {
 
         String content = token.content;
 
-        if (definition.options != null) {
-            // This command takes an option as parameters, so look for it in the allowed ones
-            if (!first) throw new IllegalStateException("Only one parameter allowed for: " + definition.name);
-            if (definition.options.contains(content))
+        // Handle options first
+        if (definition.isOption(content)) {
+            // This is an option
+            if (foundOption)
+                throw new IllegalStateException("Only one option parameter allowed for " + definition.name);
+            else if (definition.isOption(content))
                 return Param.makeOption(content);
-            throw new IllegalStateException("Unknown option for " + definition.name + ": " + content +
-                    ". Expected one of " + definition.options);
-        } else {
-            // This command has a parameter as content -- a field, number or similar
-            String def = definition.parameter;
-
-            // Check for multiples when only one allowed
-            if (!first && !def.endsWith("+"))
-                throw new IllegalStateException("Only one parameter allowed for " + definition.name);
-
-            if (def.startsWith("NUMBER")) {
-                Double d = Data.asNumeric(content);
-                if (d == null)
-                    throw new IllegalStateException("Expected numeric parameter for " + definition.name + ", but was: " + content);
-                return Param.makeNumber(d);
-            }
-
-            if (def.startsWith("STRING")) {
-                if (!Data.isQuoted(content))
-                    throw new IllegalStateException("Expected quoted parameter for " + definition.name + ", but was: " + content);
-                return Param.makeString(Data.deQuote(content));
-            }
-
-            if (def.startsWith("FIELD/LIT")) {
-                if (Data.isQuoted(content))
-                    return Param.makeString(Data.deQuote(content));
-                Double d = Data.asNumeric(content);
-                if (d != null) return Param.makeNumber(d);
-                return parseField(content, "Could not parse as literal or field");
-            }
-
-            if (def.startsWith("FIELD")) {
-                if (Data.isQuoted(content))
-                    return Param.makeString(Data.deQuote(content));
-                Double d = Data.asNumeric(content);
-                if (d != null) return Param.makeNumber(d);
-                return parseField(content, "Could not parse as field");
-            }
-
-            if (def.startsWith("LIT")) {
-                if (Data.isQuoted(content))
-                    return Param.makeString(Data.deQuote(content));
-                Double d = Data.asNumeric(content);
-                if (d != null) return Param.makeNumber(d);
-                return parseField(content, "Could not parse as literal");
-            }
-
-            throw new IllegalStateException("Internal error: Strange definition for " + definition.name);
+            else
+                throw new IllegalStateException("Unknown option for " + definition.name + ": " + content +
+                        ". Expected one of " + definition.options());
         }
+
+        // Is it a string?
+        if (Data.isQuoted(content)) {
+            if (definition.allowsParameter("STRING", foundParameter))
+                return Param.makeString(Data.deQuote(content));
+            else
+                throw new IllegalStateException(definition.name + " does not have string parameters: " + content);
+        }
+
+        // Is it a number?
+        Double d = Data.asNumeric(content);
+        if (d != null) {
+            if (definition.allowsParameter("NUMBER", foundParameter))
+                return Param.makeNumber(d);
+            else
+                throw new IllegalStateException(definition.name + " does not have numeric parameters: " + content);
+        }
+
+        // Last choice is a field
+        if (!definition.allowsParameter("FIELD", foundParameter))
+            throw new IllegalStateException(definition.name + " does not have field parameters: " + content);
+
+        if (asField(content) == null) {
+            if (content.startsWith("#"))
+                throw new IllegalStateException("Unknown special field: " + content);
+            else
+                throw new IllegalStateException("Illegal field name: " + content);
+        }
+        return Param.makeField(content);
     }
 
     /**

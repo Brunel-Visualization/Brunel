@@ -16,8 +16,10 @@
 
 package org.brunel.action.parse;
 
-import java.util.LinkedHashSet;
+import org.brunel.data.Data;
+
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Stores information on how to parse a token
@@ -25,26 +27,52 @@ import java.util.Set;
 public class GrammarItem {
     public final String name;
     public final String type;
-    public final String parameter;                  // If non-null, this is the type of parameter allowed
-    public final Set<String> options;               // If non-null, these are the options allowed
+    private final Set<String> parameters;            // These are the type of parameter allowed
+    private final Set<String> options;               // These are the options allowed
+    private final boolean emptyAllowed;              // If true, may have no parameters
 
     GrammarItem(String[] description) {
         this.name = description[0];
         this.type = description[1];
-        if (description.length == 2) {
-            // No parameter, no options:      e.g.    stack, bar
-            parameter = null;
-            options = null;
-        } else if (description.length == 3) {
-            // Parameter, not options         e.g.    x(a,b,c), size(y)
-            parameter = description[2];
-            options = null;
-        } else {
-            // Options, not parameter         e.g.    axes(none), legends(all)
-            parameter = null;
-            options = new LinkedHashSet<String>();
-            for (int i = 2; i < description.length; i++) options.add(description[i]);
+        this.parameters = new TreeSet<String>();
+        this.options = new TreeSet<String>();
+
+        boolean canBeEmpty = false;
+        for (int i = 2; i < description.length; i++) {
+            String s = description[i];
+            if (s.equalsIgnoreCase("-"))                        // - means "may be empty"
+                canBeEmpty = true;
+            else if (s.toUpperCase().equals(s))                 // ALL CAPS such as LITERAL, STRING, FIELD, etc.
+                parameters.add(s);
+            else
+                options.add(s);                                 // Rest are options that are allowed
         }
+        this.emptyAllowed = canBeEmpty || hasNoContent();
+
     }
 
+    public boolean allowsMultiples() {
+        for (String s : parameters) if (s.endsWith("+")) return true;
+        return false;
+    }
+
+    public boolean allowsParameter(String s, boolean secondAppearance) {
+        return parameters.contains(s + "+") || !secondAppearance && parameters.contains(s);
+    }
+
+    public boolean hasNoContent() {
+        return parameters.isEmpty() && options.isEmpty();
+    }
+
+    public boolean isOption(String s) {
+        return options.contains(s);
+    }
+
+    public boolean mayHaveNoContent() {
+        return emptyAllowed;
+    }
+
+    public String options() {
+        return Data.join(options);
+    }
 }
