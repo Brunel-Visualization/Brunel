@@ -57,19 +57,38 @@ public class Parser {
     }
 
     private static Param parseModifier(BrunelToken t) {
-        if (t.content.length() == 0) throw new IllegalStateException("Empty modifier");
-        Param result;
-        if (Data.isQuoted(t.content))
-            result = Param.makeString(Data.deQuote(t.content));
-        else {
-            Double d = Data.asNumeric(t.content);
-            if (d != null)
-                result = Param.makeNumber(d);
-            else
-                result = Param.makeOption(t.content.toLowerCase());
-        }
+        String content = t.content;
+        if (content.length() == 0) throw new IllegalStateException("Empty modifier");
+        Param result = parseModifier(content);
         t.parsedType = result.type().toString();
         return result;
+    }
+
+    private static Param parseModifier(String content) {
+        Param result;
+        if (Data.isQuoted(content))
+            result = Param.makeString(Data.deQuote(content));
+        else {
+            Double d = Data.asNumeric(content);
+            if (d != null)
+                result = Param.makeNumber(d);
+            else {
+                List<Param> list = tryAsDashSeparatedList(content);
+                if (list != null)
+                    result = Param.makeList(list);
+                else
+                    result = Param.makeOption(content.toLowerCase());
+            }
+        }
+        return result;
+    }
+
+    private static List<Param> tryAsDashSeparatedList(String content) {
+        String[] parts = content.split("-");
+        if (parts.length < 2) return null;               // Need multiples for this
+        List<Param> list = new ArrayList<Param>();
+        for (String p : parts) list.add(parseModifier(p));
+        return list;
     }
 
     private final ParseGrammar grammar = ParseGrammar.instance();
@@ -157,7 +176,31 @@ public class Parser {
                             // A modifier for the field
                             token.parsedType = "syntax";
                             if (i > parametersEnd - 2) throw new IllegalStateException("Unterminated option ':'");
-                            Param modifier = parseModifier(tokens.get(++i)); // We have handled an extra token so increment i
+                            Param modifier;
+
+                            BrunelToken nextToken = tokens.get(++i);    // We have handled an extra token so increment i
+
+                            if (nextToken.content.equals("[")) {
+                                // Handle a list of values
+                                nextToken.parsedType = "syntax";
+                                List<Param> listContent = new ArrayList<Param>();
+                                while (i < parametersEnd) {
+                                    nextToken = tokens.get(++i);
+                                    listContent.add(parseModifier(nextToken));
+                                    nextToken = tokens.get(++i);
+                                    if (nextToken.content.equals("]")) { // List terminated
+                                        nextToken.parsedType = "syntax";
+                                        break;
+                                    }
+                                    if (!nextToken.content.equals(","))
+                                        throw new IllegalStateException("Expected comma or closing bracket, but was: " + nextToken.content);
+                                    nextToken.parsedType = "syntax";
+
+                                }
+                                modifier = Param.makeList(listContent);
+                            } else {
+                                modifier = parseModifier(nextToken);
+                            }
                             params.push(params.pop().addModifiers(modifier));
                         } else if (",".equals(token.content)) {
                             // Separates field
@@ -232,7 +275,8 @@ public class Parser {
     }
 
     private boolean isSpecialChar(char startChar) {
-        return startChar == ',' || startChar == '(' || startChar == ')' || startChar == ':';
+        return startChar == ',' || startChar == '(' || startChar == ')'
+                || startChar == '[' || startChar == ']' || startChar == ':';
     }
 
     private Param parseParameter(BrunelToken token, GrammarItem definition, boolean foundOption, boolean foundParameter) {

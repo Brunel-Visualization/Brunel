@@ -16,6 +16,7 @@
 
 package org.brunel.action;
 
+import org.brunel.data.Data;
 import org.junit.Test;
 
 import java.util.List;
@@ -228,8 +229,30 @@ public class ParseTest {
         actions = new Parser().getActionSteps(new Parser().tokenize("bin(\na:2,                   b: 3)"));
         assertEquals(1, actions.size());
         assertEquals("bin(a:2, b:3)", actions.get(0).toString());
-
-
     }
+
+    @Test
+    public void testListCommands() {
+        List<ActionStep> actions;
+        actions = new Parser().getActionSteps(new Parser().tokenize("color(a:[red,green,blue])"));
+        assertEquals(1,actions.size());
+        ActionStep a = actions.get(0);
+        assertEquals("color", a.name);
+        assertEquals(1, a.parameters.length);
+        Param p = a.parameters[0];
+        assertEquals(Param.Type.field, p.type());
+
+        Param[] mods = p.modifiers();
+        assertEquals(1, mods.length);
+        assertEquals(Param.Type.list, mods[0].type());
+        List<Param> items = mods[0].asList();
+        assertEquals("red, green, blue", Data.join(items));
+
+        // Check that a-b-c is simply syntacic sugar for [a,b,c]
+        actions = new Parser().getActionSteps(new Parser().tokenize("color(a:red-green-blue)"));
+        items = actions.get(0).parameters[0].modifiers()[0].asList();
+        assertEquals("red, green, blue", Data.join(items));
+    }
+
 
 }

@@ -22,6 +22,7 @@ import org.brunel.data.Field;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -43,6 +44,10 @@ public class Param implements Comparable<Param> {
 
     public static Param makeField(String s) {
         return new Param(s, Type.field);
+    }
+
+    public static Param makeList(List<Param> listContent) {
+        return new Param(listContent, Type.list);
     }
 
     public static List<Param> makeFields(String[] fields) {
@@ -109,6 +114,16 @@ public class Param implements Comparable<Param> {
         return asField(null);
     }
 
+    /**
+     * Return the content as a list
+     * If the parameter is not a list, it returns this item wrapped in a list
+     *
+     * @return parameter name
+     */
+    public List<Param> asList() {
+        return type == Type.list ? (List<Param>) content : Collections.singletonList(this);
+    }
+
     public String asString() {
         if (type == Type.number) return Data.formatNumeric(asDouble(), false);
         else return content.toString();
@@ -167,5 +182,5 @@ public class Param implements Comparable<Param> {
         return type;
     }
 
-    public enum Type {field, option, number, string}
+    public enum Type {field, option, number, string, list}
 }

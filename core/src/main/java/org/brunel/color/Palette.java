@@ -21,6 +21,7 @@ import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,15 +36,15 @@ import java.util.Set;
 public class Palette {
 
     private static final Palette[] sequential = new Palette[]{
-            new Palette("Blue;blue,purple;#f1eef6,#bdc9e1,#74a9cf,#2b8cbe,#045a8d"),
-            new Palette("Green;blue,green;#edf8fb,#b2e2e2,#66c2a4,#2ca25f,#006d2c"),
-            new Palette("PurpleBlue;blue,purple;#edf8fb,#b3cde3,#8c96c6,#8856a7,#810f7c"),
-            new Palette("BlueGreen;green,blue;#f0f9e8,#bae4bc,#7bccc4,#43a2ca,#0868ac"),
-            new Palette("Red;orange,red;#fef0d9,#fdcc8a,#fc8d59,#e34a33,#b30000"),
-            new Palette("Purple;red,purple;#feebe2,#fbb4b9,#f768a1,#c51b8a,#7a0177"),
-            new Palette("GreenYellow;green;#ffffcc,#c2e699,#78c679,#31a354,#006837"),
-            new Palette("BlueYellow;green,blue;#ffffcc,#a1dab4,#41b6c4,#2c7fb8,#253494"),
-            new Palette("Brown;orange,brown;#ffffd4,#fed98e,#fe9929,#d95f0e,#993404")
+            new Palette("Blues;blue,purple;#f1eef6,#bdc9e1,#74a9cf,#2b8cbe,#045a8d"),
+            new Palette("Greens;blue,green;#edf8fb,#b2e2e2,#66c2a4,#2ca25f,#006d2c"),
+            new Palette("PurpleBlues;blue,purple;#edf8fb,#b3cde3,#8c96c6,#8856a7,#810f7c"),
+            new Palette("BlueGreens;green,blue;#f0f9e8,#bae4bc,#7bccc4,#43a2ca,#0868ac"),
+            new Palette("Reds;orange,red;#fef0d9,#fdcc8a,#fc8d59,#e34a33,#b30000"),
+            new Palette("Purples;red,purple;#feebe2,#fbb4b9,#f768a1,#c51b8a,#7a0177"),
+            new Palette("GreenYellows;green;#ffffcc,#c2e699,#78c679,#31a354,#006837"),
+            new Palette("BlueYellows;green,blue;#ffffcc,#a1dab4,#41b6c4,#2c7fb8,#253494"),
+            new Palette("Browns;orange,brown;#ffffd4,#fed98e,#fe9929,#d95f0e,#993404")
     };
 
     private static final Palette nominal19;                         // 19 of the 22 Kelly colors
@@ -71,10 +72,11 @@ public class Palette {
         }
         if (kellyColors.size() != 19)
             throw new IllegalStateException("Expected 19 Kelly colors, but was " + kellyColors.size());
-        nominal19 = new Palette("nominal19", kellyColors);
+        nominal19 = new Palette("nominal19", kellyColors, false);
     }
 
     private final String name;
+    public final String singleColor;
     private final Set<String> colorTags;
     private final String[] items;
 
@@ -86,6 +88,14 @@ public class Palette {
         String[] cols = parts[2].split(",");
         items = new String[cols.length];
         for (int i = 0; i < items.length; i++) items[i] = cols[i].trim();
+        this.singleColor = null;
+    }
+
+    public Palette(String name, List<String> colors, boolean singleColor) {
+        this.name = name;
+        this.singleColor = singleColor ? colors.get(colors.size() - 1) : null;
+        this.colorTags = Collections.EMPTY_SET;
+        this.items = colors.toArray(new String[colors.size()]);
     }
 
     public static ColorMapping makeColorMapping(Field f, Param[] modifiers, boolean largeElement) {
@@ -95,18 +105,15 @@ public class Palette {
         if (modifiers.length == 0) {
             base = makeDefaultMapping(f);
         } else {
-            // Set the amount of mutedness of the hues
-            String paletteName = null;
-            paletteName = modifiers[0].asString();
-            if (paletteName.endsWith("=")) {
-                mutingLevel = 0;
-                paletteName = paletteName.substring(0, paletteName.length() - 1);
+            List<Param> params = modifiers[0].asList();
+            List<String> names = new ArrayList<String>();
+            for (Param p : params) {
+                String s = p.asString();
+                if (s.equals("=")) mutingLevel = 0;
+                else if (s.startsWith("*")) mutingLevel += s.length();
+                else names.add(s);
             }
-            while (paletteName.endsWith("*")) {
-                mutingLevel++;
-                paletteName = paletteName.substring(0, paletteName.length() - 1);
-            }
-            base = makeNamedMapping(f, paletteName);
+            base = makeNamedMapping(f, names);
         }
 
         // For binning the palette is based on the numeric values, but the categories
@@ -118,31 +125,37 @@ public class Palette {
         return mutingLevel == 0 ? base : base.mute(mutingLevel);
     }
 
-    private static ColorMapping makeNamedMapping(Field f, String paletteName) {
-        String[] paletteParts = paletteName.split("-");
-        if (paletteParts.length == 1) {
-            String name = paletteParts[0];
-            // Default name -- probably used just so we can mute the default
-            if (name.equals("auto") || name.equals("default") || name.equals("")) return makeDefaultMapping(f);
-            if (name.equals("diverging")) return makeNamedMapping(f, "Blue-Red");
+    private static ColorMapping makeNamedMapping(Field f, List<String> paletteParts) {
+        if (paletteParts.size() == 0) {
+            // Default palette probably used just so we can mute the default
+            return makeDefaultMapping(f);
+        } else if (paletteParts.size() == 1) {
+            String name = paletteParts.get(0);
+            if (name.equals("diverging")) return makeNamedMapping(f, Arrays.asList("Blues", "Reds"));
 
-
-            // Names for the nominal palette
-            if (name.equalsIgnoreCase("nominal") || name.equalsIgnoreCase("ordinal") || name.equalsIgnoreCase("nominal19") || name.equalsIgnoreCase("kelly"))
-                return makeNominal(f, nominal19.items);
             Palette palette = makeNamedPalette(name);
-            return new ColorMapping(fieldSplits(f, palette.length(), null), palette.items);
-        } else if (paletteParts.length == 2) {
+            if (f.isNumeric())
+                return new ColorMapping(fieldSplits(f, palette.length()), palette.items);
+            else
+                return makeNominal(f, palette.items);
+        } else if (paletteParts.size() == 2 && f.isNumeric()) {
             // Two range divergent
-            String a = paletteParts[0];
-            String b = paletteParts[1];
-            return makeDivergent(f, makeNamedPalette(a), makeNamedPalette(b), null);
+            String a = paletteParts.get(0);
+            String b = paletteParts.get(1);
+            return makeDivergent(f, makeNamedPalette(a), makeNamedPalette(b));
         } else {
-            // Two range divergent with middle value
-            String a = paletteParts[0];
-            String b = paletteParts[2];
-            String value = paletteParts[1];
-            return makeDivergent(f, makeNamedPalette(a), makeNamedPalette(b), value);
+            // Either individual values or interpolations == but all define exact colors
+            List<String> colors = new ArrayList<String>();
+            for (String s : paletteParts) {
+                Palette p = makeNamedPalette(s);
+                if (p.singleColor != null) colors.add(p.singleColor);
+                else Collections.addAll(colors, p.items);
+            }
+            Palette combined = new Palette("combined", colors, false);
+            if (f.isNumeric())
+                return new ColorMapping(fieldSplits(f, combined.length()), combined.items);
+            else
+                return makeNominal(f, combined.items);
         }
     }
 
@@ -151,7 +164,7 @@ public class Palette {
     }
 
     private static ColorMapping makeDefaultMapping(Field f) {
-        if (!f.isNumeric()) return makeNamedMapping(f, "nominal");
+        if (!f.isNumeric()) return makeNamedMapping(f, Collections.singletonList("nominal"));
 
         // Default to divergent, except for given cases below
         boolean divergent = true;
@@ -160,10 +173,15 @@ public class Palette {
         if ("sum".equals(summary) || "percent".equals(summary)) divergent = false;
 
         // Ask for the appropriate named mapping
-        return makeNamedMapping(f, divergent ? "Blue-Red" : "Blue");
+        return makeNamedMapping(f, divergent ?
+                Arrays.asList("Blues", "Reds") : Collections.singletonList("Blue"));
     }
 
     private static Palette makeNamedPalette(String name) {
+        if (name.equalsIgnoreCase("nominal") || name.equalsIgnoreCase("ordinal")
+                || name.equalsIgnoreCase("nominal19") || name.equalsIgnoreCase("kelly"))
+            return nominal19;
+
         if (name.startsWith("continuous") || name.startsWith("sequential")) {
             int n;
             try {
@@ -198,38 +216,32 @@ public class Palette {
             java.awt.Color a = java.awt.Color.getHSBColor(hsv[0], r * hsv[1], (1 - r) + r * hsv[2]);
             colors.add(String.format("#%02X%02X%02X", a.getRed(), a.getGreen(), a.getBlue()));
         }
-        return new Palette(c, colors);
+        return new Palette(c, colors, true);
     }
 
-    private static Object[] fieldSplits(Field f, int n, String midValue) {
+    public static Object[] fieldSplits(Field f, int n) {
         Auto.setTransform(f);
         String t = f.stringProperty("transform");
         Object[] objects = new Object[n];
         double min = f.min();
         double max = f.max();
-        Double mid = midValue == null ? null : Double.parseDouble(midValue);
         for (int i = 0; i < n; i++) {
             if ("log".equals(t)) {
-                objects[i] = Math.exp(interpolate(n, Math.log(min), Math.log(max), mid, i));
+                objects[i] = Math.exp(interpolate(n, Math.log(min), Math.log(max), i));
             } else if ("root".equals(t)) {
-                objects[i] = Math.pow(interpolate(n, Math.sqrt(min), Math.sqrt(max), mid, i), 2);
+                objects[i] = Math.pow(interpolate(n, Math.sqrt(min), Math.sqrt(max), i), 2);
             } else {
-                objects[i] = interpolate(n, min, max, mid, i);
+                objects[i] = interpolate(n, min, max, i);
             }
         }
         return objects;
     }
 
-    private static double interpolate(int n, double min, double max, Double mid, int i) {
-        if (mid == null)
-            return min + (max - min) * i / (n - 1);
-        else {
-            if (i <= (n + 1) / 2) return interpolate((n + 1) / 2, min, mid, null, i);
-            else return interpolate((n + 1) / 2, mid, max, null, i - (n + 1) / 2);
-        }
+    private static double interpolate(int n, double min, double max, int i) {
+        return min + (max - min) * i / (n - 1);
     }
 
-    private static ColorMapping makeDivergent(Field f, Palette lower, Palette upper, String midValue) {
+    private static ColorMapping makeDivergent(Field f, Palette lower, Palette upper) {
         int low = lower.items.length;
         int n = low + upper.items.length - 1;
         String[] colors = new String[n];
@@ -242,7 +254,7 @@ public class Palette {
                 colors[i] = upper.items[i - low];
             }
         }
-        return new ColorMapping(fieldSplits(f, n, midValue), colors);
+        return new ColorMapping(fieldSplits(f, n), colors);
     }
 
     static String mid(String a, String b, double v) {
@@ -267,7 +279,7 @@ public class Palette {
 
         // For numeric data we make bands of color
         int n = items.length;
-        Object[] simple = fieldSplits(field, n, null);
+        Object[] simple = fieldSplits(field, n);
         Object[] rampedValues = new Object[2 * n - 2];
         String[] rampedItems = new String[2 * n - 2];
         for (int i = 0; i < n - 1; i++) {
@@ -279,9 +291,4 @@ public class Palette {
         return new ColorMapping(rampedValues, rampedItems);
     }
 
-    public Palette(String name, List<String> colors) {
-        this.name = name;
-        this.colorTags = Collections.EMPTY_SET;
-        this.items = colors.toArray(new String[colors.size()]);
-    }
 }

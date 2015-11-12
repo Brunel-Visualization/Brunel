@@ -432,29 +432,39 @@ class D3ScaleBuilder {
 
     private void addSizeScale(String name, Param p, VisSingle vis, String defaultTransform) {
 
-        // Find modifiers for upper and lower values. If one only is specified, it is the upper
-        double min = 0.05, max = 1.0;
-        if (p.modifiers().length == 2) {
-            double v1 = p.modifiers()[0].asDouble() / 100;
-            double v2 = p.modifiers()[1].asDouble() / 100;
-            min = Math.min(v1, v2);
-            max = Math.max(v1, v2);
-        } else if (p.modifiers().length == 1) {
-            max = p.modifiers()[0].asDouble() / 100;
+        Object[] sizes;
+        if (p.modifiers().length > 0) {
+            sizes = getSizes(p.modifiers()[0].asList());
+        } else {
+            sizes = new Object[]{0.05, 1.0};
         }
 
         Field f = fieldById(p, vis);
-
-        scaleWithDomain(name, new Field[]{f}, Purpose.size, 2, defaultTransform, null);
-        if (f.preferCategorical()) {
-            int length = f.categories().length;
-            double[] sizes = new double[length];
-            for (int i = 0; i < length; i++) sizes[i] = max * (i + 1.0) / length;
-            out.addChained("range(" + Arrays.toString(sizes) + ")");
+        Object[] divisions;
+        if (f.isNumeric()) {
+            // Divide up and interpolate
+            divisions = Palette.fieldSplits(f, sizes.length);
         } else {
-            out.addChained("range([", min, ",", max, "])");
+            // Alternate among categories
+            divisions = f.categories();
         }
-        out.endStatement();
+
+        scaleWithDomain(name, new Field[]{f}, Purpose.size, sizes.length, defaultTransform, divisions);
+        out.addChained("range([ ").add(Data.join(sizes)).add("])").endStatement();
+    }
+
+    private Object[] getSizes(List<Param> params) {
+        // The parameters define the lists we want
+        List<Double> result = new ArrayList<Double>();
+        for (Param p : params) {
+            String s = p.asString();
+            if (s.endsWith("%")) s = s.substring(0, s.length() - 1);
+            Double d = Data.asNumeric(s);
+            if (d != null) result.add(d/100);
+        }
+        if (result.isEmpty()) return new Object[] { 0.05, 1.0};
+        if (result.size() == 1) result.add(0, 0.05);
+        return result.toArray(new Object[result.size()]);
     }
 
     private void addOpacityScale(Param p, VisSingle vis) {

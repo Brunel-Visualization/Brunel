@@ -17,6 +17,7 @@
 package org.brunel.maps;
 
 import org.brunel.action.Param;
+import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 
@@ -74,10 +75,11 @@ public class GeoAnalysis {
         // Write out the resulting structure
         out.add("{").indentMore();
         GeoFile[] files = map.getFiles();
+        String version = new BuilderOptions().version;
         for (int k = 0; k < files.length; k++) {
             if (k > 0) out.add(",").onNewLine();
             String fileName = files[k].name;
-            String source = Data.quote("http://brunelvis.org/geo/0.7/" + fileName + ".json");
+            String source = Data.quote("http://brunelvis.org/geo/" + version + "/" + fileName + ".json");
             out.onNewLine().add(source, ":{").indentMore();
             int i = 0;
             Map<Object, Integer> features = combined.get(fileName);
