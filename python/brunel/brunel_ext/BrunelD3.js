@@ -215,7 +215,7 @@ var BrunelD3 = (function () {
     function makeLoc(target, labeling, s, datum) {
         if (labeling.where) {
             var box = target.getBBox();
-            var p = labeling.where(box, s);
+            var p = labeling.where(box, s, datum);
             return {x: p.x, y: p.y, box: box};
         } else if (labeling.method == 'wedge')
             return wedgeLoc(labeling.path, datum);
@@ -723,7 +723,7 @@ var BrunelD3 = (function () {
      Reads feature data from a geojson file and adds to the data's rows
      data:      Brunel's data structure
      locations: Maps from source file -> map of data names to their geo file indices
-     idFunc:    Function to return the element ID
+     idFunc:    Function to return the element ID (may be null for background maps)
      element:   The element we are loading data into
      millis:    Time to use for transitioning in the next build
      returns true if we have started loading, but not added the data in yet
@@ -766,11 +766,12 @@ var BrunelD3 = (function () {
             var i, rows = [];
             for (i = 0; i < data._rows.length; i++) {
                 var row = data._rows[i],                                        // The data row
-                    fname = idFunc(row),                                        // The ID for that row
+                    fname = idFunc ? idFunc(row) : null,                        // The ID for that row
                     feature = element._features[fname];                         // The feature for that name
                 if (feature) {
                     row.geometry = feature.geometry;
                     row.type = feature.type;
+                    row.geo_properties = feature.properties;
                     rows.push(row);
                 }
             }
