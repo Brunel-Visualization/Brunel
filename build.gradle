@@ -117,7 +117,7 @@ task makeMinified(type: JavaExec, dependsOn: build) {
     def closureArgs = []
     closureArgs << "--charset" << "utf-8"
     closureArgs << "--compilation_level" << "SIMPLE_OPTIMIZATIONS"
-    closureArgs << "--js_output_file" << "out/javascript/brunel.0.7.min.js"
+    closureArgs << "--js_output_file" << "out/javascript/brunel.0.8.min.js"
     closureArgs << "out/javascript/BrunelD3.js"
     closureArgs << "out/javascript/BrunelData.js"
     args closureArgs
@@ -130,7 +130,7 @@ task makeMinifiedControls(type: JavaExec, dependsOn: build) {
     def closureArgs = []
     closureArgs << "--charset" << "utf-8"
     closureArgs << "--compilation_level" << "SIMPLE_OPTIMIZATIONS"
-    closureArgs << "--js_output_file" << "out/javascript/brunel.controls.0.7.min.js"
+    closureArgs << "--js_output_file" << "out/javascript/brunel.controls.0.8.min.js"
     closureArgs << "out/javascript/sumoselect/jquery.sumoselect.min.js"
     closureArgs << "out/javascript/BrunelEventHandlers.js"
     closureArgs << "out/javascript/BrunelJQueryControlFactory.js"

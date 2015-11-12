@@ -22,7 +22,7 @@ package org.brunel.maps;
 public class Point implements Comparable<Point> {
 
     /**
-     * Determines if the points a->b->c turns clockwise or counterclockwise
+     * Determines if the points a - b - c turns clockwise or counterclockwise
      *
      * @param a first point
      * @param b second point

@@ -174,7 +174,7 @@ public class Palette {
 
         // Ask for the appropriate named mapping
         return makeNamedMapping(f, divergent ?
-                Arrays.asList("Blues", "Reds") : Collections.singletonList("Blue"));
+                Arrays.asList("Blues", "Reds") : Collections.singletonList("Blues"));
     }
 
     private static Palette makeNamedPalette(String name) {
@@ -188,7 +188,7 @@ public class Palette {
                 n = Integer.parseInt(name.substring(name.length() - 1));
             } catch (NumberFormatException e) {
                 // The default is the first one
-                n = 0;
+                n = 1;
             }
             n = (n + sequential.length - 1) % sequential.length;
             return sequential[n];
@@ -199,7 +199,7 @@ public class Palette {
 
         if (name.startsWith("#") && name.length() == 7) return makeSingleHue(name);
 
-        String color = COLORS_BY_NAME.get(name);
+        String color = COLORS_BY_NAME.get(name.toLowerCase());
         if (color != null) return makeSingleHue(color);
 
         throw new IllegalStateException("Unknown color palette: " + name);

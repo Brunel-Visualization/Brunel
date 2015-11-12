@@ -65,6 +65,8 @@ class ActionEditorPane extends JTextPane implements DocumentListener, Runnable {
         StyleConstants.setForeground(specialFieldStyle, Common.GREEN2);
         StyleConstants.setItalic(specialFieldStyle, true);
         StyleConstants.setBold(specialFieldStyle, true);
+        sc.addStyle("list", specialFieldStyle);
+
 
         Style numberStyle = sc.addStyle("number", defaultStyle);
         StyleConstants.setForeground(numberStyle, Common.GREEN2);

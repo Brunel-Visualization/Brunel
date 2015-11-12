@@ -70,6 +70,32 @@ also edit the commands and hit return to modify the syntax.
 Basic Concepts
 --------------
 
+### Data statement: `data('...')`
+Although some applications may allow you to specify a data set to use through their user interface
+(or is predefined, like the example data set sued in this guide), the data statement allows you to
+specify a web location to read data for an element. A different data set can be associated with each
+element, and we allow two custom location schemes as helpful utilities
+
+ * `sample:???.csv` -- using this scheme directly accesses Brunel's sample data files, one of
+AirlineDelays.csv, BGG Top 2000 Games.csv, BigTenWins.csv, Conferences.csv, minard.csv,
+minard-cities.csv, minard-temp.csv, minard-troops.csv, US States.csv, whiskey.csv.
+ * `refresh://???` Brunel caches data by URL, so as to speed up multiple accesses. Although this is
+almost always a good thing, it is not for streaming data, or if you have just edited some online
+data! Simply replace the `http:` prefix for your data with `refresh:` and the resource will be read
+every time the command is executed.
+
+<!-- examples -->
+
+    data("http://brunel.mybluemix.net/sample_data/minard-troops.csv") x(long) y(lat)
+    size(survivors:600%)
+
+    data('sample:minard-troops.csv') path x(long) y(lat) color(direction) size(survivors:600%)
+    split(group)
+
+    data('sample:minard-troops.csv') path x(long) y(lat) color(direction) size(survivors:600%)
+    split(group) + data('sample:minard-cities.csv') text x(long) y(lat) label(city)
+
+
 ### Position Commands: `x` and `y`
 The commands `x` and `y` set fields to be used for the x and y dimensions. These dimensions may be
 physically flipped by using the transpose option, but that does not affect how they behave. Elements _
@@ -216,9 +242,8 @@ as numeric values, or with quotes as a categorical value.
 
     bar x(state) yrange(winter, 58.2) + bar x(state) yrange(summer, 58.2)
 
-    y(region) x('Hot') color(summer:red) style('symbol:circle') size(#count:100) mean(summer)
-    sort(summer) + y(region) x('Cold') color(winter:blue) style('symbol:circle') size(#count:100) mean
-    (winter)
+    y(region) x('Hot') color(summer:red) style('symbol:circle') size(#count) mean(summer) sort(summer) +
+    y(region) x('Cold') color(winter:blue) style('symbol:circle') size(#count) mean (winter)
 
 As well as constant and regular fields, you can use the following "special" fields where a regular
 field is expected. These fields start with a '#' symbol and have special meaning, as described
@@ -306,13 +331,13 @@ In the above examples, you can see that the mapping from field to color is depen
 the field. There are three different classes of mapping used:
 
  * **nominal** : Used by default for categorical data, this mapping has no order and tries to create a
-spread of different hues to distinguish as many different hues as possible
+spread of different hues to distinguish as many different hues as possible.
  * **diverging** : Used by default for most numeric data, this mapping assumes that high and low values
 are of interest and so creates a two-ended color range that highlights those values
- * **continuous** : Used for counts and binned data, this mapping goes from low to high with one range of
+ * **sequential** : Used for counts and binned data, this mapping goes from low to high with one range of
 color
 
-Some examples are given below:
+You can explicitly request the type of mapping you want to use, as shown below:
 
 <!-- examples -->
 
@@ -320,19 +345,56 @@ Some examples are given below:
 
     color(winter:diverging) bar x(winter) y(#count) bin(winter)
 
-    color(winter:continuous) bar x(winter) y(#count) bin(winter)
+    color(winter:sequential) bar x(winter) y(#count) bin(winter)
 
-In addition to these classes of mappings, explicit color mappings can be used from the following
-list: `blue`, `green`, `red`, `yellow`, `gray`, `blue-red`, `green-red`, `green-blue`, `white-black`
-, `red-blue`, `red-green`, `blue-green`, `black-white` :
+For detailed color mapping specification, you can specify a sequential scale by name ( _Greens_, _
+PurpleBlues_, _BlueGreens_, _Reds_, _Purples_, _GreenYellows_, _BlueYellows_, _Browns_). Note that
+these are all **plural** -- they define a carefully designed scale that is generally close to the hues
+defined in the name.
+
+You can also specify a simple scale going from white to a defined color by specifying the CSS name
+of the color, or the #RRGGBB code:
 
 <!-- examples -->
 
-    color(winter:gray) x(winter) y(summer) style("size:200%")
+    color(winter:Blue) x(winter) y(summer) style("size:200%")
 
-    color(winter:blue-red) x(winter) y(summer) style("size:200%")
+    color(winter:black) x(winter) y(summer) style("size:200%")
 
-    color(winter:green) x(winter) y(summer) style("size:200%")
+    color(winter:#800800) x(winter) y(summer) style("size:200%")
+
+For more control, you can specify one or more colors (or palettes) that are combined together. The
+produces a set of colors for category data, and for numeric data defines a scale. You can also add
+in runs of asterisks to mute the colors more than normal, or `=` to remove default muting for area
+elements. The standard syntax for a list of colors is `[color1,color2,...,colorN]`, but we also
+allow `color1-color2-...-colorN` as a simpler style, especially for divergent color scales. Here are
+some examples for a numeric field
+
+<!-- examples -->
+
+    color(winter:black-yellow) x(winter) y(summer) style("size:200%")
+
+    color(winter:[black,yellow]) x(winter) y(summer) style("size:200%")
+
+    x(winter) y(summer) color(winter:[white, black, yellow]) style('size:200%')
+
+    x(winter) y(summer) color(winter:[magenta, lime]) style('size:200%')
+
+    x(winter) y(summer) color(winter:[magenta, lime, **]) style('size:200%')
+
+    x(winter) y(summer) color(winter:[black, nominal]) style('size:200%')
+
+And here are some examples for a categorical field
+
+    color(region:black-yellow) x(winter) y(summer) style("size:200%")
+
+    x(winter) y(summer) color(region:[gray,gray,red,gray,gray,blue]) style('size:200%')
+
+    x(winter) y(summer) color(region:[gray, gray, red, gray, gray, blue]) style('size:200%')
+
+    x(winter) y(summer) color(region:[blues]) style('size:200%')
+
+    x(winter) y(summer) color(region:[#aaaaaa,#888888,nominal]) style('size:200%')
 
 As described above, aesthetics interact with the element type. Because elements such as lines need
 one color only, when we use color on such an element, it splits into pieces, one for each "group"
@@ -369,9 +431,9 @@ to the selected items, as shown in the examples
 
 
 ### Size
-The size aesthetic works very similarly to color, except it modifies the size of the element. It can
-be given an optional parameter which is a percentage to increase size by for the maximum value of
-the field. This defaults to 100.
+The size aesthetic works very similarly to color, except it modifies the size of the element.
+Instead of specifying lists of colors, lists of sizes can be specified. If only a single size is
+specified then a scale is cterated going from 5% to that defined size.
 
 <!-- examples -->
 
@@ -379,7 +441,9 @@ the field. This defaults to 100.
 
     point x(state) y(density) size(density) style("size:200%")
 
-    point x(state) y(density) size(density:1000)
+    point x(state) y(density) size(density:1000%)
+
+    point x(state) y(density) size(density:500%-0%-1000%)
 
 `Size` works differently for different elements; point elements can be sized as you would expect;
 bars are sized on their widths only (so `width` and `size` have the same effect. Edges have their
@@ -613,7 +677,7 @@ highlighted in the other chart.
 
 <!-- examples -->
 
-    x(winter) y(summer) color(#selection) size(#selection:200) | y(region) size(#count)
+    x(winter) y(summer) color(#selection) size(#selection:200%) | y(region) size(#count)
     interaction(select:mouseover) color(#selection) x('') axes(none) label(region)
     sort(#count:ascending)
 
@@ -641,7 +705,7 @@ happen afterwards and so will respect the filtered data.
 
 <!-- examples -->
 
-    x(population) y(violent_crimes) color(dem_rep) size(water:600) filter(presidential_choice, water)
+    x(population) y(violent_crimes) color(dem_rep) size(water:600%) filter(presidential_choice, water)
 
 
 
@@ -836,6 +900,11 @@ paths and combining them with commas and hierarchies, you should be fine.
 completely override any other definition. So if you do `style('* {fill:blue}')` it will turn all of
 brunel blue...
  * SVG CSS is used, so we do not use "color" for color -- instead use "fill" or "stroke"
+
+Brunel also extends these CSS defintions with `size`, which allows you to set the size of SVG
+elements, and `label-location`, which can be defined for either an element or a label, and allows
+you to change where a label is located relative to the shape. The valid values are: `left, right, top, bottom, middle`
+.
 
 <!-- examples -->
 

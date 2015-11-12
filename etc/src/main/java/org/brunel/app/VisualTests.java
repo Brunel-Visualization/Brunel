@@ -149,8 +149,10 @@ class VisualTests {
     }
 
     private String makeTitle(String id, Action a, String result) {
+        String s = a.toString();
+        if (s.length() > 100) s = s.substring(0, 100) + "...";
         return "<h2 style='text-align:center;margin:2px;" + resultColor(result) + "'>" +
-                "<span style='font-style:italic;color:#aaaaaa'>" + id + "</span>&nbsp;&nbsp;&nbsp;&nbsp;" + a.toString() + "</h2>";
+                "<span style='font-style:italic;color:#aaaaaa'>" + id + "</span>&nbsp;&nbsp;&nbsp;&nbsp;" + s + "</h2>";
     }
 
     private String resultColor(String result) {

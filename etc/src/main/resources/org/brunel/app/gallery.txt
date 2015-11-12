@@ -37,9 +37,9 @@
 #width          800
 #height         500
 #brunel         data('sample:BGG Top 2000 Games.csv')
-                path x(published) y(categories) color(categories) size(voters:200) top(published:1800) sum(voters) legends(none)
+                path x(published) y(categories) color(categories) size(voters:200%) top(published:1800) sum(voters) legends(none)
                 + data('sample:BGG Top 2000 Games.csv')
-                x(published) y(categories) size(voters:300) tooltip('#', rank, ': ', title) top(published:1800, rating:20)
+                x(published) y(categories) size(voters:300%) tooltip('#', rank, ': ', title) top(published:1800, rating:20)
 
 #id             statesbar
 #title          State temperatures
@@ -54,7 +54,7 @@
 #description    Areas and Populations for US states, colored by the percentage difference in votes between
                 democrat and republican in the 2012 election.
 #brunel         data('sample:US States.csv')
-                text x(area) y(population) color(dem_rep:red-blue) label(abbr) tooltip(#all) style('font-size:36px;font-family:times')
+                text x(area) y(population) color(dem_rep:reds-blues) label(abbr) tooltip(#all) style('font-size:36px;font-family:times')
 
 #id             states2plots
 #ext            gif
@@ -64,7 +64,7 @@
                 x(Income) y(Violent_Crimes) color(#count:blue) label(#selection) bin(violent_crimes, income)
                 legends(none) style('.label {font-size:40px}') interaction(select)
                 | data('sample:US States.csv')
-                bubble color(violent_crimes:red)
+                bubble color(violent_crimes:reds)
                 size(population) sort(population) label(abbr) interaction(filter)
 
 #id             airlinesDelay
@@ -72,7 +72,7 @@
 #description    Data from an ASA competition showing a summary of which days are the worst to travel on. Note that
                 the time period 9/11 - 9/15 are outliers due to the impact of cancellations in 2001.
 #brunel         data('sample:AirlineDelays.csv')
-                text x(month) y(day) color(count:red) size(count:200) label(month, '/', day) top(result:1) sum(count) axes(none)
+                text x(month) y(day) color(count:reds) size(count:200%) label(month, '/', day) top(result:1) sum(count) axes(none)
 
 #id             airlinesDelay2
 #title          Airline Overview
@@ -113,18 +113,12 @@
                 followed the soldiers' retreat.
 #width          1000
 #height         450
-#brunel         data('sample:minard-troops.csv')
-                path x(long) y(lat) color(direction) size(survivors:0:1250) split(group) axes(none) legends(none)
-                at(-10, 0, 112, 80) style('stroke:none; fill-opacity:1')
-                + data('sample:minard-cities.csv')
-                text x(long) y(lat) label(city) style('fill:black;font-family:Times; font-size:12pt')
-                +  data('sample:minard-troops.csv')  size(survivors:0:1250)
-                x(long) y(lat) style('fill-opacity:0;stroke-opacity:0') tooltip(group, survivors, direction)
-                | data('sample:minard-temp.csv')
-                line x(long) y(temp) at(0, 60, 110, 100) style('stroke:green')
-                + data('sample:minard-temp.csv')
-                text x(long) y(temp) label(temp, 'C ', month, ' ', day)
-                style('font-family: Times; font-style:italic; fill:black')
+#brunel         data('sample:minard-troops.csv') path x(long) y(lat) color(direction:[#ddbb88, black]) size(survivors:1250%)
+                split(group) axes(none) legends(none) at(-10, 0, 112, 80) style('stroke:none; fill-opacity:1')
+                + data('sample:minard-cities.csv') text x(long) y(lat) label(city) style('fill:black;font-family:Times; font-size:12pt')
+                + data('sample:minard-troops.csv') x(long) y(lat) size(survivors:1250%) tooltip(group, survivors, direction) style('fill-opacity:0;stroke-opacity:0')
+                | data('sample:minard-temp.csv') line x(long) y(temp) at(0, 60, 110, 100) style('stroke:green')
+                + data('sample:minard-temp.csv') text x(long) y(temp) label(temp, 'C ', month, ' ', day) style('font-family: Times; font-style:italic; fill:black')
 
 #id             whiskeydd
 #title          Whiskey Drill-Down
@@ -145,11 +139,11 @@
 
 #id             moby
 #title          Word Frequencies in "Moby Dick"
-#description    A Tag Cloud depicting the frequencies of common words in "Moby Dick".  Here, Brunel is given the results of the 
+#description    A Tag Cloud depicting the frequencies of common words in "Moby Dick".  Here, Brunel is given the results of the
                 word frequencies to plot.
 #width          800
 #height         800
 #brunel         data('sample:mobydickcounts.csv')
-                cloud color(occurrence) size(occurrence) sort(occurrence)   label(word)  
-                style(':nth-child(odd) { font-family:Impact;font-style:normal') 
+                cloud color(occurrence) size(occurrence) sort(occurrence)   label(word)
+                style(':nth-child(odd) { font-family:Impact;font-style:normal')
                 style(':nth-child(even) { font-family:Times; font-style:italic;font-size:200px')  legends(none)

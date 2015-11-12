@@ -93,6 +93,8 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 
 - cpi       / x(food) y(housing) color(DATE) + line  x(food) y(housing) fit(housing) :: pass
 - whiskey   / bubble color(#count) size(#count) sort(#count) label(brand:1) | bubble color(#count) size(#count) sort(#count:ascending) label(brand:1) :: pass :: Two different sort orders
+- simple  / x(#row) y('reds') color(#row:reds) axes(y) legends(none) + x(#row) y('red') color(#row:red) legends(none) + x(#row) y('blues-reds') color(#row:[blues, reds]) legends(none) + x(#row) y('blue-red') color(#row:[blue, red]) legends(none)  + x(#row) y('blue-black-red') color(#row:[blue, black, red]) legends(none) + x(#row) y('nominal') color(#row:nominal) legends(none) + x(#row) y('w-w-w-c-m') color(#row:[#ffffff, #ffffff, #ffffff, cyan, magenta]) legends(none) :: pass
+
 
 #### Note
 

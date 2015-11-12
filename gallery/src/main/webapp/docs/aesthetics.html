@@ -61,28 +61,45 @@ You can explicitly request the type of mapping you want to use, as shown below:
 </p>
 
 <p>
-    For detailed color mapping specification, you can specify a sequential scale by name (<i>Green</i>,
-    <i>PurpleBlue</i>,<i>BlueGreen</i>,<i>Red</i>,<i>Purple</i>,<i>GreenYellow</i>,<i>BlueYellow</i>,<i>Brown</i>).
-    These are scales that mix hues to create a good scale with the named colors as the dominant ones. You can also
-    specify a scale going from white to a defined color by specifying the CSS name of the color, or the #RRGGBB code:
+    For detailed color mapping specification, you can specify a sequential scale by name (<i>Greens</i>,
+    <i>PurpleBlues</i>,<i>BlueGreens</i>,<i>Reds</i>,<i>Purples</i>,<i>GreenYellows</i>,<i>BlueYellows</i>,<i>Browns</i>).
+    Note that these are all <b>plural</b> -- they define a carefully designed scale that is generally close to the hues
+    defined in the name.
+</p><p>
+    You can also specify a simple scale going from white to a defined color by specifying the CSS name of the color,
+    or the #RRGGBB code:
 </p>
 <p class="examples"><a onClick="showAction(this.text)">color(winter:Blue) x(winter) y(summer) style("size:200%")</a></p>
 <p class="examples"><a onClick="showAction(this.text)">color(winter:black) x(winter) y(summer) style("size:200%")</a>
 </p>
 <p class="examples"><a onClick="showAction(this.text)">color(winter:#800800) x(winter) y(summer) style("size:200%")</a>
 </p>
-
 <p>
-    You can specify a divergent color scale by naming two sequential scales to use at either ends. If the data is
-    numeric, you can specify a mid-point for the neutral center tone. Note also that in one example we add an asterisk
-    at the end of the scale. You can add as many of these as you like to any scale. They act to mute the strengths
-    of the colors, making them less vivid and more suitable for large areas
+    For more control, you can specify one or more colors (or palettes) that are combined together. The produces
+    a set of colors for category data, and for numeric data defines a scale.  You can also add in runs of asterisks
+    to mute the colors more than normal, or `=` to remove default muting for area elements. The standard syntax for a
+    list of colors is `[color1,color2, ... ,colorN]`, but we also allow `color1-color2-...-colorN` as a simpler style,
+    especially for divergent color scales. Here are some examples for a numeric field
 </p>
 <p class="examples"><a onClick="showAction(this.text)">color(winter:black-yellow) x(winter) y(summer) style("size:200%")</a></p>
-<p class="examples"><a onClick="showAction(this.text)">color(winter:black-50-yellow) x(winter) y(summer) style("size:200%")</a></p>
-<p class="examples"><a onClick="showAction(this.text)">color(winter:Magenta-Lime*) x(winter) y(summer) style("size:200%")</a>
+<p class="examples"><a onClick="showAction(this.text)">color(winter:[black,yellow]) x(winter) y(summer) style("size:200%")</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) color(winter:[white, black, yellow]) style('size:200%')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) color(winter:[magenta, lime]) style('size:200%')</a>
 </p>
-<p class="examples"><a onClick="showAction(this.text)">color(winter:#800800-white) x(winter) y(summer) style("size:200%")</a>
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) color(winter:[magenta, lime, **]) style('size:200%')</a>
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) color(winter:[black, nominal]) style('size:200%')</a>
+
+</p>
+And here are some examples for a categorical field
+</p>
+<p class="examples"><a onClick="showAction(this.text)">color(region:black-yellow) x(winter) y(summer) style("size:200%")</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) color(region:[gray,gray,red,gray,gray,blue]) style('size:200%')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) color(region:[gray, gray, red, gray, gray, blue]) style('size:200%')</a>
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) color(region:[blues]) style('size:200%')</a>
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) color(region:[#aaaaaa,#888888,nominal]) style('size:200%')</a>
 </p>
 
 
@@ -114,12 +131,13 @@ You can explicitly request the type of mapping you want to use, as shown below:
 <H3>Size</H3>
 <p>
     The size aesthetic works very similarly to color, except it modifies the size of the element.
-    It can be given an optional parameter which is a percentage to increase size by for the maximum value
-    of the field. This defaults to 100.
+    Instead of specifying lists of colors, lists of sizes can be specified. If only a single size is specified
+    then a scale is cterated going from 5% to that defined size.
 </p>
 <p class="examples"><a onClick="showAction(this.text)">point x(state) y(density) size(density)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">point x(state) y(density) size(density) style("size:200%")</a></p>
-<p class="examples"><a onClick="showAction(this.text)">point x(state) y(density) size(density:1000)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">point x(state) y(density) size(density:1000%)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">point x(state) y(density) size(density:500%-0%-1000%)</a></p>
 <p>
     <code>Size</code> works differently for different elements; point elements can be sized as you would expect; bars
     are sized on their widths only (so <code>width</code> and <code>size</code> have the same effect.
