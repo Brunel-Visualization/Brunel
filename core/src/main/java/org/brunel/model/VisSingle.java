@@ -425,7 +425,7 @@ public class VisSingle extends VisItem implements Cloneable {
         if (addSeriesSplit) result.split(Param.makeField("#series"));
         if (convertYsToRange) {
             result.fRange = new Param[] {fY.get(0), fY.get(1)};
-            result.fY = Collections.EMPTY_LIST;
+            result.fY = Collections.emptyList();
         }
 
         // Set the default element
