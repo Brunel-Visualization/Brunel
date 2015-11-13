@@ -98,7 +98,7 @@ public class Param implements Comparable<Param> {
                 return name;
             else {
                 Field field = data.field(name, true);
-                if (field == null) throw new IllegalArgumentException("Cannot find field '" + name + "' in the data");
+                if (field == null) return null;
                 return field.name;
             }
         } else return "'" + name + "'";

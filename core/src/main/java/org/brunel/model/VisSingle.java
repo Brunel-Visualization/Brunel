@@ -354,8 +354,10 @@ public class VisSingle extends VisItem implements Cloneable {
     private void addFieldNames(Collection<String> target, boolean forceToBeField, List<Param>... sources) {
         for (List<Param> s : sources)
             for (Param p : s)
-                if (p.isField() || forceToBeField)
-                    target.add(p.asField(getDataset()));
+                if (p.isField() || forceToBeField) {
+                    String field = p.asField(getDataset());
+                    if (field != null) target.add(field);
+                }
     }
 
     public VisSingle polar() {
