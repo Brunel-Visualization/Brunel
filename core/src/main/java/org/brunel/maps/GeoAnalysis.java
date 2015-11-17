@@ -190,8 +190,8 @@ public class GeoAnalysis {
     private List<GeoFile> makeRequiredFiles(Param[] params) {
         if (params.length == 0) return null;
         List<GeoFile> result = new ArrayList<GeoFile>();
-        for (String s : params[0].asString().split(",")) {
-            s = s.replaceAll(" ", "");
+        for (Param p : params) {
+            String s = p.asString();
             if (s.equalsIgnoreCase("uk")) s = "UnitedKingdom";
             if (s.equalsIgnoreCase("usa")) s = "UnitedStatesofAmerica";
             for (GeoFile f : geoFiles) {

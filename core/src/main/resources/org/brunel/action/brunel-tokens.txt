@@ -23,7 +23,7 @@ pack diagram
 tree diagram
 treemap diagram
 network diagram
-map diagram - STRING labels
+map diagram - STRING+ labels
 
 ## X and Y locations
 x position FIELD+ NUMBER+ STRING+
