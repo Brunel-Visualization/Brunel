@@ -313,7 +313,7 @@ class D3ScaleBuilder {
         } else {
             bounds = bounds.expand(0.05);
             for (int i = 0; i < geo.length; i++) {
-                if (geo[i] == null) continue;
+                if (geo[i] == null || geo[i].totalBounds() == null) continue;
                 Rect trial = geo[i].totalBounds().union(bounds);
 
                 // Increase bounds if the element had actual data (which we obviously want to show)

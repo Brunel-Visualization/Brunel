@@ -39,8 +39,13 @@ public abstract class D3Diagram {
         if (vis.tDiagram == VisTypes.Diagram.cloud) return new Cloud(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.tree) return new Tree(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.treemap) return new Treemap(vis, data, out);
-        if (vis.tDiagram == VisTypes.Diagram.map) return new GeoMap(vis, data, positionFields, out);
         if (vis.tDiagram == VisTypes.Diagram.network) return new Network(vis, data, dependency, out);
+        if (vis.tDiagram == VisTypes.Diagram.map) {
+            if (vis.tDiagramParameters.length == 1 && vis.tDiagramParameters[0].asString().equals("labels"))
+                return new GeoMapLabels(vis, data, positionFields, out);
+            else
+                return new GeoMap(vis, data, positionFields, out);
+        }
         throw new IllegalStateException("Unknown diagram: " + vis.tDiagram);
     }
 
@@ -89,7 +94,7 @@ public abstract class D3Diagram {
     }
 
     void addAestheticsAndTooltips(ElementDetails details, boolean addLabels) {
-        String remapAesthetics =  "if (d == null || d.row == null) return; ";
+        String remapAesthetics = "if (d == null || d.row == null) return; ";
         if (!vis.itemsTooltip.isEmpty()) {
             labelBuilder.addTooltips(details);
         }
