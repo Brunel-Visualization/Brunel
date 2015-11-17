@@ -47,7 +47,6 @@ public class CSV {
         int currentIndex = 0;
 
         char separator = findSeparator(data);
-
         String building = null;
 
         int fieldCount = -1;
