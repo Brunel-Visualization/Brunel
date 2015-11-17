@@ -472,6 +472,7 @@ public class VisSingle extends VisItem implements Cloneable {
             Param p = list.get(i);
             if (p.isField()) {
                 String name = p.asField(dataset);
+                if (name == null) throw new IllegalStateException("Could not find field: " + p);
                 // If the name is not the canonical one, replace it with the correct one
                 if (!name.equals(p.asString())) list.set(i, Param.makeField(name).addModifiers(p.modifiers()));
             }

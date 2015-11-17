@@ -183,10 +183,15 @@ public class GeoAnalysis {
         return GeoMapping.createGeoMapping(names, makeRequiredFiles(geoParameters), this);
     }
 
+    public GeoMapping world() {
+        return make(new Object[0], new Param[]{ Param.makeString("world")});
+    }
+
     private List<GeoFile> makeRequiredFiles(Param[] params) {
         if (params.length == 0) return null;
         List<GeoFile> result = new ArrayList<GeoFile>();
         for (String s : params[0].asString().split(",")) {
+            s = s.replaceAll(" ", "");
             if (s.equalsIgnoreCase("uk")) s = "UnitedKingdom";
             if (s.equalsIgnoreCase("usa")) s = "UnitedStatesofAmerica";
             for (GeoFile f : geoFiles) {

@@ -36,10 +36,15 @@ public class GeoMap extends D3Diagram {
 
     public static GeoMapping makeMapping(VisSingle vis, Dataset data, PositionFields positions) {
         String idField = getIDField(vis);
-        if (idField != null)
-            return GeoAnalysis.instance().make(data.field(idField).categories(), vis.tDiagramParameters);
-        PointCollection p = positions.getAllPoints();
-            return GeoAnalysis.instance().makeForPoints(p, vis.tDiagramParameters);
+        GeoMapping result;
+        if (idField != null) {
+            result = GeoAnalysis.instance().make(data.field(idField).categories(), vis.tDiagramParameters);
+        } else {
+            PointCollection p = positions.getAllPoints();
+            result = GeoAnalysis.instance().makeForPoints(p, vis.tDiagramParameters);
+        }
+        if (result.fileCount() == 0) return GeoAnalysis.instance().world();
+        else return result;
     }
 
     public GeoMap(VisSingle vis, Dataset data, PositionFields positions, ScriptWriter out) {

@@ -100,6 +100,7 @@ public class GeoMapping {
         // Build featureMap -- only needed for features, not points
         for (int i = 0; i < result.length; i++) {
             List<Object> use = potential.get(result[i]);        // Features used in this file
+            if (use == null) continue;                          // Required, but contains no features
             for (Object o : use) {                              // Record match information
                 FeatureDetail s = (FeatureDetail) o;
                 featureMap.put(s.name, new int[]{i, s.indexWithinFile});
@@ -142,7 +143,7 @@ public class GeoMapping {
     }
 
     private static int[][] findName(Map<String, int[][]> featureMap, String s) {
-        s = s.replaceAll("  ", " ");
+        s = s.replaceAll("[ \t]+", " ");
         String common = commonNames.get(s);
         if (common != null) s = common;
 
