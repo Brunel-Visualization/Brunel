@@ -94,6 +94,16 @@ public class GeoAnalysis {
         out.indentLess().onNewLine().add("}");
     }
 
+    public static String fixAbbreviations(String s) {
+        return s.replaceAll("st\\.[ ]*", "saint ")
+                .replaceAll("dem\\.[ ]*", "democratic ")
+                .replaceAll("rep\\.[ ]*", "republic ")
+                .replaceAll("is\\.[ ]*", "islands ")
+                .replaceAll("\u2019", "'")
+                .replaceAll("&", " and ")
+                .replaceAll(" [ ]+", " ").trim();
+    }
+
     final Map<String, int[][]> featureMap;                // For each feature, a pair of [fileIndex,featureIndex]
     final GeoFile[] geoFiles;                             // Feature files we can use
 
@@ -128,7 +138,7 @@ public class GeoAnalysis {
                     data[i][0] = Integer.parseInt(s[0]);
                     data[i][1] = Integer.parseInt(s[1]);
                 }
-                featureMap.put(name.toLowerCase(), data);
+                featureMap.put(canonical(name), data);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -146,6 +156,10 @@ public class GeoAnalysis {
                 featureMap.put(t, featureMap.get(s));
             }
         }
+    }
+
+    private static String canonical(String name) {
+        return fixAbbreviations(name.toLowerCase());
     }
 
     static String removeAccents(String s) {

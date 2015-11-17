@@ -70,4 +70,54 @@ public class TestAnalyze {
         assertEquals("Nowhere", a.getUnmatched().iterator().next());
         assertEquals("AL:[0, 3482] FRA:[1, 73] GER:[1, 58] IA:[0, 3470] IL:[0, 3487] IN:[0, 3488] NY:[0, 3500] TX:[0, 3477]", dump(a.getFeatureMap()));
     }
+
+    @Test
+    public void testNameMatching() {
+
+        String[] names = new String[]{
+                "Afghanistan", "Afghanistan", "Albania", "Albania", "Albania", "Albania", "Algeria", "Andorra", "Andorra", "Angola", "Angola", "Antigua and Barbuda",
+                "Argentina", "Armenia", "Armenia", "Australia", "Australia", "Australia", "Austria", "Austria", "Azerbaijan", "Azerbaijan", "Bahamas, The", "Bahamas,The",
+                "Bahrain", "Bangladesh", "Bangladesh", "Bangladesh", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia",
+                "Bosnia and Herzegovina", "Botswana", "Brazil", "Britain", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cambodia", "Cameroon", "Canada",
+                "Cape Verde", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo,Democratic Republic of the", "Costa Rica", "Cote D'Ivoire",
+                "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador",
+                "England", "Equatorial Guinea", "Eritrea", "Estonia", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia,The", "Georgia", "Germany", "Ghana",
+                "Great Britain", "Greece", "Greenland", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India",
+                "Indonesia", "Iran", "Iraq", "Ireland", "Ireland,Northern", "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati",
+                "Korea,North", "Korea,South", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg",
+                "Macedonia", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova",
+                "Monaco", "Mongolia", "Morocco", "Mozambique", "Myanmar(Burma)", "Namibia", "Nauru", "Nepal", "Netherlands,The", "New Zealand", "Nicaragua", "Niger", "Nigeria",
+                "North Korea", "Norway", "Northern Ireland", "Oman", "Pakistan", "Palau", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines,The", "Poland", "Portugal",
+                "Qatar", "Romania", "Russia", "Rwanda", "St.Kitts and Nevis", "St.Lucia", "St.Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia",
+                "Scotland", "Senegal", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea",
+                "Spain", "Sri Lanka", "Sudan", "Suriname", "Swaziland", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Togo", "Tonga",
+                "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States",
+                "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Wales", "Yemen", "Zambia", "Zimbabwe",
+                "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Anguilla", "Antigua and Barbuda", "Argentina", "Armenia", "Aruba", "Australia",
+                "Austria", "Azerbaijan", "Bahamas, The", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bermuda", "Bhutan", "Bolivia",
+                "Botswana", "Bougainville", "Brazil", "British Virgin Islands", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cambodia", "Cameroon",
+                "Canada", "Cape Verde Islands", "Cayman Islands", "Central African Republic", "Chad", "Chile", "China, Hong Kong", "China, Macau", "China, People?s Republic",
+                "China, Taiwan", "Colombia", "Comoros", "Congo, Democratic Republic of", "Congo, Republic of", "Costa Rica", "Cote d\u2019Ivoire", "Croatia", "Cuba",
+                "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia",
+                "Ethiopia", "Faeroe Islands", "Falkland Islands", "Fiji", "Finland", "France", "French Guiana", "Gabon",
+                "Gambia, The", "Georgia", "Germany", "Ghana", "Greece", "Greenland", "Grenada", "Guadeloupe", "Guam", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana",
+                "Haiti", "Holy See (Vatican City State)", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan",
+                "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Korea, Democratic People?s Rep", "Korea, Republic of", "Kosovo", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon",
+                "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Macedonia", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta",
+                "Martinique", "Mauritania", "Mauritius", "Mayotte", "Mexico", "Moldova", "Monaco", "Mongolia", "Montenegro", "Montserrat", "Morocco", "Mozambique", "Myanmar",
+                "Namibia", "Nauru", "Nepal", "Netherlands", "New Caledonia", "New Zealand", "Nicaragua", "Niger", "Nigeria", "Norway", "Oman",
+                "Pakistan", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Puerto Rico", "Qatar", "R\u00e9union", "Romania",
+                "Russia", "Rwanda", "Saint Barthelemy", "Saint Kitts & Nevis", "Saint Lucia", "Saint Martin", "Saint Pierre & Miquelon", "Saint Vincent",
+                "Samoa", "San Marino", "Sao Tom\u00e9 & Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia",
+                "Solomon Islands", "Somalia", "South Africa", "Spain", "Sri Lanka", "Sudan", "Suriname", "Swaziland", "Sweden", "Switzerland", "Syria", "Tajikistan",
+                "Tanzania", "Thailand", "Togo", "Tonga", "Trinidad & Tobago", "Tunisia", "Turkey", "Turkmenistan", "Turks & Caicos Islands",
+                "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom of GB & NI", "United States of America", "Uruguay", "US Virgin Islands", "Uzbekistan",
+                "Vanuatu", "Venezuela", "Vietnam", "Wallis & Futuna Islands", "Yemen", "Zambia", "Zimbabwe"
+        };
+
+        GeoMapping a = GeoAnalysis.instance().make(names, new Param[0]);
+        assertEquals(a.getUnmatched().toString(), 6, a.getUnmatched().size());          // We get all except 6 small islands
+
+    }
+
 }

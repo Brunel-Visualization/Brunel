@@ -34,6 +34,17 @@ import java.util.TreeMap;
  */
 public class GeoMapping {
 
+    private static final String MAPPING = "britain:united kingdom|great britain:united kingdom|united states:united states of america|usa:united states of america" +
+            "|burma:myanmar|vatican city:vatican|holy see:vatican";
+    private static final Map<String, String> commonNames = new HashMap<String, String>();
+
+    static {
+        for (String s: MAPPING.split("\\|")) {
+            String[] p = s.split(":");
+            commonNames.put(p[0], p[1]);
+        }
+    }
+
     public static GeoMapping createGeoMapping(PointCollection points, List<GeoFile> required, GeoAnalysis geoAnalysis) {
         HashSet<Object> unmatched = new HashSet<Object>();
         Map<GeoFile, List<Object>> map = mapBoundsToFiles(points, geoAnalysis);
@@ -98,7 +109,47 @@ public class GeoMapping {
 
     // Find a match, if necessary by removing accent marks and periods
     private static int[][] findFeature(Object key, Map<String, int[][]> featureMap) {
-        String s = key.toString().toLowerCase();
+        String s = key.toString().toLowerCase().trim();
+        int[][] name = findName(featureMap, s);
+        if (name != null) return name;
+
+        int p = s.indexOf(',');
+        if (p > 0) {
+            // Instead of  "Netherlands, The", try "The Netherlands"
+            name = findName(featureMap, s.substring(p+1).trim() + " " + s.substring(0, p));
+            if (name != null) return name;
+            // Instead of  "Netherlands, The", try "Netherlands"
+            name = findName(featureMap, s.substring(0, p));
+            if (name != null) return name;
+        }
+
+        p = s.indexOf('(');
+        if (p > 0) {
+            // Things like "Myanmar(burma)"
+            name = findName(featureMap, s.substring(0, p).trim());
+            if (name != null) return name;
+        }
+
+        // Replace common abbreviations
+        String t = GeoAnalysis.fixAbbreviations(s);
+
+        if (!t.equals(s)) {
+            name = findName(featureMap, t);
+            if (name != null) return name;
+        }
+
+        return null;
+    }
+
+    private static int[][] findName(Map<String, int[][]> featureMap, String s) {
+        s = s.replaceAll("  ", " ");
+        String common = commonNames.get(s);
+        if (common != null) s = common;
+
+        // Lots of variations
+        if (s.startsWith("united kingdom of")) s = "united kingdom";
+
+        // Try the name, then try removing accents and special characters
         int[][] result = featureMap.get(s);
         if (result != null) return result;
         s = GeoAnalysis.removeAccents(s);
