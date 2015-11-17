@@ -12,7 +12,7 @@ This data was collected from [BoardGameGeek](http://boardgamegeek.com) via their
 This is free for non-commercial use, as described in [http://boardgamegeek.com/wiki/page/XML_API_Terms_of_Use](http://boardgamegeek.com/wiki/page/XML_API_Terms_of_Use)
 
 ### cpi.csv
-This is public domain data from the UK's Office for National Statistics [http://www.ons.gov.uk](http://www.ons.gov.uk)
+This data set is public domain data taken from the U.S. Bureau of Labor Statistics [http://www.bls.gov](http://www.bls.gov)
 
 ### minard
 These data sets are taken from a public domain graphic by Joseph Minard
@@ -20,7 +20,7 @@ These data sets are taken from a public domain graphic by Joseph Minard
 The graphic was hand-digitized by Leeland Wilkinson.
 
 ### mobydickcounts.csv
-This frequency table was built by Dan Rope using Pyhtion Scikit text analysis tools, based on the Project Gutenberg
+This frequency table was built by Dan Rope using Pyon Scikit text analysis tools, based on the Project Gutenberg
 text for the book, which is in the public domain. [http://onlinebooks.library.upenn.edu/webbin/gutbook/lookup?num=2701](http://onlinebooks.library.upenn.edu/webbin/gutbook/lookup?num=2701)
 
 ### sierpinski.csv

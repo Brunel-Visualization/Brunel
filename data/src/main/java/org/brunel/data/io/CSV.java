@@ -193,29 +193,29 @@ public class CSV {
     }
 
     public static String readable(String text) {
-        String[] parts = text.split(" ");
-        List<String> result = new ArrayList<String>();
-        for (String part : parts) {
-            String built = "";
-            int at = 0;
-            while (at < part.length()) {
-                String c = part.substring(at, at + 1);
-                if (at == 0 && isLower(c)) {
-                    c = c.toUpperCase();
-                    built += c;
-                } else if (at > 0 && !isLower(c) && isLower(part.substring(at - 1, at))) {
-                    // Split up camel case
-                    result.add(built);
-                    part = part.substring(at);
-                    built = "" + c;
-                    at = 0;
-                } else
-                    built += c;
-                at++;
+        String built = "";                                  // Assemble this string
+        String last = " ";                                  // Last character processed
+        boolean lastLower = false;                          // Case of last character
+        for (int i=0; i<text.length(); i++) {
+            String s = text.substring(i, i+1);
+            if (s.equals("_")) s = " ";                     // underscores are spaces
+            boolean lower = isLower(s);
+            boolean upper = isUpper(s);
+            if (s.equals(" ")) {
+                if (!last.equals(" ")) built += s;
+            } else if (lower) {
+                // After a space, capitalize lowercase
+                if (last.equals(" ")) built += s.toUpperCase();
+                else built += s;
+            } else  {
+                // Add a space between a lower case and an uppercase or digit
+                if (lastLower && (upper || isDigit(s))) built += " " + s;
+                else built += s;
             }
-            if (built.length() > 0) result.add(built);
+            lastLower = lower;
+            last = s;
         }
-        return Data.join(result, " ");
+        return built;
     }
 
     private static boolean isDigit(String c) {

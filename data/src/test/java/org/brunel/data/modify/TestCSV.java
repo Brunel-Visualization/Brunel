@@ -120,7 +120,7 @@ public class TestCSV {
         assertEquals("Testing", CSV.readable("testing"));
         assertEquals("My Name", CSV.readable("my name"));
         assertEquals("My Name Is 12", CSV.readable("MyNameIs12"));
-
+        assertEquals("What Fun?", CSV.readable("What_fun?"));
     }
 
     @Test
