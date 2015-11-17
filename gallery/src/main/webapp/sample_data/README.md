@@ -1,9 +1,9 @@
-# Data Set Attributions
+# Data Set Attribution
 
 ### AirlineDelays.csv
 The original data came from the ASA Section on Statistical Computing and Statistical Graphics.
 The large data set shows many details on airline delay factors. This data shows a summarization
-of that data
+of that data.
 
 Original data: [http://stat-computing.org/dataexpo/2009/the-data.html](http://stat-computing.org/dataexpo/2009/the-data.html)
 
@@ -17,14 +17,14 @@ This is public domain data from the UK's Office for National Statistics [http://
 ### minard
 These data sets are taken from a public domain graphic by Joseph Minard
 [https://en.wikipedia.org/wiki/Charles_Joseph_Minard](https://en.wikipedia.org/wiki/Charles_Joseph_Minard)
-The graphic was hand-digitized by Leeland Wilkinson
+The graphic was hand-digitized by Leeland Wilkinson.
 
 ### mobydickcounts.csv
 This frequency table was built by Dan Rope using Pyhtion Scikit text analysis tools, based on the Project Gutenberg
 text for the book, which is in the public domain. [http://onlinebooks.library.upenn.edu/webbin/gutbook/lookup?num=2701](http://onlinebooks.library.upenn.edu/webbin/gutbook/lookup?num=2701)
 
 ### sierpinski.csv
-This data set was built by Frank van Ham using well-known algorithms and is in the public domain
+This data set was built by Frank van Ham using well-known algorithms and is in the public domain.
 
 ### Unemployment.csv
 This data set is public domain data taken from the U.S. Bureau of Labor Statistics [http://www.bls.gov](http://www.bls.gov)
