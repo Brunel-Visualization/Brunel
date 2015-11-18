@@ -19,7 +19,7 @@ package org.brunel.maps;
 /**
  * A map projection
  */
-abstract class Projection {
+public abstract class Projection {
 
     private static double asRadians(double lon) {
         return Math.toRadians(lon);
@@ -70,7 +70,7 @@ abstract class Projection {
     public final static class Mercator extends Projection {
         public Point transform(Point p) {
             double a = asRadians(p.x);
-            double b = asRadians(p.y);
+            double b = asRadians(Math.min(89.5, Math.max(p.y, -89.5)));
             return new Point(a, Math.log(Math.tan(Math.PI / 4 + b / 2)));
         }
 

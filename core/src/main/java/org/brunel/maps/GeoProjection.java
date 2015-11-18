@@ -37,7 +37,7 @@ public class GeoProjection {
             "}"
     };
 
-    private static final Projection MERCATOR = new Projection.Mercator();           // Mercator projection
+    public static final Projection MERCATOR = new Projection.Mercator();           // Mercator projection
     private static final Projection WINKEL3 = new Projection.WinkelTripel();        // Winkel Tripel
     private static final String LN = "\n\t\t";                                      // for output formatting
     private final String width;                                                     // JS name of width
