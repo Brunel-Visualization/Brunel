@@ -42,4 +42,8 @@ public class LabelPoint extends Point {
         this.rank = rank;
         this.size = size;
     }
+
+    public String toString() {
+        return  label + "[" + rank + "," + size + "]";
+    }
 }

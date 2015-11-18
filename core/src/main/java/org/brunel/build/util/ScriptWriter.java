@@ -131,7 +131,7 @@ public class ScriptWriter {
         return this;
     }
 
-    private int currentColumn() {
+    public int currentColumn() {
         base.flush();
         StringBuffer b = base.getBuffer();
         int end = b.length() - 1;

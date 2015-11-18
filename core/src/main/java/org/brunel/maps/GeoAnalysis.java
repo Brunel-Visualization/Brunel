@@ -132,6 +132,12 @@ public class GeoAnalysis {
 
     }
 
+    public List<LabelPoint> getLabelsWithin(Rect r) {
+        List<LabelPoint> result = new ArrayList<LabelPoint>();
+        for (LabelPoint p : labels) if (r.contains(p)) result.add(p);
+        return result;
+    }
+
     private LabelPoint[] readLabels(LineNumberReader rdr) throws IOException {
         List<LabelPoint> list = new ArrayList<LabelPoint>();
         while (true) {
