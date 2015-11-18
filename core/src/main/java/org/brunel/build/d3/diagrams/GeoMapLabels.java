@@ -21,15 +21,23 @@ import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.PositionFields;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
+import org.brunel.maps.Rect;
 import org.brunel.model.VisSingle;
 
 public class GeoMapLabels extends D3Diagram {
 
+    private final PositionFields positions;
+
     public GeoMapLabels(VisSingle vis, Dataset data, PositionFields positions, ScriptWriter out) {
         super(vis, data, out);
+        this.positions = positions;
     }
 
     public ElementDetails writeDataConstruction() {
+
+        Rect r = positions.getAllPoints().bounds();
+
+
         out.add("var geo_labels = [ {c:[31.25, 30.05], key:'cairo'}, {c:[15,15],key:'test-b'}]").endStatement();
         return ElementDetails.makeForDiagram("geo_labels", "text", "text", "box", false);
     }

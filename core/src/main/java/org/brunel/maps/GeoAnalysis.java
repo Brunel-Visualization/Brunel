@@ -21,11 +21,14 @@ import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -106,45 +109,81 @@ public class GeoAnalysis {
 
     final Map<String, int[][]> featureMap;                // For each feature, a pair of [fileIndex,featureIndex]
     final GeoFile[] geoFiles;                             // Feature files we can use
+    final LabelPoint[] labels;                            // Labels for the world
 
     private GeoAnalysis() {
         try {
-            // Read in the information file
+            // Read in the feature information file
             InputStream is = GeoAnalysis.class.getResourceAsStream("/org/brunel/maps/geoindex.txt");
             LineNumberReader rdr = new LineNumberReader(new InputStreamReader(is, "utf-8"));
+            geoFiles = readFileDescriptions(rdr);                       // The files
+            featureMap = readFeatureDescriptions(rdr);                  // Map from features to files & ids
+            rdr.close();
 
-            // Read the names of the files and their sizes (in K)
-            List<GeoFile> list = new ArrayList<GeoFile>();
-            while (true) {
-                String[] fileLine = rdr.readLine().split("\\|");
-                if (fileLine.length != 4) break;                            // End of the file definitions
-                list.add(new GeoFile(fileLine[0], fileLine[1], fileLine[2], fileLine[3]));
-            }
+            // Read label file information
+            is = GeoAnalysis.class.getResourceAsStream("/org/brunel/maps/locations.txt");
+            rdr = new LineNumberReader(new InputStreamReader(is, "utf-8"));
+            labels = readLabels(rdr);
 
-            geoFiles = list.toArray(new GeoFile[list.size()]);
-
-            // Read the features
-            featureMap = new HashMap<String, int[][]>();
-            while (true) {
-                String line = rdr.readLine();
-                if (line == null) break;                                    // End of file
-                if (line.trim().length() == 0) continue;                    // Skip blank lines (should be at top)
-                String[] featureLine = line.split("\\|");
-                String name = featureLine[0];
-                int m = featureLine.length - 1;
-                int[][] data = new int[m][2];
-                for (int i = 0; i < m; i++) {
-                    String[] s = featureLine[i + 1].split(":");
-                    data[i][0] = Integer.parseInt(s[0]);
-                    data[i][1] = Integer.parseInt(s[1]);
-                }
-                featureMap.put(canonical(name), data);
-            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        addVariantFeatureNames();
 
-        // Add variants of names by normalizing removing accent marks and periods
+    }
+
+    private LabelPoint[] readLabels(LineNumberReader rdr) throws IOException {
+        List<LabelPoint> list = new ArrayList<LabelPoint>();
+        while (true) {
+            String line = rdr.readLine();
+            if (line == null) break;
+            list.add(LabelPoint.parse(line));
+        }
+        Collections.sort(list, new Comparator<LabelPoint>() {
+            public int compare(LabelPoint a, LabelPoint b) {
+                if (a.rank != b.rank) return a.rank - b.rank;       // lower rank goes first
+                if (a.size != b.size) return b.size - a.size;       // then sort by higher size (population)
+                return a.label.compareTo(b.label);                  // Just make them different ...
+            }
+        });
+        return list.toArray(new LabelPoint[list.size()]);
+    }
+
+    private HashMap<String, int[][]> readFeatureDescriptions(LineNumberReader rdr) throws IOException {
+        HashMap<String, int[][]> map = new HashMap<String, int[][]>();
+        // Read the features
+        while (true) {
+            String line = rdr.readLine();
+            if (line == null) break;                                    // End of file
+            if (line.trim().length() == 0) continue;                    // Skip blank lines (should be at top)
+            String[] featureLine = line.split("\\|");
+            String name = featureLine[0];
+            int m = featureLine.length - 1;
+            int[][] data = new int[m][2];
+            for (int i = 0; i < m; i++) {
+                String[] s = featureLine[i + 1].split(":");
+                data[i][0] = Integer.parseInt(s[0]);
+                data[i][1] = Integer.parseInt(s[1]);
+            }
+            map.put(canonical(name), data);
+        }
+        return map;
+    }
+
+    private GeoFile[] readFileDescriptions(LineNumberReader rdr) throws IOException {
+        // Read the names of the files and their sizes (in K)
+        List<GeoFile> list = new ArrayList<GeoFile>();
+        while (true) {
+            String[] fileLine = rdr.readLine().split("\\|");
+            if (fileLine.length != 4) break;                            // End of the file definitions
+            list.add(new GeoFile(fileLine[0], fileLine[1], fileLine[2], fileLine[3]));
+        }
+
+        return list.toArray(new GeoFile[list.size()]);
+    }
+
+    // Add variants of names by normalizing removing accent marks and periods
+    private void addVariantFeatureNames() {
         List<String> keys = new ArrayList<String>(featureMap.keySet());
         for (String s : keys) {
             String t = removeAccents(s);

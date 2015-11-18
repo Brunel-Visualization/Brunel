@@ -41,6 +41,7 @@ public class PositionFields {
     private final Map<VisSingle, Field[]> x = new HashMap<VisSingle, Field[]>();
     private final Map<VisSingle, Field[]> y = new HashMap<VisSingle, Field[]>();
     private final VisSingle[] elements;
+    private PointCollection collection;
 
     public PositionFields(VisSingle[] elements, Dataset[] elementData) {
         this.elements = elements;
@@ -79,7 +80,9 @@ public class PositionFields {
     }
 
     public PointCollection getAllPoints() {
-        PointCollection collection = new PointCollection();
+        if (collection != null) return collection;
+
+        collection = new PointCollection();
 
         // Add points for all the fields for each element
         for (VisSingle v : elements) {
