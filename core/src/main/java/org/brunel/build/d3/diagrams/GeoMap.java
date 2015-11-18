@@ -39,15 +39,15 @@ public class GeoMap extends D3Diagram {
         if (idField != null)
             return GeoAnalysis.instance().make(data.field(idField).categories(), vis.tDiagramParameters);
         PointCollection p = positions.getAllPoints();
-        if (!p.isEmpty())
+        if (!p.isEmpty() || vis.tDiagramParameters != null)
             return GeoAnalysis.instance().makeForPoints(p, vis.tDiagramParameters);
         return null;
     }
 
-    public GeoMap(VisSingle vis, Dataset data, PositionFields positions, ScriptWriter out) {
+    public GeoMap(VisSingle vis, Dataset data, GeoMapping mapping, ScriptWriter out) {
         super(vis, data, out);
+        this.mapping = mapping;
         idField = getIDField(vis);
-        mapping = makeMapping(vis, data, positions);
         if (mapping == null)
             throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
     }

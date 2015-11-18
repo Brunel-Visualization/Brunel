@@ -19,9 +19,9 @@ package org.brunel.build.d3.diagrams;
 import org.brunel.action.Param;
 import org.brunel.build.ElementDependency;
 import org.brunel.build.d3.D3LabelBuilder;
+import org.brunel.build.d3.D3ScaleBuilder;
 import org.brunel.build.d3.ElementDefinition;
 import org.brunel.build.util.ElementDetails;
-import org.brunel.build.util.PositionFields;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class D3Diagram {
-    public static D3Diagram make(VisSingle vis, Dataset data, ScriptWriter out, ElementDependency dependency, PositionFields positionFields) {
+    public static D3Diagram make(VisSingle vis, Dataset data, ScriptWriter out, ElementDependency dependency, D3ScaleBuilder scales) {
         if (vis.tDiagram == null) return null;
         if (vis.tDiagram == VisTypes.Diagram.bubble) return new Bubble(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.chord) return new Chord(vis, data, out);
@@ -42,9 +42,9 @@ public abstract class D3Diagram {
         if (vis.tDiagram == VisTypes.Diagram.network) return new Network(vis, data, dependency, out);
         if (vis.tDiagram == VisTypes.Diagram.map) {
             if (vis.tDiagramParameters.length == 1 && vis.tDiagramParameters[0].asString().equals("labels"))
-                return new GeoMapLabels(vis, data, positionFields, out);
+                return new GeoMapLabels(vis, data, scales, out);
             else
-                return new GeoMap(vis, data, positionFields, out);
+                return new GeoMap(vis, data, scales.getGeo(vis), out);
         }
         throw new IllegalStateException("Unknown diagram: " + vis.tDiagram);
     }

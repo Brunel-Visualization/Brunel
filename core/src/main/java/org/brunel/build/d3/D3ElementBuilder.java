@@ -48,7 +48,7 @@ class D3ElementBuilder {
         this.data = data;
         this.dependency = dependency;
         this.labelBuilder = new D3LabelBuilder(vis, out, data);
-        this.diagram = D3Diagram.make(vis, data, out, dependency, scales.positionFields);
+        this.diagram = D3Diagram.make(vis, data, out, dependency, scales);
     }
 
     public void generate(int elementIndex) {

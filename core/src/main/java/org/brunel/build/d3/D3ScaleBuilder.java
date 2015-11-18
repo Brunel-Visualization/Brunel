@@ -31,6 +31,7 @@ import org.brunel.data.auto.Auto;
 import org.brunel.data.auto.NumericScale;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
+import org.brunel.maps.GeoAnalysis;
 import org.brunel.maps.GeoMapping;
 import org.brunel.maps.Rect;
 import org.brunel.model.VisSingle;
@@ -53,7 +54,27 @@ import java.util.Set;
  * 'x' and 'y' are used only for the untransformed locations. We use left, right, top, bottom, h and v
  * for the transformed ones
  */
-class D3ScaleBuilder {
+public class D3ScaleBuilder {
+
+    /**
+     * Return the GeoMapping for the indicated VisSingle
+     *
+     * @param vis target
+     * @return result
+     */
+    public GeoMapping getGeo(VisSingle vis) {
+        for (int i = 0; i < element.length; i++)
+            if (element[i] == vis) return geo[i];
+        throw new IllegalStateException("Could not find vis in known elements");
+    }
+
+    public Rect getGeoBounds() {
+        Rect bounds = null;
+        for (GeoMapping g : geo)
+            if (g != null && g.totalBounds() != null)
+                bounds = g.totalBounds().union(bounds);
+        return bounds;
+    }
 
     public boolean isGeo() {
         return geo != null;
@@ -83,7 +104,7 @@ class D3ScaleBuilder {
     private final double[] marginTLBR;                      // Margins between the coordinate area and the chart space
     private final VisSingle[] element;                      // The elements ...
     private final Dataset[] elementData;                    // ... and their data
-    final PositionFields positionFields;                    // Details on positions
+    public final PositionFields positionFields;                    // Details on positions
     private final ScriptWriter out;                         // Write definitions to here
 
     public D3ScaleBuilder(VisSingle[] element, Dataset[] elementData, PositionFields positionFields, double chartWidth, double chartHeight, ScriptWriter out) {
@@ -144,12 +165,25 @@ class D3ScaleBuilder {
     // The whole array returned will be null if nothing is a map
     private GeoMapping[] makeGeoMappings(VisSingle[] element, Dataset[] elementData, PositionFields positionFields) {
         GeoMapping[] maps = null;
+        boolean oneValid = false;
         for (int i = 0; i < element.length; i++) {
             if (element[i].tDiagram == VisTypes.Diagram.map) {
                 if (maps == null) maps = new GeoMapping[element.length];
                 maps[i] = GeoMap.makeMapping(element[i], elementData[i], positionFields);
+                if (maps[i] != null && maps[i].totalBounds() != null) oneValid = true;
             }
         }
+
+        if (!oneValid) {
+            // We were unable to create a valid map -- nothing provided location information.
+            // We will build a world map. This is an edge case, but supports the simple Brunel 'map'
+            for (int i = 0; i < element.length; i++) {
+                if (element[i].tDiagram == VisTypes.Diagram.map && element[i].tDiagramParameters.length == 0) {
+                    maps[i] = GeoAnalysis.instance().make(new Object[0], new Param[]{Param.makeString("world")});
+                }
+            }
+        }
+
         return maps;
     }
 
@@ -309,7 +343,8 @@ class D3ScaleBuilder {
         Rect bounds = makePositionBounds(positionFields.allXFields, positionFields.allYFields);
         if (bounds == null) {
             // All we have are reference maps -- so just use them
-            for (GeoMapping g : geo) if (g != null) bounds = g.totalBounds().union(bounds);
+            for (GeoMapping g : geo) if (g != null && g.totalBounds() != null)
+                bounds = g.totalBounds().union(bounds);
         } else {
             bounds = bounds.expand(0.05);
             for (int i = 0; i < geo.length; i++) {
@@ -460,9 +495,9 @@ class D3ScaleBuilder {
             String s = p.asString();
             if (s.endsWith("%")) s = s.substring(0, s.length() - 1);
             Double d = Data.asNumeric(s);
-            if (d != null) result.add(d/100);
+            if (d != null) result.add(d / 100);
         }
-        if (result.isEmpty()) return new Object[] { 0.05, 1.0};
+        if (result.isEmpty()) return new Object[]{0.05, 1.0};
         if (result.size() == 1) result.add(0, 0.05);
         return result.toArray(new Object[result.size()]);
     }
