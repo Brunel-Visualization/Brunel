@@ -24,23 +24,26 @@ public class LabelPoint extends Point {
     public final String label;                      // text for the location
     public final int rank;                          // 0 is most important, 8 is least
     public final int size;                          // 1 is smallest, 14 the largest
+    public final int type;                          // 1-capital, 2-region capital, 3-local capital, 4-other
 
     public static LabelPoint parse(String line) {
         String[] p = line.split("\\|");
         return new LabelPoint(
                 Double.parseDouble(p[1]),           // longitude is second
                 Double.parseDouble(p[0]),           // latitude is first
-                p[4],                               // name last
+                p[5],                               // name last
                 Integer.parseInt(p[2]),             // rank
-                Integer.parseInt(p[3])              // size
+                Integer.parseInt(p[3])       ,       // size
+                Integer.parseInt(p[4])              // class
         );
     }
 
-    public LabelPoint(double x, double y, String label, int rank, int size) {
+    public LabelPoint(double x, double y, String label, int rank, int size, int type) {
         super(x, y);
         this.label = label;
         this.rank = rank;
         this.size = size;
+        this.type = type;
     }
 
     public String toString() {

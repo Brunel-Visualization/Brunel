@@ -787,6 +787,24 @@ var BrunelD3 = (function () {
         }
     }
 
+    // A star of radius r with n points
+    function star(radius, n) {
+        var i, a, r,  p = "M";
+        for (i = 0; i < 2 * n; i++) {
+            a = (i / n - 0.5) * Math.PI;
+            if (i > 0) p += "L";
+            r = radius * (i%2 ? 0.4 : 1);
+            p += r * Math.cos(a) + ',' + r * Math.sin(a);
+        }
+        return p + "Z";
+    }
+
+    function makeSymbol(type, radius) {
+        radius = radius || 4;
+        if (type == 'star') return star(radius*1.5, 5);
+        return d3.svg.symbol().type(type).size(radius * radius * 4)();
+    }
+
 // Expose these methods
     return {
         'geometry': geometries,
@@ -804,6 +822,7 @@ var BrunelD3 = (function () {
         'sizedPath': sizedPath,
         'tween': transitionTween,
         'addFeatures': makeMap,
+        'symbol': makeSymbol,
         'time': time
     }
 

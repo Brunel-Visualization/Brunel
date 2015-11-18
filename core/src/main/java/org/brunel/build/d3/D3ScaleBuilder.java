@@ -178,9 +178,8 @@ public class D3ScaleBuilder {
             // We were unable to create a valid map -- nothing provided location information.
             // We will build a world map. This is an edge case, but supports the simple Brunel 'map'
             for (int i = 0; i < element.length; i++) {
-                if (element[i].tDiagram == VisTypes.Diagram.map && element[i].tDiagramParameters.length == 0) {
-                    maps[i] = GeoAnalysis.instance().make(new Object[0], new Param[]{Param.makeString("world")});
-                }
+                if (element[i].tDiagram == VisTypes.Diagram.map && element[i].tDiagramParameters.length == 0)
+                    maps[i] = GeoAnalysis.instance().world();
             }
         }
 
@@ -343,8 +342,9 @@ public class D3ScaleBuilder {
         Rect bounds = makePositionBounds(positionFields.allXFields, positionFields.allYFields);
         if (bounds == null) {
             // All we have are reference maps -- so just use them
-            for (GeoMapping g : geo) if (g != null && g.totalBounds() != null)
-                bounds = g.totalBounds().union(bounds);
+            for (GeoMapping g : geo)
+                if (g != null && g.totalBounds() != null)
+                    bounds = g.totalBounds().union(bounds);
         } else {
             bounds = bounds.expand(0.05);
             for (int i = 0; i < geo.length; i++) {

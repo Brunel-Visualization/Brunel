@@ -151,7 +151,7 @@
 
 .brunel circle.element, .brunel .chord .element.edge {
     stroke-width: 1px;
-    stroke-opacity:0.25
+    stroke-opacity: 0.25
 }
 
 .brunel rect.point, .brunel .chord .element.edge {
@@ -176,7 +176,50 @@
     stroke: #67b51b
 }
 
-.brunel .element.polygon.nondata {fill:#f2f2f2; stroke:#c0c0c0}
+.brunel .element.polygon.nondata {
+    fill: #f2f2f2;
+    stroke: #c0c0c0
+}
+
+.brunel .mark.L1 {
+    fill: #404040;
+}
+
+.brunel .mark.L2 {
+    fill: #808080;
+}
+
+.brunel .mark.L3 {
+    fill: #808080;
+}
+
+.brunel .mark.L4 {
+    fill: #808080;
+}
+
+.brunel .label.L1 {
+    fill: #404040;
+    font-weight:bold;
+    font-size:11pt;
+}
+
+.brunel .label.L2 {
+    fill: #808080;
+    font-style:italic;
+    font-size:9pt;
+}
+
+.brunel .label.L3 {
+    fill: #808080;
+    text-shadow: none;
+    font-size:8pt;
+}
+
+.brunel .label.L4 {
+    fill: #808080;
+    text-shadow: none;
+    font-size:7pt;
+}
 
 .brunel .horizontal-box {
     -moz-box-orient: horizontal;
@@ -247,7 +290,7 @@ div.brunel.tooltip:after {
 }
 
 div.brunel.tooltip.above:before {
-   visibility: hidden;
+    visibility: hidden;
 }
 
 div.brunel.tooltip.below:after {

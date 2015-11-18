@@ -52,7 +52,7 @@ public class GeoMapLabels extends D3Diagram {
         if (points.size() > 50) points = points.subList(0, 50);
 
         int popHigh = points.get(0).size;
-        int popLow = points.get(points.size()-1).size;
+        int popLow = points.get(points.size() - 1).size;
 
         out.add("var geo_labels = [").indentMore();
         boolean first = true;
@@ -60,7 +60,7 @@ public class GeoMapLabels extends D3Diagram {
             if (!first) out.add(", ");
             String s = "{c:[" + F.format(p.x) + "," + F.format(p.y) + "], key:"
                     + Data.quote(p.label) + ", r:" + radiusFor(p, popHigh, popLow)
-                    + "}";
+                    + ", t:" + p.type + "}";
             if (out.currentColumn() + s.length() > 100)
                 out.onNewLine();
             out.add(s);
@@ -68,23 +68,26 @@ public class GeoMapLabels extends D3Diagram {
         }
         out.indentLess().add("]").endStatement();
 
-        return ElementDetails.makeForDiagram("geo_labels", "circle", "point", "box", false);
+        return ElementDetails.makeForDiagram("geo_labels", "path", "point", "box", false);
     }
 
     private int radiusFor(LabelPoint p, int high, int low) {
-        return (int) (Math.round( (p.size - low) * 3.0 / (high-low)) + 2);
+        return (int) (Math.round((p.size - low) * 4.0 / (high - low) + 3 ));
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
-        out.addChained("attr('r', function(d) { return d.r + 'px'})");
+        out.addChained("attr('d', function(d) { return BrunelD3.symbol(['star','star','square','circle'][d.t-1], d.r)})")
+                .addChained("attr('class', function(d) { return 'mark L' + d.t })");
         addPositionTransform();
         out.endStatement();
 
         // Labels
+        out.add("diagramLabels.classed('map', true)").endStatement();
         out.add("var labelSel = diagramLabels.selectAll('*').data(d3Data, function(d) { return d.key})").endStatement();
-        out.add("labelSel.enter().append('text').attr('class','map element label')")
+        out.add("labelSel.enter().append('text')")
                 .addChained("attr('dy', '0.3em')")
                 .addChained("attr('dx', function(d) { return (d.r + 3) + 'px'})")
+                .addChained("attr('class', function(d) { return 'label L' + d.t })")
                 .addChained("text(function(d) {return d.key})").endStatement();
         out.add("labelSel");
         addPositionTransform();

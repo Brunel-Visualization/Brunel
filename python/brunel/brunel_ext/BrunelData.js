@@ -1771,29 +1771,32 @@ V.io_CSV.identifier = function(text) {
 };
 
 V.io_CSV.readable = function(text) {
-    var _i, at, built, c, part;
-    var parts = text.split(" ");
-    var result = new $.List();
-    for(_i=$.iter(parts), part=_i.current; _i.hasNext(); part=_i.next()) {
-        built = "";
-        at = 0;
-        while (at < $.len(part)) {
-            c = part.substring(at, at + 1);
-            if (at == 0 && V.io_CSV.isLower(c)) {
-                c = c.toUpperCase();
-                built += c;
-            } else if (at > 0 && !V.io_CSV.isLower(c) && V.io_CSV.isLower(part.substring(at - 1, at))) {
-                result.add(built);
-                part = part.substring(at);
-                built = "" + c;
-                at = 0;
-            } else
-                built += c;
-            at++;
+    var i, lower, s, upper;
+    var built = "";
+    var last = " ";
+    var lastLower = false;
+    for (i = 0; i < $.len(text); i++){
+        s = text.substring(i, i + 1);
+        if (s == "_") s = " ";
+        lower = V.io_CSV.isLower(s);
+        upper = V.io_CSV.isUpper(s);
+        if (s == " ") {
+            if (!(last == " ")) built += s;
+        } else if (lower) {
+            if (last == " ")
+                built += s.toUpperCase();
+            else
+                built += s;
+        } else {
+            if (lastLower && (upper || V.io_CSV.isDigit(s)))
+                built += " " + s;
+            else
+                built += s;
         }
-        if ($.len(built) > 0) result.add(built);
+        lastLower = lower;
+        last = s;
     }
-    return V.Data.join(result, " ");
+    return built;
 };
 
 V.io_CSV.isDigit = function(c) {
