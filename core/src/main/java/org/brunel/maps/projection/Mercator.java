@@ -25,7 +25,7 @@ import org.brunel.geom.Rect;
 
 class Mercator extends Projection {
     public String d3Definition(Rect bounds) {
-        Rect ext = projectedExtent(bounds);
+        Rect ext = transform(bounds);
 
         // We find the center in projected space, and then invert the projection
         Point c = inverse(ext.center());

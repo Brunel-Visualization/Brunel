@@ -24,6 +24,8 @@ import org.brunel.geom.Geom;
 import org.brunel.geom.Point;
 import org.brunel.geom.Poly;
 import org.brunel.geom.Rect;
+import org.brunel.maps.projection.Projection;
+import org.brunel.maps.projection.ProjectionBuilder;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
@@ -59,6 +61,7 @@ public class GeoInformation {
     private final VisSingle[] element;
     private final Poly hull;                                        // Convex hull for the points
     private final Rect bounds;                                      // Combined bounds
+    private final Projection projection;
 
     private GeoInformation(VisSingle[] elements, Dataset[] elementData, PositionFields positionFields) {
         this.element = elements;
@@ -70,6 +73,11 @@ public class GeoInformation {
             if (g != null && g.totalBounds() != null)
                 bounds = g.totalBounds().union(bounds);
         this.bounds = bounds;
+        this.projection = ProjectionBuilder.makeProjection(bounds);
+    }
+
+    public String d3Definition() {
+        return projection.d3Definition(bounds);
     }
 
     public Poly getConvexHullAroundPoints(VisSingle[] elements, PositionFields positionFields) {
@@ -110,6 +118,15 @@ public class GeoInformation {
 
     public Rect bounds() {
         return bounds;
+    }
+
+    public Rect projectedBounds() {
+        Rect r = projection.projectedBounds();
+        return r == null ? projection.transform(bounds) : r;
+    }
+
+    public Point transform(Point p) {
+        return projection.transform(p);
     }
 
     // The whole array returned will be null if nothing is a map

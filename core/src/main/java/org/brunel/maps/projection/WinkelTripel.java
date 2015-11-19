@@ -24,7 +24,7 @@ import org.brunel.geom.Rect;
  */
 class WinkelTripel extends Projection {
     public String d3Definition(Rect bounds) {
-        Rect ext = projectedExtent(bounds);
+        Rect ext = transform(bounds);
 
         // Finding the center is tricky because we cannot invert the transform so we have to search for it
         // We just do a grid search; slow, but simple. First by y, then by x

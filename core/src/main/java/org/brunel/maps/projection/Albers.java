@@ -49,7 +49,7 @@ class Albers extends Projection {
         String parallels = ".parallels([" + F.format(parallelA) + "," + F.format(parallelB) + "])";
         String rotate = ".rotate([" + F.format(rotation) + ",0,0])";
 
-        Rect ext = projectedExtent(bounds);
+        Rect ext = transform(bounds);
 
         // We find the center in projected space, and then invert the projection
         Point c = inverse(ext.center());

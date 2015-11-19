@@ -26,9 +26,7 @@ import org.brunel.data.Dataset;
 import org.brunel.maps.GeoFile;
 import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
-import org.brunel.geom.Rect;
 import org.brunel.maps.projection.ProjectionBuilder;
-import org.brunel.maps.projection.Projection;
 import org.brunel.model.VisSingle;
 
 import java.util.LinkedHashMap;
@@ -46,12 +44,11 @@ public class GeoMap extends D3Diagram {
             throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
     }
 
-    public static void writeProjection(ScriptWriter out, Rect bounds) {
+    public static void writeProjection(ScriptWriter out, GeoInformation geo) {
         out.comment("Define the projection");
 
         // Calculate a suitable projection
-        Projection projection = ProjectionBuilder.makeProjection(bounds);
-        String[] projectionDescription = projection.d3Definition(bounds).split("\n");
+        String[] projectionDescription = geo.d3Definition().split("\n");
         out.indentMore();
         out.add("var ");
         out.indentMore();

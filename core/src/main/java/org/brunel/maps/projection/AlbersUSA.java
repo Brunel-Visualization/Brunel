@@ -34,4 +34,8 @@ class AlbersUSA extends Albers {
                 + LN + ".scale(Math.min(" + width + "/0.96, " + height + "/0.48))"
                 + LN + translateDefinition();
     }
+
+    public Rect projectedBounds() {
+        return transform(new Rect(-125, -65, 25, 50));
+    }
 }

@@ -81,12 +81,19 @@ public abstract class Projection {
     public abstract Point inverse(Point p);
 
     /**
+     * Known bounds (null if not actually known)
+     */
+    public Rect projectedBounds() {
+        return null;
+    }
+
+    /**
      * Provides a good guess at the size of a projected rectangle
      *
      * @param b rectangle to project
      * @return size in projected coordinate space
      */
-    public Rect projectedExtent(Rect b) {
+    public Rect transform(Rect b) {
         Rect bounds = null;
         for (Point pt : b.makeBoundaryPoints()) {
             Point p = transform(pt);

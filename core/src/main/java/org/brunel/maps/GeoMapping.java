@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -52,7 +53,7 @@ public class GeoMapping {
         GeoFile[] geoFiles = geoAnalysis.geoFiles;
         for (GeoFile f : geoFiles) {
             if (!bounds.intersects(f.bounds)) continue;             // Ignore if outside the bounds
-            List content = new ArrayList();
+            List<Object> content = new ArrayList<Object>();
             for (Point p : poly.points)
                 if (f.covers(p)) content.add(p);
             if (!content.isEmpty()) map.put(f, content);

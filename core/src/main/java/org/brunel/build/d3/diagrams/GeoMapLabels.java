@@ -22,11 +22,10 @@ import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
+import org.brunel.geom.Rect;
 import org.brunel.maps.GeoFile;
 import org.brunel.maps.GeoMapping;
-import org.brunel.maps.projection.ProjectionBuilder;
 import org.brunel.maps.LabelPoint;
-import org.brunel.geom.Rect;
 import org.brunel.model.VisSingle;
 
 import java.awt.*;
@@ -62,7 +61,7 @@ public class GeoMapLabels extends D3Diagram {
             maxPoints = (int) vis.tDiagramParameters[0].modifiers()[0].asDouble();
         }
 
-        points = thin(points, scales.geo.bounds(), maxPoints);
+        points = thin(points, maxPoints);
 
         int popHigh = 0, popLow = 100;
         for (LabelPoint p : points) {
@@ -89,10 +88,9 @@ public class GeoMapLabels extends D3Diagram {
     }
 
     // we will remove points which seem likely to overlap
-    private List<LabelPoint> thin(List<LabelPoint> points, Rect totalBounds, int maxPoints) {
+    private List<LabelPoint> thin(List<LabelPoint> points, int maxPoints) {
 
-
-        Rect bds = ProjectionBuilder.MERCATOR.projectedExtent(totalBounds);
+        Rect bds = scales.geo.projectedBounds();
         double scale = Math.min(800 / bds.width(), 600 / bds.height());
 
         ArrayList<LabelPoint> result = new ArrayList<LabelPoint>();
@@ -104,7 +102,7 @@ public class GeoMapLabels extends D3Diagram {
         for (LabelPoint p : points) {
             boolean intersects = false;
 
-            org.brunel.geom.Point pp = ProjectionBuilder.MERCATOR.transform(p);
+            org.brunel.geom.Point pp = scales.geo.transform(p);
             double x = pp.x * scale, y = pp.y * scale;
             Rectangle2D size = font.getStringBounds(p.label, frc);
             Rect s = new Rect(x - 15, x + size.getWidth() + 15, y, y + size.getHeight());
