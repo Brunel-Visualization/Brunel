@@ -20,12 +20,17 @@ import org.brunel.build.util.PositionFields;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.geom.Geom;
+import org.brunel.geom.Point;
+import org.brunel.geom.Poly;
 import org.brunel.geom.Rect;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This class contains all the information needed to synchronize and build visualizations based on maps
@@ -42,28 +47,33 @@ public class GeoInformation {
         }
     }
 
+    public static GeoInformation make(VisSingle[] elements, Dataset[] elementData, PositionFields positionFields) {
+        // If any element specifies a map, we make the map information for all to share
+        for (VisSingle e : elements)
+            if (e.tDiagram == VisTypes.Diagram.map)
+                return new GeoInformation(elements, elementData, positionFields);
+        return null;
+    }
+
     private final GeoMapping[] geo;                                 // Geographic mappings, one per element
     private final VisSingle[] element;
-    private final PositionFields positionFields;
-    private final PointCollection points;
+    private final Poly hull;                                        // Convex hull for the points
     private final Rect bounds;                                      // Combined bounds
-    private final GeoAnalysis analysis = GeoAnalysis.instance();
 
-    public GeoInformation(VisSingle[] elements, Dataset[] elementData, PositionFields positionFields) {
+    private GeoInformation(VisSingle[] elements, Dataset[] elementData, PositionFields positionFields) {
         this.element = elements;
-        this.positionFields = positionFields;
-        this.points = getAllPoints(elements, positionFields);
-        geo = makeGeoMappings(element, elementData);
+        this.hull = getConvexHullAroundPoints(elements, positionFields);
+        this.geo = makeGeoMappings(elements, elementData);
 
-        Rect bounds = points.bounds();
+        Rect bounds = hull.bounds;
         for (GeoMapping g : geo)
             if (g != null && g.totalBounds() != null)
                 bounds = g.totalBounds().union(bounds);
         this.bounds = bounds;
     }
 
-    public PointCollection getAllPoints(VisSingle[] elements, PositionFields positionFields) {
-        PointCollection collection = new PointCollection();
+    public Poly getConvexHullAroundPoints(VisSingle[] elements, PositionFields positionFields) {
+        Set<Point> collection = new HashSet<Point>();
         // Add points for all the fields for each element
         for (VisSingle v : elements) {
             Field[] xx = positionFields.getX(v);
@@ -73,11 +83,11 @@ public class GeoInformation {
                     for (int i = 0; i < x.rowCount(); i++) {
                         Double a = Data.asNumeric(x.value(i));
                         Double b = Data.asNumeric(y.value(i));
-                        if (a != null && b != null) collection.add(a, b);
+                        if (a != null && b != null) collection.add(new Point(a, b));
                     }
                 }
         }
-        return collection;
+        return Geom.makeConvexHull(collection);
     }
 
     public List<GeoMapping> getAllGeo() {
@@ -104,12 +114,11 @@ public class GeoInformation {
 
     // The whole array returned will be null if nothing is a map
     private GeoMapping[] makeGeoMappings(VisSingle[] element, Dataset[] elementData) {
-        GeoMapping[] maps = null;
+        GeoMapping[] maps = new GeoMapping[element.length];
         boolean oneValid = false;
         for (int i = 0; i < element.length; i++) {
             if (element[i].tDiagram == VisTypes.Diagram.map) {
-                if (maps == null) maps = new GeoMapping[element.length];
-                maps[i] = makeMapping(element[i], elementData[i], positionFields);
+                maps[i] = makeMapping(element[i], elementData[i]);
                 if (maps[i] != null && maps[i].totalBounds() != null) oneValid = true;
             }
         }
@@ -119,19 +128,19 @@ public class GeoInformation {
             // We will build a world map. This is an edge case, but supports the simple Brunel 'map'
             for (int i = 0; i < element.length; i++) {
                 if (element[i].tDiagram == VisTypes.Diagram.map && element[i].tDiagramParameters.length == 0)
-                    maps[i] = analysis.world();
+                    maps[i] = GeoData.instance().world();
             }
         }
 
         return maps;
     }
 
-    public GeoMapping makeMapping(VisSingle vis, Dataset data, PositionFields positions) {
+    public GeoMapping makeMapping(VisSingle vis, Dataset data) {
         String idField = getIDField(vis);
         if (idField != null)
-            return analysis.make(data.field(idField).categories(), vis.tDiagramParameters);
-        if (points.isEmpty() || vis.tDiagramParameters != null)
-            return analysis.makeForPoints(points, vis.tDiagramParameters);
+            return GeoData.instance().make(data.field(idField).categories(), vis.tDiagramParameters);
+        if (hull.size() == 0 || vis.tDiagramParameters != null)
+            return GeoData.instance().makeForPoints(hull, vis.tDiagramParameters);
         return null;
     }
 

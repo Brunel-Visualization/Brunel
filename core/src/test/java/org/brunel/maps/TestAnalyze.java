@@ -32,7 +32,7 @@ import static junit.framework.TestCase.assertEquals;
 public class TestAnalyze {
     @Test
     public void testExamples() {
-        GeoMapping a = GeoAnalysis.instance().make("France,Germany,Lux.".split(","), new Param[0]);
+        GeoMapping a = GeoData.instance().make("France,Germany,Lux.".split(","), new Param[0]);
         assertEquals(1, a.getFiles().length);
         assertEquals("WesternEurope", a.getFiles()[0].name);
         assertEquals(a.getUnmatched().toString(), 0, a.getUnmatched().size());
@@ -53,7 +53,7 @@ public class TestAnalyze {
 
     @Test
     public void testExamples2() {
-        GeoMapping a = GeoAnalysis.instance().make("france,germany,UK,IRE".split(","), new Param[0]);
+        GeoMapping a = GeoData.instance().make("france,germany,UK,IRE".split(","), new Param[0]);
         assertEquals(1, a.getFiles().length);
         assertEquals("Europe", a.getFiles()[0].name);
         assertEquals(a.getUnmatched().toString(), 0, a.getUnmatched().size());
@@ -62,7 +62,7 @@ public class TestAnalyze {
 
     @Test
     public void testExamples3() {
-        GeoMapping a = GeoAnalysis.instance().make("FRA,GER,NY,TX,IA,AL,IN,IL,Nowhere".split(","), new Param[0]);
+        GeoMapping a = GeoData.instance().make("FRA,GER,NY,TX,IA,AL,IN,IL,Nowhere".split(","), new Param[0]);
         assertEquals(2, a.getFiles().length);
         assertEquals("USAMain", a.getFiles()[0].name);
         assertEquals("WesternEurope", a.getFiles()[1].name);
@@ -115,7 +115,7 @@ public class TestAnalyze {
                 "Vanuatu", "Venezuela", "Vietnam", "Wallis & Futuna Islands", "Yemen", "Zambia", "Zimbabwe"
         };
 
-        GeoMapping a = GeoAnalysis.instance().make(names, new Param[0]);
+        GeoMapping a = GeoData.instance().make(names, new Param[0]);
         assertEquals(a.getUnmatched().toString(), 6, a.getUnmatched().size());          // We get all except 6 small islands
 
     }

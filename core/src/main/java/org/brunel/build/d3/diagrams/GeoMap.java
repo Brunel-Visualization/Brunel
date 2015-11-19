@@ -18,16 +18,22 @@ package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.ElementDefinition;
+import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
+import org.brunel.data.Data;
 import org.brunel.data.Dataset;
-import org.brunel.maps.GeoAnalysis;
+import org.brunel.maps.GeoFile;
 import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
 import org.brunel.geom.Rect;
 import org.brunel.maps.projection.ProjectionBuilder;
 import org.brunel.maps.projection.Projection;
 import org.brunel.model.VisSingle;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class GeoMap extends D3Diagram {
 
@@ -110,7 +116,7 @@ public class GeoMap extends D3Diagram {
         if (mapping.fileCount() == 0) throw new IllegalStateException("No suitable map found");
 
         out.add("var features = ");
-        GeoAnalysis.writeMapping(out, mapping);
+        writeMapping(out, mapping);
         out.endStatement();
 
         String idName = idField == null ? "null" : "data." + D3Util.canonicalFieldName(idField);
@@ -126,5 +132,48 @@ public class GeoMap extends D3Diagram {
     public void writePreDefinition(ElementDetails details, ElementDefinition elementDef) {
         out.add("selection.classed('nondata', function(d) {return !d || d.row == null})").endStatement();
     }
+
+    /**
+     * Given a GeoMapping, assembles the Javascript needed to use it
+     *
+     * @param out destination for the Javascript
+     * @param map the mapping to output
+     */
+    public static void writeMapping(ScriptWriter out, GeoMapping map) {
+
+        // Overall combined map from file name -> (Map of data name to feature index in that file)
+        Map<String, Map<Object, Integer>> combined = new LinkedHashMap<String, Map<Object, Integer>>();
+        for (GeoFile geo : map.getFiles()) combined.put(geo.name, new TreeMap<Object, Integer>());
+
+        for (Map.Entry<Object, int[]> e : map.getFeatureMap().entrySet()) {
+            Object dataName = e.getKey();
+            int[] indices = e.getValue();                               // [FILE INDEX, FEATURE KEY]
+            String fileName = map.getFiles()[indices[0]].name;
+            Map<Object, Integer> features = combined.get(fileName);
+            features.put(dataName, indices[1]);
+        }
+
+        // Write out the resulting structure
+        out.add("{").indentMore();
+        GeoFile[] files = map.getFiles();
+        String version = new BuilderOptions().version;
+        for (int k = 0; k < files.length; k++) {
+            if (k > 0) out.add(",").onNewLine();
+            String fileName = files[k].name;
+            String source = Data.quote("http://brunelvis.org/geo/" + version + "/" + fileName + ".json");
+            out.onNewLine().add(source, ":{").indentMore();
+            int i = 0;
+            Map<Object, Integer> features = combined.get(fileName);
+            for (Map.Entry<Object, Integer> s : features.entrySet()) {
+                if (i++ > 0) out.add(", ");
+                if (i % 5 == 0) out.onNewLine();
+                out.add("'").add(s.getKey()).add("':").add(s.getValue());
+            }
+            out.indentLess().onNewLine().add("}");
+        }
+
+        out.indentLess().onNewLine().add("}");
+    }
+
 
 }

@@ -16,19 +16,27 @@
 
 package org.brunel.geom;
 
+import java.util.Collection;
+
 /**
  * Very simple polygon class
  */
 public class Poly {
-    private final Point[] points;                // The points
+    public final Point[] points;                // The points
+    public final Rect bounds;                   // Their bounds
 
     /**
      * A polygons is a list of points
      *
      * @param points constituent parts
      */
-    public Poly(Point[] points) {
+    public Poly(Point... points) {
         this.points = points;
+        this.bounds = Geom.bounds(points);
+    }
+
+    public Poly(Collection<Point> points) {
+        this(points.toArray(new Point[points.size()]));
     }
 
     /**
@@ -39,6 +47,8 @@ public class Poly {
      * @return true if it does
      */
     public boolean contains(Point p) {
+        if (!bounds.contains(p)) return false;          // Quick check for speed
+
         // This method uses the ray casting algorithm described at
         // http://en.wikipedia.org/wiki/Point_in_polygon
 
@@ -130,5 +140,9 @@ public class Poly {
 
         return intersectCountLeft % 2 != 0;
 
+    }
+
+    public int size() {
+        return points.length;
     }
 }

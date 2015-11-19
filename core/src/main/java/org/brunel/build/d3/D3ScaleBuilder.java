@@ -136,7 +136,7 @@ public class D3ScaleBuilder {
         int marginBottom = Math.max(hAxis.size, vAxis.bottomGutter);        // Height of hAxis, or gutter for vAxis
         int marginRight = Math.max(hAxis.rightGutter, legendWidth);         // Overflow for hAxis, or legend
         marginTLBR = new double[]{marginTop, marginLeft, marginBottom, marginRight};
-        this.geo = new GeoInformation(element, elementData, positionFields);
+        this.geo = GeoInformation.make(element, elementData, positionFields);
 
     }
 

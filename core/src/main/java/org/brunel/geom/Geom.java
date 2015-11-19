@@ -18,16 +18,14 @@ package org.brunel.geom;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Stack;
 
 /**
  * Utility class for handling geometry
  */
 public class Geom {
-    public static List<Point> makeConvexHull(Collection<Point> pts) {
+    public static Poly makeConvexHull(Collection<Point> pts) {
         // Get points, sorted by Y and then X
         Point[] points = pts.toArray(new Point[pts.size()]);
         Arrays.sort(points);
@@ -35,7 +33,7 @@ public class Geom {
         // Stack to manipulate points with
         Stack<Point> stack = new Stack<Point>();
         if (points.length == 0) {
-            return Collections.emptyList();
+            return new Poly();
         }
 
         // Sort so bottom left is the first
@@ -49,7 +47,7 @@ public class Geom {
         // find next different point - p1
         int i = 1;
         while (i < N && p0.equals(points[i])) i++;
-        if (i == N) return stack;
+        if (i == N) return new Poly(p0);
         Point p1 = points[i];
 
         // find next point not collinear with p0,p1
@@ -65,7 +63,14 @@ public class Geom {
             stack.push(points[i]);
             i++;
         }
-        return stack;
+        return new Poly(stack);
+    }
+
+    public static Rect bounds(Point[] points) {
+        if (points.length == 0) return null;
+        Rect r = new Rect(points[0].x, points[0].x, points[0].y, points[1].y);
+        for (int i = 1; i < points.length; i++) r = r.union(points[i]);
+        return r;
     }
 
     private static class PolarComparator implements Comparator<Point> {

@@ -17,112 +17,53 @@
 package org.brunel.maps;
 
 import org.brunel.action.Param;
-import org.brunel.build.util.BuilderOptions;
-import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Data;
-import org.brunel.geom.Rect;
+import org.brunel.geom.Poly;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.regex.Pattern;
 
 /**
  * This class reads in information needed to analyze geographic names, and provides a method to
  * build the mapping needed for a set of feature names.
  */
-public class GeoAnalysis {
+class GeoData {
 
-    private static final Pattern PATTERN = Pattern.compile("\\p{InCombiningDiacriticalMarks}+"); // Removes diacretics
-    private static GeoAnalysis INSTANCE;                                                         // The singleton
+    private static GeoData INSTANCE;                                                         // The singleton
 
     /**
      * Gets the singleton instance
      *
      * @return the analysis instance to use
      */
-    public static synchronized GeoAnalysis instance() {
-        if (INSTANCE == null) INSTANCE = new GeoAnalysis();
+    public static synchronized GeoData instance() {
+        if (INSTANCE == null) INSTANCE = new GeoData();
         return INSTANCE;
     }
 
-    /**
-     * Given a GeoMapping, assembles the Javascript needed to use it
-     *
-     * @param out destination for the Javascript
-     * @param map the mapping to output
-     */
-    public static void writeMapping(ScriptWriter out, GeoMapping map) {
-
-        // Overall combined map from file name -> (Map of data name to feature index in that file)
-        Map<String, Map<Object, Integer>> combined = new LinkedHashMap<String, Map<Object, Integer>>();
-        for (GeoFile geo : map.getFiles()) combined.put(geo.name, new TreeMap<Object, Integer>());
-
-        for (Map.Entry<Object, int[]> e : map.getFeatureMap().entrySet()) {
-            Object dataName = e.getKey();
-            int[] indices = e.getValue();                               // [FILE INDEX, FEATURE KEY]
-            String fileName = map.getFiles()[indices[0]].name;
-            Map<Object, Integer> features = combined.get(fileName);
-            features.put(dataName, indices[1]);
-        }
-
-        // Write out the resulting structure
-        out.add("{").indentMore();
-        GeoFile[] files = map.getFiles();
-        String version = new BuilderOptions().version;
-        for (int k = 0; k < files.length; k++) {
-            if (k > 0) out.add(",").onNewLine();
-            String fileName = files[k].name;
-            String source = Data.quote("http://brunelvis.org/geo/" + version + "/" + fileName + ".json");
-            out.onNewLine().add(source, ":{").indentMore();
-            int i = 0;
-            Map<Object, Integer> features = combined.get(fileName);
-            for (Map.Entry<Object, Integer> s : features.entrySet()) {
-                if (i++ > 0) out.add(", ");
-                if (i % 5 == 0) out.onNewLine();
-                out.add("'").add(s.getKey()).add("':").add(s.getValue());
-            }
-            out.indentLess().onNewLine().add("}");
-        }
-
-        out.indentLess().onNewLine().add("}");
-    }
-
-    public static String fixAbbreviations(String s) {
-        return s.replaceAll("st\\.[ ]*", "saint ")
-                .replaceAll("dem\\.[ ]*", "democratic ")
-                .replaceAll("rep\\.[ ]*", "republic ")
-                .replaceAll("is\\.[ ]*", "islands ")
-                .replaceAll("\u2019", "'")
-                .replaceAll("&", " and ")
-                .replaceAll(" [ ]+", " ").trim();
-    }
 
     final Map<String, int[][]> featureMap;                // For each feature, a pair of [fileIndex,featureIndex]
     final GeoFile[] geoFiles;                             // Feature files we can use
     final LabelPoint[] labels;                            // Labels for the world
 
-    private GeoAnalysis() {
+    private GeoData() {
         try {
             // Read in the feature information file
-            InputStream is = GeoAnalysis.class.getResourceAsStream("/org/brunel/maps/geoindex.txt");
+            InputStream is = GeoData.class.getResourceAsStream("/org/brunel/maps/geoindex.txt");
             LineNumberReader rdr = new LineNumberReader(new InputStreamReader(is, "utf-8"));
             geoFiles = readFileDescriptions(rdr);                       // The files
             featureMap = readFeatureDescriptions(rdr);                  // Map from features to files & ids
             rdr.close();
 
             // Read label file information
-            is = GeoAnalysis.class.getResourceAsStream("/org/brunel/maps/locations.txt");
+            is = GeoData.class.getResourceAsStream("/org/brunel/maps/locations.txt");
             rdr = new LineNumberReader(new InputStreamReader(is, "utf-8"));
             labels = readLabels(rdr);
 
@@ -136,30 +77,31 @@ public class GeoAnalysis {
 
     }
 
+    // Add variants of names by normalizing removing accent marks and periods
+    private void addVariantFeatureNames() {
+        List<String> keys = new ArrayList<String>(featureMap.keySet());
+        for (String s : keys) {
+            for (String t : GeoNaming.variants(s))
+                if (!featureMap.containsKey(t))
+                    featureMap.put(t, featureMap.get(s));
+        }
+    }
+
     private void placeLabelsInFiles() {
         for (LabelPoint p : labels) {
-            int included = 0;
-            int[][] where = featureMap.get(canonical(p.parent0));
+            int[][] where = featureMap.get(GeoNaming.canonical(p.parent0));
             if (where != null) {
-                included += where.length;
                 for (int[] item : where) {
                     geoFiles[item[0]].pts.add(p);
                 }
             }
-            where = featureMap.get(canonical(p.parent1));
+            where = featureMap.get(GeoNaming.canonical(p.parent1));
             if (where != null) {
-                included += where.length;
                 for (int[] item : where) {
                     geoFiles[item[0]].pts.add(p);
                 }
             }
         }
-    }
-
-    public List<LabelPoint> getLabelsWithin(Rect r) {
-        List<LabelPoint> result = new ArrayList<LabelPoint>();
-        for (LabelPoint p : labels) if (r.contains(p)) result.add(p);
-        return result;
     }
 
     private LabelPoint[] readLabels(LineNumberReader rdr) throws IOException {
@@ -195,7 +137,7 @@ public class GeoAnalysis {
                 data[i][0] = Integer.parseInt(s[0]);
                 data[i][1] = Integer.parseInt(s[1]);
             }
-            map.put(canonical(name), data);
+            map.put(GeoNaming.canonical(name), data);
         }
         return map;
     }
@@ -212,47 +154,17 @@ public class GeoAnalysis {
         return list.toArray(new GeoFile[list.size()]);
     }
 
-    // Add variants of names by normalizing removing accent marks and periods
-    private void addVariantFeatureNames() {
-        List<String> keys = new ArrayList<String>(featureMap.keySet());
-        for (String s : keys) {
-            String t = removeAccents(s);
-            if (!featureMap.containsKey(t)) {
-                featureMap.put(t, featureMap.get(s));
-            }
-            t = removePeriods(t);
-            if (!featureMap.containsKey(t)) {
-                featureMap.put(t, featureMap.get(s));
-            }
-        }
-    }
-
-    private static String canonical(String name) {
-        return fixAbbreviations(name.toLowerCase());
-    }
-
-    static String removeAccents(String s) {
-        String decomposed = Normalizer.normalize(s, Normalizer.Form.NFD);
-        return PATTERN.matcher(decomposed).replaceAll("");
-    }
-
-    static String removePeriods(String s) {
-        // Do not remove from XX.YY pattern
-        if (s.length() == 5 && s.charAt(2) == '.') return s;
-        return s.replaceAll("\\.", "");
-    }
-
     /**
      * For a set of features, returns the mapping to use for them
      *
      * @param names feature names
      * @return resulting mapping
      */
-    public GeoMapping make(Object[] names, Param[] geoParameters) {
+    GeoMapping make(Object[] names, Param[] geoParameters) {
         return GeoMapping.createGeoMapping(names, makeRequiredFiles(geoParameters), this);
     }
 
-    public GeoMapping world() {
+    GeoMapping world() {
         return make(new Object[0], new Param[]{Param.makeString("world")});
     }
 
@@ -273,7 +185,7 @@ public class GeoAnalysis {
         return result;
     }
 
-    public GeoMapping makeForPoints(PointCollection points, Param[] geoParameters) {
-        return GeoMapping.createGeoMapping(points, makeRequiredFiles(geoParameters), this);
+    GeoMapping makeForPoints(Poly hull, Param[] geoParameters) {
+        return GeoMapping.createGeoMapping(hull, makeRequiredFiles(geoParameters), this);
     }
 }

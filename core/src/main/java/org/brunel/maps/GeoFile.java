@@ -79,7 +79,7 @@ public class GeoFile implements Comparable<GeoFile> {
      */
     public boolean covers(Point p) {
         // Do the bounds check first for speed
-        return bounds.contains(p) && hull.contains(p);
+        return hull.contains(p);
     }
 
     public String toString() {

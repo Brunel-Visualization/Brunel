@@ -17,6 +17,7 @@
 package org.brunel.maps;
 
 import org.brunel.geom.Point;
+import org.brunel.geom.Poly;
 import org.brunel.geom.Rect;
 
 import java.util.ArrayList;
@@ -37,40 +38,29 @@ import java.util.TreeMap;
  */
 public class GeoMapping {
 
-    private static final String MAPPING = "britain:united kingdom|great britain:united kingdom|united states:united states of america|usa:united states of america" +
-            "|burma:myanmar|vatican city:vatican|holy see:vatican";
-    private static final Map<String, String> commonNames = new HashMap<String, String>();
-
-    static {
-        for (String s: MAPPING.split("\\|")) {
-            String[] p = s.split(":");
-            commonNames.put(p[0], p[1]);
-        }
-    }
-
-    public static GeoMapping createGeoMapping(PointCollection points, List<GeoFile> required, GeoAnalysis geoAnalysis) {
+    public static GeoMapping createGeoMapping(Poly polygon, List<GeoFile> required, GeoData geoAnalysis) {
         HashSet<Object> unmatched = new HashSet<Object>();
-        Map<GeoFile, List<Object>> map = mapBoundsToFiles(points, geoAnalysis);
+        Map<GeoFile, List<Object>> map = mapBoundsToFiles(polygon, geoAnalysis);
         return new GeoMapping(required, unmatched, map);
     }
 
     // Create a map from Geofile index to the points that file contains.
-    private static Map<GeoFile, List<Object>> mapBoundsToFiles(PointCollection points, GeoAnalysis geoAnalysis) {
+    private static Map<GeoFile, List<Object>> mapBoundsToFiles(Poly poly, GeoData geoAnalysis) {
         HashMap<GeoFile, List<Object>> map = new HashMap<GeoFile, List<Object>>();
-        if (points.isEmpty()) return map;
-        Rect bounds = points.bounds();
+        if (poly.size() == 0) return map;
+        Rect bounds = poly.bounds;
         GeoFile[] geoFiles = geoAnalysis.geoFiles;
         for (GeoFile f : geoFiles) {
             if (!bounds.intersects(f.bounds)) continue;             // Ignore if outside the bounds
             List content = new ArrayList();
-            for (Point p : points.convexHull())
+            for (Point p : poly.points)
                 if (f.covers(p)) content.add(p);
             if (!content.isEmpty()) map.put(f, content);
         }
         return map;
     }
 
-    static GeoMapping createGeoMapping(Object[] names, List<GeoFile> required, GeoAnalysis geoAnalysis) {
+    static GeoMapping createGeoMapping(Object[] names, List<GeoFile> required, GeoData geoAnalysis) {
         HashSet<Object> unmatched = new HashSet<Object>();
         Map<GeoFile, List<Object>> map = mapFeaturesToFiles(names, geoAnalysis, unmatched);
         GeoMapping mapping = new GeoMapping(required, unmatched, map);
@@ -78,7 +68,7 @@ public class GeoMapping {
         return mapping;
     }
 
-    private static Map<GeoFile, List<Object>> mapFeaturesToFiles(Object[] names, GeoAnalysis geoAnalysis, Collection<Object> unmatched) {
+    private static Map<GeoFile, List<Object>> mapFeaturesToFiles(Object[] names, GeoData geoAnalysis, Collection<Object> unmatched) {
         Map<GeoFile, List<Object>> contained = new HashMap<GeoFile, List<Object>>();
         for (Object s : names) {
             int[][] item = findFeature(s, geoAnalysis.featureMap);
@@ -113,31 +103,11 @@ public class GeoMapping {
 
     // Find a match, if necessary by removing accent marks and periods
     private static int[][] findFeature(Object key, Map<String, int[][]> featureMap) {
-        String s = key.toString().toLowerCase().trim();
+        String s = GeoNaming.canonical(key.toString());
         int[][] name = findName(featureMap, s);
         if (name != null) return name;
 
-        int p = s.indexOf(',');
-        if (p > 0) {
-            // Instead of  "Netherlands, The", try "The Netherlands"
-            name = findName(featureMap, s.substring(p+1).trim() + " " + s.substring(0, p));
-            if (name != null) return name;
-            // Instead of  "Netherlands, The", try "Netherlands"
-            name = findName(featureMap, s.substring(0, p));
-            if (name != null) return name;
-        }
-
-        p = s.indexOf('(');
-        if (p > 0) {
-            // Things like "Myanmar(burma)"
-            name = findName(featureMap, s.substring(0, p).trim());
-            if (name != null) return name;
-        }
-
-        // Replace common abbreviations
-        String t = GeoAnalysis.fixAbbreviations(s);
-
-        if (!t.equals(s)) {
+        for (String t : GeoNaming.variants(s)) {
             name = findName(featureMap, t);
             if (name != null) return name;
         }
@@ -146,21 +116,14 @@ public class GeoMapping {
     }
 
     private static int[][] findName(Map<String, int[][]> featureMap, String s) {
-        s = s.replaceAll("[ \t]+", " ");
-        String common = commonNames.get(s);
-        if (common != null) s = common;
 
-        // Lots of variations
-        if (s.startsWith("united kingdom of")) s = "united kingdom";
-
-        // Try the name, then try removing accents and special characters
         int[][] result = featureMap.get(s);
         if (result != null) return result;
-        s = GeoAnalysis.removeAccents(s);
-        result = featureMap.get(s);
-        if (result != null) return result;
-        s = GeoAnalysis.removePeriods(s);
-        return featureMap.get(s);
+        for (String t : GeoNaming.variants(s)) {
+            result = featureMap.get(t);
+            if (result != null) return result;
+        }
+        return null;
     }
 
     private final Map<Object, int[]> featureMap = new TreeMap<Object, int[]>();     // Feature -> [file, featureKey]
