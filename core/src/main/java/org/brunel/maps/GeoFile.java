@@ -16,6 +16,10 @@
 
 package org.brunel.maps;
 
+import org.brunel.geom.Point;
+import org.brunel.geom.Poly;
+import org.brunel.geom.Rect;
+
 import java.util.ArrayList;
 import java.util.List;
 

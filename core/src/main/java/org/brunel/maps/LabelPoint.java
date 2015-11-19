@@ -16,9 +16,10 @@
 
 package org.brunel.maps;
 
+import org.brunel.geom.Point;
+
 /**
  * A label point is a point that has labeling information
- * Sortign orders them by rank
  */
 public class LabelPoint extends Point {
     public final String label;                      // text for the location

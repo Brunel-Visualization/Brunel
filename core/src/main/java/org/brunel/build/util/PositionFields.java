@@ -17,11 +17,9 @@
 package org.brunel.build.util;
 
 import org.brunel.action.Param;
-import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
-import org.brunel.maps.PointCollection;
 import org.brunel.model.VisSingle;
 
 import java.util.ArrayList;
@@ -40,11 +38,8 @@ public class PositionFields {
 
     private final Map<VisSingle, Field[]> x = new HashMap<VisSingle, Field[]>();
     private final Map<VisSingle, Field[]> y = new HashMap<VisSingle, Field[]>();
-    private final VisSingle[] elements;
-    private PointCollection collection;
 
     public PositionFields(VisSingle[] elements, Dataset[] elementData) {
-        this.elements = elements;
 
         String xTransform = null, yTransform = null;                // If defined by the VisSingle
 
@@ -79,25 +74,28 @@ public class PositionFields {
             this.yTransform = yTransform;
     }
 
-    public PointCollection getAllPoints() {
-        if (collection != null) return collection;
+    public double[] getXFieldRange() {
+        return getRange(allXFields);
+    }
 
-        collection = new PointCollection();
+    public double[] getYFieldRange() {
+        return getRange(allYFields);
+    }
 
-        // Add points for all the fields for each element
-        for (VisSingle v : elements) {
-            Field[] xx = getX(v);
-            Field[] yy = getY(v);
-            for (Field x : xx)
-                for (Field y : yy) {
-                    for (int i = 0; i < x.rowCount(); i++) {
-                        Double a = Data.asNumeric(x.value(i));
-                        Double b = Data.asNumeric(y.value(i));
-                        if (a != null && b != null) collection.add(a, b);
-                    }
+    private double[] getRange(Field[] xFields) {
+        Double min = null, max = null;
+        for (Field x : xFields) {
+            if (x.isNumeric()) {
+                if (min == null) {
+                    min = x.min();
+                    max = x.max();
+                } else {
+                    min = Math.min(min, x.min());
+                    max = Math.min(max, x.max());
                 }
+            }
         }
-        return collection;
+        return min == null ? null : new double[]{min, max};
     }
 
     private String getDefinedXTransform(VisSingle v) {

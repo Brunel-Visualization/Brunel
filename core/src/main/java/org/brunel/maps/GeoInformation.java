@@ -16,12 +16,11 @@
 
 package org.brunel.maps;
 
-import org.brunel.build.d3.D3Interaction;
-import org.brunel.build.d3.diagrams.GeoMap;
 import org.brunel.build.util.PositionFields;
-import org.brunel.build.util.ScriptWriter;
+import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.geom.Rect;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
@@ -33,47 +32,52 @@ import java.util.List;
  */
 public class GeoInformation {
 
-    private final GeoMapping[] geo;                         // Geographic mappings, one per element
+    public static String getIDField(VisSingle vis) {
+        if (vis.fKeys.isEmpty()) {
+            if (vis.positionFields().length == 0)
+                return null;
+            return vis.positionFields()[0];
+        } else {
+            return vis.fKeys.get(0).asField();
+        }
+    }
+
+    private final GeoMapping[] geo;                                 // Geographic mappings, one per element
     private final VisSingle[] element;
     private final PositionFields positionFields;
+    private final PointCollection points;
+    private final Rect bounds;                                      // Combined bounds
+    private final GeoAnalysis analysis = GeoAnalysis.instance();
 
-    public String geoProjection;  // Projection we used
-
-    public GeoInformation(VisSingle[] element, Dataset[] elementData, PositionFields positionFields) {
-        this.element = element;
+    public GeoInformation(VisSingle[] elements, Dataset[] elementData, PositionFields positionFields) {
+        this.element = elements;
         this.positionFields = positionFields;
-        geo = makeGeoMappings(element, elementData, positionFields);
+        this.points = getAllPoints(elements, positionFields);
+        geo = makeGeoMappings(element, elementData);
+
+        Rect bounds = points.bounds();
+        for (GeoMapping g : geo)
+            if (g != null && g.totalBounds() != null)
+                bounds = g.totalBounds().union(bounds);
+        this.bounds = bounds;
     }
 
-    public void writeProjection(D3Interaction interaction, ScriptWriter out) {
-        // Calculate the full bounds
-        Rect bounds = makePositionBounds(positionFields.allXFields, positionFields.allYFields);
-        if (bounds == null) {
-            // All we have are reference maps -- so just use them
-            for (GeoMapping g : geo)
-                if (g != null && g.totalBounds() != null)
-                    bounds = g.totalBounds().union(bounds);
-        } else {
-            bounds = bounds.expand(0.05);
-            for (int i = 0; i < geo.length; i++) {
-                if (geo[i] == null || geo[i].totalBounds() == null) continue;
-                Rect trial = geo[i].totalBounds().union(bounds);
-
-                // Increase bounds if the element had actual data (which we obviously want to show)
-                // or it is a reference map, but massively bigger than the target area
-                if (containsData(element[i]) || bounds.area() > 0.1 * trial.area())
-                    bounds = trial;
-            }
+    public PointCollection getAllPoints(VisSingle[] elements, PositionFields positionFields) {
+        PointCollection collection = new PointCollection();
+        // Add points for all the fields for each element
+        for (VisSingle v : elements) {
+            Field[] xx = positionFields.getX(v);
+            Field[] yy = positionFields.getY(v);
+            for (Field x : xx)
+                for (Field y : yy) {
+                    for (int i = 0; i < x.rowCount(); i++) {
+                        Double a = Data.asNumeric(x.value(i));
+                        Double b = Data.asNumeric(y.value(i));
+                        if (a != null && b != null) collection.add(a, b);
+                    }
+                }
         }
-
-        // Write the projection for that
-        this.geoProjection = GeoMap.writeProjection(out, bounds);
-    }
-
-    private Rect makePositionBounds(Field[] xFields, Field[] yFields) {
-        double[] rx = getRange(xFields);
-        double[] ry = getRange(yFields);
-        return rx == null || ry == null ? null : new Rect(rx[0], rx[1], ry[0], ry[1]);
+        return collection;
     }
 
     public List<GeoMapping> getAllGeo() {
@@ -94,22 +98,18 @@ public class GeoInformation {
         throw new IllegalStateException("Could not find vis in known elements");
     }
 
-    public Rect getGeoBounds() {
-        Rect bounds = null;
-        for (GeoMapping g : geo)
-            if (g != null && g.totalBounds() != null)
-                bounds = g.totalBounds().union(bounds);
+    public Rect bounds() {
         return bounds;
     }
 
     // The whole array returned will be null if nothing is a map
-    private GeoMapping[] makeGeoMappings(VisSingle[] element, Dataset[] elementData, PositionFields positionFields) {
+    private GeoMapping[] makeGeoMappings(VisSingle[] element, Dataset[] elementData) {
         GeoMapping[] maps = null;
         boolean oneValid = false;
         for (int i = 0; i < element.length; i++) {
             if (element[i].tDiagram == VisTypes.Diagram.map) {
                 if (maps == null) maps = new GeoMapping[element.length];
-                maps[i] = GeoMap.makeMapping(element[i], elementData[i], positionFields);
+                maps[i] = makeMapping(element[i], elementData[i], positionFields);
                 if (maps[i] != null && maps[i].totalBounds() != null) oneValid = true;
             }
         }
@@ -119,34 +119,20 @@ public class GeoInformation {
             // We will build a world map. This is an edge case, but supports the simple Brunel 'map'
             for (int i = 0; i < element.length; i++) {
                 if (element[i].tDiagram == VisTypes.Diagram.map && element[i].tDiagramParameters.length == 0)
-                    maps[i] = GeoAnalysis.instance().world();
+                    maps[i] = analysis.world();
             }
         }
 
         return maps;
     }
 
-    private double[] getRange(Field[] xFields) {
-        Double min = null, max = null;
-        for (Field x : xFields) {
-            if (x.isNumeric()) {
-                if (min == null) {
-                    min = x.min();
-                    max = x.max();
-                } else {
-                    min = Math.min(min, x.min());
-                    max = Math.min(max, x.max());
-                }
-            }
-        }
-        return min == null ? null : new double[]{min, max};
+    public GeoMapping makeMapping(VisSingle vis, Dataset data, PositionFields positions) {
+        String idField = getIDField(vis);
+        if (idField != null)
+            return analysis.make(data.field(idField).categories(), vis.tDiagramParameters);
+        if (points.isEmpty() || vis.tDiagramParameters != null)
+            return analysis.makeForPoints(points, vis.tDiagramParameters);
+        return null;
     }
-
-    private boolean containsData(VisSingle vis) {
-        // Positional data or keys are real data; otherwise we are likely a background map
-        return vis.positionFields().length > 0 || !vis.fKeys.isEmpty();
-    }
-
-
 
 }

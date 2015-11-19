@@ -24,9 +24,9 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.maps.GeoFile;
 import org.brunel.maps.GeoMapping;
-import org.brunel.maps.GeoProjection;
+import org.brunel.maps.projection.ProjectionBuilder;
 import org.brunel.maps.LabelPoint;
-import org.brunel.maps.Rect;
+import org.brunel.geom.Rect;
 import org.brunel.model.VisSingle;
 
 import java.awt.*;
@@ -56,16 +56,13 @@ public class GeoMapLabels extends D3Diagram {
             for (GeoFile f : g.getFiles()) points.addAll(f.pts);
         }
 
-        Rect r1 = scales.geo.getGeoBounds();
-        Rect r2 = scales.positionFields.getAllPoints().bounds();
-        Rect r = r1 == null ? r2 : r1.union(r2);
 
         int maxPoints = 40;
         if (vis.tDiagramParameters[0].modifiers().length > 0) {
             maxPoints = (int) vis.tDiagramParameters[0].modifiers()[0].asDouble();
         }
 
-        points = thin(points, r, maxPoints);
+        points = thin(points, scales.geo.bounds(), maxPoints);
 
         int popHigh = 0, popLow = 100;
         for (LabelPoint p : points) {
@@ -95,7 +92,7 @@ public class GeoMapLabels extends D3Diagram {
     private List<LabelPoint> thin(List<LabelPoint> points, Rect totalBounds, int maxPoints) {
 
 
-        Rect bds = GeoProjection.MERCATOR.projectedExtent(totalBounds);
+        Rect bds = ProjectionBuilder.MERCATOR.projectedExtent(totalBounds);
         double scale = Math.min(800 / bds.width(), 600 / bds.height());
 
         ArrayList<LabelPoint> result = new ArrayList<LabelPoint>();
@@ -107,7 +104,7 @@ public class GeoMapLabels extends D3Diagram {
         for (LabelPoint p : points) {
             boolean intersects = false;
 
-            org.brunel.maps.Point pp = GeoProjection.MERCATOR.transform(p);
+            org.brunel.geom.Point pp = ProjectionBuilder.MERCATOR.transform(p);
             double x = pp.x * scale, y = pp.y * scale;
             Rectangle2D size = font.getStringBounds(p.label, frc);
             Rect s = new Rect(x - 15, x + size.getWidth() + 15, y, y + size.getHeight());

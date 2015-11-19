@@ -16,6 +16,8 @@
 
 package org.brunel.maps;
 
+import org.brunel.geom.Rect;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;

@@ -19,62 +19,40 @@ package org.brunel.build.d3.diagrams;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.ElementDefinition;
 import org.brunel.build.util.ElementDetails;
-import org.brunel.build.util.PositionFields;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.maps.GeoAnalysis;
+import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
-import org.brunel.maps.GeoProjection;
-import org.brunel.maps.PointCollection;
-import org.brunel.maps.Rect;
+import org.brunel.geom.Rect;
+import org.brunel.maps.projection.ProjectionBuilder;
+import org.brunel.maps.projection.Projection;
 import org.brunel.model.VisSingle;
 
 public class GeoMap extends D3Diagram {
 
-    private final String idField;               // Field used for identifiers
     private final GeoMapping mapping;           // Mapping of identifiers to features
-
-    public static GeoMapping makeMapping(VisSingle vis, Dataset data, PositionFields positions) {
-        String idField = getIDField(vis);
-        if (idField != null)
-            return GeoAnalysis.instance().make(data.field(idField).categories(), vis.tDiagramParameters);
-        PointCollection p = positions.getAllPoints();
-        if (!p.isEmpty() || vis.tDiagramParameters != null)
-            return GeoAnalysis.instance().makeForPoints(p, vis.tDiagramParameters);
-        return null;
-    }
 
     public GeoMap(VisSingle vis, Dataset data, GeoMapping mapping, ScriptWriter out) {
         super(vis, data, out);
         this.mapping = mapping;
-        idField = getIDField(vis);
         if (mapping == null)
             throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
     }
 
-    private static String getIDField(VisSingle vis) {
-        if (vis.fKeys.isEmpty()) {
-            if (vis.positionFields().length == 0)
-                return null;
-            return vis.positionFields()[0];
-        } else {
-            return vis.fKeys.get(0).asField();
-        }
-    }
-
-    public static String writeProjection(ScriptWriter out, Rect bounds) {
+    public static void writeProjection(ScriptWriter out, Rect bounds) {
         out.comment("Define the projection");
 
         // Calculate a suitable projection
-        GeoProjection projection = new GeoProjection("geom.inner_width", "geom.inner_height", "winkel3");
-        String[] projectionDescription = projection.makeProjection(bounds).split("\n");
+        Projection projection = ProjectionBuilder.makeProjection(bounds);
+        String[] projectionDescription = projection.d3Definition(bounds).split("\n");
         out.indentMore();
         out.add("var ");
         out.indentMore();
 
         // Define Winkel Tripel function if needed
         if (projectionDescription[0].contains("winkel3")) {
-            String[] strings = GeoProjection.WinkelD3Function;
+            String[] strings = ProjectionBuilder.WinkelD3Function;
             out.add("winkel3 =", strings[0]);
             out.indentMore();
             for (int i = 1; i < strings.length; i++)
@@ -91,7 +69,6 @@ public class GeoMap extends D3Diagram {
             out.onNewLine().add(projectionDescription[i].trim());
         out.add(",").onNewLine();
         out.indentLess();
-
 
         // Always add pan/zoom for now -- should check to see if turned off
         out.add("zoom = d3.behavior.zoom()")
@@ -112,8 +89,6 @@ public class GeoMap extends D3Diagram {
                 .onNewLine().add("if (!q) q = [-9e9,9e9]").endStatement()
                 .onNewLine().add("return 'translate(' + q[0] + ',' + q[1] + ')'")
                 .indentLess().onNewLine().add("}");
-
-        return projection.projectionName;
     }
 
     public void writeDiagramEnter() {
@@ -125,7 +100,7 @@ public class GeoMap extends D3Diagram {
         out.indentLess();
 
         out.comment("Read in the feature data and call build again when done");
-        writeFeatureHookup(mapping, idField);
+        writeFeatureHookup(mapping, GeoInformation.getIDField(vis));
 
         // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
         return ElementDetails.makeForDiagram("data._rows", "path", "polygon", "geo", false);

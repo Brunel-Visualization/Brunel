@@ -225,7 +225,7 @@ public class D3ScaleBuilder {
     public void writeAxes() {
         if (isDiagram) return;                          // No axes needed for diagrams
 
-        // Calculate geometry
+        // Calculate geom
         String width = "geom.inner_width";
         String height = "geom.inner_height";
         if (coords == VisTypes.Coordinates.transposed) {

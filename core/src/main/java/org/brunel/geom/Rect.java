@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.brunel.maps;
+package org.brunel.geom;
 
 /**
  * A geometric rectangle

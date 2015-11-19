@@ -21,6 +21,7 @@ import org.brunel.build.AbstractBuilder;
 import org.brunel.build.DataTransformParameters;
 import org.brunel.build.ElementDependency;
 import org.brunel.build.controls.Controls;
+import org.brunel.build.d3.diagrams.GeoMap;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.PositionFields;
 import org.brunel.build.util.ScriptWriter;
@@ -167,7 +168,7 @@ public class D3Builder extends AbstractBuilder {
         out.add("charts[" + chartIndex, "] = function() {").ln();
         out.indentMore();
 
-        // Define scales and geometry (we need the scales to get axes sizes, which determines geometry)
+        // Define scales and geom (we need the scales to get axes sizes, which determines geom)
         double chartWidth = visWidth - chartMargins[1] - chartMargins[3];
         double chartHeight = visHeight - chartMargins[0] - chartMargins[2];
         this.scalesBuilder = new D3ScaleBuilder(elements, elementData, positionFields, chartWidth, chartHeight, out);
@@ -188,7 +189,9 @@ public class D3Builder extends AbstractBuilder {
         // Define scales and access functions
         if (scalesBuilder.isGeo()) {
             out.titleComment("Projection");
-            scalesBuilder.geo.writeProjection(interaction, out);
+
+            // Write the projection for that
+            GeoMap.writeProjection(out, scalesBuilder.geo.bounds());
 
         } else {
 

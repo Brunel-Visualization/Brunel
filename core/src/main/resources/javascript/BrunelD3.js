@@ -762,7 +762,7 @@ var BrunelD3 = (function () {
         }
 
         function build() {
-            // Add feature geometry to each row
+            // Add feature geom to each row
             var i, rows = [];
             for (i = 0; i < data._rows.length; i++) {
                 var row = data._rows[i],                                        // The data row

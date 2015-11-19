@@ -20,6 +20,7 @@ import org.brunel.action.Param;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
+import org.brunel.geom.Rect;
 
 import java.io.IOException;
 import java.io.InputStream;
