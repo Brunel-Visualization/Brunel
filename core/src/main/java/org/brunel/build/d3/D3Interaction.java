@@ -27,7 +27,7 @@ import org.brunel.model.VisTypes;
  * sc
  * Handles adding interactivity to charts
  */
-class D3Interaction {
+public class D3Interaction {
 
     private static boolean isSelectable(VisSingle vis) {
         // Only if explicitly requested

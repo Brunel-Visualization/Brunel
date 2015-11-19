@@ -44,6 +44,7 @@ public class GeoProjection {
     private final String height;                                                    // JS name of height
     private final String winkelTripleFunctionName;                                  // In JS, this will be the name
     private final NumberFormat F = new DecimalFormat("#.####");                     // for output formatting
+    public String projectionName;                                                   // The name we chose
 
     /**
      * GeoProjection chooses good projections for D3 to use for a amp
@@ -78,6 +79,7 @@ public class GeoProjection {
     }
 
     private String makeAlbersUSA() {
+        this.projectionName = "albersUSA";
         // Everything is well known, so easy to define with fixed details
         return "d3.geo.albersUsa()"
                 + LN + ".scale(Math.min(" + width + "/0.96, " + height + "/0.48))"
@@ -85,6 +87,7 @@ public class GeoProjection {
     }
 
     private String makeMercator(Rect b) {
+        this.projectionName = "mercator";
         Rect ext = MERCATOR.projectedExtent(b);
 
         // We find the center in projected space, and then invert the projection
@@ -112,7 +115,7 @@ public class GeoProjection {
     }
 
     private String makeWinkelTripel(Rect bounds) {
-
+        this.projectionName = "winkelTripel";
         Rect ext = WINKEL3.projectedExtent(bounds);
 
         // Finding the center is tricky because we cannot invert the transform so we have to search for it
@@ -145,6 +148,7 @@ public class GeoProjection {
     }
 
     private String makeAlbers(Rect b) {
+        this.projectionName = "albers";
 
         // Parallels at 1/6 and 5/6 of the latitude
         double parallelA = (b.y1 + b.y2 * 5) / 6;           // Parallels at 1/6 and 5/6

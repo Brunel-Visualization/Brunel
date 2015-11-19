@@ -17,7 +17,6 @@
 package org.brunel.build.d3;
 
 import org.brunel.action.Param;
-import org.brunel.build.d3.diagrams.GeoMap;
 import org.brunel.build.util.AxisDetails;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.PositionFields;
@@ -31,9 +30,7 @@ import org.brunel.data.auto.Auto;
 import org.brunel.data.auto.NumericScale;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
-import org.brunel.maps.GeoAnalysis;
-import org.brunel.maps.GeoMapping;
-import org.brunel.maps.Rect;
+import org.brunel.maps.GeoInformation;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
@@ -56,31 +53,6 @@ import java.util.Set;
  */
 public class D3ScaleBuilder {
 
-    public List<GeoMapping> getAllGeo() {
-        ArrayList<GeoMapping> geoMappings = new ArrayList<GeoMapping>();
-        for (GeoMapping g : geo) if (g != null) geoMappings.add(g);
-        return geoMappings;
-    }
-
-    /**
-     * Return the GeoMapping for the indicated VisSingle
-     *
-     * @param vis target
-     * @return result
-     */
-    public GeoMapping getGeo(VisSingle vis) {
-        for (int i = 0; i < element.length; i++)
-            if (element[i] == vis) return geo[i];
-        throw new IllegalStateException("Could not find vis in known elements");
-    }
-
-    public Rect getGeoBounds() {
-        Rect bounds = null;
-        for (GeoMapping g : geo)
-            if (g != null && g.totalBounds() != null)
-                bounds = g.totalBounds().union(bounds);
-        return bounds;
-    }
 
     public boolean isGeo() {
         return geo != null;
@@ -103,14 +75,14 @@ public class D3ScaleBuilder {
     final VisTypes.Coordinates coords;                      // Combined coordinate system derived from all elements
     final boolean isDiagram;                                // True if we want to treat it as a diagram coord system
 
-    private final GeoMapping[] geo;                         // Geographic mappings, one per element
 
     private final Field colorLegendField;                   // Field to use for the color legend
     private final AxisDetails hAxis, vAxis;                 // The same as the above, but at the physical location
     private final double[] marginTLBR;                      // Margins between the coordinate area and the chart space
     private final VisSingle[] element;                      // The elements ...
     private final Dataset[] elementData;                    // ... and their data
-    public final PositionFields positionFields;                    // Details on positions
+    public final PositionFields positionFields;             // Details on positions
+    public final GeoInformation geo;                        // Details on geo mapping
     private final ScriptWriter out;                         // Write definitions to here
 
     public D3ScaleBuilder(VisSingle[] element, Dataset[] elementData, PositionFields positionFields, double chartWidth, double chartHeight, ScriptWriter out) {
@@ -164,33 +136,10 @@ public class D3ScaleBuilder {
         int marginBottom = Math.max(hAxis.size, vAxis.bottomGutter);        // Height of hAxis, or gutter for vAxis
         int marginRight = Math.max(hAxis.rightGutter, legendWidth);         // Overflow for hAxis, or legend
         marginTLBR = new double[]{marginTop, marginLeft, marginBottom, marginRight};
+        this.geo = new GeoInformation(element, elementData, positionFields);
 
-        geo = makeGeoMappings(element, elementData, positionFields);
     }
 
-    // The whole array returned will be null if nothing is a map
-    private GeoMapping[] makeGeoMappings(VisSingle[] element, Dataset[] elementData, PositionFields positionFields) {
-        GeoMapping[] maps = null;
-        boolean oneValid = false;
-        for (int i = 0; i < element.length; i++) {
-            if (element[i].tDiagram == VisTypes.Diagram.map) {
-                if (maps == null) maps = new GeoMapping[element.length];
-                maps[i] = GeoMap.makeMapping(element[i], elementData[i], positionFields);
-                if (maps[i] != null && maps[i].totalBounds() != null) oneValid = true;
-            }
-        }
-
-        if (!oneValid) {
-            // We were unable to create a valid map -- nothing provided location information.
-            // We will build a world map. This is an edge case, but supports the simple Brunel 'map'
-            for (int i = 0; i < element.length; i++) {
-                if (element[i].tDiagram == VisTypes.Diagram.map && element[i].tDiagramParameters.length == 0)
-                    maps[i] = GeoAnalysis.instance().world();
-            }
-        }
-
-        return maps;
-    }
 
     /**
      * Adds the calls to set the axes into the already defined scale groups
@@ -343,57 +292,8 @@ public class D3ScaleBuilder {
         interaction.addScaleInteractivity();
     }
 
-    public void writeProjection(D3Interaction interaction) {
-        // Calculate the full bounds
-        Rect bounds = makePositionBounds(positionFields.allXFields, positionFields.allYFields);
-        if (bounds == null) {
-            // All we have are reference maps -- so just use them
-            for (GeoMapping g : geo)
-                if (g != null && g.totalBounds() != null)
-                    bounds = g.totalBounds().union(bounds);
-        } else {
-            bounds = bounds.expand(0.05);
-            for (int i = 0; i < geo.length; i++) {
-                if (geo[i] == null || geo[i].totalBounds() == null) continue;
-                Rect trial = geo[i].totalBounds().union(bounds);
 
-                // Increase bounds if the element had actual data (which we obviously want to show)
-                // or it is a reference map, but massively bigger than the target area
-                if (containsData(element[i]) || bounds.area() > 0.1 * trial.area())
-                    bounds = trial;
-            }
-        }
 
-        // Write the projection for that
-        GeoMap.writeProjection(out, bounds);
-    }
-
-    private Rect makePositionBounds(Field[] xFields, Field[] yFields) {
-        double[] rx = getRange(xFields);
-        double[] ry = getRange(yFields);
-        return rx == null || ry == null ? null : new Rect(rx[0], rx[1], ry[0], ry[1]);
-    }
-
-    private double[] getRange(Field[] xFields) {
-        Double min = null, max = null;
-        for (Field x : xFields) {
-            if (x.isNumeric()) {
-                if (min == null) {
-                    min = x.min();
-                    max = x.max();
-                } else {
-                    min = Math.min(min, x.min());
-                    max = Math.min(max, x.max());
-                }
-            }
-        }
-        return min == null ? null : new double[]{min, max};
-    }
-
-    private boolean containsData(VisSingle vis) {
-        // Positional data or keys are real data; otherwise we are likely a background map
-        return vis.positionFields().length > 0 || !vis.fKeys.isEmpty();
-    }
 
     public void writeLegends(VisSingle vis) {
         if (vis.fColor.isEmpty() || colorLegendField == null) return;

@@ -62,7 +62,7 @@ public class GeoMap extends D3Diagram {
         }
     }
 
-    public static void writeProjection(ScriptWriter out, Rect bounds) {
+    public static String writeProjection(ScriptWriter out, Rect bounds) {
         out.comment("Define the projection");
 
         // Calculate a suitable projection
@@ -112,6 +112,8 @@ public class GeoMap extends D3Diagram {
                 .onNewLine().add("if (!q) q = [-9e9,9e9]").endStatement()
                 .onNewLine().add("return 'translate(' + q[0] + ',' + q[1] + ')'")
                 .indentLess().onNewLine().add("}");
+
+        return projection.projectionName;
     }
 
     public void writeDiagramEnter() {

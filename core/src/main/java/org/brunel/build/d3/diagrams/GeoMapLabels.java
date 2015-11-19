@@ -50,13 +50,13 @@ public class GeoMapLabels extends D3Diagram {
 
     public void preBuildDefinitions() {
         List<LabelPoint> points = new ArrayList<LabelPoint>();
-        List<GeoMapping> mappings = scales.getAllGeo();
+        List<GeoMapping> mappings = scales.geo.getAllGeo();
 
         for (GeoMapping g : mappings) {
             for (GeoFile f : g.getFiles()) points.addAll(f.pts);
         }
 
-        Rect r1 = scales.getGeoBounds();
+        Rect r1 = scales.geo.getGeoBounds();
         Rect r2 = scales.positionFields.getAllPoints().bounds();
         Rect r = r1 == null ? r2 : r1.union(r2);
 
@@ -93,6 +93,7 @@ public class GeoMapLabels extends D3Diagram {
 
     // we will remove points which seem likely to overlap
     private List<LabelPoint> thin(List<LabelPoint> points, Rect totalBounds, int maxPoints) {
+
 
         Rect bds = GeoProjection.MERCATOR.projectedExtent(totalBounds);
         double scale = Math.min(800 / bds.width(), 600 / bds.height());

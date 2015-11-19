@@ -188,7 +188,7 @@ public class D3Builder extends AbstractBuilder {
         // Define scales and access functions
         if (scalesBuilder.isGeo()) {
             out.titleComment("Projection");
-            scalesBuilder.writeProjection(interaction);
+            scalesBuilder.geo.writeProjection(interaction, out);
 
         } else {
 

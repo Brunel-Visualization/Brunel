@@ -44,7 +44,7 @@ public abstract class D3Diagram {
             if (vis.tDiagramParameters.length == 1 && vis.tDiagramParameters[0].asString().equals("labels"))
                 return new GeoMapLabels(vis, data, scales, out);
             else
-                return new GeoMap(vis, data, scales.getGeo(vis), out);
+                return new GeoMap(vis, data, scales.geo.getGeo(vis), out);
         }
         throw new IllegalStateException("Unknown diagram: " + vis.tDiagram);
     }
