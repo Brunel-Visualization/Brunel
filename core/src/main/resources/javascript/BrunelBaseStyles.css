@@ -182,41 +182,41 @@
 }
 
 .brunel .mark.L1 {
-    fill: #404040;
+    fill: #707070;
 }
 
 .brunel .mark.L2 {
-    fill: #808080;
+    fill: #a0a0a0;
 }
 
 .brunel .mark.L3 {
-    fill: #808080;
+    fill: #a0a0a0;
 }
 
 .brunel .mark.L4 {
-    fill: #808080;
+    fill: #a0a0a0;
 }
 
 .brunel .label.L1 {
-    fill: #404040;
+    fill: #707070;
     font-weight:bold;
-    font-size:11pt;
+    font-size:10pt;
 }
 
 .brunel .label.L2 {
-    fill: #808080;
+    fill: #a0a0a0;
     font-style:italic;
     font-size:9pt;
 }
 
 .brunel .label.L3 {
-    fill: #808080;
+    fill: #a0a0a0;
     text-shadow: none;
     font-size:8pt;
 }
 
 .brunel .label.L4 {
-    fill: #808080;
+    fill: #a0a0a0;
     text-shadow: none;
     font-size:7pt;
 }

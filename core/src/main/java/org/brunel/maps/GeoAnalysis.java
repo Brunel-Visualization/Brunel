@@ -125,11 +125,34 @@ public class GeoAnalysis {
             rdr = new LineNumberReader(new InputStreamReader(is, "utf-8"));
             labels = readLabels(rdr);
 
+            // Add labels to geo files
+            placeLabelsInFiles();
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         addVariantFeatureNames();
 
+    }
+
+    private void placeLabelsInFiles() {
+        for (LabelPoint p : labels) {
+            int included = 0;
+            int[][] where = featureMap.get(canonical(p.parent0));
+            if (where != null) {
+                included += where.length;
+                for (int[] item : where) {
+                    geoFiles[item[0]].pts.add(p);
+                }
+            }
+            where = featureMap.get(canonical(p.parent1));
+            if (where != null) {
+                included += where.length;
+                for (int[] item : where) {
+                    geoFiles[item[0]].pts.add(p);
+                }
+            }
+        }
     }
 
     public List<LabelPoint> getLabelsWithin(Rect r) {
@@ -229,7 +252,7 @@ public class GeoAnalysis {
     }
 
     public GeoMapping world() {
-        return make(new Object[0], new Param[]{ Param.makeString("world")});
+        return make(new Object[0], new Param[]{Param.makeString("world")});
     }
 
     private List<GeoFile> makeRequiredFiles(Param[] params) {

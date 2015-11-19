@@ -77,6 +77,10 @@ public abstract class D3Diagram {
         return "'" + (isHierarchy ? classes + " hierarchy" : classes) + "'";
     }
 
+    public void preBuildDefinitions() {
+        // By default, do nothing
+    }
+
     public abstract ElementDetails writeDataConstruction();
 
     public abstract void writeDefinition(ElementDetails details, ElementDefinition elementDef);

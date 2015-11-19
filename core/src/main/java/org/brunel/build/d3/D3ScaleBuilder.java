@@ -56,6 +56,12 @@ import java.util.Set;
  */
 public class D3ScaleBuilder {
 
+    public List<GeoMapping> getAllGeo() {
+        ArrayList<GeoMapping> geoMappings = new ArrayList<GeoMapping>();
+        for (GeoMapping g : geo) if (g != null) geoMappings.add(g);
+        return geoMappings;
+    }
+
     /**
      * Return the GeoMapping for the indicated VisSingle
      *

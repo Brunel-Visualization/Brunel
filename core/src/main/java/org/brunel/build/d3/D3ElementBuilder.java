@@ -94,6 +94,10 @@ class D3ElementBuilder {
         out.addChained("style('opacity', 0.5).remove()").endStatement();
     }
 
+    public void preBuildDefinitions() {
+        if (diagram != null) diagram.preBuildDefinitions();
+    }
+
     private String getSize(String aestheticFunctionCall, ModelUtil.Size size, Field[] fields, String extent, String scaleName) {
 
         boolean needsFunction = aestheticFunctionCall != null;

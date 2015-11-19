@@ -92,6 +92,7 @@ public class GeoMap extends D3Diagram {
         out.add(",").onNewLine();
         out.indentLess();
 
+
         // Always add pan/zoom for now -- should check to see if turned off
         out.add("zoom = d3.behavior.zoom()")
                 .addChained("scale(projection.scale()).translate(projection.translate())")
@@ -103,6 +104,14 @@ public class GeoMap extends D3Diagram {
         out.endStatement();
         out.indentLess();
         out.add("vis.call(zoom)").endStatement();
+        // Define a 'safe' version of projection which sends failed projection points off the screen
+        // This occurs for the albersUSA projection ...
+        out.add("function projectTransform(p) {").indentMore()
+                .onNewLine().add("if (p.c) p = p.c").endStatement()
+                .onNewLine().add("var q = projection(p)").endStatement()
+                .onNewLine().add("if (!q) q = [-9e9,9e9]").endStatement()
+                .onNewLine().add("return 'translate(' + q[0] + ',' + q[1] + ')'")
+                .indentLess().onNewLine().add("}");
     }
 
     public void writeDiagramEnter() {

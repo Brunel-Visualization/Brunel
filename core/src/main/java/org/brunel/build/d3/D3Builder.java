@@ -299,6 +299,7 @@ public class D3Builder extends AbstractBuilder {
     private void defineElementBuildFunction(VisSingle vis, Dataset data, ElementDependency dependency) {
 
         D3ElementBuilder elementBuilder = new D3ElementBuilder(vis, out, scalesBuilder, positionFields, data, dependency);
+        elementBuilder.preBuildDefinitions();
 
         // Main method to make a vis
         out.titleComment("Build element from data");

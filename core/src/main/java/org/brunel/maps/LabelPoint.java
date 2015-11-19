@@ -22,6 +22,7 @@ package org.brunel.maps;
  */
 public class LabelPoint extends Point {
     public final String label;                      // text for the location
+    public final String parent0, parent1;           // parent country and region
     public final int rank;                          // 0 is most important, 8 is least
     public final int size;                          // 1 is smallest, 14 the largest
     public final int type;                          // 1-capital, 2-region capital, 3-local capital, 4-other
@@ -31,22 +32,26 @@ public class LabelPoint extends Point {
         return new LabelPoint(
                 Double.parseDouble(p[1]),           // longitude is second
                 Double.parseDouble(p[0]),           // latitude is first
-                p[5],                               // name last
+                p[7],                               // name last
                 Integer.parseInt(p[2]),             // rank
-                Integer.parseInt(p[3])       ,       // size
-                Integer.parseInt(p[4])              // class
+                Integer.parseInt(p[3]),             // size
+                Integer.parseInt(p[4]),             // class
+                p[5],                               // country
+                p[6]                                // region
         );
     }
 
-    public LabelPoint(double x, double y, String label, int rank, int size, int type) {
+    public LabelPoint(double x, double y, String label, int rank, int size, int type, String parent0, String parent1) {
         super(x, y);
         this.label = label;
         this.rank = rank;
         this.size = size;
         this.type = type;
+        this.parent0 = parent0;
+        this.parent1 = parent1;
     }
 
     public String toString() {
-        return  label + "[" + rank + "," + size + "]";
+        return label + "[" + rank + "," + size + "]";
     }
 }

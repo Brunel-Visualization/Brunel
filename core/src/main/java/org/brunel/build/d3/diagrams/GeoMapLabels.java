@@ -22,7 +22,8 @@ import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
-import org.brunel.maps.GeoAnalysis;
+import org.brunel.maps.GeoFile;
+import org.brunel.maps.GeoMapping;
 import org.brunel.maps.GeoProjection;
 import org.brunel.maps.LabelPoint;
 import org.brunel.maps.Rect;
@@ -47,21 +48,30 @@ public class GeoMapLabels extends D3Diagram {
         this.scales = scales;
     }
 
-    public ElementDetails writeDataConstruction() {
+    public void preBuildDefinitions() {
+        List<LabelPoint> points = new ArrayList<LabelPoint>();
+        List<GeoMapping> mappings = scales.getAllGeo();
+
+        for (GeoMapping g : mappings) {
+            for (GeoFile f : g.getFiles()) points.addAll(f.pts);
+        }
 
         Rect r1 = scales.getGeoBounds();
         Rect r2 = scales.positionFields.getAllPoints().bounds();
         Rect r = r1 == null ? r2 : r1.union(r2);
 
-        List<LabelPoint> points = GeoAnalysis.instance().getLabelsWithin(r);
-        points = thin(points, r);
+        int maxPoints = 40;
+        if (vis.tDiagramParameters[0].modifiers().length > 0) {
+            maxPoints = (int) vis.tDiagramParameters[0].modifiers()[0].asDouble();
+        }
+
+        points = thin(points, r, maxPoints);
 
         int popHigh = 0, popLow = 100;
         for (LabelPoint p : points) {
             popHigh = Math.max(popHigh, p.size);
             popLow = Math.min(popLow, p.size);
         }
-
         out.add("var geo_labels = [").indentMore();
         boolean first = true;
         for (LabelPoint p : points) {
@@ -75,12 +85,14 @@ public class GeoMapLabels extends D3Diagram {
             first = false;
         }
         out.indentLess().add("]").endStatement();
+    }
 
+    public ElementDetails writeDataConstruction() {
         return ElementDetails.makeForDiagram("geo_labels", "path", "point", "box", false);
     }
 
     // we will remove points which seem likely to overlap
-    private List<LabelPoint> thin(List<LabelPoint> points, Rect totalBounds) {
+    private List<LabelPoint> thin(List<LabelPoint> points, Rect totalBounds, int maxPoints) {
 
         Rect bds = GeoProjection.MERCATOR.projectedExtent(totalBounds);
         double scale = Math.min(800 / bds.width(), 600 / bds.height());
@@ -97,11 +109,10 @@ public class GeoMapLabels extends D3Diagram {
             org.brunel.maps.Point pp = GeoProjection.MERCATOR.transform(p);
             double x = pp.x * scale, y = pp.y * scale;
             Rectangle2D size = font.getStringBounds(p.label, frc);
-            Rect s = new Rect(x - 15, x + size.getWidth() + 5, y, y + size.getHeight());
+            Rect s = new Rect(x - 15, x + size.getWidth() + 15, y, y + size.getHeight());
 
             for (Rect r : accepted) {
                 if (r.intersects(s)) {
-                    System.out.println(p + " intersects " + result.get(accepted.indexOf(r)));
                     intersects = true;
                     break;
                 }
@@ -110,7 +121,7 @@ public class GeoMapLabels extends D3Diagram {
                 accepted.add(s);
                 result.add(p);
             }
-            if (result.size() >= 60) break;
+            if (result.size() >= maxPoints) break;
         }
         return result;
     }
@@ -120,9 +131,9 @@ public class GeoMapLabels extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
-        out.addChained("attr('d', function(d) { return BrunelD3.symbol(['star','star','square','circle'][d.t-1], d.r)})")
+        out.addChained("attr('d', function(d) { return BrunelD3.symbol(['star','star','square','circle'][d.t-1], d.r*geom.default_point_size/14)})")
                 .addChained("attr('class', function(d) { return 'mark L' + d.t })");
-        addPositionTransform();
+        out.addChained("attr('transform', projectTransform)");
         out.endStatement();
 
         // Labels
@@ -130,20 +141,14 @@ public class GeoMapLabels extends D3Diagram {
         out.add("var labelSel = diagramLabels.selectAll('*').data(d3Data, function(d) { return d.key})").endStatement();
         out.add("labelSel.enter().append('text')")
                 .addChained("attr('dy', '0.3em')")
-                .addChained("attr('dx', function(d) { return (d.r*1.5) + 'px'})")
+                .addChained("attr('dx', function(d) { return (2 + d.r*geom.default_point_size/10) + 'px'})")
                 .addChained("attr('class', function(d) { return 'label L' + d.t })")
                 .addChained("text(function(d) {return d.key})").endStatement();
+
         out.add("labelSel");
-        addPositionTransform();
+        out.addChained("attr('transform', projectTransform)");
         out.endStatement();
 
-    }
-
-    private void addPositionTransform() {
-        out.addChained("attr('transform', function(d) {").indentMore().indentMore()
-                .onNewLine().add("var p = projection(d.c);")
-                .onNewLine().add("return 'translate(' + p[0] + ' ' + p[1] + ')'")
-                .onNewLine().add("})").indentLess().indentLess();
     }
 
     public void writeDiagramEnter() {

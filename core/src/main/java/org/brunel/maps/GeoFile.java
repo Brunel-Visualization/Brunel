@@ -16,13 +16,17 @@
 
 package org.brunel.maps;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Keeps basic information on a GeoJSON file
  */
-class GeoFile implements Comparable<GeoFile> {
+public class GeoFile implements Comparable<GeoFile> {
     public final String name;           // File name
     public final double size;           // Size in Kbytes
     public final Rect bounds;           // longitude min, max; latitude min,max
+    public final List<LabelPoint> pts;  // contained label points
     private final Poly hull;            // Convex points in lat/long
 
     /**
@@ -39,6 +43,7 @@ class GeoFile implements Comparable<GeoFile> {
         String[] b = boundsString.split(",");
         this.bounds = new Rect(Double.parseDouble(b[0]), Double.parseDouble(b[1]), Double.parseDouble(b[2]), Double.parseDouble(b[3]));
         this.hull = new Poly(parse(hullString));
+        this.pts = new ArrayList<LabelPoint>();
     }
 
     private Point[] parse(String hullString) {
