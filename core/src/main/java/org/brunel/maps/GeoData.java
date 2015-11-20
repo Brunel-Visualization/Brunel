@@ -17,6 +17,8 @@
 package org.brunel.maps;
 
 import org.brunel.action.Param;
+import org.brunel.data.io.CSV;
+import org.brunel.geom.Point;
 import org.brunel.geom.Poly;
 
 import java.io.IOException;
@@ -27,8 +29,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class reads in information needed to analyze geographic names, and provides a method to
@@ -48,8 +52,9 @@ class GeoData {
         return INSTANCE;
     }
 
-
     final Map<String, int[][]> featureMap;                // For each feature, a pair of [fileIndex,featureIndex]
+    final Map<String, GeoFile> filesByName;               // A map of canonical name to file
+    final Map<String, LabelPoint> labelsByName;           // A map of canonical name to labels
     final GeoFile[] geoFiles;                             // Feature files we can use
     final LabelPoint[] labels;                            // Labels for the world
 
@@ -62,10 +67,22 @@ class GeoData {
             featureMap = readFeatureDescriptions(rdr);                  // Map from features to files & ids
             rdr.close();
 
+            filesByName = makeFileNameMap(geoFiles);                    // So we can identify them by name
+
             // Read label file information
             is = GeoData.class.getResourceAsStream("/org/brunel/maps/locations.txt");
             rdr = new LineNumberReader(new InputStreamReader(is, "utf-8"));
             labels = readLabels(rdr);
+
+            labelsByName = new HashMap<String, LabelPoint>();
+            for (LabelPoint s : labels) {
+                String name = GeoNaming.canonical(s.label);
+                LabelPoint previous = labelsByName.put(name, s);
+                if (previous != null && previous.compareTo(s) > 0) {
+                    // Oops, the previous was better --restore it
+                    labelsByName.put(name, previous);
+                }
+            }
 
             // Add labels to geo files
             placeLabelsInFiles();
@@ -75,6 +92,15 @@ class GeoData {
         }
         addVariantFeatureNames();
 
+    }
+
+    private Map<String, GeoFile> makeFileNameMap(GeoFile[] geoFiles) {
+        Map<String, GeoFile> map = new HashMap<String, GeoFile>();
+        for (GeoFile s : geoFiles) {
+            map.put(GeoNaming.canonical(s.name), s);
+            map.put(GeoNaming.canonical(CSV.readable(s.name)), s);
+        }
+        return map;
     }
 
     // Add variants of names by normalizing removing accent marks and periods
@@ -170,16 +196,36 @@ class GeoData {
 
     private List<GeoFile> makeRequiredFiles(Param[] params) {
         if (params.length == 0) return null;
+        Set<GeoFile> byFeature = new HashSet<GeoFile>();
         List<GeoFile> result = new ArrayList<GeoFile>();
         for (Param p : params) {
-            String s = p.asString();
-            if (s.equalsIgnoreCase("uk")) s = "UnitedKingdom";
-            if (s.equalsIgnoreCase("usa")) s = "UnitedStatesofAmerica";
-            for (GeoFile f : geoFiles) {
-                if (f.name.equalsIgnoreCase(s)) {
-                    result.add(f);
-                    break;
+            String key = GeoNaming.canonical(p.asString());
+            GeoFile f = filesByName.get(key);
+            if (f != null) {
+                result.add(f);
+            } else {
+                int[][] feature = featureMap.get(key);
+                if (feature != null) {
+                    byFeature.add(geoFiles[feature[0][0]]);
+                } else {
+                    LabelPoint location = labelsByName.get(key);
+                    if (location != null)
+                        byFeature.add(smallestFileContaining(location));
+
                 }
+            }
+
+        }
+        result.addAll(byFeature);
+        return result;
+    }
+
+    private GeoFile smallestFileContaining(Point point) {
+        GeoFile result = null;
+        for (GeoFile g : geoFiles) {
+            if (g.covers(point)) {
+                if (result == null || g.bounds.area() < result.bounds.area())
+                    result = g;
             }
         }
         return result;
