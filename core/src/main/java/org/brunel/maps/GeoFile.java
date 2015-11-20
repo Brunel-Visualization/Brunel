@@ -31,7 +31,7 @@ public class GeoFile implements Comparable<GeoFile> {
     public final double size;           // Size in Kbytes
     public final Rect bounds;           // longitude min, max; latitude min,max
     public final List<LabelPoint> pts;  // contained label points
-    private final Poly hull;            // Convex points in lat/long
+    public final Poly hull;             // Convex points in lat/long
 
     /**
      * Defines a GeoFile

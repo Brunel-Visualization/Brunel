@@ -30,6 +30,7 @@ import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -60,28 +61,38 @@ public class GeoInformation {
     private final GeoMapping[] geo;                                 // Geographic mappings, one per element
     private final VisSingle[] element;
     private final Poly hull;                                        // Convex hull for the points
-    private final Rect bounds;                                      // Combined bounds
     private final Projection projection;
+    private final Rect projectedBounds;
 
     private GeoInformation(VisSingle[] elements, Dataset[] elementData, PositionFields positionFields) {
         this.element = elements;
-        this.hull = getConvexHullAroundPoints(elements, positionFields);
-        this.geo = makeGeoMappings(elements, elementData);
+        Poly positionHull = getPositionPoints(elements, positionFields);
+        this.geo = makeGeoMappings(elements, elementData, positionHull);
+        this.hull = combineForHull(positionHull, geo);
+        this.projection = ProjectionBuilder.makeProjection(hull.bounds);
+        this.projectedBounds = projection.projectedBounds(hull.points);
+    }
 
-        Rect bounds = hull.bounds;
-        for (GeoMapping g : geo)
-            if (g != null && g.totalBounds() != null)
-                bounds = g.totalBounds().union(bounds);
-        this.bounds = bounds;
-        this.projection = ProjectionBuilder.makeProjection(bounds);
+    private Poly combineForHull(Poly pointsHull, GeoMapping[] geo) {
+        List<Point> combined = new ArrayList<Point>();
+        Collections.addAll(combined, pointsHull.points);
+
+        // Add in the hulls for each of the contained files
+        for (GeoMapping g1 : geo)
+            if (g1 != null) {
+                for (GeoFile f : g1.getFiles())
+                    Collections.addAll(combined, f.hull.points);
+            }
+        // And return the hull of the combined set
+        return Geom.makeConvexHull(combined);
     }
 
     public String d3Definition() {
-        return projection.d3Definition(bounds);
+        return projection.d3Definition(hull.bounds);
     }
 
-    public Poly getConvexHullAroundPoints(VisSingle[] elements, PositionFields positionFields) {
-        Set<Point> collection = new HashSet<Point>();
+    private Poly getPositionPoints(VisSingle[] elements, PositionFields positionFields) {
+        Set<Point> points = new HashSet<Point>();
         // Add points for all the fields for each element
         for (VisSingle v : elements) {
             Field[] xx = positionFields.getX(v);
@@ -91,11 +102,11 @@ public class GeoInformation {
                     for (int i = 0; i < x.rowCount(); i++) {
                         Double a = Data.asNumeric(x.value(i));
                         Double b = Data.asNumeric(y.value(i));
-                        if (a != null && b != null) collection.add(new Point(a, b));
+                        if (a != null && b != null) points.add(new Point(a, b));
                     }
                 }
         }
-        return Geom.makeConvexHull(collection);
+        return Geom.makeConvexHull(points);
     }
 
     public List<GeoMapping> getAllGeo() {
@@ -116,13 +127,8 @@ public class GeoInformation {
         throw new IllegalStateException("Could not find vis in known elements");
     }
 
-    public Rect bounds() {
-        return bounds;
-    }
-
     public Rect projectedBounds() {
-        Rect r = projection.projectedBounds();
-        return r == null ? projection.transform(bounds) : r;
+        return projectedBounds;
     }
 
     public Point transform(Point p) {
@@ -130,12 +136,12 @@ public class GeoInformation {
     }
 
     // The whole array returned will be null if nothing is a map
-    private GeoMapping[] makeGeoMappings(VisSingle[] element, Dataset[] elementData) {
+    private GeoMapping[] makeGeoMappings(VisSingle[] element, Dataset[] elementData, Poly positionHull) {
         GeoMapping[] maps = new GeoMapping[element.length];
         boolean oneValid = false;
         for (int i = 0; i < element.length; i++) {
             if (element[i].tDiagram == VisTypes.Diagram.map) {
-                maps[i] = makeMapping(element[i], elementData[i]);
+                maps[i] = makeMapping(element[i], elementData[i], positionHull);
                 if (maps[i] != null && maps[i].totalBounds() != null) oneValid = true;
             }
         }
@@ -152,12 +158,12 @@ public class GeoInformation {
         return maps;
     }
 
-    public GeoMapping makeMapping(VisSingle vis, Dataset data) {
+    public static GeoMapping makeMapping(VisSingle vis, Dataset data, Poly positionHull) {
         String idField = getIDField(vis);
         if (idField != null)
             return GeoData.instance().make(data.field(idField).categories(), vis.tDiagramParameters);
-        if (hull.size() == 0 || vis.tDiagramParameters != null)
-            return GeoData.instance().makeForPoints(hull, vis.tDiagramParameters);
+        if (positionHull.size() > 0 || vis.tDiagramParameters != null)
+            return GeoData.instance().makeForPoints(positionHull, vis.tDiagramParameters);
         return null;
     }
 

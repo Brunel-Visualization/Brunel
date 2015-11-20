@@ -38,8 +38,8 @@ public class ProjectionBuilder {
     };
 
     public static final Projection MERCATOR = new Mercator();           // Mercator projection
-    private static final Projection WINKEL3 = new WinkelTripel();        // Winkel Tripel
-    private static final Projection ALBERS_USA = new AlbersUSA();        // Albers for the U.S.A.
+    public static final Projection WINKEL3 = new WinkelTripel();        // Winkel Tripel
+    public static final Projection ALBERS_USA = new AlbersUSA();        // Albers for the U.S.A.
 
     public static Projection makeProjection(Rect bounds) {
         // Are we USA only?
@@ -81,5 +81,4 @@ public class ProjectionBuilder {
         double angle = -b.cx();                             // Rotation angle
         return new Albers(parallelA, parallelB, angle);
     }
-
 }

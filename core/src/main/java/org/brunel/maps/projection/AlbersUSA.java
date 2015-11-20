@@ -16,16 +16,31 @@
 
 package org.brunel.maps.projection;
 
+import org.brunel.geom.Point;
 import org.brunel.geom.Rect;
 
 /**
- * This is not the real Albers USA projection, as we do not really need the piecing together.
- * Instead it just does a regular Albers for the USA, and generates better code for D3
+ * hand-crafted to look similar to what D3 does
  */
-class AlbersUSA extends Albers {
+class AlbersUSA extends Projection {
+
+    private final Albers lower48 = new Albers(29.5, 45.5, 96);
+    private final Albers alaska = new Albers(0, 50, 120);
+    private final Albers hawaii = new Albers(-140, 9, 120);
+    private final Albers pr = new Albers(0, 21, 120);
+
+    private final Rect lower48Rect;
+
+    private final Point alaskaTopLeft;
+    private final Point hawaiiTopLeft;
+    private final Point prTopLeft;
+
 
     public AlbersUSA() {
-        super(29.5, 45.5, 96);
+         lower48Rect = lower48.transform(new Rect(-125, -65, 25, 50));
+         alaskaTopLeft = alaska.transform(new Point(-180, 73));
+         hawaiiTopLeft = hawaii.transform(new Point(-160.5, 22.5));
+         prTopLeft = hawaii.transform(new Point(-67.5, 18.5));
     }
 
     public String d3Definition(Rect bounds) {
@@ -35,7 +50,31 @@ class AlbersUSA extends Albers {
                 + LN + translateDefinition();
     }
 
-    public Rect projectedBounds() {
-        return transform(new Rect(-125, -65, 25, 50));
+
+    public Point transform(Point p) {
+        Point q;
+        if (p.y > 50) {
+            // Alaska
+            q= shift(alaska.transform(p), alaskaTopLeft, 0, 0.75);
+        } else if (p.x < -140) {
+            // Hawaii
+            q= shift(hawaii.transform(p), hawaiiTopLeft, 0.33, 0.8);
+        } else if (p.y < 21 ) {
+            // Puerto Rico
+            q= shift(pr.transform(p), prTopLeft, 0.7, 0.8);
+        } else {
+            // lower 48
+            q= lower48.transform(p);
+        }
+        return q;
+    }
+
+    public Point inverse(Point p) {
+        throw new UnsupportedOperationException("Not supported");
+    }
+
+    private Point shift(Point point, Point base, double targetX, double targetY) {
+        return new Point((point.x - base.x) * targetX * lower48Rect.width() + lower48Rect.x1,
+                (point.y - base.y) * targetY * lower48Rect.height() + lower48Rect.y1);
     }
 }

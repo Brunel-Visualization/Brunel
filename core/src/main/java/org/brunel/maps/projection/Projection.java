@@ -27,6 +27,18 @@ import java.text.NumberFormat;
  */
 public abstract class Projection {
 
+    public Rect projectedBounds(Point[] points) {
+        Rect r = null;
+        for (Point p : points) {
+            Point q = transform(p);
+            if (r==null)
+                r = new Rect(q.x, q.x, q.y,q.y);
+            else
+                r = r.union(q);
+        }
+        return r;
+    }
+
     protected double asRadians(double lon) {
         return Math.toRadians(lon);
     }
@@ -79,13 +91,6 @@ public abstract class Projection {
      * @return 2D longitude, latitude
      */
     public abstract Point inverse(Point p);
-
-    /**
-     * Known bounds (null if not actually known)
-     */
-    public Rect projectedBounds() {
-        return null;
-    }
 
     /**
      * Provides a good guess at the size of a projected rectangle
