@@ -52,7 +52,9 @@ public class GeoMapLabels extends D3Diagram {
         List<GeoMapping> mappings = scales.geo.getAllGeo();
 
         for (GeoMapping g : mappings) {
-            for (GeoFile f : g.getFiles()) points.addAll(f.pts);
+            for (GeoFile f : g.getFiles()) {
+                for (LabelPoint p : f.pts) if (scales.geo.containedInBounds(p)) points.add(p);
+            }
         }
 
 
@@ -68,14 +70,15 @@ public class GeoMapLabels extends D3Diagram {
             popHigh = Math.max(popHigh, p.size);
             popLow = Math.min(popLow, p.size);
         }
+        out.onNewLine().comment("lon, lat, label, size, type");
         out.add("var geo_labels = [").indentMore();
         boolean first = true;
         for (LabelPoint p : points) {
             if (!first) out.add(", ");
-            String s = "{c:[" + F.format(p.x) + "," + F.format(p.y) + "], key:"
-                    + Data.quote(p.label) + ", r:" + radiusFor(p, popHigh, popLow)
-                    + ", t:" + p.type + "}";
-            if (out.currentColumn() + s.length() > 100)
+            String s = "[" + F.format(p.x) + "," + F.format(p.y) + ","
+                    + Data.quote(p.label) + "," + radiusFor(p, popHigh, popLow)
+                    + "," + p.type + "]";
+            if (out.currentColumn() + s.length() > 120)
                 out.onNewLine();
             out.add(s);
             first = false;
@@ -127,24 +130,28 @@ public class GeoMapLabels extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
-        out.addChained("attr('d', function(d) { return BrunelD3.symbol(['star','star','square','circle'][d.t-1], d.r*geom.default_point_size/14)})")
-                .addChained("attr('class', function(d) { return 'mark L' + d.t })");
+        out.addChained("attr('d', function(d) { return BrunelD3.symbol(['star','star','square','circle'][d[4]-1], d[3]*geom.default_point_size/14)})")
+                .addChained("attr('class', function(d) { return 'mark L' + d[4] })");
         out.addChained("attr('transform', projectTransform)");
         out.endStatement();
 
         // Labels
         out.add("diagramLabels.classed('map', true)").endStatement();
-        out.add("var labelSel = diagramLabels.selectAll('*').data(d3Data, function(d) { return d.key})").endStatement();
+        out.add("var labelSel = diagramLabels.selectAll('*').data(d3Data, function(d) { return d[2]})").endStatement();
         out.add("labelSel.enter().append('text')")
                 .addChained("attr('dy', '0.3em')")
-                .addChained("attr('dx', function(d) { return (2 + d.r*geom.default_point_size/10) + 'px'})")
-                .addChained("attr('class', function(d) { return 'label L' + d.t })")
-                .addChained("text(function(d) {return d.key})").endStatement();
+                .addChained("attr('dx', function(d) { return (2 + d[3]*geom.default_point_size/10) + 'px'})")
+                .addChained("attr('class', function(d) { return 'label L' + d[4] })")
+                .addChained("text(function(d) {return d[2]})").endStatement();
 
         out.add("labelSel");
         out.addChained("attr('transform', projectTransform)");
         out.endStatement();
 
+    }
+
+    public String getRowKey() {
+        return "d[2]";
     }
 
     public void writeDiagramEnter() {

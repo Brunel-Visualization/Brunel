@@ -42,6 +42,7 @@ public class ProjectionBuilder {
     public static final Projection ALBERS_USA = new AlbersUSA();        // Albers for the U.S.A.
 
     public static Projection makeProjection(Rect bounds) {
+
         // Are we USA only?
         if (bounds.x1 < -100 && bounds.y1 > 17 && bounds.y2 > 35 && bounds.y2 < 73) {
             // If we need Alaska and/or Hawaii use the AlbersUSA, otherwise plain Mercator

@@ -87,7 +87,6 @@ public class GeoMap extends D3Diagram {
         // Define a 'safe' version of projection which sends failed projection points off the screen
         // This occurs for the albersUSA projection ...
         out.add("function projectTransform(p) {").indentMore()
-                .onNewLine().add("if (p.c) p = p.c").endStatement()
                 .onNewLine().add("var q = projection(p)").endStatement()
                 .onNewLine().add("if (!q) q = [-9e9,9e9]").endStatement()
                 .onNewLine().add("return 'translate(' + q[0] + ',' + q[1] + ')'")

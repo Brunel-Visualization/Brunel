@@ -69,8 +69,33 @@ public class GeoInformation {
         Poly positionHull = getPositionPoints(elements, positionFields);
         this.geo = makeGeoMappings(elements, elementData, positionHull);
         this.hull = combineForHull(positionHull, geo);
-        this.projection = ProjectionBuilder.makeProjection(hull.bounds);
+        this.projection = ProjectionBuilder.makeProjection(adjustForUS());
         this.projectedBounds = projection.projectedBounds(hull.points);
+    }
+
+    private Rect adjustForUS() {
+        Rect hawaii = new Rect(-181, -154, 18, 30);
+        Rect alaskanIslandsA = new Rect(-181, -165, 50, 55);
+        Rect alaskanIslandsB = new Rect(170, 181, 50, 55);
+
+        Rect bounds = hull.bounds;
+
+        // Do the points wrap around the globe, but only because of alaskan islands?
+        if (bounds.x1 < -179 && bounds.x2 > 179) {
+            double minX = Double.POSITIVE_INFINITY, maxX = Double.NEGATIVE_INFINITY;
+            for (Point p : hull.points) {
+                // Skip points in areas we do not waht to consider for the projection
+                if (hawaii.contains(p) || alaskanIslandsA.contains(p) || alaskanIslandsB.contains(p)) continue;
+                minX = Math.min(minX, p.x);
+                maxX = Math.max(maxX, p.x);
+            }
+            if (maxX > minX) return new Rect(minX, maxX, bounds.y1, bounds.y2);
+        }
+        return bounds;
+    }
+
+    public boolean containedInBounds(Point p) {
+        return hull.bounds.contains(p);
     }
 
     private Poly combineForHull(Poly pointsHull, GeoMapping[] geo) {
@@ -78,17 +103,18 @@ public class GeoInformation {
         Collections.addAll(combined, pointsHull.points);
 
         // Add in the hulls for each of the contained files
-        for (GeoMapping g1 : geo)
-            if (g1 != null) {
-                for (GeoFile f : g1.getFiles())
+        for (GeoMapping g : geo)
+            if (g != null) {
+                for (GeoFile f : g.getFiles()) {
                     Collections.addAll(combined, f.hull.points);
+                }
             }
         // And return the hull of the combined set
         return Geom.makeConvexHull(combined);
     }
 
     public String d3Definition() {
-        return projection.d3Definition(hull.bounds);
+        return projection.d3Definition(adjustForUS());
     }
 
     private Poly getPositionPoints(VisSingle[] elements, PositionFields positionFields) {
