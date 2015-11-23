@@ -54,14 +54,6 @@ public class Point implements Comparable<Point> {
         return d == 0 ? Double.compare(x, p.x) : d;
     }
 
-    public final double dist(Point o) {
-        return Math.sqrt(dist2(o));
-    }
-
-    private double dist2(Point o) {
-        return (o.x - x) * (o.x - x) + (o.y - y) * (o.y - y);
-    }
-
     public int hashCode() {
         long temp = Double.doubleToLongBits(x);
         int result = (int) (temp ^ (temp >>> 32));
@@ -69,6 +61,7 @@ public class Point implements Comparable<Point> {
         return 31 * result + (int) (temp ^ (temp >>> 32));
     }
 
+    @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -77,13 +70,15 @@ public class Point implements Comparable<Point> {
     }
 
     public String toString() {
-        return "(" + f(x) + "," + f(y) + ")";
+        return String.format("(%.2f,%.2f)",x,y);
     }
 
-    private static double f(double v) {
-        return ((int) (v * 100)) / 100.0;
-    }
-
+    /**
+     * Create a new point offset form the orginal
+     * @param dx x offset
+     * @param dy y offset
+     * @return new point
+     */
     public Point translate(double dx, double dy) {
         return new Point(x + dx, y + dy);
     }

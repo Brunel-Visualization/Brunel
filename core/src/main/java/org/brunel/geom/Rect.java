@@ -20,22 +20,34 @@ package org.brunel.geom;
  * A geometric rectangle
  */
 public class Rect {
-    /* Coordinates */
-    public final double x1, y1, x2, y2;
+    /**
+     * Coordinates of the rectangle
+     */
+    public final double left, top, right, bottom;
 
-    public Rect(double x1, double x2, double y1, double y2) {
-        this.x1 = x1;
-        this.y1 = y1;
-        this.x2 = x2;
-        this.y2 = y2;
-        assert x2 >= x1 && y2 >= y1;
+    public Rect(double left, double right, double top, double bottom) {
+        this.left = left;
+        this.top = top;
+        this.right = right;
+        this.bottom = bottom;
+        assert right >= left && bottom >= top;
     }
 
+    /**
+     * Area
+     *
+     * @return area of rectangle
+     */
     public final double area() {
-        return (x2 - x1) * (y2 - y1);
+        return (right - left) * (bottom - top);
     }
 
-    public Point center() {
+    /**
+     * Simple center
+     *
+     * @return rectangle center
+     */
+    public final Point center() {
         return new Point(cx(), cy());
     }
 
@@ -45,7 +57,7 @@ public class Rect {
      * @return the x coordinate of the center of the rect
      */
     public final double cx() {
-        return (x1 + x2) / 2;
+        return (left + right) / 2;
     }
 
     /**
@@ -54,9 +66,15 @@ public class Rect {
      * @return the y coordinate of the center of the rect
      */
     public final double cy() {
-        return (y1 + y2) / 2;
+        return (top + bottom) / 2;
     }
 
+    /**
+     * Minimum distance between this and another rectangle
+     *
+     * @param o other rectangle
+     * @return &gt; 0 if they are outside, &lt;0 if one is contained in the other, 0 if the bounds intersect
+     */
     public final double distance(Rect o) {
 
 		/*
@@ -72,42 +90,42 @@ public class Rect {
 		 * 			G						I
 		 */
 
-        if (o.x1 + o.width() < x1) {
+        if (o.right < left) {
             // It is to our left
-            if (o.y1 > y2) {
+            if (o.top > bottom) {
                 // Completely in A -- find distance to corner
-                return distancePtPt(o.x1 + o.width(), o.y1, x1, y2);
-            } else if (o.y2 < y1) {
+                return Geom.distance(o.right, o.top, left, bottom);
+            } else if (o.bottom < top) {
                 // Completely in G -- find distance to corners
-                return distancePtPt(o.x1 + o.width(), o.y2, x1, y1);
+                return Geom.distance(o.right, o.bottom, left, top);
             } else {
                 // Overlaps our sides -- the orthogonal distance is good
-                return x1 - o.x1 - o.width();
+                return left - o.left - o.width();
             }
-        } else if (o.x1 > x2) {
+        } else if (o.left > right) {
             // It is to our right
-            if (o.y1 > y2) {
+            if (o.top > bottom) {
                 // Completely in C -- find distance to corner
-                return distancePtPt(o.x1, o.y1, x2, y2);
-            } else if (o.y2 < y1) {
+                return Geom.distance(o.left, o.top, right, bottom);
+            } else if (o.bottom < top) {
                 // Completely in I -- find distance to corners
-                return distancePtPt(o.x1, o.y2, x2, y1);
+                return Geom.distance(o.left, o.bottom, right, top);
             } else {
                 // Overlaps our sides -- the orthogonal distance is good
-                return o.x1 - x2;
+                return o.left - right;
             }
-        } else if (o.y1 > y2) {
+        } else if (o.top > bottom) {
             // Above us, but not completely in A or C, so horizontal extents overlap
-            return o.y1 - y2;
-        } else if (o.y2 < y1) {
+            return o.top - bottom;
+        } else if (o.bottom < top) {
             // Below us, but not completely in G or I, so horizontal extents overlap
-            return y1 - o.y2;
+            return top - o.bottom;
         }
 
         if (contains(o) || o.contains(this)) {
             // One is contained in the other so find minimum distance between sides
-            double d1 = Math.min(Math.abs(x1 - o.x1), Math.abs(x2 - o.x1 - o.width()));
-            double d2 = Math.min(Math.abs(y1 - o.y1), Math.abs(y2 - o.y2));
+            double d1 = Math.min(Math.abs(left - o.left), Math.abs(right - o.right));
+            double d2 = Math.min(Math.abs(top - o.top), Math.abs(bottom - o.bottom));
             return -Math.min(d1, d2);
         }
         // They do intersect somehow and one is not contained in the other
@@ -115,15 +133,21 @@ public class Rect {
 
     }
 
-    private double distancePtPt(double x1, double y1, double x2, double y2) {
-        return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+    public double width() {
+        return right - left;
     }
 
     private boolean contains(Rect o) {
-        return o.x1 >= x1 && o.x2 <= x2 && o.y1 >= y1 && o.y2 <= y2;
+        return o.left >= left && o.right <= right && o.top >= top && o.bottom <= bottom;
     }
 
-    public final double distanceTo(double px, double py) {
+    /**
+     * Minimum distance to a point
+     *
+     * @param p point to calculate distance t
+     * @return Distance, with negative meaning the point is inside the rect
+     */
+    public final double distanceTo(Point p) {
         /*
          * Base algorithm on comparisons to see where the point is relative to the rect
 		 *
@@ -136,64 +160,60 @@ public class Rect {
 		 * 			G			H			I
 		 */
 
-        if (py < y1) {
-            if (px < x1) {
+        if (p.y < top) {
+            if (p.x < left) {
                 // A: get distance to corner
-                return Math.sqrt((px - x1) * (px - x1) + (py - y1) * (py - y1));
-            } else if (px > x2) {
+                return Math.sqrt((p.x - left) * (p.x - left) + (p.y - top) * (p.y - top));
+            } else if (p.x > right) {
                 // C: get distance to corner
-                return Math.sqrt((px - x2) * (px - x2) + (py - y1) * (py - y1));
+                return Math.sqrt((p.x - right) * (p.x - right) + (p.y - top) * (p.y - top));
             } else {
                 // B: get distance to side
-                return y1 - py;
+                return top - p.y;
             }
-        } else if (py > y2) {
-            if (px < x1) {
+        } else if (p.y > bottom) {
+            if (p.x < left) {
                 // G: get distance to corner
-                return Math.sqrt((px - x1) * (px - x1) + (py - y2) * (py - y2));
-            } else if (px > x2) {
+                return Math.sqrt((p.x - left) * (p.x - left) + (p.y - bottom) * (p.y - bottom));
+            } else if (p.x > right) {
                 // I: get distance to corner
-                return Math.sqrt((px - x2) * (px - x2) + (py - y2) * (py - y2));
+                return Math.sqrt((p.x - right) * (p.x - right) + (p.y - bottom) * (p.y - bottom));
             } else {
                 // H: get distance to side
-                return py - y2;
+                return p.y - bottom;
             }
         } else {
-            if (px < x1) {
+            if (p.x < left) {
                 // D: get distance to side
-                return x1 - px;
-            } else if (px > x2) {
+                return left - p.x;
+            } else if (p.x > right) {
                 // F: get distance to corner
-                return px - x2;
+                return p.x - right;
             } else {
                 // E: get minimum distance to a side; return as negative to denote inside
-                return -Math.min(Math.min(px - x1, x2 - px), Math.min(py - y1, y2 - py));
+                return -Math.min(Math.min(p.x - left, right - p.x), Math.min(p.y - top, bottom - p.y));
             }
         }
     }
 
+    /**
+     * Increase size by a ratio.
+     * The height and width are increased by a fraction of the width and height.
+     * A negative number will inset, but it must be greater than -1, otherwise the result will be an illegal rectangle.
+     *
+     * @param v expansion ratio, greater than -1
+     * @return new rectangle
+     */
     public Rect expand(double v) {
-        return new Rect(x1 - width() * v, x2 + width() * v, y1 - height() * v, y2 + height() * v);
-    }
-
-    public double width() {
-        return x2 - x1;
+        return new Rect(left - width() * v, right + width() * v, top - height() * v, bottom + height() * v);
     }
 
     public double height() {
-        return y2 - y1;
-    }
-
-    public Rect intersection(Rect o) {
-        double a1 = Math.max(x1, o.x1);
-        double b1 = Math.max(y1, o.y1);
-        double a2 = Math.min(x2, o.x2);
-        double b2 = Math.min(y2, o.y2);
-        return a2 > a1 && b2 > b1 ? new Rect(a1, a2, b1, b2) : null;
+        return bottom - top;
     }
 
     public final boolean intersects(Rect other) {
-        return y2 >= other.y1 && y1 <= other.y2 && x2 >= other.x1 && x1 <= other.x2;
+        return bottom >= other.top && top <= other.bottom && right >= other.left && left <= other.right;
     }
 
     /**
@@ -203,28 +223,37 @@ public class Rect {
      */
     public Point[] makeBoundaryPoints() {
         return new Point[]{
-                new Point(x1, y1), new Point(cx(), y1), new Point(x2, y1), new Point(x2, cy()),
-                new Point(x2, y2), new Point(cx(), y2), new Point(x1, y2), new Point(x1, cy()),
+                new Point(left, top), new Point(cx(), top), new Point(right, top), new Point(right, cy()),
+                new Point(right, bottom), new Point(cx(), bottom), new Point(left, bottom), new Point(left, cy()),
         };
     }
 
     public String toString() {
-        return "[" + x1 + ", " + x2 + " : " + y1 + ", " + y2 + ")]";
+        return "[" + left + ", " + right + " : " + top + ", " + bottom + ")]";
     }
 
     public Rect union(Point p) {
         if (contains(p)) return this;
-        return new Rect(Math.min(p.x, x1), Math.max(p.x, x2), Math.min(p.y, y1), Math.max(p.y, y2));
+        return new Rect(Math.min(p.x, left), Math.max(p.x, right), Math.min(p.y, top), Math.max(p.y, bottom));
     }
 
     public final boolean contains(Point p) {
-        return p.x >= x1 && p.y >= y1 && p.x <= x2 && p.y <= y2;
+        return p.x >= left && p.y >= top && p.x <= right && p.y <= bottom;
     }
 
-    public Rect union(Rect o) {
-        if (o == null || contains(o)) return this;
-        if (o.contains(this)) return o;
-        return new Rect(Math.min(x1, o.x1), Math.max(x2, o.x2), Math.min(y1, o.y1), Math.max(y2, o.y2));
+    /**
+     * Create a rectangle containing two other rectangles
+     * @param a rectangle, may be null
+     * @param b rectangle, may be null
+     * @return rectangle, will be null when both parameters are null
+     */
+    public static Rect union(Rect a, Rect b) {
+        if (a == null) return b;            // Nulls are ignored
+        if (b == null) return a;            // Nulls are ignored
+        if (a.contains(b)) return a;        // If one contains another, do not create a new object
+        if (b.contains(a)) return b;        // If one contains another, do not create a new object
+        return new Rect(Math.min(a.left, b.left), Math.max(a.right, b.right),
+                Math.min(a.top, b.top), Math.max(a.bottom, b.bottom));
     }
 
 }

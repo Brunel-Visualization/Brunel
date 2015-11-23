@@ -28,15 +28,21 @@ public class Poly {
     /**
      * A polygons is a list of points
      *
-     * @param points constituent parts
+     * @param points Collection of points in any order
+     */
+    public Poly(Collection<Point> points) {
+        this(points.toArray(new Point[points.size()]));
+    }
+
+    /**
+     * A polygons is a list of points.
+     * This shares the array and does not copy it so do not modify the array post-creation
+     *
+     * @param points Array of points in any order
      */
     public Poly(Point... points) {
         this.points = points;
         this.bounds = Geom.bounds(points);
-    }
-
-    public Poly(Collection<Point> points) {
-        this(points.toArray(new Point[points.size()]));
     }
 
     /**
@@ -58,91 +64,94 @@ public class Poly {
 
         // Go through each combination of coordinates
         // j will always point to the position before i
-        int j = points.length - 1;
+        int N = points.length;
 
         // horizontal line: y = y
-        for (int i = 0; i < points.length; i++) {
+        for (int i = 0; i < N; i++) {
             // Determine line formula for current segment: y = mx + b
+            int j = (i + 1) % N;
             double yj = points[j].y;
             double yi = points[i].y;
             double xj = points[j].x;
             double xi = points[i].x;
             double m = (yj - yi) / (xj - xi);
 
-            if (Double.isNaN(m)) {
-                // Both points are identical. Ignore this segment
-            } else if (Math.abs(m) < 1e-6) {
-                // two horizontal lines won't intersect (and if they do we don't want to increment anyway)
-            } else {
-                if (Math.abs(m) > 1e6) {
-                    // Vertical line.`
-                    double iy = p.y;
+            if (Double.isNaN(m) || Math.abs(m) < 1e-6) {
+                // Both points are identical, or the line is horizontal. Ignore this segment
+                continue;
+            }
+            if (Math.abs(m) > 1e6) {
+                // Vertical line.`
+                double iy = p.y;
 
-                    if ((iy > yi && iy < yj)
-                            || (iy > yj - 0.0 && iy < yi)) {
-                        // Is the intersection to the left or right?
-                        if (xi < p.x) {
-                            // If the horizontal ray hits a vertex, we have a
-                            // special case.
-                            if (Math.abs(iy - yi) == 0.0) {
-                                // Only count if the other vertex on this segment is below the position.
-                                if (yj > p.y) {
-                                    intersectCountLeft++;
-                                }
-                            } else if (Math.abs(iy - yj) == 0.0) {
-                                // Only count if the other vertex on this segment is below the position.
-                                if (yi > p.y) {
-                                    intersectCountLeft++;
-                                }
-                            } else {
+                if ((iy > yi && iy < yj)
+                        || (iy > yj - 0.0 && iy < yi)) {
+                    // Is the intersection to the left or right?
+                    if (xi < p.x) {
+                        // If the horizontal ray hits a vertex, we have a
+                        // special case.
+                        if (Math.abs(iy - yi) == 0.0) {
+                            // Only count if the other vertex on this segment is below the position.
+                            if (yj > p.y) {
                                 intersectCountLeft++;
                             }
+                        } else if (Math.abs(iy - yj) == 0.0) {
+                            // Only count if the other vertex on this segment is below the position.
+                            if (yi > p.y) {
+                                intersectCountLeft++;
+                            }
+                        } else {
+                            intersectCountLeft++;
                         }
                     }
-                } else {
-                    // Solve for b: y - mx, using first point
-                    double b = yi - m * xi;
+                }
+            } else {
+                // Solve for b: y - mx, using first point
+                double b = yi - m * xi;
 
-                    // Find the x position of the intersection point of the segment
-                    // with the horizontal ray.
-                    // x = (y - b)/m
-                    double ix = (p.y - b) / m;
+                // Find the x position of the intersection point of the segment
+                // with the horizontal ray.
+                // x = (y - b)/m
+                double ix = (p.y - b) / m;
 
-                    if ((ix > xi && ix < xj)
-                            || (ix > xj && ix < xi)) {
+                if ((ix > xi && ix < xj)
+                        || (ix > xj && ix < xi)) {
 
-                        // Is the intersection to the left or right?
-                        if (ix < p.x) {
-                            // If the horizontal ray hits a vertex, we have a
-                            // special case.
-                            if (Math.abs(p.y - yi) == 0.0) {
-                                // Only count if the other vertex on this segment is
-                                // below the position.
-                                // Screen coordinates - below is greater than.
-                                if (yj > p.y) {
-                                    intersectCountLeft++;
-                                }
-                            } else if (Math.abs(p.y - yj) == 0) {
-                                // Only count if the other vertex on this segment is
-                                // below the position.
-                                if (yi > p.y) {
-                                    intersectCountLeft++;
-                                }
-                            } else {
+                    // Is the intersection to the left or right?
+                    if (ix < p.x) {
+                        // If the horizontal ray hits a vertex, we have a
+                        // special case.
+                        if (Math.abs(p.y - yi) == 0.0) {
+                            // Only count if the other vertex on this segment is
+                            // below the position.
+                            // Screen coordinates - below is greater than.
+                            if (yj > p.y) {
                                 intersectCountLeft++;
                             }
+                        } else if (Math.abs(p.y - yj) == 0) {
+                            // Only count if the other vertex on this segment is
+                            // below the position.
+                            if (yi > p.y) {
+                                intersectCountLeft++;
+                            }
+                        } else {
+                            intersectCountLeft++;
                         }
                     }
                 }
             }
-            j = i;
         }
 
         return intersectCountLeft % 2 != 0;
 
     }
 
-    public int size() {
+    /**
+     * Returns the number of points in the polygon
+     *
+     * @return size
+     */
+    public final int count() {
         return points.length;
     }
 }

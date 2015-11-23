@@ -25,6 +25,12 @@ import java.util.Stack;
  * Utility class for handling geometry
  */
 public class Geom {
+
+    /**
+     * Create the convex hull of a set of points
+     * @param pts a collection of points
+     * @return a Polygon for the hull. This may be a degenerate polygon (with as few as zero points) but will not be null
+     */
     public static Poly makeConvexHull(Collection<Point> pts) {
         // Get points, sorted by Y and then X
         Point[] points = pts.toArray(new Point[pts.size()]);
@@ -66,6 +72,11 @@ public class Geom {
         return new Poly(stack);
     }
 
+    /**
+     * Create the bounds for a set of point
+     * @param points array of points
+     * @return bounding rectangle (null if there are no points)
+     */
     public static Rect bounds(Point[] points) {
         if (points.length == 0) return null;
         Rect r = new Rect(points[0].x, points[0].x, points[0].y, points[1].y);
@@ -73,6 +84,19 @@ public class Geom {
         return r;
     }
 
+    /**
+     * Inter-point distance
+     * @param x1 First Point, x coordinate
+     * @param y1 First Point, y coordinate
+     * @param x2 Second Point, x coordinate
+     * @param y2 Second Point, y coordinate
+     * @return Euclidean distance between the points
+     */
+    static double distance(double x1, double y1, double x2, double y2) {
+        return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+    }
+
+    /** Comparator used in convex hull to sort points by angle from a fix point */
     private static class PolarComparator implements Comparator<Point> {
         private final Point p;
 
