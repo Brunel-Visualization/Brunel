@@ -20,12 +20,14 @@ import org.brunel.action.Param;
 import org.brunel.data.io.CSV;
 import org.brunel.geom.Point;
 import org.brunel.geom.Poly;
+import org.brunel.util.MappedLists;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -36,7 +38,7 @@ import java.util.Set;
 
 /**
  * This class reads in information needed to analyze geographic names, and provides a method to
- * build the mapping needed for a set of feature names.
+ * build the mapping needed for a set of feature names. It is a singleton class - it holds a lot of data!
  */
 class GeoData {
 
@@ -52,11 +54,28 @@ class GeoData {
         return INSTANCE;
     }
 
-    final Map<String, int[][]> featureMap;                // For each feature, a pair of [fileIndex,featureIndex]
-    final Map<String, GeoFile> filesByName;               // A map of canonical name to file
-    final Map<String, LabelPoint> labelsByName;           // A map of canonical name to labels
-    final GeoFile[] geoFiles;                             // Feature files we can use
-    final LabelPoint[] labels;                            // Labels for the world
+    MappedLists<GeoFile, Object> mapFeaturesToFiles(Object[] names, Collection<Object> unmatched) {
+        MappedLists<GeoFile, Object> contained = new MappedLists<GeoFile, Object>();
+        for (Object s : names) {
+            String key = s.toString();
+            int[][] item = featureByName(key);
+            if (item == null) {
+                unmatched.add(s);
+            } else {
+                for (int[] i : item) {
+                    GeoFile file = geoFiles[i[0]];
+                    contained.add(file, new IndexedFeature(key, i[1]));
+                }
+            }
+        }
+        return contained;
+    }
+
+    private final Map<String, int[][]> featureMap;        // For each feature, a pair of [fileIndex,featureIndex]
+    private final Map<String, GeoFile> filesByName;       // A map of canonical name to file
+    private final Map<String, LabelPoint> labelsByName;   // A map of canonical name to labels
+    private final GeoFile[] geoFiles;                     // Feature files we can use
+    private final LabelPoint[] labels;                    // Labels for the world
 
     private GeoData() {
         try {
@@ -73,25 +92,45 @@ class GeoData {
             is = GeoData.class.getResourceAsStream("/org/brunel/maps/locations.txt");
             rdr = new LineNumberReader(new InputStreamReader(is, "utf-8"));
             labels = readLabels(rdr);
+            rdr.close();
 
-            labelsByName = new HashMap<String, LabelPoint>();
-            for (LabelPoint s : labels) {
-                String name = GeoNaming.canonical(s.label);
-                LabelPoint previous = labelsByName.put(name, s);
-                if (previous != null && previous.compareTo(s) > 0) {
-                    // Oops, the previous was better --restore it
-                    labelsByName.put(name, previous);
-                }
-            }
-
-            // Add labels to geo files
-            placeLabelsInFiles();
+            labelsByName = makeLabelsMap();                             // Create a map form names to labels
+            placeLabelsInFiles();                                       // Add labels to geo files
 
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         addVariantFeatureNames();
 
+    }
+
+    private HashMap<String, LabelPoint> makeLabelsMap() {
+        HashMap<String, LabelPoint> map = new HashMap<String, LabelPoint>();
+        for (LabelPoint s : labels) {
+            String name = GeoNaming.canonical(s.label);
+            LabelPoint previous = map.put(name, s);
+            // There are multiple places with the same name (e.g. Paris, Texas vs Paris, France)
+            // So if the one that was in there is more important than this one, restore the original version
+            if (previous != null && previous.compareTo(s) > 0) {
+                map.put(name, previous);
+            }
+        }
+        return map;
+    }
+
+    public int[][] featureByName(String s) {
+        s = GeoNaming.canonical(s);
+        int[][] result = featureMap.get(s);
+        if (result != null) return result;
+        for (String t : GeoNaming.variants(s)) {
+            result = featureMap.get(t);
+            if (result != null) return result;
+        }
+        return null;
+    }
+
+    public GeoFile[] getGeoFiles() {
+        return geoFiles;
     }
 
     private Map<String, GeoFile> makeFileNameMap(GeoFile[] geoFiles) {
@@ -174,7 +213,7 @@ class GeoData {
         while (true) {
             String[] fileLine = rdr.readLine().split("\\|");
             if (fileLine.length != 4) break;                            // End of the file definitions
-            list.add(new GeoFile(fileLine[0], fileLine[1], fileLine[2], fileLine[3]));
+            list.add(new GeoFile(fileLine[0], fileLine[1], fileLine[2]));
         }
 
         return list.toArray(new GeoFile[list.size()]);

@@ -89,7 +89,7 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - simple    / map + data('raw:x,y;10,50;100,0') x(x) y(y) label(x, y) :: pass
 - simple    / map + data('raw:n,x,y;London,-0.12,51.5;Paris,2.3,48.8') x(x) y(y) label(n) :: pass
 - simple    / map + data('raw:n,x,y,s;Tokyo,139.7,35.7,8.3;Yokohama,139.6,35.4,3.5;Osaka-shi,135.5,34.7,2.6;Sapporo,141.3,43,1.8') x(x) y(y) size(s:300) label(n) :: pass
-- simple    / map('uk,france,spain,germany') :: pass
+- simple    / map('uk','france','spain','germany') :: pass
 
 - cpi       / x(food) y(housing) color(DATE) + line  x(food) y(housing) fit(housing) :: pass
 - whiskey   / bubble color(#count) size(#count) sort(#count) label(brand:1) | bubble color(#count) size(#count) sort(#count:ascending) label(brand:1) :: pass :: Two different sort orders

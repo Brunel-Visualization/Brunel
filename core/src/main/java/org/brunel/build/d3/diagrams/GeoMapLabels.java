@@ -34,6 +34,7 @@ import java.awt.geom.Rectangle2D;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class GeoMapLabels extends D3Diagram {
@@ -56,6 +57,7 @@ public class GeoMapLabels extends D3Diagram {
                 for (LabelPoint p : f.pts) if (scales.geo.containedInBounds(p)) points.add(p);
             }
         }
+        Collections.sort(points, LabelPoint.COMPARATOR);
 
 
         int maxPoints = 40;

@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 /**
  * Works out names of places and compares them
  */
-public class GeoNaming {
+class GeoNaming {
 
     private static final Pattern PATTERN = Pattern.compile("\\p{InCombiningDiacriticalMarks}+"); // Removes diacretics
 
@@ -55,7 +55,7 @@ public class GeoNaming {
         return s;
     }
 
-    public static String expandAbbreviations(String s) {
+    private static String expandAbbreviations(String s) {
         return s.replaceAll("st\\.[ ]*", "saint ")
                 .replaceAll("dem\\.[ ]*", "democratic ")
                 .replaceAll("rep\\.[ ]*", "republic ")
@@ -65,12 +65,12 @@ public class GeoNaming {
                 .replaceAll(" [ ]+", " ").trim();
     }
 
-    static String removeAccents(String s) {
+    private static String removeAccents(String s) {
         String decomposed = Normalizer.normalize(s, Normalizer.Form.NFD);
         return PATTERN.matcher(decomposed).replaceAll("");
     }
 
-    static String removePeriods(String s) {
+    private static String removePeriods(String s) {
         // Do not remove from XX.YY pattern
         if (s.length() == 5 && s.charAt(2) == '.') return s;
         return s.replaceAll("\\.", "");

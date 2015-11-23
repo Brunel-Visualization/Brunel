@@ -18,6 +18,8 @@ package org.brunel.maps;
 
 import org.brunel.geom.Point;
 
+import java.util.Comparator;
+
 /**
  * A label point is a point that has labeling information
  */
@@ -42,7 +44,7 @@ public class LabelPoint extends Point {
         );
     }
 
-    public LabelPoint(double x, double y, String label, int rank, int size, int type, String parent0, String parent1) {
+    private LabelPoint(double x, double y, String label, int rank, int size, int type, String parent0, String parent1) {
         super(x, y);
         this.label = label;
         this.rank = rank;
@@ -55,4 +57,13 @@ public class LabelPoint extends Point {
     public String toString() {
         return label + "[" + rank + "," + size + "]";
     }
+
+    public static final Comparator<LabelPoint> COMPARATOR = new Comparator<LabelPoint>() {
+        public int compare(LabelPoint a, LabelPoint b) {
+            if (a.rank != b.rank) return a.rank - b.rank;               // lower rank is more important
+            if (a.type != b.type) return a.type - b.type;               // lower type is more important
+            if (a.size != b.size) return b.size - a.size;               // higher size is more important
+            return a.label.compareTo(b.label);                          // just to distinguish
+        }
+    };
 }

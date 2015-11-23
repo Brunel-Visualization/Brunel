@@ -61,16 +61,22 @@ public class GeoInformation {
     private final GeoMapping[] geo;                                 // Geographic mappings, one per element
     private final VisSingle[] element;
     private final Poly hull;                                        // Convex hull for the points
+    private final boolean needsExpansion;
     private final Projection projection;
-    private final Rect projectedBounds;
 
     private GeoInformation(VisSingle[] elements, Dataset[] elementData, PositionFields positionFields) {
         this.element = elements;
         Poly positionHull = getPositionPoints(elements, positionFields);
         this.geo = makeGeoMappings(elements, elementData, positionHull);
-        this.hull = combineForHull(positionHull, geo);
+        Poly withoutReferenceMaps = combineForHull(positionHull, geo, false);
+        if (withoutReferenceMaps.count() == 0) {
+            this.hull = combineForHull(positionHull, geo, true);
+            this.needsExpansion = false;
+        } else {
+            this.hull = withoutReferenceMaps;
+            this.needsExpansion = true;
+        }
         this.projection = ProjectionBuilder.makeProjection(adjustForUS());
-        this.projectedBounds = projection.projectedBounds(hull.points);
     }
 
     private Rect adjustForUS() {
@@ -81,15 +87,15 @@ public class GeoInformation {
         Rect bounds = hull.bounds;
 
         // Do the points wrap around the globe, but only because of alaskan islands?
-        if (bounds.x1 < -179 && bounds.x2 > 179) {
+        if (bounds.left < -179 && bounds.right > 179) {
             double minX = Double.POSITIVE_INFINITY, maxX = Double.NEGATIVE_INFINITY;
             for (Point p : hull.points) {
-                // Skip points in areas we do not waht to consider for the projection
+                // Skip points in areas we do not want to consider for the projection
                 if (hawaii.contains(p) || alaskanIslandsA.contains(p) || alaskanIslandsB.contains(p)) continue;
                 minX = Math.min(minX, p.x);
                 maxX = Math.max(maxX, p.x);
             }
-            if (maxX > minX) return new Rect(minX, maxX, bounds.y1, bounds.y2);
+            if (maxX > minX) return new Rect(minX, maxX, bounds.top, bounds.bottom);
         }
         return bounds;
     }
@@ -98,13 +104,13 @@ public class GeoInformation {
         return hull.bounds.contains(p);
     }
 
-    private Poly combineForHull(Poly pointsHull, GeoMapping[] geo) {
+    private Poly combineForHull(Poly pointsHull, GeoMapping[] geo, boolean includeReferenceMaps) {
         List<Point> combined = new ArrayList<Point>();
         Collections.addAll(combined, pointsHull.points);
 
         // Add in the hulls for each of the contained files
         for (GeoMapping g : geo)
-            if (g != null) {
+            if (g != null && (includeReferenceMaps || !g.isReference())) {
                 for (GeoFile f : g.getFiles()) {
                     Collections.addAll(combined, f.hull.points);
                 }
@@ -114,7 +120,9 @@ public class GeoInformation {
     }
 
     public String d3Definition() {
-        return projection.d3Definition(adjustForUS());
+        Rect rect = adjustForUS();
+        if (needsExpansion) rect= rect.expand(0.1);
+        return projection.d3Definition(rect);
     }
 
     private Poly getPositionPoints(VisSingle[] elements, PositionFields positionFields) {
@@ -154,7 +162,7 @@ public class GeoInformation {
     }
 
     public Rect projectedBounds() {
-        return projectedBounds;
+        return projection.projectedBounds(hull.points);
     }
 
     public Point transform(Point p) {
@@ -184,11 +192,11 @@ public class GeoInformation {
         return maps;
     }
 
-    public static GeoMapping makeMapping(VisSingle vis, Dataset data, Poly positionHull) {
+    private static GeoMapping makeMapping(VisSingle vis, Dataset data, Poly positionHull) {
         String idField = getIDField(vis);
         if (idField != null)
             return GeoData.instance().make(data.field(idField).categories(), vis.tDiagramParameters);
-        if (positionHull.size() > 0 || vis.tDiagramParameters != null)
+        if (positionHull.count() > 0 || vis.tDiagramParameters != null)
             return GeoData.instance().makeForPoints(positionHull, vis.tDiagramParameters);
         return null;
     }

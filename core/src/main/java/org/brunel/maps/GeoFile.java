@@ -28,7 +28,6 @@ import java.util.List;
  */
 public class GeoFile implements Comparable<GeoFile> {
     public final String name;           // File name
-    public final double size;           // Size in Kbytes
     public final Rect bounds;           // longitude min, max; latitude min,max
     public final List<LabelPoint> pts;  // contained label points
     public final Poly hull;             // Convex points in lat/long
@@ -39,11 +38,9 @@ public class GeoFile implements Comparable<GeoFile> {
      * @param name         file name (not including extension or path). EG "world"
      * @param boundsString x1,x2,y1,y2
      * @param hullString   A polygon: x1,x2;y1,y2;...
-     * @param sizeString   An integer giving the file download size in K
      */
-    public GeoFile(String name, String boundsString, String hullString, String sizeString) {
+    public GeoFile(String name, String boundsString, String hullString) {
         this.name = name;
-        this.size = Integer.parseInt(sizeString);
         String[] b = boundsString.split(",");
         this.bounds = new Rect(Double.parseDouble(b[0]), Double.parseDouble(b[1]), Double.parseDouble(b[2]), Double.parseDouble(b[3]));
         this.hull = new Poly(parse(hullString));
@@ -78,7 +75,6 @@ public class GeoFile implements Comparable<GeoFile> {
      * @return true if it is likely to be inside. False means it definitely is not
      */
     public boolean covers(Point p) {
-        // Do the bounds check first for speed
         return hull.contains(p);
     }
 

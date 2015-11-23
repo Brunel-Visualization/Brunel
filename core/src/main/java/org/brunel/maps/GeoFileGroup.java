@@ -17,13 +17,13 @@
 package org.brunel.maps;
 
 import org.brunel.geom.Rect;
+import org.brunel.util.MappedLists;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -38,19 +38,19 @@ class GeoFileGroup {
      * @param containedItems Map form files to those items we want groups to contain
      * @return empty group
      */
-    public static GeoFileGroup makeEmpty(Map<GeoFile, List<Object>> containedItems) {
+    public static GeoFileGroup makeEmpty(MappedLists<GeoFile, Object> containedItems) {
         // Count the number of features we can match
         Set<Object> all = new HashSet<Object>();
         for (List<Object> f : containedItems.values()) all.addAll(f);
         return new GeoFileGroup(all.size(), containedItems, Collections.<GeoFile>emptySet(), Collections.emptySet());
     }
     public final Set<GeoFile> files;                            // These are the files
-    private final Map<GeoFile, List<Object>> itemsMap;          // Map form files to contained items
-    private final int requiredContentCount;                     // We want to match this many features
+    private final MappedLists<GeoFile, Object> itemsMap;              // Map from files to contained items
+    private final int requiredContentCount;                     // We from to match this many features
     private final Set<Object> content;                          // These are items we do contain
     private Rect totalBounds;                                   // bounds for all the group
 
-    private GeoFileGroup(int requiredCount, Map<GeoFile, List<Object>> itemsMap, Collection<GeoFile> files, Collection<?> features) {
+    private GeoFileGroup(int requiredCount, MappedLists<GeoFile, Object> itemsMap, Collection<GeoFile> files, Collection<?> features) {
         this.requiredContentCount = requiredCount;
         this.itemsMap = itemsMap;
         this.files = new LinkedHashSet<GeoFile>(files);
@@ -98,8 +98,8 @@ class GeoFileGroup {
     private double area() {
         if (files.isEmpty()) return 0;
         if (totalBounds == null)
-            for (GeoFile f : files) totalBounds = f.bounds.union(totalBounds);
-        return totalBounds.area();
+            for (GeoFile f : files) totalBounds = Rect.union(f.bounds, totalBounds);
+        return totalBounds == null ? 0 : totalBounds.area();
     }
 
     public String toString() {
