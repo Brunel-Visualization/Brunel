@@ -30,6 +30,7 @@ class GeoNaming {
 
     private static final Pattern PATTERN = Pattern.compile("\\p{InCombiningDiacriticalMarks}+"); // Removes diacretics
 
+    // Common renamings
     private static final String MAPPING = "uk:united kingdom|britain:united kingdom|great britain:united kingdom" +
             "|united states:united states of america|united states:united states of america|usa:united states of america" +
             "|us:united states of america|unitedstatesofamerica:united states of america" +

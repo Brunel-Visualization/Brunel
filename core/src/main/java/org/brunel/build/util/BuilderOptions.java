@@ -38,6 +38,6 @@ public class BuilderOptions {
     public boolean generateBuildCode = true;                    // if true, Add javascript to build the chart initially
     public boolean readableJavascript = true;                   // Readable or shorter
     public String localResources;                               // If set, get resources from this local directory
-    public String version = "0.8";                              // Which online version to use
+    public String version = "0.9";                              // Which online version to use
 
 }

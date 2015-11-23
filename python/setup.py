@@ -30,7 +30,7 @@ except:
 
 setup(
     name='brunel',
-    version='0.8.0',
+    version='0.9.0',
     packages=['brunel'],
     install_requires= ['pandas', 'jinja2', 'ipython', 'jupyter-pip', 'JPype1-py3'],
     package_data= {
