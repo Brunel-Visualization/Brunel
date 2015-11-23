@@ -27,7 +27,7 @@ class WinkelTripel extends Projection {
         Rect ext = transform(bounds);
 
         // Finding the center is tricky because we cannot invert the transform so we have to search for it
-        // We just do a grid search; slow, but simple. First by y, then by x
+        // We just do a grid search; Slow, but simple. First by y (using the center as the x, then by x
         double y = 0, dy = 9e99;
         for (int i = -90; i < 90; i++) {
             Point p = transform(new Point(bounds.cx(), i));
@@ -56,8 +56,8 @@ class WinkelTripel extends Projection {
     }
 
     public Point transform(Point p) {
-        double x = asRadians(p.x);
-        double y = asRadians(p.y);
+        double x = Math.toRadians(p.x);
+        double y = Math.toRadians(p.y);
 
         double a = Math.acos(Math.cos(y) * Math.cos(x / 2));
         double sinca = Math.abs(a) < 1e-6 ? 1 : Math.sin(a) / a;

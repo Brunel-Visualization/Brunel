@@ -24,18 +24,18 @@ import org.brunel.geom.Rect;
  */
 class Albers extends Projection {
 
+    private final double parallelA;         // line of latitude
+    private final double parallelB;         // line of latitude
     private final double n;                 // midpoint of sins at parallels
     private final double C, r1;             // Other transform constants
-    private final double parallelA;
-    private final double parallelB;
     private final double rotation;          // Rotation for longitude
 
-    public Albers(double parallelA, double parallelB, double rotation) {
+     Albers(double parallelA, double parallelB, double rotation) {
         this.parallelA = parallelA;
         this.parallelB = parallelB;
         this.rotation = rotation;
-        double s1 = asRadians(parallelA);
-        double s2 = asRadians(parallelB);
+        double s1 = Math.toRadians(parallelA);
+        double s2 = Math.toRadians(parallelB);
         double sin1 = Math.sin(s1);
         double sin2 = Math.sin(s2);
         n = (sin1 + sin2) / 2;
@@ -45,10 +45,8 @@ class Albers extends Projection {
     }
 
     public String d3Definition(Rect bounds) {
-
         String parallels = ".parallels([" + F.format(parallelA) + "," + F.format(parallelB) + "])";
         String rotate = ".rotate([" + F.format(rotation) + ",0,0])";
-
         Rect ext = transform(bounds);
 
         // We find the center in projected space, and then invert the projection
@@ -64,8 +62,8 @@ class Albers extends Projection {
     }
 
     public Point transform(Point p) {
-        double a = asRadians(p.x + rotation);
-        double b = asRadians(p.y);
+        double a = Math.toRadians(p.x + rotation);
+        double b = Math.toRadians(p.y);
         double r = Math.sqrt(C - 2 * n * Math.sin(b)) / n;
         return new Point(r * Math.sin(a * n), r1 - r * Math.cos(a * n));
     }

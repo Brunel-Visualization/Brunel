@@ -20,17 +20,21 @@ import org.brunel.geom.Point;
 import org.brunel.geom.Rect;
 
 /**
- * hand-crafted to look similar to what D3 does
+ * This pieces together four projections to make a composite one.
+ * It has been designed to look vaguely similar to how D3 does it, but is not as robust
  */
 class AlbersUSA extends Projection {
 
+    // Projections we use
     private final Albers lower48 = new Albers(29.5, 45.5, 96);
     private final Albers alaska = new Albers(0, 50, 120);
     private final Albers hawaii = new Albers(-140, 9, 120);
     private final Albers pr = new Albers(0, 21, 120);
 
+    // The space we want to transform into (in projected units)
     private final Rect lower48Rect;
 
+    // Projected locations before they are shifted
     private final Point alaskaTopLeft;
     private final Point hawaiiTopLeft;
     private final Point prTopLeft;
@@ -50,7 +54,11 @@ class AlbersUSA extends Projection {
                 + LN + translateDefinition();
     }
 
-
+    /**
+     * Transform a point
+     * @param p point in lat/long coordinates
+     * @return projected location, subject to one of the four sub-transforms
+     */
     public Point transform(Point p) {
         Point q;
         if (p.y > 50) {
@@ -63,7 +71,7 @@ class AlbersUSA extends Projection {
             // Puerto Rico
             q= shift(pr.transform(p), prTopLeft, 0.7, 0.8);
         } else {
-            // lower 48
+            // Lower 48
             q= lower48.transform(p);
         }
         return q;
@@ -74,7 +82,7 @@ class AlbersUSA extends Projection {
     }
 
     private Point shift(Point point, Point base, double targetX, double targetY) {
-        return new Point((point.x - base.x) * targetX * lower48Rect.width() + lower48Rect.x1,
-                (point.y - base.y) * targetY * lower48Rect.height() + lower48Rect.y1);
+        return new Point((point.x - base.x) * targetX * lower48Rect.width() + lower48Rect.left,
+                (point.y - base.y) * targetY * lower48Rect.height() + lower48Rect.top);
     }
 }

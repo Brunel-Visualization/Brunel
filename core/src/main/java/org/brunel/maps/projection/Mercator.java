@@ -38,8 +38,9 @@ class Mercator extends Projection {
     }
 
     public Point transform(Point p) {
-        double a = asRadians(p.x);
-        double b = asRadians(Math.min(89.5, Math.max(p.y, -89.5)));
+        double a = Math.toRadians(p.x);
+        double lon = Math.min(89.5, Math.max(p.y, -89.5));
+        double b = Math.toRadians(lon);
         return new Point(a, Math.log(Math.tan(Math.PI / 4 + b / 2)));
     }
 

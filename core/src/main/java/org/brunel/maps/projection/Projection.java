@@ -23,7 +23,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
 /**
- * A map projection
+ * Base class for a map projection
  */
 public abstract class Projection {
 
@@ -39,21 +39,17 @@ public abstract class Projection {
         return r;
     }
 
-    protected double asRadians(double lon) {
-        return Math.toRadians(lon);
-    }
-
-    protected static final String width = "geom.inner_width";
-    protected static final String height = "geom.inner_height";
-    protected static final String LN = "\n\t\t";                                      // for output formatting
-    protected final NumberFormat F = new DecimalFormat("#.####");                     // for output formatting
+    static final String width = "geom.inner_width";                         // Javascript name for the map width in px
+    static final String height = "geom.inner_height";                       // Javascript name for the map height in px
+    static final NumberFormat F = new DecimalFormat("#.####");              // For output formatting
+    static final String LN = "\n\t\t";                                      // For output formatting
 
 
-    protected String translateDefinition() {
+    String translateDefinition() {
         return ".translate([" + width + "/2, " + height + "/2])";
     }
 
-    protected String scaleDefinition(Rect extent) {
+    String scaleDefinition(Rect extent) {
         return ".scale(Math.min((" + width + "-4)/" + F.format(extent.width())
                 + ", (" + height + "-4)/" + F.format(extent.height()) + "))";
     }
@@ -62,7 +58,7 @@ public abstract class Projection {
      * The D3 definition
      *
      * @return D3 string defining the function
-     * @param bounds the bounds to display
+     * @param bounds the lat/long bounds to display
      */
     public abstract String d3Definition(Rect bounds);
 
@@ -85,7 +81,7 @@ public abstract class Projection {
     public abstract Point transform(Point p);
 
     /**
-     * Projects backwards
+     * Projects backwards. May not be defined for all projections
      *
      * @param p the projected point
      * @return 2D longitude, latitude
@@ -98,7 +94,7 @@ public abstract class Projection {
      * @param b rectangle to project
      * @return size in projected coordinate space
      */
-    public Rect transform(Rect b) {
+    Rect transform(Rect b) {
         Rect bounds = null;
         for (Point pt : b.makeBoundaryPoints()) {
             Point p = transform(pt);

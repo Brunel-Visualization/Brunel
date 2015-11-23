@@ -20,12 +20,12 @@ import org.brunel.geom.Point;
 import org.brunel.geom.Rect;
 
 /**
- * Allows definitions of suitable geo projections
+ * Builds projections
  */
 public class ProjectionBuilder {
 
     /**
-     * This function defines a D3 projection to do the Winkel Tripel projection for a whole-earth projection
+     * This Javascript function defines a D3 projection to do the Winkel Tripel projection for a whole-earth projection
      */
     public static final String[] WinkelD3Function = new String[]{
             "function () {",
@@ -37,16 +37,20 @@ public class ProjectionBuilder {
             "}"
     };
 
-    public static final Projection MERCATOR = new Mercator();           // Mercator projection
-    public static final Projection WINKEL3 = new WinkelTripel();        // Winkel Tripel
-    public static final Projection ALBERS_USA = new AlbersUSA();        // Albers for the U.S.A.
+    private static final Projection MERCATOR = new Mercator();           // Mercator projection
+    private static final Projection WINKEL3 = new WinkelTripel();        // Winkel Tripel
+    private static final Projection ALBERS_USA = new AlbersUSA();        // Albers for the U.S.A.
 
+    /**
+     * Choose a suitable projection for the given lat/long bounds
+     * @param bounds lat/long bounds
+     * @return a Projection
+     */
     public static Projection makeProjection(Rect bounds) {
-
         // Are we USA only?
-        if (bounds.x1 < -100 && bounds.y1 > 17 && bounds.y2 > 35 && bounds.y2 < 73) {
+        if (bounds.left < -100 && bounds.top > 17 && bounds.bottom > 35 && bounds.bottom < 73) {
             // If we need Alaska and/or Hawaii use the AlbersUSA, otherwise plain Mercator
-            if (bounds.x1 < -120) return ALBERS_USA;
+            if (bounds.left < -120) return ALBERS_USA;
             else return MERCATOR;
         }
 
@@ -54,7 +58,7 @@ public class ProjectionBuilder {
         if (getMercatorDistortion(bounds) <= 1.8) return MERCATOR;
 
         // If we cover a wide area, use winkel triple
-        if (bounds.x2 - bounds.x1 > 180 && bounds.y2 - bounds.y1 > 90) return WINKEL3;
+        if (bounds.right - bounds.left > 180 && bounds.bottom - bounds.top > 90) return WINKEL3;
 
         // Otherwise albers is our best bet
         return makeAlbers(bounds);
@@ -69,17 +73,18 @@ public class ProjectionBuilder {
      * @return Ratio always greater than 1
      */
     private static double getMercatorDistortion(Rect bounds) {
-        if (bounds.y1 < -89 || bounds.y2 > 89) return 100;
-        double a = MERCATOR.getTissotArea(new Point(bounds.cx(), bounds.y1));
-        double b = MERCATOR.getTissotArea(new Point(bounds.cx(), bounds.y2));
+        if (bounds.top < -89 || bounds.bottom > 89) return 100;
+        double a = MERCATOR.getTissotArea(new Point(bounds.cx(), bounds.top));
+        double b = MERCATOR.getTissotArea(new Point(bounds.cx(), bounds.bottom));
         return a < b / 100 || b < a / 100 ? 100 : Math.max(b / a, a / b);
     }
 
+    // The Albers projection needs standard parallels and a rotation angle
     private static Albers makeAlbers(Rect b) {
         // Parallels at 1/6 and 5/6 of the latitude
-        double parallelA = (b.y1 + b.y2 * 5) / 6;           // Parallels at 1/6 and 5/6
-        double parallelB = (b.y1 * 5 + b.y2) / 6;           // Parallels at 1/6 and 5/6
-        double angle = -b.cx();                             // Rotation angle
+        double parallelA = (b.top + b.bottom * 5) / 6;           // Parallels at 1/6 and 5/6
+        double parallelB = (b.top * 5 + b.bottom) / 6;           // Parallels at 1/6 and 5/6
+        double angle = -b.cx();                                  // Rotation angle
         return new Albers(parallelA, parallelB, angle);
     }
 }
