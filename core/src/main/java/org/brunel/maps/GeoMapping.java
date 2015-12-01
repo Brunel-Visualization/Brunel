@@ -108,8 +108,10 @@ public class GeoMapping {
         return featureMap;
     }
 
-    public GeoFile[] getFiles() {
-        return result;
+    public String[] getFiles() {
+        String[] strings = new String[result.length];
+        for (int i=0; i<strings.length; i++) strings[i] = result[i].name;
+        return strings;
     }
 
     public Set<Object> getUnmatched() {

@@ -23,8 +23,7 @@ import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.geom.Rect;
-import org.brunel.maps.GeoFile;
-import org.brunel.maps.GeoMapping;
+import org.brunel.maps.GeoInformation;
 import org.brunel.maps.LabelPoint;
 import org.brunel.model.VisSingle;
 
@@ -34,7 +33,6 @@ import java.awt.geom.Rectangle2D;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class GeoMapLabels extends D3Diagram {
@@ -49,16 +47,7 @@ public class GeoMapLabels extends D3Diagram {
     }
 
     public void preBuildDefinitions() {
-        List<LabelPoint> points = new ArrayList<LabelPoint>();
-        List<GeoMapping> mappings = scales.geo.getAllGeo();
-
-        for (GeoMapping g : mappings) {
-            for (GeoFile f : g.getFiles()) {
-                for (LabelPoint p : f.pts) if (scales.geo.containedInBounds(p)) points.add(p);
-            }
-        }
-        Collections.sort(points, LabelPoint.COMPARATOR);
-
+        List<LabelPoint> points = GeoInformation.getLabelsWithinScaleBounds(scales.geo);
 
         int maxPoints = 40;
         if (vis.tDiagramParameters[0].modifiers().length > 0) {

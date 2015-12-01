@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * Keeps basic information on a GeoJSON file
  */
-public class GeoFile implements Comparable<GeoFile> {
+class GeoFile implements Comparable<GeoFile> {
     public final String name;           // File name
     public final Rect bounds;           // longitude min, max; latitude min,max
     public final List<LabelPoint> pts;  // contained label points

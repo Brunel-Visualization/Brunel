@@ -23,7 +23,6 @@ import org.brunel.build.util.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
-import org.brunel.maps.GeoFile;
 import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
 import org.brunel.maps.projection.ProjectionBuilder;
@@ -137,25 +136,26 @@ public class GeoMap extends D3Diagram {
      */
     public static void writeMapping(ScriptWriter out, GeoMapping map) {
 
+        String[] files = map.getFiles();
+
         // Overall combined map from file name -> (Map of data name to feature index in that file)
         Map<String, Map<Object, Integer>> combined = new LinkedHashMap<String, Map<Object, Integer>>();
-        for (GeoFile geo : map.getFiles()) combined.put(geo.name, new TreeMap<Object, Integer>());
+        for (String geo : files) combined.put(geo, new TreeMap<Object, Integer>());
 
         for (Map.Entry<Object, int[]> e : map.getFeatureMap().entrySet()) {
             Object dataName = e.getKey();
             int[] indices = e.getValue();                               // [FILE INDEX, FEATURE KEY]
-            String fileName = map.getFiles()[indices[0]].name;
+            String fileName = files[indices[0]];
             Map<Object, Integer> features = combined.get(fileName);
             features.put(dataName, indices[1]);
         }
 
         // Write out the resulting structure
         out.add("{").indentMore();
-        GeoFile[] files = map.getFiles();
         String version = new BuilderOptions().version;
         for (int k = 0; k < files.length; k++) {
             if (k > 0) out.add(",").onNewLine();
-            String fileName = files[k].name;
+            String fileName = files[k];
             String source = Data.quote("http://brunelvis.org/geo/" + version + "/" + fileName + ".json");
             out.onNewLine().add(source, ":{").indentMore();
             int i = 0;

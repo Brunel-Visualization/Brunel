@@ -58,6 +58,19 @@ public class GeoInformation {
         return null;
     }
 
+    public List<LabelPoint> getLabelsWithinScaleBounds() {
+        List<LabelPoint> points = new ArrayList<LabelPoint>();
+        List<GeoMapping> mappings = getAllGeo();
+
+        for (GeoMapping g : mappings) {
+            for (GeoFile f : g.getFiles()) {
+                for (LabelPoint p : f.pts) if (hull.bounds.contains(p)) points.add(p);
+            }
+        }
+        Collections.sort(points, LabelPoint.COMPARATOR);
+        return points;
+    }
+
     private final GeoMapping[] geo;                                 // Geographic mappings, one per element
     private final VisSingle[] element;
     private final Poly hull;                                        // Convex hull for the points
@@ -100,10 +113,6 @@ public class GeoInformation {
         return bounds;
     }
 
-    public boolean containedInBounds(Point p) {
-        return hull.bounds.contains(p);
-    }
-
     private Poly combineForHull(Poly pointsHull, GeoMapping[] geo, boolean includeReferenceMaps) {
         List<Point> combined = new ArrayList<Point>();
         Collections.addAll(combined, pointsHull.points);
@@ -115,6 +124,7 @@ public class GeoInformation {
                     Collections.addAll(combined, f.hull.points);
                 }
             }
+
         // And return the hull of the combined set
         return Geom.makeConvexHull(combined);
     }
