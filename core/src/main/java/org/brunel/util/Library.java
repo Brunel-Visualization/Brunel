@@ -19,6 +19,7 @@ package org.brunel.util;
 
 import org.brunel.action.Action;
 import org.brunel.data.Field;
+import org.brunel.maps.GeoInformation;
 import org.brunel.util.LibraryItem.Param;
 
 import java.io.IOException;
@@ -112,31 +113,59 @@ public class Library {
         return params;
     }
 
-    private Action chooseBivariate(Field x, Field y) {
+    private Action chooseBivariate(Field a, Field b) {
+        // Ensure that if they are of different types, the categorical one is first
+        if (b.preferCategorical() && !a.preferCategorical()) return chooseBivariate(b, a);
+
         // Dates need line charts
-        if (x.isDate() && !y.isDate() && !y.preferCategorical()) return makeLineChart(x, y);
-        if (y.isDate() && !x.isDate() && !x.preferCategorical()) return makeLineChart(y, x);
+        if (a.isDate() && !b.isDate()) return makeLineChart(a, b);
+        if (b.isDate() && !a.isDate() && !a.preferCategorical()) return makeLineChart(b, a);
+
+        // See if a choropleth will work
+        if (goodForMapNames(a)) return get("colorMap").apply(a, b);
+        if (goodForMapNames(b)) return get("colorMap").apply(b, a);
+
         // Heatmaps if either is categorical
-        if (x.preferCategorical() || y.preferCategorical())
-            return get("heatmap").apply(orderByCoarseness(x, y));
+        if (a.preferCategorical() || b.preferCategorical())
+            return get("heatmap").apply(orderByCoarseness(a, b));
+
         // Default to scatter
-        return get("scatter").apply(orderByCoarseness(x, y));
+        return get("scatter").apply(orderByCoarseness(a, b));
+    }
+
+    private boolean goodForLongitude(Field f) {
+        return f.min() > -181 && f.max() <= 181;
+    }
+
+    private boolean goodForLatitude(Field f) {
+        return f.min() > -91 && f.max() < 91;
     }
 
     private Action chooseMultivariate(Field... fields) {
         Field[] ordered = orderByCoarseness(fields);
         if (fields.length == 3) {
-            if (!ordered[0].preferCategorical() && !ordered[1].preferCategorical() && !ordered[2].preferCategorical())
+            Field a = ordered[0];
+            Field b = ordered[1];
+            Field c = ordered[2];
+            if (!a.preferCategorical() && !b.preferCategorical() && !c.preferCategorical()) {
                 return get("bubble").apply(ordered);
+            }
+
         }
         return get("treemap").apply(ordered);
     }
 
     private Action chooseUnivariate(Field f) {
-        if (goodForWordle(f))
+        if (goodForMapNames(f))
+            return get("map").apply(f);
+        else if (goodForWordle(f))
             return get("wordle").apply(f);
         else
             return get("barOfCounts").apply(f);
+    }
+
+    private boolean goodForMapNames(Field f) {
+        return GeoInformation.fractionGeoNames(f) > 0.5;
     }
 
     private boolean goodForWordle(Field f) {

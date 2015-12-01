@@ -47,7 +47,7 @@ public class GeoMapLabels extends D3Diagram {
     }
 
     public void preBuildDefinitions() {
-        List<LabelPoint> points = GeoInformation.getLabelsWithinScaleBounds(scales.geo);
+        List<LabelPoint> points = scales.geo.getLabelsWithinScaleBounds();
 
         int maxPoints = 40;
         if (vis.tDiagramParameters[0].modifiers().length > 0) {

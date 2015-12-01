@@ -70,19 +70,22 @@ public class GeoMapping {
 
     private void buildFeatureMap() {
         // Build featureMap -- only needed for features, not points
-        for (int i = 0; i < result.length; i++) {
-            List<Object> use = potential.get(result[i]);        // Features used in this file
+        for (int i = 0; i < files.length; i++) {
+            List<Object> use = potential.get(files[i]);        // Features used in this file
             if (use == null) continue;                          // Required, but contains no features
             for (Object o : use) {                              // Record match information
                 IndexedFeature s = (IndexedFeature) o;
-                featureMap.put(s.name, new int[]{i, s.indexWithinFile});
+
+                // The order is important -- better files are first, so do not overwrite them
+                if (!featureMap.containsKey(s.name))
+                    featureMap.put(s.name, new int[]{i, s.indexWithinFile});
             }
         }
     }
 
     private final Map<Object, int[]> featureMap = new TreeMap<Object, int[]>();     // Feature -> [file, featureKey]
     private final Set<Object> unmatched;                                            // Features we did not map
-    private final GeoFile[] result;                                                 // The files to use
+    final GeoFile[] files;                                                 // The files to use
     private final MappedLists<GeoFile, Object> potential;                           // Files that contain wanted items
     private GeoFileGroup best;                                                      // We search to determine this
 
@@ -93,15 +96,15 @@ public class GeoMapping {
 
         // Define the desired files to use
         if (required != null) {
-            result = required.toArray(new GeoFile[required.size()]);
+            files = required.toArray(new GeoFile[required.size()]);
         } else {
-            result = best.files.toArray(new GeoFile[best.files.size()]);
-            Arrays.sort(result);
+            files = best.files.toArray(new GeoFile[best.files.size()]);
+            Arrays.sort(files);
         }
     }
 
     public int fileCount() {
-        return result.length;
+        return files.length;
     }
 
     public Map<Object, int[]> getFeatureMap() {
@@ -109,8 +112,8 @@ public class GeoMapping {
     }
 
     public String[] getFiles() {
-        String[] strings = new String[result.length];
-        for (int i=0; i<strings.length; i++) strings[i] = result[i].name;
+        String[] strings = new String[files.length];
+        for (int i=0; i<strings.length; i++) strings[i] = files[i].name;
         return strings;
     }
 
@@ -120,7 +123,7 @@ public class GeoMapping {
 
     public Rect totalBounds() {
         Rect bounds = null;
-        for (GeoFile i : result) bounds = Rect.union(i.bounds, bounds);
+        for (GeoFile i : files) bounds = Rect.union(i.bounds, bounds);
         return bounds;
     }
 

@@ -40,6 +40,8 @@ import java.util.Set;
  */
 public class GeoInformation {
 
+    private static final String KEY_GEO_NAMES = "geo names";
+
     public static String getIDField(VisSingle vis) {
         if (vis.fKeys.isEmpty()) {
             if (vis.positionFields().length == 0)
@@ -58,12 +60,33 @@ public class GeoInformation {
         return null;
     }
 
+    /**
+     * The fraction of values that are suitable geographic names
+     *
+     * @param f field to analyze
+     * @return fraction in the range zero to one
+     */
+    public static double fractionGeoNames(Field f) {
+        if (f.property(KEY_GEO_NAMES) == null) {
+            // Calculate suitability for use as a geographic name
+            double count = 0;
+            if (!f.isNumeric()) {
+                HashSet<Object> unmatched = new HashSet<Object>();
+                GeoData.instance().mapFeaturesToFiles(f.categories(), unmatched);
+                for (int i = 0; i < f.rowCount(); i++)
+                    if (!unmatched.contains(f.value(i))) count++;
+            }
+            f.set(KEY_GEO_NAMES, count / f.valid());
+        }
+        return f.numericProperty(KEY_GEO_NAMES);
+    }
+
     public List<LabelPoint> getLabelsWithinScaleBounds() {
         List<LabelPoint> points = new ArrayList<LabelPoint>();
         List<GeoMapping> mappings = getAllGeo();
 
         for (GeoMapping g : mappings) {
-            for (GeoFile f : g.getFiles()) {
+            for (GeoFile f : g.files) {
                 for (LabelPoint p : f.pts) if (hull.bounds.contains(p)) points.add(p);
             }
         }
@@ -120,9 +143,8 @@ public class GeoInformation {
         // Add in the hulls for each of the contained files
         for (GeoMapping g : geo)
             if (g != null && (includeReferenceMaps || !g.isReference())) {
-                for (GeoFile f : g.getFiles()) {
+                for (GeoFile f : g.files)
                     Collections.addAll(combined, f.hull.points);
-                }
             }
 
         // And return the hull of the combined set
@@ -131,7 +153,7 @@ public class GeoInformation {
 
     public String d3Definition() {
         Rect rect = adjustForUS();
-        if (needsExpansion) rect= rect.expand(0.1);
+        if (needsExpansion) rect = rect.expand(0.1);
         return projection.d3Definition(rect);
     }
 

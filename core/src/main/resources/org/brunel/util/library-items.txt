@@ -7,3 +7,5 @@ bubble          :: point x($1) y($2) size($3) :: field, field, numeric
 heatmap         :: x($1) y($2) sort(#count) color(#count) label(#count) tooltip(#all) style('symbol:rect;border-radius:8;size:95%')
                 :: categorical, categorical
 treemap         :: bar x($1) treemap color($1[-1]) size(#count) label($1[-0]) tooltip(#all) :: multiCategorical
+map             :: map x($1) tooltip(#all) + map(labels) :: categorical
+colorMap        :: map x($1) color($2) tooltip(#all) + map(labels) :: categorical, field
