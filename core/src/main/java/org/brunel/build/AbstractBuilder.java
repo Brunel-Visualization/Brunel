@@ -152,7 +152,7 @@ public abstract class AbstractBuilder implements Builder {
         currentChartID = defineChart(loc, elements, data);
         for (int i = 0; i < elements.length; i++)
             buildElement(elements[i], data[i], dependency);
-        endChart(currentChartID);
+        endChart(currentChartID, dependency);
     }
 
     /* Build independent charts tiled into the same display area */
@@ -335,8 +335,9 @@ public abstract class AbstractBuilder implements Builder {
      * Any final work needed to finish off the chart code
      *
      * @param currentChartID
+     * @param dependency
      */
-    protected abstract void endChart(String currentChartID);
+    protected abstract void endChart(String currentChartID, ElementDependency dependency);
 
     private double squarifyDivergence(double[][] rects, int width, int height) {
         double sum = 0;

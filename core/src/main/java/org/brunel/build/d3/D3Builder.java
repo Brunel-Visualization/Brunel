@@ -367,7 +367,7 @@ public class D3Builder extends AbstractBuilder {
         return controls;
     }
 
-    protected void endChart(String currentChartID) {
+    protected void endChart(String currentChartID, ElementDependency dependency) {
         out.onNewLine().add("function build(time) {").indentMore();
         out.onNewLine().add("var first = elements[0].data() == null").endStatement();
         out.add("if (first) time = 0;").comment("No transition for first call");
@@ -389,7 +389,15 @@ public class D3Builder extends AbstractBuilder {
 
         // TODO: make this much more acceptable code
         if (scalesBuilder.diagram == VisTypes.Diagram.network) {
-            out.onNewLine().add("if (first) BrunelD3.network(d3.layout.force(), chart.graph, elements[0], elements[1], geom)").endStatement();
+            int nodeIndex = dependency.sourceIndex;
+            out.onNewLine().add("if (first) {").indentMore();
+            for (int i : elementBuildOrder) {
+                if (dependency.isDependent(i)) {
+                    out.onNewLine().add("BrunelD3.network(d3.layout.force(), chart.graph, elements[" + nodeIndex
+                            + "], elements[" + i + "], geom)").endStatement();
+                }
+            }
+            out.indentLess().onNewLine().add("}");
         }
 
 

@@ -806,16 +806,20 @@ var BrunelD3 = (function () {
     }
 
     // Start a network layout for the node and edge elements
-    // The graph shudl already have been built within the nodeElement
-    function makeNetworkLayout(layout, graph, nodes, edges, geom) {
+    // The graph should already have been built within the nodeElement
+    // density is a 0-1 value stating hwo packed the resulting graph should be
+    function makeNetworkLayout(layout, graph, nodes, edges, geom, density) {
+        var pad = geom.default_point_size * 2;
+        density = density || 0.5;
         layout.nodes(graph.nodes).links(graph.links)
-            .size([geom.inner_width,geom.inner_height])
+            .size([geom.inner_width, geom.inner_height])
+            .linkDistance(density * Math.sqrt(geom.inner_width * geom.inner_height / graph.nodes.length))
             .start();
 
         layout.on("tick", function() {
             nodes.selection()
-                .attr('cx', function(d) { return d.x })
-                .attr('cy', function(d) { return d.y });
+                .attr('cx', function(d) { return d.x = Math.min(Math.max(d.x, pad), geom.inner_width-pad) })
+                .attr('cy', function(d) { return d.y = Math.min(Math.max(d.y, pad), geom.inner_height-pad)});
             edges.selection()
                 .attr('x1',function(d) { return d.source.x })
                 .attr('y1',function(d) { return d.source.y })
