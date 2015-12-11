@@ -104,7 +104,7 @@ public class D3Interaction {
     private boolean isZoomable(VisSingle[] elements) {
         // Check for things that just will not work currently
         if (xScaleCategorical && yScaleCategorical) return false;                           // Only zoom numerical
-        if (scales.isDiagram || scales.coords == VisTypes.Coordinates.polar) return false;  // Doesn't work
+        if (scales.diagram != null || scales.coords == VisTypes.Coordinates.polar) return false;  // Doesn't work
 
         // If anything says we want it, we get it
         // Otherwise, if anything says we do not, we do not

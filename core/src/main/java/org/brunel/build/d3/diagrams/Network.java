@@ -44,11 +44,18 @@ class Network extends D3Diagram {
         out.add("var graph = BrunelData.diagram_Graph.make(processed,", nodeField, ",",
                 edgeDataset, ",", a, ",", b, ")").endStatement();
 
-        // No layout yet ... here's a simulation!
-        out.add("for (var i in graph.nodes) { graph.nodes[i].x = 0.5 + 0.3 * Math.cos(i*Math.PI/3); graph.nodes[i].y = 0.5 + 0.3*Math.sin(i*Math.PI/3) }").endStatement();
+        makeLayout();
+
         out.add("data._graph = graph").endStatement();
 
         return ElementDetails.makeForDiagram("graph.nodes", "circle", "point", "box", false);
+    }
+
+    private void makeLayout() {
+        out.comment("Circle Layout")
+                .add("var r = 0.5 - 5 / geom.inner_radius;")
+                .add("var a, i, N = graph.nodes.length").endStatement()
+                .add("for(i=0; i<N; i++) { a = Math.PI*2*i/N; graph.nodes[i].x = 0.5 + r*Math.cos(a); graph.nodes[i].y = 0.5 + r*Math.sin(a) }").endStatement();
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {

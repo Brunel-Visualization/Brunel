@@ -53,7 +53,6 @@ import java.util.Set;
  */
 public class D3ScaleBuilder {
 
-
     public boolean isGeo() {
         return geo != null;
     }
@@ -73,8 +72,7 @@ public class D3ScaleBuilder {
     }
 
     final VisTypes.Coordinates coords;                      // Combined coordinate system derived from all elements
-    final boolean isDiagram;                                // True if we want to treat it as a diagram coord system
-
+    final VisTypes.Diagram diagram;                         // The first diagram for this system (null for coords)
 
     private final Field colorLegendField;                   // Field to use for the color legend
     private final AxisDetails hAxis, vAxis;                 // The same as the above, but at the physical location
@@ -90,7 +88,7 @@ public class D3ScaleBuilder {
         this.elementData = elementData;
         this.positionFields = positionFields;
         this.out = out;
-        this.isDiagram = chooseIsDiagram();
+        this.diagram = findDiagram();
         this.coords = makeCombinedCoords();
         VisTypes.Axes axes = makeCombinedAxes();
 
@@ -139,7 +137,6 @@ public class D3ScaleBuilder {
         this.geo = GeoInformation.make(element, elementData, positionFields);
 
     }
-
 
     /**
      * Adds the calls to set the axes into the already defined scale groups
@@ -223,7 +220,7 @@ public class D3ScaleBuilder {
     }
 
     public void writeAxes() {
-        if (isDiagram) return;                          // No axes needed for diagrams
+        if (diagram != null) return;                          // No axes needed for diagrams
 
         // Calculate geom
         String width = "geom.inner_width";
@@ -291,9 +288,6 @@ public class D3ScaleBuilder {
         writePositionScale("y", positionFields.allYFields, getYRange(), false);
         interaction.addScaleInteractivity();
     }
-
-
-
 
     public void writeLegends(VisSingle vis) {
         if (vis.fColor.isEmpty() || colorLegendField == null) return;
@@ -428,11 +422,11 @@ public class D3ScaleBuilder {
         out.endStatement();
     }
 
-    private boolean chooseIsDiagram() {
+    private VisTypes.Diagram findDiagram() {
         // Any diagram make the chart all diagram. Mixing diagrams and non-diagrams will
         // likely be useless at best, but we will not throw an error for it
-        for (VisSingle e : element) if (e.tDiagram != null) return true;
-        return false;
+        for (VisSingle e : element) if (e.tDiagram != null) return e.tDiagram;
+        return null;
     }
 
     private Field combineNumericFields(Field[] ff) {
@@ -546,14 +540,17 @@ public class D3ScaleBuilder {
 
     private String getXRange() {
         if (coords == VisTypes.Coordinates.polar) return "[0, geom.inner_radius]";
+        if (coords == VisTypes.Coordinates.centered) return "[-geom.inner_radius,geom.inner_radius]";
+
         boolean reversed = coords == VisTypes.Coordinates.transposed && positionFields.xCategorical;
         return reversed ? "[geom.inner_width,0]" : "[0, geom.inner_width]";
     }
 
     private String getYRange() {
         if (coords == VisTypes.Coordinates.polar) return "[0, Math.PI*2]";
-        boolean reversed = false;
+        if (coords == VisTypes.Coordinates.centered) return "[-geom.inner_radius,geom.inner_radius]";
 
+        boolean reversed = false;
         // If we are on the vertical axis and all the position  are numeric, but the lowest at the start, not the end
         // This means that vertical numeric axes run bottom-to-top, as expected.
         if (coords != VisTypes.Coordinates.transposed) reversed = !positionFields.yCategorical;
@@ -591,17 +588,17 @@ public class D3ScaleBuilder {
 
         // If auto, check for the coordinate system / diagram to determine what is wanted
         if (result == VisTypes.Axes.auto)
-            return coords == VisTypes.Coordinates.polar || isDiagram ? VisTypes.Axes.none : VisTypes.Axes.all;
+            return coords == VisTypes.Coordinates.polar || diagram != null ? VisTypes.Axes.none : VisTypes.Axes.all;
         else
             return result;
     }
 
     private VisTypes.Coordinates makeCombinedCoords() {
-        // For diagrams, we set the coords to polar for the chord chart and clouds
-        if (isDiagram)
-            for (VisSingle e : element)
-                if (e.tDiagram == VisTypes.Diagram.chord || e.tDiagram == VisTypes.Diagram.cloud)
-                    return VisTypes.Coordinates.polar;
+        // For diagrams, we set the coords to polar for the chord chart and clouds, and centered for networks
+        if (diagram == VisTypes.Diagram.chord || diagram == VisTypes.Diagram.cloud)
+            return VisTypes.Coordinates.polar;
+        if (diagram == VisTypes.Diagram.network)
+            return VisTypes.Coordinates.centered;
 
         // The rule here is that we return the one with the highest ordinal value;
         // that will correspond to the most "unusual". In practice this means that

@@ -457,10 +457,10 @@ public class D3Builder extends AbstractBuilder {
         String elementTransform = makeElementTransform(scalesBuilder.coords);
         out.add("var elementGroup = interior.append('g').attr('class', 'element" + (elementIndex + 1) + "')");
         if (elementTransform != null) out.addChained(elementTransform);
-        if (scalesBuilder.isDiagram)
+        if (scalesBuilder.diagram != null)
             out.continueOnNextLine(",").add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");
         out.continueOnNextLine(",").add("main = elementGroup.append('g').attr('class', 'main')");
-        if (scalesBuilder.isDiagram)
+        if (scalesBuilder.diagram != null)
             out.continueOnNextLine(",").add("diagramLabels = elementGroup.append('g').attr('class', 'diagram labels')");
         out.continueOnNextLine(",").add("labels = elementGroup.append('g').attr('class', 'labels')").endStatement();
     }
@@ -493,7 +493,7 @@ public class D3Builder extends AbstractBuilder {
     private String makeElementTransform(VisTypes.Coordinates coords) {
         if (coords == VisTypes.Coordinates.transposed)
             return "attr('transform','matrix(0,1,1,0,0,0)')";
-        else if (coords == VisTypes.Coordinates.polar)
+        else if (coords == VisTypes.Coordinates.polar || coords == VisTypes.Coordinates.centered)
             return makeTranslateTransform("geom.inner_width/2", "geom.inner_height/2");
         else
             return null;
