@@ -32,8 +32,8 @@ class Network extends D3Diagram {
         this.dependency = dependency;
     }
 
-    public ElementDetails writeDataConstruction() {
 
+    public ElementDetails writeDataConstruction() {
         String nodeField = quoted(vis.fKeys.get(0).asField());
 
         VisSingle links = dependency.getEdgeElement();
@@ -41,29 +41,13 @@ class Network extends D3Diagram {
         String a = quoted(links.fKeys.get(0).asField());
         String b = quoted(links.fKeys.get(1).asField());
 
-        out.add("var graph = BrunelData.diagram_Graph.make(processed,", nodeField, ",",
+        out.add("chart.graph = BrunelData.diagram_Graph.make(processed,", nodeField, ",",
                 edgeDataset, ",", a, ",", b, ")").endStatement();
-
-        makeLayout();
-
-        out.add("data._graph = graph").endStatement();
-
-        return ElementDetails.makeForDiagram("graph.nodes", "circle", "point", "box", false);
-    }
-
-    private void makeLayout() {
-        out.comment("Circle Layout")
-                .add("var r = 0.5 - 5 / geom.inner_radius;")
-                .add("var a, i, N = graph.nodes.length").endStatement()
-                .add("for(i=0; i<N; i++) { a = Math.PI*2*i/N; graph.nodes[i].x = 0.5 + r*Math.cos(a); graph.nodes[i].y = 0.5 + r*Math.sin(a) }").endStatement();
+        return ElementDetails.makeForDiagram("chart.graph.nodes", "circle", "point", "box", false);
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
-        out.addChained("attr('cx', function(d) { return scale_x(d.x) })")
-                .addChained("attr('cy', function(d) { return scale_y(d.y) })")
-                .addChained("attr('r',", elementDef.overallSize, ")");
-
-        out.endStatement();
+        out.addChained("attr('r',", elementDef.overallSize, ")").endStatement();
         addAestheticsAndTooltips(details, true);
     }
 

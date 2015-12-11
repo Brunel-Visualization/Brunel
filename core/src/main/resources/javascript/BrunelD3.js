@@ -805,7 +805,27 @@ var BrunelD3 = (function () {
         return d3.svg.symbol().type(type).size(radius * radius * 4)();
     }
 
-// Expose these methods
+    // Start a network layout for the node and edge elements
+    // The graph shudl already have been built within the nodeElement
+    function makeNetworkLayout(layout, graph, nodes, edges, geom) {
+        layout.nodes(graph.nodes).links(graph.links)
+            .size([geom.inner_width,geom.inner_height])
+            .start();
+
+        layout.on("tick", function() {
+            nodes.selection()
+                .attr('cx', function(d) { return d.x })
+                .attr('cy', function(d) { return d.y });
+            edges.selection()
+                .attr('x1',function(d) { return d.source.x })
+                .attr('y1',function(d) { return d.source.y })
+                .attr('x2',function(d) { return d.target.x })
+                .attr('y2',function(d) { return d.target.y });
+        });
+        nodes.selection().call(layout.drag)
+    }
+
+    // Expose these methods
     return {
         'geometry': geometries,
         'addTooltip': makeTooltip,
@@ -823,6 +843,7 @@ var BrunelD3 = (function () {
         'tween': transitionTween,
         'addFeatures': makeMap,
         'symbol': makeSymbol,
+        'network': makeNetworkLayout,
         'time': time
     }
 

@@ -540,7 +540,6 @@ public class D3ScaleBuilder {
 
     private String getXRange() {
         if (coords == VisTypes.Coordinates.polar) return "[0, geom.inner_radius]";
-        if (coords == VisTypes.Coordinates.centered) return "[-geom.inner_radius,geom.inner_radius]";
 
         boolean reversed = coords == VisTypes.Coordinates.transposed && positionFields.xCategorical;
         return reversed ? "[geom.inner_width,0]" : "[0, geom.inner_width]";
@@ -548,7 +547,6 @@ public class D3ScaleBuilder {
 
     private String getYRange() {
         if (coords == VisTypes.Coordinates.polar) return "[0, Math.PI*2]";
-        if (coords == VisTypes.Coordinates.centered) return "[-geom.inner_radius,geom.inner_radius]";
 
         boolean reversed = false;
         // If we are on the vertical axis and all the position  are numeric, but the lowest at the start, not the end
@@ -597,8 +595,6 @@ public class D3ScaleBuilder {
         // For diagrams, we set the coords to polar for the chord chart and clouds, and centered for networks
         if (diagram == VisTypes.Diagram.chord || diagram == VisTypes.Diagram.cloud)
             return VisTypes.Coordinates.polar;
-        if (diagram == VisTypes.Diagram.network)
-            return VisTypes.Coordinates.centered;
 
         // The rule here is that we return the one with the highest ordinal value;
         // that will correspond to the most "unusual". In practice this means that

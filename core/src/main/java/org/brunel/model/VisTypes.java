@@ -35,7 +35,7 @@ public class VisTypes {
 
     /* Coordinate methods */
     public enum Coordinates {
-        regular, transposed, polar, centered
+        regular, transposed, polar
     }
 
     /* Our diagram layouts; each may have an option default element to use */

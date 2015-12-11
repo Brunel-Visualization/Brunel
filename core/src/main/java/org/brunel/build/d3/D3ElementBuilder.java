@@ -52,6 +52,7 @@ class D3ElementBuilder {
     }
 
     public void generate(int elementIndex) {
+        out.add("element = elements[" + elementIndex + "]").endStatement();
 
         if (diagram != null) out.onNewLine().comment("Data structures for a", vis.tDiagram, "diagram");
 
@@ -66,7 +67,6 @@ class D3ElementBuilder {
         modifyGroupStyleName();             // Diagrams change the name so CSS style sheets will work well
 
         // Set the values of things known to this element
-        out.add("element = elements[" + elementIndex + "]").endStatement();
         out.add("d3Data =", details.dataSource).endStatement();
         out.add("selection = main.selectAll('*').data(d3Data,", getKeyFunction(), ")").endStatement();
 
@@ -545,8 +545,7 @@ class D3ElementBuilder {
     private ElementDetails makeDetails() {
         // When we create diagrams this has the side effect of writing the data calls needed
         if (dependency.isEdge(vis)) {
-            String dataDef = "elements[" + dependency.sourceIndex + "].internal()._graph.links";
-            return ElementDetails.makeForDiagram(dataDef, "line", "edge", "box", false);
+            return ElementDetails.makeForDiagram("chart.graph.links", "line", "edge", "box", false);
         } else if (diagram == null)
             return ElementDetails.makeForCoordinates(vis, getSymbol());
         else
@@ -581,7 +580,7 @@ class D3ElementBuilder {
 
     private void writeCoordinateLabelingAndAesthetics(ElementDetails details) {
         // Define colors using the color function
-        if (!vis.fColor.isEmpty()) out.addChained("style(" + details.colorAttribute + ", color)");
+        if (!vis.fColor.isEmpty()) out.addChained("style('" + details.colorAttribute + "', color)");
 
         // Define line width if needed
         if (details.needsStrokeSize)

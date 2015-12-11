@@ -107,7 +107,7 @@ public class ElementDetails {
 
     private ElementDetails(String dataSource, String elementType, String elementClass, String textMethod, boolean textFits) {
         this.splitIntoShapes = false;
-        this.colorAttribute = "fill";
+        this.colorAttribute = elementType.equals("line") ? "stroke" : "fill";
         this.dataSource = dataSource;
         this.producesPath = false;
         this.elementType = elementType;

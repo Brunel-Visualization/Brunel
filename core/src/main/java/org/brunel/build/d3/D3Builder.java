@@ -140,11 +140,11 @@ public class D3Builder extends AbstractBuilder {
 
         // Add commonly used definitions
         out.onNewLine().ln();
-        out.add("var datasets = [],").at(40).comment("Array of datasets for the original data");
-        out.add("    pre = function(d, i) { return d },").at(40).comment("Default pre-process does nothing");
-        out.add("    post = function(d, i) { return d },").at(40).comment("Default post-process does nothing");
-        out.add("    transitionTime = 200,").at(40).comment("Transition time for animations");
-        out.add("    charts = [],").at(40).comment("The charts in the system");
+        out.add("var datasets = [],").at(50).comment("Array of datasets for the original data");
+        out.add("    pre = function(d, i) { return d },").at(50).comment("Default pre-process does nothing");
+        out.add("    post = function(d, i) { return d },").at(50).comment("Default post-process does nothing");
+        out.add("    transitionTime = 200,").at(50).comment("Transition time for animations");
+        out.add("    charts = [],").at(50).comment("The charts in the system");
         out.add("    vis = d3.select('#' + visId).attr('class', 'brunel')").comment("the SVG container");
 
         return options.visIdentifier;
@@ -178,8 +178,9 @@ public class D3Builder extends AbstractBuilder {
         // Transpose if needed
         if (scalesBuilder.coords == VisTypes.Coordinates.transposed) out.add("geom.transpose()").endStatement();
 
-        // Define the list of elements
-        out.add("var elements = [];").at(40).comment("Array of elements in this chart");
+        // Define the\is chart and its array of elements
+        out.add("var chart = charts[" + chartIndex + "], ")
+                .add("elements = [];").at(50).comment("Array of elements in this chart");
 
         // Now build the main groups
         out.titleComment("Define groups for the chart parts");
@@ -384,6 +385,15 @@ public class D3Builder extends AbstractBuilder {
         }
         for (int i : elementBuildOrder)
             out.onNewLine().add("elements[" + i + "].build(time);");
+
+
+        // TODO: make this much more acceptable code
+        if (scalesBuilder.diagram == VisTypes.Diagram.network) {
+            out.onNewLine().add("if (first) BrunelD3.network(d3.layout.force(), chart.graph, elements[0], elements[1], geom)").endStatement();
+        }
+
+
+
         out.indentLess().onNewLine().add("}").endStatement().ln();
 
         out.comment("Expose the following components of the chart");
@@ -474,6 +484,7 @@ public class D3Builder extends AbstractBuilder {
         out.add("return {").indentMore();
         out.onNewLine().add("data:").at(24).add("function() { return processed },");
         out.onNewLine().add("internal:").at(24).add("function() { return data },");
+        out.onNewLine().add("selection:").at(24).add("function() { return selection },");
         out.onNewLine().add("makeData:").at(24).add("makeData,");
         out.onNewLine().add("build:").at(24).add("build,");
         out.onNewLine().add("fields: {").indentMore();
@@ -493,7 +504,7 @@ public class D3Builder extends AbstractBuilder {
     private String makeElementTransform(VisTypes.Coordinates coords) {
         if (coords == VisTypes.Coordinates.transposed)
             return "attr('transform','matrix(0,1,1,0,0,0)')";
-        else if (coords == VisTypes.Coordinates.polar || coords == VisTypes.Coordinates.centered)
+        else if (coords == VisTypes.Coordinates.polar)
             return makeTranslateTransform("geom.inner_width/2", "geom.inner_height/2");
         else
             return null;
