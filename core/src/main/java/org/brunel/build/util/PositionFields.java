@@ -132,7 +132,8 @@ public class PositionFields {
     private Field[] getYFields(VisSingle vis, Dataset data) {
         if (vis.fRange != null) {
             // Range is a pair
-            return new Field[]{data.field(vis.fRange[0].asField()), data.field(vis.fRange[1].asField())};
+            return new Field[]{data.field(vis.fRange[0].asField(data)),
+                    data.field(vis.fRange[1].asField(data))};
         } else if (vis.fY.isEmpty()) {
             return new Field[0];
         } else if (vis.fY.size() > 1) {

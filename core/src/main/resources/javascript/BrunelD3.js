@@ -809,11 +809,11 @@ var BrunelD3 = (function () {
     // The graph should already have been built within the nodeElement
     // density is a 0-1 value stating hwo packed the resulting graph should be
     function makeNetworkLayout(layout, graph, nodes, edges, geom, density) {
-        var pad = geom.default_point_size * 2;
-        density = density || 0.5;
+        var pad = geom.default_point_size * 2,
+            d = (density || 0.5) * Math.sqrt(geom.inner_width * geom.inner_height / graph.nodes.length);
         layout.nodes(graph.nodes).links(graph.links)
             .size([geom.inner_width, geom.inner_height])
-            .linkDistance(density * Math.sqrt(geom.inner_width * geom.inner_height / graph.nodes.length))
+            .linkDistance(d).charge(-1.5*d)
             .start();
 
         layout.on("tick", function() {

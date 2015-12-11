@@ -387,7 +387,7 @@ public class D3Builder extends AbstractBuilder {
             out.onNewLine().add("elements[" + i + "].build(time);");
 
 
-        // TODO: make this much more acceptable code
+        // TODO: make this much less "special case" code
         if (scalesBuilder.diagram == VisTypes.Diagram.network) {
             int nodeIndex = dependency.sourceIndex;
             out.onNewLine().add("if (first) {").indentMore();

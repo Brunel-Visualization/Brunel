@@ -70,7 +70,7 @@ public class ElementDetails {
 
         this.classes = "'" + classList + "'";
         this.splitIntoShapes = element.producesSingleShape;
-        this.colorAttribute = "'" + (filled ? "fill" : "stroke") + "'";
+        this.colorAttribute = filled ? "fill" : "stroke";
         this.dataSource = element.producesSingleShape ? "splits" : "data._rows";
         this.producesPath = element.producesSingleShape ||
                 (element == VisTypes.Element.bar && vis.coords == VisTypes.Coordinates.polar);
