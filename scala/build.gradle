@@ -33,4 +33,7 @@ repositories {
     compile project(':data')
     compile project(':core')
 }
+
+version = project(":core").version
+archivesBaseName = 'spark-1.5_scala-2.10_brunel'
  
