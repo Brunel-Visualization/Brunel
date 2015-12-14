@@ -42,11 +42,9 @@ object Brunel {
    *
    */
   def create(df: DataFrame, brunelSrc: String, width: Int, height: Int, visId: String): BrunelOutput = {
-
     val dataset = makeDataset(df)
     val builder = D3Integration.makeD3(dataset, brunelSrc, width, height, visId)
-    val result = new BrunelOutput(builder.getVisualization().toString(), builder.getStyleOverrides(), builder.getControls())
-    return result
+    new BrunelOutput(builder.getVisualization.toString, builder.getStyleOverrides, builder.getControls)
   }
 
   //Create a Brunel Dataset from a Spark DataFrame

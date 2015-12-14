@@ -25,11 +25,12 @@ import org.brunel.data.Data
 import java.util.HashMap
 
 //Brunel Provider implementation for Spark DataFrames typed to the expected data value types needed by Brunel.
-class SparkDataProvider[+T] (colIndex:Int, rows:Array[Row]) extends Provider {
-  
+class
+SparkDataProvider[+T] (colIndex:Int, rows:Array[Row]) extends Provider {
+
   //Column structure created on-demand when needed to estimate memory
-  lazy val column : List[T]  = List.tabulate(rows.length) (x => rows(x).getAs[T](colIndex) )  
-  
+  lazy val column : List[T]  = List.tabulate(rows.length) (x => rows(x).getAs[T](colIndex) )
+
   def compareRows(a: Int, b: Int, categoryOrder: HashMap[Object,Integer]): Int = {
     val p = rows(a).getAs[T](colIndex)
     val q = rows(b).getAs[T](colIndex)
@@ -42,10 +43,10 @@ class SparkDataProvider[+T] (colIndex:Int, rows:Array[Row]) extends Provider {
       return categoryOrder.get(p) - categoryOrder.get(q)
     }
   }
-  
+
   def count(): Int = rows.length
   def expectedSize(): Int = {
-    
+
     val unique = column.distinct
     var total = 24 + 4 * column.length
     if (column(0).isInstanceOf[String]) {
@@ -54,11 +55,11 @@ class SparkDataProvider[+T] (colIndex:Int, rows:Array[Row]) extends Provider {
     else {
       total += (16*unique.length)
     }
-    
+
     return total
-    
+
   }
-  
+
   def setValue(o: Any,index: Int): Provider = ColumnProvider.copy(this).setValue(o, index);
   def value(index: Int): Object = rows(index).getAs(colIndex)
 }

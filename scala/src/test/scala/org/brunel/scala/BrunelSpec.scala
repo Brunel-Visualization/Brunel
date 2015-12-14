@@ -41,7 +41,7 @@ class BrunelSpec extends UnitSpec {
     (187, "missing", "2007-12-12", "Porsche"))).toDF("mpg", "horsepower", "date", "name")
 
   //Column type conversion
-  val df = df_orig.withColumn("date", to_date(df_orig("date"))).withColumn("horsepower", df_orig("horsepower").cast(DoubleType))  
+  val df = df_orig.withColumn("date", to_date(df_orig("date"))).withColumn("horsepower", df_orig("horsepower").cast(DoubleType))
   val rows = df.collect()
 
   "The SparkDataProvider columns" should "have proper length and expected memory size" in {
@@ -66,7 +66,7 @@ class BrunelSpec extends UnitSpec {
     assert(dataset.field("horsepower").isNumeric())
     assert(!dataset.field("name").isNumeric())
     assert(dataset.field("date").isDate())
-    
+
     assert(dataset.field("horsepower").value(3) == null)
     assert(dataset.field("mpg").value(3) == 187)
     assert(dataset.field("name").value(3) == "Porsche")
@@ -80,7 +80,7 @@ class BrunelSpec extends UnitSpec {
     assert(brunelOutput.css.length() > 0)
     assert(brunelOutput.js.contains("['mpg', 'horsepower'],[123.0, 234.2],[123.0, 247.5],[189.0, 254.0],[187.0, null]"))
     assert(brunelOutput.css.contains("fill: red;"))
-    
+
   }
 
 }
