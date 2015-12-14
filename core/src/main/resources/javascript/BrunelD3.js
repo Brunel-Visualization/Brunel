@@ -805,7 +805,31 @@ var BrunelD3 = (function () {
         return d3.svg.symbol().type(type).size(radius * radius * 4)();
     }
 
-// Expose these methods
+    // Start a network layout for the node and edge elements
+    // The graph should already have been built within the nodeElement
+    // density is a 0-1 value stating hwo packed the resulting graph should be
+    function makeNetworkLayout(layout, graph, nodes, edges, geom, density) {
+        var pad = geom.default_point_size * 2,
+            d = (density || 0.5) * Math.sqrt(geom.inner_width * geom.inner_height / graph.nodes.length);
+        layout.nodes(graph.nodes).links(graph.links)
+            .size([geom.inner_width, geom.inner_height])
+            .linkDistance(d).charge(-1.5*d)
+            .start();
+
+        layout.on("tick", function() {
+            nodes.selection()
+                .attr('cx', function(d) { return d.x = Math.min(Math.max(d.x, pad), geom.inner_width-pad) })
+                .attr('cy', function(d) { return d.y = Math.min(Math.max(d.y, pad), geom.inner_height-pad)});
+            edges.selection()
+                .attr('x1',function(d) { return d.source.x })
+                .attr('y1',function(d) { return d.source.y })
+                .attr('x2',function(d) { return d.target.x })
+                .attr('y2',function(d) { return d.target.y });
+        });
+        nodes.selection().call(layout.drag)
+    }
+
+    // Expose these methods
     return {
         'geometry': geometries,
         'addTooltip': makeTooltip,
@@ -823,6 +847,7 @@ var BrunelD3 = (function () {
         'tween': transitionTween,
         'addFeatures': makeMap,
         'symbol': makeSymbol,
+        'network': makeNetworkLayout,
         'time': time
     }
 

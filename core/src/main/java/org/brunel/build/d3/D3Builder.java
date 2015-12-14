@@ -140,11 +140,11 @@ public class D3Builder extends AbstractBuilder {
 
         // Add commonly used definitions
         out.onNewLine().ln();
-        out.add("var datasets = [],").at(40).comment("Array of datasets for the original data");
-        out.add("    pre = function(d, i) { return d },").at(40).comment("Default pre-process does nothing");
-        out.add("    post = function(d, i) { return d },").at(40).comment("Default post-process does nothing");
-        out.add("    transitionTime = 200,").at(40).comment("Transition time for animations");
-        out.add("    charts = [],").at(40).comment("The charts in the system");
+        out.add("var datasets = [],").at(50).comment("Array of datasets for the original data");
+        out.add("    pre = function(d, i) { return d },").at(50).comment("Default pre-process does nothing");
+        out.add("    post = function(d, i) { return d },").at(50).comment("Default post-process does nothing");
+        out.add("    transitionTime = 200,").at(50).comment("Transition time for animations");
+        out.add("    charts = [],").at(50).comment("The charts in the system");
         out.add("    vis = d3.select('#' + visId).attr('class', 'brunel')").comment("the SVG container");
 
         return options.visIdentifier;
@@ -178,8 +178,9 @@ public class D3Builder extends AbstractBuilder {
         // Transpose if needed
         if (scalesBuilder.coords == VisTypes.Coordinates.transposed) out.add("geom.transpose()").endStatement();
 
-        // Define the list of elements
-        out.add("var elements = [];").at(40).comment("Array of elements in this chart");
+        // Define the\is chart and its array of elements
+        out.add("var chart = charts[" + chartIndex + "], ")
+                .add("elements = [];").at(50).comment("Array of elements in this chart");
 
         // Now build the main groups
         out.titleComment("Define groups for the chart parts");
@@ -366,7 +367,7 @@ public class D3Builder extends AbstractBuilder {
         return controls;
     }
 
-    protected void endChart(String currentChartID) {
+    protected void endChart(String currentChartID, ElementDependency dependency) {
         out.onNewLine().add("function build(time) {").indentMore();
         out.onNewLine().add("var first = elements[0].data() == null").endStatement();
         out.add("if (first) time = 0;").comment("No transition for first call");
@@ -384,6 +385,23 @@ public class D3Builder extends AbstractBuilder {
         }
         for (int i : elementBuildOrder)
             out.onNewLine().add("elements[" + i + "].build(time);");
+
+
+        // TODO: make this much less "special case" code
+        if (scalesBuilder.diagram == VisTypes.Diagram.network) {
+            int nodeIndex = dependency.sourceIndex;
+            out.onNewLine().add("if (first) {").indentMore();
+            for (int i : elementBuildOrder) {
+                if (dependency.isDependent(i)) {
+                    out.onNewLine().add("BrunelD3.network(d3.layout.force(), chart.graph, elements[" + nodeIndex
+                            + "], elements[" + i + "], geom)").endStatement();
+                }
+            }
+            out.indentLess().onNewLine().add("}");
+        }
+
+
+
         out.indentLess().onNewLine().add("}").endStatement().ln();
 
         out.comment("Expose the following components of the chart");
@@ -457,10 +475,10 @@ public class D3Builder extends AbstractBuilder {
         String elementTransform = makeElementTransform(scalesBuilder.coords);
         out.add("var elementGroup = interior.append('g').attr('class', 'element" + (elementIndex + 1) + "')");
         if (elementTransform != null) out.addChained(elementTransform);
-        if (scalesBuilder.isDiagram)
+        if (scalesBuilder.diagram != null)
             out.continueOnNextLine(",").add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");
         out.continueOnNextLine(",").add("main = elementGroup.append('g').attr('class', 'main')");
-        if (scalesBuilder.isDiagram)
+        if (scalesBuilder.diagram != null)
             out.continueOnNextLine(",").add("diagramLabels = elementGroup.append('g').attr('class', 'diagram labels')");
         out.continueOnNextLine(",").add("labels = elementGroup.append('g').attr('class', 'labels')").endStatement();
     }
@@ -474,6 +492,7 @@ public class D3Builder extends AbstractBuilder {
         out.add("return {").indentMore();
         out.onNewLine().add("data:").at(24).add("function() { return processed },");
         out.onNewLine().add("internal:").at(24).add("function() { return data },");
+        out.onNewLine().add("selection:").at(24).add("function() { return selection },");
         out.onNewLine().add("makeData:").at(24).add("makeData,");
         out.onNewLine().add("build:").at(24).add("build,");
         out.onNewLine().add("fields: {").indentMore();

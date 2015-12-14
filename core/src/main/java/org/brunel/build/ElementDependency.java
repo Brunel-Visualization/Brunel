@@ -32,7 +32,6 @@ public class ElementDependency {
     public final int sourceIndex;
     private final Set<VisSingle> linked = new LinkedHashSet<VisSingle>();
     private final VisSingle[] elements;
-    private boolean usesMapProjection;
 
     public ElementDependency(VisSingle[] elements) {
         this.elements = elements;
@@ -45,7 +44,6 @@ public class ElementDependency {
             } else {
                 linked.add(v);                              // Does not define positions -- dependent
             }
-            if (v.tDiagram == VisTypes.Diagram.map) usesMapProjection = true;
         }
         if (src < 0) linked.clear();                        // Must have a source for anything to link to
         sourceIndex = src;
@@ -66,6 +64,10 @@ public class ElementDependency {
 
     public boolean isDependent(VisSingle vis) {
         return linked.contains(vis);
+    }
+
+    public boolean isDependent(int i) {
+        return linked.contains(elements[i]);
     }
 
     /**

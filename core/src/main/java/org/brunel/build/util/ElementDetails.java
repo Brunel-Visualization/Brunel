@@ -70,7 +70,7 @@ public class ElementDetails {
 
         this.classes = "'" + classList + "'";
         this.splitIntoShapes = element.producesSingleShape;
-        this.colorAttribute = "'" + (filled ? "fill" : "stroke") + "'";
+        this.colorAttribute = filled ? "fill" : "stroke";
         this.dataSource = element.producesSingleShape ? "splits" : "data._rows";
         this.producesPath = element.producesSingleShape ||
                 (element == VisTypes.Element.bar && vis.coords == VisTypes.Coordinates.polar);
@@ -107,7 +107,7 @@ public class ElementDetails {
 
     private ElementDetails(String dataSource, String elementType, String elementClass, String textMethod, boolean textFits) {
         this.splitIntoShapes = false;
-        this.colorAttribute = "fill";
+        this.colorAttribute = elementType.equals("line") ? "stroke" : "fill";
         this.dataSource = dataSource;
         this.producesPath = false;
         this.elementType = elementType;
