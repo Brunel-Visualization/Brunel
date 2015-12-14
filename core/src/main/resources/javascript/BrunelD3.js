@@ -810,8 +810,8 @@ var BrunelD3 = (function () {
     // density is a 0-1 value stating hwo packed the resulting graph should be
     function makeNetworkLayout(layout, graph, nodes, edges, geom, density) {
         // "D" is the desired distance we would like to have between nodes
-        var N = graph.nodes.length, E = graph.links.length, S = geom.default_point_size,
-            pad = S * 2,
+        var N = graph.nodes.length, E = graph.links.length,
+            pad = geom.default_point_size * 2,
             D = (density || 1) * 0.5 * Math.sqrt((geom.inner_width-2*pad) * (geom.inner_height-2*pad) / N),
             R = D * Math.max(1, D-3) / 5 / Math.max(1, E/N);
 
@@ -819,7 +819,6 @@ var BrunelD3 = (function () {
             .size([geom.inner_width, geom.inner_height])
             .linkDistance(D).charge(-R)
             .start();
-        console.log("Factors = " +  D + ", " + R);
 
         layout.on("tick", function() {
             nodes.selection()
