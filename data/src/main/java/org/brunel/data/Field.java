@@ -38,7 +38,7 @@ public class Field extends Informative implements Comparable<Field> {
     private boolean calculatedNominal, calculatedNumeric, calculatedDate;   // True when we calculate these
     private HashMap<Object, Integer> categoryOrder;                             // order of the categories
 
-    Field(String name, String label, Provider provider) {
+    public Field(String name, String label, Provider provider) {
         this(name, label, provider, null);
     }
 
