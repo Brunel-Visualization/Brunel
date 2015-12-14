@@ -810,11 +810,13 @@ var BrunelD3 = (function () {
     // density is a 0-1 value stating hwo packed the resulting graph should be
     function makeNetworkLayout(layout, graph, nodes, edges, geom, density) {
         var pad = geom.default_point_size * 2,
-            d = (density || 0.5) * Math.sqrt(geom.inner_width * geom.inner_height / graph.nodes.length);
+            repulse = (density || 1) * Math.sqrt((geom.inner_width-2*pad) * (geom.inner_height-2*pad) / graph.nodes.length),
+            attract = Math.min(geom.default_point_size*3, repulse*0.66);
         layout.nodes(graph.nodes).links(graph.links)
             .size([geom.inner_width, geom.inner_height])
-            .linkDistance(d).charge(-1.5*d)
+            .linkDistance(attract).charge(-repulse)
             .start();
+        console.log("Factors = " + attract + ", " + repulse);
 
         layout.on("tick", function() {
             nodes.selection()
