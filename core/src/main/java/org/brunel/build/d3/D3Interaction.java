@@ -17,7 +17,7 @@
 package org.brunel.build.d3;
 
 import org.brunel.action.Param;
-import org.brunel.build.util.PositionFields;
+import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
@@ -40,12 +40,12 @@ public class D3Interaction {
     private final boolean xScaleCategorical;    // True if any are
     private final boolean yScaleCategorical;    // True if any are
 
-    public D3Interaction(VisSingle[] elements, PositionFields positionFields, D3ScaleBuilder scales, ScriptWriter out) {
+    public D3Interaction(ChartStructure structure, D3ScaleBuilder scales, ScriptWriter out) {
         this.scales = scales;
         this.out = out;
-        this.xScaleCategorical = anyCategorical(positionFields.allXFields);
-        this.yScaleCategorical = anyCategorical(positionFields.allYFields);
-        this.zoomable = isZoomable(elements);
+        this.xScaleCategorical = anyCategorical(structure.coordinates.allXFields);
+        this.yScaleCategorical = anyCategorical(structure.coordinates.allYFields);
+        this.zoomable = isZoomable(structure.elements);
     }
 
     /**

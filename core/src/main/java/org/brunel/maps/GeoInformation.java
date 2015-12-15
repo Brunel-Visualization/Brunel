@@ -16,7 +16,7 @@
 
 package org.brunel.maps;
 
-import org.brunel.build.util.PositionFields;
+import org.brunel.build.chart.ChartCoordinates;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
@@ -50,14 +50,6 @@ public class GeoInformation {
         } else {
             return vis.fKeys.get(0).asField();
         }
-    }
-
-    public static GeoInformation make(VisSingle[] elements, Dataset[] elementData, PositionFields positionFields) {
-        // If any element specifies a map, we make the map information for all to share
-        for (VisSingle e : elements)
-            if (e.tDiagram == VisTypes.Diagram.map)
-                return new GeoInformation(elements, elementData, positionFields);
-        return null;
     }
 
     /**
@@ -100,7 +92,7 @@ public class GeoInformation {
     private final boolean needsExpansion;
     private final Projection projection;
 
-    private GeoInformation(VisSingle[] elements, Dataset[] elementData, PositionFields positionFields) {
+    public GeoInformation(VisSingle[] elements, Dataset[] elementData, ChartCoordinates positionFields) {
         this.element = elements;
         Poly positionHull = getPositionPoints(elements, positionFields);
         this.geo = makeGeoMappings(elements, elementData, positionHull);
@@ -157,7 +149,7 @@ public class GeoInformation {
         return projection.d3Definition(rect);
     }
 
-    private Poly getPositionPoints(VisSingle[] elements, PositionFields positionFields) {
+    private Poly getPositionPoints(VisSingle[] elements, ChartCoordinates positionFields) {
         Set<Point> points = new HashSet<Point>();
         // Add points for all the fields for each element
         for (VisSingle v : elements) {

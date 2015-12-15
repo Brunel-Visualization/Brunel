@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.brunel.build.util;
+package org.brunel.build.chart;
 
 import org.brunel.data.Data;
 import org.brunel.data.Field;
@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * Calculates information on how to display axes
  */
-public class AxisDetails {
+public class ChartAxes {
 
     /* Estimate the space needed to show all text categories */
     public int maxCategoryWidth() {
@@ -78,7 +78,7 @@ public class AxisDetails {
     public int bottomGutter;                // Space above and below chart (for vertical chart only)
 
     /* Constructs the axis for the given fields */
-    public AxisDetails(String dimension, Field[] definedFields, boolean categorical) {
+    public ChartAxes(String dimension, Field[] definedFields, boolean categorical) {
         this.scale = "scale_" + dimension;
         this.fields = definedFields; // suitable(definedFields);
         this.title = title(fields);

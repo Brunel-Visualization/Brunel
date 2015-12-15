@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.brunel.build.d3;
+package org.brunel.build.element;
 
 /**
  * Stores the functionality needed to build an element.

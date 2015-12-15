@@ -17,20 +17,19 @@
 package org.brunel.build.d3;
 
 import org.brunel.action.Param;
-import org.brunel.build.util.AxisDetails;
+import org.brunel.build.chart.ChartAxes;
+import org.brunel.build.chart.ChartCoordinates;
+import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.util.ModelUtil;
-import org.brunel.build.util.PositionFields;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.color.ColorMapping;
 import org.brunel.color.Palette;
 import org.brunel.data.Data;
-import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
 import org.brunel.data.auto.NumericScale;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
-import org.brunel.maps.GeoInformation;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
@@ -53,9 +52,6 @@ import java.util.Set;
  */
 public class D3ScaleBuilder {
 
-    public boolean isGeo() {
-        return geo != null;
-    }
 
     public boolean needsAxes() {
         return hAxis.exists() || vAxis.exists();
@@ -75,18 +71,15 @@ public class D3ScaleBuilder {
     final VisTypes.Diagram diagram;                         // The first diagram for this system (null for coords)
 
     private final Field colorLegendField;                   // Field to use for the color legend
-    private final AxisDetails hAxis, vAxis;                 // The same as the above, but at the physical location
+    private final ChartAxes hAxis, vAxis;                   // The same as the above, but at the physical location
     private final double[] marginTLBR;                      // Margins between the coordinate area and the chart space
-    private final VisSingle[] element;                      // The elements ...
-    private final Dataset[] elementData;                    // ... and their data
-    public final PositionFields positionFields;             // Details on positions
-    public final GeoInformation geo;                        // Details on geo mapping
+    private final ChartStructure structure;                 // Overall detail on the chart composition
+    private final VisSingle[] elements;                     // The elements that define the scales used
     private final ScriptWriter out;                         // Write definitions to here
 
-    public D3ScaleBuilder(VisSingle[] element, Dataset[] elementData, PositionFields positionFields, double chartWidth, double chartHeight, ScriptWriter out) {
-        this.element = element;
-        this.elementData = elementData;
-        this.positionFields = positionFields;
+    public D3ScaleBuilder(ChartStructure structure, double chartWidth, double chartHeight, ScriptWriter out) {
+        this.structure = structure;
+        this.elements = structure.elements;
         this.out = out;
         this.diagram = findDiagram();
         this.coords = makeCombinedCoords();
@@ -95,19 +88,21 @@ public class D3ScaleBuilder {
         // Create the position needed
         this.colorLegendField = getColorLegendField();
 
+        ChartCoordinates coords = structure.coordinates;
+
         // Set the axis information for each dimension
-        AxisDetails xAxis, yAxis;
+        ChartAxes xAxis, yAxis;
         if (axes == VisTypes.Axes.all || axes == VisTypes.Axes.x) {
-            xAxis = new AxisDetails("x", positionFields.allXFields, positionFields.xCategorical);
+            xAxis = new ChartAxes("x", coords.allXFields, coords.xCategorical);
         } else
-            xAxis = new AxisDetails("x", new Field[0], positionFields.xCategorical);
+            xAxis = new ChartAxes("x", new Field[0], coords.xCategorical);
         if (axes == VisTypes.Axes.all || axes == VisTypes.Axes.y)
-            yAxis = new AxisDetails("y", positionFields.allYFields, positionFields.yCategorical);
+            yAxis = new ChartAxes("y", coords.allYFields, coords.yCategorical);
         else
-            yAxis = new AxisDetails("y", new Field[0], positionFields.yCategorical);
+            yAxis = new ChartAxes("y", new Field[0], coords.yCategorical);
 
         // Map the dimension to the physical location on screen
-        if (coords == VisTypes.Coordinates.transposed) {
+        if (this.coords == VisTypes.Coordinates.transposed) {
             hAxis = yAxis;
             vAxis = xAxis;
         } else {
@@ -134,8 +129,6 @@ public class D3ScaleBuilder {
         int marginBottom = Math.max(hAxis.size, vAxis.bottomGutter);        // Height of hAxis, or gutter for vAxis
         int marginRight = Math.max(hAxis.rightGutter, legendWidth);         // Overflow for hAxis, or legend
         marginTLBR = new double[]{marginTop, marginLeft, marginBottom, marginRight};
-        this.geo = GeoInformation.make(element, elementData, positionFields);
-
     }
 
     /**
@@ -284,8 +277,8 @@ public class D3ScaleBuilder {
     }
 
     public void writeCoordinateScales(D3Interaction interaction) {
-        writePositionScale("x", positionFields.allXFields, getXRange(), elementsFillHorizontal());
-        writePositionScale("y", positionFields.allYFields, getYRange(), false);
+        writePositionScale("x", structure.coordinates.allXFields, getXRange(), elementsFillHorizontal());
+        writePositionScale("y", structure.coordinates.allYFields, getYRange(), false);
         interaction.addScaleInteractivity();
     }
 
@@ -425,7 +418,7 @@ public class D3ScaleBuilder {
     private VisTypes.Diagram findDiagram() {
         // Any diagram make the chart all diagram. Mixing diagrams and non-diagrams will
         // likely be useless at best, but we will not throw an error for it
-        for (VisSingle e : element) if (e.tDiagram != null) return e.tDiagram;
+        for (VisSingle e : elements) if (e.tDiagram != null) return e.tDiagram;
         return null;
     }
 
@@ -446,9 +439,9 @@ public class D3ScaleBuilder {
     }
 
     private Field fieldById(String fieldName, VisSingle vis) {
-        for (int i = 0; i < element.length; i++) {
-            if (element[i] == vis) {
-                Field field = elementData[i].field(fieldName);
+        for (int i = 0; i < elements.length; i++) {
+            if (elements[i] == vis) {
+                Field field = structure.data[i].field(fieldName);
                 if (field == null) throw new IllegalStateException("Unknown field " + fieldName);
                 return field;
             }
@@ -466,7 +459,7 @@ public class D3ScaleBuilder {
 
     private Field getColorLegendField() {
         Field result = null;
-        for (VisSingle vis : element) {
+        for (VisSingle vis : elements) {
             boolean auto = vis.tLegends == VisTypes.Legends.auto;
             if (vis.fColor.isEmpty()) continue;                             // No color means no color legend
             if (vis.tLegends == VisTypes.Legends.none) continue;            // No legend if not asked for one
@@ -493,7 +486,7 @@ public class D3ScaleBuilder {
             if (f.name.equals("#count") || "sum".equals(f.stringProperty("summary"))) return 1.0;
 
         // Really want it for bar/area charts that are not ranges
-        for (VisSingle e : element)
+        for (VisSingle e : elements)
             if ((e.tElement == VisTypes.Element.bar || e.tElement == VisTypes.Element.area)
                     && e.fRange == null) return 0.8;
 
@@ -503,7 +496,7 @@ public class D3ScaleBuilder {
 
     private boolean elementsFillHorizontal() {
         boolean fillToEdge = true;
-        for (VisSingle e : element)
+        for (VisSingle e : elements)
             if (e.tElement != VisTypes.Element.line && e.tElement != VisTypes.Element.area) fillToEdge = false;
         return fillToEdge;
     }
@@ -512,7 +505,7 @@ public class D3ScaleBuilder {
         double[] padding = new double[]{0, 0};
         if (purpose == Purpose.color || purpose == Purpose.size) return padding;                // None for aesthetics
         if (coords == VisTypes.Coordinates.polar) return padding;                               // None for polar angle
-        for (VisSingle e : element) {
+        for (VisSingle e : elements) {
             boolean noBottomYPadding = e.tElement == VisTypes.Element.bar || e.tElement == VisTypes.Element.area || e.tElement == VisTypes.Element.line;
             if (e.tElement == VisTypes.Element.text) {
                 // Text needs lot of padding
@@ -541,7 +534,7 @@ public class D3ScaleBuilder {
     private String getXRange() {
         if (coords == VisTypes.Coordinates.polar) return "[0, geom.inner_radius]";
 
-        boolean reversed = coords == VisTypes.Coordinates.transposed && positionFields.xCategorical;
+        boolean reversed = coords == VisTypes.Coordinates.transposed && structure.coordinates.xCategorical;
         return reversed ? "[geom.inner_width,0]" : "[0, geom.inner_width]";
     }
 
@@ -551,13 +544,13 @@ public class D3ScaleBuilder {
         boolean reversed = false;
         // If we are on the vertical axis and all the position  are numeric, but the lowest at the start, not the end
         // This means that vertical numeric axes run bottom-to-top, as expected.
-        if (coords != VisTypes.Coordinates.transposed) reversed = !positionFields.yCategorical;
+        if (coords != VisTypes.Coordinates.transposed) reversed = !structure.coordinates.yCategorical;
         return reversed ? "[geom.inner_height,0]" : "[0, geom.inner_height]";
     }
 
     private int legendWidth() {
         if (colorLegendField == null) return 0;
-        AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical());
+        ChartAxes legendAxis = new ChartAxes("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical());
         int spaceNeededForTicks = 32 + legendAxis.maxCategoryWidth();
         int spaceNeededForTitle = colorLegendField.label.length() * 7;                // Assume 7 pixels per character
         return 6 + Math.max(spaceNeededForTicks, spaceNeededForTitle);                // Add some spacing
@@ -566,7 +559,7 @@ public class D3ScaleBuilder {
     private VisTypes.Axes makeCombinedAxes() {
         // The rule here is that we add axes as much as possible, so presence overrides lack of presence
         VisTypes.Axes result = VisTypes.Axes.auto;
-        for (VisSingle e : element) {
+        for (VisSingle e : elements) {
             if (e.tAxes == VisTypes.Axes.all) {
                 // All means we are done, just return
                 return VisTypes.Axes.all;
@@ -599,8 +592,8 @@ public class D3ScaleBuilder {
         // The rule here is that we return the one with the highest ordinal value;
         // that will correspond to the most "unusual". In practice this means that
         // you need only define 'polar' or 'transpose' in one chart
-        VisTypes.Coordinates result = element[0].coords;
-        for (VisSingle e : element) if (e.coords.compareTo(result) > 0) result = e.coords;
+        VisTypes.Coordinates result = elements[0].coords;
+        for (VisSingle e : elements) if (e.coords.compareTo(result) > 0) result = e.coords;
 
         return result;
     }
@@ -639,12 +632,12 @@ public class D3ScaleBuilder {
         if (name.equals("x")) {
             // We need to copy it as we are modifying it
             if (scaleField == field) scaleField = field.rename(field.name, field.label);
-            scaleField.set("transform", positionFields.xTransform);
+            scaleField.set("transform", structure.coordinates.xTransform);
         }
         if (name.equals("y")) {
             // We need to copy it as we are modifying it
             if (scaleField == field) scaleField = field.rename(field.name, field.label);
-            scaleField.set("transform", positionFields.yTransform);
+            scaleField.set("transform", structure.coordinates.yTransform);
         }
 
         // We util a nice scale only for rectangular coordinates
@@ -680,8 +673,8 @@ public class D3ScaleBuilder {
             // Some scales (like for an area size) have a default transform (e.g. root) and we
             // util that if the field wants a linear scale.
             String transform = null;
-            if (name.equals("x")) transform = positionFields.xTransform;
-            if (name.equals("y")) transform = positionFields.yTransform;
+            if (name.equals("x")) transform = structure.coordinates.xTransform;
+            if (name.equals("y")) transform = structure.coordinates.yTransform;
 
             // Size must not get a transform as it will seriously distort things
             if (purpose == Purpose.size) transform = defaultTransform;

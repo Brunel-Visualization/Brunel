@@ -16,11 +16,11 @@
 
 package org.brunel.build.d3;
 
-import org.brunel.build.ElementDependency;
+import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.d3.diagrams.D3Diagram;
-import org.brunel.build.util.ElementDetails;
+import org.brunel.build.element.ElementDefinition;
+import org.brunel.build.element.ElementDetails;
 import org.brunel.build.util.ModelUtil;
-import org.brunel.build.util.PositionFields;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
@@ -32,23 +32,20 @@ class D3ElementBuilder {
     private final ScriptWriter out;                             // To write code out to
     private final VisSingle vis;                                // Element definition
     private final Dataset data;                                 // Data this element uses
-    private final ElementDependency dependency;                    // Our keys link to keys in this element
+    private final ChartStructure structure;                    // Our keys link to keys in this element
 
-    private final PositionFields positionFields;                // Defines how our positions work
     private final D3ScaleBuilder scales;                        // Helper to build scales
     private final D3LabelBuilder labelBuilder;                  // Helper to build labels
     private final D3Diagram diagram;                            // Helper to build diagrams
 
-    public D3ElementBuilder(VisSingle vis, ScriptWriter out, D3ScaleBuilder scales,
-                            PositionFields positionFields, Dataset data, ElementDependency dependency) {
+    public D3ElementBuilder(VisSingle vis, Dataset data, ScriptWriter out, ChartStructure structure, D3ScaleBuilder scales) {
         this.vis = vis;
         this.out = out;
         this.scales = scales;
-        this.positionFields = positionFields;
         this.data = data;
-        this.dependency = dependency;
+        this.structure = structure;
         this.labelBuilder = new D3LabelBuilder(vis, out, data);
-        this.diagram = D3Diagram.make(vis, data, out, dependency, scales);
+        this.diagram = D3Diagram.make(vis, data, out, structure, scales);
     }
 
     public void generate(int elementIndex) {
@@ -191,13 +188,13 @@ class D3ElementBuilder {
 
     private ElementDefinition buildElementDefinition() {
         ElementDefinition e = new ElementDefinition();
-        Field[] x = positionFields.getX(vis);
-        Field[] y = positionFields.getY(vis);
+        Field[] x = structure.coordinates.getX(vis);
+        Field[] y = structure.coordinates.getY(vis);
         Field[] keys = new Field[vis.fKeys.size()];
         for (int i = 0; i < keys.length; i++) keys[i] = data.field(vis.fKeys.get(i).asField());
         ModelUtil.Size sizeWidth = ModelUtil.getElementSize(vis, "width");
         ModelUtil.Size sizeHeight = ModelUtil.getElementSize(vis, "height");
-        if (scales.isGeo()) {
+        if (structure.geo != null) {
             // Maps with feature data do not need the geo coordinates set
             if (vis.tDiagram != VisTypes.Diagram.map)
                 setGeoLocations(e, x, y, keys);
@@ -205,8 +202,8 @@ class D3ElementBuilder {
             e.x.size = getSize(getSizeCall(0), sizeWidth, new Field[0], "geom.default_point_size", null);
             e.y.size = getSize(getSizeCall(1), sizeHeight, new Field[0], "geom.default_point_size", null);
         } else {
-            setLocations(e.x, "x", x, keys, positionFields.xCategorical);
-            setLocations(e.y, "y", y, keys, positionFields.yCategorical);
+            setLocations(e.x, "x", x, keys, structure.coordinates.xCategorical);
+            setLocations(e.y, "y", y, keys, structure.coordinates.yCategorical);
             e.x.size = getSize(getSizeCall(0), sizeWidth, x, "geom.inner_width", "scale_x");
             e.y.size = getSize(getSizeCall(1), sizeHeight, y, "geom.inner_height", "scale_y");
         }
@@ -219,9 +216,9 @@ class D3ElementBuilder {
         int n = x.length;
         if (y.length != n)
             throw new IllegalStateException("X and Y dimensions do not match in geographic maps");
-        if (dependency.isEdge(vis)) {
+        if (structure.isEdge(vis)) {
             throw new IllegalStateException("Cannot handle edged dependencies in geographic maps");
-        } else if (dependency.isDependent(vis)) {
+        } else if (structure.isDependent(vis)) {
             throw new IllegalStateException("Cannot handle positional dependencies in geographic maps");
         }
 
@@ -266,19 +263,19 @@ class D3ElementBuilder {
 
         String scaleName = "scale_" + dimName;
 
-        if (dependency.isEdge(vis)) {
+        if (structure.isEdge(vis)) {
             // These are edges in a network layout
             dim.left = "function(d) { return scale_" + dimName + "(d.source." + dimName + ") }";
             dim.right = "function(d) { return scale_" + dimName + "(d.target." + dimName + ") }";
-        } else if (dependency.isDependent(vis)) {
+        } else if (structure.isDependent(vis)) {
             // Use the keys to get the X and Y locations from other items
             if (keys.length == 1) {
                 // One key gives the center
-                dim.center = "function(d) { return " + scaleName + "(" + dependency.keyedLocation(dimName, keys[0]) + ") }";
+                dim.center = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[0]) + ") }";
             } else {
                 // Two keys give ends
-                dim.left = "function(d) { return " + scaleName + "(" + dependency.keyedLocation(dimName, keys[0]) + ") }";
-                dim.right = "function(d) { return " + scaleName + "(" + dependency.keyedLocation(dimName, keys[1]) + ") }";
+                dim.left = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[0]) + ") }";
+                dim.right = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[1]) + ") }";
                 dim.center = "function() { return " + scaleName + "(0.5) }";        // Not sure what is best here -- should not get used
             }
         } else if (fields.length == 0) {
@@ -525,7 +522,7 @@ class D3ElementBuilder {
         String result = ModelUtil.getElementSymbol(vis);
         if (result != null) return result;
         // We default to a rectangle if all the scales are categorical or binned, otherwise we return a point
-        boolean cat = allShowExtent(positionFields.allXFields) && allShowExtent(positionFields.allYFields);
+        boolean cat = allShowExtent(structure.coordinates.allXFields) && allShowExtent(structure.coordinates.allYFields);
         return cat ? "rect" : "point";
     }
 
@@ -544,7 +541,7 @@ class D3ElementBuilder {
 
     private ElementDetails makeDetails() {
         // When we create diagrams this has the side effect of writing the data calls needed
-        if (dependency.isEdge(vis)) {
+        if (structure.isEdge(vis)) {
             return ElementDetails.makeForDiagram("chart.graph.links", "line", "edge", "box", false);
         } else if (diagram == null)
             return ElementDetails.makeForCoordinates(vis, getSymbol());

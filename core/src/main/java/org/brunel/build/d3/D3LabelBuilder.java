@@ -17,7 +17,7 @@
 package org.brunel.build.d3;
 
 import org.brunel.action.Param;
-import org.brunel.build.util.ElementDetails;
+import org.brunel.build.element.ElementDetails;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;

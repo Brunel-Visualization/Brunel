@@ -17,7 +17,9 @@
 package org.brunel.build;
 
 import org.brunel.action.Param;
+import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.controls.Controls;
+import org.brunel.build.element.ElementStructure;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
@@ -77,6 +79,7 @@ public abstract class AbstractBuilder implements Builder {
     private String currentElementID;                // Identifier for the element we are building
     private StyleSheet visStyles;                   // Collection of style overrides for this visualization
     protected Controls controls;                    // Contains the controls for the current chart
+    protected ChartStructure structure;             // Structure of the chart currently being built
     private Dataset[] datasets;                     // Data sets used by the VisItem being built
 
     public AbstractBuilder(BuilderOptions options) {
@@ -125,7 +128,7 @@ public abstract class AbstractBuilder implements Builder {
                 // If we have a set of compositions, they are placed into the whole area
             } else if (compositionMethod == VisTypes.Composition.overlay) {
                 double[] loc = getLocation(findFirstBounds(main));
-                buildOverlayComposition(main.children(), loc);
+                buildSingleChart(main.children(), loc);
             } else if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
                 // Nesting not yet implemented, so simply util the first element and pretend it is tiled
                 buildTiledCharts(width, height, new VisItem[]{main.getSingle()});
@@ -139,7 +142,8 @@ public abstract class AbstractBuilder implements Builder {
 
     public abstract String makeImports();
 
-    private void buildOverlayComposition(VisItem[] items, double[] loc) {
+    private void buildSingleChart(VisItem[] items, double[] loc) {
+
         // Assemble the elements and data
         Dataset[] data = new Dataset[items.length];
         VisSingle[] elements = new VisSingle[items.length];
@@ -148,11 +152,12 @@ public abstract class AbstractBuilder implements Builder {
             data[i] = buildData(elements[i]);
         }
 
-        ElementDependency dependency = new ElementDependency(elements);         // Characterize inter-element dependency
-        currentChartID = defineChart(loc, elements, data);
-        for (int i = 0; i < elements.length; i++)
-            buildElement(elements[i], data[i], dependency);
-        endChart(currentChartID, dependency);
+        this.structure = new ChartStructure(elements, data);         // Characterize inter-element dependency
+        currentChartID = defineChart(loc);
+        for (int i = 0; i < elements.length; i++) {
+            buildElement(structure.elementStructure[i]);
+        }
+        endChart(currentChartID, structure);
     }
 
     /* Build independent charts tiled into the same display area */
@@ -181,9 +186,9 @@ public abstract class AbstractBuilder implements Builder {
             VisItem[] items = chart.children();
             if (items == null) {
                 // The chart is a single element
-                buildOverlayComposition(new VisItem[]{chart}, loc);
+                buildSingleChart(new VisItem[]{chart}, loc);
             } else {
-                buildOverlayComposition(items, loc);
+                buildSingleChart(items, loc);
             }
 
         }
@@ -242,12 +247,10 @@ public abstract class AbstractBuilder implements Builder {
      * It is called before we start calling the <code>buildSingle(...)</code> calls that will define the
      * contents of this area
      *
-     * @param location    The chart location in percentages, relative to overall location: [top, left, bottom, right\
-     * @param elements    The VisSingles that define the elements that will be created in this chart
-     * @param elementData The built data for those elements
+     * @param location         The chart location in percentages, relative to overall location: [top, left, bottom, right\
      * @return an id that identifies this visualization within the visualization system
      */
-    protected abstract String defineChart(double[] location, VisSingle[] elements, Dataset[] elementData);
+    protected abstract String defineChart(double[] location);
 
     /**
      * This builds the data and reports the built data to the builder
@@ -304,17 +307,17 @@ public abstract class AbstractBuilder implements Builder {
     }
 
     // Builds controls as needed, then the custom styles, then the visualization
-    private void buildElement(VisSingle vis, Dataset data, ElementDependency dependency) {
+    private void buildElement(ElementStructure structure) {
         try {
             // Note that controls need the ORIGINAL dataset; the one passed in has been transformed
-            controls.buildControls(vis, vis.getDataset());
-            currentElementID = defineElement(vis, data, indexOf(vis.getDataset(), datasets), dependency);
-            if (vis.styles != null) {
-                StyleSheet styles = vis.styles.replaceClass("currentElement", currentElementID);
+            controls.buildControls(structure.vis, structure.vis.getDataset());
+            currentElementID = defineElement(structure.vis, structure.data, indexOf(structure.vis.getDataset(), datasets), structure.chartStructure);
+            if (structure.vis.styles != null) {
+                StyleSheet styles = structure.vis.styles.replaceClass("currentElement", currentElementID);
                 visStyles.add(styles, currentChartID);
             }
         } catch (Exception e) {
-            throw VisException.makeBuilding(e, vis);
+            throw VisException.makeBuilding(e, structure.vis);
         }
     }
 
@@ -337,7 +340,7 @@ public abstract class AbstractBuilder implements Builder {
      * @param currentChartID
      * @param dependency
      */
-    protected abstract void endChart(String currentChartID, ElementDependency dependency);
+    protected abstract void endChart(String currentChartID, ChartStructure dependency);
 
     private double squarifyDivergence(double[][] rects, int width, int height) {
         double sum = 0;
@@ -525,6 +528,6 @@ public abstract class AbstractBuilder implements Builder {
     protected abstract DataTransformParameters modifyParameters(DataTransformParameters params, VisSingle vis);
 
     /* Adds an 'element' in GoG terms -- a bar, line, point, etc. */
-    protected abstract String defineElement(VisSingle vis, Dataset data, int datasetIndex, ElementDependency dependency);
+    protected abstract String defineElement(VisSingle vis, Dataset data, int datasetIndex, ChartStructure dependency);
 
 }

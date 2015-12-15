@@ -14,30 +14,54 @@
  * limitations under the License.
  */
 
-package org.brunel.build;
+package org.brunel.build.chart;
 
 import org.brunel.build.d3.D3Util;
+import org.brunel.build.element.ElementStructure;
+import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.maps.GeoInformation;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
  * Manages dependency between elements
  */
-public class ElementDependency {
+public class ChartStructure {
+
+
+    public  GeoInformation makeGeo() {
+        // If any element specifies a map, we make the map information for all to share
+        for (VisSingle e : elements)
+            if (e.tDiagram == VisTypes.Diagram.map)
+                return new GeoInformation(elements, data, coordinates);
+        return null;
+    }
 
     public final int sourceIndex;
+    public final ChartCoordinates coordinates;
+    public final VisSingle[] elements;
+    public final Dataset[] data;
+    public final GeoInformation geo;
+    public final ElementStructure[] elementStructure;
     private final Set<VisSingle> linked = new LinkedHashSet<VisSingle>();
-    private final VisSingle[] elements;
 
-    public ElementDependency(VisSingle[] elements) {
+    public ChartStructure(VisSingle[] elements, Dataset[] data) {
         this.elements = elements;
+        this.data = data;
+        this.coordinates = new ChartCoordinates(elements, data);
+        this.elementStructure = new ElementStructure[elements.length];
+        this.geo = makeGeo();
+
         int src = -1;
         for (int i = 0; i < elements.length; i++) {
             VisSingle v = elements[i];
+            elementStructure[i] = new ElementStructure(this, i, v, data[i]);
             if (v.fKeys.isEmpty()) continue;                // Must have keys to be involved
             if (v.positionFields().length > 0 || v.tDiagram != null) {
                 if (src < 0) src = i;                       // Defines positions so it is the source (first one wins)
@@ -45,11 +69,10 @@ public class ElementDependency {
                 linked.add(v);                              // Does not define positions -- dependent
             }
         }
+
         if (src < 0) linked.clear();                        // Must have a source for anything to link to
         sourceIndex = src;
     }
-
-
 
     /**
      * Find an element suitable for use as an edge element linking nodes
@@ -92,10 +115,26 @@ public class ElementDependency {
         return idToPointName + D3Util.writeCall(key) + ")." + dimName;
     }
 
+    public Integer[] elementBuildOrder() {
+        // Start with the default order
+        Integer[] order = new Integer[elements.length];
+        for (int i = 0; i < order.length; i++) order[i] = i;
+
+        // Sort so elements with most keys go last
+        // This works at least for nodes and links at least; when we add new cases, we'll need a more complex function
+        Arrays.sort(order, new Comparator<Integer>() {
+            public int compare(Integer a, Integer b) {
+                return elements[a].fKeys.size() - elements[b].fKeys.size();
+            }
+        });
+
+        return order;
+    }
 
     public VisSingle sourceElement() {
         return sourceIndex < 0 ? null : elements[sourceIndex];
     }
+
     /**
      * Create the Javascript that access the linked data
      *

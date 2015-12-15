@@ -19,11 +19,10 @@ package org.brunel.build.d3;
 import org.brunel.action.Param;
 import org.brunel.build.AbstractBuilder;
 import org.brunel.build.DataTransformParameters;
-import org.brunel.build.ElementDependency;
+import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.d3.diagrams.GeoMap;
 import org.brunel.build.util.BuilderOptions;
-import org.brunel.build.util.PositionFields;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
@@ -32,9 +31,7 @@ import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -121,8 +118,6 @@ public class D3Builder extends AbstractBuilder {
     private String chartClass;                  // Current chart parent class
     private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
     private D3Interaction interaction;          // Builder for interactions
-    private PositionFields positionFields;      // Information on fields used for position
-    private Integer[] elementBuildOrder;        // Order to build the elements
 
     public Object getVisualization() {
         return out.content();
@@ -150,11 +145,7 @@ public class D3Builder extends AbstractBuilder {
         return options.visIdentifier;
     }
 
-    protected String defineChart(double[] location, VisSingle[] elements, Dataset[] elementData) {
-
-        this.positionFields = new PositionFields(elements, elementData);
-        this.elementBuildOrder = makeBuildOrder(elements);
-
+    protected String defineChart(double[] location) {
         elementIndex = 0;
 
         chartClass = "chart" + (chartIndex + 1);
@@ -171,7 +162,7 @@ public class D3Builder extends AbstractBuilder {
         // Define scales and geom (we need the scales to get axes sizes, which determines geom)
         double chartWidth = visWidth - chartMargins[1] - chartMargins[3];
         double chartHeight = visHeight - chartMargins[0] - chartMargins[2];
-        this.scalesBuilder = new D3ScaleBuilder(elements, elementData, positionFields, chartWidth, chartHeight, out);
+        this.scalesBuilder = new D3ScaleBuilder(structure, chartWidth, chartHeight, out);
         double[] margins = scalesBuilder.marginsTLBR();
         out.add("var geom = BrunelD3.geometry(vis.node(),", chartMargins, ",", margins, ")").endStatement();
 
@@ -184,14 +175,14 @@ public class D3Builder extends AbstractBuilder {
 
         // Now build the main groups
         out.titleComment("Define groups for the chart parts");
-        interaction = new D3Interaction(elements, positionFields, scalesBuilder, out);
+        interaction = new D3Interaction(structure, scalesBuilder, out);
         writeMainGroups();
 
         // Define scales and access functions
-        if (scalesBuilder.isGeo()) {
+        if (structure.geo != null) {
             // Write the projection
             out.titleComment("Projection");
-            GeoMap.writeProjection(out, scalesBuilder.geo);
+            GeoMap.writeProjection(out, structure.geo);
         } else {
             out.titleComment("Scales");
             scalesBuilder.writeCoordinateScales(interaction);
@@ -207,27 +198,7 @@ public class D3Builder extends AbstractBuilder {
         return chartClass;
     }
 
-    /*
-            If we have a dependency between elements, for example, between a node and edge chart,
-            we will need to build taking that into account -- the nodes first, then the edges
-     */
-    private Integer[] makeBuildOrder(final VisSingle[] elements) {
-        // Start with the default order
-        Integer[] order = new Integer[elements.length];
-        for (int i = 0; i < order.length; i++) order[i] = i;
-
-        // Sort so elements with most keys go last
-        // This works at least for nodes and links at least; when we add new cases, we'll need a more complex function
-        Arrays.sort(order, new Comparator<Integer>() {
-            public int compare(Integer a, Integer b) {
-                return elements[a].fKeys.size() - elements[b].fKeys.size();
-            }
-        });
-
-        return order;
-    }
-
-    protected String defineElement(VisSingle vis, Dataset data, int datasetIndex, ElementDependency dependency) {
+    protected String defineElement(VisSingle vis, Dataset data, int datasetIndex, ChartStructure dependency) {
         out.titleComment("Define element #" + (elementIndex + 1));
         out.add("elements[" + elementIndex + "] = function() {").indentMore();
         out.onNewLine().add("var original, processed,").at(40).comment("data sets passed in and then transformed")
@@ -297,9 +268,9 @@ public class D3Builder extends AbstractBuilder {
         return result;
     }
 
-    private void defineElementBuildFunction(VisSingle vis, Dataset data, ElementDependency dependency) {
+    private void defineElementBuildFunction(VisSingle vis, Dataset data, ChartStructure dependency) {
 
-        D3ElementBuilder elementBuilder = new D3ElementBuilder(vis, out, scalesBuilder, positionFields, data, dependency);
+        D3ElementBuilder elementBuilder = new D3ElementBuilder(vis, data, out, dependency, scalesBuilder);
         elementBuilder.preBuildDefinitions();
 
         // Main method to make a vis
@@ -367,23 +338,25 @@ public class D3Builder extends AbstractBuilder {
         return controls;
     }
 
-    protected void endChart(String currentChartID, ElementDependency dependency) {
+    protected void endChart(String currentChartID, ChartStructure dependency) {
         out.onNewLine().add("function build(time) {").indentMore();
         out.onNewLine().add("var first = elements[0].data() == null").endStatement();
         out.add("if (first) time = 0;").comment("No transition for first call");
 
         if (scalesBuilder.needsAxes()) out.onNewLine().add("buildAxes(); ");
 
+        Integer[] order = structure.elementBuildOrder();
+
         out.onNewLine().add("if (first || time>0) ");
-        if (elementBuildOrder.length > 1) {
+        if (order.length > 1) {
             out.add("{").indentMore();
-            for (int i : elementBuildOrder)
+            for (int i : order)
                 out.onNewLine().add("elements[" + i + "].makeData();");
             out.indentLess().onNewLine().add("}").endStatement();
         } else {
             out.add("elements[0].makeData()").endStatement();
         }
-        for (int i : elementBuildOrder)
+        for (int i : order)
             out.onNewLine().add("elements[" + i + "].build(time);");
 
 
@@ -391,7 +364,7 @@ public class D3Builder extends AbstractBuilder {
         if (scalesBuilder.diagram == VisTypes.Diagram.network) {
             int nodeIndex = dependency.sourceIndex;
             out.onNewLine().add("if (first) {").indentMore();
-            for (int i : elementBuildOrder) {
+            for (int i : order) {
                 if (dependency.isDependent(i)) {
                     out.onNewLine().add("BrunelD3.network(d3.layout.force(), chart.graph, elements[" + nodeIndex
                             + "], elements[" + i + "], geom)").endStatement();
@@ -399,7 +372,6 @@ public class D3Builder extends AbstractBuilder {
             }
             out.indentLess().onNewLine().add("}");
         }
-
 
 
         out.indentLess().onNewLine().add("}").endStatement().ln();

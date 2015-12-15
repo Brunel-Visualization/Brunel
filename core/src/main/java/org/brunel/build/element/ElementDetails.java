@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.brunel.build.util;
+package org.brunel.build.element;
 
+import org.brunel.build.util.ModelUtil;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 

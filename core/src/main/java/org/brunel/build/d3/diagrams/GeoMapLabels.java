@@ -16,14 +16,13 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.D3ScaleBuilder;
-import org.brunel.build.d3.ElementDefinition;
-import org.brunel.build.util.ElementDetails;
+import org.brunel.build.chart.ChartStructure;
+import org.brunel.build.element.ElementDefinition;
+import org.brunel.build.element.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.geom.Rect;
-import org.brunel.maps.GeoInformation;
 import org.brunel.maps.LabelPoint;
 import org.brunel.model.VisSingle;
 
@@ -39,15 +38,15 @@ public class GeoMapLabels extends D3Diagram {
 
     private final NumberFormat F = new DecimalFormat("#.####");
 
-    private final D3ScaleBuilder scales;
+    private final ChartStructure structure;
 
-    public GeoMapLabels(VisSingle vis, Dataset data, D3ScaleBuilder scales, ScriptWriter out) {
+    public GeoMapLabels(VisSingle vis, Dataset data, ChartStructure structure, ScriptWriter out) {
         super(vis, data, out);
-        this.scales = scales;
+        this.structure = structure;
     }
 
     public void preBuildDefinitions() {
-        List<LabelPoint> points = scales.geo.getLabelsWithinScaleBounds();
+        List<LabelPoint> points = structure.geo.getLabelsWithinScaleBounds();
 
         int maxPoints = 40;
         if (vis.tDiagramParameters[0].modifiers().length > 0) {
@@ -84,7 +83,7 @@ public class GeoMapLabels extends D3Diagram {
     // we will remove points which seem likely to overlap
     private List<LabelPoint> thin(List<LabelPoint> points, int maxPoints) {
 
-        Rect bds = scales.geo.projectedBounds();
+        Rect bds = structure.geo.projectedBounds();
         double scale = Math.min(800 / bds.width(), 600 / bds.height());
 
         ArrayList<LabelPoint> result = new ArrayList<LabelPoint>();
@@ -96,7 +95,7 @@ public class GeoMapLabels extends D3Diagram {
         for (LabelPoint p : points) {
             boolean intersects = false;
 
-            org.brunel.geom.Point pp = scales.geo.transform(p);
+            org.brunel.geom.Point pp = structure.geo.transform(p);
             double x = pp.x * scale, y = pp.y * scale;
             Rectangle2D size = font.getStringBounds(p.label, frc);
             Rect s = new Rect(x - 15, x + size.getWidth() + 15, y, y + size.getHeight());

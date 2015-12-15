@@ -16,18 +16,18 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.ElementDependency;
-import org.brunel.build.d3.ElementDefinition;
-import org.brunel.build.util.ElementDetails;
+import org.brunel.build.chart.ChartStructure;
+import org.brunel.build.element.ElementDefinition;
+import org.brunel.build.element.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
 
 class Network extends D3Diagram {
 
-    private final ElementDependency dependency;
+    private final ChartStructure dependency;
 
-    public Network(VisSingle vis, Dataset data, ElementDependency dependency, ScriptWriter out) {
+    public Network(VisSingle vis, Dataset data, ChartStructure dependency, ScriptWriter out) {
         super(vis, data, out);
         this.dependency = dependency;
     }

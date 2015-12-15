@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.brunel.build.util;
+package org.brunel.build.chart;
 
 import org.brunel.action.Param;
+import org.brunel.build.util.ModelUtil;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
@@ -30,7 +31,7 @@ import java.util.Map;
 /**
  * Keep information on fields used for position within a visualization
  */
-public class PositionFields {
+public class ChartCoordinates {
 
     public final Field[] allXFields, allYFields;
     public final String xTransform, yTransform;
@@ -39,7 +40,7 @@ public class PositionFields {
     private final Map<VisSingle, Field[]> x = new HashMap<VisSingle, Field[]>();
     private final Map<VisSingle, Field[]> y = new HashMap<VisSingle, Field[]>();
 
-    public PositionFields(VisSingle[] elements, Dataset[] elementData) {
+    public ChartCoordinates(VisSingle[] elements, Dataset[] elementData) {
 
         String xTransform = null, yTransform = null;                // If defined by the VisSingle
 
@@ -72,30 +73,6 @@ public class PositionFields {
             this.yTransform = yCategorical ? "linear" : chooseTransform(allYFields);
         else
             this.yTransform = yTransform;
-    }
-
-    public double[] getXFieldRange() {
-        return getRange(allXFields);
-    }
-
-    public double[] getYFieldRange() {
-        return getRange(allYFields);
-    }
-
-    private double[] getRange(Field[] xFields) {
-        Double min = null, max = null;
-        for (Field x : xFields) {
-            if (x.isNumeric()) {
-                if (min == null) {
-                    min = x.min();
-                    max = x.max();
-                } else {
-                    min = Math.min(min, x.min());
-                    max = Math.min(max, x.max());
-                }
-            }
-        }
-        return min == null ? null : new double[]{min, max};
     }
 
     private String getDefinedXTransform(VisSingle v) {
