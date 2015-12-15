@@ -22,10 +22,10 @@ import org.brunel.build.DataTransformParameters;
 import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.d3.diagrams.GeoMap;
+import org.brunel.build.element.ElementStructure;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
-import org.brunel.data.Dataset;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
@@ -113,7 +113,6 @@ public class D3Builder extends AbstractBuilder {
 
     private ScriptWriter out;                   // Where to write code
     private int chartIndex;                     // Current chart index
-    private int elementIndex;                   // Current element index
     private int visWidth, visHeight;            // Overall vis size
     private String chartClass;                  // Current chart parent class
     private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
@@ -146,7 +145,6 @@ public class D3Builder extends AbstractBuilder {
     }
 
     protected String defineChart(double[] location) {
-        elementIndex = 0;
 
         chartClass = "chart" + (chartIndex + 1);
         double[] chartMargins = new double[]{
@@ -198,9 +196,9 @@ public class D3Builder extends AbstractBuilder {
         return chartClass;
     }
 
-    protected String defineElement(VisSingle vis, Dataset data, int datasetIndex, ChartStructure dependency) {
-        out.titleComment("Define element #" + (elementIndex + 1));
-        out.add("elements[" + elementIndex + "] = function() {").indentMore();
+    protected void defineElement(ElementStructure structure) {
+        out.titleComment("Define element #" + (structure.elementIndex + 1));
+        out.add("elements[" + structure.elementIndex + "] = function() {").indentMore();
         out.onNewLine().add("var original, processed,").at(40).comment("data sets passed in and then transformed")
                 .indentMore()
                 .onNewLine().add("element,").at(40).comment("Brunel element information")
@@ -210,22 +208,23 @@ public class D3Builder extends AbstractBuilder {
                 .indentLess();
 
         // Add data variables used throughout
-        addElementGroups();
+        addElementGroups(structure);
 
         // Data transforms
-        D3DataBuilder dataBuilder = new D3DataBuilder(vis, out, data, datasetIndex);
+        int datasetIndex = structure.getIndexOfBaseData();
+        VisSingle vis = structure.vis;
+        D3DataBuilder dataBuilder = new D3DataBuilder(vis, out, structure.data, datasetIndex);
         dataBuilder.writeDataManipulation(createResultFields(vis));
 
         scalesBuilder.writeAestheticScales(vis);
         scalesBuilder.writeLegends(vis);
 
-        defineElementBuildFunction(vis, data, dependency);
+        defineElementBuildFunction(structure);
 
         // Expose the methods and variables we want the user to have access to
         addElementExports(vis);
 
         out.indentLess().onNewLine().add("}()").endStatement().ln();
-        return "element" + (++elementIndex);
     }
 
     /*
@@ -268,17 +267,17 @@ public class D3Builder extends AbstractBuilder {
         return result;
     }
 
-    private void defineElementBuildFunction(VisSingle vis, Dataset data, ChartStructure dependency) {
+    private void defineElementBuildFunction(ElementStructure elementStructure) {
 
-        D3ElementBuilder elementBuilder = new D3ElementBuilder(vis, data, out, dependency, scalesBuilder);
+        D3ElementBuilder elementBuilder = new D3ElementBuilder(elementStructure.vis, elementStructure.data, out, structure, scalesBuilder);
         elementBuilder.preBuildDefinitions();
 
         // Main method to make a vis
         out.titleComment("Build element from data");
 
         out.add("function build(transitionMillis) {").ln().indentMore();
-        elementBuilder.generate(elementIndex);
-        interaction.addElementHandlers(vis);
+        elementBuilder.generate(elementStructure.elementIndex);
+        interaction.addElementHandlers(elementStructure.vis);
         out.indentLess().onNewLine().add("}").endStatement().ln();
     }
 
@@ -443,9 +442,9 @@ public class D3Builder extends AbstractBuilder {
 
     }
 
-    private void addElementGroups() {
+    private void addElementGroups(ElementStructure structure) {
         String elementTransform = makeElementTransform(scalesBuilder.coords);
-        out.add("var elementGroup = interior.append('g').attr('class', 'element" + (elementIndex + 1) + "')");
+        out.add("var elementGroup = interior.append('g').attr('class', '" + structure.getElementID() + "')");
         if (elementTransform != null) out.addChained(elementTransform);
         if (scalesBuilder.diagram != null)
             out.continueOnNextLine(",").add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");

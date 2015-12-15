@@ -27,6 +27,7 @@ public class ElementStructure {
     public final ChartStructure chartStructure;
     public final int elementIndex;
     public final VisSingle vis;
+    public final Dataset original;
     public final Dataset data;
 
     public ElementDefinition definition;
@@ -37,6 +38,15 @@ public class ElementStructure {
         this.elementIndex = elementIndex;
         this.vis = vis;
         this.data = data;
+        this.original = vis.getDataset();
     }
 
+    public String getElementID() {
+        return "element" + (elementIndex + 1);
+    }
+
+    public int getIndexOfBaseData() {
+        for (int i = 0; i < chartStructure.baseDataSets.length; i++) if (original == chartStructure.baseDataSets[i]) return i;
+        throw new IllegalStateException("Could not find data set in array of datasets");
+    }
 }

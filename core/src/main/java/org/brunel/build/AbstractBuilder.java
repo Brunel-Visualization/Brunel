@@ -73,14 +73,13 @@ public abstract class AbstractBuilder implements Builder {
             {{0, 0, 100, 50}, {0, 50, 50, 100}, {50, 50, 100, 100}},                                     // Three charts
             {{0, 0, 50, 50}, {0, 50, 50, 100}, {50, 0, 100, 50}, {50, 50, 100, 100}},                    // Four charts
     };
+
     protected final BuilderOptions options;
     private String currentVisualizationID;          // ID of the main visualization (e.g. the div's ID)
     private String currentChartID;                  // Identifier for the chart we are building
-    private String currentElementID;                // Identifier for the element we are building
     private StyleSheet visStyles;                   // Collection of style overrides for this visualization
     protected Controls controls;                    // Contains the controls for the current chart
     protected ChartStructure structure;             // Structure of the chart currently being built
-    private Dataset[] datasets;                     // Data sets used by the VisItem being built
 
     public AbstractBuilder(BuilderOptions options) {
         this.options = options;
@@ -102,8 +101,6 @@ public abstract class AbstractBuilder implements Builder {
 
         // Clear existing collections
         visStyles = new StyleSheet();
-
-        datasets = main.getDataSets();
 
         // Create the main visualization area and get an identifier for it.
         currentVisualizationID = defineVisSystem(main, width, height);
@@ -128,7 +125,7 @@ public abstract class AbstractBuilder implements Builder {
                 // If we have a set of compositions, they are placed into the whole area
             } else if (compositionMethod == VisTypes.Composition.overlay) {
                 double[] loc = getLocation(findFirstBounds(main));
-                buildSingleChart(main.children(), loc);
+                buildSingleChart(main, main.children(), loc);
             } else if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
                 // Nesting not yet implemented, so simply util the first element and pretend it is tiled
                 buildTiledCharts(width, height, new VisItem[]{main.getSingle()});
@@ -137,12 +134,11 @@ public abstract class AbstractBuilder implements Builder {
         }
 
         endVisSystem(main, currentVisualizationID);
-
     }
 
     public abstract String makeImports();
 
-    private void buildSingleChart(VisItem[] items, double[] loc) {
+    private void buildSingleChart(VisItem chart, VisItem[] items, double[] loc) {
 
         // Assemble the elements and data
         Dataset[] data = new Dataset[items.length];
@@ -152,7 +148,7 @@ public abstract class AbstractBuilder implements Builder {
             data[i] = buildData(elements[i]);
         }
 
-        this.structure = new ChartStructure(elements, data);         // Characterize inter-element dependency
+        this.structure = new ChartStructure(chart, elements, data);         // Characterize inter-element dependency
         currentChartID = defineChart(loc);
         for (int i = 0; i < elements.length; i++) {
             buildElement(structure.elementStructure[i]);
@@ -186,9 +182,9 @@ public abstract class AbstractBuilder implements Builder {
             VisItem[] items = chart.children();
             if (items == null) {
                 // The chart is a single element
-                buildSingleChart(new VisItem[]{chart}, loc);
+                buildSingleChart(chart, new VisItem[]{chart}, loc);
             } else {
-                buildSingleChart(items, loc);
+                buildSingleChart(chart, items, loc);
             }
 
         }
@@ -311,9 +307,9 @@ public abstract class AbstractBuilder implements Builder {
         try {
             // Note that controls need the ORIGINAL dataset; the one passed in has been transformed
             controls.buildControls(structure.vis, structure.vis.getDataset());
-            currentElementID = defineElement(structure.vis, structure.data, indexOf(structure.vis.getDataset(), datasets), structure.chartStructure);
+            defineElement(structure);
             if (structure.vis.styles != null) {
-                StyleSheet styles = structure.vis.styles.replaceClass("currentElement", currentElementID);
+                StyleSheet styles = structure.vis.styles.replaceClass("currentElement", structure.getElementID());
                 visStyles.add(styles, currentChartID);
             }
         } catch (Exception e) {
@@ -321,10 +317,6 @@ public abstract class AbstractBuilder implements Builder {
         }
     }
 
-    private int indexOf(Dataset data, Dataset[] datasets) {
-        for (int i = 0; i < datasets.length; i++) if (data == datasets[i]) return i;
-        throw new IllegalStateException("Could not find data set in array of datasets");
-    }
 
     /**
      * Any final work needed to finish off the vis code
@@ -528,6 +520,6 @@ public abstract class AbstractBuilder implements Builder {
     protected abstract DataTransformParameters modifyParameters(DataTransformParameters params, VisSingle vis);
 
     /* Adds an 'element' in GoG terms -- a bar, line, point, etc. */
-    protected abstract String defineElement(VisSingle vis, Dataset data, int datasetIndex, ChartStructure dependency);
+    protected abstract void defineElement(ElementStructure structure);
 
 }

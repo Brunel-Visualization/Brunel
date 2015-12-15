@@ -21,6 +21,7 @@ import org.brunel.build.element.ElementStructure;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.maps.GeoInformation;
+import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
@@ -34,6 +35,7 @@ import java.util.Set;
  */
 public class ChartStructure {
 
+    public final Dataset[] baseDataSets;
 
     public  GeoInformation makeGeo() {
         // If any element specifies a map, we make the map information for all to share
@@ -51,12 +53,13 @@ public class ChartStructure {
     public final ElementStructure[] elementStructure;
     private final Set<VisSingle> linked = new LinkedHashSet<VisSingle>();
 
-    public ChartStructure(VisSingle[] elements, Dataset[] data) {
+    public ChartStructure(VisItem chart, VisSingle[]elements, Dataset[] data) {
         this.elements = elements;
         this.data = data;
         this.coordinates = new ChartCoordinates(elements, data);
         this.elementStructure = new ElementStructure[elements.length];
         this.geo = makeGeo();
+        this.baseDataSets = chart.getDataSets();
 
         int src = -1;
         for (int i = 0; i < elements.length; i++) {
