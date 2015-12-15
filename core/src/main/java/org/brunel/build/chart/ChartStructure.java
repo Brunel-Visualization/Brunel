@@ -37,6 +37,10 @@ public class ChartStructure {
 
     public final Dataset[] baseDataSets;
 
+    public String getChartID() {
+        return "chart" + chartIndex;
+    }
+
     public  GeoInformation makeGeo() {
         // If any element specifies a map, we make the map information for all to share
         for (VisSingle e : elements)
@@ -47,13 +51,15 @@ public class ChartStructure {
 
     public final int sourceIndex;
     public final ChartCoordinates coordinates;
+    public final int chartIndex;
     public final VisSingle[] elements;
     public final Dataset[] data;
     public final GeoInformation geo;
     public final ElementStructure[] elementStructure;
     private final Set<VisSingle> linked = new LinkedHashSet<VisSingle>();
 
-    public ChartStructure(VisItem chart, VisSingle[]elements, Dataset[] data) {
+    public ChartStructure(VisItem chart, int chartIndex, VisSingle[] elements, Dataset[] data) {
+        this.chartIndex = chartIndex;
         this.elements = elements;
         this.data = data;
         this.coordinates = new ChartCoordinates(elements, data);

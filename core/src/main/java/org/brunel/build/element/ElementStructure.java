@@ -42,7 +42,7 @@ public class ElementStructure {
     }
 
     public String getElementID() {
-        return "element" + (elementIndex + 1);
+        return "element" + elementIndex;
     }
 
     public int getIndexOfBaseData() {

@@ -76,7 +76,6 @@ public abstract class AbstractBuilder implements Builder {
 
     protected final BuilderOptions options;
     private String currentVisualizationID;          // ID of the main visualization (e.g. the div's ID)
-    private String currentChartID;                  // Identifier for the chart we are building
     private StyleSheet visStyles;                   // Collection of style overrides for this visualization
     protected Controls controls;                    // Contains the controls for the current chart
     protected ChartStructure structure;             // Structure of the chart currently being built
@@ -125,7 +124,7 @@ public abstract class AbstractBuilder implements Builder {
                 // If we have a set of compositions, they are placed into the whole area
             } else if (compositionMethod == VisTypes.Composition.overlay) {
                 double[] loc = getLocation(findFirstBounds(main));
-                buildSingleChart(main, main.children(), loc);
+                buildSingleChart(main, 0, main.children(), loc);
             } else if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
                 // Nesting not yet implemented, so simply util the first element and pretend it is tiled
                 buildTiledCharts(width, height, new VisItem[]{main.getSingle()});
@@ -138,7 +137,7 @@ public abstract class AbstractBuilder implements Builder {
 
     public abstract String makeImports();
 
-    private void buildSingleChart(VisItem chart, VisItem[] items, double[] loc) {
+    private void buildSingleChart(VisItem chart, int chartIndex, VisItem[] items, double[] loc) {
 
         // Assemble the elements and data
         Dataset[] data = new Dataset[items.length];
@@ -148,12 +147,12 @@ public abstract class AbstractBuilder implements Builder {
             data[i] = buildData(elements[i]);
         }
 
-        this.structure = new ChartStructure(chart, elements, data);         // Characterize inter-element dependency
-        currentChartID = defineChart(loc);
+        this.structure = new ChartStructure(chart, chartIndex, elements, data);         // Characterize inter-element dependency
+        defineChart(structure, loc);
         for (int i = 0; i < elements.length; i++) {
             buildElement(structure.elementStructure[i]);
         }
-        endChart(currentChartID, structure);
+        endChart(structure);
     }
 
     /* Build independent charts tiled into the same display area */
@@ -166,7 +165,8 @@ public abstract class AbstractBuilder implements Builder {
         // Layout for all unplaced charts
 
         int unplacedCount = 0;
-        for (VisItem chart : charts) {
+        for (int i = 0; i < charts.length; i++) {
+            VisItem chart = charts[i];
             Param[] bounds = findFirstBounds(chart);
 
             double[] loc;
@@ -182,9 +182,9 @@ public abstract class AbstractBuilder implements Builder {
             VisItem[] items = chart.children();
             if (items == null) {
                 // The chart is a single element
-                buildSingleChart(chart, new VisItem[]{chart}, loc);
+                buildSingleChart(chart, i, new VisItem[]{chart}, loc);
             } else {
-                buildSingleChart(chart, items, loc);
+                buildSingleChart(chart, i, items, loc);
             }
 
         }
@@ -243,10 +243,10 @@ public abstract class AbstractBuilder implements Builder {
      * It is called before we start calling the <code>buildSingle(...)</code> calls that will define the
      * contents of this area
      *
+     * @param structure
      * @param location         The chart location in percentages, relative to overall location: [top, left, bottom, right\
-     * @return an id that identifies this visualization within the visualization system
      */
-    protected abstract String defineChart(double[] location);
+    protected abstract void defineChart(ChartStructure structure, double[] location);
 
     /**
      * This builds the data and reports the built data to the builder
@@ -310,7 +310,7 @@ public abstract class AbstractBuilder implements Builder {
             defineElement(structure);
             if (structure.vis.styles != null) {
                 StyleSheet styles = structure.vis.styles.replaceClass("currentElement", structure.getElementID());
-                visStyles.add(styles, currentChartID);
+                visStyles.add(styles, structure.chartStructure.getChartID());
             }
         } catch (Exception e) {
             throw VisException.makeBuilding(e, structure.vis);
@@ -329,10 +329,9 @@ public abstract class AbstractBuilder implements Builder {
     /**
      * Any final work needed to finish off the chart code
      *
-     * @param currentChartID
      * @param dependency
      */
-    protected abstract void endChart(String currentChartID, ChartStructure dependency);
+    protected abstract void endChart(ChartStructure dependency);
 
     private double squarifyDivergence(double[][] rects, int width, int height) {
         double sum = 0;

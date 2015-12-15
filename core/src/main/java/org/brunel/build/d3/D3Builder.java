@@ -112,9 +112,7 @@ public class D3Builder extends AbstractBuilder {
     }
 
     private ScriptWriter out;                   // Where to write code
-    private int chartIndex;                     // Current chart index
     private int visWidth, visHeight;            // Overall vis size
-    private String chartClass;                  // Current chart parent class
     private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
     private D3Interaction interaction;          // Builder for interactions
 
@@ -126,7 +124,6 @@ public class D3Builder extends AbstractBuilder {
         this.visWidth = width;
         this.visHeight = height;
         this.out = new ScriptWriter(options.readableJavascript);
-        this.chartIndex = 0;
 
         // Write the class definition function (and flag to use strict mode)
         out.add("function ", options.className, "(visId) {").ln().indentMore();
@@ -144,23 +141,22 @@ public class D3Builder extends AbstractBuilder {
         return options.visIdentifier;
     }
 
-    protected String defineChart(double[] location) {
+    protected void defineChart(ChartStructure structure, double[] location) {
 
-        chartClass = "chart" + (chartIndex + 1);
         double[] chartMargins = new double[]{
                 (visHeight * location[0] / 100), (visWidth * location[1] / 100),
                 (visHeight * (1 - location[2] / 100)), (visWidth * (1 - location[3] / 100))
         };
 
         // Write the class definition function
-        out.titleComment("Define chart #" + chartIndex, "in the visualization");
-        out.add("charts[" + chartIndex, "] = function() {").ln();
+        out.titleComment("Define chart #" + (structure.chartIndex+1), "in the visualization");
+        out.add("charts[" + structure.chartIndex, "] = function() {").ln();
         out.indentMore();
 
         // Define scales and geom (we need the scales to get axes sizes, which determines geom)
         double chartWidth = visWidth - chartMargins[1] - chartMargins[3];
         double chartHeight = visHeight - chartMargins[0] - chartMargins[2];
-        this.scalesBuilder = new D3ScaleBuilder(structure, chartWidth, chartHeight, out);
+        this.scalesBuilder = new D3ScaleBuilder(this.structure, chartWidth, chartHeight, out);
         double[] margins = scalesBuilder.marginsTLBR();
         out.add("var geom = BrunelD3.geometry(vis.node(),", chartMargins, ",", margins, ")").endStatement();
 
@@ -168,19 +164,19 @@ public class D3Builder extends AbstractBuilder {
         if (scalesBuilder.coords == VisTypes.Coordinates.transposed) out.add("geom.transpose()").endStatement();
 
         // Define the\is chart and its array of elements
-        out.add("var chart = charts[" + chartIndex + "], ")
+        out.add("var chart = charts[" + structure.chartIndex + "], ")
                 .add("elements = [];").at(50).comment("Array of elements in this chart");
 
         // Now build the main groups
         out.titleComment("Define groups for the chart parts");
-        interaction = new D3Interaction(structure, scalesBuilder, out);
-        writeMainGroups();
+        interaction = new D3Interaction(this.structure, scalesBuilder, out);
+        writeMainGroups(structure);
 
         // Define scales and access functions
-        if (structure.geo != null) {
+        if (this.structure.geo != null) {
             // Write the projection
             out.titleComment("Projection");
-            GeoMap.writeProjection(out, structure.geo);
+            GeoMap.writeProjection(out, this.structure.geo);
         } else {
             out.titleComment("Scales");
             scalesBuilder.writeCoordinateScales(interaction);
@@ -191,9 +187,6 @@ public class D3Builder extends AbstractBuilder {
                 scalesBuilder.writeAxes();
             }
         }
-
-        chartIndex++;
-        return chartClass;
     }
 
     protected void defineElement(ElementStructure structure) {
@@ -337,7 +330,7 @@ public class D3Builder extends AbstractBuilder {
         return controls;
     }
 
-    protected void endChart(String currentChartID, ChartStructure dependency) {
+    protected void endChart(ChartStructure dependency) {
         out.onNewLine().add("function build(time) {").indentMore();
         out.onNewLine().add("var first = elements[0].data() == null").endStatement();
         out.add("if (first) time = 0;").comment("No transition for first call");
@@ -415,14 +408,14 @@ public class D3Builder extends AbstractBuilder {
                 stackCommand, sortCommand, params.seriesCommand, params.usedCommand);
     }
 
-    private void writeMainGroups() {
+    private void writeMainGroups(ChartStructure structure) {
         String axesTransform = makeTranslateTransform("geom.inner_left", "geom.inner_top");
-        out.add("var chart = vis.append('g').attr('class', '" + chartClass + "')")
+        out.add("var chart = vis.append('g').attr('class', '" + structure.getChartID() + "')")
                 .addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
                 .endStatement();
         out.add("var interior = chart.append('g').attr('class', 'interior')")
                 .addChained(axesTransform)
-                .addChained("attr('clip-path', 'url(#" + clipID() + ")')")
+                .addChained("attr('clip-path', 'url(#" + clipID(structure) + ")')")
                 .endStatement();
 
         interaction.addPrerequisites();
@@ -433,7 +426,7 @@ public class D3Builder extends AbstractBuilder {
                 .addChained(makeTranslateTransform("geom.outer_width", "0")).endStatement();
 
         // Make the clip path for this: we expand by a pixel to avoid ugly cut-offs right at the edge
-        out.add("vis.append('clipPath').attr('id', '" + clipID() + "').append('rect')");
+        out.add("vis.append('clipPath').attr('id', '" + clipID(structure) + "').append('rect')");
         out.addChained("attr('x', -1).attr('y', -1)");
         if (scalesBuilder.coords == VisTypes.Coordinates.transposed)
             out.addChained("attr('width', geom.inner_height+2).attr('height', geom.inner_width+2)").endStatement();
@@ -455,8 +448,8 @@ public class D3Builder extends AbstractBuilder {
     }
 
     // returns an id that is unique to the chart and the visualization
-    private String clipID() {
-        return "clip_" + options.visIdentifier + "_" + chartIndex;
+    private String clipID(ChartStructure structure) {
+        return "clip_" + options.visIdentifier + "_" + structure.chartIndex;
     }
 
     private void addElementExports(VisSingle vis) {
