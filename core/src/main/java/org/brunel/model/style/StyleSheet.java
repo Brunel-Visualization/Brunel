@@ -134,7 +134,7 @@ public class StyleSheet {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return w.toString();
+        return w.toString().trim();
     }
 
     /**

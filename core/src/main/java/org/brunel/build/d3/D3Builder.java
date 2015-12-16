@@ -42,11 +42,11 @@ import java.util.Map;
  */
 public class D3Builder extends AbstractBuilder {
 
-    private static final String COPYRIGHT_COMMENTS = "<!--\n" +
-            "\tD3 Copyright \u00a9 2012, Michael Bostock\n" +
-            "\tjQuery Copyright © 2010 by The jQuery Project\n" +
-            "\tsumoselect Copyright © 2014 Hemant Negi\n " +
-            "-->\n";
+    private static final String COPYRIGHT_COMMENTS = "\t<!--\n" +
+            "\t\tD3 Copyright \u00a9 2012, Michael Bostock\n" +
+            "\t\tjQuery Copyright \u00a9 2010 by The jQuery Project\n" +
+            "\t\tsumoselect Copyright \u00a9 2014 Hemant Negi\n " +
+            "\t-->\n";
 
     /**
      * Return the required builder with default options
@@ -78,7 +78,7 @@ public class D3Builder extends AbstractBuilder {
 
     public String makeImports() {
 
-        String pattern = "<script src=\"%s\" charset=\"utf-8\"></script>\n";
+        String pattern = "\t<script src=\"%s\" charset=\"utf-8\"></script>\n";
 
         String base = COPYRIGHT_COMMENTS +
                 String.format(pattern, "http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js");
@@ -428,7 +428,7 @@ public class D3Builder extends AbstractBuilder {
     }
 
     public String makeStyleSheets() {
-        String pattern = "<link rel=\"stylesheet\" type=\"text/css\" href=\"%s\" charset=\"utf-8\"></script>\n";
+        String pattern = "\t<link rel=\"stylesheet\" type=\"text/css\" href=\"%s\" charset=\"utf-8\"/>\n";
 
         String base;
         if (options.localResources == null) {
