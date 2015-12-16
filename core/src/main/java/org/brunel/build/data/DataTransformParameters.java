@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.brunel.build;
+package org.brunel.build.data;
 
 /**
  * This structure is defined by the base builder and passed to abstract data building methods of that class.

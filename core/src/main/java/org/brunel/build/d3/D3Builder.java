@@ -18,7 +18,7 @@ package org.brunel.build.d3;
 
 import org.brunel.action.Param;
 import org.brunel.build.AbstractBuilder;
-import org.brunel.build.DataTransformParameters;
+import org.brunel.build.data.DataTransformParameters;
 import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.d3.diagrams.GeoMap;
@@ -377,7 +377,7 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().add("}()").endStatement().ln();
     }
 
-    protected DataTransformParameters modifyParameters(DataTransformParameters params, VisSingle vis) {
+    public DataTransformParameters modifyParameters(DataTransformParameters params, VisSingle vis) {
         String stackCommand = "";
         String sortCommand = params.sortCommand;
 

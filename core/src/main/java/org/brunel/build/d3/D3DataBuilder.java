@@ -17,7 +17,7 @@
 package org.brunel.build.d3;
 
 import org.brunel.action.Param;
-import org.brunel.build.DataTransformParameters;
+import org.brunel.build.data.DataTransformParameters;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;

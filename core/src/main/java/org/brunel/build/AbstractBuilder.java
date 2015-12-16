@@ -19,26 +19,17 @@ package org.brunel.build;
 import org.brunel.action.Param;
 import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.controls.Controls;
+import org.brunel.build.data.DataBuilder;
+import org.brunel.build.data.DataModifier;
 import org.brunel.build.element.ElementStructure;
 import org.brunel.build.util.BuilderOptions;
-import org.brunel.data.Data;
 import org.brunel.data.Dataset;
-import org.brunel.data.Field;
 import org.brunel.model.VisComposition;
 import org.brunel.model.VisException;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 import org.brunel.model.style.StyleSheet;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
 
 /**
  * The abstract builder does as much work as possible in building the visualizations. A descendant of this class
@@ -60,7 +51,7 @@ import java.util.Map;
  *
  * A builder may be called multiple times; every call to 'build' will reset the state and start from new
  */
-public abstract class AbstractBuilder implements Builder {
+public abstract class AbstractBuilder implements Builder, DataModifier {
 
     /**
      * Default layouts, in percent coordinates. The outer array indexes the total number of charts, and
@@ -143,8 +134,8 @@ public abstract class AbstractBuilder implements Builder {
         Dataset[] data = new Dataset[items.length];
         VisSingle[] elements = new VisSingle[items.length];
         for (int i = 0; i < items.length; i++) {
-            elements[i] = items[i].getSingle().resolve();                       // In future, will do nesting
-            data[i] = buildData(elements[i]);
+            elements[i] = items[i].getSingle().resolve();                               // In future, will do nesting
+            data[i] = new DataBuilder(elements[i], this).build();
         }
 
         this.structure = new ChartStructure(chart, chartIndex, elements, data);         // Characterize inter-element dependency
@@ -217,7 +208,6 @@ public abstract class AbstractBuilder implements Builder {
     // has a bounds definition
     private double[] getLocation(Param[] bounds) {
         double l = 0, t = 0, r = 100, b = 100;
-
         if (bounds != null && bounds.length > 0) l = bounds[0].asDouble();
         if (bounds != null && bounds.length > 1) t = bounds[1].asDouble();
         if (bounds != null && bounds.length > 2) r = bounds[2].asDouble();
@@ -244,63 +234,9 @@ public abstract class AbstractBuilder implements Builder {
      * contents of this area
      *
      * @param structure
-     * @param location         The chart location in percentages, relative to overall location: [top, left, bottom, right\
+     * @param location  The chart location in percentages, relative to overall location: [top, left, bottom, right\
      */
     protected abstract void defineChart(ChartStructure structure, double[] location);
-
-    /**
-     * This builds the data and reports the built data to the builder
-     *
-     * @param vis from this we will take all the data commands and the base source data
-     * @return built dataset
-     */
-    private Dataset buildData(VisSingle vis) {
-        String constantsCommand = makeConstantsCommand(vis);
-        String filterCommand = makeFilterCommands(vis);
-        String binCommand = makeTransformCommands(vis);
-        String summaryCommand = buildSummaryCommands(vis);
-        String sortCommand = makeFieldCommands(vis.fSort);
-        String seriesYFields = makeSeriesCommand(vis);
-        String usedFields = required(vis.usedFields(true));
-
-        DataTransformParameters params = new DataTransformParameters(constantsCommand,
-                filterCommand, binCommand, summaryCommand, "", sortCommand, seriesYFields,
-                usedFields);
-
-        // Call the engine to see if it has any special needs
-        params = modifyParameters(params, vis);
-
-        Dataset data = vis.getDataset();                                                // The data to use
-        data = data.addConstants(params.constantsCommand);                              // add constant fields
-        data = data.filter(params.filterCommand);                                       // filter data
-        data = data.bin(params.transformCommand);                                       // bin data
-        data = data.summarize(params.summaryCommand);                                   // summarize data
-        data = data.series(params.seriesCommand);                                       // convert series
-        data = data.sort(params.sortCommand);                                           // sort data
-        data = data.stack(params.stackCommand);                                         // stack data
-        data.set("parameters", params);                                                 // Params used to build this
-        return data;
-    }
-
-    private String makeSeriesCommand(VisSingle vis) {
-        // Only have a series for 2+ y fields
-
-        if (vis.fY.size() < 2) return "";
-        /*
-            The command is of the form:
-                    y1, y2, y3; a1, a2
-            Where the fields y1 ... are the fields to makes the series
-            and the additional fields a1... are ones required to be kept as-is.
-            #series and #values are always generated, so need to retain them additionally
-        */
-
-        LinkedHashSet<String> keep = new LinkedHashSet<String>();
-        for (Param p : vis.fX) keep.add(p.asString());
-        Collections.addAll(keep, vis.nonPositionFields());
-        keep.remove("#series");
-        keep.remove("#values");
-        return Data.join(vis.fY) + ";" + Data.join(keep);
-    }
 
     // Builds controls as needed, then the custom styles, then the visualization
     private void buildElement(ElementStructure structure) {
@@ -316,7 +252,6 @@ public abstract class AbstractBuilder implements Builder {
             throw VisException.makeBuilding(e, structure.vis);
         }
     }
-
 
     /**
      * Any final work needed to finish off the vis code
@@ -344,179 +279,6 @@ public abstract class AbstractBuilder implements Builder {
         }
         return sum;
     }
-
-    private String makeConstantsCommand(VisSingle vis) {
-        List<String> toAdd = new ArrayList<String>();
-        for (String f : vis.usedFields(false)) {
-            if (!f.startsWith("#") && vis.getDataset().field(f) == null) {
-                // Field does not exist -- assume it is a constant and add it
-                toAdd.add(f);
-            }
-        }
-        return Data.join(toAdd, "; ");
-    }
-
-    private String makeFilterCommands(VisSingle vis) {
-        List<String> commands = new ArrayList<String>();
-
-        // All position fields must be valid -- filter if not
-        String[] pos = vis.positionFields();
-        for (String s : pos) {
-            Field f = vis.getDataset().field(s);
-            if (f == null) continue;        // May have been added as a constant -- no need to filter
-            if (f.numericProperty("valid") < f.rowCount())
-                commands.add(s + " valid");
-        }
-
-        for (Map.Entry<Param, String> e : vis.fTransform.entrySet()) {
-            String operation = e.getValue();
-            Param key = e.getKey();
-            String name = getParameterFieldValue(vis, key);
-            Field f = vis.getDataset().field(name);
-            int N;
-            if (f == null) {
-                // The field must be a constant or created field -- get length from data set
-                N = vis.getDataset().rowCount();
-            } else {
-                name = f.name;              // Make sure we use the canonical (not lax) name
-                N = f.valid();              // And we can use the valid ones
-            }
-
-            if (name.equals("#row")) {
-                // Invert 'top' and 'bottom' as row #1 is the top one, not the bottom
-                if (operation.equals("top")) operation = "bottom";
-                else if (operation.equals("bottom")) operation = "top";
-            }
-
-            int n = getParameterIntValue(key, 10);
-            if (operation.equals("top"))
-                commands.add(name + " ranked 1," + n);
-            else if (operation.equals("bottom")) {
-                commands.add(name + " ranked " + (N - n) + "," + N);
-            } else if (operation.equals("inner")) {
-                commands.add(name + " ranked " + n + "," + (N - n));
-            } else if (operation.equals("outer")) {
-                commands.add(name + " !ranked " + n + "," + (N - n));
-            }
-        }
-
-        return Data.join(commands, "; ");
-    }
-
-    private String getParameterFieldValue(VisSingle vis, Param param) {
-
-        if (param != null && param.isField()) {
-            // Usual case of a field specified
-            return param.asField();
-        } else {
-            // Try Y fields then aesthetic fields
-            if (vis.fY.size() == 1) {
-                String s = vis.fY.get(0).asField();
-                if (!s.startsWith("'") && !s.startsWith("#")) return s;       // If it's a real field
-            }
-            if (vis.aestheticFields().length > 0) return vis.aestheticFields()[0];
-            return "#row";      // If all else fails
-        }
-    }
-
-    protected int getParameterIntValue(Param param, int defaultValue) {
-        if (param == null) return defaultValue;
-        if (param.isField()) {
-            // The parameter is a field, so we examine the modifier for the int value
-            return getParameterIntValue(param.firstModifier(), defaultValue);
-        } else {
-            // The parameter is a value
-            return (int) param.asDouble();
-        }
-    }
-
-    private String makeFieldCommands(List<Param> params) {
-        String[] commands = new String[params.size()];
-        for (int i = 0; i < params.size(); i++) {
-            Param p = params.get(i);
-            String s = p.asField();
-            if (p.hasModifiers())
-                commands[i] = s + ":" + p.firstModifier().asString();
-            else
-                commands[i] = s;
-        }
-        return Data.join(commands, "; ");
-    }
-
-    private String buildSummaryCommands(VisSingle item) {
-        Map<String, String> spec = new HashMap<String, String>();
-
-        // We must account for all of these except for the special fields series and values
-        // As they will be handled later
-        HashSet<String> fields = new HashSet<String>(Arrays.asList(item.usedFields(false)));
-        fields.remove("#series");
-        fields.remove("#values");
-
-        // Add the summary measures
-        for (Map.Entry<Param, String> e : item.fSummarize.entrySet()) {
-            Param p = e.getKey();
-            String name = p.asField();
-            String measure = e.getValue();
-            if (p.hasModifiers()) measure += ":" + p.firstModifier().asString();
-            spec.put(name, name + ":" + measure);
-            fields.remove(name);
-        }
-
-        // Add all color used fields in as dimensions (factors)
-        for (String s : fields) {
-            // Count is an implicit summary
-            if (s.equals("#count"))
-                spec.put(s, s + ":sum");
-            else
-                spec.put(s, s);
-        }
-
-        // X fields are used for the percentage bases
-        for (Param s : item.fX) spec.put(s.asField(), s.asField() + ":base");
-
-        // Return null if summary is not called for
-        if (spec.containsKey("#count") || item.fSummarize.size() > 0) {
-            String[] result = new String[spec.size()];
-            int n = 0;
-            for (Map.Entry<String, String> e : spec.entrySet())
-                result[n++] = e.getKey() + "=" + e.getValue();
-            return Data.join(result, "; ");
-        } else
-            return "";
-    }
-
-    /*
-        Builds the command to transform fields without summarizing -- ranks, bin, inside and outside
-        The commands look like this:
-            salary=bin:10; age=rank; education=outside:90
-     */
-    private String makeTransformCommands(VisSingle item) {
-        if (item.fTransform.isEmpty()) return "";
-        StringBuilder b = new StringBuilder();
-        for (Map.Entry<Param, String> e : item.fTransform.entrySet()) {
-            Param p = e.getKey();
-            String name = p.asField();
-            String measure = e.getValue();
-            if (measure.equals("bin") || measure.equals("rank")) {
-                if (p.hasModifiers()) measure += ":" + p.firstModifier().asString();
-                if (b.length() > 0) b.append("; ");
-                b.append(name).append("=").append(measure);
-            }
-        }
-        return b.toString();
-    }
-
-    private String required(String[] fields) {
-        List<String> result = new ArrayList<String>();
-        Collections.addAll(result, fields);
-        // ensure we always have #row and #count
-        if (!result.contains("#row")) result.add("#row");
-        if (!result.contains("#count")) result.add("#count");
-        return Data.join(result, "; ");
-    }
-
-    /* Do any further processing and return the transformed data set */
-    protected abstract DataTransformParameters modifyParameters(DataTransformParameters params, VisSingle vis);
 
     /* Adds an 'element' in GoG terms -- a bar, line, point, etc. */
     protected abstract void defineElement(ElementStructure structure);
