@@ -30,6 +30,8 @@ import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -43,11 +45,21 @@ import java.util.Map;
  * Write the Javascript for the data
  */
 public class D3DataBuilder {
+
+
+
     public static void writeTables(VisItem main, ScriptWriter out, BuilderOptions options) {
         if (options.includeData == BuilderOptions.DataMethod.none) return;
         if (options.includeData == BuilderOptions.DataMethod.minimal) {
             throw new UnsupportedOperationException("Cannot make minimal data yet");
         }
+
+        out.titleComment("Data Tables");
+
+        NumberFormat format = new DecimalFormat();
+        format.setGroupingUsed(false);
+        format.setMinimumFractionDigits(0);
+        format.setMaximumFractionDigits(8);
 
         Dataset[] datasets = main.getDataSets();
         for (int d = 0; d < datasets.length; d++) {
@@ -71,7 +83,6 @@ public class D3DataBuilder {
 
             // Name the table with a numeric suffix for multiple tables
             out.onNewLine().add("var", String.format(options.dataName, d + 1), "= [").ln().indentMore();
-            int numPerLine = 12 / Math.max(1, Math.max(1, fields.length));
             out.add("[");
             for (int i = 0; i < fields.length; i++) {
                 String name = fields[i].name;
@@ -79,11 +90,15 @@ public class D3DataBuilder {
                 if (i > 0) out.add(", ");
                 out.add("'").add(name).add("'");
             }
-            out.add("],");
+            out.add("], ");
             for (int r = 0; r < data.rowCount(); r++) {
                 if (r > 0) out.add(",");
-                if ((r + 1) % numPerLine == 0) out.onNewLine();
-                out.add(makeRowText(fields, r));
+                String rowText = makeRowText(fields, r, format);
+                if (out.currentColumn() + rowText.length() > 99)
+                    out.onNewLine();
+                else if (r > 0)
+                    out.add(" ");
+                out.add(rowText);
             }
             out.indentLess().onNewLine().add("]").endStatement();
         }
@@ -105,7 +120,7 @@ public class D3DataBuilder {
     }
 
     // If the row contains any nulls, return null for the whole row
-    private static String makeRowText(Field[] fields, int r) {
+    private static String makeRowText(Field[] fields, int r, NumberFormat format) {
         StringBuilder row = new StringBuilder();
         D3Util.DateBuilder dateBuilder = new D3Util.DateBuilder();
         row.append("[");
@@ -120,12 +135,12 @@ public class D3DataBuilder {
                 row.append(Data.quote(value.toString()));
             } else if (field.isDate()) {
                 Date date = Data.asDate(value);
-                if (date == null) return null;
-                row.append(dateBuilder.make(date, (DateFormat) field.property("dateFormat"), false));
+                if (date == null) row.append("null");
+                else row.append(dateBuilder.make(date, (DateFormat) field.property("dateFormat"), false));
             } else if (field.isNumeric()) {
                 Double d = Data.asNumeric(value);
-                if (d == null) return null;
-                row.append(d.toString());
+                if (d == null) row.append("null");
+                else row.append(format.format(d));
             } else
                 row.append(Data.quote(value.toString()));
         }
@@ -149,7 +164,7 @@ public class D3DataBuilder {
         out.onNewLine().ln().add("function makeData() {").ln().indentMore();
         writeDataTransforms();
         writeHookup(requiredFields);
-        out.indentLess().onNewLine().add("}").endStatement().ln();
+        out.indentLess().onNewLine().add("}").ln();
     }
 
     private void writeDataTransforms() {

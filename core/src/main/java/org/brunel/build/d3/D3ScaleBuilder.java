@@ -348,7 +348,7 @@ public class D3ScaleBuilder {
             if (vAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
         }
-        out.indentLess().add("}").endStatement().ln();
+        out.indentLess().add("}").ln();
     }
 
     private void addRotateTicks() {

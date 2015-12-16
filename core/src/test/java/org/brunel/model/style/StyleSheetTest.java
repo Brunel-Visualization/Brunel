@@ -42,7 +42,7 @@ public class StyleSheetTest {
                 ".c {\n" +
                 "\tx: 2;\n" +
                 "\tz: 4;\n" +
-                "}\n", sheet.toString());
+                "}", sheet.toString());
 
         String output = StyleFactory.instance().makeStyleSheet(SAMPLE).toString("top");
         assertTrue(output.startsWith("top * {"));

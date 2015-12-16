@@ -35,10 +35,9 @@ class Network extends D3Diagram {
     }
 
     public void writeBuildCommands() {
-        out.onNewLine().add("if (first) {").indentMore();
-        out.onNewLine().add("BrunelD3.network(d3.layout.force(), graph, elements[" + nodes.index
-                + "], elements[" + edges.index + "], geom)").endStatement();
-        out.indentLess().onNewLine().add("}");
+        out.onNewLine().add("if (first) ")
+                .add("BrunelD3.network(d3.layout.force(), graph, elements[" + nodes.index
+                        + "], elements[" + edges.index + "], geom)").endStatement();
     }
 
     public void writePerChartDefinitions() {
@@ -54,16 +53,17 @@ class Network extends D3Diagram {
 
         out.add("graph = BrunelData.diagram_Graph.make(processed,", nodeField, ",",
                 edgeDataset, ",", a, ",", b, ")").endStatement();
+        out.ln();
         makeLayout();
+        out.ln();
         return ElementDetails.makeForDiagram("graph.nodes", "circle", "point", "box", false);
     }
 
     private void makeLayout() {
         out.comment("Initial Circle Layout")
-                .add("var r1 = geom.inner_width/2, r2 = geom.inner_height/2,").onNewLine()
-                .add("a, i, N = graph.nodes.length").endStatement()
-                .add("for(i=0; i<N; i++) { a = Math.PI*2*i/N; graph.nodes[i].x = r1 + 0.75*r1*Math.cos(a); graph.nodes[i].y = r2 + 0.75*r2*Math.sin(a) }")
-                .endStatement();
+                .add("var h = geom.inner_width/2, v = geom.inner_height/2, a, i, N = graph.nodes.length").endStatement()
+                .add("for(i=0; i<N; i++) { a = Math.PI*2*i/N; graph.nodes[i].x = h + h*Math.cos(a)/2; graph.nodes[i].y = v + v*Math.sin(a)/2 }")
+                .ln();
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {

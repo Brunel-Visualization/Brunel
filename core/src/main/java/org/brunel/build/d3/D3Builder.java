@@ -176,10 +176,8 @@ public class D3Builder extends AbstractBuilder {
         out.add("elements[" + structure.index + "] = function() {").indentMore();
         out.onNewLine().add("var original, processed,").at(40).comment("data sets passed in and then transformed")
                 .indentMore()
-                .onNewLine().add("element,").at(40).comment("Brunel element information")
-                .onNewLine().add("data, layout,").at(40).comment("Brunel data and layout method")
-                .onNewLine().add("d3Data, d3Layout,").at(40).comment("D3 versions")
-                .onNewLine().add("selection;").at(40).comment("D3 selection")
+                .onNewLine().add("element, data,").at(40).comment("Brunel element information and brunel data")
+                .onNewLine().add("d3Data, selection;").at(40).comment("D3 version of data and D3 selection")
                 .indentLess();
 
         // Add data variables used throughout
@@ -202,7 +200,7 @@ public class D3Builder extends AbstractBuilder {
         out.add("function build(transitionMillis) {").ln().indentMore();
         elementBuilder.generate(structure.index);
         interaction.addElementHandlers(structure.vis);
-        out.indentLess().onNewLine().add("}").endStatement().ln();
+        out.indentLess().onNewLine().add("}").ln().ln();
 
         // Expose the methods and variables we want the user to have access to
         addElementExports(vis);
@@ -242,7 +240,7 @@ public class D3Builder extends AbstractBuilder {
             out.add("{").indentMore();
             for (int i : order)
                 out.onNewLine().add("elements[" + i + "].makeData();");
-            out.indentLess().onNewLine().add("}").endStatement();
+            out.indentLess().onNewLine().add("}").ln();
         } else {
             out.add("elements[0].makeData()").endStatement();
         }
@@ -251,13 +249,11 @@ public class D3Builder extends AbstractBuilder {
 
         for (D3ElementBuilder builder : elementBuilders) builder.writeBuildCommands();
 
-        out.indentLess().onNewLine().add("}").endStatement().ln();
+        out.indentLess().onNewLine().add("}").ln();
 
-        out.comment("Expose the following components of the chart");
-        out.add("return {").indentMore()
-                .onNewLine().add("build : build,")
-                .onNewLine().add("elements : elements")
-                .onNewLine().indentLess().add("}").endStatement();
+        out.ln().comment("Expose the following components of the chart");
+        out.add("return { build : build, elements : elements }").endStatement();
+
         // Finish the chart method
         out.indentLess().add("}()").endStatement().ln();
     }
@@ -265,19 +261,13 @@ public class D3Builder extends AbstractBuilder {
     protected void endVisSystem(VisItem main) {
 
         // Define visualization functions
-        out.titleComment("Expose the needed Visualization functions and fields");
-        out.add("function setData(rowData, i) { datasets[i||0] = BrunelData.Dataset.makeFromRows(rowData) }").endStatement();
-        out.add("function getData(i) { return datasets[i||0] }").endStatement();
-
-        out.add("function buildSystem() {").ln().indentMore()
+        out.add("function setData(rowData, i) { datasets[i||0] = BrunelData.Dataset.makeFromRows(rowData) }").ln();
+        out.add("function updateAll(time)     { charts.forEach(function(x) {x.build(time || 20)}) }").ln();
+        out.add("function buildAll() {").ln().indentMore()
                 .add("for (var i=0;i<arguments.length;i++) setData(arguments[i], i)").endStatement()
-                .add("charts.forEach(function(x) {x.build(transitionTime)})").endStatement();
-        out.ln().indentLess().add("}").endStatement().ln();
+                .add("updateAll(transitionTime)").endStatement();
+        out.indentLess().add("}").ln().ln();
 
-        out.add("function rebuildSystem(time) {").ln().indentMore()
-                .add("time = (time == null) ? 20 : time").endStatement()
-                .add("charts.forEach(function(x) {x.build(time)})").endStatement();
-        out.ln().indentLess().add("}").endStatement().ln();
 
         // Return the important items
         out.add("return {").indentMore().ln()
@@ -285,13 +275,13 @@ public class D3Builder extends AbstractBuilder {
                 .add("dataPostProcess:").at(24).add("function(f) { if (f) post = f; return post },").ln()
                 .add("data:").at(24).add("function(d,i) { if (d) setData(d,i); return datasets[i||0] },").ln()
                 .add("visId:").at(24).add("visId,").ln()
-                .add("build:").at(24).add("buildSystem,").ln()
-                .add("rebuild:").at(24).add("rebuildSystem,").ln()
+                .add("build:").at(24).add("buildAll,").ln()
+                .add("rebuild:").at(24).add("updateAll,").ln()
                 .add("charts:").at(24).add("charts").ln()
-                .indentLess().add("}").endStatement();
+                .indentLess().add("}").ln();
 
         // Finish the outer class definition
-        out.indentLess().onNewLine().add("}").endStatement();
+        out.indentLess().onNewLine().add("}").ln();
 
         // Create the initial raw data table
         D3DataBuilder.writeTables(main, out, options);
@@ -374,6 +364,7 @@ public class D3Builder extends AbstractBuilder {
         out.onNewLine().add("makeData:").at(24).add("makeData,");
         out.onNewLine().add("build:").at(24).add("build,");
         out.onNewLine().add("fields: {").indentMore();
+        out.mark();
         writeFieldName("x", vis.fX);
         writeFieldName("y", vis.fY);
         writeFieldName("color", vis.fColor);
@@ -393,10 +384,11 @@ public class D3Builder extends AbstractBuilder {
     }
 
     private void writeFieldName(String name, List<Param> fieldNames) {
+        if (fieldNames.isEmpty()) return;
+        if (out.changedSinceMark()) out.add(",");
         List<String> names = new ArrayList<String>();
         for (Param p : fieldNames) names.add(p.asField());
-        if (!fieldNames.isEmpty())
-            out.onNewLine().add(name, ":").at(24).add("[").addQuotedCollection(names).add("],");
+        out.onNewLine().add(name, ":").at(24).add("[").addQuotedCollection(names).add("]");
     }
 
     private void writeMainGroups(ChartStructure structure) {
