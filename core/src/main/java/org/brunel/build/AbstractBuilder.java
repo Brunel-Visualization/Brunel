@@ -16,7 +16,7 @@
 
 package org.brunel.build;
 
-import org.brunel.action.Param;
+import org.brunel.build.chart.ChartLayout;
 import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.data.DataBuilder;
@@ -53,21 +53,8 @@ import org.brunel.model.style.StyleSheet;
  */
 public abstract class AbstractBuilder implements Builder, DataModifier {
 
-    /**
-     * Default layouts, in percent coordinates. The outer array indexes the total number of charts, and
-     * the next one indexes the chart within the order. The charts are assumed to be in importance order,
-     * so the areas of the charts are decreasing. Layout coords are top, left, bottom, right
-     */
-    private static final double[][][] LAYOUTS = new double[][][]{
-            {{0, 0, 100, 100}},                                                                          // One chart
-            {{0, 0, 100, 50}, {0, 50, 100, 100}},                                                        // Two charts
-            {{0, 0, 100, 50}, {0, 50, 50, 100}, {50, 50, 100, 100}},                                     // Three charts
-            {{0, 0, 50, 50}, {0, 50, 50, 100}, {50, 0, 100, 50}, {50, 50, 100, 100}},                    // Four charts
-    };
-
     protected final BuilderOptions options;
     protected Controls controls;                    // Contains the controls for the current chart
-//    protected ChartStructure structure;             // Structure of the chart currently being built
     private StyleSheet visStyles;                   // Collection of style overrides for this visualization
 
     public AbstractBuilder(BuilderOptions options) {
@@ -84,14 +71,12 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
      */
     public final void build(VisItem main, int width, int height) {
 
-        // Clear existing collections
+        // Clear existing collections and prepare for new controls
         visStyles = new StyleSheet();
+        controls = new Controls(options);
 
         // Create the main visualization area
         defineVisSystem(main, width, height);
-
-        // Set the Controls to be ready for util
-        controls = new Controls(options);
 
         // The build process for each item is the same, regardless of composition method:
         // - calculate the location for it relative to the defined space
@@ -107,9 +92,9 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
             if (compositionMethod == VisTypes.Composition.tile) {
                 // We define a set of charts and build them, tiling them into the space.
                 buildTiledCharts(width, height, main.children());
-                // If we have a set of compositions, they are placed into the whole area
             } else if (compositionMethod == VisTypes.Composition.overlay) {
-                double[] loc = getLocation(findFirstBounds(main));
+                // If we have a set of compositions, they are placed into the whole area
+                double[] loc = new ChartLayout(width, height, main).getLocation(0);
                 buildSingleChart(main, 0, main.children(), loc);
             } else if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
                 // Nesting not yet implemented, so simply util the first element and pretend it is tiled
@@ -202,28 +187,11 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
 
     /* Build independent charts tiled into the same display area */
     private void buildTiledCharts(int width, int height, VisItem[] charts) {
-        // Count the number of unplaced charts (those without bounds definition)
-        int nUnplacedCharts = 0;
-        for (VisItem chart : charts)
-            if (findFirstBounds(chart) == null) nUnplacedCharts++;
+        ChartLayout layout = new ChartLayout(width, height, charts);
 
-        // Layout for all unplaced charts
-
-        int unplacedCount = 0;
         for (int i = 0; i < charts.length; i++) {
             VisItem chart = charts[i];
-            Param[] bounds = findFirstBounds(chart);
-
-            double[] loc;
-            if (bounds == null) {
-                // No bounds are given, so use the values from the pattern
-                double[][] layout = squarify(LAYOUTS[Math.min(nUnplacedCharts - 1, 3)], width, height);
-                loc = layout[unplacedCount++];
-            } else {
-                // Bounds are given so use them
-                loc = getLocation(bounds);
-            }
-
+            double[] loc = layout.getLocation(i);
             VisItem[] items = chart.children();
             if (items == null) {
                 // The chart is a single element
@@ -235,49 +203,6 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         }
     }
 
-    private Param[] findFirstBounds(VisItem chart) {
-        // Find the first item in the chart that has a bounds defined
-        if (chart.children() == null) {
-            return chart.getSingle().bounds;
-        } else {
-            for (VisItem v : chart.children()) {
-                Param[] result = findFirstBounds(v);
-                if (result != null) return result;
-            }
-        }
-        return null;
-    }
 
-    // Calculate the location for the bounds of the chart. We search the children and return the first one that
-    // has a bounds definition
-    private double[] getLocation(Param[] bounds) {
-        double l = 0, t = 0, r = 100, b = 100;
-        if (bounds != null && bounds.length > 0) l = bounds[0].asDouble();
-        if (bounds != null && bounds.length > 1) t = bounds[1].asDouble();
-        if (bounds != null && bounds.length > 2) r = bounds[2].asDouble();
-        if (bounds != null && bounds.length > 3) b = bounds[3].asDouble();
-        return new double[]{t, l, b, r};
-    }
-
-    /* Swap dimensions if it makes the charts closer to the golden ration (1.62) */
-    private double[][] squarify(double[][] layout, int width, int height) {
-        double[][] alternate = new double[layout.length][];
-        for (int i = 0; i < layout.length; i++)
-            alternate[i] = new double[]{layout[i][1], layout[i][0], layout[i][3], layout[i][2]};
-        return squarifyDivergence(alternate, width, height) < squarifyDivergence(layout, width, height)
-                ? alternate : layout;
-    }
-
-    private double squarifyDivergence(double[][] rects, int width, int height) {
-        double sum = 0;
-        // Calculate weighted sum of divergence from the golden ratio
-        for (double[] r : rects) {
-            double h = Math.abs(r[1] - r[3]) * width;
-            double v = Math.abs(r[0] - r[2]) * height;
-            double div = (h / v - 1.62);
-            sum += Math.sqrt(h * v) * div * div;
-        }
-        return sum;
-    }
 
 }

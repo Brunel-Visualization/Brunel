@@ -44,6 +44,7 @@ public class ChartStructure {
     public final GeoInformation geo;
     public final ElementStructure[] elementStructure;
     private final Set<VisSingle> linked = new LinkedHashSet<VisSingle>();
+
     public ChartStructure(VisItem chart, int chartIndex, VisSingle[] elements, Dataset[] data) {
         this.chartIndex = chartIndex;
         this.elements = elements;
@@ -150,7 +151,4 @@ public class ChartStructure {
         throw new IllegalStateException("Could not find other VisSingle element");
     }
 
-    public VisSingle sourceElement() {
-        return sourceIndex < 0 ? null : elements[sourceIndex];
-    }
 }
