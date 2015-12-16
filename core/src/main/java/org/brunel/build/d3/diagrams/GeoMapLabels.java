@@ -102,7 +102,10 @@ public class GeoMapLabels extends D3Diagram {
         out.add("labelSel");
         out.addChained("attr('transform', projectTransform)");
         out.endStatement();
+    }
 
+    public boolean needsDiagramLabels() {
+        return true;
     }
 
     public void writeDiagramEnter() {

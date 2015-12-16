@@ -112,6 +112,10 @@ public class D3ScaleBuilder {
         marginTLBR = new double[]{marginTop, marginLeft, marginBottom, marginRight};
     }
 
+    public boolean needsLegends() {
+        return colorLegendField != null;
+    }
+
     private VisTypes.Coordinates makeCombinedCoords() {
         // For diagrams, we set the coords to polar for the chord chart and clouds, and centered for networks
         if (structure.diagram == VisTypes.Diagram.chord || structure.diagram == VisTypes.Diagram.cloud)
@@ -174,7 +178,7 @@ public class D3ScaleBuilder {
     }
 
     private int legendWidth() {
-        if (colorLegendField == null) return 0;
+        if (!needsLegends()) return 0;
         AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical());
         int spaceNeededForTicks = 32 + legendAxis.maxCategoryWidth();
         int spaceNeededForTitle = colorLegendField.label.length() * 7;                // Assume 7 pixels per character

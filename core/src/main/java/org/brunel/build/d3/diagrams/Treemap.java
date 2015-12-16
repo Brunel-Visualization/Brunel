@@ -53,4 +53,8 @@ class Treemap extends D3Diagram {
         labelBuilder.addTreeInternalLabels(details, "box");
         addAestheticsAndTooltips(details, true);
     }
+
+    public boolean needsDiagramLabels() {
+        return true;
+    }
 }

@@ -88,14 +88,26 @@ class D3ElementBuilder {
         out.addChained("style('opacity', 0.5).remove()").endStatement();
     }
 
+    public boolean needsDiagramExtras() {
+        return diagram != null && diagram.needsDiagramExtras();
+    }
+
+    public boolean needsDiagramLabels() {
+        return diagram != null && diagram.needsDiagramLabels();
+    }
+
     public void writeBuildCommands() {
         if (diagram != null) diagram.writeBuildCommands();
+    }
+
+    public void writePerChartDefinitions() {
+        if (diagram != null) diagram.writePerChartDefinitions();
     }
 
     private ElementDetails makeDetails() {
         // When we create diagrams this has the side effect of writing the data calls needed
         if (structure.isGraphEdge()) {
-            return ElementDetails.makeForDiagram("chart.graph.links", "line", "edge", "box", false);
+            return ElementDetails.makeForDiagram("graph.links", "line", "edge", "box", false);
         } else if (diagram == null)
             return ElementDetails.makeForCoordinates(vis, getSymbol());
         else
@@ -352,8 +364,8 @@ class D3ElementBuilder {
 
         if (structure.isGraphEdge()) {
             // These are edges in a network layout
-            dim.left = "function(d) { return scale_" + dimName + "(d.source." + dimName + ") }";
-            dim.right = "function(d) { return scale_" + dimName + "(d.target." + dimName + ") }";
+            dim.left = "function(d) { return d.source." + dimName + " }";
+            dim.right = "function(d) { return d.target." + dimName + " }";
         } else if (structure.dependent) {
             // Use the keys to get the X and Y locations from other items
             if (keys.length == 1) {

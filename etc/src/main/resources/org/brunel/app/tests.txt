@@ -95,6 +95,7 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - whiskey   / bubble color(#count) size(#count) sort(#count) label(brand:1) | bubble color(#count) size(#count) sort(#count:ascending) label(brand:1) :: pass :: Two different sort orders
 - simple  / x(#row) y('reds') color(#row:reds) axes(y) legends(none) + x(#row) y('red') color(#row:red) legends(none) + x(#row) y('blues-reds') color(#row:[blues, reds]) legends(none) + x(#row) y('blue-red') color(#row:[blue, red]) legends(none)  + x(#row) y('blue-black-red') color(#row:[blue, black, red]) legends(none) + x(#row) y('nominal') color(#row:nominal) legends(none) + x(#row) y('w-w-w-c-m') color(#row:[#ffffff, #ffffff, #ffffff, cyan, magenta]) legends(none) :: pass
 
+- simple    / data('raw:A,B;a,b;a,c;a,d;b,c;a,e;e,f') edge key(A, B) + data('raw:I;a;b;c;d;e;f;g') network color(I) key(I) legends(none) style('fill-opacity:1') :: pass
 
 #### Note
 

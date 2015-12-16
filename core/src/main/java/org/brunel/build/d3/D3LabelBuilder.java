@@ -184,7 +184,6 @@ public class D3LabelBuilder {
         out.endStatement();
 
         out.add("treeLabels.exit().remove()").endStatement();
-
     }
 
     public boolean needed() {

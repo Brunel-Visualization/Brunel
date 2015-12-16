@@ -36,9 +36,13 @@ class Network extends D3Diagram {
 
     public void writeBuildCommands() {
         out.onNewLine().add("if (first) {").indentMore();
-        out.onNewLine().add("BrunelD3.network(d3.layout.force(), chart.graph, elements[" + nodes.index
+        out.onNewLine().add("BrunelD3.network(d3.layout.force(), graph, elements[" + nodes.index
                 + "], elements[" + edges.index + "], geom)").endStatement();
         out.indentLess().onNewLine().add("}");
+    }
+
+    public void writePerChartDefinitions() {
+        out.add("var graph;").at(50).comment("Graph used for nodes and links");
     }
 
     public ElementDetails writeDataConstruction() {
@@ -48,17 +52,17 @@ class Network extends D3Diagram {
         String a = quoted(edges.vis.fKeys.get(0).asField(edges.data));
         String b = quoted(edges.vis.fKeys.get(1).asField(edges.data));
 
-        out.add("chart.graph = BrunelData.diagram_Graph.make(processed,", nodeField, ",",
+        out.add("graph = BrunelData.diagram_Graph.make(processed,", nodeField, ",",
                 edgeDataset, ",", a, ",", b, ")").endStatement();
         makeLayout();
-        return ElementDetails.makeForDiagram("chart.graph.nodes", "circle", "point", "box", false);
+        return ElementDetails.makeForDiagram("graph.nodes", "circle", "point", "box", false);
     }
 
     private void makeLayout() {
         out.comment("Initial Circle Layout")
-                .add("var g = chart.graph, r1 = geom.inner_width/2, r2 = geom.inner_height/2,").onNewLine()
-                .add("a, i, N = g.nodes.length").endStatement()
-                .add("for(i=0; i<N; i++) { a = Math.PI*2*i/N; g.nodes[i].x = r1 + 0.75*r1*Math.cos(a); g.nodes[i].y = r2 + 0.75*r2*Math.sin(a) }")
+                .add("var r1 = geom.inner_width/2, r2 = geom.inner_height/2,").onNewLine()
+                .add("a, i, N = graph.nodes.length").endStatement()
+                .add("for(i=0; i<N; i++) { a = Math.PI*2*i/N; graph.nodes[i].x = r1 + 0.75*r1*Math.cos(a); graph.nodes[i].y = r2 + 0.75*r2*Math.sin(a) }")
                 .endStatement();
     }
 

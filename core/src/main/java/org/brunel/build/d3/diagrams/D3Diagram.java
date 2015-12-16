@@ -79,6 +79,16 @@ public abstract class D3Diagram {
         return "'" + (isHierarchy ? classes + " hierarchy" : classes) + "'";
     }
 
+    public boolean needsDiagramExtras() {
+        // By default, no extras needed
+        return false;
+    }
+
+    public boolean needsDiagramLabels() {
+        // By default, no labels needed
+        return false;
+    }
+
     public void preBuildDefinitions() {
         // By default, do nothing
     }
@@ -94,6 +104,10 @@ public abstract class D3Diagram {
     public void writeDiagramEnter() {
         // By default, nothing is needed
         out.endStatement();
+    }
+
+    public void writePerChartDefinitions() {
+        // By Default, do nothing
     }
 
     public void writePreDefinition(ElementDetails details, ElementDefinition elementDef) {

@@ -88,6 +88,10 @@ class Chord extends D3Diagram {
                 .endStatement();
     }
 
+    public boolean needsDiagramExtras() {
+        return true;
+    }
+
     public void writeDiagramEnter() {
         // Ensure we have a row for each chord, based off the chord start and end points
         out.endStatement();
