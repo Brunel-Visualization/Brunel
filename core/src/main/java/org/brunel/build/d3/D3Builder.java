@@ -61,10 +61,12 @@ public class D3Builder extends AbstractBuilder {
     public static D3Builder make(BuilderOptions options) {
         return new D3Builder(options);
     }
+
     private ScriptWriter out;                   // Where to write code
     private int visWidth, visHeight;            // Overall vis size
     private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
     private D3Interaction interaction;          // Builder for interactions
+
     private D3Builder(BuilderOptions options) {
         super(options);
     }
@@ -164,7 +166,7 @@ public class D3Builder extends AbstractBuilder {
         addElementGroups(structure);
 
         // Data transforms
-        int datasetIndex = structure.getIndexOfBaseData();
+        int datasetIndex = structure.getBaseDatasetIndex();
         VisSingle vis = structure.vis;
         D3DataBuilder dataBuilder = new D3DataBuilder(vis, out, structure.data, datasetIndex);
         dataBuilder.writeDataManipulation(createResultFields(vis));
@@ -221,11 +223,11 @@ public class D3Builder extends AbstractBuilder {
             out.onNewLine().add("elements[" + i + "].build(time);");
 
         // TODO: make this much less "special case" code
-        if (scalesBuilder.diagram == VisTypes.Diagram.network) {
+        if (structure.diagram == VisTypes.Diagram.network) {
             int nodeIndex = structure.sourceIndex;
             out.onNewLine().add("if (first) {").indentMore();
             for (int i : order) {
-                if (structure.isDependent(i)) {
+                if (structure.elementStructure[i].dependent) {
                     out.onNewLine().add("BrunelD3.network(d3.layout.force(), chart.graph, elements[" + nodeIndex
                             + "], elements[" + i + "], geom)").endStatement();
                 }
@@ -300,10 +302,10 @@ public class D3Builder extends AbstractBuilder {
         String elementTransform = makeElementTransform(scalesBuilder.coords);
         out.add("var elementGroup = interior.append('g').attr('class', '" + structure.getElementID() + "')");
         if (elementTransform != null) out.addChained(elementTransform);
-        if (scalesBuilder.diagram != null)
+        if (structure.vis.tDiagram != null)
             out.continueOnNextLine(",").add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");
         out.continueOnNextLine(",").add("main = elementGroup.append('g').attr('class', 'main')");
-        if (scalesBuilder.diagram != null)
+        if (structure.vis.tDiagram != null)
             out.continueOnNextLine(",").add("diagramLabels = elementGroup.append('g').attr('class', 'diagram labels')");
         out.continueOnNextLine(",").add("labels = elementGroup.append('g').attr('class', 'labels')").endStatement();
     }
@@ -350,7 +352,7 @@ public class D3Builder extends AbstractBuilder {
 
     private void defineElementBuildFunction(ElementStructure elementStructure) {
 
-        D3ElementBuilder elementBuilder = new D3ElementBuilder(elementStructure.vis, elementStructure.data, out, elementStructure.chartStructure, scalesBuilder);
+        D3ElementBuilder elementBuilder = new D3ElementBuilder(elementStructure, out, scalesBuilder);
         elementBuilder.preBuildDefinitions();
 
         // Main method to make a vis

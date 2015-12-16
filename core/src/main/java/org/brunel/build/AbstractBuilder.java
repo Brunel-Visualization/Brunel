@@ -160,7 +160,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
             defineElement(structure);
             if (structure.vis.styles != null) {
                 StyleSheet styles = structure.vis.styles.replaceClass("currentElement", structure.getElementID());
-                visStyles.add(styles, structure.chartStructure.getChartID());
+                visStyles.add(styles, structure.chart.getChartID());
             }
         } catch (Exception e) {
             throw VisException.makeBuilding(e, structure.vis);
@@ -173,11 +173,11 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         Dataset[] data = new Dataset[items.length];
         VisSingle[] elements = new VisSingle[items.length];
         for (int i = 0; i < items.length; i++) {
-            elements[i] = items[i].getSingle().resolve();                               // In future, will do nesting
+            elements[i] = items[i].getSingle().resolve();
             data[i] = new DataBuilder(elements[i], this).build();
         }
 
-        ChartStructure structure = new ChartStructure(chart, chartIndex, elements, data);         // Characterize inter-element dependency
+        ChartStructure structure = new ChartStructure(chart, chartIndex, elements, data);
         defineChart(structure, loc);
         for (int i = 0; i < elements.length; i++) {
             buildElement(structure.elementStructure[i]);
@@ -202,7 +202,5 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
 
         }
     }
-
-
 
 }

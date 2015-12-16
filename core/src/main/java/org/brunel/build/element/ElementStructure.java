@@ -17,27 +17,33 @@
 package org.brunel.build.element;
 
 import org.brunel.build.chart.ChartStructure;
+import org.brunel.build.d3.D3Util;
 import org.brunel.data.Dataset;
+import org.brunel.data.Field;
+import org.brunel.maps.GeoMapping;
 import org.brunel.model.VisSingle;
+import org.brunel.model.VisTypes;
 
 /**
  * Created by graham on 12/15/15.
  */
 public class ElementStructure {
-    public final ChartStructure chartStructure;
+    public final ChartStructure chart;
     public final int elementIndex;
     public final VisSingle vis;
     public final Dataset original;
     public final Dataset data;
+    public final boolean dependent;
 
     public ElementDefinition definition;
     public ElementDetails details;
 
-    public ElementStructure(ChartStructure chartStructure, int elementIndex, VisSingle vis, Dataset data) {
-        this.chartStructure = chartStructure;
+    public ElementStructure(ChartStructure chartStructure, int elementIndex, VisSingle vis, Dataset data, boolean dependent) {
+        this.chart = chartStructure;
         this.elementIndex = elementIndex;
         this.vis = vis;
         this.data = data;
+        this.dependent = dependent;
         this.original = vis.getDataset();
     }
 
@@ -45,9 +51,28 @@ public class ElementStructure {
         return "element" + elementIndex;
     }
 
-    public int getIndexOfBaseData() {
-        for (int i = 0; i < chartStructure.baseDataSets.length; i++)
-            if (original == chartStructure.baseDataSets[i]) return i;
-        throw new IllegalStateException("Could not find data set in array of datasets");
+    public int getBaseDatasetIndex() {
+        return chart.getBaseDatasetIndex(original);
     }
+
+    public GeoMapping getMapping() {
+        return chart.geo.getGeo(this);
+    }
+
+    public boolean isGraphEdge() {
+        return dependent && vis.tElement == VisTypes.Element.edge && vis.fKeys.size() == 2;
+    }
+
+    /**
+     * Create the Javascript that gives us the required location on a given dimension in data units
+     *
+     * @param dimName "x" or "y"
+     * @param key     field to use for a key
+     * @return javascript fragment
+     */
+    public String keyedLocation(String dimName, Field key) {
+        String idToPointName = "elements[" + chart.sourceIndex + "].internal()._idToPoint(";
+        return idToPointName + D3Util.writeCall(key) + ")." + dimName;
+    }
+
 }

@@ -16,13 +16,12 @@
 
 package org.brunel.build.d3;
 
-import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.d3.diagrams.D3Diagram;
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
+import org.brunel.build.element.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
@@ -31,21 +30,19 @@ class D3ElementBuilder {
 
     private final ScriptWriter out;                             // To write code out to
     private final VisSingle vis;                                // Element definition
-    private final Dataset data;                                 // Data this element uses
-    private final ChartStructure structure;                    // Our keys link to keys in this element
 
     private final D3ScaleBuilder scales;                        // Helper to build scales
     private final D3LabelBuilder labelBuilder;                  // Helper to build labels
     private final D3Diagram diagram;                            // Helper to build diagrams
+    private final ElementStructure structure;
 
-    public D3ElementBuilder(VisSingle vis, Dataset data, ScriptWriter out, ChartStructure structure, D3ScaleBuilder scales) {
-        this.vis = vis;
+    public D3ElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales) {
+        this.structure = structure;
+        this.vis = structure.vis;
         this.out = out;
         this.scales = scales;
-        this.data = data;
-        this.structure = structure;
-        this.labelBuilder = new D3LabelBuilder(vis, out, data);
-        this.diagram = D3Diagram.make(vis, data, out, structure, scales);
+        this.labelBuilder = new D3LabelBuilder(vis, out, structure.data);
+        this.diagram = D3Diagram.make(structure, out);
     }
 
     public void generate(int elementIndex) {
@@ -93,7 +90,7 @@ class D3ElementBuilder {
 
     private ElementDetails makeDetails() {
         // When we create diagrams this has the side effect of writing the data calls needed
-        if (structure.isEdge(vis)) {
+        if (structure.isGraphEdge()) {
             return ElementDetails.makeForDiagram("chart.graph.links", "line", "edge", "box", false);
         } else if (diagram == null)
             return ElementDetails.makeForCoordinates(vis, getSymbol());
@@ -103,13 +100,13 @@ class D3ElementBuilder {
 
     private ElementDefinition buildElementDefinition() {
         ElementDefinition e = new ElementDefinition();
-        Field[] x = structure.coordinates.getX(vis);
-        Field[] y = structure.coordinates.getY(vis);
+        Field[] x = structure.chart.coordinates.getX(vis);
+        Field[] y = structure.chart.coordinates.getY(vis);
         Field[] keys = new Field[vis.fKeys.size()];
-        for (int i = 0; i < keys.length; i++) keys[i] = data.field(vis.fKeys.get(i).asField());
+        for (int i = 0; i < keys.length; i++) keys[i] = structure.data.field(vis.fKeys.get(i).asField());
         ModelUtil.Size sizeWidth = ModelUtil.getElementSize(vis, "width");
         ModelUtil.Size sizeHeight = ModelUtil.getElementSize(vis, "height");
-        if (structure.geo != null) {
+        if (structure.chart.geo != null) {
             // Maps with feature data do not need the geo coordinates set
             if (vis.tDiagram != VisTypes.Diagram.map)
                 setGeoLocations(e, x, y, keys);
@@ -117,8 +114,8 @@ class D3ElementBuilder {
             e.x.size = getSize(getSizeCall(0), sizeWidth, new Field[0], "geom.default_point_size", null);
             e.y.size = getSize(getSizeCall(1), sizeHeight, new Field[0], "geom.default_point_size", null);
         } else {
-            setLocations(e.x, "x", x, keys, structure.coordinates.xCategorical);
-            setLocations(e.y, "y", y, keys, structure.coordinates.yCategorical);
+            setLocations(e.x, "x", x, keys, structure.chart.coordinates.xCategorical);
+            setLocations(e.y, "y", y, keys, structure.chart.coordinates.yCategorical);
             e.x.size = getSize(getSizeCall(0), sizeWidth, x, "geom.inner_width", "scale_x");
             e.y.size = getSize(getSizeCall(1), sizeHeight, y, "geom.inner_height", "scale_y");
         }
@@ -244,7 +241,7 @@ class D3ElementBuilder {
         String result = ModelUtil.getElementSymbol(vis);
         if (result != null) return result;
         // We default to a rectangle if all the scales are categorical or binned, otherwise we return a point
-        boolean cat = allShowExtent(structure.coordinates.allXFields) && allShowExtent(structure.coordinates.allYFields);
+        boolean cat = allShowExtent(structure.chart.coordinates.allXFields) && allShowExtent(structure.chart.coordinates.allYFields);
         return cat ? "rect" : "point";
     }
 
@@ -253,9 +250,9 @@ class D3ElementBuilder {
         int n = x.length;
         if (y.length != n)
             throw new IllegalStateException("X and Y dimensions do not match in geographic maps");
-        if (structure.isEdge(vis)) {
+        if (structure.isGraphEdge()) {
             throw new IllegalStateException("Cannot handle edged dependencies in geographic maps");
-        } else if (structure.isDependent(vis)) {
+        } else if (structure.dependent) {
             throw new IllegalStateException("Cannot handle positional dependencies in geographic maps");
         }
 
@@ -349,11 +346,11 @@ class D3ElementBuilder {
 
         String scaleName = "scale_" + dimName;
 
-        if (structure.isEdge(vis)) {
+        if (structure.isGraphEdge()) {
             // These are edges in a network layout
             dim.left = "function(d) { return scale_" + dimName + "(d.source." + dimName + ") }";
             dim.right = "function(d) { return scale_" + dimName + "(d.target." + dimName + ") }";
-        } else if (structure.isDependent(vis)) {
+        } else if (structure.dependent) {
             // Use the keys to get the X and Y locations from other items
             if (keys.length == 1) {
                 // One key gives the center

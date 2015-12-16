@@ -18,6 +18,7 @@ package org.brunel.build.d3;
 
 import org.brunel.action.Param;
 import org.brunel.build.chart.ChartStructure;
+import org.brunel.build.element.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
@@ -29,17 +30,20 @@ import org.brunel.model.VisTypes;
  */
 public class D3Interaction {
 
-    private final D3ScaleBuilder scales;       // Scales for the chart
+    private final ChartStructure structure;     // Chart Structure
+    private final D3ScaleBuilder scales;        // Scales for the chart
     private final ScriptWriter out;             // Write definitions here
     private final boolean zoomable;             // Same for all elements
     private final boolean xScaleCategorical;    // True if any are
     private final boolean yScaleCategorical;    // True if any are
+
     public D3Interaction(ChartStructure structure, D3ScaleBuilder scales, ScriptWriter out) {
+        this.structure = structure;
         this.scales = scales;
         this.out = out;
         this.xScaleCategorical = anyCategorical(structure.coordinates.allXFields);
         this.yScaleCategorical = anyCategorical(structure.coordinates.allYFields);
-        this.zoomable = isZoomable(structure.elements);
+        this.zoomable = isZoomable(structure.elementStructure);
     }
 
     private boolean anyCategorical(Field[] fields) {
@@ -47,18 +51,18 @@ public class D3Interaction {
         return false;
     }
 
-    private boolean isZoomable(VisSingle[] elements) {
+    private boolean isZoomable(ElementStructure[] elements) {
         // Check for things that just will not work currently
         if (xScaleCategorical && yScaleCategorical) return false;                           // Only zoom numerical
-        if (scales.diagram != null || scales.coords == VisTypes.Coordinates.polar) return false;  // Doesn't work
+        if (structure.diagram != null || scales.coords == VisTypes.Coordinates.polar) return false;  // Doesn't work
 
         // If anything says we want it, we get it
         // Otherwise, if anything says we do not, we do not
         // Otherwise, we get it
         boolean defaultResult = true;
-        for (VisSingle vis : elements) {
-            if (vis.tInteraction.containsKey(VisTypes.Interaction.panzoom)) return true;
-            if (vis.tInteraction.containsKey(VisTypes.Interaction.none)) defaultResult = false;
+        for (ElementStructure e : elements) {
+            if (e.vis.tInteraction.containsKey(VisTypes.Interaction.panzoom)) return true;
+            if (e.vis.tInteraction.containsKey(VisTypes.Interaction.none)) defaultResult = false;
         }
         return defaultResult;
     }

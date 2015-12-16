@@ -19,6 +19,7 @@ package org.brunel.build.d3.diagrams;
 import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
+import org.brunel.build.element.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
@@ -35,10 +36,10 @@ class Network extends D3Diagram {
     public ElementDetails writeDataConstruction() {
         String nodeField = quoted(vis.fKeys.get(0).asField());
 
-        VisSingle links = dependency.getEdgeElement();
-        String edgeDataset = dependency.linkedDataReference(links);
-        String a = quoted(links.fKeys.get(0).asField());
-        String b = quoted(links.fKeys.get(1).asField());
+        ElementStructure links = dependency.getEdge();
+        String edgeDataset = "elements[" + links.getBaseDatasetIndex() + "].data()";
+        String a = quoted(links.vis.fKeys.get(0).asField(links.data));
+        String b = quoted(links.vis.fKeys.get(1).asField(links.data));
 
         out.add("chart.graph = BrunelData.diagram_Graph.make(processed,", nodeField, ",",
                 edgeDataset, ",", a, ",", b, ")").endStatement();

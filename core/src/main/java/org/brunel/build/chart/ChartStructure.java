@@ -16,10 +16,8 @@
 
 package org.brunel.build.chart;
 
-import org.brunel.build.d3.D3Util;
 import org.brunel.build.element.ElementStructure;
 import org.brunel.data.Dataset;
-import org.brunel.data.Field;
 import org.brunel.maps.GeoInformation;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
@@ -27,54 +25,85 @@ import org.brunel.model.VisTypes;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 /**
  * Manages dependency between elements
  */
 public class ChartStructure {
 
-    public final Dataset[] baseDataSets;
     public final int sourceIndex;
+
     public final ChartCoordinates coordinates;
     public final int chartIndex;
     public final VisSingle[] elements;
-    public final Dataset[] data;
     public final GeoInformation geo;
+    public final VisTypes.Diagram diagram;
     public final ElementStructure[] elementStructure;
-    private final Set<VisSingle> linked = new LinkedHashSet<VisSingle>();
+
+    private final Dataset[] baseDataSets;
 
     public ChartStructure(VisItem chart, int chartIndex, VisSingle[] elements, Dataset[] data) {
+        this.baseDataSets = chart.getDataSets();
         this.chartIndex = chartIndex;
         this.elements = elements;
-        this.data = data;
         this.coordinates = new ChartCoordinates(elements, data);
         this.elementStructure = new ElementStructure[elements.length];
-        this.geo = makeGeo();
-        this.baseDataSets = chart.getDataSets();
+        this.diagram = findDiagram();
+        this.sourceIndex = findSourceElement(elements);
 
-        int src = -1;
         for (int i = 0; i < elements.length; i++) {
-            VisSingle v = elements[i];
-            elementStructure[i] = new ElementStructure(this, i, v, data[i]);
-            if (v.fKeys.isEmpty()) continue;                // Must have keys to be involved
-            if (v.positionFields().length > 0 || v.tDiagram != null) {
-                if (src < 0) src = i;                       // Defines positions so it is the source (first one wins)
-            } else {
-                linked.add(v);                              // Does not define positions -- dependent
-            }
+            VisSingle vis = elements[i];
+            boolean isDependent = sourceIndex >= 0 && vis.tDiagram == null && vis.positionFields().length == 0;
+            elementStructure[i] = new ElementStructure(this, i, vis, data[i], isDependent);
         }
 
-        if (src < 0) linked.clear();                        // Must have a source for anything to link to
-        sourceIndex = src;
+        this.geo = makeGeo();
+
+    }
+
+    public int getBaseDatasetIndex(Dataset dataset) {
+        for (int i = 0; i < baseDataSets.length; i++)
+            if (dataset == baseDataSets[i]) return i;
+        throw new IllegalStateException("Could not find data set in array of datasets");
+    }
+
+    public ElementStructure getEdge() {
+        for (ElementStructure e : elementStructure) if (e.isGraphEdge()) return e;
+        return null;
+    }
+    private int findSourceElement(VisSingle[] elements) {
+        int candidate = -1;
+        for (int i = 0; i < elements.length; i++) {
+            VisSingle vis = elements[i];
+            if (vis.fKeys.size() == 1) {
+                // A source must have one key only
+                if (candidate < 0) {
+                    candidate = i;
+                } else {
+                    // If there are multiple elements with one key, we need to pick the better one
+                    // Diagrams are always better sources, otherwise the one that defines positions is better.
+                    if (vis.tDiagram != null) return i;
+                    if (vis.positionFields().length > elements[candidate].positionFields().length) {
+                        candidate = i;
+                    }
+                }
+            }
+        }
+        return candidate;
+    }
+
+    private VisTypes.Diagram findDiagram() {
+        // Any diagram make the chart all diagram. Mixing diagrams and non-diagrams will
+        // likely be useless at best, but we will not throw an error for it
+        for (VisSingle e : elements) if (e.tDiagram != null) return e.tDiagram;
+        return null;
     }
 
     public GeoInformation makeGeo() {
         // If any element specifies a map, we make the map information for all to share
-        for (VisSingle e : elements)
-            if (e.tDiagram == VisTypes.Diagram.map)
-                return new GeoInformation(elements, data, coordinates);
+        for (ElementStructure e : elementStructure)
+            if (e.vis.tDiagram == VisTypes.Diagram.map)
+                return new GeoInformation(elementStructure, coordinates);
         return null;
     }
 
@@ -96,59 +125,6 @@ public class ChartStructure {
 
     public String getChartID() {
         return "chart" + chartIndex;
-    }
-
-    public boolean isDependent(int i) {
-        return linked.contains(elements[i]);
-    }
-
-    public boolean isDependent(VisSingle vis) {
-        return linked.contains(vis);
-    }
-
-    /**
-     * Returns true if this element is defined by a node-edge graph, and this is the edge element
-     *
-     * @param vis target visualization
-     * @return true if we can use graph layout links for this element's position
-     */
-    public boolean isEdge(VisSingle vis) {
-        return getEdgeElement() == vis && elements[sourceIndex].tDiagram == VisTypes.Diagram.network;
-    }
-
-    /**
-     * Find an element suitable for use as an edge element linking nodes
-     *
-     * @return VisSingle, or null if it does not exist
-     */
-    public VisSingle getEdgeElement() {
-        for (VisSingle v : linked)
-            if (v.fKeys.size() == 2) return v;
-        return null;
-    }
-
-    /**
-     * Create the Javascript that gives us the required location on a given dimension in data units
-     *
-     * @param dimName "x" or "y"
-     * @param key     field to use for a key
-     * @return javascript fragment
-     */
-    public String keyedLocation(String dimName, Field key) {
-        String idToPointName = "elements[" + sourceIndex + "].internal()._idToPoint(";
-        return idToPointName + D3Util.writeCall(key) + ")." + dimName;
-    }
-
-    /**
-     * Create the Javascript that access the linked data
-     *
-     * @param other the target VisItem to reference
-     */
-    public String linkedDataReference(VisSingle other) {
-        for (int i = 0; i < elements.length; i++)
-            if (elements[i] == other)
-                return "elements[" + i + "].data()";
-        throw new IllegalStateException("Could not find other VisSingle element");
     }
 
 }

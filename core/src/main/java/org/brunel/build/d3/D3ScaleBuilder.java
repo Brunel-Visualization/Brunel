@@ -52,18 +52,17 @@ import java.util.Set;
 public class D3ScaleBuilder {
 
     final VisTypes.Coordinates coords;                      // Combined coordinate system derived from all elements
-    final VisTypes.Diagram diagram;                         // The first diagram for this system (null for coords)
     private final Field colorLegendField;                   // Field to use for the color legend
-    private final AxisDetails hAxis, vAxis;                   // The same as the above, but at the physical location
+    private final AxisDetails hAxis, vAxis;                 // Details for each axis
     private final double[] marginTLBR;                      // Margins between the coordinate area and the chart space
     private final ChartStructure structure;                 // Overall detail on the chart composition
     private final VisSingle[] elements;                     // The elements that define the scales used
     private final ScriptWriter out;                         // Write definitions to here
+
     public D3ScaleBuilder(ChartStructure structure, double chartWidth, double chartHeight, ScriptWriter out) {
         this.structure = structure;
         this.elements = structure.elements;
         this.out = out;
-        this.diagram = findDiagram();
         this.coords = makeCombinedCoords();
         VisTypes.Axes axes = makeCombinedAxes();
 
@@ -113,16 +112,9 @@ public class D3ScaleBuilder {
         marginTLBR = new double[]{marginTop, marginLeft, marginBottom, marginRight};
     }
 
-    private VisTypes.Diagram findDiagram() {
-        // Any diagram make the chart all diagram. Mixing diagrams and non-diagrams will
-        // likely be useless at best, but we will not throw an error for it
-        for (VisSingle e : elements) if (e.tDiagram != null) return e.tDiagram;
-        return null;
-    }
-
     private VisTypes.Coordinates makeCombinedCoords() {
         // For diagrams, we set the coords to polar for the chord chart and clouds, and centered for networks
-        if (diagram == VisTypes.Diagram.chord || diagram == VisTypes.Diagram.cloud)
+        if (structure.diagram == VisTypes.Diagram.chord || structure.diagram == VisTypes.Diagram.cloud)
             return VisTypes.Coordinates.polar;
 
         // The rule here is that we return the one with the highest ordinal value;
@@ -157,9 +149,12 @@ public class D3ScaleBuilder {
 
         // If auto, check for the coordinate system / diagram to determine what is wanted
         if (result == VisTypes.Axes.auto)
-            return coords == VisTypes.Coordinates.polar || diagram != null ? VisTypes.Axes.none : VisTypes.Axes.all;
-        else
-            return result;
+            if (coords == VisTypes.Coordinates.polar || structure.diagram != null)
+                result = VisTypes.Axes.none;
+            else
+                result = VisTypes.Axes.all;
+
+        return result;
     }
 
     private Field getColorLegendField() {
@@ -196,7 +191,7 @@ public class D3ScaleBuilder {
     private Field fieldById(String fieldName, VisSingle vis) {
         for (int i = 0; i < elements.length; i++) {
             if (elements[i] == vis) {
-                Field field = structure.data[i].field(fieldName);
+                Field field = structure.elementStructure[i].data.field(fieldName);
                 if (field == null) throw new IllegalStateException("Unknown field " + fieldName);
                 return field;
             }
@@ -270,7 +265,7 @@ public class D3ScaleBuilder {
     }
 
     public void writeAxes() {
-        if (diagram != null) return;                          // No axes needed for diagrams
+        if (!hAxis.exists() && !vAxis.exists()) return;                          // No axes needed
 
         // Calculate geom
         String width = "geom.inner_width";
