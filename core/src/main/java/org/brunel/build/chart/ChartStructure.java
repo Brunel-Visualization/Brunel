@@ -19,6 +19,7 @@ package org.brunel.build.chart;
 import org.brunel.build.element.ElementStructure;
 import org.brunel.data.Dataset;
 import org.brunel.maps.GeoInformation;
+import org.brunel.maps.GeoMapping;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
@@ -51,26 +52,24 @@ public class ChartStructure {
         this.diagram = findDiagram();
         this.sourceIndex = findSourceElement(elements);
 
+        this.geo = makeGeo(elements, data);
+
         for (int i = 0; i < elements.length; i++) {
             VisSingle vis = elements[i];
             boolean isDependent = sourceIndex >= 0 && vis.tDiagram == null && vis.positionFields().length == 0;
-            elementStructure[i] = new ElementStructure(this, i, vis, data[i], isDependent);
+            GeoMapping geoMapping = geo == null ? null : geo.getGeo(vis);
+            elementStructure[i] = new ElementStructure(this, i, vis, data[i], geoMapping, isDependent);
         }
 
-        this.geo = makeGeo();
-
     }
 
-    public int getBaseDatasetIndex(Dataset dataset) {
-        for (int i = 0; i < baseDataSets.length; i++)
-            if (dataset == baseDataSets[i]) return i;
-        throw new IllegalStateException("Could not find data set in array of datasets");
-    }
-
-    public ElementStructure getEdge() {
-        for (ElementStructure e : elementStructure) if (e.isGraphEdge()) return e;
+    private VisTypes.Diagram findDiagram() {
+        // Any diagram make the chart all diagram. Mixing diagrams and non-diagrams will
+        // likely be useless at best, but we will not throw an error for it
+        for (VisSingle e : elements) if (e.tDiagram != null) return e.tDiagram;
         return null;
     }
+
     private int findSourceElement(VisSingle[] elements) {
         int candidate = -1;
         for (int i = 0; i < elements.length; i++) {
@@ -92,18 +91,11 @@ public class ChartStructure {
         return candidate;
     }
 
-    private VisTypes.Diagram findDiagram() {
-        // Any diagram make the chart all diagram. Mixing diagrams and non-diagrams will
-        // likely be useless at best, but we will not throw an error for it
-        for (VisSingle e : elements) if (e.tDiagram != null) return e.tDiagram;
-        return null;
-    }
-
-    public GeoInformation makeGeo() {
+    public GeoInformation makeGeo(VisSingle[] elements, Dataset[] data) {
         // If any element specifies a map, we make the map information for all to share
-        for (ElementStructure e : elementStructure)
-            if (e.vis.tDiagram == VisTypes.Diagram.map)
-                return new GeoInformation(elementStructure, coordinates);
+        for (VisSingle vis : elements)
+            if (vis.tDiagram == VisTypes.Diagram.map)
+                return new GeoInformation(elements, data, coordinates);
         return null;
     }
 
@@ -123,8 +115,19 @@ public class ChartStructure {
         return order;
     }
 
+    public int getBaseDatasetIndex(Dataset dataset) {
+        for (int i = 0; i < baseDataSets.length; i++)
+            if (dataset == baseDataSets[i]) return i;
+        throw new IllegalStateException("Could not find data set in array of datasets");
+    }
+
     public String getChartID() {
         return "chart" + chartIndex;
+    }
+
+    public ElementStructure getEdge() {
+        for (ElementStructure e : elementStructure) if (e.isGraphEdge()) return e;
+        return null;
     }
 
 }

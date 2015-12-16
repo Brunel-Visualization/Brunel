@@ -36,15 +36,15 @@ public class SimpleCache implements DatasetCache {
     private long estimatedMemoryUse = 0;
 
     @Override
+    public synchronized Dataset retrieve(String key) {
+        return map.get(key);
+    }
+
+    @Override
     public synchronized void store(String key, Dataset dataset) {
         Dataset previous = map.put(key, dataset);
         if (previous != null) estimatedMemoryUse -= previous.expectedSize();
         estimatedMemoryUse += dataset.expectedSize();
-    }
-
-    @Override
-    public synchronized Dataset retrieve(String key) {
-        return map.get(key);
     }
 
     private class MapCache extends LinkedHashMap<String, Dataset> {

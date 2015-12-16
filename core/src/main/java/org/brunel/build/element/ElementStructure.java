@@ -33,30 +33,28 @@ public class ElementStructure {
     public final VisSingle vis;
     public final Dataset original;
     public final Dataset data;
+    public final GeoMapping geo;
     public final boolean dependent;
 
     public ElementDefinition definition;
     public ElementDetails details;
 
-    public ElementStructure(ChartStructure chartStructure, int elementIndex, VisSingle vis, Dataset data, boolean dependent) {
+    public ElementStructure(ChartStructure chartStructure, int elementIndex, VisSingle vis, Dataset data, GeoMapping geo, boolean dependent) {
         this.chart = chartStructure;
         this.elementIndex = elementIndex;
         this.vis = vis;
         this.data = data;
+        this.geo = geo;
         this.dependent = dependent;
         this.original = vis.getDataset();
-    }
-
-    public String getElementID() {
-        return "element" + elementIndex;
     }
 
     public int getBaseDatasetIndex() {
         return chart.getBaseDatasetIndex(original);
     }
 
-    public GeoMapping getMapping() {
-        return chart.geo.getGeo(this);
+    public String getElementID() {
+        return "element" + elementIndex;
     }
 
     public boolean isGraphEdge() {

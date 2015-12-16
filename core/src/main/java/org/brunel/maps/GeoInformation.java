@@ -18,8 +18,8 @@ package org.brunel.maps;
 
 import org.brunel.action.Param;
 import org.brunel.build.chart.ChartCoordinates;
-import org.brunel.build.element.ElementStructure;
 import org.brunel.data.Data;
+import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.geom.Geom;
 import org.brunel.geom.Point;
@@ -88,16 +88,16 @@ public class GeoInformation {
         return points;
     }
 
-    private final Map<ElementStructure, GeoMapping> geo;            // Geographic mappings, one per geo element
-    private final ElementStructure[] elements;
+    private final Map<VisSingle, GeoMapping> geo;            // Geographic mappings, one per geo element
+    private final VisSingle[] elements;
     private final Poly hull;                                        // Convex hull for the points
     private final boolean needsExpansion;
     private final Projection projection;
 
-    public GeoInformation(ElementStructure[] elements, ChartCoordinates positionFields) {
+    public GeoInformation(VisSingle[] elements, Dataset[] datas, ChartCoordinates positionFields) {
         this.elements = elements;
         Poly positionHull = getPositionPoints(positionFields);
-        this.geo = makeGeoMappings(elements, positionHull);
+        this.geo = makeGeoMappings(elements, datas, positionHull);
         Poly withoutReferenceMaps = combineForHull(positionHull, geo, false);
         if (withoutReferenceMaps.count() == 0) {
             this.hull = combineForHull(positionHull, geo, true);
@@ -130,7 +130,7 @@ public class GeoInformation {
         return bounds;
     }
 
-    private Poly combineForHull(Poly pointsHull, Map<ElementStructure, GeoMapping> geo, boolean includeReferenceMaps) {
+    private Poly combineForHull(Poly pointsHull, Map<VisSingle, GeoMapping> geo, boolean includeReferenceMaps) {
         List<Point> combined = new ArrayList<Point>();
         Collections.addAll(combined, pointsHull.points);
 
@@ -154,9 +154,9 @@ public class GeoInformation {
     private Poly getPositionPoints(ChartCoordinates positionFields) {
         Set<Point> points = new HashSet<Point>();
         // Add points for all the fields for each element
-        for (ElementStructure e : elements) {
-            Field[] xx = positionFields.getX(e.vis);
-            Field[] yy = positionFields.getY(e.vis);
+        for (VisSingle e : elements) {
+            Field[] xx = positionFields.getX(e);
+            Field[] yy = positionFields.getY(e);
             for (Field x : xx)
                 for (Field y : yy) {
                     for (int i = 0; i < x.rowCount(); i++) {
@@ -175,7 +175,7 @@ public class GeoInformation {
      * @param e target
      * @return result
      */
-    public GeoMapping getGeo(ElementStructure e) {
+    public GeoMapping getGeo(VisSingle e) {
         return geo.get(e);
     }
 
@@ -188,12 +188,12 @@ public class GeoInformation {
     }
 
     // The whole array returned will be null if nothing is a map
-    private Map<ElementStructure, GeoMapping> makeGeoMappings(ElementStructure[] element, Poly positionHull) {
-        Map<ElementStructure, GeoMapping> map = new LinkedHashMap<ElementStructure, GeoMapping>();
+    private Map<VisSingle, GeoMapping> makeGeoMappings(VisSingle[] element, Dataset[] datas, Poly positionHull) {
+        Map<VisSingle, GeoMapping> map = new LinkedHashMap<VisSingle, GeoMapping>();
         boolean oneValid = false;
         for (int i = 0; i < element.length; i++) {
-            if (element[i].vis.tDiagram == VisTypes.Diagram.map) {
-                GeoMapping mapping = makeMapping(element[i], positionHull);
+            if (element[i].tDiagram == VisTypes.Diagram.map) {
+                GeoMapping mapping = makeMapping(element[i], datas[i], positionHull);
                 if (mapping != null) {
                     map.put(elements[i], mapping);
                     if (mapping.totalBounds() != null) oneValid = true;
@@ -204,8 +204,8 @@ public class GeoInformation {
         if (!oneValid) {
             // We were unable to create a valid map -- nothing provided location information.
             // We will build a world map. This is an edge case, but supports the simple Brunel 'map'
-            for (ElementStructure e : element) {
-                if (e.vis.tDiagram == VisTypes.Diagram.map && e.vis.tDiagramParameters.length == 0) {
+            for (VisSingle e : element) {
+                if (e.tDiagram == VisTypes.Diagram.map && e.tDiagramParameters.length == 0) {
                     map.put(e, GeoData.instance().world());
                 }
             }
@@ -214,11 +214,11 @@ public class GeoInformation {
         return map;
     }
 
-    private static GeoMapping makeMapping(ElementStructure e, Poly positionHull) {
-        String idField = getIDField(e.vis);
-        Param[] diagramParameters = e.vis.tDiagramParameters;
+    private static GeoMapping makeMapping(VisSingle e, Dataset data, Poly positionHull) {
+        String idField = getIDField(e);
+        Param[] diagramParameters = e.tDiagramParameters;
         if (idField != null)
-            return GeoData.instance().make(e.data.field(idField).categories(), diagramParameters);
+            return GeoData.instance().make(data.field(idField).categories(), diagramParameters);
         if (positionHull.count() > 0 || diagramParameters != null)
             return GeoData.instance().makeForPoints(positionHull, diagramParameters);
         return null;

@@ -30,6 +30,7 @@ public class BuilderOptions {
     public boolean readableJavascript = true;                   // Readable or shorter
     public String localResources;                               // If set, get resources from this local directory
     public String version = "0.9";                              // Which online version to use
+
     /**
      * none -  no data described
      * full - send full data set

@@ -41,6 +41,7 @@ public class FilterControl {
             return new FilterControl(data.name(), fieldID, field.label, null, field.min(), field.max());
 
     }
+
     public final String data;
     public final String id;
     public final String label;

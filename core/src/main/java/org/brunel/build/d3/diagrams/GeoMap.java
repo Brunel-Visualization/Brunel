@@ -82,6 +82,7 @@ public class GeoMap extends D3Diagram {
                 .onNewLine().add("return 'translate(' + q[0] + ',' + q[1] + ')'")
                 .indentLess().onNewLine().add("}");
     }
+
     private final GeoMapping mapping;           // Mapping of identifiers to features
 
     public GeoMap(VisSingle vis, Dataset data, GeoMapping mapping, ScriptWriter out) {
@@ -162,12 +163,12 @@ public class GeoMap extends D3Diagram {
         addAestheticsAndTooltips(details, true);
     }
 
-    public void writePreDefinition(ElementDetails details, ElementDefinition elementDef) {
-        out.add("selection.classed('nondata', function(d) {return !d || d.row == null})").endStatement();
-    }
-
     public void writeDiagramEnter() {
         super.writeDiagramEnter();
+    }
+
+    public void writePreDefinition(ElementDetails details, ElementDefinition elementDef) {
+        out.add("selection.classed('nondata', function(d) {return !d || d.row == null})").endStatement();
     }
 
 }

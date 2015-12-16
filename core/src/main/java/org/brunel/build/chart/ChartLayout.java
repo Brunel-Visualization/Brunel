@@ -56,15 +56,21 @@ public class ChartLayout {
 
     }
 
-    private double[][] makeUnplacedLocations(int width, int height, VisItem[] charts) {
-        int unplacedCount = 0;
-        for (VisItem chart : charts)
-            if (findBounds(chart) == null) unplacedCount++;
-        return squarify(ChartLayout.LAYOUTS[Math.min(unplacedCount - 1, 3)], width, height);
-    }
-
     public double[] getLocation(int chartIndex) {
         return locations[chartIndex];
+    }
+
+    private Param[] findBounds(VisItem chart) {
+        // Find the first item in the chart that has a bounds defined
+        if (chart.children() == null) {
+            return chart.getSingle().bounds;
+        } else {
+            for (VisItem v : chart.children()) {
+                Param[] result = findBounds(v);
+                if (result != null) return result;
+            }
+        }
+        return null;
     }
 
     // Calculate the location for the bounds of the chart.
@@ -75,6 +81,13 @@ public class ChartLayout {
         if (bounds != null && bounds.length > 2) r = bounds[2].asDouble();
         if (bounds != null && bounds.length > 3) b = bounds[3].asDouble();
         return new double[]{t, l, b, r};
+    }
+
+    private double[][] makeUnplacedLocations(int width, int height, VisItem[] charts) {
+        int unplacedCount = 0;
+        for (VisItem chart : charts)
+            if (findBounds(chart) == null) unplacedCount++;
+        return squarify(ChartLayout.LAYOUTS[Math.min(unplacedCount - 1, 3)], width, height);
     }
 
     /* Swap dimensions if it makes the charts closer to the golden ration (1.62) */
@@ -96,19 +109,6 @@ public class ChartLayout {
             sum += Math.sqrt(h * v) * div * div;
         }
         return sum;
-    }
-
-    private Param[] findBounds(VisItem chart) {
-        // Find the first item in the chart that has a bounds defined
-        if (chart.children() == null) {
-            return chart.getSingle().bounds;
-        } else {
-            for (VisItem v : chart.children()) {
-                Param[] result = findBounds(v);
-                if (result != null) return result;
-            }
-        }
-        return null;
     }
 
 }

@@ -41,6 +41,7 @@ class AxisDetails {
     public int rightGutter;                // Space needed on left and right (for horizontal chart only)
     public int topGutter;
     public int bottomGutter;                // Space above and below chart (for vertical chart only)
+
     /* Constructs the axis for the given fields */
     public AxisDetails(String dimension, Field[] definedFields, boolean categorical) {
         this.scale = "scale_" + dimension;
@@ -115,53 +116,9 @@ class AxisDetails {
         }
     }
 
-    public int estimatedSimpleSizeWhenHorizontal() {
-        return exists() ? 20 + estimatedTitleHeight() : 0;
-    }
-
-    public void layoutVertically(double availableSpace) {
-        if (!exists()) return;
-        int tickCount = countTicks(fields);
-
-        // A simple fixed gutter for ticks to flow into
-        topGutter = 5;
-        bottomGutter = 5;
-        availableSpace -= (topGutter + bottomGutter);
-
-        // Simple algorithm: just skip fields if necessary
-        tickValues = makeSkippingTickValues(availableSpace, tickCount);
-
-        // Add 10 pixels for tick marks and gap between title and ticks
-        size = tickValues == null ? maxCategoryWidth() : maxTickWidth();
-        size += estimatedTitleHeight() + 10;
-    }
-
     /* Does not exist if no fields to show */
     public boolean exists() {
         return fields.length > 0;
-    }
-
-    private int countTicks(Field[] fields) {
-        if (fields.length == 0) return 1;                               // To prevent div by zero errors
-        int n = 0;
-        for (Field f : fields)
-            n += categorical ? f.categories().length : 5;     // Assume 5 ticks for numeric
-        return n;
-    }
-
-    // If needed, create ticks that will fit the space nicely
-    private Object[] makeSkippingTickValues(double width, int count) {
-        if (!categorical) return null;    // Only good for categorical
-        double spacePerTick = width / count;
-        int skipFrequency = (int) Math.round(20 / spacePerTick);
-        if (skipFrequency < 2) return null;
-        List<Object> useThese = new ArrayList<Object>();
-        int at = 0;
-        for (Field f : fields) {
-            for (Object s : f.categories())
-                if (at++ % skipFrequency == 0) useThese.add(s);
-        }
-        return useThese.toArray(new Object[useThese.size()]);
     }
 
     /* Estimate the space needed to show all text categories */
@@ -188,6 +145,55 @@ class AxisDetails {
         return (int) (maxCharCount * 6.5);      // Assume a font with about this character width
     }
 
+    private int countTicks(Field[] fields) {
+        if (fields.length == 0) return 1;                               // To prevent div by zero errors
+        int n = 0;
+        for (Field f : fields)
+            n += categorical ? f.categories().length : 5;     // Assume 5 ticks for numeric
+        return n;
+    }
+
+    // If needed, create ticks that will fit the space nicely
+    private Object[] makeSkippingTickValues(double width, int count) {
+        if (!categorical) return null;    // Only good for categorical
+        double spacePerTick = width / count;
+        int skipFrequency = (int) Math.round(20 / spacePerTick);
+        if (skipFrequency < 2) return null;
+        List<Object> useThese = new ArrayList<Object>();
+        int at = 0;
+        for (Field f : fields) {
+            for (Object s : f.categories())
+                if (at++ % skipFrequency == 0) useThese.add(s);
+        }
+        return useThese.toArray(new Object[useThese.size()]);
+    }
+
+    /* Space needed for title */
+    private int estimatedTitleHeight() {
+        return title == null ? 0 : 16;
+    }
+
+    public int estimatedSimpleSizeWhenHorizontal() {
+        return exists() ? 20 + estimatedTitleHeight() : 0;
+    }
+
+    public void layoutVertically(double availableSpace) {
+        if (!exists()) return;
+        int tickCount = countTicks(fields);
+
+        // A simple fixed gutter for ticks to flow into
+        topGutter = 5;
+        bottomGutter = 5;
+        availableSpace -= (topGutter + bottomGutter);
+
+        // Simple algorithm: just skip fields if necessary
+        tickValues = makeSkippingTickValues(availableSpace, tickCount);
+
+        // Add 10 pixels for tick marks and gap between title and ticks
+        size = tickValues == null ? maxCategoryWidth() : maxTickWidth();
+        size += estimatedTitleHeight() + 10;
+    }
+
     /* Estimate the space needed to show all text categories */
     public int maxTickWidth() {
         int maxCharCount = 1;
@@ -197,11 +203,6 @@ class AxisDetails {
             maxCharCount = Math.max(maxCharCount, length);
         }
         return (int) (maxCharCount * 6.5);      // Assume a font with about this character width
-    }
-
-    /* Space needed for title */
-    private int estimatedTitleHeight() {
-        return title == null ? 0 : 16;
     }
 
 }

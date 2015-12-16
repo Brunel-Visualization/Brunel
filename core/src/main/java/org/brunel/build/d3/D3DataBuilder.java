@@ -132,6 +132,7 @@ public class D3DataBuilder {
         row.append("]");
         return row.toString();
     }
+
     private final VisSingle vis;
     private final ScriptWriter out;
     private final Dataset data;
@@ -329,7 +330,6 @@ public class D3DataBuilder {
     }
 
     private boolean suitableForKey(List<String> result) {
-        // TODO: Cannot check if the fields make a good key easily without data
         Field[] fields = new Field[result.size()];
         for (int i = 0; i < fields.length; i++) fields[i] = data.field(result.get(i));
         // Sort and see if any adjacent 'keys' are the same

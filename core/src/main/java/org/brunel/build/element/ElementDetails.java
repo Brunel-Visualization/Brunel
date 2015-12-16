@@ -28,6 +28,7 @@ public class ElementDetails {
     public static ElementDetails makeForCoordinates(VisSingle vis, String symbol) {
         return new ElementDetails(vis, symbol);
     }
+
     public final boolean splitIntoShapes;               // Will produce one shape per split
     public final String colorAttribute;                 // 'fill' or 'stroke' as appropriate
     public final String dataSource;                     // Where the data for d3 lives
