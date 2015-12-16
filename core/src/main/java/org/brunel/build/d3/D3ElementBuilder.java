@@ -88,6 +88,10 @@ class D3ElementBuilder {
         out.addChained("style('opacity', 0.5).remove()").endStatement();
     }
 
+    public void writeBuildCommands() {
+        if (diagram != null) diagram.writeBuildCommands();
+    }
+
     private ElementDetails makeDetails() {
         // When we create diagrams this has the side effect of writing the data calls needed
         if (structure.isGraphEdge()) {

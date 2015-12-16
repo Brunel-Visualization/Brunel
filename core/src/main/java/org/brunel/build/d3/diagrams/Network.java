@@ -16,7 +16,6 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.element.ElementStructure;
@@ -26,20 +25,28 @@ import org.brunel.model.VisSingle;
 
 class Network extends D3Diagram {
 
-    private final ChartStructure dependency;
+    private final ElementStructure nodes;
+    private final ElementStructure edges;
 
-    public Network(VisSingle vis, Dataset data, ChartStructure dependency, ScriptWriter out) {
+    public Network(VisSingle vis, Dataset data, ElementStructure nodes, ElementStructure edges, ScriptWriter out) {
         super(vis, data, out);
-        this.dependency = dependency;
+        this.nodes = nodes;
+        this.edges = edges;
+    }
+
+    public void writeBuildCommands() {
+        out.onNewLine().add("if (first) {").indentMore();
+        out.onNewLine().add("BrunelD3.network(d3.layout.force(), chart.graph, elements[" + nodes.index
+                + "], elements[" + edges.index + "], geom)").endStatement();
+        out.indentLess().onNewLine().add("}");
     }
 
     public ElementDetails writeDataConstruction() {
         String nodeField = quoted(vis.fKeys.get(0).asField());
 
-        ElementStructure links = dependency.getEdge();
-        String edgeDataset = "elements[" + links.getBaseDatasetIndex() + "].data()";
-        String a = quoted(links.vis.fKeys.get(0).asField(links.data));
-        String b = quoted(links.vis.fKeys.get(1).asField(links.data));
+        String edgeDataset = "elements[" + edges.getBaseDatasetIndex() + "].data()";
+        String a = quoted(edges.vis.fKeys.get(0).asField(edges.data));
+        String b = quoted(edges.vis.fKeys.get(1).asField(edges.data));
 
         out.add("chart.graph = BrunelData.diagram_Graph.make(processed,", nodeField, ",",
                 edgeDataset, ",", a, ",", b, ")").endStatement();

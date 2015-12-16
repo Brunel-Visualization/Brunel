@@ -29,7 +29,7 @@ import org.brunel.model.VisTypes;
  */
 public class ElementStructure {
     public final ChartStructure chart;
-    public final int elementIndex;
+    public final int index;
     public final VisSingle vis;
     public final Dataset original;
     public final Dataset data;
@@ -41,7 +41,7 @@ public class ElementStructure {
 
     public ElementStructure(ChartStructure chartStructure, int elementIndex, VisSingle vis, Dataset data, GeoMapping geo, boolean dependent) {
         this.chart = chartStructure;
-        this.elementIndex = elementIndex;
+        this.index = elementIndex;
         this.vis = vis;
         this.data = data;
         this.geo = geo;
@@ -54,7 +54,7 @@ public class ElementStructure {
     }
 
     public String getElementID() {
-        return "element" + elementIndex;
+        return "element" + index;
     }
 
     public boolean isGraphEdge() {

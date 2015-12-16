@@ -179,9 +179,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
 
         ChartStructure structure = new ChartStructure(chart, chartIndex, elements, data);
         defineChart(structure, loc);
-        for (int i = 0; i < elements.length; i++) {
-            buildElement(structure.elementStructure[i]);
-        }
+        for (ElementStructure e : structure.elementStructure) buildElement(e);
         endChart(structure);
     }
 

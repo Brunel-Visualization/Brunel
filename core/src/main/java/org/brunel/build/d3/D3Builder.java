@@ -43,7 +43,7 @@ import java.util.Map;
 public class D3Builder extends AbstractBuilder {
 
     private static final String COPYRIGHT_COMMENTS = "<!--\n" +
-            "\tD3 Copyright © 2012, Michael Bostock\n" +
+            "\tD3 Copyright \u00a9 2012, Michael Bostock\n" +
             "\tjQuery Copyright © 2010 by The jQuery Project\n" +
             "\tsumoselect Copyright © 2014 Hemant Negi\n " +
             "-->\n";
@@ -66,6 +66,7 @@ public class D3Builder extends AbstractBuilder {
     private int visWidth, visHeight;            // Overall vis size
     private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
     private D3Interaction interaction;          // Builder for interactions
+    private D3ElementBuilder[] elementBuilders; // Builder for each element
 
     private D3Builder(BuilderOptions options) {
         super(options);
@@ -149,11 +150,16 @@ public class D3Builder extends AbstractBuilder {
                 scalesBuilder.writeAxes();
             }
         }
+
+        ElementStructure[] structures = structure.elementStructure;
+        elementBuilders = new D3ElementBuilder[structures.length];
+        for (int i = 0; i < structures.length; i++)
+            elementBuilders[i] = new D3ElementBuilder(structures[i], out, scalesBuilder);
     }
 
     protected void defineElement(ElementStructure structure) {
-        out.titleComment("Define element #" + (structure.elementIndex + 1));
-        out.add("elements[" + structure.elementIndex + "] = function() {").indentMore();
+        out.titleComment("Define element #" + (structure.index + 1));
+        out.add("elements[" + structure.index + "] = function() {").indentMore();
         out.onNewLine().add("var original, processed,").at(40).comment("data sets passed in and then transformed")
                 .indentMore()
                 .onNewLine().add("element,").at(40).comment("Brunel element information")
@@ -174,7 +180,16 @@ public class D3Builder extends AbstractBuilder {
         scalesBuilder.writeAestheticScales(vis);
         scalesBuilder.writeLegends(vis);
 
-        defineElementBuildFunction(structure);
+        D3ElementBuilder elementBuilder = elementBuilders[structure.index];
+        elementBuilder.preBuildDefinitions();
+
+        // Main method to make a vis
+        out.titleComment("Build element from data");
+
+        out.add("function build(transitionMillis) {").ln().indentMore();
+        elementBuilder.generate(structure.index);
+        interaction.addElementHandlers(structure.vis);
+        out.indentLess().onNewLine().add("}").endStatement().ln();
 
         // Expose the methods and variables we want the user to have access to
         addElementExports(vis);
@@ -222,18 +237,7 @@ public class D3Builder extends AbstractBuilder {
         for (int i : order)
             out.onNewLine().add("elements[" + i + "].build(time);");
 
-        // TODO: make this much less "special case" code
-        if (structure.diagram == VisTypes.Diagram.network) {
-            int nodeIndex = structure.sourceIndex;
-            out.onNewLine().add("if (first) {").indentMore();
-            for (int i : order) {
-                if (structure.elementStructure[i].dependent) {
-                    out.onNewLine().add("BrunelD3.network(d3.layout.force(), chart.graph, elements[" + nodeIndex
-                            + "], elements[" + i + "], geom)").endStatement();
-                }
-            }
-            out.indentLess().onNewLine().add("}");
-        }
+        for (D3ElementBuilder builder : elementBuilders) builder.writeBuildCommands();
 
         out.indentLess().onNewLine().add("}").endStatement().ln();
 
@@ -348,20 +352,6 @@ public class D3Builder extends AbstractBuilder {
         Map<String, Integer> result = new HashMap<String, Integer>();
         for (String s : needed) result.put(s, result.size());
         return result;
-    }
-
-    private void defineElementBuildFunction(ElementStructure elementStructure) {
-
-        D3ElementBuilder elementBuilder = new D3ElementBuilder(elementStructure, out, scalesBuilder);
-        elementBuilder.preBuildDefinitions();
-
-        // Main method to make a vis
-        out.titleComment("Build element from data");
-
-        out.add("function build(transitionMillis) {").ln().indentMore();
-        elementBuilder.generate(elementStructure.elementIndex);
-        interaction.addElementHandlers(elementStructure.vis);
-        out.indentLess().onNewLine().add("}").endStatement().ln();
     }
 
     private void addElementExports(VisSingle vis) {

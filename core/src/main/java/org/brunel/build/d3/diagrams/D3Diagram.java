@@ -40,7 +40,8 @@ public abstract class D3Diagram {
         if (vis.tDiagram == VisTypes.Diagram.cloud) return new Cloud(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.tree) return new Tree(vis, data, out);
         if (vis.tDiagram == VisTypes.Diagram.treemap) return new Treemap(vis, data, out);
-        if (vis.tDiagram == VisTypes.Diagram.network) return new Network(vis, data, structure.chart, out);
+        if (vis.tDiagram == VisTypes.Diagram.network)
+            return new Network(vis, data, structure, structure.chart.getEdge(), out);
         if (vis.tDiagram == VisTypes.Diagram.map) {
             if (vis.tDiagramParameters.length == 1 && vis.tDiagramParameters[0].asString().equals("labels"))
                 return new GeoMapLabels(vis, data, structure.chart, out);
@@ -79,6 +80,10 @@ public abstract class D3Diagram {
     }
 
     public void preBuildDefinitions() {
+        // By default, do nothing
+    }
+
+    public void writeBuildCommands() {
         // By default, do nothing
     }
 
