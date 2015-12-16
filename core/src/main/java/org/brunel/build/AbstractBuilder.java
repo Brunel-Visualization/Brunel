@@ -67,7 +67,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
 
     protected final BuilderOptions options;
     protected Controls controls;                    // Contains the controls for the current chart
-    protected ChartStructure structure;             // Structure of the chart currently being built
+//    protected ChartStructure structure;             // Structure of the chart currently being built
     private StyleSheet visStyles;                   // Collection of style overrides for this visualization
 
     public AbstractBuilder(BuilderOptions options) {
@@ -156,9 +156,9 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
     /**
      * Any final work needed to finish off the chart code
      *
-     * @param dependency
+     * @param structure
      */
-    protected abstract void endChart(ChartStructure dependency);
+    protected abstract void endChart(ChartStructure structure);
 
     /**
      * Any final work needed to finish off the vis code
@@ -192,7 +192,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
             data[i] = new DataBuilder(elements[i], this).build();
         }
 
-        this.structure = new ChartStructure(chart, chartIndex, elements, data);         // Characterize inter-element dependency
+        ChartStructure structure = new ChartStructure(chart, chartIndex, elements, data);         // Characterize inter-element dependency
         defineChart(structure, loc);
         for (int i = 0; i < elements.length; i++) {
             buildElement(structure.elementStructure[i]);

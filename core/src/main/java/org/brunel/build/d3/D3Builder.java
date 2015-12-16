@@ -116,7 +116,7 @@ public class D3Builder extends AbstractBuilder {
         // Define scales and geom (we need the scales to get axes sizes, which determines geom)
         double chartWidth = visWidth - chartMargins[1] - chartMargins[3];
         double chartHeight = visHeight - chartMargins[0] - chartMargins[2];
-        this.scalesBuilder = new D3ScaleBuilder(this.structure, chartWidth, chartHeight, out);
+        this.scalesBuilder = new D3ScaleBuilder(structure, chartWidth, chartHeight, out);
         double[] margins = scalesBuilder.marginsTLBR();
         out.add("var geom = BrunelD3.geometry(vis.node(),", chartMargins, ",", margins, ")").endStatement();
 
@@ -129,14 +129,14 @@ public class D3Builder extends AbstractBuilder {
 
         // Now build the main groups
         out.titleComment("Define groups for the chart parts");
-        interaction = new D3Interaction(this.structure, scalesBuilder, out);
+        interaction = new D3Interaction(structure, scalesBuilder, out);
         writeMainGroups(structure);
 
         // Define scales and access functions
-        if (this.structure.geo != null) {
+        if (structure.geo != null) {
             // Write the projection
             out.titleComment("Projection");
-            GeoMap.writeProjection(out, this.structure.geo);
+            GeoMap.writeProjection(out, structure.geo);
         } else {
             out.titleComment("Scales");
             scalesBuilder.writeCoordinateScales(interaction);
@@ -199,7 +199,7 @@ public class D3Builder extends AbstractBuilder {
         out.add("    vis = d3.select('#' + visId).attr('class', 'brunel')").comment("the SVG container");
     }
 
-    protected void endChart(ChartStructure dependency) {
+    protected void endChart(ChartStructure structure) {
         out.onNewLine().add("function build(time) {").indentMore();
         out.onNewLine().add("var first = elements[0].data() == null").endStatement();
         out.add("if (first) time = 0;").comment("No transition for first call");
@@ -222,10 +222,10 @@ public class D3Builder extends AbstractBuilder {
 
         // TODO: make this much less "special case" code
         if (scalesBuilder.diagram == VisTypes.Diagram.network) {
-            int nodeIndex = dependency.sourceIndex;
+            int nodeIndex = structure.sourceIndex;
             out.onNewLine().add("if (first) {").indentMore();
             for (int i : order) {
-                if (dependency.isDependent(i)) {
+                if (structure.isDependent(i)) {
                     out.onNewLine().add("BrunelD3.network(d3.layout.force(), chart.graph, elements[" + nodeIndex
                             + "], elements[" + i + "], geom)").endStatement();
                 }
@@ -350,7 +350,7 @@ public class D3Builder extends AbstractBuilder {
 
     private void defineElementBuildFunction(ElementStructure elementStructure) {
 
-        D3ElementBuilder elementBuilder = new D3ElementBuilder(elementStructure.vis, elementStructure.data, out, structure, scalesBuilder);
+        D3ElementBuilder elementBuilder = new D3ElementBuilder(elementStructure.vis, elementStructure.data, out, elementStructure.chartStructure, scalesBuilder);
         elementBuilder.preBuildDefinitions();
 
         // Main method to make a vis
