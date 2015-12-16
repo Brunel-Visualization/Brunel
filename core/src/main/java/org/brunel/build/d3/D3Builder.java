@@ -120,7 +120,7 @@ public class D3Builder extends AbstractBuilder {
         return out.content();
     }
 
-    protected String defineVisSystem(VisItem main, int width, int height) {
+    protected void defineVisSystem(VisItem main, int width, int height) {
         this.visWidth = width;
         this.visHeight = height;
         this.out = new ScriptWriter(options.readableJavascript);
@@ -137,8 +137,6 @@ public class D3Builder extends AbstractBuilder {
         out.add("    transitionTime = 200,").at(50).comment("Transition time for animations");
         out.add("    charts = [],").at(50).comment("The charts in the system");
         out.add("    vis = d3.select('#' + visId).attr('class', 'brunel')").comment("the SVG container");
-
-        return options.visIdentifier;
     }
 
     protected void defineChart(ChartStructure structure, double[] location) {
@@ -274,7 +272,7 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}").endStatement().ln();
     }
 
-    protected void endVisSystem(VisItem main, String currentVisualizationID) {
+    protected void endVisSystem(VisItem main) {
 
         // Define visualization functions
         out.titleComment("Expose the needed Visualization functions and fields");

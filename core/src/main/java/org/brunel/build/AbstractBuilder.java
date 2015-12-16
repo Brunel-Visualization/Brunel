@@ -66,7 +66,6 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
     };
 
     protected final BuilderOptions options;
-    private String currentVisualizationID;          // ID of the main visualization (e.g. the div's ID)
     private StyleSheet visStyles;                   // Collection of style overrides for this visualization
     protected Controls controls;                    // Contains the controls for the current chart
     protected ChartStructure structure;             // Structure of the chart currently being built
@@ -92,11 +91,11 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         // Clear existing collections
         visStyles = new StyleSheet();
 
-        // Create the main visualization area and get an identifier for it.
-        currentVisualizationID = defineVisSystem(main, width, height);
+        // Create the main visualization area
+        defineVisSystem(main, width, height);
 
         // Set the Controls to be ready for util
-        controls = new Controls(currentVisualizationID);
+        controls = new Controls(options);
 
         // The build process for each item is the same, regardless of composition method:
         // - calculate the location for it relative to the defined space
@@ -123,7 +122,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
 
         }
 
-        endVisSystem(main, currentVisualizationID);
+        endVisSystem(main);
     }
 
     public abstract String makeImports();
@@ -182,7 +181,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
     }
 
     public String getStyleOverrides() {
-        return visStyles.toString("#" + currentVisualizationID + ".brunel");
+        return visStyles.toString("#" + options.visIdentifier + ".brunel");
     }
 
     /**
@@ -191,9 +190,8 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
      * @param main   The visualization we will build into this space
      * @param width  space to put it into
      * @param height space to put it into
-     * @return a non-null identifier for this visualization.
      */
-    protected abstract String defineVisSystem(VisItem main, int width, int height);
+    protected abstract void defineVisSystem(VisItem main, int width, int height);
 
     /* Swap dimensions if it makes the charts closer to the golden ration (1.62) */
     private double[][] squarify(double[][] layout, int width, int height) {
@@ -255,11 +253,10 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
 
     /**
      * Any final work needed to finish off the vis code
+     *  @param main
      *
-     * @param main
-     * @param currentVisualizationID
      */
-    protected abstract void endVisSystem(VisItem main, String currentVisualizationID);
+    protected abstract void endVisSystem(VisItem main);
 
     /**
      * Any final work needed to finish off the chart code

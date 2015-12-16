@@ -18,6 +18,7 @@ package org.brunel.build.controls;
 
 import com.google.gson.Gson;
 import org.brunel.action.Param;
+import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
@@ -32,11 +33,11 @@ import java.util.List;
  */
 public class Controls {
 
-    public final String visId;
     public final List<FilterControl> filters;
+    private final BuilderOptions options;
 
-    public Controls(String visId) {
-        this.visId = visId;
+    public Controls(BuilderOptions options) {
+        this.options = options;
         this.filters = new ArrayList<FilterControl>();
     }
 
@@ -78,13 +79,13 @@ public class Controls {
 
             //Range filter
             if (categories == null) {
-                out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_range_slider(", out.quote(visId), ",",
+                out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_range_slider(", out.quote(options.visIdentifier), ",",
                         out.quote(fieldId), ",", out.quote(label), ",", min, ",", max, "))").endStatement();
             }
 
             //Category filter
             else {
-                out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_category_filter(", out.quote(visId), ",",
+                out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_category_filter(", out.quote(options.visIdentifier), ",",
                         out.quote(fieldId), ",", out.quote(label), ",", gson.toJson(categories), "))").endStatement();
             }
 
