@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.brunel.build.chart;
+package org.brunel.build.d3;
 
 import org.brunel.data.Data;
 import org.brunel.data.Field;
@@ -28,46 +28,11 @@ import java.util.List;
 /**
  * Calculates information on how to display axes
  */
-public class ChartAxes {
+class AxisDetails {
 
-    /* Estimate the space needed to show all text categories */
-    public int maxCategoryWidth() {
-        if (fields.length == 0) return 0;
-        int maxCharCount = 1;
-        for (Field f : fields) {
-            if (categorical) {
-                for (Object s : f.categories()) {
-                    int length = f.format(s).length();
-                    if (s instanceof Range) length++;                       // The ellipsis is often rather long
-                    maxCharCount = Math.max(maxCharCount, length);
-                }
-            } else {
-                // If we have numeric data, we use our scaling to guess the divisions needed
-                Object[] sampleTicks = Auto.makeNumericScale(f, true, new double[]{0, 0}, 0, 5, false).divisions;
-                for (Object s : sampleTicks)
-                    maxCharCount = Math.max(maxCharCount, f.format(s).length());
-                // Always allow room for three characters. We need this because D3 often
-                // adds fractions to what should be integer scales
-                maxCharCount = Math.max(maxCharCount, 3);
-            }
-        }
-        return (int) (maxCharCount * 6.5);      // Assume a font with about this character width
-    }
-
-    /* Estimate the space needed to show all text categories */
-    public int maxTickWidth() {
-        int maxCharCount = 1;
-        for (Object s : tickValues) {
-            int length = s.toString().length();
-            if (s instanceof Range) length++;                   // The ellipsis is often rather long
-            maxCharCount = Math.max(maxCharCount, length);
-        }
-        return (int) (maxCharCount * 6.5);      // Assume a font with about this character width
-    }
-
-    private final Field[] fields;                      // Fields used in this axis
     public final String title;                         // Title for the axis
     public final String scale;                         // Name for the scale to use for this axis
+    private final Field[] fields;                      // Fields used in this axis
     private final boolean categorical;                 // True if the axis is categorical
     public boolean rotatedTicks = false;               // If true, ticks are to be rotated
     public Object[] tickValues;                        // If non-null, ony show these ticks
@@ -76,43 +41,35 @@ public class ChartAxes {
     public int rightGutter;                // Space needed on left and right (for horizontal chart only)
     public int topGutter;
     public int bottomGutter;                // Space above and below chart (for vertical chart only)
-
     /* Constructs the axis for the given fields */
-    public ChartAxes(String dimension, Field[] definedFields, boolean categorical) {
+    public AxisDetails(String dimension, Field[] definedFields, boolean categorical) {
         this.scale = "scale_" + dimension;
         this.fields = definedFields; // suitable(definedFields);
         this.title = title(fields);
         this.categorical = categorical;
     }
 
-//    private Field[] suitable(Field[] fields) {
-//        Set<Field> result = new LinkedHashSet<Field>();
-//        for (Field f : fields) {
-//            if (f.name.startsWith("'")) continue;           // Do not use constants
-//            result.add(f);
-//        }
-//        return result.toArray(new Field[result.size()]);
-//    }
+    /* Return the title for the axis */
+    private static String title(Field[] fields) {
+
+        if (fields.length == 1) {
+            // Do not title '#row', '#count', "#series", "#values" -- otherwise just use the label
+            return fields[0].isSynthetic() ? null : fields[0].label;
+        }
+
+        LinkedHashSet<String> titles = new LinkedHashSet<String>();             // All the titles
+        LinkedHashSet<String> originalTitles = new LinkedHashSet<String>();     // Only using names before summary
+        for (Field f : fields) {
+            titles.add(f.label);
+            String originalLabel = (String) f.property("originalLabel");
+            originalTitles.add(originalLabel == null ? f.label : originalLabel);
+        }
+        if (originalTitles.size() < titles.size()) titles = originalTitles;     // If shorter, use that
+        return titles.isEmpty() ? null : Data.join(titles);
+    }
 
     public boolean isLog() {
         return fields.length > 0 && "log".equals(fields[0].property("transform"));
-    }
-
-    public void layoutVertically(double availableSpace) {
-        if (!exists()) return;
-        int tickCount = countTicks(fields);
-
-        // A simple fixed gutter for ticks to flow into
-        topGutter = 5;
-        bottomGutter = 5;
-        availableSpace -= (topGutter + bottomGutter);
-
-        // Simple algorithm: just skip fields if necessary
-        tickValues = makeSkippingTickValues(availableSpace, tickCount);
-
-        // Add 10 pixels for tick marks and gap between title and ticks
-        size = tickValues == null ? maxCategoryWidth() : maxTickWidth();
-        size += estimatedTitleHeight() + 10;
     }
 
     /**
@@ -162,33 +119,26 @@ public class ChartAxes {
         return exists() ? 20 + estimatedTitleHeight() : 0;
     }
 
+    public void layoutVertically(double availableSpace) {
+        if (!exists()) return;
+        int tickCount = countTicks(fields);
+
+        // A simple fixed gutter for ticks to flow into
+        topGutter = 5;
+        bottomGutter = 5;
+        availableSpace -= (topGutter + bottomGutter);
+
+        // Simple algorithm: just skip fields if necessary
+        tickValues = makeSkippingTickValues(availableSpace, tickCount);
+
+        // Add 10 pixels for tick marks and gap between title and ticks
+        size = tickValues == null ? maxCategoryWidth() : maxTickWidth();
+        size += estimatedTitleHeight() + 10;
+    }
+
     /* Does not exist if no fields to show */
     public boolean exists() {
         return fields.length > 0;
-    }
-
-    /* Space needed for title */
-    private int estimatedTitleHeight() {
-        return title == null ? 0 : 16;
-    }
-
-    /* Return the title for the axis */
-    private static String title(Field[] fields) {
-
-        if (fields.length == 1) {
-            // Do not title '#row', '#count', "#series", "#values" -- otherwise just use the label
-            return fields[0].isSynthetic() ? null : fields[0].label;
-        }
-
-        LinkedHashSet<String> titles = new LinkedHashSet<String>();             // All the titles
-        LinkedHashSet<String> originalTitles = new LinkedHashSet<String>();     // Only using names before summary
-        for (Field f : fields) {
-            titles.add(f.label);
-            String originalLabel = (String) f.property("originalLabel");
-            originalTitles.add(originalLabel == null ? f.label : originalLabel);
-        }
-        if (originalTitles.size() < titles.size()) titles = originalTitles;     // If shorter, use that
-        return titles.isEmpty() ? null : Data.join(titles);
     }
 
     private int countTicks(Field[] fields) {
@@ -212,6 +162,46 @@ public class ChartAxes {
                 if (at++ % skipFrequency == 0) useThese.add(s);
         }
         return useThese.toArray(new Object[useThese.size()]);
+    }
+
+    /* Estimate the space needed to show all text categories */
+    public int maxCategoryWidth() {
+        if (fields.length == 0) return 0;
+        int maxCharCount = 1;
+        for (Field f : fields) {
+            if (categorical) {
+                for (Object s : f.categories()) {
+                    int length = f.format(s).length();
+                    if (s instanceof Range) length++;                       // The ellipsis is often rather long
+                    maxCharCount = Math.max(maxCharCount, length);
+                }
+            } else {
+                // If we have numeric data, we use our scaling to guess the divisions needed
+                Object[] sampleTicks = Auto.makeNumericScale(f, true, new double[]{0, 0}, 0, 5, false).divisions;
+                for (Object s : sampleTicks)
+                    maxCharCount = Math.max(maxCharCount, f.format(s).length());
+                // Always allow room for three characters. We need this because D3 often
+                // adds fractions to what should be integer scales
+                maxCharCount = Math.max(maxCharCount, 3);
+            }
+        }
+        return (int) (maxCharCount * 6.5);      // Assume a font with about this character width
+    }
+
+    /* Estimate the space needed to show all text categories */
+    public int maxTickWidth() {
+        int maxCharCount = 1;
+        for (Object s : tickValues) {
+            int length = s.toString().length();
+            if (s instanceof Range) length++;                   // The ellipsis is often rather long
+            maxCharCount = Math.max(maxCharCount, length);
+        }
+        return (int) (maxCharCount * 6.5);      // Assume a font with about this character width
+    }
+
+    /* Space needed for title */
+    private int estimatedTitleHeight() {
+        return title == null ? 0 : 16;
     }
 
 }

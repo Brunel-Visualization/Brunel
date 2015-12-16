@@ -31,6 +31,10 @@ public class D3Util {
 
     private static final boolean DEBUG = false;
 
+    public static String writeCall(Field f) {
+        return "data." + baseFieldID(f) + "(d)";
+    }
+
     public static String baseFieldID(Field f) {
         return canonicalFieldName(f.name);
     }
@@ -49,10 +53,6 @@ public class D3Util {
         }
 
         return s;                                       // As it is
-    }
-
-    public static String writeCall(Field f) {
-        return "data." + baseFieldID(f) + "(d)";
     }
 
     public static void addTiming(String s, ScriptWriter out) {

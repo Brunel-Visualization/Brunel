@@ -36,19 +36,6 @@ import java.util.Set;
 public class ChartStructure {
 
     public final Dataset[] baseDataSets;
-
-    public String getChartID() {
-        return "chart" + chartIndex;
-    }
-
-    public  GeoInformation makeGeo() {
-        // If any element specifies a map, we make the map information for all to share
-        for (VisSingle e : elements)
-            if (e.tDiagram == VisTypes.Diagram.map)
-                return new GeoInformation(elements, data, coordinates);
-        return null;
-    }
-
     public final int sourceIndex;
     public final ChartCoordinates coordinates;
     public final int chartIndex;
@@ -57,7 +44,6 @@ public class ChartStructure {
     public final GeoInformation geo;
     public final ElementStructure[] elementStructure;
     private final Set<VisSingle> linked = new LinkedHashSet<VisSingle>();
-
     public ChartStructure(VisItem chart, int chartIndex, VisSingle[] elements, Dataset[] data) {
         this.chartIndex = chartIndex;
         this.elements = elements;
@@ -83,45 +69,12 @@ public class ChartStructure {
         sourceIndex = src;
     }
 
-    /**
-     * Find an element suitable for use as an edge element linking nodes
-     *
-     * @return VisSingle, or null if it does not exist
-     */
-    public VisSingle getEdgeElement() {
-        for (VisSingle v : linked)
-            if (v.fKeys.size() == 2) return v;
+    public GeoInformation makeGeo() {
+        // If any element specifies a map, we make the map information for all to share
+        for (VisSingle e : elements)
+            if (e.tDiagram == VisTypes.Diagram.map)
+                return new GeoInformation(elements, data, coordinates);
         return null;
-    }
-
-    public boolean isDependent(VisSingle vis) {
-        return linked.contains(vis);
-    }
-
-    public boolean isDependent(int i) {
-        return linked.contains(elements[i]);
-    }
-
-    /**
-     * Returns true if this element is defined by a node-edge graph, and this is the edge element
-     *
-     * @param vis target visualization
-     * @return true if we can use graph layout links for this element's position
-     */
-    public boolean isEdge(VisSingle vis) {
-        return getEdgeElement() == vis && elements[sourceIndex].tDiagram == VisTypes.Diagram.network;
-    }
-
-    /**
-     * Create the Javascript that gives us the required location on a given dimension in data units
-     *
-     * @param dimName "x" or "y"
-     * @param key     field to use for a key
-     * @return javascript fragment
-     */
-    public String keyedLocation(String dimName, Field key) {
-        String idToPointName = "elements[" + sourceIndex + "].internal()._idToPoint(";
-        return idToPointName + D3Util.writeCall(key) + ")." + dimName;
     }
 
     public Integer[] elementBuildOrder() {
@@ -140,8 +93,49 @@ public class ChartStructure {
         return order;
     }
 
-    public VisSingle sourceElement() {
-        return sourceIndex < 0 ? null : elements[sourceIndex];
+    public String getChartID() {
+        return "chart" + chartIndex;
+    }
+
+    public boolean isDependent(int i) {
+        return linked.contains(elements[i]);
+    }
+
+    public boolean isDependent(VisSingle vis) {
+        return linked.contains(vis);
+    }
+
+    /**
+     * Returns true if this element is defined by a node-edge graph, and this is the edge element
+     *
+     * @param vis target visualization
+     * @return true if we can use graph layout links for this element's position
+     */
+    public boolean isEdge(VisSingle vis) {
+        return getEdgeElement() == vis && elements[sourceIndex].tDiagram == VisTypes.Diagram.network;
+    }
+
+    /**
+     * Find an element suitable for use as an edge element linking nodes
+     *
+     * @return VisSingle, or null if it does not exist
+     */
+    public VisSingle getEdgeElement() {
+        for (VisSingle v : linked)
+            if (v.fKeys.size() == 2) return v;
+        return null;
+    }
+
+    /**
+     * Create the Javascript that gives us the required location on a given dimension in data units
+     *
+     * @param dimName "x" or "y"
+     * @param key     field to use for a key
+     * @return javascript fragment
+     */
+    public String keyedLocation(String dimName, Field key) {
+        String idToPointName = "elements[" + sourceIndex + "].internal()._idToPoint(";
+        return idToPointName + D3Util.writeCall(key) + ")." + dimName;
     }
 
     /**
@@ -154,5 +148,9 @@ public class ChartStructure {
             if (elements[i] == other)
                 return "elements[" + i + "].data()";
         throw new IllegalStateException("Could not find other VisSingle element");
+    }
+
+    public VisSingle sourceElement() {
+        return sourceIndex < 0 ? null : elements[sourceIndex];
     }
 }

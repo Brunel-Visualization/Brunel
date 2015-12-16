@@ -66,16 +66,12 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
     };
 
     protected final BuilderOptions options;
-    private StyleSheet visStyles;                   // Collection of style overrides for this visualization
     protected Controls controls;                    // Contains the controls for the current chart
     protected ChartStructure structure;             // Structure of the chart currently being built
+    private StyleSheet visStyles;                   // Collection of style overrides for this visualization
 
     public AbstractBuilder(BuilderOptions options) {
         this.options = options;
-    }
-
-    public final BuilderOptions getOptions() {
-        return options;
     }
 
     /**
@@ -125,7 +121,66 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         endVisSystem(main);
     }
 
+    public final BuilderOptions getOptions() {
+        return options;
+    }
+
+    public String getStyleOverrides() {
+        return visStyles.toString("#" + options.visIdentifier + ".brunel");
+    }
+
     public abstract String makeImports();
+
+    /**
+     * Within the system of visualizations, this is called to define a single visualization's location.
+     * It is called before we start calling the <code>buildSingle(...)</code> calls that will define the
+     * contents of this area
+     *
+     * @param structure
+     * @param location  The chart location in percentages, relative to overall location: [top, left, bottom, right\
+     */
+    protected abstract void defineChart(ChartStructure structure, double[] location);
+
+    /* Adds an 'element' in GoG terms -- a bar, line, point, etc. */
+    protected abstract void defineElement(ElementStructure structure);
+
+    /**
+     * Define the overall visualization.
+     *
+     * @param main   The visualization we will build into this space
+     * @param width  space to put it into
+     * @param height space to put it into
+     */
+    protected abstract void defineVisSystem(VisItem main, int width, int height);
+
+    /**
+     * Any final work needed to finish off the chart code
+     *
+     * @param dependency
+     */
+    protected abstract void endChart(ChartStructure dependency);
+
+    /**
+     * Any final work needed to finish off the vis code
+     *
+     * @param main
+     */
+    protected abstract void endVisSystem(VisItem main);
+
+    // Builds controls as needed, then the custom styles, then the visualization
+    private void buildElement(ElementStructure structure) {
+        try {
+            // Note that controls need the ORIGINAL dataset; the one passed in has been transformed
+            controls.buildControls(structure.vis, structure.vis.getDataset());
+            defineElement(structure);
+            if (structure.vis.styles != null) {
+                StyleSheet styles = structure.vis.styles.replaceClass("currentElement", structure.getElementID());
+                visStyles.add(styles, structure.chartStructure.getChartID());
+            }
+        } catch (Exception e) {
+            throw VisException.makeBuilding(e, structure.vis);
+        }
+    }
 
     private void buildSingleChart(VisItem chart, int chartIndex, VisItem[] items, double[] loc) {
 
@@ -180,39 +235,6 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         }
     }
 
-    public String getStyleOverrides() {
-        return visStyles.toString("#" + options.visIdentifier + ".brunel");
-    }
-
-    /**
-     * Define the overall visualization.
-     *
-     * @param main   The visualization we will build into this space
-     * @param width  space to put it into
-     * @param height space to put it into
-     */
-    protected abstract void defineVisSystem(VisItem main, int width, int height);
-
-    /* Swap dimensions if it makes the charts closer to the golden ration (1.62) */
-    private double[][] squarify(double[][] layout, int width, int height) {
-        double[][] alternate = new double[layout.length][];
-        for (int i = 0; i < layout.length; i++)
-            alternate[i] = new double[]{layout[i][1], layout[i][0], layout[i][3], layout[i][2]};
-        return squarifyDivergence(alternate, width, height) < squarifyDivergence(layout, width, height)
-                ? alternate : layout;
-    }
-
-    // Calculate the location for the bounds of the chart. We search the children and return the first one that
-    // has a bounds definition
-    private double[] getLocation(Param[] bounds) {
-        double l = 0, t = 0, r = 100, b = 100;
-        if (bounds != null && bounds.length > 0) l = bounds[0].asDouble();
-        if (bounds != null && bounds.length > 1) t = bounds[1].asDouble();
-        if (bounds != null && bounds.length > 2) r = bounds[2].asDouble();
-        if (bounds != null && bounds.length > 3) b = bounds[3].asDouble();
-        return new double[]{t, l, b, r};
-    }
-
     private Param[] findFirstBounds(VisItem chart) {
         // Find the first item in the chart that has a bounds defined
         if (chart.children() == null) {
@@ -226,44 +248,25 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         return null;
     }
 
-    /**
-     * Within the system of visualizations, this is called to define a single visualization's location.
-     * It is called before we start calling the <code>buildSingle(...)</code> calls that will define the
-     * contents of this area
-     *
-     * @param structure
-     * @param location  The chart location in percentages, relative to overall location: [top, left, bottom, right\
-     */
-    protected abstract void defineChart(ChartStructure structure, double[] location);
-
-    // Builds controls as needed, then the custom styles, then the visualization
-    private void buildElement(ElementStructure structure) {
-        try {
-            // Note that controls need the ORIGINAL dataset; the one passed in has been transformed
-            controls.buildControls(structure.vis, structure.vis.getDataset());
-            defineElement(structure);
-            if (structure.vis.styles != null) {
-                StyleSheet styles = structure.vis.styles.replaceClass("currentElement", structure.getElementID());
-                visStyles.add(styles, structure.chartStructure.getChartID());
-            }
-        } catch (Exception e) {
-            throw VisException.makeBuilding(e, structure.vis);
-        }
+    // Calculate the location for the bounds of the chart. We search the children and return the first one that
+    // has a bounds definition
+    private double[] getLocation(Param[] bounds) {
+        double l = 0, t = 0, r = 100, b = 100;
+        if (bounds != null && bounds.length > 0) l = bounds[0].asDouble();
+        if (bounds != null && bounds.length > 1) t = bounds[1].asDouble();
+        if (bounds != null && bounds.length > 2) r = bounds[2].asDouble();
+        if (bounds != null && bounds.length > 3) b = bounds[3].asDouble();
+        return new double[]{t, l, b, r};
     }
 
-    /**
-     * Any final work needed to finish off the vis code
-     *  @param main
-     *
-     */
-    protected abstract void endVisSystem(VisItem main);
-
-    /**
-     * Any final work needed to finish off the chart code
-     *
-     * @param dependency
-     */
-    protected abstract void endChart(ChartStructure dependency);
+    /* Swap dimensions if it makes the charts closer to the golden ration (1.62) */
+    private double[][] squarify(double[][] layout, int width, int height) {
+        double[][] alternate = new double[layout.length][];
+        for (int i = 0; i < layout.length; i++)
+            alternate[i] = new double[]{layout[i][1], layout[i][0], layout[i][3], layout[i][2]};
+        return squarifyDivergence(alternate, width, height) < squarifyDivergence(layout, width, height)
+                ? alternate : layout;
+    }
 
     private double squarifyDivergence(double[][] rects, int width, int height) {
         double sum = 0;
@@ -276,8 +279,5 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         }
         return sum;
     }
-
-    /* Adds an 'element' in GoG terms -- a bar, line, point, etc. */
-    protected abstract void defineElement(ElementStructure structure);
 
 }

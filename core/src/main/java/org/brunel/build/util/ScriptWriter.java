@@ -30,15 +30,15 @@ import java.util.Set;
  */
 public class ScriptWriter {
 
-    private final int lineMaxLength;
     private static final Set<Character> NO_SPACE_BEFORE = new HashSet<Character>(Arrays.asList(':', ',', ';', '(', ')', ']'));
     private static final String INDENT = "  ";
+    private final int lineMaxLength;
     private final PrintWriter out;
     private final StringWriter base;
+    public boolean readable = false;
     private int consecutiveNewLines = 0;
     private int indentLevel = 0;
     private boolean changed;
-    public boolean readable = false;
 
     public ScriptWriter(boolean readableJavascript) {
         readable = readableJavascript;
@@ -53,17 +53,6 @@ public class ScriptWriter {
             return indentMore().onNewLine().add(".").add(items).indentLess();
         else
             return add(".").add(items);
-    }
-
-    public boolean changedSinceMark() {
-        return changed;
-    }
-
-    public ScriptWriter continueOnNextLine(String... before) {
-        for (String s : before) out.print(s);
-        ln();
-        if (readable) out.print(INDENT);
-        return this;
     }
 
     public ScriptWriter indentLess() {
@@ -97,10 +86,6 @@ public class ScriptWriter {
         consecutiveNewLines = 0;
         changed = true;
         return this;
-    }
-
-    public void mark() {
-        changed = false;
     }
 
     public ScriptWriter onNewLine() {
@@ -169,6 +154,10 @@ public class ScriptWriter {
         return this;
     }
 
+    public boolean changedSinceMark() {
+        return changed;
+    }
+
     public ScriptWriter comment(Object... items) {
         if (readable) {
             if (consecutiveNewLines == 0) add(" ");
@@ -183,8 +172,19 @@ public class ScriptWriter {
         return base.toString();
     }
 
+    public ScriptWriter continueOnNextLine(String... before) {
+        for (String s : before) out.print(s);
+        ln();
+        if (readable) out.print(INDENT);
+        return this;
+    }
+
     public ScriptWriter endStatement() {
         return add(";").ln();
+    }
+
+    public void mark() {
+        changed = false;
     }
 
     public ScriptWriter titleComment(Object... items) {

@@ -28,7 +28,7 @@ class Tree extends D3Diagram {
     private final int pad;          // Amount to pad tree by
 
     public Tree(VisSingle vis, Dataset data, ScriptWriter out) {
-        super(vis, data , out);
+        super(vis, data, out);
         this.pad = 10;
     }
 
@@ -48,7 +48,7 @@ class Tree extends D3Diagram {
         // Do not override the polar coordinates!
         if (vis.coords != VisTypes.Coordinates.polar)
             out.add("elementGroup.attr('transform', 'translate(" + pad + ", " + pad + ")')").endStatement();
-        return ElementDetails.makeForDiagram("treeLayout(tree.root)", "circle", "point",  "box", false);
+        return ElementDetails.makeForDiagram("treeLayout(tree.root)", "circle", "point", "box", false);
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {

@@ -75,30 +75,6 @@ public class ChartCoordinates {
             this.yTransform = yTransform;
     }
 
-    private String getDefinedXTransform(VisSingle v) {
-        for (Param p : v.fX)
-            if (p.isField() && p.hasModifiers()) return p.firstModifier().asString();
-        return null;
-    }
-
-    private String getDefinedYTransform(VisSingle v) {
-        for (Param p : v.fY)
-            if (p.isField() && p.hasModifiers()) return p.firstModifier().asString();
-        if (v.fRange != null) {
-            if (v.fRange[0].isField() && v.fRange[0].hasModifiers()) return v.fRange[0].firstModifier().asString();
-            if (v.fRange[1].isField() && v.fRange[1].hasModifiers()) return v.fRange[1].firstModifier().asString();
-        }
-        return null;
-    }
-
-    public Field[] getX(VisSingle vis) {
-        return x.get(vis);
-    }
-
-    public Field[] getY(VisSingle vis) {
-        return y.get(vis);
-    }
-
     private Field[] getXFields(VisSingle vis, Dataset data) {
         Field[] result = new Field[vis.fX.size()];
         for (int i = 0; i < vis.fX.size(); i++)
@@ -132,6 +108,22 @@ public class ChartCoordinates {
         }
     }
 
+    private String getDefinedXTransform(VisSingle v) {
+        for (Param p : v.fX)
+            if (p.isField() && p.hasModifiers()) return p.firstModifier().asString();
+        return null;
+    }
+
+    private String getDefinedYTransform(VisSingle v) {
+        for (Param p : v.fY)
+            if (p.isField() && p.hasModifiers()) return p.firstModifier().asString();
+        if (v.fRange != null) {
+            if (v.fRange[0].isField() && v.fRange[0].hasModifiers()) return v.fRange[0].firstModifier().asString();
+            if (v.fRange[1].isField() && v.fRange[1].hasModifiers()) return v.fRange[1].firstModifier().asString();
+        }
+        return null;
+    }
+
     private String chooseTransform(Field[] fields) {
         if (fields.length == 0) return "linear";
 
@@ -149,6 +141,14 @@ public class ChartCoordinates {
         }
         if ("log".equals(best) && min <= 0) return "linear";
         return best;
+    }
+
+    public Field[] getX(VisSingle vis) {
+        return x.get(vis);
+    }
+
+    public Field[] getY(VisSingle vis) {
+        return y.get(vis);
     }
 
 }

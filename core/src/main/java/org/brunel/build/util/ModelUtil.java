@@ -90,6 +90,33 @@ public class ModelUtil {
     }
 
     /**
+     * Get the value of a style item
+     *
+     * @param vis    which visualization to look at styles for
+     * @param target the target style to look for
+     * @param key    which value to return
+     * @return the found value in either the vis styles, or the default styles, or null if not found in either
+     */
+    private static String getStyle(VisSingle vis, StyleTarget target, String key) {
+        String result = vis.styles == null ? null : vis.styles.get(target, key);
+        return result == null ? StyleSheet.getBrunelDefault(target, key) : result;
+    }
+
+    private static Size decompose(String s) {
+        if (s == null) return null;
+        s = s.trim();
+        try {
+            int pUnit = s.length();
+            while (pUnit > 0 && "1234567890.".indexOf(s.charAt(pUnit - 1)) < 0)
+                pUnit--;
+            double v = Double.parseDouble(s.substring(0, pUnit));
+            return new Size(v, s.substring(pUnit));
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Could not parse style defined as: " + s, e);
+        }
+    }
+
+    /**
      * Returns the label position
      *
      * @param vis the visualization to look for definitions in
@@ -123,33 +150,6 @@ public class ModelUtil {
         return decompose(s);
     }
 
-    private static Size decompose(String s) {
-        if (s == null) return null;
-        s = s.trim();
-        try {
-            int pUnit = s.length();
-            while (pUnit > 0 && "1234567890.".indexOf(s.charAt(pUnit - 1)) < 0)
-                pUnit--;
-            double v = Double.parseDouble(s.substring(0, pUnit));
-            return new Size(v, s.substring(pUnit));
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Could not parse style defined as: " + s, e);
-        }
-    }
-
-    /**
-     * Get the value of a style item
-     *
-     * @param vis    which visualization to look at styles for
-     * @param target the target style to look for
-     * @param key    which value to return
-     * @return the found value in either the vis styles, or the default styles, or null if not found in either
-     */
-    private static String getStyle(VisSingle vis, StyleTarget target, String key) {
-        String result = vis.styles == null ? null : vis.styles.get(target, key);
-        return result == null ? StyleSheet.getBrunelDefault(target, key) : result;
-    }
-
     public static boolean hasFilters(VisItem target) {
         if (target.children() == null) return !target.getSingle().fFilter.isEmpty();
         for (VisItem v : target.children()) if (hasFilters(v)) return true;
@@ -180,6 +180,11 @@ public class ModelUtil {
             this.unit = unit.isEmpty() ? "px" : unit;
         }
 
+        public String suffix() {
+            // All are converted to pixels
+            return isPercent() ? unit : "px";
+        }
+
         public boolean isPercent() {
             return unit.equals("%");
         }
@@ -188,9 +193,8 @@ public class ModelUtil {
             return value + unit;
         }
 
-        public String suffix() {
-            // All are converted to pixels
-            return isPercent() ? unit : "px";
+        public double valueInPixels(double percentSize100) {
+            return isPercent() ? value() * percentSize100 : value;
         }
 
         public double value() {
@@ -202,10 +206,6 @@ public class ModelUtil {
             if (unit.equals("pt")) return value * DPI / 72;
             if (unit.equals("pc")) return value * DPI / 6;
             throw new IllegalStateException("Unknown unit: " + unit);
-        }
-
-        public double valueInPixels(double percentSize100) {
-            return isPercent() ? value() * percentSize100 : value;
         }
     }
 }

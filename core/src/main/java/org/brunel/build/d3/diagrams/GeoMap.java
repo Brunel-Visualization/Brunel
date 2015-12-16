@@ -18,8 +18,8 @@ package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.element.ElementDefinition;
-import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.element.ElementDetails;
+import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
@@ -33,15 +33,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class GeoMap extends D3Diagram {
-
-    private final GeoMapping mapping;           // Mapping of identifiers to features
-
-    public GeoMap(VisSingle vis, Dataset data, GeoMapping mapping, ScriptWriter out) {
-        super(vis, data, out);
-        this.mapping = mapping;
-        if (mapping == null)
-            throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
-    }
 
     public static void writeProjection(ScriptWriter out, GeoInformation geo) {
         out.comment("Define the projection");
@@ -91,9 +82,13 @@ public class GeoMap extends D3Diagram {
                 .onNewLine().add("return 'translate(' + q[0] + ',' + q[1] + ')'")
                 .indentLess().onNewLine().add("}");
     }
+    private final GeoMapping mapping;           // Mapping of identifiers to features
 
-    public void writeDiagramEnter() {
-        super.writeDiagramEnter();
+    public GeoMap(VisSingle vis, Dataset data, GeoMapping mapping, ScriptWriter out) {
+        super(vis, data, out);
+        this.mapping = mapping;
+        if (mapping == null)
+            throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
     }
 
     public ElementDetails writeDataConstruction() {
@@ -116,16 +111,6 @@ public class GeoMap extends D3Diagram {
 
         String idName = idField == null ? "null" : "data." + D3Util.canonicalFieldName(idField);
         out.add("if (BrunelD3.addFeatures(data, features,", idName, ", this, transitionMillis)) return").endStatement();
-    }
-
-    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
-        // Set the given location using the transform
-        out.addChained("attr('d', path )").endStatement();
-        addAestheticsAndTooltips(details, true);
-    }
-
-    public void writePreDefinition(ElementDetails details, ElementDefinition elementDef) {
-        out.add("selection.classed('nondata', function(d) {return !d || d.row == null})").endStatement();
     }
 
     /**
@@ -171,5 +156,18 @@ public class GeoMap extends D3Diagram {
         out.indentLess().onNewLine().add("}");
     }
 
+    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
+        // Set the given location using the transform
+        out.addChained("attr('d', path )").endStatement();
+        addAestheticsAndTooltips(details, true);
+    }
+
+    public void writePreDefinition(ElementDetails details, ElementDefinition elementDef) {
+        out.add("selection.classed('nondata', function(d) {return !d || d.row == null})").endStatement();
+    }
+
+    public void writeDiagramEnter() {
+        super.writeDiagramEnter();
+    }
 
 }

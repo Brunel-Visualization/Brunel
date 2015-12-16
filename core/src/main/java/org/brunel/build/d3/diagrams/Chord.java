@@ -30,6 +30,10 @@ class Chord extends D3Diagram {
         super(vis, data, out);
     }
 
+    public String getRowKey() {
+        return "d.source.index + '|' + d.target.index";
+    }
+
     public ElementDetails writeDataConstruction() {
         String f1 = vis.positionFields()[0];
         String f2 = position[1];
@@ -49,17 +53,7 @@ class Chord extends D3Diagram {
         out.add("var arc_width =", Data.formatNumeric(arcWidth, false), ";").comment("Width of exterior arc");
         out.add("function keyFunction(d) { return d.source.index + '|' + d.target.index };").comment(" special key function for the edges");
 
-        return ElementDetails.makeForDiagram("chord.chords()", "path", "edge",  "poly", false);
-    }
-
-    public String getRowKey() {
-        return "d.source.index + '|' + d.target.index";
-    }
-
-    public void writeDiagramEnter() {
-        // Ensure we have a row for each chord, based off the chord start and end points
-        out.endStatement();
-        out.add("selection.each(function(d) { d.row = chordData.index(d.target.index, d.target.subindex) })").endStatement();
+        return ElementDetails.makeForDiagram("chord.chords()", "path", "edge", "poly", false);
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
@@ -92,5 +86,11 @@ class Chord extends D3Diagram {
         out.add("BrunelD3.tween(arcText, transitionMillis,").indentMore().ln()
                 .add("function(d,i) { var txt=this; return function() { BrunelD3.centerInWedge(txt, arcGroup[0][i], arc_width) } })")
                 .endStatement();
+    }
+
+    public void writeDiagramEnter() {
+        // Ensure we have a row for each chord, based off the chord start and end points
+        out.endStatement();
+        out.add("selection.each(function(d) { d.row = chordData.index(d.target.index, d.target.subindex) })").endStatement();
     }
 }

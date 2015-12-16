@@ -23,16 +23,15 @@ package org.brunel.build.element;
  */
 public class ElementDefinition {
 
+    /* Definitions for x and y fields */
+    public final ElementDimensionDefinition x = new ElementDimensionDefinition();
+    public final ElementDimensionDefinition y = new ElementDimensionDefinition();
+    public String overallSize;                         // A general size for the whole item
+
     public static class ElementDimensionDefinition {
         public String center;                          // Where the center is to be (always defined)
         public String left;                            // Where the left is to be (right will also be defined)
         public String right;                           // Where the right is to be (left will also be defined)
         public String size;                            // What the size is to be
     }
-
-    /* Definitions for x and y fields */
-    public final ElementDimensionDefinition x = new ElementDimensionDefinition();
-    public final ElementDimensionDefinition y = new ElementDimensionDefinition();
-
-    public String overallSize;                         // A general size for the whole item
 }

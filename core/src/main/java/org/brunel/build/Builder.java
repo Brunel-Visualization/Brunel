@@ -26,7 +26,6 @@ import org.brunel.model.VisItem;
  */
 public interface Builder {
 
-
     /**
      * Builds the visualization
      *
@@ -35,6 +34,13 @@ public interface Builder {
      * @param height pixel height of the rectangle into which the visualization is to be put
      */
     void build(VisItem target, int width, int height);
+
+    /**
+     * Returns the options used for building the visualization
+     *
+     * @return options used
+     */
+    BuilderOptions getOptions();
 
     /**
      * Some visualizations may re-define or add to the standard styles. This will be a CSS-compatible
@@ -53,11 +59,5 @@ public interface Builder {
      * @return non-null visualization artifact
      */
     Object getVisualization();
-
-    /**
-     * Returns the options used for building the visualization
-     * @return options used
-     */
-    BuilderOptions getOptions();
 
 }

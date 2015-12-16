@@ -45,6 +45,17 @@ public class D3LabelBuilder {
         this.data = data;
     }
 
+    public void addFontSizeAttribute(VisSingle vis) {
+        if (!vis.fSize.isEmpty()) {
+            ModelUtil.Size parts = ModelUtil.getFontSize(vis);
+            if (parts == null) {
+                out.addChained("style('font-size', function(d) { return (100*size(d)) + '%' })");
+            } else {
+                out.addChained("style('font-size', function(d) { return (", parts.value(), "* size(d)) +'" + parts.suffix() + "' })");
+            }
+        }
+    }
+
     /* Call this after shapes have been defined to add the labels */
     public void addLabels(ElementDetails details) {
 
@@ -76,43 +87,12 @@ public class D3LabelBuilder {
         out.add("labelGroup.exit().remove()").endStatement();
     }
 
-    public void addFontSizeAttribute(VisSingle vis) {
-        if (!vis.fSize.isEmpty()) {
-            ModelUtil.Size parts = ModelUtil.getFontSize(vis);
-            if (parts == null) {
-                out.addChained("style('font-size', function(d) { return (100*size(d)) + '%' })");
-            } else {
-                out.addChained("style('font-size', function(d) { return (", parts.value(), "* size(d)) +'" + parts.suffix() + "' })");
-            }
-        }
-    }
-
     public void addTooltips(ElementDetails details) {
         if (vis.itemsTooltip.isEmpty()) return;
         out.onNewLine().ln();
         defineLabeling(details.modifyForTooltip(vis.coords == VisTypes.Coordinates.transposed),
                 prettify(vis.itemsTooltip, true), true);
         out.add("BrunelD3.addTooltip(selection, tooltipLabeling, geom)").endStatement();
-    }
-
-    /* Call to add labels for internal nodes of trees and treemaps */
-    public void addTreeInternalLabels(ElementDetails details, String where) {
-        out.add("diagramLabels.attr('class', 'axis diagram treemap hierarchy')").endStatement();
-        out.add("var treeLabels = diagramLabels.selectAll('text').data(d3Data)").endStatement();
-
-        out.add("treeLabels.enter().append('text')");
-        out.addChained("attr('class', function(d) { return 'axis label L' + d.depth })");
-        out.addChained("attr('dx', 2)").addChained("attr('dy', '0.85em')").endStatement();
-
-        out.add("var treeLabeling = {method:'box', fit:true, content:function(d){return d.innerNodeName}, ");
-        out.indentMore().ln().add("where : function(box) { return", where, "}").indentLess();
-        out.add("}").endStatement();
-
-        out.add("BrunelD3.tween(treeLabels,transitionMillis, function(d, i) { return BrunelD3.makeLabeling(this, selection[0][i], treeLabeling, false)})");
-        out.endStatement();
-
-        out.add("treeLabels.exit().remove()").endStatement();
-
     }
 
     public void defineLabeling(ElementDetails details, List<Param> items, boolean forTooltip) {
@@ -138,10 +118,6 @@ public class D3LabelBuilder {
         out.indentLess().onNewLine().add("}");
 
         out.indentLess().onNewLine().add("}").endStatement();
-    }
-
-    public boolean needed() {
-        return vis.itemsLabel.size() > 0 || vis.tElement == VisTypes.Element.text;
     }
 
     private List<Param> prettify(List<Param> items, boolean longForm) {
@@ -189,5 +165,29 @@ public class D3LabelBuilder {
             }
             first = false;
         }
+    }
+
+    /* Call to add labels for internal nodes of trees and treemaps */
+    public void addTreeInternalLabels(ElementDetails details, String where) {
+        out.add("diagramLabels.attr('class', 'axis diagram treemap hierarchy')").endStatement();
+        out.add("var treeLabels = diagramLabels.selectAll('text').data(d3Data)").endStatement();
+
+        out.add("treeLabels.enter().append('text')");
+        out.addChained("attr('class', function(d) { return 'axis label L' + d.depth })");
+        out.addChained("attr('dx', 2)").addChained("attr('dy', '0.85em')").endStatement();
+
+        out.add("var treeLabeling = {method:'box', fit:true, content:function(d){return d.innerNodeName}, ");
+        out.indentMore().ln().add("where : function(box) { return", where, "}").indentLess();
+        out.add("}").endStatement();
+
+        out.add("BrunelD3.tween(treeLabels,transitionMillis, function(d, i) { return BrunelD3.makeLabeling(this, selection[0][i], treeLabeling, false)})");
+        out.endStatement();
+
+        out.add("treeLabels.exit().remove()").endStatement();
+
+    }
+
+    public boolean needed() {
+        return vis.itemsLabel.size() > 0 || vis.tElement == VisTypes.Element.text;
     }
 }

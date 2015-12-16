@@ -25,28 +25,9 @@ import org.brunel.model.VisTypes;
  */
 public class ElementDetails {
 
-    /**
-     * Define details about the element.
-     * The elementType defines the type of graphical object that will be created
-     * The textMethod defines how we place text around or inside the shape:
-     * The methods 'wedge', 'poly', 'area', 'path', 'box' wrap the text somewhere useful in the center of the shape,
-     * and will also remove the label if it does not fit.
-     * a box around the shape (and so will work bets for convex shapes like rectangles and circles)
-     *
-     * @param dataSource  the javascript name of the element's data
-     * @param elementType path, line, text, rect or circle
-     * @param elementClass the name of the element class for CSS purposes (polygon, path, point, etc.)
-     * @param textMethod  wedge, poly, area, path, box, left, right, top, bottom
-     * @param textFits true if text must fit within the shape
-     */
-    public static ElementDetails makeForDiagram(String dataSource, String elementType, String elementClass, String textMethod, boolean textFits) {
-        return new ElementDetails(dataSource, elementType, elementClass, textMethod, textFits);
-    }
-
     public static ElementDetails makeForCoordinates(VisSingle vis, String symbol) {
         return new ElementDetails(vis, symbol);
     }
-
     public final boolean splitIntoShapes;               // Will produce one shape per split
     public final String colorAttribute;                 // 'fill' or 'stroke' as appropriate
     public final String dataSource;                     // Where the data for d3 lives
@@ -55,7 +36,6 @@ public class ElementDetails {
     public final String classes;                        // Class names for this item
     public final String textMethod;                     // How to fit text to the shape
     public final boolean textMustFit;                   // If true, text must fit inside
-
     public boolean needsStrokeSize;                     // If we must define stroke-size using the "size" aesthetic
 
     private ElementDetails(VisSingle vis, String symbol) {
@@ -126,5 +106,23 @@ public class ElementDetails {
             if (method.equals("bottom")) method = "right";
         }
         return makeForDiagram(dataSource, elementType, "point", method, false);
+    }
+
+    /**
+     * Define details about the element.
+     * The elementType defines the type of graphical object that will be created
+     * The textMethod defines how we place text around or inside the shape:
+     * The methods 'wedge', 'poly', 'area', 'path', 'box' wrap the text somewhere useful in the center of the shape,
+     * and will also remove the label if it does not fit.
+     * a box around the shape (and so will work bets for convex shapes like rectangles and circles)
+     *
+     * @param dataSource   the javascript name of the element's data
+     * @param elementType  path, line, text, rect or circle
+     * @param elementClass the name of the element class for CSS purposes (polygon, path, point, etc.)
+     * @param textMethod   wedge, poly, area, path, box, left, right, top, bottom
+     * @param textFits     true if text must fit within the shape
+     */
+    public static ElementDetails makeForDiagram(String dataSource, String elementType, String elementClass, String textMethod, boolean textFits) {
+        return new ElementDetails(dataSource, elementType, elementClass, textMethod, textFits);
     }
 }

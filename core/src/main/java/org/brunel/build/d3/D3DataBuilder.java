@@ -43,25 +43,6 @@ import java.util.Map;
  * Write the Javascript for the data
  */
 public class D3DataBuilder {
-    private final VisSingle vis;
-    private final ScriptWriter out;
-    private final Dataset data;
-    private final int datasetIndex;
-
-    public D3DataBuilder(VisSingle vis, ScriptWriter out, Dataset data, int index) {
-        this.vis = vis;
-        this.out = out;
-        this.data = data;
-        datasetIndex = index;
-    }
-
-    public void writeDataManipulation(Map<String, Integer> requiredFields) {
-        out.onNewLine().ln().add("function makeData() {").ln().indentMore();
-        writeDataTransforms();
-        writeHookup(requiredFields);
-        out.indentLess().onNewLine().add("}").endStatement().ln();
-    }
-
     public static void writeTables(VisItem main, ScriptWriter out, BuilderOptions options) {
         if (options.includeData == BuilderOptions.DataMethod.none) return;
         if (options.includeData == BuilderOptions.DataMethod.minimal) {
@@ -85,7 +66,7 @@ public class D3DataBuilder {
 
             if (fields.length == 0) {
                 // A Chart that doesn't actually use the data ... just meta values
-                fields = new Field[] { Data.makeConstantField("_dummy_", "Dummy", 1.0, data.rowCount())};
+                fields = new Field[]{Data.makeConstantField("_dummy_", "Dummy", 1.0, data.rowCount())};
             }
 
             // Name the table with a numeric suffix for multiple tables
@@ -123,68 +104,6 @@ public class D3DataBuilder {
         }
     }
 
-    private void defineKeyFieldFunction(List<String> fields, boolean actsOnRowObject, Map<String, Integer> usedFields) {
-        // Add the split fields accessor
-        out.add("function(d) { return ");
-        if (fields.isEmpty()) {
-            out.add("'ALL'");
-        } else {
-            for (int i = 0; i < fields.size(); i++) {
-                String s = fields.get(i);
-                if (i > 0) out.add("+ '|' + ");
-                out.add("f" + usedFields.get(s));
-                out.add(actsOnRowObject ? ".value(d.row)" : ".value(d)");
-            }
-        }
-        out.add(" }");
-    }
-
-    /**
-     * The keys are used so that transitions when the data changes are logically consistent.
-     * We want the right things to morph into each color as the data changes, and not be
-     * dependent on table order. The following code works out the most likely items to be the keys
-     * based on the type of chart being produced
-     *
-     * @return list of keys
-     */
-    private List<String> makeKeyFields() {
-        // If we have defined keys, util them
-        if (!vis.fKeys.isEmpty()) return asFields(vis.fKeys);
-
-        if (vis.tDiagram == VisTypes.Diagram.chord) {
-            List<String> result = new ArrayList<String>();
-            Collections.addAll(result, vis.positionFields());
-            Collections.addAll(result, vis.aestheticFields());
-            if (suitableForKey(result)) return result;
-        }
-
-        if (vis.tDiagram == VisTypes.Diagram.tree || vis.tDiagram == VisTypes.Diagram.treemap || vis.tDiagram == VisTypes.Diagram.map) {
-            // Positions are the keys for trees and treemaps
-            return Arrays.asList(vis.positionFields());
-        }
-
-
-        // If we split by aesthetics, they are the keys
-        if (vis.tElement.producesSingleShape) return makeSplitFields();
-
-        // For non-diagrams, try the aesthetics AND x values
-        if (vis.tDiagram == null) {
-            List<String> result = asFields(vis.fX);
-            Collections.addAll(result, vis.aestheticFields());
-            if (suitableForKey(result)) return result;
-        }
-
-
-        // Otherwise just use the row
-        return Collections.singletonList("#row");
-    }
-
-    private List<String> asFields(List<Param> items) {
-        List<String> fields = new ArrayList<String>();
-        for (Param p : items) fields.add(p.asField());
-        return fields;
-    }
-
     // If the row contains any nulls, return null for the whole row
     private static String makeRowText(Field[] fields, int r) {
         StringBuilder row = new StringBuilder();
@@ -213,17 +132,23 @@ public class D3DataBuilder {
         row.append("]");
         return row.toString();
     }
+    private final VisSingle vis;
+    private final ScriptWriter out;
+    private final Dataset data;
+    private final int datasetIndex;
 
-    private boolean suitableForKey(List<String> result) {
-        // TODO: Cannot check if the fields make a good key easily without data
-        Field[] fields = new Field[result.size()];
-        for (int i = 0; i < fields.length; i++) fields[i] = data.field(result.get(i));
-        // Sort and see if any adjacent 'keys' are the same
-        FieldRowComparison rowComparison = new FieldRowComparison(fields, null, false);
-        int[] order = rowComparison.makeSortedOrder(data.rowCount());
-        for (int i = 1; i < order.length; i++)
-            if (rowComparison.compare(order[i], order[i - 1]) == 0) return false;
-        return true;
+    public D3DataBuilder(VisSingle vis, ScriptWriter out, Dataset data, int index) {
+        this.vis = vis;
+        this.out = out;
+        this.data = data;
+        datasetIndex = index;
+    }
+
+    public void writeDataManipulation(Map<String, Integer> requiredFields) {
+        out.onNewLine().ln().add("function makeData() {").ln().indentMore();
+        writeDataTransforms();
+        writeHookup(requiredFields);
+        out.indentLess().onNewLine().add("}").endStatement().ln();
     }
 
     private void writeDataTransforms() {
@@ -320,6 +245,66 @@ public class D3DataBuilder {
         out.onNewLine().indentLess().add("}").endStatement();
     }
 
+    private void writeTransform(String name, String command) {
+        // Ignore if nothing to write
+        if (!command.isEmpty())
+            out.addChained(name, "(" + out.quote(command) + ")");
+    }
+
+    private void defineKeyFieldFunction(List<String> fields, boolean actsOnRowObject, Map<String, Integer> usedFields) {
+        // Add the split fields accessor
+        out.add("function(d) { return ");
+        if (fields.isEmpty()) {
+            out.add("'ALL'");
+        } else {
+            for (int i = 0; i < fields.size(); i++) {
+                String s = fields.get(i);
+                if (i > 0) out.add("+ '|' + ");
+                out.add("f" + usedFields.get(s));
+                out.add(actsOnRowObject ? ".value(d.row)" : ".value(d)");
+            }
+        }
+        out.add(" }");
+    }
+
+    /**
+     * The keys are used so that transitions when the data changes are logically consistent.
+     * We want the right things to morph into each color as the data changes, and not be
+     * dependent on table order. The following code works out the most likely items to be the keys
+     * based on the type of chart being produced
+     *
+     * @return list of keys
+     */
+    private List<String> makeKeyFields() {
+        // If we have defined keys, util them
+        if (!vis.fKeys.isEmpty()) return asFields(vis.fKeys);
+
+        if (vis.tDiagram == VisTypes.Diagram.chord) {
+            List<String> result = new ArrayList<String>();
+            Collections.addAll(result, vis.positionFields());
+            Collections.addAll(result, vis.aestheticFields());
+            if (suitableForKey(result)) return result;
+        }
+
+        if (vis.tDiagram == VisTypes.Diagram.tree || vis.tDiagram == VisTypes.Diagram.treemap || vis.tDiagram == VisTypes.Diagram.map) {
+            // Positions are the keys for trees and treemaps
+            return Arrays.asList(vis.positionFields());
+        }
+
+        // If we split by aesthetics, they are the keys
+        if (vis.tElement.producesSingleShape) return makeSplitFields();
+
+        // For non-diagrams, try the aesthetics AND x values
+        if (vis.tDiagram == null) {
+            List<String> result = asFields(vis.fX);
+            Collections.addAll(result, vis.aestheticFields());
+            if (suitableForKey(result)) return result;
+        }
+
+        // Otherwise just use the row
+        return Collections.singletonList("#row");
+    }
+
     private List<String> makeSplitFields() {
         // Start with all the aesthetics
         ArrayList<String> splitters = new ArrayList<String>();
@@ -337,10 +322,22 @@ public class D3DataBuilder {
         return splitters;
     }
 
-    private void writeTransform(String name, String command) {
-        // Ignore if nothing to write
-        if (!command.isEmpty())
-            out.addChained(name, "(" + out.quote(command) + ")");
+    private List<String> asFields(List<Param> items) {
+        List<String> fields = new ArrayList<String>();
+        for (Param p : items) fields.add(p.asField());
+        return fields;
+    }
+
+    private boolean suitableForKey(List<String> result) {
+        // TODO: Cannot check if the fields make a good key easily without data
+        Field[] fields = new Field[result.size()];
+        for (int i = 0; i < fields.length; i++) fields[i] = data.field(result.get(i));
+        // Sort and see if any adjacent 'keys' are the same
+        FieldRowComparison rowComparison = new FieldRowComparison(fields, null, false);
+        int[] order = rowComparison.makeSortedOrder(data.rowCount());
+        for (int i = 1; i < order.length; i++)
+            if (rowComparison.compare(order[i], order[i - 1]) == 0) return false;
+        return true;
     }
 
 }

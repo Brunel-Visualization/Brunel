@@ -21,6 +21,11 @@ import java.io.InputStream;
 import java.net.URI;
 
 public class ContentReader {
+    public static String readContentFromUrl(URI uri) throws IOException {
+        //TODO:  Centrally handle security
+        return readContent(uri.toURL().openStream());
+    }
+
     public static String readContent(InputStream is) throws IOException {
         // Use StringBuilder to read the data in large chunks
         StringBuilder builder = new StringBuilder();
@@ -31,10 +36,5 @@ public class ContentReader {
             builder.append(new String(data, 0, c));
 
         return builder.toString();
-    }
-
-    public static String readContentFromUrl(URI uri) throws IOException {
-        //TODO:  Centrally handle security
-        return readContent(uri.toURL().openStream());
     }
 }

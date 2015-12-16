@@ -46,7 +46,8 @@ public class ElementStructure {
     }
 
     public int getIndexOfBaseData() {
-        for (int i = 0; i < chartStructure.baseDataSets.length; i++) if (original == chartStructure.baseDataSets[i]) return i;
+        for (int i = 0; i < chartStructure.baseDataSets.length; i++)
+            if (original == chartStructure.baseDataSets[i]) return i;
         throw new IllegalStateException("Could not find data set in array of datasets");
     }
 }

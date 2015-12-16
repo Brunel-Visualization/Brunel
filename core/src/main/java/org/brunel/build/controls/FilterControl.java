@@ -26,6 +26,21 @@ import org.brunel.data.Field;
  */
 public class FilterControl {
 
+    /**
+     * Given a field, make the information for a valid filter for it
+     *
+     * @param data    base data to filter
+     * @param fieldID identifier of the field to filter using
+     * @return built Filter description
+     */
+    public static FilterControl makeForField(Dataset data, String fieldID) {
+        Field field = data.field(fieldID);
+        if (field.preferCategorical())
+            return new FilterControl(data.name(), fieldID, field.label, field.categories(), null, null);
+        else
+            return new FilterControl(data.name(), fieldID, field.label, null, field.min(), field.max());
+
+    }
     public final String data;
     public final String id;
     public final String label;
@@ -40,21 +55,5 @@ public class FilterControl {
         this.categories = categories;
         this.min = min;
         this.max = max;
-    }
-
-    /**
-     * Given a field, make the information for a valid filter for it
-     * @param data base data to filter
-     * @param fieldID identifier of the field to filter using
-     * @return built Filter description
-     */
-    public static FilterControl makeForField(Dataset data, String fieldID) {
-        Field field = data.field(fieldID);
-        if (field.preferCategorical())
-            return new FilterControl(data.name(), fieldID, field.label, field.categories(), null, null);
-        else
-            return new FilterControl(data.name(), fieldID, field.label, null, field.min(), field.max());
-
-
     }
 }

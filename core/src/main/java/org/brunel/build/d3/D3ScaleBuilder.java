@@ -17,7 +17,6 @@
 package org.brunel.build.d3;
 
 import org.brunel.action.Param;
-import org.brunel.build.chart.ChartAxes;
 import org.brunel.build.chart.ChartCoordinates;
 import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.util.ModelUtil;
@@ -52,31 +51,14 @@ import java.util.Set;
  */
 public class D3ScaleBuilder {
 
-
-    public boolean needsAxes() {
-        return hAxis.exists() || vAxis.exists();
-    }
-
-    /* The purpsoe of a scale */
-    private enum Purpose {
-        x(true), y(true), size(false), color(false);
-        public final boolean isCoord;
-
-        Purpose(boolean isCoord) {
-            this.isCoord = isCoord;
-        }
-    }
-
     final VisTypes.Coordinates coords;                      // Combined coordinate system derived from all elements
     final VisTypes.Diagram diagram;                         // The first diagram for this system (null for coords)
-
     private final Field colorLegendField;                   // Field to use for the color legend
-    private final ChartAxes hAxis, vAxis;                   // The same as the above, but at the physical location
+    private final AxisDetails hAxis, vAxis;                   // The same as the above, but at the physical location
     private final double[] marginTLBR;                      // Margins between the coordinate area and the chart space
     private final ChartStructure structure;                 // Overall detail on the chart composition
     private final VisSingle[] elements;                     // The elements that define the scales used
     private final ScriptWriter out;                         // Write definitions to here
-
     public D3ScaleBuilder(ChartStructure structure, double chartWidth, double chartHeight, ScriptWriter out) {
         this.structure = structure;
         this.elements = structure.elements;
@@ -91,15 +73,15 @@ public class D3ScaleBuilder {
         ChartCoordinates coords = structure.coordinates;
 
         // Set the axis information for each dimension
-        ChartAxes xAxis, yAxis;
+        AxisDetails xAxis, yAxis;
         if (axes == VisTypes.Axes.all || axes == VisTypes.Axes.x) {
-            xAxis = new ChartAxes("x", coords.allXFields, coords.xCategorical);
+            xAxis = new AxisDetails("x", coords.allXFields, coords.xCategorical);
         } else
-            xAxis = new ChartAxes("x", new Field[0], coords.xCategorical);
+            xAxis = new AxisDetails("x", new Field[0], coords.xCategorical);
         if (axes == VisTypes.Axes.all || axes == VisTypes.Axes.y)
-            yAxis = new ChartAxes("y", coords.allYFields, coords.yCategorical);
+            yAxis = new AxisDetails("y", coords.allYFields, coords.yCategorical);
         else
-            yAxis = new ChartAxes("y", new Field[0], coords.yCategorical);
+            yAxis = new AxisDetails("y", new Field[0], coords.yCategorical);
 
         // Map the dimension to the physical location on screen
         if (this.coords == VisTypes.Coordinates.transposed) {
@@ -131,29 +113,111 @@ public class D3ScaleBuilder {
         marginTLBR = new double[]{marginTop, marginLeft, marginBottom, marginRight};
     }
 
-    /**
-     * Adds the calls to set the axes into the already defined scale groups
-     */
-    private void defineAxesBuild() {
-        out.onNewLine().ln().add("function buildAxes() {").indentMore();
-        if (hAxis.exists()) {
-            out.onNewLine().add("axes.select('g.axis.x').call(axis_bottom)");
-            if (hAxis.rotatedTicks) addRotateTicks();
-            out.endStatement();
-        }
-
-        if (vAxis.exists()) {
-            out.onNewLine().add("axes.select('g.axis.y').call(axis_left)");
-            if (vAxis.rotatedTicks) addRotateTicks();
-            out.endStatement();
-        }
-        out.indentLess().add("}").endStatement().ln();
+    private VisTypes.Diagram findDiagram() {
+        // Any diagram make the chart all diagram. Mixing diagrams and non-diagrams will
+        // likely be useless at best, but we will not throw an error for it
+        for (VisSingle e : elements) if (e.tDiagram != null) return e.tDiagram;
+        return null;
     }
 
-    public List<Object> getCategories(Field[] ff) {
-        Set<Object> all = new LinkedHashSet<Object>();
-        for (Field f : ff) if (f.preferCategorical()) Collections.addAll(all, f.categories());
-        return new ArrayList<Object>(all);
+    private VisTypes.Coordinates makeCombinedCoords() {
+        // For diagrams, we set the coords to polar for the chord chart and clouds, and centered for networks
+        if (diagram == VisTypes.Diagram.chord || diagram == VisTypes.Diagram.cloud)
+            return VisTypes.Coordinates.polar;
+
+        // The rule here is that we return the one with the highest ordinal value;
+        // that will correspond to the most "unusual". In practice this means that
+        // you need only define 'polar' or 'transpose' in one chart
+        VisTypes.Coordinates result = elements[0].coords;
+        for (VisSingle e : elements) if (e.coords.compareTo(result) > 0) result = e.coords;
+
+        return result;
+    }
+
+    private VisTypes.Axes makeCombinedAxes() {
+        // The rule here is that we add axes as much as possible, so presence overrides lack of presence
+        VisTypes.Axes result = VisTypes.Axes.auto;
+        for (VisSingle e : elements) {
+            if (e.tAxes == VisTypes.Axes.all) {
+                // All means we are done, just return
+                return VisTypes.Axes.all;
+            } else if (result == VisTypes.Axes.auto) {
+                // Override with whatever this is
+                result = e.tAxes;
+            } else if (e.tAxes == VisTypes.Axes.x) {
+                // We need 'x'
+                if (result == VisTypes.Axes.y) return VisTypes.Axes.all;        // X and Y means all -- done
+                else result = VisTypes.Axes.x;
+            } else if (e.tAxes == VisTypes.Axes.y) {
+                // We need 'y'
+                if (result == VisTypes.Axes.x) return VisTypes.Axes.all;        // X and Y means all -- done
+                else result = VisTypes.Axes.y;
+            }
+        }
+
+        // If auto, check for the coordinate system / diagram to determine what is wanted
+        if (result == VisTypes.Axes.auto)
+            return coords == VisTypes.Coordinates.polar || diagram != null ? VisTypes.Axes.none : VisTypes.Axes.all;
+        else
+            return result;
+    }
+
+    private Field getColorLegendField() {
+        Field result = null;
+        for (VisSingle vis : elements) {
+            boolean auto = vis.tLegends == VisTypes.Legends.auto;
+            if (vis.fColor.isEmpty()) continue;                             // No color means no color legend
+            if (vis.tLegends == VisTypes.Legends.none) continue;            // No legend if not asked for one
+
+            Field f = fieldById(getColor(vis).asField(), vis);
+            if (auto && f.name.equals("#selection")) continue;              // No default legend for selection
+
+            if (result == null) result = f;                                 // The first color definition
+            else if (!same(result, f)) return null;                         // Two incompatible colors
+        }
+        return result;
+    }
+
+    private int legendWidth() {
+        if (colorLegendField == null) return 0;
+        AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical());
+        int spaceNeededForTicks = 32 + legendAxis.maxCategoryWidth();
+        int spaceNeededForTitle = colorLegendField.label.length() * 7;                // Assume 7 pixels per character
+        return 6 + Math.max(spaceNeededForTicks, spaceNeededForTitle);                // Add some spacing
+    }
+
+    private boolean elementsFillHorizontal() {
+        boolean fillToEdge = true;
+        for (VisSingle e : elements)
+            if (e.tElement != VisTypes.Element.line && e.tElement != VisTypes.Element.area) fillToEdge = false;
+        return fillToEdge;
+    }
+
+    private Field fieldById(String fieldName, VisSingle vis) {
+        for (int i = 0; i < elements.length; i++) {
+            if (elements[i] == vis) {
+                Field field = structure.data[i].field(fieldName);
+                if (field == null) throw new IllegalStateException("Unknown field " + fieldName);
+                return field;
+            }
+        }
+        throw new IllegalStateException("Passed in a vis that was not part of the system defined in the constructor");
+    }
+
+    private Param getColor(VisSingle vis) {
+        return vis.fColor.isEmpty() ? null : vis.fColor.get(0);
+    }
+
+    // Determine if position are the same
+    private boolean same(Field a, Field b) {
+        return a.name.equals(b.name) && a.preferCategorical() == b.preferCategorical();
+    }
+
+    public boolean allNumeric(Field[] fields) {
+        for (Field f : fields)
+            if (!f.isNumeric())
+                return false;
+        return true;
     }
 
     public Double getGranularitySuitableForSizing(Field[] ff) {
@@ -170,6 +234,10 @@ public class D3ScaleBuilder {
 
     public double[] marginsTLBR() {
         return this.marginTLBR;
+    }
+
+    public boolean needsAxes() {
+        return hAxis.exists() || vAxis.exists();
     }
 
     public void writeAestheticScales(VisSingle vis) {
@@ -199,17 +267,6 @@ public class D3ScaleBuilder {
             out.onNewLine().add("var width = function(d) { return scale_width(" + D3Util.writeCall(fieldById(size[0], vis)) + ") }").endStatement();
             out.onNewLine().add("var height = function(d) { return scale_height(" + D3Util.writeCall(fieldById(size[1], vis)) + ") }").endStatement();
         }
-    }
-
-    private Field fieldById(Param p, VisSingle vis) {
-        return fieldById(p.asField(), vis);
-    }
-
-    public boolean allNumeric(Field[] fields) {
-        for (Field f : fields)
-            if (!f.isNumeric())
-                return false;
-        return true;
     }
 
     public void writeAxes() {
@@ -276,78 +333,23 @@ public class D3ScaleBuilder {
         defineAxesBuild();
     }
 
-    public void writeCoordinateScales(D3Interaction interaction) {
-        writePositionScale("x", structure.coordinates.allXFields, getXRange(), elementsFillHorizontal());
-        writePositionScale("y", structure.coordinates.allYFields, getYRange(), false);
-        interaction.addScaleInteractivity();
-    }
-
-    public void writeLegends(VisSingle vis) {
-        if (vis.fColor.isEmpty() || colorLegendField == null) return;
-        if (!vis.fColor.get(0).asField().equals(colorLegendField.name)) return;
-        String legendTicks, legendLabels = null;
-        if (colorLegendField.preferCategorical()) {
-            // Categorical data can just grab it from the domain
-            legendTicks = "scale_color.domain()";
-            // Binned data reads in opposite direction (bottom to top)
-            if (colorLegendField.isBinned()) legendTicks += ".reverse()";
-        } else {
-            // Numeric must calculate a nice range
-            NumericScale details = Auto.makeNumericScale(colorLegendField, true, new double[]{0, 0}, 0.25, 7, false);
-            Double[] divisions = details.divisions;
-            if (details.granular) {
-                // Granular data has divisions BETWEEN the values, not at them, so need to fix that
-                Double[] newDiv = new Double[divisions.length - 1];
-                for (int i = 0; i < newDiv.length; i++) newDiv[i] = (divisions[i] + divisions[i + 1]) / 2;
-                divisions = newDiv;
-            }
-            // Reverse
-            for (int i = 0; i < divisions.length / 2; i++) {
-                Double t = divisions[divisions.length - 1 - i];
-                divisions[divisions.length - 1 - i] = divisions[i];
-                divisions[i] = t;
-            }
-
-            if (colorLegendField.isDate()) {
-                // Convert to dates
-                DateFormat dateFormat = (DateFormat) colorLegendField.property("dateFormat");
-                D3Util.DateBuilder dateBuilder = new D3Util.DateBuilder();
-                String[] divs = new String[divisions.length];
-                String[] labels = new String[divisions.length];
-                for (int i = 0; i < divs.length; i++) {
-                    divs[i] = dateBuilder.make(Data.asDate(divisions[i]), dateFormat, true);
-                    labels[i] = "'" + colorLegendField.format(divisions[i]) + "'";
-                }
-                legendTicks = "[" + Data.join(divs) + "]";
-                legendLabels = "[" + Data.join(labels) + "]";
-            } else {
-                legendTicks = "[" + Data.join(divisions) + "]";
-            }
+    /**
+     * Adds the calls to set the axes into the already defined scale groups
+     */
+    private void defineAxesBuild() {
+        out.onNewLine().ln().add("function buildAxes() {").indentMore();
+        if (hAxis.exists()) {
+            out.onNewLine().add("axes.select('g.axis.x').call(axis_bottom)");
+            if (hAxis.rotatedTicks) addRotateTicks();
+            out.endStatement();
         }
 
-        String title = colorLegendField.label;
-        if (title == null) title = colorLegendField.name;
-
-        out.add("BrunelD3.addLegend(legends, " + out.quote(title) + ", scale_color, " + legendTicks);
-        if (legendLabels != null) out.add(", ").add(legendLabels);
-        out.add(")").endStatement();
-    }
-
-    private void addColorScale(Param p, VisSingle vis) {
-        Field f = fieldById(p, vis);
-
-        // Determine if the element fills a big area
-        boolean largeElement = vis.tElement == VisTypes.Element.area || vis.tElement == VisTypes.Element.bar
-                || vis.tElement == VisTypes.Element.polygon;
-        if (vis.tDiagram == VisTypes.Diagram.map || vis.tDiagram == VisTypes.Diagram.treemap)
-            largeElement = true;
-
-        if (vis.tElement == VisTypes.Element.path && !vis.fSize.isEmpty())
-            largeElement = true;
-
-        ColorMapping palette = Palette.makeColorMapping(f, p.modifiers(), largeElement);
-        scaleWithDomain("color", new Field[]{f}, Purpose.color, palette.values.length, "linear", palette.values);
-        out.addChained("range([ ").addQuoted(palette.colors).add("])").endStatement();
+        if (vAxis.exists()) {
+            out.onNewLine().add("axes.select('g.axis.y').call(axis_left)");
+            if (vAxis.rotatedTicks) addRotateTicks();
+            out.endStatement();
+        }
+        out.indentLess().add("}").endStatement().ln();
     }
 
     private void addRotateTicks() {
@@ -358,177 +360,27 @@ public class D3ScaleBuilder {
                 .addChained("attr('transform', function(d) { return 'rotate(-45)' })");
     }
 
-    private void addSizeScale(String name, Param p, VisSingle vis, String defaultTransform) {
-
-        Object[] sizes;
-        if (p.modifiers().length > 0) {
-            sizes = getSizes(p.modifiers()[0].asList());
-        } else {
-            sizes = new Object[]{0.05, 1.0};
-        }
-
-        Field f = fieldById(p, vis);
-        Object[] divisions;
-        if (f.isNumeric()) {
-            // Divide up and interpolate
-            divisions = Palette.fieldSplits(f, sizes.length);
-        } else {
-            // Alternate among categories
-            divisions = f.categories();
-        }
-
-        scaleWithDomain(name, new Field[]{f}, Purpose.size, sizes.length, defaultTransform, divisions);
-        out.addChained("range([ ").add(Data.join(sizes)).add("])").endStatement();
+    public void writeCoordinateScales(D3Interaction interaction) {
+        writePositionScale("x", structure.coordinates.allXFields, getXRange(), elementsFillHorizontal());
+        writePositionScale("y", structure.coordinates.allYFields, getYRange(), false);
+        interaction.addScaleInteractivity();
     }
 
-    private Object[] getSizes(List<Param> params) {
-        // The parameters define the lists we want
-        List<Double> result = new ArrayList<Double>();
-        for (Param p : params) {
-            String s = p.asString();
-            if (s.endsWith("%")) s = s.substring(0, s.length() - 1);
-            Double d = Data.asNumeric(s);
-            if (d != null) result.add(d / 100);
-        }
-        if (result.isEmpty()) return new Object[]{0.05, 1.0};
-        if (result.size() == 1) result.add(0, 0.05);
-        return result.toArray(new Object[result.size()]);
-    }
+    private void writePositionScale(String name, Field[] fields, String range, boolean fillToEdge) {
+        int categories = scaleWithDomain(name, fields, Purpose.valueOf(name), 2, "linear", null);
 
-    private void addOpacityScale(Param p, VisSingle vis) {
-        double min = p.hasModifiers() ? p.firstModifier().asDouble() : 0.2;
-        Field f = fieldById(p, vis);
-
-        scaleWithDomain("opacity", new Field[]{f}, Purpose.color, 2, "linear", null);
-        if (f.preferCategorical()) {
-            int length = f.categories().length;
-            double[] sizes = new double[length];
-            // degenerate data gets the min value
-            if (length == 1)
-                sizes[0] = min;
+        if (fields.length == 0) {
+            out.addChained("range(" + range + ")");
+        } else if (categories > 0) {
+            // Lines and areas should go all the way to the edge
+            if (fillToEdge)
+                out.addChained("rangePoints(" + range + ", 0)");
             else
-                for (int i = 0; i < length; i++) sizes[i] = min + (1 - min) * i / (length - 1);
-            out.addChained("range(" + Arrays.toString(sizes) + ")");
+                out.addChained("rangePoints(" + range + ", 1)");
         } else {
-            out.addChained("range([" + min + ", 1])");
+            out.addChained("range(" + range + ")");
         }
         out.endStatement();
-    }
-
-    private VisTypes.Diagram findDiagram() {
-        // Any diagram make the chart all diagram. Mixing diagrams and non-diagrams will
-        // likely be useless at best, but we will not throw an error for it
-        for (VisSingle e : elements) if (e.tDiagram != null) return e.tDiagram;
-        return null;
-    }
-
-    private Field combineNumericFields(Field[] ff) {
-        List<Object> data = new ArrayList<Object>();
-        for (Field f : ff)
-            for (int i = 0; i < f.rowCount(); i++) {
-                Object value = f.value(i);
-                if (value instanceof Range) {
-                    data.add(Data.asNumeric(((Range) value).low));
-                    data.add(Data.asNumeric(((Range) value).high));
-                } else
-                    data.add(Data.asNumeric(value));
-            }
-        Field combined = Data.makeColumnField("combined", null, data.toArray(new Object[data.size()]));
-        combined.set("numeric", true);
-        return combined;
-    }
-
-    private Field fieldById(String fieldName, VisSingle vis) {
-        for (int i = 0; i < elements.length; i++) {
-            if (elements[i] == vis) {
-                Field field = structure.data[i].field(fieldName);
-                if (field == null) throw new IllegalStateException("Unknown field " + fieldName);
-                return field;
-            }
-        }
-        throw new IllegalStateException("Passed in a vis that was not part of the system defined in the constructor");
-    }
-
-    private Param getColor(VisSingle vis) {
-        return vis.fColor.isEmpty() ? null : vis.fColor.get(0);
-    }
-
-    private Param getOpacity(VisSingle vis) {
-        return vis.fOpacity.isEmpty() ? null : vis.fOpacity.get(0);
-    }
-
-    private Field getColorLegendField() {
-        Field result = null;
-        for (VisSingle vis : elements) {
-            boolean auto = vis.tLegends == VisTypes.Legends.auto;
-            if (vis.fColor.isEmpty()) continue;                             // No color means no color legend
-            if (vis.tLegends == VisTypes.Legends.none) continue;            // No legend if not asked for one
-
-            Field f = fieldById(getColor(vis).asField(), vis);
-            if (auto && f.name.equals("#selection")) continue;              // No default legend for selection
-
-            if (result == null) result = f;                                 // The first color definition
-            else if (!same(result, f)) return null;                         // Two incompatible colors
-        }
-        return result;
-    }
-
-    private double getIncludeZeroFraction(Field[] fields, Purpose purpose) {
-
-        if (purpose == Purpose.x) return 0.1;               // Really do not want much empty space on color axes
-        if (purpose == Purpose.size) return 0.9;            // Almost always want to go to zero
-        if (purpose == Purpose.color) return 0.2;           // Color
-
-        // For 'Y'
-
-        // If any position are  counts or sums, always include zero
-        for (Field f : fields)
-            if (f.name.equals("#count") || "sum".equals(f.stringProperty("summary"))) return 1.0;
-
-        // Really want it for bar/area charts that are not ranges
-        for (VisSingle e : elements)
-            if ((e.tElement == VisTypes.Element.bar || e.tElement == VisTypes.Element.area)
-                    && e.fRange == null) return 0.8;
-
-        // By default, only if we have 20% extra space
-        return 0.2;
-    }
-
-    private boolean elementsFillHorizontal() {
-        boolean fillToEdge = true;
-        for (VisSingle e : elements)
-            if (e.tElement != VisTypes.Element.line && e.tElement != VisTypes.Element.area) fillToEdge = false;
-        return fillToEdge;
-    }
-
-    private double[] getNumericPaddingFraction(Purpose purpose, VisTypes.Coordinates coords) {
-        double[] padding = new double[]{0, 0};
-        if (purpose == Purpose.color || purpose == Purpose.size) return padding;                // None for aesthetics
-        if (coords == VisTypes.Coordinates.polar) return padding;                               // None for polar angle
-        for (VisSingle e : elements) {
-            boolean noBottomYPadding = e.tElement == VisTypes.Element.bar || e.tElement == VisTypes.Element.area || e.tElement == VisTypes.Element.line;
-            if (e.tElement == VisTypes.Element.text) {
-                // Text needs lot of padding
-                padding[0] = Math.max(padding[0], 0.1);
-                padding[1] = Math.max(padding[1], 0.1);
-            } else if (purpose == Purpose.y && noBottomYPadding) {
-                // A little padding on the top only
-                padding[1] = Math.max(padding[1], 0.02);
-            } else {
-                // A little padding
-                padding[0] = Math.max(padding[0], 0.02);
-                padding[1] = Math.max(padding[1], 0.02);
-            }
-        }
-        return padding;
-    }
-
-    /**
-     * Returns position for the sizes as an array
-     */
-    private Param[] getSize(VisSingle vis) {
-        List<Param> fSize = vis.fSize;
-        return fSize.toArray(new Param[fSize.size()]);
     }
 
     private String getXRange() {
@@ -546,61 +398,6 @@ public class D3ScaleBuilder {
         // This means that vertical numeric axes run bottom-to-top, as expected.
         if (coords != VisTypes.Coordinates.transposed) reversed = !structure.coordinates.yCategorical;
         return reversed ? "[geom.inner_height,0]" : "[0, geom.inner_height]";
-    }
-
-    private int legendWidth() {
-        if (colorLegendField == null) return 0;
-        ChartAxes legendAxis = new ChartAxes("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical());
-        int spaceNeededForTicks = 32 + legendAxis.maxCategoryWidth();
-        int spaceNeededForTitle = colorLegendField.label.length() * 7;                // Assume 7 pixels per character
-        return 6 + Math.max(spaceNeededForTicks, spaceNeededForTitle);                // Add some spacing
-    }
-
-    private VisTypes.Axes makeCombinedAxes() {
-        // The rule here is that we add axes as much as possible, so presence overrides lack of presence
-        VisTypes.Axes result = VisTypes.Axes.auto;
-        for (VisSingle e : elements) {
-            if (e.tAxes == VisTypes.Axes.all) {
-                // All means we are done, just return
-                return VisTypes.Axes.all;
-            } else if (result == VisTypes.Axes.auto) {
-                // Override with whatever this is
-                result = e.tAxes;
-            } else if (e.tAxes == VisTypes.Axes.x) {
-                // We need 'x'
-                if (result == VisTypes.Axes.y) return VisTypes.Axes.all;        // X and Y means all -- done
-                else result = VisTypes.Axes.x;
-            } else if (e.tAxes == VisTypes.Axes.y) {
-                // We need 'y'
-                if (result == VisTypes.Axes.x) return VisTypes.Axes.all;        // X and Y means all -- done
-                else result = VisTypes.Axes.y;
-            }
-        }
-
-        // If auto, check for the coordinate system / diagram to determine what is wanted
-        if (result == VisTypes.Axes.auto)
-            return coords == VisTypes.Coordinates.polar || diagram != null ? VisTypes.Axes.none : VisTypes.Axes.all;
-        else
-            return result;
-    }
-
-    private VisTypes.Coordinates makeCombinedCoords() {
-        // For diagrams, we set the coords to polar for the chord chart and clouds, and centered for networks
-        if (diagram == VisTypes.Diagram.chord || diagram == VisTypes.Diagram.cloud)
-            return VisTypes.Coordinates.polar;
-
-        // The rule here is that we return the one with the highest ordinal value;
-        // that will correspond to the most "unusual". In practice this means that
-        // you need only define 'polar' or 'transpose' in one chart
-        VisTypes.Coordinates result = elements[0].coords;
-        for (VisSingle e : elements) if (e.coords.compareTo(result) > 0) result = e.coords;
-
-        return result;
-    }
-
-    // Determine if position are the same
-    private boolean same(Field a, Field b) {
-        return a.name.equals(b.name) && a.preferCategorical() == b.preferCategorical();
     }
 
     private int scaleWithDomain(String name, Field[] fields, Purpose purpose, int numericDomainDivs, String defaultTransform, Object[] partitionPoints) {
@@ -697,21 +494,220 @@ public class D3ScaleBuilder {
         return -1;
     }
 
-    private void writePositionScale(String name, Field[] fields, String range, boolean fillToEdge) {
-        int categories = scaleWithDomain(name, fields, Purpose.valueOf(name), 2, "linear", null);
+    public List<Object> getCategories(Field[] ff) {
+        Set<Object> all = new LinkedHashSet<Object>();
+        for (Field f : ff) if (f.preferCategorical()) Collections.addAll(all, f.categories());
+        return new ArrayList<Object>(all);
+    }
 
-        if (fields.length == 0) {
-            out.addChained("range(" + range + ")");
-        } else if (categories > 0) {
-            // Lines and areas should go all the way to the edge
-            if (fillToEdge)
-                out.addChained("rangePoints(" + range + ", 0)");
-            else
-                out.addChained("rangePoints(" + range + ", 1)");
+    private double getIncludeZeroFraction(Field[] fields, Purpose purpose) {
+
+        if (purpose == Purpose.x) return 0.1;               // Really do not want much empty space on color axes
+        if (purpose == Purpose.size) return 0.9;            // Almost always want to go to zero
+        if (purpose == Purpose.color) return 0.2;           // Color
+
+        // For 'Y'
+
+        // If any position are  counts or sums, always include zero
+        for (Field f : fields)
+            if (f.name.equals("#count") || "sum".equals(f.stringProperty("summary"))) return 1.0;
+
+        // Really want it for bar/area charts that are not ranges
+        for (VisSingle e : elements)
+            if ((e.tElement == VisTypes.Element.bar || e.tElement == VisTypes.Element.area)
+                    && e.fRange == null) return 0.8;
+
+        // By default, only if we have 20% extra space
+        return 0.2;
+    }
+
+    private Field combineNumericFields(Field[] ff) {
+        List<Object> data = new ArrayList<Object>();
+        for (Field f : ff)
+            for (int i = 0; i < f.rowCount(); i++) {
+                Object value = f.value(i);
+                if (value instanceof Range) {
+                    data.add(Data.asNumeric(((Range) value).low));
+                    data.add(Data.asNumeric(((Range) value).high));
+                } else
+                    data.add(Data.asNumeric(value));
+            }
+        Field combined = Data.makeColumnField("combined", null, data.toArray(new Object[data.size()]));
+        combined.set("numeric", true);
+        return combined;
+    }
+
+    private double[] getNumericPaddingFraction(Purpose purpose, VisTypes.Coordinates coords) {
+        double[] padding = new double[]{0, 0};
+        if (purpose == Purpose.color || purpose == Purpose.size) return padding;                // None for aesthetics
+        if (coords == VisTypes.Coordinates.polar) return padding;                               // None for polar angle
+        for (VisSingle e : elements) {
+            boolean noBottomYPadding = e.tElement == VisTypes.Element.bar || e.tElement == VisTypes.Element.area || e.tElement == VisTypes.Element.line;
+            if (e.tElement == VisTypes.Element.text) {
+                // Text needs lot of padding
+                padding[0] = Math.max(padding[0], 0.1);
+                padding[1] = Math.max(padding[1], 0.1);
+            } else if (purpose == Purpose.y && noBottomYPadding) {
+                // A little padding on the top only
+                padding[1] = Math.max(padding[1], 0.02);
+            } else {
+                // A little padding
+                padding[0] = Math.max(padding[0], 0.02);
+                padding[1] = Math.max(padding[1], 0.02);
+            }
+        }
+        return padding;
+    }
+
+    public void writeLegends(VisSingle vis) {
+        if (vis.fColor.isEmpty() || colorLegendField == null) return;
+        if (!vis.fColor.get(0).asField().equals(colorLegendField.name)) return;
+        String legendTicks, legendLabels = null;
+        if (colorLegendField.preferCategorical()) {
+            // Categorical data can just grab it from the domain
+            legendTicks = "scale_color.domain()";
+            // Binned data reads in opposite direction (bottom to top)
+            if (colorLegendField.isBinned()) legendTicks += ".reverse()";
         } else {
-            out.addChained("range(" + range + ")");
+            // Numeric must calculate a nice range
+            NumericScale details = Auto.makeNumericScale(colorLegendField, true, new double[]{0, 0}, 0.25, 7, false);
+            Double[] divisions = details.divisions;
+            if (details.granular) {
+                // Granular data has divisions BETWEEN the values, not at them, so need to fix that
+                Double[] newDiv = new Double[divisions.length - 1];
+                for (int i = 0; i < newDiv.length; i++) newDiv[i] = (divisions[i] + divisions[i + 1]) / 2;
+                divisions = newDiv;
+            }
+            // Reverse
+            for (int i = 0; i < divisions.length / 2; i++) {
+                Double t = divisions[divisions.length - 1 - i];
+                divisions[divisions.length - 1 - i] = divisions[i];
+                divisions[i] = t;
+            }
+
+            if (colorLegendField.isDate()) {
+                // Convert to dates
+                DateFormat dateFormat = (DateFormat) colorLegendField.property("dateFormat");
+                D3Util.DateBuilder dateBuilder = new D3Util.DateBuilder();
+                String[] divs = new String[divisions.length];
+                String[] labels = new String[divisions.length];
+                for (int i = 0; i < divs.length; i++) {
+                    divs[i] = dateBuilder.make(Data.asDate(divisions[i]), dateFormat, true);
+                    labels[i] = "'" + colorLegendField.format(divisions[i]) + "'";
+                }
+                legendTicks = "[" + Data.join(divs) + "]";
+                legendLabels = "[" + Data.join(labels) + "]";
+            } else {
+                legendTicks = "[" + Data.join(divisions) + "]";
+            }
+        }
+
+        String title = colorLegendField.label;
+        if (title == null) title = colorLegendField.name;
+
+        out.add("BrunelD3.addLegend(legends, " + out.quote(title) + ", scale_color, " + legendTicks);
+        if (legendLabels != null) out.add(", ").add(legendLabels);
+        out.add(")").endStatement();
+    }
+
+    private void addColorScale(Param p, VisSingle vis) {
+        Field f = fieldById(p, vis);
+
+        // Determine if the element fills a big area
+        boolean largeElement = vis.tElement == VisTypes.Element.area || vis.tElement == VisTypes.Element.bar
+                || vis.tElement == VisTypes.Element.polygon;
+        if (vis.tDiagram == VisTypes.Diagram.map || vis.tDiagram == VisTypes.Diagram.treemap)
+            largeElement = true;
+
+        if (vis.tElement == VisTypes.Element.path && !vis.fSize.isEmpty())
+            largeElement = true;
+
+        ColorMapping palette = Palette.makeColorMapping(f, p.modifiers(), largeElement);
+        scaleWithDomain("color", new Field[]{f}, Purpose.color, palette.values.length, "linear", palette.values);
+        out.addChained("range([ ").addQuoted(palette.colors).add("])").endStatement();
+    }
+
+    private void addOpacityScale(Param p, VisSingle vis) {
+        double min = p.hasModifiers() ? p.firstModifier().asDouble() : 0.2;
+        Field f = fieldById(p, vis);
+
+        scaleWithDomain("opacity", new Field[]{f}, Purpose.color, 2, "linear", null);
+        if (f.preferCategorical()) {
+            int length = f.categories().length;
+            double[] sizes = new double[length];
+            // degenerate data gets the min value
+            if (length == 1)
+                sizes[0] = min;
+            else
+                for (int i = 0; i < length; i++) sizes[i] = min + (1 - min) * i / (length - 1);
+            out.addChained("range(" + Arrays.toString(sizes) + ")");
+        } else {
+            out.addChained("range([" + min + ", 1])");
         }
         out.endStatement();
+    }
+
+    private void addSizeScale(String name, Param p, VisSingle vis, String defaultTransform) {
+
+        Object[] sizes;
+        if (p.modifiers().length > 0) {
+            sizes = getSizes(p.modifiers()[0].asList());
+        } else {
+            sizes = new Object[]{0.05, 1.0};
+        }
+
+        Field f = fieldById(p, vis);
+        Object[] divisions;
+        if (f.isNumeric()) {
+            // Divide up and interpolate
+            divisions = Palette.fieldSplits(f, sizes.length);
+        } else {
+            // Alternate among categories
+            divisions = f.categories();
+        }
+
+        scaleWithDomain(name, new Field[]{f}, Purpose.size, sizes.length, defaultTransform, divisions);
+        out.addChained("range([ ").add(Data.join(sizes)).add("])").endStatement();
+    }
+
+    private Field fieldById(Param p, VisSingle vis) {
+        return fieldById(p.asField(), vis);
+    }
+
+    private Param getOpacity(VisSingle vis) {
+        return vis.fOpacity.isEmpty() ? null : vis.fOpacity.get(0);
+    }
+
+    /**
+     * Returns position for the sizes as an array
+     */
+    private Param[] getSize(VisSingle vis) {
+        List<Param> fSize = vis.fSize;
+        return fSize.toArray(new Param[fSize.size()]);
+    }
+
+    private Object[] getSizes(List<Param> params) {
+        // The parameters define the lists we want
+        List<Double> result = new ArrayList<Double>();
+        for (Param p : params) {
+            String s = p.asString();
+            if (s.endsWith("%")) s = s.substring(0, s.length() - 1);
+            Double d = Data.asNumeric(s);
+            if (d != null) result.add(d / 100);
+        }
+        if (result.isEmpty()) return new Object[]{0.05, 1.0};
+        if (result.size() == 1) result.add(0, 0.05);
+        return result.toArray(new Object[result.size()]);
+    }
+
+    /* The purpsoe of a scale */
+    private enum Purpose {
+        x(true), y(true), size(false), color(false);
+        public final boolean isCoord;
+
+        Purpose(boolean isCoord) {
+            this.isCoord = isCoord;
+        }
     }
 
 }

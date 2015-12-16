@@ -85,16 +85,13 @@ public abstract class D3Diagram {
 
     public abstract void writeDefinition(ElementDetails details, ElementDefinition elementDef);
 
-    public void writePreDefinition(ElementDetails details, ElementDefinition elementDef) {
-        // By Default, do nothing
+    public void writeDiagramEnter() {
+        // By default, nothing is needed
+        out.endStatement();
     }
 
-    void makeHierarchicalTree() {
-        String[] positionFields = vis.positionFields();
-        String fieldsList = positionFields.length == 0 ? "" : ", " + quoted(positionFields);
-        String sizeParam = size == null ? null : Data.quote(size.asField());
-        out.add("var tree = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, " + sizeParam + fieldsList + ")").endStatement();
-        isHierarchy = true;
+    public void writePreDefinition(ElementDetails details, ElementDefinition elementDef) {
+        // By Default, do nothing
     }
 
     void addAestheticsAndTooltips(ElementDetails details, boolean addLabels) {
@@ -115,15 +112,18 @@ public abstract class D3Diagram {
 
     }
 
+    void makeHierarchicalTree() {
+        String[] positionFields = vis.positionFields();
+        String fieldsList = positionFields.length == 0 ? "" : ", " + quoted(positionFields);
+        String sizeParam = size == null ? null : Data.quote(size.asField());
+        out.add("var tree = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, " + sizeParam + fieldsList + ")").endStatement();
+        isHierarchy = true;
+    }
+
     protected String quoted(String... items) {
         List<String> p = new ArrayList<String>();
         for (String s : items) p.add(Data.quote(s));
         return Data.join(p);
-    }
-
-    public void writeDiagramEnter() {
-        // By default, nothing is needed
-        out.endStatement();
     }
 
 }

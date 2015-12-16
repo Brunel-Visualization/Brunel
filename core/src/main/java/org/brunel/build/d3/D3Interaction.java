@@ -29,23 +29,38 @@ import org.brunel.model.VisTypes;
  */
 public class D3Interaction {
 
-    private static boolean isSelectable(VisSingle vis) {
-        // Only if explicitly requested
-        return vis.tInteraction.containsKey(VisTypes.Interaction.select);
-    }
-
     private final D3ScaleBuilder scales;       // Scales for the chart
     private final ScriptWriter out;             // Write definitions here
     private final boolean zoomable;             // Same for all elements
     private final boolean xScaleCategorical;    // True if any are
     private final boolean yScaleCategorical;    // True if any are
-
     public D3Interaction(ChartStructure structure, D3ScaleBuilder scales, ScriptWriter out) {
         this.scales = scales;
         this.out = out;
         this.xScaleCategorical = anyCategorical(structure.coordinates.allXFields);
         this.yScaleCategorical = anyCategorical(structure.coordinates.allYFields);
         this.zoomable = isZoomable(structure.elements);
+    }
+
+    private boolean anyCategorical(Field[] fields) {
+        for (Field f : fields) if (f.preferCategorical()) return true;
+        return false;
+    }
+
+    private boolean isZoomable(VisSingle[] elements) {
+        // Check for things that just will not work currently
+        if (xScaleCategorical && yScaleCategorical) return false;                           // Only zoom numerical
+        if (scales.diagram != null || scales.coords == VisTypes.Coordinates.polar) return false;  // Doesn't work
+
+        // If anything says we want it, we get it
+        // Otherwise, if anything says we do not, we do not
+        // Otherwise, we get it
+        boolean defaultResult = true;
+        for (VisSingle vis : elements) {
+            if (vis.tInteraction.containsKey(VisTypes.Interaction.panzoom)) return true;
+            if (vis.tInteraction.containsKey(VisTypes.Interaction.none)) defaultResult = false;
+        }
+        return defaultResult;
     }
 
     /**
@@ -59,6 +74,11 @@ public class D3Interaction {
             out.add("selection.on('" + type + "', function(d) { BrunelD3.select(data.$row(d), original, this, rebuildSystem) } )").endStatement();
 
         }
+    }
+
+    private static boolean isSelectable(VisSingle vis) {
+        // Only if explicitly requested
+        return vis.tInteraction.containsKey(VisTypes.Interaction.select);
     }
 
     /**
@@ -94,26 +114,5 @@ public class D3Interaction {
             if (!yScaleCategorical) out.add(".y(scale_y)");
         }
         out.endStatement();
-    }
-
-    private boolean anyCategorical(Field[] fields) {
-        for (Field f : fields) if (f.preferCategorical()) return true;
-        return false;
-    }
-
-    private boolean isZoomable(VisSingle[] elements) {
-        // Check for things that just will not work currently
-        if (xScaleCategorical && yScaleCategorical) return false;                           // Only zoom numerical
-        if (scales.diagram != null || scales.coords == VisTypes.Coordinates.polar) return false;  // Doesn't work
-
-        // If anything says we want it, we get it
-        // Otherwise, if anything says we do not, we do not
-        // Otherwise, we get it
-        boolean defaultResult = true;
-        for (VisSingle vis : elements) {
-            if (vis.tInteraction.containsKey(VisTypes.Interaction.panzoom)) return true;
-            if (vis.tInteraction.containsKey(VisTypes.Interaction.none)) defaultResult = false;
-        }
-        return defaultResult;
     }
 }

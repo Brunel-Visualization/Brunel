@@ -77,24 +77,73 @@ public class DataBuilder {
         return data;
     }
 
-    private String makeSeriesCommand() {
-        // Only have a series for 2+ y fields
+    protected int getParameterIntValue(Param param, int defaultValue) {
+        if (param == null) return defaultValue;
+        if (param.isField()) {
+            // The parameter is a field, so we examine the modifier for the int value
+            return getParameterIntValue(param.firstModifier(), defaultValue);
+        } else {
+            // The parameter is a value
+            return (int) param.asDouble();
+        }
+    }
 
-        if (vis.fY.size() < 2) return "";
-        /*
-            The command is of the form:
-                    y1, y2, y3; a1, a2
-            Where the fields y1 ... are the fields to makes the series
-            and the additional fields a1... are ones required to be kept as-is.
-            #series and #values are always generated, so need to retain them additionally
-        */
+    private String buildSummaryCommands() {
+        Map<String, String> spec = new HashMap<String, String>();
 
-        LinkedHashSet<String> keep = new LinkedHashSet<String>();
-        for (Param p : vis.fX) keep.add(p.asString());
-        Collections.addAll(keep, vis.nonPositionFields());
-        keep.remove("#series");
-        keep.remove("#values");
-        return Data.join(vis.fY) + ";" + Data.join(keep);
+        // We must account for all of these except for the special fields series and values
+        // As they will be handled later
+        HashSet<String> fields = new HashSet<String>(Arrays.asList(vis.usedFields(false)));
+        fields.remove("#series");
+        fields.remove("#values");
+
+        // Add the summary measures
+        for (Map.Entry<Param, String> e : vis.fSummarize.entrySet()) {
+            Param p = e.getKey();
+            String name = p.asField();
+            String measure = e.getValue();
+            if (p.hasModifiers()) measure += ":" + p.firstModifier().asString();
+            spec.put(name, name + ":" + measure);
+            fields.remove(name);
+        }
+
+        // Add all color used fields in as dimensions (factors)
+        for (String s : fields) {
+            // Count is an implicit summary
+            if (s.equals("#count"))
+                spec.put(s, s + ":sum");
+            else
+                spec.put(s, s);
+        }
+
+        // X fields are used for the percentage bases
+        for (Param s : vis.fX) spec.put(s.asField(), s.asField() + ":base");
+
+        // Return null if summary is not called for
+        if (spec.containsKey("#count") || vis.fSummarize.size() > 0) {
+            String[] result = new String[spec.size()];
+            int n = 0;
+            for (Map.Entry<String, String> e : spec.entrySet())
+                result[n++] = e.getKey() + "=" + e.getValue();
+            return Data.join(result, "; ");
+        } else
+            return "";
+    }
+
+    private String getParameterFieldValue(Param param) {
+
+        if (param != null && param.isField()) {
+            // Usual case of a field specified
+            return param.asField();
+        } else {
+            // Try Y fields then aesthetic fields
+            if (vis.fY.size() == 1) {
+                String s = vis.fY.get(0).asField();
+                if (!s.startsWith("'") && !s.startsWith("#")) return s;       // If it's a real field
+            }
+            if (vis.aestheticFields().length > 0) return vis.aestheticFields()[0];
+            return "#row";      // If all else fails
+        }
     }
 
     private String makeConstantsCommand() {
@@ -106,6 +155,20 @@ public class DataBuilder {
             }
         }
         return Data.join(toAdd, "; ");
+    }
+
+    private String makeFieldCommands() {
+        List<Param> params = vis.fSort;
+        String[] commands = new String[params.size()];
+        for (int i = 0; i < params.size(); i++) {
+            Param p = params.get(i);
+            String s = p.asField();
+            if (p.hasModifiers())
+                commands[i] = s + ":" + p.firstModifier().asString();
+            else
+                commands[i] = s;
+        }
+        return Data.join(commands, "; ");
     }
 
     private String makeFilterCommands() {
@@ -155,87 +218,24 @@ public class DataBuilder {
         return Data.join(commands, "; ");
     }
 
-    private String getParameterFieldValue(Param param) {
+    private String makeSeriesCommand() {
+        // Only have a series for 2+ y fields
 
-        if (param != null && param.isField()) {
-            // Usual case of a field specified
-            return param.asField();
-        } else {
-            // Try Y fields then aesthetic fields
-            if (vis.fY.size() == 1) {
-                String s = vis.fY.get(0).asField();
-                if (!s.startsWith("'") && !s.startsWith("#")) return s;       // If it's a real field
-            }
-            if (vis.aestheticFields().length > 0) return vis.aestheticFields()[0];
-            return "#row";      // If all else fails
-        }
-    }
+        if (vis.fY.size() < 2) return "";
+        /*
+            The command is of the form:
+                    y1, y2, y3; a1, a2
+            Where the fields y1 ... are the fields to makes the series
+            and the additional fields a1... are ones required to be kept as-is.
+            #series and #values are always generated, so need to retain them additionally
+        */
 
-    protected int getParameterIntValue(Param param, int defaultValue) {
-        if (param == null) return defaultValue;
-        if (param.isField()) {
-            // The parameter is a field, so we examine the modifier for the int value
-            return getParameterIntValue(param.firstModifier(), defaultValue);
-        } else {
-            // The parameter is a value
-            return (int) param.asDouble();
-        }
-    }
-
-    private String makeFieldCommands() {
-        List<Param> params = vis.fSort;
-        String[] commands = new String[params.size()];
-        for (int i = 0; i < params.size(); i++) {
-            Param p = params.get(i);
-            String s = p.asField();
-            if (p.hasModifiers())
-                commands[i] = s + ":" + p.firstModifier().asString();
-            else
-                commands[i] = s;
-        }
-        return Data.join(commands, "; ");
-    }
-
-    private String buildSummaryCommands() {
-        Map<String, String> spec = new HashMap<String, String>();
-
-        // We must account for all of these except for the special fields series and values
-        // As they will be handled later
-        HashSet<String> fields = new HashSet<String>(Arrays.asList(vis.usedFields(false)));
-        fields.remove("#series");
-        fields.remove("#values");
-
-        // Add the summary measures
-        for (Map.Entry<Param, String> e : vis.fSummarize.entrySet()) {
-            Param p = e.getKey();
-            String name = p.asField();
-            String measure = e.getValue();
-            if (p.hasModifiers()) measure += ":" + p.firstModifier().asString();
-            spec.put(name, name + ":" + measure);
-            fields.remove(name);
-        }
-
-        // Add all color used fields in as dimensions (factors)
-        for (String s : fields) {
-            // Count is an implicit summary
-            if (s.equals("#count"))
-                spec.put(s, s + ":sum");
-            else
-                spec.put(s, s);
-        }
-
-        // X fields are used for the percentage bases
-        for (Param s : vis.fX) spec.put(s.asField(), s.asField() + ":base");
-
-        // Return null if summary is not called for
-        if (spec.containsKey("#count") || vis.fSummarize.size() > 0) {
-            String[] result = new String[spec.size()];
-            int n = 0;
-            for (Map.Entry<String, String> e : spec.entrySet())
-                result[n++] = e.getKey() + "=" + e.getValue();
-            return Data.join(result, "; ");
-        } else
-            return "";
+        LinkedHashSet<String> keep = new LinkedHashSet<String>();
+        for (Param p : vis.fX) keep.add(p.asString());
+        Collections.addAll(keep, vis.nonPositionFields());
+        keep.remove("#series");
+        keep.remove("#values");
+        return Data.join(vis.fY) + ";" + Data.join(keep);
     }
 
     /*

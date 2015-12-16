@@ -18,10 +18,10 @@ package org.brunel.build.d3;
 
 import org.brunel.action.Param;
 import org.brunel.build.AbstractBuilder;
-import org.brunel.build.data.DataTransformParameters;
 import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.d3.diagrams.GeoMap;
+import org.brunel.build.data.DataTransformParameters;
 import org.brunel.build.element.ElementStructure;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
@@ -48,8 +48,29 @@ public class D3Builder extends AbstractBuilder {
             "\tsumoselect Copyright © 2014 Hemant Negi\n " +
             "-->\n";
 
+    /**
+     * Return the required builder with default options
+     */
+    public static D3Builder make() {
+        return make(new BuilderOptions());
+    }
+
+    /**
+     * Return the required builder
+     */
+    public static D3Builder make(BuilderOptions options) {
+        return new D3Builder(options);
+    }
+    private ScriptWriter out;                   // Where to write code
+    private int visWidth, visHeight;            // Overall vis size
+    private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
+    private D3Interaction interaction;          // Builder for interactions
     private D3Builder(BuilderOptions options) {
         super(options);
+    }
+
+    public Object getVisualization() {
+        return out.content();
     }
 
     public String makeImports() {
@@ -80,65 +101,6 @@ public class D3Builder extends AbstractBuilder {
         return base;
     }
 
-    public String makeStyleSheets() {
-        String pattern = "<link rel=\"stylesheet\" type=\"text/css\" href=\"%s\" charset=\"utf-8\"></script>\n";
-
-        String base;
-        if (options.localResources == null) {
-            base = String.format(pattern, "http://brunelvis.org/js/brunel." + options.version + ".css");
-        } else {
-            base = String.format(pattern, options.localResources + "/BrunelBaseStyles.css");
-        }
-
-        if (getControls().isNeeded()) {
-            base = base + String.format(pattern, "http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css")
-                    + String.format(pattern, "http://brunelvis.org/js/sumoselect.css");
-        }
-        return base;
-    }
-
-    /**
-     * Return the required builder
-     */
-    public static D3Builder make(BuilderOptions options) {
-        return new D3Builder(options);
-    }
-
-    /**
-     * Return the required builder with default options
-     */
-    public static D3Builder make() {
-        return make(new BuilderOptions());
-    }
-
-    private ScriptWriter out;                   // Where to write code
-    private int visWidth, visHeight;            // Overall vis size
-    private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
-    private D3Interaction interaction;          // Builder for interactions
-
-    public Object getVisualization() {
-        return out.content();
-    }
-
-    protected void defineVisSystem(VisItem main, int width, int height) {
-        this.visWidth = width;
-        this.visHeight = height;
-        this.out = new ScriptWriter(options.readableJavascript);
-
-        // Write the class definition function (and flag to use strict mode)
-        out.add("function ", options.className, "(visId) {").ln().indentMore();
-        out.add("\"use strict\";").comment("Strict Mode");
-
-        // Add commonly used definitions
-        out.onNewLine().ln();
-        out.add("var datasets = [],").at(50).comment("Array of datasets for the original data");
-        out.add("    pre = function(d, i) { return d },").at(50).comment("Default pre-process does nothing");
-        out.add("    post = function(d, i) { return d },").at(50).comment("Default post-process does nothing");
-        out.add("    transitionTime = 200,").at(50).comment("Transition time for animations");
-        out.add("    charts = [],").at(50).comment("The charts in the system");
-        out.add("    vis = d3.select('#' + visId).attr('class', 'brunel')").comment("the SVG container");
-    }
-
     protected void defineChart(ChartStructure structure, double[] location) {
 
         double[] chartMargins = new double[]{
@@ -147,7 +109,7 @@ public class D3Builder extends AbstractBuilder {
         };
 
         // Write the class definition function
-        out.titleComment("Define chart #" + (structure.chartIndex+1), "in the visualization");
+        out.titleComment("Define chart #" + (structure.chartIndex + 1), "in the visualization");
         out.add("charts[" + structure.chartIndex, "] = function() {").ln();
         out.indentMore();
 
@@ -218,58 +180,68 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}()").endStatement().ln();
     }
 
-    /*
-        Builds a mapping from the fields we will use in the built data object to an indexing 0,1,2,3, ...
-     */
-    private Map<String, Integer> createResultFields(VisSingle vis) {
-        LinkedHashSet<String> needed = new LinkedHashSet<String>();
-        if (vis.fY.size() > 1) {
-            // A series needs special handling -- Y's are different in output than input
-            if (vis.stacked) {
-                // Stacked series chart needs lower and upper values
-                needed.add("#values$lower");
-                needed.add("#values$upper");
-            }
-            // Always need series and values
-            needed.add("#series");
-            needed.add("#values");
+    protected void defineVisSystem(VisItem main, int width, int height) {
+        this.visWidth = width;
+        this.visHeight = height;
+        this.out = new ScriptWriter(options.readableJavascript);
 
-            // And then all the X fields
-            for (Param p : vis.fX) needed.add(p.asField());
+        // Write the class definition function (and flag to use strict mode)
+        out.add("function ", options.className, "(visId) {").ln().indentMore();
+        out.add("\"use strict\";").comment("Strict Mode");
 
-            // And the non-position fields
-            Collections.addAll(needed, vis.nonPositionFields());
-        } else {
-            if (vis.stacked) {
-                // Stacked chart needs lower and upper Y field values as well as the rest
-                String y = vis.fY.get(0).asField();
-                needed.add(y + "$lower");
-                needed.add(y + "$upper");
-            }
-            Collections.addAll(needed, vis.usedFields(true));
-        }
-
-        // We always want the row field
-        needed.add("#row");
-
-        // Convert to map for easy lookup
-        Map<String, Integer> result = new HashMap<String, Integer>();
-        for (String s : needed) result.put(s, result.size());
-        return result;
+        // Add commonly used definitions
+        out.onNewLine().ln();
+        out.add("var datasets = [],").at(50).comment("Array of datasets for the original data");
+        out.add("    pre = function(d, i) { return d },").at(50).comment("Default pre-process does nothing");
+        out.add("    post = function(d, i) { return d },").at(50).comment("Default post-process does nothing");
+        out.add("    transitionTime = 200,").at(50).comment("Transition time for animations");
+        out.add("    charts = [],").at(50).comment("The charts in the system");
+        out.add("    vis = d3.select('#' + visId).attr('class', 'brunel')").comment("the SVG container");
     }
 
-    private void defineElementBuildFunction(ElementStructure elementStructure) {
+    protected void endChart(ChartStructure dependency) {
+        out.onNewLine().add("function build(time) {").indentMore();
+        out.onNewLine().add("var first = elements[0].data() == null").endStatement();
+        out.add("if (first) time = 0;").comment("No transition for first call");
 
-        D3ElementBuilder elementBuilder = new D3ElementBuilder(elementStructure.vis, elementStructure.data, out, structure, scalesBuilder);
-        elementBuilder.preBuildDefinitions();
+        if (scalesBuilder.needsAxes()) out.onNewLine().add("buildAxes(); ");
 
-        // Main method to make a vis
-        out.titleComment("Build element from data");
+        Integer[] order = structure.elementBuildOrder();
 
-        out.add("function build(transitionMillis) {").ln().indentMore();
-        elementBuilder.generate(elementStructure.elementIndex);
-        interaction.addElementHandlers(elementStructure.vis);
+        out.onNewLine().add("if (first || time>0) ");
+        if (order.length > 1) {
+            out.add("{").indentMore();
+            for (int i : order)
+                out.onNewLine().add("elements[" + i + "].makeData();");
+            out.indentLess().onNewLine().add("}").endStatement();
+        } else {
+            out.add("elements[0].makeData()").endStatement();
+        }
+        for (int i : order)
+            out.onNewLine().add("elements[" + i + "].build(time);");
+
+        // TODO: make this much less "special case" code
+        if (scalesBuilder.diagram == VisTypes.Diagram.network) {
+            int nodeIndex = dependency.sourceIndex;
+            out.onNewLine().add("if (first) {").indentMore();
+            for (int i : order) {
+                if (dependency.isDependent(i)) {
+                    out.onNewLine().add("BrunelD3.network(d3.layout.force(), chart.graph, elements[" + nodeIndex
+                            + "], elements[" + i + "], geom)").endStatement();
+                }
+            }
+            out.indentLess().onNewLine().add("}");
+        }
+
         out.indentLess().onNewLine().add("}").endStatement().ln();
+
+        out.comment("Expose the following components of the chart");
+        out.add("return {").indentMore()
+                .onNewLine().add("build : build,")
+                .onNewLine().add("elements : elements")
+                .onNewLine().indentLess().add("}").endStatement();
+        // Finish the chart method
+        out.indentLess().add("}()").endStatement().ln();
     }
 
     protected void endVisSystem(VisItem main) {
@@ -324,55 +296,160 @@ public class D3Builder extends AbstractBuilder {
 
     }
 
+    private void addElementGroups(ElementStructure structure) {
+        String elementTransform = makeElementTransform(scalesBuilder.coords);
+        out.add("var elementGroup = interior.append('g').attr('class', '" + structure.getElementID() + "')");
+        if (elementTransform != null) out.addChained(elementTransform);
+        if (scalesBuilder.diagram != null)
+            out.continueOnNextLine(",").add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");
+        out.continueOnNextLine(",").add("main = elementGroup.append('g').attr('class', 'main')");
+        if (scalesBuilder.diagram != null)
+            out.continueOnNextLine(",").add("diagramLabels = elementGroup.append('g').attr('class', 'diagram labels')");
+        out.continueOnNextLine(",").add("labels = elementGroup.append('g').attr('class', 'labels')").endStatement();
+    }
+
+    /*
+        Builds a mapping from the fields we will use in the built data object to an indexing 0,1,2,3, ...
+     */
+    private Map<String, Integer> createResultFields(VisSingle vis) {
+        LinkedHashSet<String> needed = new LinkedHashSet<String>();
+        if (vis.fY.size() > 1) {
+            // A series needs special handling -- Y's are different in output than input
+            if (vis.stacked) {
+                // Stacked series chart needs lower and upper values
+                needed.add("#values$lower");
+                needed.add("#values$upper");
+            }
+            // Always need series and values
+            needed.add("#series");
+            needed.add("#values");
+
+            // And then all the X fields
+            for (Param p : vis.fX) needed.add(p.asField());
+
+            // And the non-position fields
+            Collections.addAll(needed, vis.nonPositionFields());
+        } else {
+            if (vis.stacked) {
+                // Stacked chart needs lower and upper Y field values as well as the rest
+                String y = vis.fY.get(0).asField();
+                needed.add(y + "$lower");
+                needed.add(y + "$upper");
+            }
+            Collections.addAll(needed, vis.usedFields(true));
+        }
+
+        // We always want the row field
+        needed.add("#row");
+
+        // Convert to map for easy lookup
+        Map<String, Integer> result = new HashMap<String, Integer>();
+        for (String s : needed) result.put(s, result.size());
+        return result;
+    }
+
+    private void defineElementBuildFunction(ElementStructure elementStructure) {
+
+        D3ElementBuilder elementBuilder = new D3ElementBuilder(elementStructure.vis, elementStructure.data, out, structure, scalesBuilder);
+        elementBuilder.preBuildDefinitions();
+
+        // Main method to make a vis
+        out.titleComment("Build element from data");
+
+        out.add("function build(transitionMillis) {").ln().indentMore();
+        elementBuilder.generate(elementStructure.elementIndex);
+        interaction.addElementHandlers(elementStructure.vis);
+        out.indentLess().onNewLine().add("}").endStatement().ln();
+    }
+
+    private void addElementExports(VisSingle vis) {
+        out.add("return {").indentMore();
+        out.onNewLine().add("data:").at(24).add("function() { return processed },");
+        out.onNewLine().add("internal:").at(24).add("function() { return data },");
+        out.onNewLine().add("selection:").at(24).add("function() { return selection },");
+        out.onNewLine().add("makeData:").at(24).add("makeData,");
+        out.onNewLine().add("build:").at(24).add("build,");
+        out.onNewLine().add("fields: {").indentMore();
+        writeFieldName("x", vis.fX);
+        writeFieldName("y", vis.fY);
+        writeFieldName("color", vis.fColor);
+        writeFieldName("size", vis.fSize);
+        writeFieldName("opacity", vis.fOpacity);
+        out.onNewLine().indentLess().add("}");
+        out.indentLess().onNewLine().add("}").endStatement();
+    }
+
+    private String makeElementTransform(VisTypes.Coordinates coords) {
+        if (coords == VisTypes.Coordinates.transposed)
+            return "attr('transform','matrix(0,1,1,0,0,0)')";
+        else if (coords == VisTypes.Coordinates.polar)
+            return makeTranslateTransform("geom.inner_width/2", "geom.inner_height/2");
+        else
+            return null;
+    }
+
+    private void writeFieldName(String name, List<Param> fieldNames) {
+        List<String> names = new ArrayList<String>();
+        for (Param p : fieldNames) names.add(p.asField());
+        if (!fieldNames.isEmpty())
+            out.onNewLine().add(name, ":").at(24).add("[").addQuotedCollection(names).add("],");
+    }
+
+    private void writeMainGroups(ChartStructure structure) {
+        String axesTransform = makeTranslateTransform("geom.inner_left", "geom.inner_top");
+        out.add("var chart = vis.append('g').attr('class', '" + structure.getChartID() + "')")
+                .addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
+                .endStatement();
+        out.add("var interior = chart.append('g').attr('class', 'interior')")
+                .addChained(axesTransform)
+                .addChained("attr('clip-path', 'url(#" + clipID(structure) + ")')")
+                .endStatement();
+
+        interaction.addPrerequisites();
+
+        out.add("var axes = chart.append('g').attr('class', 'axis')")
+                .addChained(axesTransform).endStatement();
+        out.add("var legends = chart.append('g').attr('class', 'legend')")
+                .addChained(makeTranslateTransform("geom.outer_width", "0")).endStatement();
+
+        // Make the clip path for this: we expand by a pixel to avoid ugly cut-offs right at the edge
+        out.add("vis.append('clipPath').attr('id', '" + clipID(structure) + "').append('rect')");
+        out.addChained("attr('x', -1).attr('y', -1)");
+        if (scalesBuilder.coords == VisTypes.Coordinates.transposed)
+            out.addChained("attr('width', geom.inner_height+2).attr('height', geom.inner_width+2)").endStatement();
+        else
+            out.addChained("attr('width', geom.inner_width+2).attr('height', geom.inner_height+2)").endStatement();
+
+    }
+
+    private String makeTranslateTransform(String dx, String dy) {
+        return "attr('transform','translate(' + " + dx + " + ',' + " + dy + " + ')')";
+    }
+
+    // returns an id that is unique to the chart and the visualization
+    private String clipID(ChartStructure structure) {
+        return "clip_" + options.visIdentifier + "_" + structure.chartIndex;
+    }
+
     public Controls getControls() {
         return controls;
     }
 
-    protected void endChart(ChartStructure dependency) {
-        out.onNewLine().add("function build(time) {").indentMore();
-        out.onNewLine().add("var first = elements[0].data() == null").endStatement();
-        out.add("if (first) time = 0;").comment("No transition for first call");
+    public String makeStyleSheets() {
+        String pattern = "<link rel=\"stylesheet\" type=\"text/css\" href=\"%s\" charset=\"utf-8\"></script>\n";
 
-        if (scalesBuilder.needsAxes()) out.onNewLine().add("buildAxes(); ");
-
-        Integer[] order = structure.elementBuildOrder();
-
-        out.onNewLine().add("if (first || time>0) ");
-        if (order.length > 1) {
-            out.add("{").indentMore();
-            for (int i : order)
-                out.onNewLine().add("elements[" + i + "].makeData();");
-            out.indentLess().onNewLine().add("}").endStatement();
+        String base;
+        if (options.localResources == null) {
+            base = String.format(pattern, "http://brunelvis.org/js/brunel." + options.version + ".css");
         } else {
-            out.add("elements[0].makeData()").endStatement();
-        }
-        for (int i : order)
-            out.onNewLine().add("elements[" + i + "].build(time);");
-
-
-        // TODO: make this much less "special case" code
-        if (scalesBuilder.diagram == VisTypes.Diagram.network) {
-            int nodeIndex = dependency.sourceIndex;
-            out.onNewLine().add("if (first) {").indentMore();
-            for (int i : order) {
-                if (dependency.isDependent(i)) {
-                    out.onNewLine().add("BrunelD3.network(d3.layout.force(), chart.graph, elements[" + nodeIndex
-                            + "], elements[" + i + "], geom)").endStatement();
-                }
-            }
-            out.indentLess().onNewLine().add("}");
+            base = String.format(pattern, options.localResources + "/BrunelBaseStyles.css");
         }
 
-
-        out.indentLess().onNewLine().add("}").endStatement().ln();
-
-        out.comment("Expose the following components of the chart");
-        out.add("return {").indentMore()
-                .onNewLine().add("build : build,")
-                .onNewLine().add("elements : elements")
-                .onNewLine().indentLess().add("}").endStatement();
-        // Finish the chart method
-        out.indentLess().add("}()").endStatement().ln();
+        if (getControls().isNeeded()) {
+            base = base + String.format(pattern, "http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css")
+                    + String.format(pattern, "http://brunelvis.org/js/sumoselect.css");
+        }
+        return base;
     }
 
     public DataTransformParameters modifyParameters(DataTransformParameters params, VisSingle vis) {
@@ -404,87 +481,6 @@ public class D3Builder extends AbstractBuilder {
         // Replace the stack and sort commands with updated versions
         return new DataTransformParameters(params.constantsCommand, params.filterCommand, params.transformCommand, params.summaryCommand,
                 stackCommand, sortCommand, params.seriesCommand, params.usedCommand);
-    }
-
-    private void writeMainGroups(ChartStructure structure) {
-        String axesTransform = makeTranslateTransform("geom.inner_left", "geom.inner_top");
-        out.add("var chart = vis.append('g').attr('class', '" + structure.getChartID() + "')")
-                .addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
-                .endStatement();
-        out.add("var interior = chart.append('g').attr('class', 'interior')")
-                .addChained(axesTransform)
-                .addChained("attr('clip-path', 'url(#" + clipID(structure) + ")')")
-                .endStatement();
-
-        interaction.addPrerequisites();
-
-        out.add("var axes = chart.append('g').attr('class', 'axis')")
-                .addChained(axesTransform).endStatement();
-        out.add("var legends = chart.append('g').attr('class', 'legend')")
-                .addChained(makeTranslateTransform("geom.outer_width", "0")).endStatement();
-
-        // Make the clip path for this: we expand by a pixel to avoid ugly cut-offs right at the edge
-        out.add("vis.append('clipPath').attr('id', '" + clipID(structure) + "').append('rect')");
-        out.addChained("attr('x', -1).attr('y', -1)");
-        if (scalesBuilder.coords == VisTypes.Coordinates.transposed)
-            out.addChained("attr('width', geom.inner_height+2).attr('height', geom.inner_width+2)").endStatement();
-        else
-            out.addChained("attr('width', geom.inner_width+2).attr('height', geom.inner_height+2)").endStatement();
-
-    }
-
-    private void addElementGroups(ElementStructure structure) {
-        String elementTransform = makeElementTransform(scalesBuilder.coords);
-        out.add("var elementGroup = interior.append('g').attr('class', '" + structure.getElementID() + "')");
-        if (elementTransform != null) out.addChained(elementTransform);
-        if (scalesBuilder.diagram != null)
-            out.continueOnNextLine(",").add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");
-        out.continueOnNextLine(",").add("main = elementGroup.append('g').attr('class', 'main')");
-        if (scalesBuilder.diagram != null)
-            out.continueOnNextLine(",").add("diagramLabels = elementGroup.append('g').attr('class', 'diagram labels')");
-        out.continueOnNextLine(",").add("labels = elementGroup.append('g').attr('class', 'labels')").endStatement();
-    }
-
-    // returns an id that is unique to the chart and the visualization
-    private String clipID(ChartStructure structure) {
-        return "clip_" + options.visIdentifier + "_" + structure.chartIndex;
-    }
-
-    private void addElementExports(VisSingle vis) {
-        out.add("return {").indentMore();
-        out.onNewLine().add("data:").at(24).add("function() { return processed },");
-        out.onNewLine().add("internal:").at(24).add("function() { return data },");
-        out.onNewLine().add("selection:").at(24).add("function() { return selection },");
-        out.onNewLine().add("makeData:").at(24).add("makeData,");
-        out.onNewLine().add("build:").at(24).add("build,");
-        out.onNewLine().add("fields: {").indentMore();
-        writeFieldName("x", vis.fX);
-        writeFieldName("y", vis.fY);
-        writeFieldName("color", vis.fColor);
-        writeFieldName("size", vis.fSize);
-        writeFieldName("opacity", vis.fOpacity);
-        out.onNewLine().indentLess().add("}");
-        out.indentLess().onNewLine().add("}").endStatement();
-    }
-
-    private String makeTranslateTransform(String dx, String dy) {
-        return "attr('transform','translate(' + " + dx + " + ',' + " + dy + " + ')')";
-    }
-
-    private String makeElementTransform(VisTypes.Coordinates coords) {
-        if (coords == VisTypes.Coordinates.transposed)
-            return "attr('transform','matrix(0,1,1,0,0,0)')";
-        else if (coords == VisTypes.Coordinates.polar)
-            return makeTranslateTransform("geom.inner_width/2", "geom.inner_height/2");
-        else
-            return null;
-    }
-
-    private void writeFieldName(String name, List<Param> fieldNames) {
-        List<String> names = new ArrayList<String>();
-        for (Param p : fieldNames) names.add(p.asField());
-        if (!fieldNames.isEmpty())
-            out.onNewLine().add(name, ":").at(24).add("[").addQuotedCollection(names).add("],");
     }
 
 }
