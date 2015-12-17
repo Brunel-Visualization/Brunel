@@ -710,12 +710,11 @@ var BrunelD3 = (function () {
             id = idField.value(i);
             x = xField.value(i);
             y = yField.value(i);
-            if (id != null) map[id] = {x: x, y: y}
+            if (id != null) map[id] = [x,y]
         }
         // Return mapping function
         return function (x) {
-            var v = map[x];
-            return v || {};
+            return map[x];
         }
     };
 

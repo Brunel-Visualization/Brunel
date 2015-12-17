@@ -58,7 +58,8 @@ public class ElementStructure {
     }
 
     public boolean isGraphEdge() {
-        return dependent && vis.tElement == VisTypes.Element.edge && vis.fKeys.size() == 2;
+        return dependent && (chart.diagram == VisTypes.Diagram.network || chart.diagram == VisTypes.Diagram.tree)
+                && vis.tElement == VisTypes.Element.edge && vis.fKeys.size() == 2;
     }
 
     /**
@@ -72,5 +73,17 @@ public class ElementStructure {
         String idToPointName = "elements[" + chart.sourceIndex + "].internal()._idToPoint(";
         return idToPointName + D3Util.writeCall(key) + ")." + dimName;
     }
+
+    /**
+     * Create the Javascript that gives us the required location in data units
+     *
+=     * @param key     field to use for a key
+     * @return javascript fragment
+     */
+    public String referredLocation(Field key) {
+        String idToPointName = "elements[" + chart.sourceIndex + "].internal()._idToPoint(";
+        return idToPointName + D3Util.writeCall(key) + ")";
+    }
+
 
 }

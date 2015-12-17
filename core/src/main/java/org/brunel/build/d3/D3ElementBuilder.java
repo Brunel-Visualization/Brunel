@@ -122,7 +122,16 @@ class D3ElementBuilder {
         for (int i = 0; i < keys.length; i++) keys[i] = structure.data.field(vis.fKeys.get(i).asField());
         ModelUtil.Size sizeWidth = ModelUtil.getElementSize(vis, "width");
         ModelUtil.Size sizeHeight = ModelUtil.getElementSize(vis, "height");
+
         if (structure.chart.geo != null) {
+            if (structure.dependent) {
+                if (keys.length == 1) {
+                    e.refLocation = "proj(" + structure.referredLocation(keys[0]) + ")";
+                } else {
+                    e.refLocation = "[ proj(" + structure.referredLocation(keys[0]) + "), proj(" + structure.referredLocation(keys[1]) + ") ]";
+                }
+            }
+
             // Maps with feature data do not need the geo coordinates set
             if (vis.tDiagram != VisTypes.Diagram.map)
                 setGeoLocations(e, x, y, keys);
@@ -130,6 +139,13 @@ class D3ElementBuilder {
             e.x.size = getSize(getSizeCall(0), sizeWidth, new Field[0], "geom.default_point_size", null);
             e.y.size = getSize(getSizeCall(1), sizeHeight, new Field[0], "geom.default_point_size", null);
         } else {
+            if (structure.dependent && !structure.isGraphEdge()) {
+                if (keys.length == 1) {
+                    e.refLocation = structure.referredLocation(keys[0]);
+                } else {
+                    e.refLocation = "[" + structure.referredLocation(keys[0]) + ", " + structure.referredLocation(keys[1]) + "]";
+                }
+            }
             setLocations(e.x, "x", x, keys, structure.chart.coordinates.xCategorical);
             setLocations(e.y, "y", y, keys, structure.chart.coordinates.yCategorical);
             e.x.size = getSize(getSizeCall(0), sizeWidth, x, "geom.inner_width", "scale_x");
@@ -268,18 +284,19 @@ class D3ElementBuilder {
             throw new IllegalStateException("X and Y dimensions do not match in geographic maps");
         if (structure.isGraphEdge()) {
             throw new IllegalStateException("Cannot handle edged dependencies in geographic maps");
-        } else if (structure.dependent) {
-            throw new IllegalStateException("Cannot handle positional dependencies in geographic maps");
         }
 
-        if (n == 0) {
+        if (structure.dependent) {
+            setDependentLocations(def.x, "x", keys, "");
+            setDependentLocations(def.y, "y", keys, "");
+        } else if (n == 0) {
             def.x.center = "null";
             def.y.center = "null";
         } else if (n == 1) {
             String xFunction = D3Util.writeCall(x[0]);
             String yFunction = D3Util.writeCall(y[0]);
-            def.x.center = "function(d) { return projection([" + xFunction + "," + yFunction + "])[0] }";
-            def.y.center = "function(d) { return projection([" + xFunction + "," + yFunction + "])[1] }";
+            def.x.center = "function(d) { return proj([" + xFunction + "," + yFunction + "])[0] }";
+            def.y.center = "function(d) { return proj([" + xFunction + "," + yFunction + "])[1] }";
         } else if (n == 2) {
             String xLow = D3Util.writeCall(x[0]);          // A call to the low field using the datum 'd'
             String xHigh = D3Util.writeCall(x[1]);         // A call to the high field using the datum 'd'
@@ -295,10 +312,10 @@ class D3ElementBuilder {
             if (isRange(y[0])) yLow += ".low";
             if (isRange(y[1])) yHigh += ".high";
 
-            def.x.left = "function(d) { return projection([" + xLow + "," + yLow + "])[0] }";
-            def.x.right = "function(d) { return projection([" + xHigh + "," + yHigh + "])[0] }";
-            def.y.left = "function(d) { return projection([" + xLow + "," + yLow + "])[1] }";
-            def.y.right = "function(d) { return projection([" + xHigh + "," + yHigh + "])[1] }";
+            def.x.left = "function(d) { return proj([" + xLow + "," + yLow + "])[0] }";
+            def.x.right = "function(d) { return proj([" + xHigh + "," + yHigh + "])[0] }";
+            def.y.left = "function(d) { return proj([" + xLow + "," + yLow + "])[1] }";
+            def.y.right = "function(d) { return proj([" + xHigh + "," + yHigh + "])[1] }";
         }
 
     }
@@ -367,16 +384,7 @@ class D3ElementBuilder {
             dim.left = "function(d) { return d.source." + dimName + " }";
             dim.right = "function(d) { return d.target." + dimName + " }";
         } else if (structure.dependent) {
-            // Use the keys to get the X and Y locations from other items
-            if (keys.length == 1) {
-                // One key gives the center
-                dim.center = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[0]) + ") }";
-            } else {
-                // Two keys give ends
-                dim.left = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[0]) + ") }";
-                dim.right = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[1]) + ") }";
-                dim.center = "function() { return " + scaleName + "(0.5) }";        // Not sure what is best here -- should not get used
-            }
+            setDependentLocations(dim, dimName, keys, scaleName);
         } else if (fields.length == 0) {
             // There are no fields -- we have a notional [0,1] extent, so use the center of that
             dim.center = "function() { return " + scaleName + "(0.5) }";
@@ -417,6 +425,19 @@ class D3ElementBuilder {
 
     }
 
+    private void setDependentLocations(ElementDefinition.ElementDimensionDefinition dim, String dimName, Field[] keys, String scaleName) {
+        // Use the keys to get the X and Y locations from other items
+        if (keys.length == 1) {
+            // One key gives the center
+            dim.center = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[0]) + ") }";
+        } else {
+            // Two keys give ends
+            dim.left = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[0]) + ") }";
+            dim.right = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[1]) + ") }";
+            dim.center = "function() { return " + scaleName + "(0.5) }";        // Not sure what is best here -- should not get used
+        }
+    }
+
     public static String getOverallSize(VisSingle vis, ElementDefinition def) {
         ModelUtil.Size size = ModelUtil.getElementSize(vis, "size");
         boolean needsFunction = vis.fSize.size() == 1;
@@ -435,8 +456,8 @@ class D3ElementBuilder {
         String y = def.y.size;
         if (x.equals(y)) return x;          // If they are both the same, use that
 
-        String xBody = stripFunction(x);
-        String yBody = stripFunction(y);
+        String xBody = D3Util.stripFunction(x);
+        String yBody = D3Util.stripFunction(y);
 
         // This will already have the size function factored in if defined
         String content = "Math.min(" + xBody + ", " + yBody + ")";
@@ -503,10 +524,27 @@ class D3ElementBuilder {
 
     private void defineEdge(String basicDef, ElementDefinition elementDef) {
         out.add(basicDef);
-        out.addChained("attr('x1'," + elementDef.x.left + ")");
-        out.addChained("attr('y1'," + elementDef.y.left + ")");
-        out.addChained("attr('x2'," + elementDef.x.right + ")");
-        out.addChained("attr('y2'," + elementDef.y.right + ")");
+        if (elementDef.refLocation != null) {
+            out.addChained("each(function(d) { this.__edge = " + elementDef.refLocation + "})");
+            if (structure.chart.geo != null) {
+                // geo does not need scales
+                out.addChained("attr('x1', function() { return this.__edge[0][0]})");
+                out.addChained("attr('y1', function() { return this.__edge[0][1]})");
+                out.addChained("attr('x2', function() { return this.__edge[1][0]})");
+                out.addChained("attr('y2', function() { return this.__edge[1][1]})");
+            } else {
+                out.addChained("attr('x1', function() { return this.__edge[0] ? scale_x(this.__edge[0][0]) : null })");
+                out.addChained("attr('y1', function() { return this.__edge[0] ? scale_y(this.__edge[0][1]) : null })");
+                out.addChained("attr('x2', function() { return this.__edge[1] ? scale_x(this.__edge[1][0]) : null })");
+                out.addChained("attr('y2', function() { return this.__edge[1] ? scale_y(this.__edge[1][1]) : null })");
+            }
+            out.addChained("each(function() { if (!this.__edge[0][0] || !this.__edge[1][0]) this.style.visibility = 'hidden'})");
+        } else {
+            out.addChained("attr('x1'," + elementDef.x.left + ")");
+            out.addChained("attr('y1'," + elementDef.y.left + ")");
+            out.addChained("attr('x2'," + elementDef.x.right + ")");
+            out.addChained("attr('y2'," + elementDef.y.right + ")");
+        }
     }
 
     private void defineRect(String basicDef, ElementDefinition elementDef) {
@@ -535,16 +573,6 @@ class D3ElementBuilder {
     private boolean isRange(Field field) {
         String s = field.stringProperty("summary");
         return s != null && (s.equals("iqr") || s.equals("range"));
-    }
-
-    private static String stripFunction(String item) {
-        // remove function wrapper if present
-        int p = item.indexOf("return");
-        int q = item.lastIndexOf("}");
-        if (p > 0 && q > 0)
-            return item.substring(p + 7, q).trim();
-        else
-            return item;
     }
 
     private void defineHorizontalExtentFunctions(ElementDefinition elementDef, boolean withWidth) {
@@ -600,7 +628,7 @@ class D3ElementBuilder {
 
     private String halve(String sizeText) {
         // Put the "/2" factor inside the function if needed
-        String body = stripFunction(sizeText);
+        String body = D3Util.stripFunction(sizeText);
         if (body.equals(sizeText))
             return body + " / 2";
         else

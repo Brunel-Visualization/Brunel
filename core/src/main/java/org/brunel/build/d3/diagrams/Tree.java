@@ -16,6 +16,7 @@
 
 package org.brunel.build.d3.diagrams;
 
+import org.brunel.build.d3.D3Util;
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
@@ -59,12 +60,11 @@ class Tree extends D3Diagram {
         } else {
             out.addChained("attr('cx', function(d) { return d.x })")
                     .addChained("attr('cy', function(d) { return d.y })");
-
         }
-        out.addChained("attr('r', function(d) { return d.row == null ? geom.default_point_size : size_x(d) / 2})");
+        out.addChained("attr('r', " + D3Util.defineSafeRadius(elementDef.overallSize) + ")").endStatement();
 
-        out.endStatement();
-        labelBuilder.addTreeInternalLabels(details, "{ x: box.x + box.width, y: box.y - box.height/2 + 3 }");
+        addLabels(details, elementDef);
+
         addAestheticsAndTooltips(details, true);
 
         // We add the tree edges
@@ -87,6 +87,31 @@ class Tree extends D3Diagram {
         out.endStatement();
 
         addAestheticsAndTooltips(details, true);
+    }
 
+    private void addLabels(ElementDetails details, ElementDefinition elementDef) {
+
+        out.add("diagramLabels.attr('class', 'axis diagram tree hierarchy')").endStatement();
+        out.add("var treeLabels = diagramLabels.selectAll('text').data(d3Data)").endStatement();
+
+        out.add("treeLabels.enter().append('text')")
+                .addChained("attr('class', function(d) { return 'axis label L' + d.depth })")
+                .addChained("style('text-anchor', 'middle')")
+                .addChained("attr('dy', '0.85em')").endStatement();
+
+        out.add("var treeLabeling = {method:'bottom', fit:false, content:function(d){return d.innerNodeName} }").endStatement();
+        out.add("BrunelD3.tween(treeLabels,transitionMillis, function(d, i) { return BrunelD3.makeLabeling(this, selection[0][i], treeLabeling, false)})");
+        out.endStatement();
+
+        out.add("treeLabels.exit().remove()").endStatement();
+
+    }
+
+    public boolean needsDiagramExtras() {
+        return true;
+    }
+
+    public boolean needsDiagramLabels() {
+        return true;
     }
 }

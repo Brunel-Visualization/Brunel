@@ -27,6 +27,7 @@ public class ElementDefinition {
     public final ElementDimensionDefinition x = new ElementDimensionDefinition();
     public final ElementDimensionDefinition y = new ElementDimensionDefinition();
     public String overallSize;                         // A general size for the whole item
+    public String refLocation;                         // Defines the location using a reference to another element
 
     public static class ElementDimensionDefinition {
         public String center;                          // Where the center is to be (always defined)
