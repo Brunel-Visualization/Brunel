@@ -75,11 +75,13 @@ class BrunelSpec extends UnitSpec {
 
   "A BrunelOutput" should "contain javascript and css" in {
 
-    val brunelOutput = Brunel.create(df, "x(mpg) y(horsepower) style('fill:red')", 600, 600, "visid")
+    val brunelOutput = Brunel.create(df, "x(mpg) y(horsepower) style('fill:red') filter(mpg)", 600, 600, "visid")
     assert(brunelOutput.js != null)
     assert(brunelOutput.css.length() > 0)
     assert(brunelOutput.js.contains("['mpg', 'horsepower'],[123.0, 234.2],[123.0, 247.5],[189.0, 254.0],[187.0, null]"))
     assert(brunelOutput.css.contains("fill: red;"))
+    
+    println(brunelOutput.js)
     
   }
 
