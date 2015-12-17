@@ -1,0 +1,22 @@
+{
+    "display_name": "Spark 1.5.1 (Scala 2.10.4)",
+    "language_info": { "name": "scala" },
+    "argv": [
+        "{PATH TO GIT}/brunel/spark-kernel/spark-kernel",
+        "--profile",
+        "{connection_file}",
+        "--magic-url",
+        "file:{PATH TO GIT}/brunel/spark-kernel/build/libs/spark-kernel-brunel-all-0.9.jar"
+    ],
+    "codemirror_mode": "scala",
+    "env": {
+        "SPARK_OPTS": "--driver-java-options=-Xms1024M --driver-java-options=-Xmx4096M --driver-java-options=-Dlog4j.logLevel=trace",
+        "MAX_INTERPRETER_THREADS": "16",
+        "SPARK_CONFIGURATION": "spark.cores.max=4",
+        "CAPTURE_STANDARD_OUT": "true",
+        "CAPTURE_STANDARD_ERR": "true",
+        "SEND_EMPTY_OUTPUT": "false",
+        "SPARK_HOME": "{PATH TO SPARK}",
+        "PYTHONPATH": "{PATH TO SPARK}/python:{PATH TO SPARK}/python/lib/py4j-0.8.2.1-src.zip"
+     }
+}
