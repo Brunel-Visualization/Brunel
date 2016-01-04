@@ -268,10 +268,13 @@ public class D3ScaleBuilder {
         }
     }
 
+    /**
+     * This method writes the code needed to define axes
+     */
     public void writeAxes() {
         if (!hAxis.exists() && !vAxis.exists()) return;                          // No axes needed
 
-        // Calculate geom
+        // Define the spaces needed to work in
         String width = "geom.inner_width";
         String height = "geom.inner_height";
         if (coords == VisTypes.Coordinates.transposed) {
@@ -314,22 +317,26 @@ public class D3ScaleBuilder {
 
         // Define the axes themselves and the method to build (and re-build) them
         out.onNewLine().ln();
-        if (hAxis.exists()) {
-            out.add("var axis_bottom = d3.svg.axis().scale(" + hAxis.scale + ").innerTickSize(3).outerTickSize(0)");
-            if (hAxis.tickValues != null)
-                out.addChained("tickValues([").addQuoted(hAxis.tickValues).add("])");
 
-            if (hAxis.isLog()) out.addChained("ticks(7, ',.g3')");
-            out.endStatement();
-        }
-        if (vAxis.exists()) {
-            out.add("var axis_left = d3.svg.axis().orient('left').scale(" + vAxis.scale + ").innerTickSize(3).outerTickSize(0)");
-            if (vAxis.tickValues != null)
-                out.addChained("tickValues([").addQuoted(vAxis.tickValues).add("])");
-            if (vAxis.isLog()) out.addChained("ticks(7, ',.g3')");
-            out.endStatement();
-        }
+        out.add("var axis_bottom = d3.svg.axis()");
+        defineAxis(this.hAxis);
+
+        out.add("var axis_left = d3.svg.axis().orient('left')");
+        defineAxis(this.vAxis);
+
         defineAxesBuild();
+    }
+
+    private void defineAxis(AxisDetails axis) {
+        if (axis.exists()) {
+            out.addChained("scale(" + axis.scale + ").innerTickSize(3).outerTickSize(0)");
+            if (axis.tickValues != null)
+                out.addChained("tickValues([").addQuoted(axis.tickValues).add("])");
+            if (axis.isLog()) out.addChained("ticks(7, ',.g3')");
+            else if (axis.tickCount != null)
+                out.addChained("ticks(").add(axis.tickCount).add(")");
+            out.endStatement();
+        }
     }
 
     /**

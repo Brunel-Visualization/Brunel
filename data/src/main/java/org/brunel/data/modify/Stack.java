@@ -36,7 +36,6 @@ import java.util.List;
  * [4] "true" means we will generate all combinations of x fields and groups, even if not present in the data
  */
 public class Stack extends DataOperation {
-
     /**
      * Create data in stacked form
      *
@@ -225,7 +224,7 @@ public class Stack extends DataOperation {
         FieldRowComparison comparison = new FieldRowComparison(keyFields, null, true);
         List<Integer> items = new ArrayList<Integer>();
         int n = base.rowCount();
-        for (int i=0; i< n; i++) {
+        for (int i = 0; i < n; i++) {
             boolean valid = true;
             for (Field f : keyFields) if (f.value(i) == null) valid = false;
             if (valid) items.add(i);

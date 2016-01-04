@@ -875,6 +875,10 @@ V.Data.copyBaseProperties = function(target, source) {
     target.set("binned", source.property("binned"));
     target.set("summary", source.property("summary"));
     target.set("transform", source.property("transform"));
+    if (source.propertyTrue("categoriesOrdered")) {
+        target.set("categoriesOrdered", true);
+        target.set("categories", source.property("categories"));
+    }
     if (source.isDate()) {
         target.set("date", true);
         target.set("dateUnit", source.property("dateUnit"));
@@ -964,6 +968,11 @@ V.util_Informative.prototype.property = function(key) {
 V.util_Informative.prototype.stringProperty = function(key) {
     var v = this.property(key);
     return v == null ? null : v.toString();
+};
+
+V.util_Informative.prototype.propertyTrue = function(key) {
+    var v = this.property(key);
+    return v != null && v;
 };
 
 V.util_Informative.prototype.set = function(key, value) {
@@ -1384,8 +1393,8 @@ V.Field.prototype.property = function(key) {
 };
 
 V.Field.prototype.setCategories = function(cats) {
-    this.makeNominalStats();
     this.set("categories", cats);
+    this.set("categoriesOrdered", true);
 };
 
 V.Field.prototype.makeDateStats = function() {
@@ -2042,13 +2051,15 @@ V.modify_ConvertSeries.addRequired = function(list) {
 };
 
 V.modify_ConvertSeries.makeSeries = function(names, reps) {
-    var i, j;
+    var field, i, j;
     var temp = V.Data.makeColumnField("#series", "Series", names);
     var blocks = $.Array(names.length * reps, 0);
     for (i = 0; i < names.length; i++)
         for (j = 0; j < reps; j++)
             blocks[i * reps + j] = i;
-    return V.Data.permute(temp, blocks, false);
+    field = V.Data.permute(temp, blocks, false);
+    field.setCategories(names);
+    return field;
 };
 
 V.modify_ConvertSeries.makeValues = function(yNames, base, n) {
@@ -2946,18 +2957,22 @@ V.stats_NominalStats.populate = function(f) {
         V.Data.sort(sortedModes);
         f.set("mode", sortedModes[Math.floor((sortedModes.length - 1) / 2)]);
     }
-    if (f.name == "#selection") {
-        if (!count.containsKey(V.Field.VAL_UNSELECTED))
-            count.put(V.Field.VAL_UNSELECTED, 0);
-        if (!count.containsKey(V.Field.VAL_SELECTED))
-            count.put(V.Field.VAL_SELECTED, 0);
-        naturalOrder = [V.Field.VAL_UNSELECTED, V.Field.VAL_SELECTED];
+    if (f.propertyTrue("categoriesOrdered")) {
+        naturalOrder = f.categories();
     } else {
-        cats = count.keySet();
-        naturalOrder = cats.toArray();
-        V.Data.sort(naturalOrder);
+        if (f.name == "#selection") {
+            if (!count.containsKey(V.Field.VAL_UNSELECTED))
+                count.put(V.Field.VAL_UNSELECTED, 0);
+            if (!count.containsKey(V.Field.VAL_SELECTED))
+                count.put(V.Field.VAL_SELECTED, 0);
+            naturalOrder = [V.Field.VAL_UNSELECTED, V.Field.VAL_SELECTED];
+        } else {
+            cats = count.keySet();
+            naturalOrder = cats.toArray();
+            V.Data.sort(naturalOrder);
+        }
+        f.set("categories", naturalOrder);
     }
-    f.set("categories", naturalOrder);
     counts = $.Array(naturalOrder.length, 0);
     for (i = 0; i < naturalOrder.length; i++)
         counts[i] = count.get(naturalOrder[i]);

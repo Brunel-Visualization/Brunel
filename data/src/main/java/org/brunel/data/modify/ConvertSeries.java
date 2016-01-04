@@ -95,7 +95,9 @@ public class ConvertSeries extends DataOperation {
         int[] blocks = new int[names.length * reps];
         for (int i = 0; i < names.length; i++)
             for (int j = 0; j < reps; j++) blocks[i * reps + j] = i;
-        return Data.permute(temp, blocks, false);
+        Field field = Data.permute(temp, blocks, false);
+        field.setCategories(names);
+        return field;
     }
 
     private static Field makeValues(String[] yNames, Dataset base, int n) {

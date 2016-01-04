@@ -87,6 +87,7 @@ public class ChartLayout {
         int unplacedCount = 0;
         for (VisItem chart : charts)
             if (findBounds(chart) == null) unplacedCount++;
+        if (unplacedCount == 0) return new double[0][];         // All locations are placed
         return squarify(ChartLayout.LAYOUTS[Math.min(unplacedCount - 1, 3)], width, height);
     }
 

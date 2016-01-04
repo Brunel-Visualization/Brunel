@@ -37,9 +37,9 @@ sizedBar whiskey age rating                         :: pass
 sizedBar cpi Date ALL                               :: pass     :: The data is regular, so the counts are similar up to the last year
 
 multiline cpi Date food housing health transport                    :: pass
-multiline cpi Date food housing health transport / stack            :: improve :: The stacking is in 'natural order' but should be the order the fields were defined in 'y'
+multiline cpi Date food housing health transport / stack            :: pass ::  Note that the stacking order is 'food housing health transport'
 multiline whiskey country rating abv / label(#series) sort(rating) size(#series:1000)  split(#series) :: pass :: Note that we have sorted by rating so that line should decrease left-to-right
-multiline whiskey rating country category / point bin(rating)       :: improve :: Very modified "line" chart --  must fix the horizontal axes ticks which overlap
+multiline whiskey rating country category / point bin(rating)       :: pass
 
 - cpi       / line x(Date) y(CLOTHING, HOUSING)                                 :: pass     :: Should split automatically
 - cpi       / line x(Date) y(CLOTHING, HOUSING) label(#series)                  :: pass     :: Should split automatically
@@ -49,7 +49,7 @@ multiline whiskey rating country category / point bin(rating)       :: improve :
 treemap whiskey brand country category                              :: improve  :: Labels are good, but the treemap doesn't make areas very accurately
 - whiskey / bar x(ABV) y(#count) bin(ABV) sort(#count) label(brand) tooltip(#all) list(brand:50) :: pass
 colorScatter whiskey age rating category / label(brand:3)             :: pass     :: Make sure the labels move when panning
-multiline cpi Date food housing health transport / stack area label(#series)      :: improve :: The stacking is in 'natural order' but should be the order the fields were defined in 'y'
+multiline cpi Date food housing health transport / stack area label(#series)      :: pass :: Note that the stacking order is the order the fields were defined in 'y'
 
 - simple	/ bar x(animal) y(size) color(animal) sort(size) filter(size, #row, animal, mammal) :: pass
 - simple	/ bar x(animal) y(size) color(mammal) transpose                                     :: pass
