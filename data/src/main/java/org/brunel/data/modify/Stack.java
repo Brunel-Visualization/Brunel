@@ -36,7 +36,6 @@ import java.util.List;
  * [4] "true" means we will generate all combinations of x fields and groups, even if not present in the data
  */
 public class Stack extends DataOperation {
-
     /**
      * Create data in stacked form
      *
