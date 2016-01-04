@@ -32,15 +32,17 @@ class AxisDetails {
 
     public final String title;                         // Title for the axis
     public final String scale;                         // Name for the scale to use for this axis
-    private final Field[] fields;                      // Fields used in this axis
-    private final boolean categorical;                 // True if the axis is categorical
     public boolean rotatedTicks = false;               // If true, ticks are to be rotated
     public Object[] tickValues;                        // If non-null, ony show these ticks
+    public Integer tickCount;                          // If non-null, request this many ticks for the axis
     public int size;                                   // The size for this axis (perpendicular to axis direction)
     public int leftGutter;
-    public int rightGutter;                // Space needed on left and right (for horizontal chart only)
+    public int rightGutter;                            // Space needed on left and right (for horizontal chart only)
     public int topGutter;
-    public int bottomGutter;                // Space above and below chart (for vertical chart only)
+    public int bottomGutter;                           // Space above and below chart (for vertical chart only)
+
+    private final Field[] fields;                      // Fields used in this axis
+    private final boolean categorical;                 // True if the axis is categorical
 
     /* Constructs the axis for the given fields */
     public AxisDetails(String dimension, Field[] definedFields, boolean categorical) {
@@ -82,7 +84,7 @@ class AxisDetails {
     public void layoutHorizontally(double availableSpace, boolean fillToEdge) {
         if (!exists()) return;
 
-        int tickWidth = maxCategoryWidth();
+        int tickWidth = maxCategoryWidth() + 5;
         int tickCount = countTicks(fields);
 
         if (!categorical) fillToEdge = true;        // Numeric ticks may go right to edge
@@ -92,7 +94,7 @@ class AxisDetails {
 
         int spaceForOneTick = (int) (availableSpace / tickCount);
 
-        if (categorical && tickWidth > spaceForOneTick + 5) {
+        if (categorical && availableSpace < tickWidth * tickCount) {
             // We must use rotated ticks, and may also need only to show a subset of them
             rotatedTicks = true;
             tickValues = makeSkippingTickValues(availableSpace, tickCount);
@@ -113,6 +115,11 @@ class AxisDetails {
             else
                 leftGutter = Math.max(0, tickWidth / 2 - spaceForOneTick / 2);
             rightGutter = leftGutter;
+
+            if (availableSpace < tickWidth * tickCount) {
+                // Must be numeric in this case, so reduce the desired number of ticks for that axis
+                this.tickCount = (int) (availableSpace / (tickWidth + 5));
+            }
         }
     }
 
@@ -146,10 +153,11 @@ class AxisDetails {
     }
 
     private int countTicks(Field[] fields) {
-        if (fields.length == 0) return 1;                               // To prevent div by zero errors
+        if (!categorical) return 10;                            // Assume 10 ticks for numeric
+        if (fields.length == 0) return 1;                       // To prevent div by zero errors
         int n = 0;
         for (Field f : fields)
-            n += categorical ? f.categories().length : 5;     // Assume 5 ticks for numeric
+            n += f.categories().length;
         return n;
     }
 
@@ -186,8 +194,18 @@ class AxisDetails {
         bottomGutter = 5;
         availableSpace -= (topGutter + bottomGutter);
 
-        // Simple algorithm: just skip fields if necessary
-        tickValues = makeSkippingTickValues(availableSpace, tickCount);
+
+
+        // Simple algorithm: just skip items if necessary
+        if (categorical) {
+            tickValues = makeSkippingTickValues(availableSpace, tickCount);
+        } else {
+            int tickWidth = 16;   // We like about this much space between ticks
+            if (tickWidth * tickCount > availableSpace) {
+                this.tickCount = (int) (availableSpace / tickWidth);
+            }
+
+        }
 
         // Add 10 pixels for tick marks and gap between title and ticks
         size = tickValues == null ? maxCategoryWidth() : maxTickWidth();

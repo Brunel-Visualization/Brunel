@@ -710,12 +710,11 @@ var BrunelD3 = (function () {
             id = idField.value(i);
             x = xField.value(i);
             y = yField.value(i);
-            if (id != null) map[id] = {x: x, y: y}
+            if (id != null) map[id] = [x,y]
         }
         // Return mapping function
         return function (x) {
-            var v = map[x];
-            return v || {};
+            return map[x];
         }
     };
 
@@ -805,7 +804,35 @@ var BrunelD3 = (function () {
         return d3.svg.symbol().type(type).size(radius * radius * 4)();
     }
 
-// Expose these methods
+    // Start a network layout for the node and edge elements
+    // The graph should already have been built within the nodeElement
+    // density is a 0-1 value stating hwo packed the resulting graph should be
+    function makeNetworkLayout(layout, graph, nodes, edges, geom, density) {
+        // "D" is the desired distance we would like to have between nodes
+        var N = graph.nodes.length, E = graph.links.length,
+            pad = geom.default_point_size * 2,
+            D = (density || 1) * 0.5 * Math.sqrt((geom.inner_width-2*pad) * (geom.inner_height-2*pad) / N),
+            R = D * Math.max(1, D-3) / 5 / Math.max(1, E/N);
+
+        layout.nodes(graph.nodes).links(graph.links)
+            .size([geom.inner_width, geom.inner_height])
+            .linkDistance(D).charge(-R)
+            .start();
+
+        layout.on("tick", function() {
+            nodes.selection()
+                .attr('cx', function(d) { return d.x = Math.min(Math.max(d.x, pad), geom.inner_width-pad) })
+                .attr('cy', function(d) { return d.y = Math.min(Math.max(d.y, pad), geom.inner_height-pad)});
+            edges.selection()
+                .attr('x1',function(d) { return d.source.x })
+                .attr('y1',function(d) { return d.source.y })
+                .attr('x2',function(d) { return d.target.x })
+                .attr('y2',function(d) { return d.target.y });
+        });
+        nodes.selection().call(layout.drag)
+    }
+
+    // Expose these methods
     return {
         'geometry': geometries,
         'addTooltip': makeTooltip,
@@ -823,6 +850,7 @@ var BrunelD3 = (function () {
         'tween': transitionTween,
         'addFeatures': makeMap,
         'symbol': makeSymbol,
+        'network': makeNetworkLayout,
         'time': time
     }
 
