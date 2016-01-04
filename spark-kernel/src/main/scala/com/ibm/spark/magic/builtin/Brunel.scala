@@ -67,7 +67,12 @@ class Brunel extends CellMagic with IncludeInterpreter {
         case s: String => s
       }
     }
-    val d3css = """.brunel * {
+    val d3dynamicCss = jsonMap match {
+      case Some(m: Map[String, Any]) => m("css") match {
+        case s: String => s
+      }
+    }
+    val d3staticCss = """.brunel * {
                   |    font-family: helvetica neue, helvetica, arial, sans-serif;
                   |    font-size: 12px;
                   |}
@@ -325,6 +330,7 @@ class Brunel extends CellMagic with IncludeInterpreter {
                   |    width: 200px;
                   |}
                   |"""
+    val d3css = d3staticCss.concat(d3dynamicCss)
     val html =
       s"""<style> $d3css </style>
          |<svg id="$visId" width="$width" height="$height"></svg>
