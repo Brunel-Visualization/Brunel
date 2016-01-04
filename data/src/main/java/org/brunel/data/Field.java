@@ -110,9 +110,8 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public void setCategories(Object[] cats) {
-        // We must make the nominal stats first to prevent them being overridden.
-        makeNominalStats();
-        set("categories", cats);
+        set("categories", cats);                // These are the categories
+        set("categoriesOrdered", true);         // And we want to keep them in this order
     }
 
     private void makeDateStats() {

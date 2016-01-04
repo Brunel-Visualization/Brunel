@@ -41,6 +41,12 @@ public class Informative {
         return v == null ? null : v.toString();
     }
 
+    public boolean propertyTrue(String key) {
+        Boolean v = (Boolean) property(key);
+        return v != null && v;
+    }
+
+
     public void set(String key, Object value) {
         if (value == null)
             info.remove(key);

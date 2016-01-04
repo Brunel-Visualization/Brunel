@@ -37,7 +37,7 @@ public class NominalStats {
         for (int i = 0; i < N; i++) {
             Object o = f.value(i);
             if (o == null) continue;
-            valid ++;
+            valid++;
             Integer c = count.get(o);
             int value = c == null ? 1 : c + 1;
             count.put(o, value);
@@ -66,25 +66,29 @@ public class NominalStats {
         }
 
         Object[] naturalOrder;
-        if (f.name.equals("#selection")) {
-            // For selection data, ensure we ALWAYS have the two categories added in
-            if (!count.containsKey(Field.VAL_UNSELECTED)) count.put(Field.VAL_UNSELECTED, 0);
-            if (!count.containsKey(Field.VAL_SELECTED)) count.put(Field.VAL_SELECTED, 0);
-            // The categories are as follows
-            naturalOrder = new Object[]{Field.VAL_UNSELECTED, Field.VAL_SELECTED};
+        if (f.propertyTrue("categoriesOrdered")) {
+            naturalOrder = f.categories();
         } else {
-            // Extract categories from the counts
-            Set<Object> cats = count.keySet();
-            naturalOrder = cats.toArray(new Object[cats.size()]);
-            Data.sort(naturalOrder);
+            if (f.name.equals("#selection")) {
+                // For selection data, ensure we ALWAYS have the two categories added in
+                if (!count.containsKey(Field.VAL_UNSELECTED)) count.put(Field.VAL_UNSELECTED, 0);
+                if (!count.containsKey(Field.VAL_SELECTED)) count.put(Field.VAL_SELECTED, 0);
+                // The categories are as follows
+                naturalOrder = new Object[]{Field.VAL_UNSELECTED, Field.VAL_SELECTED};
+            } else {
+                // Extract categories from the counts
+                Set<Object> cats = count.keySet();
+                naturalOrder = cats.toArray(new Object[cats.size()]);
+                Data.sort(naturalOrder);
+            }
+
+            f.set("categories", naturalOrder);
         }
 
-        f.set("categories", naturalOrder);
         int[] counts = new int[naturalOrder.length];
         for (int i = 0; i < naturalOrder.length; i++)
             counts[i] = count.get(naturalOrder[i]);
         f.set("categoryCounts", counts);
-
     }
 
     public static boolean creates(String key) {

@@ -225,7 +225,7 @@ public class Stack extends DataOperation {
         FieldRowComparison comparison = new FieldRowComparison(keyFields, null, true);
         List<Integer> items = new ArrayList<Integer>();
         int n = base.rowCount();
-        for (int i=0; i< n; i++) {
+        for (int i = 0; i < n; i++) {
             boolean valid = true;
             for (Field f : keyFields) if (f.value(i) == null) valid = false;
             if (valid) items.add(i);
