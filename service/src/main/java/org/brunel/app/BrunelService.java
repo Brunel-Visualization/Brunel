@@ -73,7 +73,9 @@ public class BrunelService extends Application {
      * @param brunelSrc the Brunel syntax defining the visualization
      * @param width the desired width of the resulting visualization
      * @param height the desired height of the resulting visualization
-     * @param visId an identifier to use for the d3 JS to reference the HTML tag containing the visualization on the web page (usually an SVG tag).
+     * @param visid an identifier to use for the d3 JS to reference the HTML tag containing the visualization on the web page (usually an SVG tag).
+     * @param controlsid an identifier to use for HTML tag that will contain the interactive controls.  
+     *          If null, then resulting JS will not contain code for the vis controls and the client is responsible for creating any UIs for vis controls using the returned JSON.
      * @return a JSON object containing the css, js, and an object describing interactive controls that require a separate UI
      */
     @POST
@@ -83,10 +85,12 @@ public class BrunelService extends Application {
     public Response createAsD3(String data, @QueryParam("src") String brunelSrc,
                                @QueryParam("width") int width,
                                @QueryParam("height") int height,
-                               @QueryParam("visid") String visId) {
+                               @QueryParam("visid") String visId,
+                               @QueryParam("controlsid") String controlsId
+                               ) {
 
     	try {
-    		BrunelD3Result result = D3Integration.createBrunelResult(data, brunelSrc, width, height, visId);
+    		BrunelD3Result result = D3Integration.createBrunelResult(data, brunelSrc, width, height, visId, controlsId);
     		return Response.ok(result).header("Access-Control-Allow-Origin", "*").build();
 
     	}
@@ -130,7 +134,7 @@ public class BrunelService extends Application {
 
     		String[] titles = new String[] {title, description};
 	    	String src = brunelSrc != null ? brunelSrc : ContentReader.readContentFromUrl(URI.create(brunelUrl));
-	        D3Builder builder = D3Integration.makeD3(readBrunelData(dataUrl, true), src, width, height, "visualization");
+	        D3Builder builder = D3Integration.makeD3(readBrunelData(dataUrl, true), src, width, height, "visualization", "controls");
 	        String response = WebDisplay.writeHtml(builder, width, height, null, brunelStr, titles);
     		return Response.ok(response).header("Access-Control-Allow-Origin", "*").build();
     	}

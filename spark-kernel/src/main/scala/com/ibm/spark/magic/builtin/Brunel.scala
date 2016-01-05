@@ -57,7 +57,8 @@ class Brunel extends CellMagic with IncludeInterpreter {
     }
 
     val visId = "visid" + java.util.UUID.randomUUID.toString
-    val brunelOutput = org.brunel.scala.Brunel.create(data.getOrElse(throw new IllegalArgumentException("No dataset provided")), action, width, height, visId)
+    val controlsId = "controlsId" + java.util.UUID.randomUUID.toString
+    val brunelOutput = org.brunel.scala.Brunel.create(data.getOrElse(throw new IllegalArgumentException("No dataset provided")), action, width, height, visId, controlsId)
 
     val d3js =  brunelOutput.js 
     val d3dynamicCss = brunelOutput.css 
@@ -68,6 +69,7 @@ class Brunel extends CellMagic with IncludeInterpreter {
          <link rel="stylesheet" type="text/css" href="http://brunelvis.org/js/brunel.0.9.css" charset="utf-8">
          <link rel="stylesheet" type="text/css" href="http://brunelvis.org/js/sumoselect.css" charset="utf-8">
          <style> $d3dynamicCss </style>
+         <div id="$controlsId" class="brunel"/>
          |<svg id="$visId" width="$width" height="$height"></svg>
          |
          |<script>

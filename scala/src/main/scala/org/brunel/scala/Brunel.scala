@@ -41,9 +41,9 @@ object Brunel {
    * a D3 visualization.
    *
    */
-  def create(df: DataFrame, brunelSrc: String, width: Int, height: Int, visId: String): BrunelOutput = {
+  def create(df: DataFrame, brunelSrc: String, width: Int, height: Int, visId: String, controlsId: String): BrunelOutput = {
     val dataset = makeDataset(df)
-    val builder = D3Integration.makeD3(dataset, brunelSrc, width, height, visId)
+    val builder = D3Integration.makeD3(dataset, brunelSrc, width, height, visId, controlsId)
     new BrunelOutput(builder.getVisualization.toString, builder.getStyleOverrides, builder.getControls)
   }
 

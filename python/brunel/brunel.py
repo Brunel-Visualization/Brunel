@@ -61,7 +61,7 @@ def display(brunel, data, width=800, height=600, output='d3'):
 def brunel_jpype_call(data, brunel_src, width, height, visid):
     start_JVM()
     brunel_util = jpype.JPackage("org.brunel.util")
-    return brunel_util.D3Integration.createBrunelJSON(data, brunel_src, int(width), int(height), visid)
+    return brunel_util.D3Integration.createBrunelJSON(data, brunel_src, int(width), int(height), visid, None)
 
 # D3 response should contain the D3 JS and D3 CSS
 def d3_output(response, visid, width, height):
