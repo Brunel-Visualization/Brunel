@@ -73,8 +73,8 @@ public class BrunelService extends Application {
      * @param brunelSrc the Brunel syntax defining the visualization
      * @param width the desired width of the resulting visualization
      * @param height the desired height of the resulting visualization
-     * @param visid an identifier to use for the d3 JS to reference the HTML tag containing the visualization on the web page (usually an SVG tag).
-     * @param controlsid an identifier to use for HTML tag that will contain the interactive controls.  
+     * @param visId an identifier to use for the d3 JS to reference the HTML tag containing the visualization on the web page (usually an SVG tag).
+     * @param controlsId an identifier to use for HTML tag that will contain the interactive controls.
      *          If null, then resulting JS will not contain code for the vis controls and the client is responsible for creating any UIs for vis controls using the returned JSON.
      * @return a JSON object containing the css, js, and an object describing interactive controls that require a separate UI
      */
