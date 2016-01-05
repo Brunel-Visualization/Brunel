@@ -49,8 +49,8 @@ public class D3Integration {
 
 	//Note:   This method is called from other languages.
 	//Do not modify this method signature without checking all language integrations.
-    public static String createBrunelJSON(String data, String brunelSrc, int width,  int height, String visId) {
-				BrunelD3Result result = createBrunelResult(data, brunelSrc, width, height, visId);
+    public static String createBrunelJSON(String data, String brunelSrc, int width,  int height, String visId, String controlsId) {
+				BrunelD3Result result = createBrunelResult(data, brunelSrc, width, height, visId, controlsId);
 				return gson.toJson(result) ;
     }
 
@@ -64,9 +64,9 @@ public class D3Integration {
 	 * @return a Gson serializable object containing the Brunel JS, CSS and interactive control metadata.
 	 */
 
-    public static BrunelD3Result createBrunelResult(String data, String brunelSrc, int width,  int height, String visId) {
+    public static BrunelD3Result createBrunelResult(String data, String brunelSrc, int width,  int height, String visId, String controlsId) {
     			Dataset dataset = makeBrunelData(data);
-				D3Builder builder = makeD3(dataset, brunelSrc, width, height, visId);
+				D3Builder builder = makeD3(dataset, brunelSrc, width, height, visId, controlsId);
 				BrunelD3Result result = new BrunelD3Result();
 				result.css = builder.getStyleOverrides();
 				result.js = builder.getVisualization().toString();
@@ -76,10 +76,11 @@ public class D3Integration {
 
 
 	//Creates a D3Builder to produce the d3 output
-    public static D3Builder makeD3(Dataset data, String actionText, int width, int height, String visId) {
+    public static D3Builder makeD3(Dataset data, String actionText, int width, int height, String visId, String controlsId) {
     	try {
             BuilderOptions options = new BuilderOptions();
             options.visIdentifier = visId;
+            options.controlsIdentifier = controlsId;
             D3Builder builder = D3Builder.make(options);
             VisItem item = makeVisItem(data, actionText);
             builder.build(item, width, height);

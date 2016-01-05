@@ -52,7 +52,8 @@ public class Controls {
     }
 
     public void write(ScriptWriter out) {
-        write("controls", "BrunelJQueryControlFactory", out);
+    	if (options.controlsIdentifier != null) 
+    		write(options.controlsIdentifier, "BrunelJQueryControlFactory", out);
     }
 
     public void write(String controlId, String uiFactoryClass, ScriptWriter out) {
