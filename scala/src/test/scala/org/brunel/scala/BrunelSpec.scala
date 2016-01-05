@@ -81,8 +81,6 @@ class BrunelSpec extends UnitSpec {
     assert(brunelOutput.js.contains("['mpg', 'horsepower'], [123, 234.2], [123, 247.5], [189, 254], [187, null]"))
     assert(brunelOutput.css.contains("fill: red;"))
 
-    println(brunelOutput.js)
-
   }
 
 }
