@@ -128,7 +128,7 @@ public abstract class D3Diagram {
                     .addChained("style('stroke-opacity', function(d) { " + remapAesthetics + "return opacity(d) })")
                     .endStatement();
 
-        if (addLabels && labelBuilder.needed()) labelBuilder.addLabels(details);
+        if (addLabels && labelBuilder.needed()) labelBuilder.addElementLabeling(details);
 
     }
 

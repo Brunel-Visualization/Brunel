@@ -61,37 +61,6 @@ public class D3LabelBuilder {
         }
     }
 
-    /* Call this after shapes have been defined to add the labels */
-    public void addLabels(ElementDetails details) {
-
-        String method = details.textMethod;
-
-        // Offset to ensure text does not hit the shape to which it is attached
-        String yOffset;
-        if (method.equals("top")) yOffset = "-0.3em";
-        else if (method.equals("bottom")) yOffset = "0.7em";
-        else yOffset = "0.3em";
-
-        // We define the transition tween function just to calculate relative to the color shape, wherever it is
-        out.add("var labelGroup = labels.selectAll('text').data(" + details.dataSource + ")").endStatement();
-
-        out.add("labelGroup.enter().append('text').attr('dy', '" + yOffset + "').attr('class', 'label')");
-        if (method.equals("left"))
-            out.addChained("style('text-anchor', 'end')");
-        else if (method.equals("right"))
-            out.addChained("style('text-anchor', 'start')");
-        else
-            out.addChained("style('text-anchor', 'middle')");
-        out.endStatement();
-
-        out.add("BrunelD3.tween(labelGroup,transitionMillis, function(d, i) {")
-                .indentMore().onNewLine()
-                .add("return BrunelD3.makeLabeling(this, selection[0][i], labeling, true)")
-                .indentLess().onNewLine().add("})").endStatement();
-
-        out.add("labelGroup.exit().remove()").endStatement();
-    }
-
     public void addTooltips(ElementDetails details) {
         if (vis.itemsTooltip.isEmpty()) return;
         out.onNewLine().ln();
