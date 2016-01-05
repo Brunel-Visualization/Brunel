@@ -90,7 +90,7 @@ class D3ElementBuilder {
                 .indentMore().indentMore()
                 .add("this.remove(); if (this.__label__) this.__label__.remove()")
                 .indentLess().indentLess()
-                .add("})");
+                .add("})").endStatement();
     }
 
     public boolean needsDiagramExtras() {

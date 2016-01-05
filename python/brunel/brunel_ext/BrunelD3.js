@@ -18,7 +18,6 @@
 var BrunelD3 = (function () {
 
     var tooltip, lastTime, lastTimeDescr;
-
     // Return geometries for the given target given the desired margins
     function geometries(target, chart_top, chart_left, chart_bottom, chart_right,
                         inner_top, inner_left, inner_bottom, inner_right) {
@@ -232,23 +231,20 @@ var BrunelD3 = (function () {
             return boxLoc(target, labeling.method);
     }
 
-    function makeLabel(text, target, labeling, needsRow) {
+    function makeLabel(text, target, labeling, content) {
         return function () {
-            if (!target || !text) return;                           // Need something to work on
+            if (!target || !text || !content) return;                // Need something to work on
             var datum = target.__data__;                            // Associated data value
-            if (needsRow && datum.row == null) return;              // Some labeling only work for rows
-            var s = labeling.content(datum);                        // If there is no content, we are done
-            if (!s) return;
 
-            var loc = makeLoc(target, labeling, s, datum);          // Get center point (x,y) and surrounding box (box)
+            var loc = makeLoc(target, labeling, content, datum);          // Get center point (x,y) and surrounding box (box)
 
             if (labeling.fit && !labeling.where) {
-                wrapInBox(text, s, loc);
+                wrapInBox(text, content, loc);
             } else {
                 // Place at the required location
                 text.setAttribute('x', loc.x);
                 text.setAttribute('y', loc.y);
-                text.textContent = s;
+                text.textContent = content;
 
                 // f it doesn't fit, kill the text
                 if (labeling.fit) {
@@ -258,7 +254,7 @@ var BrunelD3 = (function () {
                         text.parentNode.removeChild(text);
                     } else if (b.width > loc.box.width) {
                         // If adding ellipses doesn't work, kill it
-                        if (!addEllipses(text, s, loc.box.width))
+                        if (!addEllipses(text, content, loc.box.width))
                             text.parentNode.removeChild(text);
                     }
                 }
@@ -543,14 +539,62 @@ var BrunelD3 = (function () {
     // If we have a positive timing, return a transition on the element.
     // Otherwise just return the element
     function transition(element, time) {
-        return time && time > 0 ? element.transition().duration(time) : element
+        if (time && time > 0) {
+            return element.transition().duration(time);
+        } else {
+            return element
+        }
     }
 
-    // If we have a positive timing, start tweening using the defiend function
+
+    var LABEL_DEF = {
+        'center': ['middle', '0.3em'],
+        'left': ['end', '0.3em'],
+        'inner-left': ['start', '0.85em'],
+        'right': ['start', '0.3em'],
+        'top': ['middle', '-0.3em'],
+        'bottom': ['middle', '0.7em']
+    };
+
+    function labelFunc(item, labelGroup, labeling) {
+        var content = labeling.content(item.__data__);          // If there is no content, we are done
+        if (!content) return;
+
+        var txt = item.__label__;
+        if (!txt) {
+            txt = labelGroup.append('text');
+            item.__label__ = txt;
+            txt.__target__ = item;
+        }
+
+        makeLabel(txt.node(), item, labeling, content)();
+        if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
+        else txt.classed('label', true);
+
+        var attrs = LABEL_DEF[labeling.method] || LABEL_DEF['center'];          // Default to center
+        txt.style('text-anchor', attrs[0]).attr('dy', attrs[1]);
+    }
+
+    // Apply labeling
+    function applyLabeling(element, group, labeling, time) {
+        if (time && time > 0)
+            return element.transition("labels").duration(time).tween('func', function (d, i) {
+                var item = this;
+                return function () {
+                    labelFunc(item, group, labeling);
+                }
+            });
+        else
+            return element.each(function () {
+                labelFunc(this, group, labeling);
+            });
+    }
+
+    // If we have a positive timing, start tweening using the defined function
     // Otherwise just call the function for each data item
     function transitionTween(element, time, func) {
         if (time && time > 0)
-            return element.transition().duration(time).tween('func', func);
+            return element.transition("element").duration(time).tween('func', func);
         return element.each(function (d, i) {
             return func.call(this, d, i)()
         })
@@ -710,7 +754,7 @@ var BrunelD3 = (function () {
             id = idField.value(i);
             x = xField.value(i);
             y = yField.value(i);
-            if (id != null) map[id] = [x,y]
+            if (id != null) map[id] = [x, y]
         }
         // Return mapping function
         return function (x) {
@@ -788,11 +832,11 @@ var BrunelD3 = (function () {
 
     // A star of radius r with n points
     function star(radius, n) {
-        var i, a, r,  p = "M";
+        var i, a, r, p = "M";
         for (i = 0; i < 2 * n; i++) {
             a = (i / n - 0.5) * Math.PI;
             if (i > 0) p += "L";
-            r = radius * (i%2 ? 0.4 : 1);
+            r = radius * (i % 2 ? 0.4 : 1);
             p += r * Math.cos(a) + ',' + r * Math.sin(a);
         }
         return p + "Z";
@@ -800,7 +844,7 @@ var BrunelD3 = (function () {
 
     function makeSymbol(type, radius) {
         radius = radius || 4;
-        if (type == 'star') return star(radius*1.5, 5);
+        if (type == 'star') return star(radius * 1.5, 5);
         return d3.svg.symbol().type(type).size(radius * radius * 4)();
     }
 
@@ -811,23 +855,35 @@ var BrunelD3 = (function () {
         // "D" is the desired distance we would like to have between nodes
         var N = graph.nodes.length, E = graph.links.length,
             pad = geom.default_point_size * 2,
-            D = (density || 1) * 0.5 * Math.sqrt((geom.inner_width-2*pad) * (geom.inner_height-2*pad) / N),
-            R = D * Math.max(1, D-3) / 5 / Math.max(1, E/N);
+            D = (density || 1) * 0.5 * Math.sqrt((geom.inner_width - 2 * pad) * (geom.inner_height - 2 * pad) / N),
+            R = D * Math.max(1, D - 3) / 5 / Math.max(1, E / N);
 
         layout.nodes(graph.nodes).links(graph.links)
             .size([geom.inner_width, geom.inner_height])
             .linkDistance(D).charge(-R)
             .start();
 
-        layout.on("tick", function() {
+        layout.on("tick", function () {
             nodes.selection()
-                .attr('cx', function(d) { return d.x = Math.min(Math.max(d.x, pad), geom.inner_width-pad) })
-                .attr('cy', function(d) { return d.y = Math.min(Math.max(d.y, pad), geom.inner_height-pad)});
+                .attr('cx', function (d) {
+                    return d.x = Math.min(Math.max(d.x, pad), geom.inner_width - pad)
+                })
+                .attr('cy', function (d) {
+                    return d.y = Math.min(Math.max(d.y, pad), geom.inner_height - pad)
+                });
             edges.selection()
-                .attr('x1',function(d) { return d.source.x })
-                .attr('y1',function(d) { return d.source.y })
-                .attr('x2',function(d) { return d.target.x })
-                .attr('y2',function(d) { return d.target.y });
+                .attr('x1', function (d) {
+                    return d.source.x
+                })
+                .attr('y1', function (d) {
+                    return d.source.y
+                })
+                .attr('x2', function (d) {
+                    return d.target.x
+                })
+                .attr('y2', function (d) {
+                    return d.target.y
+                });
         });
         nodes.selection().call(layout.drag)
     }
@@ -841,7 +897,7 @@ var BrunelD3 = (function () {
         'addLegend': colorLegend,
         'centerInWedge': centerInArc,
         'makeRowsWithKeys': makeRowsWithKeys,
-        'makeLabeling': makeLabel,
+        'label': applyLabeling,
         'cloudLayout': cloud,
         'select': select,
         'shorten': shorten,

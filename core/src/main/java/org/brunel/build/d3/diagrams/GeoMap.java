@@ -69,7 +69,7 @@ public class GeoMap extends D3Diagram {
                 .addChained("on('zoom', function() {").onNewLine();
         out.indentMore();
         out.add("projection.translate(zoom.translate()).scale(zoom.scale())").endStatement();
-        out.add("rebuildSystem(0)").endStatement();
+        out.add("updateAll(0)").endStatement();
         out.indentLess().add("})");
         out.endStatement();
         out.indentLess();

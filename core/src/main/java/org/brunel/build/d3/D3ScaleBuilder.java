@@ -256,7 +256,8 @@ public class D3ScaleBuilder {
         }
         if (size.length == 1) {
             // We have exactly one field and util that for the single size scale, with a root transform by default for point elements
-            String defaultTransform = vis.tElement == VisTypes.Element.point ? "sqrt" : "linear";
+            String defaultTransform = (vis.tElement == VisTypes.Element.point || vis.tElement == VisTypes.Element.text)
+                    ? "sqrt" : "linear";
             addSizeScale("size", size[0], vis, defaultTransform);
             out.onNewLine().add("var size = function(d) { return scale_size(" + D3Util.writeCall(fieldById(size[0], vis)) + ") }").endStatement();
         } else if (size.length > 1) {
@@ -427,8 +428,9 @@ public class D3ScaleBuilder {
             return list.size();
         }
 
-        // Determine how much we want to include zero
+        // Determine how much we want to include zero (for size scale we always want it)
         double includeZero = getIncludeZeroFraction(fields, purpose);
+        if (purpose == Purpose.size) includeZero = 1.0;
 
         // Build a combined scale field and force the desired transform on it for x and y dimensions
         Field scaleField = fields.length == 1 ? field : combineNumericFields(fields);
@@ -663,15 +665,7 @@ public class D3ScaleBuilder {
         }
 
         Field f = fieldById(p, vis);
-        Object[] divisions;
-        if (f.isNumeric()) {
-            // Divide up and interpolate
-            divisions = Palette.fieldSplits(f, sizes.length);
-        } else {
-            // Alternate among categories
-            divisions = f.categories();
-        }
-
+        Object[] divisions = f.isNumeric() ? null : f.categories();
         scaleWithDomain(name, new Field[]{f}, Purpose.size, sizes.length, defaultTransform, divisions);
         out.addChained("range([ ").add(Data.join(sizes)).add("])").endStatement();
     }
