@@ -59,6 +59,7 @@ class Brunel extends CellMagic with IncludeInterpreter {
     val visId = "visid" + java.util.UUID.randomUUID.toString
     val controlsId = "controlsId" + java.util.UUID.randomUUID.toString
     val brunelOutput = org.brunel.scala.Brunel.create(data.getOrElse(throw new IllegalArgumentException("No dataset provided")), action, width, height, visId, controlsId)
+    val version = org.brunel.scala.Brunel.brunelVersion
 
     val d3js =  brunelOutput.js 
     val d3dynamicCss = brunelOutput.css 
@@ -66,7 +67,7 @@ class Brunel extends CellMagic with IncludeInterpreter {
     val html =
       
       s"""
-         <link rel="stylesheet" type="text/css" href="http://brunelvis.org/js/brunel.0.9.css" charset="utf-8">
+         <link rel="stylesheet" type="text/css" href="http://brunelvis.org/js/brunel.$version.css" charset="utf-8">
          <link rel="stylesheet" type="text/css" href="http://brunelvis.org/js/sumoselect.css" charset="utf-8">
          <style> $d3dynamicCss </style>
          <div id="$controlsId" class="brunel"/>
@@ -77,8 +78,8 @@ class Brunel extends CellMagic with IncludeInterpreter {
             waitSeconds: 60,
             paths: {
                 'd3': '//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min',
-                'brunel' : 'http://brunelvis.org/js/brunel.0.9.min',
-                'brunelControls' : 'http://brunelvis.org/js/brunel.controls.0.9.min'
+                'brunel' : 'http://brunelvis.org/js/brunel.$version.min',
+                'brunelControls' : 'http://brunelvis.org/js/brunel.controls.$version.min'
             },
 
             shim: {

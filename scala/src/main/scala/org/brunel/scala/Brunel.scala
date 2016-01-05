@@ -26,6 +26,7 @@ import org.brunel.data.Field
 import org.brunel.util.D3Integration
 import org.brunel.util.BrunelD3Result
 import org.brunel.data.io.CSV
+import org.brunel.build.util.BuilderOptions
 
 /**
  * Creation of Brunel output for Spark DataFrames
@@ -35,6 +36,7 @@ object Brunel {
   //Brunel numeric and date column type conversions from a Spark DataFrame
   val numericTypes = List("IntegerType", "LongType", "DoubleType", "FloatType", "DecimalType")
   val dateTypes = List("DateType", "TimestampType")
+  val brunelVersion = (new BuilderOptions()).version
 
   /**
    * Create Brunel notebook output from a Spark DataFrame using the provided Brunel source.  This output is currently
