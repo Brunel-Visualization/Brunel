@@ -45,9 +45,8 @@ public class D3LabelBuilder {
         this.data = data;
     }
 
-    public void addElementLabeling(ElementDetails details) {
-        if (!needed()) return;
-        out.add("BrunelD3.applyLabeling(selection, transitionMillis, attachLabel)").endStatement();
+    public void addElementLabeling() {
+        if (needed()) out.add("BrunelD3.applyLabeling(selection, transitionMillis, attachLabel)").endStatement();
     }
 
     public void addFontSizeAttribute(VisSingle vis) {

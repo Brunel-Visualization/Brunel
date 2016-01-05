@@ -266,7 +266,7 @@ class D3ElementBuilder {
 
         out.endStatement();
 
-        labelBuilder.addElementLabeling(details);
+        labelBuilder.addElementLabeling();
 
         labelBuilder.addTooltips(details);
 
