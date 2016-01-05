@@ -56,6 +56,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
     protected final BuilderOptions options;
     protected Controls controls;                    // Contains the controls for the current chart
     private StyleSheet visStyles;                   // Collection of style overrides for this visualization
+    private Dataset[] datasets;                     // datasets used by this visualization
 
     public AbstractBuilder(BuilderOptions options) {
         this.options = options;
@@ -74,6 +75,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         // Clear existing collections and prepare for new controls
         visStyles = new StyleSheet();
         controls = new Controls(options);
+        datasets = main.getDataSets();
 
         // Create the main visualization area
         defineVisSystem(main, width, height);
@@ -95,7 +97,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
             } else if (compositionMethod == VisTypes.Composition.overlay) {
                 // If we have a set of compositions, they are placed into the whole area
                 double[] loc = new ChartLayout(width, height, main).getLocation(0);
-                buildSingleChart(main, 0, main.children(), loc);
+                buildSingleChart(0, main.children(), loc);
             } else if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
                 // Nesting not yet implemented, so simply util the first element and pretend it is tiled
                 buildTiledCharts(width, height, new VisItem[]{main.getSingle()});
@@ -167,7 +169,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         }
     }
 
-    private void buildSingleChart(VisItem chart, int chartIndex, VisItem[] items, double[] loc) {
+    private void buildSingleChart(int chartIndex, VisItem[] items, double[] loc) {
 
         // Assemble the elements and data
         Dataset[] data = new Dataset[items.length];
@@ -177,7 +179,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
             data[i] = new DataBuilder(elements[i], this).build();
         }
 
-        ChartStructure structure = new ChartStructure(chart, chartIndex, elements, data);
+        ChartStructure structure = new ChartStructure(chartIndex, elements, data, datasets);
         defineChart(structure, loc);
         for (ElementStructure e : structure.elementStructure) buildElement(e);
         endChart(structure);
@@ -193,9 +195,9 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
             VisItem[] items = chart.children();
             if (items == null) {
                 // The chart is a single element
-                buildSingleChart(chart, i, new VisItem[]{chart}, loc);
+                buildSingleChart(i, new VisItem[]{chart}, loc);
             } else {
-                buildSingleChart(chart, i, items, loc);
+                buildSingleChart(i, items, loc);
             }
 
         }

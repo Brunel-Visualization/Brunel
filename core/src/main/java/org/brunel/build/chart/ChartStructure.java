@@ -20,7 +20,6 @@ import org.brunel.build.element.ElementStructure;
 import org.brunel.data.Dataset;
 import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
-import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
@@ -43,8 +42,8 @@ public class ChartStructure {
 
     private final Dataset[] baseDataSets;
 
-    public ChartStructure(VisItem chart, int chartIndex, VisSingle[] elements, Dataset[] data) {
-        this.baseDataSets = chart.getDataSets();
+    public ChartStructure(int chartIndex, VisSingle[] elements, Dataset[] data, Dataset[] dataSets) {
+        this.baseDataSets = dataSets;
         this.chartIndex = chartIndex;
         this.elements = elements;
         this.coordinates = new ChartCoordinates(elements, data);
