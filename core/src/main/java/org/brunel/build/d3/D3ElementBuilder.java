@@ -84,8 +84,13 @@ class D3ElementBuilder {
         }
 
         // This fires when items leave the system
+        // It removes the item and any associated labels
         out.onNewLine().ln().add("BrunelD3.trans(selection.exit(),transitionMillis/3)");
-        out.addChained("style('opacity', 0.5).remove()").endStatement();
+        out.addChained("style('opacity', 0.5).each( function() {")
+                .indentMore().indentMore()
+                .add("this.remove(); if (this.__label__) this.__label__.remove()")
+                .indentLess().indentLess()
+                .add("})");
     }
 
     public boolean needsDiagramExtras() {
@@ -261,12 +266,10 @@ class D3ElementBuilder {
 
         out.endStatement();
 
+        labelBuilder.addElementLabeling(details);
+
         labelBuilder.addTooltips(details);
 
-        // We do not add labels if the element IS a label
-        if (labelBuilder.needed() && vis.tElement != VisTypes.Element.text) {
-            labelBuilder.addLabels(details);
-        }
     }
 
     private String getSymbol() {

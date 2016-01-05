@@ -45,6 +45,11 @@ public class D3LabelBuilder {
         this.data = data;
     }
 
+    public void addElementLabeling(ElementDetails details) {
+        if (!needed()) return;
+        out.add("BrunelD3.applyLabeling(selection, transitionMillis, attachLabel)").endStatement();
+    }
+
     public void addFontSizeAttribute(VisSingle vis) {
         if (!vis.fSize.isEmpty()) {
             ModelUtil.Size parts = ModelUtil.getFontSize(vis);
@@ -118,6 +123,31 @@ public class D3LabelBuilder {
         out.indentLess().onNewLine().add("}");
 
         out.indentLess().onNewLine().add("}").endStatement();
+
+
+        // Define the attach labeling function; not needed for tooltips
+        if (forTooltip) return;
+
+        // Offset to ensure text does not hit the shape to which it is attached
+        String yOffset = "0.3em";
+        if (textMethod.equals("top")) yOffset = "-0.3em";
+        else if (textMethod.equals("bottom")) yOffset = "0.7em";
+
+        out.onNewLine().add("function attachLabel() {").indentMore().onNewLine()
+                .add("var t = this; return function() {").endStatement()
+                .add("var txt = BrunelD3.attachLabel(t, labels, labeling)").endStatement()
+                .add("if (txt) txt.attr('dy', '" + yOffset + "').attr('class', 'label')");
+
+        if (textMethod.equals("left"))
+            out.addChained("style('text-anchor', 'end')");
+        else if (textMethod.equals("right"))
+            out.addChained("style('text-anchor', 'start')");
+        else
+            out.addChained("style('text-anchor', 'middle')");
+
+        out.indentLess().add("}}").ln();
+
+
     }
 
     private List<Param> prettify(List<Param> items, boolean longForm) {
