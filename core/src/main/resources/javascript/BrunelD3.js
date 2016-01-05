@@ -382,18 +382,20 @@ var BrunelD3 = (function () {
         // dx and dy are delta, but spread out to fit the space better for non-square results
         // When we start searching out from the center in the spiral, we look for anything larger than us
         // and start outside that. 'precision' reduces the concept of 'larger' so we search less space
-        var delta = Math.max(1, Math.pow(data.rowCount() / 300, 2));
+
+        var delta = Math.max(0.2, Math.pow(data.rowCount() / 300, 2));
         var precision = Math.pow(0.9, data.rowCount() / 100);
         var dx = delta * ext[0] / Math.max(ext[0], ext[1]),
             dy = delta * ext[1] / Math.max(ext[0], ext[1]);
         var placed = [];           // Placed items
 
+
         function intersects(a, b) {
             // Height first as that is less likely to overlap for long text
-            return a.y + a.height / 2 >= b.y - b.height / 2
-                && b.y + b.height / 2 >= a.y - a.height / 2
-                && a.x + a.width / 2 >= b.x - b.width / 2
-                && b.x + b.width / 2 >= a.x - a.width / 2;
+            return a.y + a.height / 2 > b.y - b.height / 2
+                && b.y + b.height / 2 > a.y - a.height / 2
+                && a.x + a.width / 2 > b.x - b.width / 2
+                && b.x + b.width / 2 > a.x - a.width / 2;
         }
 
         function ascender(txt) {
@@ -411,7 +413,7 @@ var BrunelD3 = (function () {
         function place(svg, index) {
             if (placed.length > index) return placed[index];                // Placed already, just return
             var r = svg.getBBox();
-            var dd = -r.y / 3, ht = r.height, oy = 0;
+            var dd = -r.y / 5, ht = r.height-1, oy = 0;
             var ascDesc = ascender(svg.textContent);
             if (ascDesc == 1) {
                 // Ascender only
@@ -425,7 +427,7 @@ var BrunelD3 = (function () {
                 // Neither
                 ht -= 2 * dd;
             }
-            var item = {width: r.width + 4, height: ht, ox: 0, oy: oy};                // Our trial item (with slight x padding)
+            var item = {width: r.width+2, height: ht, ox: 0, oy: oy};                // Our trial item (with slight x padding)
             var rotated = (index % 5) % 2 == 1;
             if (rotated) item = {height: item.width, width: item.height, oy: 0, ox: oy};
             var i, hit = true, theta = 0;                                      // Start at center and ensure we loop
@@ -473,6 +475,8 @@ var BrunelD3 = (function () {
                 return Math.max(v, Math.abs(item.y) + item.height / 2)
             }, 0);
             var s = Math.min(ext[0] / sx, ext[1] / sy) / 2;
+
+            console.log("scaled by " + s);
             svg.parentNode.setAttribute('transform', 'scale(' + s + ')');
         }
 
