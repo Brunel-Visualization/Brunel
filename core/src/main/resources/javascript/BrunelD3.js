@@ -18,7 +18,6 @@
 var BrunelD3 = (function () {
 
     var tooltip, lastTime, lastTimeDescr;
-
     // Return geometries for the given target given the desired margins
     function geometries(target, chart_top, chart_left, chart_bottom, chart_right,
                         inner_top, inner_left, inner_bottom, inner_right) {
@@ -547,8 +546,17 @@ var BrunelD3 = (function () {
         }
     }
 
-    function labelFunc(item, labelGroup, labeling ) {
-        if (item.__data__.row == null) return;                  // Needs data
+
+    var LABEL_DEF = {
+        'center': ['middle', '0.3em'],
+        'left': ['end', '0.3em'],
+        'inner-left': ['start', '0.85em'],
+        'right': ['start', '0.3em'],
+        'top': ['middle', '-0.3em'],
+        'bottom': ['middle', '0.7em']
+    };
+
+    function labelFunc(item, labelGroup, labeling) {
         var content = labeling.content(item.__data__);          // If there is no content, we are done
         if (!content) return;
 
@@ -559,29 +567,20 @@ var BrunelD3 = (function () {
             txt.__target__ = item;
         }
 
-
         makeLabel(txt.node(), item, labeling, content)();
+        if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
+        else txt.classed('label', true);
 
-        txt.classed('label', true);
-        var method = labeling.method;
-        if (method == 'top') txt.attr('dy', '-0.3em');
-        else if (method == 'bottom') txt.attr('dy', '0.7em');
-        else txt.attr('dy', '0.3em');
-
-        if (method == 'top')
-            txt.style('text-anchor', 'end');
-        else if (method == 'right')
-            txt.style('text-anchor', 'start');
-        else
-            txt.style('text-anchor', 'middle');
+        var attrs = LABEL_DEF[labeling.method] || LABEL_DEF['center'];          // Default to center
+        txt.style('text-anchor', attrs[0]).attr('dy', attrs[1]);
     }
 
     // Apply labeling
     function applyLabeling(element, group, labeling, time) {
         if (time && time > 0)
-            return element.transition("labels").duration(time).tween('func', function(d,i) {
-                console.log("label transition " + i);
-                var item = this; return function() {
+            return element.transition("labels").duration(time).tween('func', function (d, i) {
+                var item = this;
+                return function () {
                     labelFunc(item, group, labeling);
                 }
             });
@@ -898,8 +897,7 @@ var BrunelD3 = (function () {
         'addLegend': colorLegend,
         'centerInWedge': centerInArc,
         'makeRowsWithKeys': makeRowsWithKeys,
-        'makeLabeling': makeLabel,
-        'applyLabeling': applyLabeling,
+        'label': applyLabeling,
         'cloudLayout': cloud,
         'select': select,
         'shorten': shorten,

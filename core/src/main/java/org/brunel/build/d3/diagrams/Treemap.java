@@ -50,7 +50,7 @@ class Treemap extends D3Diagram {
                 .addChained("style('width', function(d) { return d.dx; })")
                 .addChained("attr('height', function(d) { return d.dy; })").endStatement();
 
-        labelBuilder.addTreeInternalLabels(details, "box");
+        labelBuilder.addTreeInternalLabels();
         addAestheticsAndTooltips(details, true);
     }
 

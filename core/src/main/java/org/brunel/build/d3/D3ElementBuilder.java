@@ -56,7 +56,7 @@ class D3ElementBuilder {
         // Define paths needed in the element, and make data splits
         if (details.producesPath) definePathsAndSplits(elementDef);
 
-        if (labelBuilder.needed()) labelBuilder.defineLabeling(details, vis.itemsLabel, false);   // Labels
+        labelBuilder.defineLabeling(details, vis.itemsLabel, false);   // Labels
 
         modifyGroupStyleName();             // Diagrams change the name so CSS style sheets will work well
 

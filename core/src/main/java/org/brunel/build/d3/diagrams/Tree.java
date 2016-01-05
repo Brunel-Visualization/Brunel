@@ -63,7 +63,7 @@ class Tree extends D3Diagram {
         }
         out.addChained("attr('r', " + D3Util.defineSafeRadius(elementDef.overallSize) + ")").endStatement();
 
-        addLabels(details, elementDef);
+//        addLabels(details, elementDef);
 
         addAestheticsAndTooltips(details, true);
 
@@ -89,23 +89,23 @@ class Tree extends D3Diagram {
         addAestheticsAndTooltips(details, true);
     }
 
-    private void addLabels(ElementDetails details, ElementDefinition elementDef) {
-
-        out.add("diagramLabels.attr('class', 'axis diagram tree hierarchy')").endStatement();
-        out.add("var treeLabels = diagramLabels.selectAll('text').data(d3Data)").endStatement();
-
-        out.add("treeLabels.enter().append('text')")
-                .addChained("attr('class', function(d) { return 'axis label L' + d.depth })")
-                .addChained("style('text-anchor', 'middle')")
-                .addChained("attr('dy', '0.85em')").endStatement();
-
-        out.add("var treeLabeling = {method:'bottom', fit:false, content:function(d){return d.innerNodeName} }").endStatement();
-        out.add("BrunelD3.tween(treeLabels,transitionMillis, function(d, i) { return BrunelD3.makeLabeling(this, selection[0][i], treeLabeling, false)})");
-        out.endStatement();
-
-        out.add("treeLabels.exit().remove()").endStatement();
-
-    }
+//    private void addLabels(ElementDetails details, ElementDefinition elementDef) {
+//
+//        out.add("diagramLabels.attr('class', 'axis diagram tree hierarchy')").endStatement();
+//        out.add("var treeLabels = diagramLabels.selectAll('text').data(d3Data)").endStatement();
+//
+//        out.add("treeLabels.enter().append('text')")
+//                .addChained("attr('class', function(d) { return 'axis label L' + d.depth })")
+//                .addChained("style('text-anchor', 'middle')")
+//                .addChained("attr('dy', '0.85em')").endStatement();
+//
+//        out.add("var treeLabeling = {method:'bottom', fit:false, content:function(d){return d.innerNodeName} }").endStatement();
+//        out.add("BrunelD3.tween(treeLabels,transitionMillis, function(d, i) { return BrunelD3.makeLabeling(this, selection[0][i], treeLabeling, false)})");
+//        out.endStatement();
+//
+//        out.add("treeLabels.exit().remove()").endStatement();
+//
+//    }
 
     public boolean needsDiagramExtras() {
         return true;
