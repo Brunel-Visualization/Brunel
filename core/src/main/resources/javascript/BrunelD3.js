@@ -232,35 +232,20 @@ var BrunelD3 = (function () {
             return boxLoc(target, labeling.method);
     }
 
-    // Add a label to a 'target'; item, placing the label in the group 'labelGroup' using the 'labeling' details
-    function attachLabel(target, labelGroup, labeling) {
-        var txt = target.__label__;
-        if (!txt) {
-            txt = labelGroup.append('text');
-            target.__label__ = txt;
-            txt.__target__ = target;
-        }
-        makeLabel(txt.node(), target, labeling, true)();
-        return txt;
-    }
-
-    function makeLabel(text, target, labeling, needsRow) {
+    function makeLabel(text, target, labeling, content) {
         return function () {
-            if (!target || !text) return;                           // Need something to work on
+            if (!target || !text || !content) return;                // Need something to work on
             var datum = target.__data__;                            // Associated data value
-            if (needsRow && datum.row == null) return;              // Some labeling only work for rows
-            var s = labeling.content(datum);                        // If there is no content, we are done
-            if (!s) return;
 
-            var loc = makeLoc(target, labeling, s, datum);          // Get center point (x,y) and surrounding box (box)
+            var loc = makeLoc(target, labeling, content, datum);          // Get center point (x,y) and surrounding box (box)
 
             if (labeling.fit && !labeling.where) {
-                wrapInBox(text, s, loc);
+                wrapInBox(text, content, loc);
             } else {
                 // Place at the required location
                 text.setAttribute('x', loc.x);
                 text.setAttribute('y', loc.y);
-                text.textContent = s;
+                text.textContent = content;
 
                 // f it doesn't fit, kill the text
                 if (labeling.fit) {
@@ -270,7 +255,7 @@ var BrunelD3 = (function () {
                         text.parentNode.removeChild(text);
                     } else if (b.width > loc.box.width) {
                         // If adding ellipses doesn't work, kill it
-                        if (!addEllipses(text, s, loc.box.width))
+                        if (!addEllipses(text, content, loc.box.width))
                             text.parentNode.removeChild(text);
                     }
                 }
@@ -562,13 +547,47 @@ var BrunelD3 = (function () {
         }
     }
 
-    // Apply labeling
-    function applyLabeling(element, time, func) {
-        if (time && time > 0)
-            return element.transition("labels").duration(time).tween('func', func);
+    function labelFunc(item, labelGroup, labeling ) {
+        if (item.__data__.row == null) return;                  // Needs data
+        var content = labeling.content(item.__data__);          // If there is no content, we are done
+        if (!content) return;
+
+        var txt = item.__label__;
+        if (!txt) {
+            txt = labelGroup.append('text');
+            item.__label__ = txt;
+            txt.__target__ = item;
+        }
+
+
+        makeLabel(txt.node(), item, labeling, content)();
+
+        txt.classed('label', true);
+        var method = labeling.method;
+        if (method == 'top') txt.attr('dy', '-0.3em');
+        else if (method == 'bottom') txt.attr('dy', '0.7em');
+        else txt.attr('dy', '0.3em');
+
+        if (method == 'top')
+            txt.style('text-anchor', 'end');
+        else if (method == 'right')
+            txt.style('text-anchor', 'start');
         else
-            return element.each(function (d, i) {
-                return func.call(this, d, i)()
+            txt.style('text-anchor', 'middle');
+    }
+
+    // Apply labeling
+    function applyLabeling(element, group, labeling, time) {
+        if (time && time > 0)
+            return element.transition("labels").duration(time).tween('func', function(d,i) {
+                console.log("label transition " + i);
+                var item = this; return function() {
+                    labelFunc(item, group, labeling);
+                }
+            });
+        else
+            return element.each(function () {
+                labelFunc(this, group, labeling);
             });
     }
 
@@ -880,7 +899,6 @@ var BrunelD3 = (function () {
         'centerInWedge': centerInArc,
         'makeRowsWithKeys': makeRowsWithKeys,
         'makeLabeling': makeLabel,
-        'attachLabel': attachLabel,
         'applyLabeling': applyLabeling,
         'cloudLayout': cloud,
         'select': select,
