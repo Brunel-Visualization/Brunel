@@ -154,7 +154,6 @@ var BrunelD3 = (function () {
         return {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, box: shrink(box)}
     }
 
-
     function areaLoc(svgItem, margin) {
         var len = svgItem.getTotalLength();
         var box = svgItem.getBBox();
@@ -211,10 +210,11 @@ var BrunelD3 = (function () {
     }
 
     // Returns an object with 'x', 'y' and 'box' that "surrounds" the text
-    function makeLoc(target, labeling, s, datum) {
+    function makeLoc(target, labeling, s) {
+        var datum = target.__data__;                            // Associated data value
         if (labeling.where) {
-            var box = target.getBBox();
-            var p = labeling.where(box, s, datum);
+            var box = target.getBBox(),
+                p = labeling.where(box, s, datum);
             return {x: p.x, y: p.y, box: box};
         } else if (labeling.method == 'wedge')
             return wedgeLoc(labeling.path, datum);
@@ -231,37 +231,6 @@ var BrunelD3 = (function () {
             return boxLoc(target, labeling.method);
     }
 
-    function makeLabel(text, target, labeling, content) {
-        return function () {
-            if (!target || !text || !content) return;                // Need something to work on
-            var datum = target.__data__;                            // Associated data value
-
-            var loc = makeLoc(target, labeling, content, datum);          // Get center point (x,y) and surrounding box (box)
-
-            if (labeling.fit && !labeling.where) {
-                wrapInBox(text, content, loc);
-            } else {
-                // Place at the required location
-                text.setAttribute('x', loc.x);
-                text.setAttribute('y', loc.y);
-                text.textContent = content;
-
-                // f it doesn't fit, kill the text
-                if (labeling.fit) {
-                    var b = text.getBBox();
-                    if (b.height > loc.box.height) {
-                        // Too tall to fit a single line
-                        text.parentNode.removeChild(text);
-                    } else if (b.width > loc.box.width) {
-                        // If adding ellipses doesn't work, kill it
-                        if (!addEllipses(text, content, loc.box.width))
-                            text.parentNode.removeChild(text);
-                    }
-                }
-            }
-
-        };
-    }
 
     function makeTextSpan(loc, parent) {
         var tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
@@ -273,21 +242,27 @@ var BrunelD3 = (function () {
     }
 
     function addEllipses(span, text, maxWidth) {
-        var i = text.length - 3;
-        while (i > 0) {
-            span.textContent = text[text.length - 1] == '.' ? text : text.substring(0, i) + "\u2026";
-            if (span.getComputedTextLength() <= maxWidth) return true;
-            i--;
+        // Binary search to fit text
+        var t, min = 0, max = text.length-3;
+        while (max-min > 1) {
+            t = Math.floor((max+min)/2);
+            span.textContent = text.substring(0, t) + "\u2026";
+            if (span.getComputedTextLength() <= maxWidth)
+                min = t;
+            else
+                max = t;
         }
-        return false;
+
+        // min will work, but we do not want trailing punctuation
+        while (min > 0 && " ,.;-".indexOf(text.charAt(min-1)) > -1) min--;
+        return min > 0; // True if we have valid text
     }
 
     function wrapInBox(textItem, text, loc) {
         while (textItem.firstChild) textItem.removeChild(textItem.firstChild);
-        var words = text.split(/\s+/), word, content = [], height;
+        var words = text.split(/\s+/), word, content = [], height, tspan, i;
 
-        var tspan;
-        for (var i = 0; i < words.length; i++) {
+        for (i = 0; i < words.length; i++) {
             tspan = tspan || makeTextSpan(loc, textItem);
             word = words[i];
             content.push(word);
@@ -325,14 +300,13 @@ var BrunelD3 = (function () {
 
     function shorten(text, len) {
         if (!text || text.length <= len) return text;
-        var parts = text.split(/[ \t\n]+/);
-        var result = "";
+        var result = "", i, parts = text.split(/[ \t\n]+/);
         if (parts.length == len) {
-            for (var i = 0; i < parts.length; i++) result += parts[i].substr(0, 1);
+            for (i = 0; i < parts.length; i++) result += parts[i].substr(0, 1);
         } else {
             var n = Math.floor((len - (parts.length - 1)) / parts.length);     // Account for spaces between parts
             if (n < 1) return text.substr(0, len);
-            for (var i = 0; i < parts.length - 1; i++) result = result + parts[i].substr(0, n) + " ";
+            for (i = 0; i < parts.length - 1; i++) result = result + parts[i].substr(0, n) + " ";
             result += parts[parts.length - 1].substring(0, len - result.length);
         }
         return result;
@@ -543,7 +517,7 @@ var BrunelD3 = (function () {
     // If we have a positive timing, return a transition on the element.
     // Otherwise just return the element
     function transition(element, time) {
-        if (time && time > 0) {
+        if (time > 0) {
             return element.transition().duration(time);
         } else {
             return element
@@ -551,6 +525,7 @@ var BrunelD3 = (function () {
     }
 
 
+    // for each position, gives the text-anchor and y offset
     var LABEL_DEF = {
         'center': ['middle', '0.3em'],
         'left': ['end', '0.3em'],
@@ -560,10 +535,14 @@ var BrunelD3 = (function () {
         'bottom': ['middle', '0.7em']
     };
 
-    function labelFunc(item, labelGroup, labeling) {
-        var content = labeling.content(item.__data__);          // If there is no content, we are done
-        if (!content) return;
+    // Add a label for the selection 'item' to the group 'labelGroup', using the information in 'labeling'
+    function labelItem(item, labelGroup, labeling) {
+        var content = labeling.content(item.__data__);
+        if (!content) return;                               // If there is no content, we are done
 
+        var loc = makeLoc(item, labeling, content);         // Get center point (x,y) and surrounding box (box)
+
+        // Ensure the label exists and cross-reference both to each other
         var txt = item.__label__;
         if (!txt) {
             txt = labelGroup.append('text');
@@ -571,7 +550,27 @@ var BrunelD3 = (function () {
             txt.__target__ = item;
         }
 
-        makeLabel(txt.node(), item, labeling, content)();
+        var textNode = txt.node();
+
+        if (labeling.fit && !labeling.where) {
+            // Do not wrap if the text has been explicitly placed
+            wrapInBox(textNode, content, loc);
+        } else {
+            // Place at the required location
+            txt.attr('x', loc.x).attr('y', loc.y).text(content);
+
+            // If it doesn't fit, kill the text
+            if (labeling.fit) {
+                var b = textNode.getBBox();
+                // Too tall to fit a single line, or too wide and could not add ellipses
+                if (b.height > loc.box.height ||
+                    b.width > loc.box.width && !addEllipses(textNode, content, loc.box.width)) {
+                    textNode.parentNode.removeChild(textNode);          // remove from parent
+                    item.__label__ = null;                              // dissociate from item
+                }
+            }
+        }
+
         if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
         else txt.classed('label', true);
 
@@ -579,25 +578,26 @@ var BrunelD3 = (function () {
         txt.style('text-anchor', attrs[0]).attr('dy', attrs[1]);
     }
 
+
     // Apply labeling
     function applyLabeling(element, group, labeling, time) {
-        if (time && time > 0)
-            return element.transition("labels").duration(time).tween('func', function (d, i) {
+        if (time)
+            return element.transition("labels").duration(time).tween('func', function () {
                 var item = this;
                 return function () {
-                    labelFunc(item, group, labeling);
+                    labelItem(item, group, labeling);
                 }
             });
         else
             return element.each(function () {
-                labelFunc(this, group, labeling);
+                labelItem(this, group, labeling);
             });
     }
 
     // If we have a positive timing, start tweening using the defined function
     // Otherwise just call the function for each data item
     function transitionTween(element, time, func) {
-        if (time && time > 0)
+        if (time)
             return element.transition("element").duration(time).tween('func', func);
         return element.each(function (d, i) {
             return func.call(this, d, i)()
