@@ -66,11 +66,11 @@ public class D3LabelBuilder {
         if (vis.itemsTooltip.isEmpty()) return;
         out.onNewLine().ln();
         defineLabeling(details.modifyForTooltip(vis.coords == VisTypes.Coordinates.transposed),
-                prettify(vis.itemsTooltip, true), true);
+                prettify(vis.itemsTooltip, true), vis.coords,  true);
         out.add("BrunelD3.addTooltip(selection, tooltipLabeling, geom)").endStatement();
     }
 
-    public void defineLabeling(ElementDetails details, List<Param> items, boolean forTooltip) {
+    public void defineLabeling(ElementDetails details, List<Param> items, VisTypes.Coordinates coordinateType, boolean forTooltip) {
         if (vis.tElement != VisTypes.Element.text && items.isEmpty()) return;
         String name = forTooltip ? "tooltipLabeling" : "labeling";
         out.add("var", name, "= {").ln().indentMore();
@@ -78,13 +78,15 @@ public class D3LabelBuilder {
         if (textMethod.equals("geo")) {
             // We define a function to extract the coordinates from the geo, and project them
             String func = "function(box,text,d) {var p = projection([d.geo_properties.c, d.geo_properties.d]); return {box:box, x:p[0], y:p[1]}}";
-            out.add("where:", func, ",").onNewLine();
+            out.onNewLine().add("where:", func, ",");
         } else {
-            out.add("method:", out.quote(textMethod), ", ");
+            out.onNewLine().add("method:", out.quote(textMethod), ", ");
         }
-        out.add("fit:", details.textMustFit, ",");
+        out.onNewLine().add("fit:", details.textMustFit, ",");
+        if (coordinateType == VisTypes.Coordinates.transposed)
+            out.onNewLine().add("transposed: true,");
         if (textMethod.equals("path") || textMethod.equals("wedge"))
-            out.add("path: path,");
+            out.onNewLine().add("path: path,");
 
         // Write it out as a wrapped function
         out.onNewLine().add("content: function(d) {").indentMore();

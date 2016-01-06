@@ -313,7 +313,11 @@ public class D3Builder extends AbstractBuilder {
         out.continueOnNextLine(",").add("main = elementGroup.append('g').attr('class', 'main')");
         if (builder.needsDiagramLabels())
             out.continueOnNextLine(",").add("diagramLabels = elementGroup.append('g').attr('class', 'diagram labels')");
-        out.continueOnNextLine(",").add("labels = elementGroup.append('g').attr('class', 'labels')").endStatement();
+
+        // Need to undo transposing so we don't get flipped labels
+        out.continueOnNextLine(",").add("labels = elementGroup.append('g').attr('class', 'labels')");
+        if (scalesBuilder.coords == VisTypes.Coordinates.transposed) out.addChained(elementTransform);
+        out.endStatement();
     }
 
     /*

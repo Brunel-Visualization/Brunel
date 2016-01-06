@@ -201,12 +201,23 @@ var BrunelD3 = (function () {
         }
     }
 
-    function boxLoc(svgItem, method) {
+    function transposeBox(b) {
+        return {x: b.y, y: b.x, width: b.height, height: b.width};
+    }
+
+    function boxLoc(svgItem, method, transposed) {
         // Add 3 pixels padding
         var b = svgItem.getBBox();
+        if (transposed) b = transposeBox(b);
         var x = method == 'left' ? b.x - 3 : (method == 'right' ? b.x + b.width + 3 : b.x + b.width / 2);
         var y = method == 'top' ? b.y - 3 : (method == 'bottom' ? b.y + b.height + 3 : b.y + b.height / 2);
         return {x: x, y: y, box: b}
+    }
+
+    function transpose(loc, labeling) {
+        if (labeling.transposed)
+            return {x: loc.y, y: loc.x, box: transposeBox(loc.box)};
+        return loc;
     }
 
     // Returns an object with 'x', 'y' and 'box' that "surrounds" the text
@@ -215,20 +226,20 @@ var BrunelD3 = (function () {
         if (labeling.where) {
             var box = target.getBBox(),
                 p = labeling.where(box, s, datum);
-            return {x: p.x, y: p.y, box: box};
+            return transpose({x: p.x, y: p.y, box: box}, labeling);
         } else if (labeling.method == 'wedge')
-            return wedgeLoc(labeling.path, datum);
+            return transpose(wedgeLoc(labeling.path, datum), labeling);
         else if (labeling.method == 'poly')
-            return polyLoc(target);
+            return transpose(polyLoc(target), labeling);
         else if (labeling.method == 'area')
-            return areaLoc(target, s.length * 3.5);                   // Guess at text length
+            return transpose(areaLoc(target, s.length * 3.5), labeling);       // Guess at text length
         else if (labeling.method == 'path') {
             if (labeling.path.centroid)
-                return centroidLoc(labeling.path, datum, target);
+                return transpose(centroidLoc(labeling.path, datum, target), labeling);
             else
-                return pathLoc(target);
+                return transpose(pathLoc(target), labeling);
         } else
-            return boxLoc(target, labeling.method);
+            return boxLoc(target, labeling.method, labeling.transposed);
     }
 
 
@@ -243,9 +254,9 @@ var BrunelD3 = (function () {
 
     function addEllipses(span, text, maxWidth) {
         // Binary search to fit text
-        var t, min = 0, max = text.length-3;
-        while (max-min > 1) {
-            t = Math.floor((max+min)/2);
+        var t, min = 0, max = text.length - 3;
+        while (max - min > 1) {
+            t = Math.floor((max + min) / 2);
             span.textContent = text.substring(0, t) + "\u2026";
             if (span.getComputedTextLength() <= maxWidth)
                 min = t;
@@ -254,7 +265,7 @@ var BrunelD3 = (function () {
         }
 
         // min will work, but we do not want trailing punctuation
-        while (min > 0 && " ,.;-".indexOf(text.charAt(min-1)) > -1) min--;
+        while (min > 0 && " ,.;-".indexOf(text.charAt(min - 1)) > -1) min--;
         return min > 0; // True if we have valid text
     }
 
@@ -387,7 +398,7 @@ var BrunelD3 = (function () {
         function place(svg, index) {
             if (placed.length > index) return placed[index];                // Placed already, just return
             var r = svg.getBBox();
-            var dd = -r.y / 5, ht = r.height-1, oy = 0;
+            var dd = -r.y / 5, ht = r.height - 1, oy = 0;
             var ascDesc = ascender(svg.textContent);
             if (ascDesc == 1) {
                 // Ascender only
@@ -401,7 +412,7 @@ var BrunelD3 = (function () {
                 // Neither
                 ht -= 2 * dd;
             }
-            var item = {width: r.width+2, height: ht, ox: 0, oy: oy};                // Our trial item (with slight x padding)
+            var item = {width: r.width + 2, height: ht, ox: 0, oy: oy};                // Our trial item (with slight x padding)
             var rotated = (index % 5) % 2 == 1;
             if (rotated) item = {height: item.width, width: item.height, oy: 0, ox: oy};
             var i, hit = true, theta = 0;                                      // Start at center and ensure we loop

@@ -700,7 +700,7 @@ public class D3ScaleBuilder {
         return result.toArray(new Object[result.size()]);
     }
 
-    /* The purpsoe of a scale */
+    /* The purpose of a scale */
     private enum Purpose {
         x(true), y(true), size(false), color(false);
         public final boolean isCoord;

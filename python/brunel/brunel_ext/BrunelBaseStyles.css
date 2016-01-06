@@ -74,20 +74,20 @@
     stroke-opacity: 0.5
 }
 
-.brunel .hierarchy {
+.brunel .hierarchy, .brunel .hierarchy tspan {
     fill: white;
     stroke-width: 0;
 }
 
-.brunel .hierarchy .L0 {
+.brunel .hierarchy .L0, .brunel .hierarchy .L0 tspan {
     visibility: hidden;
 }
 
-.brunel .hierarchy .L1 {
+.brunel .hierarchy .L1, .brunel .hierarchy .L1 tspan {
     fill: #f9ecb7;
 }
 
-.brunel .hierarchy .L2 {
+.brunel .hierarchy .L2, .brunel .hierarchy .L2 tspan{
     fill: #d3870d;
 }
 
@@ -95,14 +95,14 @@
     visibility: hidden
 }
 
-.brunel .treemap.axis .L1 {
+.brunel .treemap.axis .L1, .brunel .treemap.axis .L1 tspan {
     visibility: visible;
     fill: #d3870d;
     font-weight: bold;
     font-size: 14px
 }
 
-.brunel .treemap.axis .L2 {
+.brunel .treemap.axis .L2, .brunel .treemap.axis .L2 tspan {
     visibility: visible;
     fill: white;
     font-size: 10px
