@@ -96,6 +96,15 @@ class ActionSimplification {
         }
     }
 
+    private void sortMultiOptions(ArrayList<ActionStep> base) {
+        // Any step  that allows multiple parameters can have those parameters sorted
+        for (ActionStep step: base) {
+            if (grammar.get(step.name).mayHaveMultipleOptions())
+                Arrays.sort(step.parameters);
+        }
+    }
+
+
     private ActionStep mergeActions(ActionStep a, ActionStep b) {
         assert a.name.equals(b.name);
         Param[] params = new Param[a.parameters.length + b.parameters.length];
@@ -137,11 +146,11 @@ class ActionSimplification {
         dropAllExceptLast(base, "diagram", true);
         dropAllExceptLast(base, "data", false);
         dropAllExceptLastByName(base, "data");
-        dropAllExceptLastByName(base, "axes");
         dropAllExceptLastByName(base, "legends");
         dropAllExceptLastByName(base, "at");
         orderCanonically(base);
         mergeSimilar(base);
+        sortMultiOptions(base);
         return base;
     }
 

@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -64,7 +65,7 @@ public class D3ScaleBuilder {
         this.elements = structure.elements;
         this.out = out;
         this.coords = makeCombinedCoords();
-        VisTypes.Axes axes = makeCombinedAxes();
+        AxisSpec[] axes = makeCombinedAxes();
 
         // Create the position needed
         this.colorLegendField = getColorLegendField();
@@ -73,14 +74,14 @@ public class D3ScaleBuilder {
 
         // Set the axis information for each dimension
         AxisDetails xAxis, yAxis;
-        if (axes == VisTypes.Axes.all || axes == VisTypes.Axes.x) {
-            xAxis = new AxisDetails("x", coords.allXFields, coords.xCategorical);
+        if (axes[0] != null) {
+            xAxis = new AxisDetails("x", coords.allXFields, coords.xCategorical, axes[0].name, axes[0].ticks);
         } else
-            xAxis = new AxisDetails("x", new Field[0], coords.xCategorical);
-        if (axes == VisTypes.Axes.all || axes == VisTypes.Axes.y)
-            yAxis = new AxisDetails("y", coords.allYFields, coords.yCategorical);
+            xAxis = new AxisDetails("x", new Field[0], coords.xCategorical, null, 9999);
+        if (axes[1] != null)
+            yAxis = new AxisDetails("y", coords.allYFields, coords.yCategorical, axes[1].name, axes[1].ticks);
         else
-            yAxis = new AxisDetails("y", new Field[0], coords.yCategorical);
+            yAxis = new AxisDetails("y", new Field[0], coords.yCategorical, null, 9999);
 
         // Map the dimension to the physical location on screen
         if (this.coords == VisTypes.Coordinates.transposed) {
@@ -130,35 +131,42 @@ public class D3ScaleBuilder {
         return result;
     }
 
-    private VisTypes.Axes makeCombinedAxes() {
+    // Return array for X and Y dimensions
+    private AxisSpec[] makeCombinedAxes() {
+
+        AxisSpec x = null;
+        AxisSpec y = null;
+
+        boolean auto = true;
+
+        // Rules:
+        // none overrides everything and no axes are used
+        // auto or no parameters means that we want default axes for this chart
+        // x or y means that we wish to define just that axis
+
         // The rule here is that we add axes as much as possible, so presence overrides lack of presence
-        VisTypes.Axes result = VisTypes.Axes.auto;
         for (VisSingle e : elements) {
-            if (e.tAxes == VisTypes.Axes.all) {
-                // All means we are done, just return
-                return VisTypes.Axes.all;
-            } else if (result == VisTypes.Axes.auto) {
-                // Override with whatever this is
-                result = e.tAxes;
-            } else if (e.tAxes == VisTypes.Axes.x) {
-                // We need 'x'
-                if (result == VisTypes.Axes.y) return VisTypes.Axes.all;        // X and Y means all -- done
-                else result = VisTypes.Axes.x;
-            } else if (e.tAxes == VisTypes.Axes.y) {
-                // We need 'y'
-                if (result == VisTypes.Axes.x) return VisTypes.Axes.all;        // X and Y means all -- done
-                else result = VisTypes.Axes.y;
+            if (e.fAxes.containsKey(VisTypes.Axes.none)) {
+                // return two null specs -- we do not want axes
+                return new AxisSpec[2];
+            }
+
+            for (Map.Entry<VisTypes.Axes, Param[]> p : e.fAxes.entrySet()) {
+                auto = false;
+                VisTypes.Axes key = p.getKey();
+                Param[] value = p.getValue();
+                if (key == VisTypes.Axes.x) x = (x == null ? AxisSpec.DEFAULT : x).merge(value);
+                else if (key == VisTypes.Axes.y) y = (y == null ? AxisSpec.DEFAULT : y).merge(value);
             }
         }
 
         // If auto, check for the coordinate system / diagram to determine what is wanted
-        if (result == VisTypes.Axes.auto)
-            if (coords == VisTypes.Coordinates.polar || structure.diagram != null)
-                result = VisTypes.Axes.none;
-            else
-                result = VisTypes.Axes.all;
+        if (auto) if (coords == VisTypes.Coordinates.polar || structure.diagram != null)
+            return new AxisSpec[2];
+        else
+            return new AxisSpec[]{AxisSpec.DEFAULT, AxisSpec.DEFAULT};
 
-        return result;
+        return new AxisSpec[]{x, y};
     }
 
     private Field getColorLegendField() {
@@ -179,7 +187,7 @@ public class D3ScaleBuilder {
 
     private int legendWidth() {
         if (!needsLegends()) return 0;
-        AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical());
+        AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical(), null, 9999);
         int spaceNeededForTicks = 32 + legendAxis.maxCategoryWidth();
         int spaceNeededForTitle = colorLegendField.label.length() * 7;                // Assume 7 pixels per character
         return 6 + Math.max(spaceNeededForTicks, spaceNeededForTitle);                // Add some spacing
@@ -318,19 +326,15 @@ public class D3ScaleBuilder {
 
         // Define the axes themselves and the method to build (and re-build) them
         out.onNewLine().ln();
-
-        out.add("var axis_bottom = d3.svg.axis()");
-        defineAxis(this.hAxis);
-
-        out.add("var axis_left = d3.svg.axis().orient('left')");
-        defineAxis(this.vAxis);
-
+        defineAxis("var axis_bottom = d3.svg.axis()", this.hAxis);
+        defineAxis("var axis_left = d3.svg.axis().orient('left')", this.vAxis);
         defineAxesBuild();
     }
 
-    private void defineAxis(AxisDetails axis) {
+    private void defineAxis(String basicDefinition, AxisDetails axis) {
         if (axis.exists()) {
-            out.addChained("scale(" + axis.scale + ").innerTickSize(3).outerTickSize(0)");
+            out.add(basicDefinition)
+                    .addChained("scale(" + axis.scale + ").innerTickSize(3).outerTickSize(0)");
             if (axis.tickValues != null)
                 out.addChained("tickValues([").addQuoted(axis.tickValues).add("])");
             if (axis.isLog()) out.addChained("ticks(7, ',.g3')");
@@ -707,6 +711,32 @@ public class D3ScaleBuilder {
 
         Purpose(boolean isCoord) {
             this.isCoord = isCoord;
+        }
+    }
+
+    private static final class AxisSpec {
+        static final AxisSpec DEFAULT = new AxisSpec();
+
+        final int ticks;
+        final String name;
+
+        private AxisSpec() {
+            ticks = 9999;
+            name = null;
+        }
+
+        public AxisSpec(int ticks, String name) {
+            this.ticks = ticks;
+            this.name = name;
+        }
+
+        public AxisSpec merge(Param[] params) {
+            AxisSpec result = this;
+            for (Param p : params) {
+                if (p.type() == Param.Type.number) result = new AxisSpec(Math.min((int) p.asDouble(), result.ticks), result.name);
+                if (p.type() == Param.Type.string) result = new AxisSpec(result.ticks, p.asString());
+            }
+            return result;
         }
     }
 

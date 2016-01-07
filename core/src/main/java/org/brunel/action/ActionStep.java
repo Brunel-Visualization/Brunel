@@ -112,7 +112,7 @@ class ActionStep {
                 item.style(oneParam());
                 return item;
             } else if (name.equals("axes")) {
-                item.axes(oneParam());
+                item.axes(parameters);
                 return item;
             } else if (name.equals("legends")) {
                 item.legends(oneParam());

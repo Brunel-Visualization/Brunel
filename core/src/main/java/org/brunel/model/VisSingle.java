@@ -51,7 +51,6 @@ public class VisSingle extends VisItem implements Cloneable {
     public List<Param> itemsLabel;         // Items to concatenate as the labels
     public List<Param> itemsTooltip;       // Items to use as tooltips
     public boolean stacked;                // If true, stack the shapes
-    public VisTypes.Axes tAxes;            // Which axes to display
     public VisTypes.Using tUsing;          // Any element modifications?
     public VisTypes.Diagram tDiagram;      // If defined, the layout to use instead of dimensions and axes
     public Param[] tDiagramParameters;     // If defined diagram parameters
@@ -61,6 +60,8 @@ public class VisSingle extends VisItem implements Cloneable {
     public boolean flipY;                  // reverse the X or y scale
     public List<Param> fKeys;              // Fields used as fKeys
     public List<String> fData;             // Data sets used
+
+    public Map<VisTypes.Axes, Param[]> fAxes;               // Axes mapped to their parameters
     public Map<VisTypes.Interaction, Param> tInteraction;   // Which interactive features to support (with maps to options)
 
     private Dataset dataset;                // Dataset in which dataset fields are to be found (may be null)
@@ -83,10 +84,10 @@ public class VisSingle extends VisItem implements Cloneable {
         this.dataset = base;
         coords = VisTypes.Coordinates.regular;
         coords = VisTypes.Coordinates.regular;
-        tAxes = VisTypes.Axes.auto;
         tUsing = VisTypes.Using.none;
         tLegends = VisTypes.Legends.auto;
         tInteraction = Collections.EMPTY_MAP;
+        fAxes = Collections.EMPTY_MAP;
 
         // For memory and speed, these are all fixed as empty until used
         fX = Collections.EMPTY_LIST;
@@ -115,8 +116,13 @@ public class VisSingle extends VisItem implements Cloneable {
         return this;
     }
 
-    public VisSingle axes(Param type) {
-        if (type != null) tAxes = VisTypes.Axes.valueOf(type.asString());
+    public VisSingle axes(Param... options) {
+        for (Param p : options) {
+            if (p == null) return this;
+            if (fAxes.isEmpty()) fAxes = new HashMap<VisTypes.Axes, Param[]>();
+            VisTypes.Axes t = VisTypes.Axes.valueOf(p.asString());
+            fAxes.put(t, p.modifiers());
+        }
         return this;
     }
 
@@ -424,7 +430,7 @@ public class VisSingle extends VisItem implements Cloneable {
 
         if (addSeriesSplit) result.split(Param.makeField("#series"));
         if (convertYsToRange) {
-            result.fRange = new Param[] {fY.get(0), fY.get(1)};
+            result.fRange = new Param[]{fY.get(0), fY.get(1)};
             result.fY = Collections.emptyList();
         }
 

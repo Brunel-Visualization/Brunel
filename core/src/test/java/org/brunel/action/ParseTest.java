@@ -152,12 +152,6 @@ public class ParseTest {
         } catch (Exception ignored) {
         }
 
-        try {
-            new Parser().getActionSteps(new Parser().tokenize("axes(none, none)"));
-            fail("Should not have parsed");
-        } catch (Exception ignored) {
-        }
-
     }
 
     @Test

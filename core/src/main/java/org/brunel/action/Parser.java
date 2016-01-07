@@ -286,7 +286,7 @@ public class Parser {
         // Handle options first
         if (definition.isOption(content)) {
             // This is an option
-            if (foundOption)
+            if (foundOption && !definition.mayHaveMultipleOptions())
                 throw new IllegalStateException("Only one option parameter allowed for " + definition.name);
             else if (definition.isOption(content))
                 return Param.makeOption(content);

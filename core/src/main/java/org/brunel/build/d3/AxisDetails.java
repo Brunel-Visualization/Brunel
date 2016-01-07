@@ -45,11 +45,17 @@ class AxisDetails {
     private final boolean categorical;                 // True if the axis is categorical
 
     /* Constructs the axis for the given fields */
-    public AxisDetails(String dimension, Field[] definedFields, boolean categorical) {
+    public AxisDetails(String dimension, Field[] definedFields, boolean categorical, String userTitle, int tickCount) {
         this.scale = "scale_" + dimension;
         this.fields = definedFields; // suitable(definedFields);
-        this.title = title(fields);
         this.categorical = categorical;
+        this.tickCount = tickCount < 100 ? tickCount : null;
+
+        if (userTitle != null)
+            this.title = (userTitle.isEmpty() ? null : userTitle);
+        else
+            this.title = title(fields);
+
     }
 
     /* Return the title for the axis */
@@ -116,7 +122,8 @@ class AxisDetails {
                 leftGutter = Math.max(0, tickWidth / 2 - spaceForOneTick / 2);
             rightGutter = leftGutter;
 
-            if (availableSpace < tickWidth * tickCount) {
+            // Do not override user-set value for tick count
+            if (availableSpace < tickWidth * tickCount && this.tickCount == null) {
                 // Must be numeric in this case, so reduce the desired number of ticks for that axis
                 this.tickCount = (int) (availableSpace / (tickWidth + 5));
             }
@@ -194,14 +201,12 @@ class AxisDetails {
         bottomGutter = 5;
         availableSpace -= (topGutter + bottomGutter);
 
-
-
         // Simple algorithm: just skip items if necessary
         if (categorical) {
             tickValues = makeSkippingTickValues(availableSpace, tickCount);
         } else {
             int tickWidth = 16;   // We like about this much space between ticks
-            if (tickWidth * tickCount > availableSpace) {
+            if (tickWidth * tickCount > availableSpace && this.tickCount == null) {
                 this.tickCount = (int) (availableSpace / tickWidth);
             }
 

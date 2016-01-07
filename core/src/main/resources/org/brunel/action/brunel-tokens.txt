@@ -82,7 +82,7 @@ smooth data FIELD+
 
 # Miscellaneous
 using other dodge interpolate
-axes other auto none all x y
+axes other + none x y
 legends other auto none all color size
 at other NUMBER+
 style other STRING

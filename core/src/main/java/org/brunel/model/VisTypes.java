@@ -20,7 +20,7 @@ public class VisTypes {
 
     /* Axes types */
     public enum Axes {
-        auto, all, none, x, y
+        none, x, y
     }
 
     /* Element usage modifiers */

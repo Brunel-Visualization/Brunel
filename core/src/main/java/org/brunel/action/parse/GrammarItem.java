@@ -30,6 +30,7 @@ public class GrammarItem {
     private final Set<String> parameters;            // These are the type of parameter allowed
     private final Set<String> options;               // These are the options allowed
     private final boolean emptyAllowed;              // If true, may have no parameters
+    private final boolean multiOptionsAllowed;       // If true, multiple options can be specified
 
     GrammarItem(String[] description) {
         this.name = description[0];
@@ -37,21 +38,24 @@ public class GrammarItem {
         this.parameters = new TreeSet<String>();
         this.options = new TreeSet<String>();
 
-        boolean canBeEmpty = false;
+        boolean canBeEmpty = false, canBeMulti = false;
         for (int i = 2; i < description.length; i++) {
             String s = description[i];
             if (s.equalsIgnoreCase("-"))                        // - means "may be empty"
                 canBeEmpty = true;
+            else if (s.equalsIgnoreCase("+"))                   // + means "may have multiple options"
+                canBeMulti = true;
             else if (s.toUpperCase().equals(s))                 // ALL CAPS such as LITERAL, STRING, FIELD, etc.
                 parameters.add(s);
             else
                 options.add(s);                                 // Rest are options that are allowed
         }
         this.emptyAllowed = canBeEmpty || hasNoContent();
-
+        this.multiOptionsAllowed = canBeMulti;
     }
 
     public boolean allowsMultiples() {
+        if (multiOptionsAllowed) return true;
         for (String s : parameters) if (s.endsWith("+")) return true;
         return false;
     }
@@ -70,6 +74,10 @@ public class GrammarItem {
 
     public boolean mayHaveNoContent() {
         return emptyAllowed;
+    }
+
+    public boolean mayHaveMultipleOptions() {
+        return multiOptionsAllowed;
     }
 
     public String options() {
