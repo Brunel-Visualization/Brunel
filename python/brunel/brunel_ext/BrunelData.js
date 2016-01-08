@@ -550,7 +550,7 @@ V.auto_Auto.convert = function(base) {
 
 V.auto_Auto.isYearly = function(asNumeric) {
     var d;
-    if (asNumeric.min() < 1800) return false;
+    if (asNumeric.min() < 1600) return false;
     if (asNumeric.max() > 2100) return false;
     d = asNumeric.numericProperty("granularity");
     return d != null && d - Math.floor(d) < 1e-6;
@@ -2025,7 +2025,8 @@ V.modify_ConvertSeries.transform = function(base, commands) {
     sections = V.modify_DataOperation.parts(commands);
     yFields = V.modify_DataOperation.list(sections[0]);
     if (yFields == null || yFields.length < 2) return base;
-    otherFields = V.modify_ConvertSeries.addRequired(V.modify_DataOperation.list(sections[1]));
+    otherFields = sections.length < 2 ? $.Array(0, null) : V.modify_ConvertSeries.addRequired(
+        V.modify_DataOperation.list(sections[1]));
     N = base.rowCount();
     series = V.modify_ConvertSeries.makeSeries(yFields, N);
     values = V.modify_ConvertSeries.makeValues(yFields, base, N);

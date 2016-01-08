@@ -45,7 +45,8 @@ public class ConvertSeries extends DataOperation {
         // This also handles the case when there is a range specified (empty yFields)
         if (yFields == null || yFields.length < 2) return base;
 
-        String[] otherFields = addRequired(list(sections[1]));
+        // If there are no other fields, there is only one section
+        String[] otherFields = addRequired(list(sections.length < 2 ? "" : sections[1]));
 
         /*
             We handle four different categories of field:
@@ -83,7 +84,7 @@ public class ConvertSeries extends DataOperation {
     private static String[] addRequired(String[] list) {
         // Ensure #count and #row are present
         List<String> result = new ArrayList<String>();
-        Collections.addAll(result, list);
+        if (list != null) Collections.addAll(result, list);
         if (!result.contains("#row")) result.add("#row");
         if (!result.contains("#count")) result.add("#count");
         return result.toArray(new String[result.size()]);

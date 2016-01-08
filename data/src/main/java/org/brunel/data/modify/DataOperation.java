@@ -50,6 +50,7 @@ public abstract class DataOperation {
      * @return array of commands, or null if there are none
      */
     public static String[] parts(String command) {
+        if (command.endsWith(";")) command = command.substring(0, command.length()-1);
         String[] parts = command.split(";");
         for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim();
         return parts.length == 1 && parts[0].isEmpty() ? null : parts;
