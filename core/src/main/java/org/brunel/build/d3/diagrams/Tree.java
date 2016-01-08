@@ -33,7 +33,7 @@ class Tree extends D3Diagram {
         this.pad = 10;
     }
 
-    public ElementDetails writeDataConstruction() {
+    public ElementDetails initalizeDiagram() {
         out.comment("Define tree (hierarchy) data structures");
         makeHierarchicalTree();
         out.add("var treeLayout = d3.layout.tree()")

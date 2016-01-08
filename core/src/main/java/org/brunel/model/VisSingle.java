@@ -250,7 +250,6 @@ public class VisSingle extends VisItem implements Cloneable {
             error = addError(error, "Diagram used requires two fields");
 
         if (duplicatesWithin(fX)) error = addError(error, "X contains duplicate fields");
-        if (duplicatesWithin(fY)) error = addError(error, "Y contains duplicate fields");
         if (duplicatesWithin(fColor)) error = addError(error, "color contains duplicate fields");
         if (duplicatesWithin(fFilter)) error = addError(error, "filter contains duplicate fields");
         if (duplicatesWithin(fSplits)) error = addError(error, "splits contains duplicate fields");
@@ -264,7 +263,7 @@ public class VisSingle extends VisItem implements Cloneable {
                 error = addError(error, "when using multiple x fields, the first must be categorical");
         }
 
-        if (fY.size() < 2 && containsSeriesField(usedFields(false)))
+        if (fY.size() < 2 && tDiagram != VisTypes.Diagram.network && containsSeriesField(usedFields(false)))
             error = addError(error, "#series and #values can only be used when there are multiple Y fields");
 
         // Handle cases where the range is defined

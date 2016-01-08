@@ -559,6 +559,7 @@ var BrunelD3 = (function () {
             txt = labelGroup.append('text');
             item.__label__ = txt;
             txt.__target__ = item;
+            txt.__labeling__ = labeling;
         }
 
         var textNode = txt.node();
@@ -885,7 +886,23 @@ var BrunelD3 = (function () {
                 })
                 .attr('cy', function (d) {
                     return d.y = Math.min(Math.max(d.y, pad), geom.inner_height - pad)
-                });
+                }).each(function (d) {
+                    var txt = this.__label__;
+                    if (!txt) return;
+                    if (txt.__off__) {
+                        // We have calculated the position, just need to move it
+                        txt.attr('x', txt.__off__.dx + d.px);
+                        txt.attr('y', txt.__off__.dy + d.py);
+                    } else {
+                        // First time placement, and then record the offset relative to the node
+                        labelItem(this, null, txt.__labeling__);
+                        txt.__off__ = {
+                            dx: +txt.attr('x') - d.x,
+                            dy: +txt.attr('y') - d.y
+                        }
+                    }
+                }
+            );
             edges.selection()
                 .attr('x1', function (d) {
                     return d.source.x

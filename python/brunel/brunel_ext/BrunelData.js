@@ -915,8 +915,9 @@ V.Data.deQuote = function(s) {
 };
 
 V.Data.quote = function(s) {
-    var c, i, n, text;
-    var quoteChar = '\'';
+    var c, i, n, quoteChar, text;
+    if (s == null) return "null";
+    quoteChar = '\'';
     if (s.indexOf(quoteChar) >= 0) quoteChar = '"';
     text = "";
     n = $.len(s);

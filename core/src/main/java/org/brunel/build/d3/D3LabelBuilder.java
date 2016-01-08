@@ -46,8 +46,15 @@ public class D3LabelBuilder {
     }
 
     public void addElementLabeling() {
+        if (vis.itemsLabel.isEmpty()) return;
+        // Networks are updated on ticks., so just attach once -- no transitions
+        if (vis.tDiagram == VisTypes.Diagram.network) {
+            out.add("BrunelD3.label(selection, labels, labeling, 0)").endStatement();
+            return;
+        }
+
         // Text elements define labeling as the main item; they do not need labels attached, which is what this does
-        if (vis.tElement != VisTypes.Element.text && vis.itemsLabel.size() > 0)
+        if (vis.tElement != VisTypes.Element.text )
             out.add("BrunelD3.label(selection, labels, labeling, transitionMillis)").endStatement();
     }
 

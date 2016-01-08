@@ -46,8 +46,6 @@ import java.util.Map;
  */
 public class D3DataBuilder {
 
-
-
     public static void writeTables(VisItem main, ScriptWriter out, BuilderOptions options) {
         if (options.includeData == BuilderOptions.DataMethod.none) return;
         if (options.includeData == BuilderOptions.DataMethod.minimal) {
@@ -201,8 +199,15 @@ public class D3DataBuilder {
 
         writeTransform("stack", params.stackCommand);               // Stack must come after all else
 
+
+        if (vis.tDiagram == VisTypes.Diagram.network && vis.fY.size() > 1) {
+            writeTransform("summarize", "#values=#values");
+        }
+
+
         out.endStatement();
         out.add("processed = post(processed,", datasetIndex, ")").endStatement();
+
         D3Util.addTiming("Data End", out);
     }
 
@@ -302,9 +307,15 @@ public class D3DataBuilder {
             if (suitableForKey(result)) return result;
         }
 
-        if (vis.tDiagram == VisTypes.Diagram.tree || vis.tDiagram == VisTypes.Diagram.treemap || vis.tDiagram == VisTypes.Diagram.map) {
-            // Positions are the keys for trees and treemaps
+        // Positions are the keys for trees and treemaps
+        if (vis.tDiagram == VisTypes.Diagram.treemap || vis.tDiagram == VisTypes.Diagram.map) {
+            // Otherwise just use the position fields as usual
             return Arrays.asList(vis.positionFields());
+        }
+
+        if (vis.tDiagram == VisTypes.Diagram.network) {
+            // The following handles the case when we use the edges as y values to make a key field for the nodes
+            if (vis.fY.size() > 1) return Collections.singletonList("#values");
         }
 
         // If we split by aesthetics, they are the keys

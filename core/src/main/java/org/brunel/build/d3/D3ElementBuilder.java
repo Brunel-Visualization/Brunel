@@ -116,7 +116,7 @@ class D3ElementBuilder {
         } else if (diagram == null)
             return ElementDetails.makeForCoordinates(vis, getSymbol());
         else
-            return diagram.writeDataConstruction();
+            return diagram.initalizeDiagram();
     }
 
     private ElementDefinition buildElementDefinition() {
@@ -508,7 +508,7 @@ class D3ElementBuilder {
             defineHorizontalExtentFunctions(elementDef, true);
             out.add(basicDef);
             out.addChained("attr('y', function(d) { return Math.min(y0(d), y1(d)) } )");
-            out.addChained("attr('height', function(d) {return Math.abs(y0(d) - y1(d)) })");
+            out.addChained("attr('height', function(d) {return Math.max(0.001, Math.abs(y0(d) - y1(d))) })");
         } else {
             // Simple element; drop from the upper value to the baseline
             out.add("var y =", elementDef.y.center).endStatement();
@@ -616,7 +616,7 @@ class D3ElementBuilder {
         if (elementDef.y.left != null) {
             // Use the left and right values
             top = "function(d) { return Math.min(y0(d), y1(d)) }";
-            height = "function(d) { return Math.abs(y1(d) - y0(d)) }";
+            height = "function(d) { return Math.max(0.0001, Math.abs(y1(d) - y0(d))) }";
         } else {
             // The height can either be a function or a numeric value
             if (elementDef.y.size.startsWith("function"))
