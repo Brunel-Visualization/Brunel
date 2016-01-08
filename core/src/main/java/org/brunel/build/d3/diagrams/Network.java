@@ -36,10 +36,12 @@ class Network extends D3Diagram {
 
         if (vis.fKeys.size() > 0) {
             nodeID  = vis.fKeys.get(0).asField(nodes.data);
+        } else if (vis.fY.size() > 1) {
+            nodeID  = "#values";
         } else if (vis.positionFields().length > 0) {
             nodeID  = vis.positionFields()[0];
         } else {
-            throw new IllegalStateException("Networks require nodes to have a single key or position field");
+            throw new IllegalStateException("Networks require nodes to have a key field or position field");
         }
 
         VisSingle edgesVis = edges.vis;
@@ -64,13 +66,13 @@ class Network extends D3Diagram {
         out.add("var graph;").at(50).comment("Graph used for nodes and links");
     }
 
-    public ElementDetails writeDataConstruction() {
+    public ElementDetails initalizeDiagram() {
+        String edgeDataset = "elements[" + edges.getBaseDatasetIndex() + "].data()";
         String nodeField = quoted(nodeID);
 
-        String edgeDataset = "elements[" + edges.getBaseDatasetIndex() + "].data()";
-
+        String from = quoted(fromFieldID),to = quoted(toFieldID);
         out.add("graph = BrunelData.diagram_Graph.make(processed,", nodeField, ",",
-                edgeDataset, ",", quoted(fromFieldID), ",", quoted(toFieldID), ")").endStatement();
+                edgeDataset, ",", from, ",", to, ")").endStatement();
         out.ln();
         makeLayout();
         out.ln();

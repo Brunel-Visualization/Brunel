@@ -264,7 +264,7 @@ public class VisSingle extends VisItem implements Cloneable {
                 error = addError(error, "when using multiple x fields, the first must be categorical");
         }
 
-        if (fY.size() < 2 && containsSeriesField(usedFields(false)))
+        if (fY.size() < 2 && tDiagram != VisTypes.Diagram.network && containsSeriesField(usedFields(false)))
             error = addError(error, "#series and #values can only be used when there are multiple Y fields");
 
         // Handle cases where the range is defined

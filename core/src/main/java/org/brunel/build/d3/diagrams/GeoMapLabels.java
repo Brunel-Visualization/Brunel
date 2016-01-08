@@ -80,7 +80,7 @@ public class GeoMapLabels extends D3Diagram {
         out.indentLess().add("]").endStatement();
     }
 
-    public ElementDetails writeDataConstruction() {
+    public ElementDetails initalizeDiagram() {
         return ElementDetails.makeForDiagram("geo_labels", "path", "point", "box", false);
     }
 

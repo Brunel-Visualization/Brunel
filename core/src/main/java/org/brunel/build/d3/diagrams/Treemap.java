@@ -28,7 +28,7 @@ class Treemap extends D3Diagram {
         super(vis, data, out);
     }
 
-    public ElementDetails writeDataConstruction() {
+    public ElementDetails initalizeDiagram() {
         out.comment("Define treemap (hierarchy) data structures");
         makeHierarchicalTree();
 

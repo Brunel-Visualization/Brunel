@@ -345,6 +345,7 @@ public class Data {
     }
 
     public static String quote(String s) {
+        if (s == null) return "null";
         // get most appropriate quote character
         char quoteChar = '\'';
         if (s.indexOf(quoteChar) >= 0) quoteChar = '"';

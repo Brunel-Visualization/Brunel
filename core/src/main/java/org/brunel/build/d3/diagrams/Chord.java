@@ -34,7 +34,7 @@ class Chord extends D3Diagram {
         return "d.source.index + '|' + d.target.index";
     }
 
-    public ElementDetails writeDataConstruction() {
+    public ElementDetails initalizeDiagram() {
         String f1 = vis.positionFields()[0];
         String f2 = position[1];
 

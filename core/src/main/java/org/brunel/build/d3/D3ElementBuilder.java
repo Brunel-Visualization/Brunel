@@ -116,7 +116,7 @@ class D3ElementBuilder {
         } else if (diagram == null)
             return ElementDetails.makeForCoordinates(vis, getSymbol());
         else
-            return diagram.writeDataConstruction();
+            return diagram.initalizeDiagram();
     }
 
     private ElementDefinition buildElementDefinition() {

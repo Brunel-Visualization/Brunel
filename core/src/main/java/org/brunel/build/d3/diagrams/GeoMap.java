@@ -94,7 +94,7 @@ public class GeoMap extends D3Diagram {
             throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
     }
 
-    public ElementDetails writeDataConstruction() {
+    public ElementDetails initalizeDiagram() {
         out.add("var path = d3.geo.path().projection(projection)").endStatement();
         out.indentLess();
 
