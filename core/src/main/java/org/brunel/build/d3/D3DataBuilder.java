@@ -317,8 +317,11 @@ public class D3DataBuilder {
             if (suitableForKey(result)) return result;
         }
 
-        // Otherwise just use the row
-        return Collections.singletonList("#row");
+        // Default is the row values
+        List<String> result = new ArrayList<String>();
+        result.add("#row");
+        if (vis.fY.size() > 1) result.add("#series");           // Because multiple rows have the same "#row"
+        return result;
     }
 
     private List<String> makeSplitFields() {

@@ -58,8 +58,10 @@ public class ElementStructure {
     }
 
     public boolean isGraphEdge() {
-        return dependent && (chart.diagram == VisTypes.Diagram.network || chart.diagram == VisTypes.Diagram.tree)
-                && vis.tElement == VisTypes.Element.edge && vis.fKeys.size() == 2;
+        return
+                (chart.diagram == VisTypes.Diagram.network || chart.diagram == VisTypes.Diagram.tree)
+                && vis.tElement == VisTypes.Element.edge
+                && (vis.fKeys.size() == 2 || vis.positionFields().length == 2);
     }
 
     /**

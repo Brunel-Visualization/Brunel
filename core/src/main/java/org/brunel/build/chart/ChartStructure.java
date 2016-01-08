@@ -103,11 +103,20 @@ public class ChartStructure {
         Integer[] order = new Integer[elements.length];
         for (int i = 0; i < order.length; i++) order[i] = i;
 
-        // Sort so elements with most keys go last
-        // This works at least for nodes and links at least; when we add new cases, we'll need a more complex function
         Arrays.sort(order, new Comparator<Integer>() {
             public int compare(Integer a, Integer b) {
-                return elements[a].fKeys.size() - elements[b].fKeys.size();
+                VisSingle aa = elements[a], bb = elements[b];
+
+                // Diagrams go first
+                if (aa.tDiagram != null && bb.tDiagram == null) return -1;
+                if (aa.tDiagram == null && bb.tDiagram != null) return 1;
+
+                // Edges go last
+                if (aa.tElement == VisTypes.Element.edge && bb.tElement != VisTypes.Element.edge) return 1;
+                if (aa.tElement != VisTypes.Element.edge && bb.tElement == VisTypes.Element.edge) return -1;
+
+                // Otherwise the more keys you have, the later you are built
+                return aa.fKeys.size() - bb.fKeys.size();
             }
         });
 
@@ -126,7 +135,7 @@ public class ChartStructure {
 
     public ElementStructure getEdge() {
         for (ElementStructure e : elementStructure) if (e.isGraphEdge()) return e;
-        return null;
+        throw new IllegalStateException("Networks were requested, but no suitable edge elements were defined");
     }
 
 }

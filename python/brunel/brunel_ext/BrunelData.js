@@ -1957,8 +1957,10 @@ V.modify_DataOperation.map = function(command, sep) {
 };
 
 V.modify_DataOperation.parts = function(command) {
-    var i;
-    var parts = command.split(";");
+    var i, parts;
+    if ($.endsWith(command, ";"))
+        command = command.substring(0, $.len(command) - 1);
+    parts = command.split(";");
     for (i = 0; i < parts.length; i++)
         parts[i] = parts[i].trim();
     return parts.length == 1 && $.isEmpty(parts[0]) ? null : parts;
@@ -2025,8 +2027,8 @@ V.modify_ConvertSeries.transform = function(base, commands) {
     sections = V.modify_DataOperation.parts(commands);
     yFields = V.modify_DataOperation.list(sections[0]);
     if (yFields == null || yFields.length < 2) return base;
-    otherFields = sections.length < 2 ? $.Array(0, null) : V.modify_ConvertSeries.addRequired(
-        V.modify_DataOperation.list(sections[1]));
+    otherFields = V.modify_ConvertSeries.addRequired(V.modify_DataOperation.list(
+        sections.length < 2 ? "" : sections[1]));
     N = base.rowCount();
     series = V.modify_ConvertSeries.makeSeries(yFields, N);
     values = V.modify_ConvertSeries.makeValues(yFields, base, N);
@@ -2045,7 +2047,8 @@ V.modify_ConvertSeries.transform = function(base, commands) {
 
 V.modify_ConvertSeries.addRequired = function(list) {
     var result = new $.List();
-    $.addAll(result, list);
+    if (list != null)
+        $.addAll(result, list);
     if (!result.contains("#row")) result.add("#row");
     if (!result.contains("#count")) result.add("#count");
     return result.toArray();

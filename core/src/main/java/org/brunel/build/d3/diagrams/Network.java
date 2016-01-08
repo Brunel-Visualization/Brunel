@@ -27,11 +27,31 @@ class Network extends D3Diagram {
 
     private final ElementStructure nodes;
     private final ElementStructure edges;
+    private final String nodeID, fromFieldID, toFieldID;
 
     public Network(VisSingle vis, Dataset data, ElementStructure nodes, ElementStructure edges, ScriptWriter out) {
         super(vis, data, out);
         this.nodes = nodes;
         this.edges = edges;
+
+        if (vis.fKeys.size() > 0) {
+            nodeID  = vis.fKeys.get(0).asField(nodes.data);
+        } else if (vis.positionFields().length > 0) {
+            nodeID  = vis.positionFields()[0];
+        } else {
+            throw new IllegalStateException("Networks require nodes to have a single key or position field");
+        }
+
+        VisSingle edgesVis = edges.vis;
+        if (edgesVis.fKeys.size() > 1) {
+            fromFieldID  = edgesVis.fKeys.get(0).asField(edges.data);
+            toFieldID  = edgesVis.fKeys.get(1).asField(edges.data);
+        } else if (edgesVis.positionFields().length > 1) {
+            fromFieldID  = edgesVis.positionFields()[0];
+            toFieldID  = edgesVis.positionFields()[1];
+        } else {
+            throw new IllegalStateException("Networks require edges to have two key fields or position fields");
+        }
     }
 
     public void writeBuildCommands() {
@@ -45,14 +65,12 @@ class Network extends D3Diagram {
     }
 
     public ElementDetails writeDataConstruction() {
-        String nodeField = quoted(vis.fKeys.get(0).asField());
+        String nodeField = quoted(nodeID);
 
         String edgeDataset = "elements[" + edges.getBaseDatasetIndex() + "].data()";
-        String a = quoted(edges.vis.fKeys.get(0).asField(edges.data));
-        String b = quoted(edges.vis.fKeys.get(1).asField(edges.data));
 
         out.add("graph = BrunelData.diagram_Graph.make(processed,", nodeField, ",",
-                edgeDataset, ",", a, ",", b, ")").endStatement();
+                edgeDataset, ",", quoted(fromFieldID), ",", quoted(toFieldID), ")").endStatement();
         out.ln();
         makeLayout();
         out.ln();
