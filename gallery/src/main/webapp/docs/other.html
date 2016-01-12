@@ -18,13 +18,22 @@
 
 <H3>Axes</H3>
 <p>
-    The axes command controls which axes are displayed. Legal values are <code>none, all, x, y, auto</code>
+    The axes command controls which axes are displayed. Legal values are <code>none, x, y</code>
 </p>
 
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(none)</a></p>
-<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(all)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(x, y)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(x)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(y)</a></p>
+
+<p>
+    In addition, the <code>x</code> and <code>y</code> options can take string and/or numeric parameters.
+The numbers give a hint as to the number of ticks desired on a numeric axis, and the string sets the title for
+the axis. The empty string suppresses the axis
+</p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(x:'Geo Area')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(y:2:'Numbers', x:10)</a></p>
+
 
 <H3>Legends</H3>
 <p>
@@ -85,14 +94,13 @@
     <li>SVG CSS is used, so we do not use "color" for color -- instead use "fill" or "stroke"</li>
 </ul>
 <p>
-    Brunel also extends these CSS defintions with <code>size</code>, which allows you to set the size of SVG elements, and
+    Brunel also extends these CSS definitions with <code>size</code>, which allows you to set the size of SVG elements, and
     <code>label-location</code>, which can be defined for either an element or a label, and allows you to change where a label is
     located relative to the shape. The valid values are: <code>left, right, top, bottom, middle</code>.
 </p>
 
 <p class="examples"><a onClick="showAction(this.text)"><p class="examples"><a onClick="showAction(this.text)">line x(state) y(summer) style('stroke:red') + line x(state)
     y(winter) style('stroke:blue')</a></p>
-</a></p>
 
 <H4>Group Hierarchy for CSS</H4>
 <p>The hierarchy for CSS purposes is given below. This is not written in stone and may change slightly in the future.
