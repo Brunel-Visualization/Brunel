@@ -1,5 +1,7 @@
 # Demo Jupyter Datai Science Notebook with Brunel
 
+**NOTE: this will build, but will not run due to a jype error - investigating**
+
 This [Docker](https://www.docker.com) image provides a quick method to experiment
 with Brunel within a [Jupyter Notebook](http://jupyter.org). It is based on the
 [Data Science Notebook](https://hub.docker.com/r/jupyter/datascience-notebook/) Docker image, with
