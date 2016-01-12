@@ -123,6 +123,7 @@ public class ModelUtil {
      * @return null if not defined
      */
     public static String getLabelPosition(VisSingle vis) {
+        if (vis == null) return null;
         String s = getStyle(vis, new StyleTarget(null, STYLE_ELEMENT, "element"), "label-location");
         if (s != null) return s;
         return getStyle(vis, new StyleTarget(null, STYLE_ELEMENT, "label"), "label-location");

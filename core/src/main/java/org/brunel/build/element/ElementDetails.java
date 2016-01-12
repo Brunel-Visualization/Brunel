@@ -106,7 +106,7 @@ public class ElementDetails {
             if (method.equals("top")) method = "left";
             if (method.equals("bottom")) method = "right";
         }
-        return makeForDiagram(dataSource, elementType, "point", method, false);
+        return makeForDiagram(null, dataSource, elementType, "point", method, false);
     }
 
     /**
@@ -123,7 +123,9 @@ public class ElementDetails {
      * @param textMethod   wedge, poly, area, path, box, left, right, top, bottom
      * @param textFits     true if text must fit within the shape
      */
-    public static ElementDetails makeForDiagram(String dataSource, String elementType, String elementClass, String textMethod, boolean textFits) {
-        return new ElementDetails(dataSource, elementType, elementClass, textMethod, textFits);
+    public static ElementDetails makeForDiagram(VisSingle vis, String dataSource, String elementType, String elementClass, String textMethod, boolean textFits) {
+        String textLocation = ModelUtil.getLabelPosition(vis);
+        if (textLocation == null) textLocation = textMethod;
+        return new ElementDetails(dataSource, elementType, elementClass, textLocation, textFits);
     }
 }

@@ -53,7 +53,7 @@ class Chord extends D3Diagram {
         out.add("var arc_width =", Data.formatNumeric(arcWidth, false), ";").comment("Width of exterior arc");
         out.add("function keyFunction(d) { return d.source.index + '|' + d.target.index };").comment(" special key function for the edges");
 
-        return ElementDetails.makeForDiagram("chord.chords()", "path", "edge", "poly", false);
+        return ElementDetails.makeForDiagram(vis, "chord.chords()", "path", "edge", "poly", false);
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {

@@ -76,7 +76,7 @@ class Network extends D3Diagram {
         out.ln();
         makeLayout();
         out.ln();
-        return ElementDetails.makeForDiagram("graph.nodes", "circle", "point", "box", false);
+        return ElementDetails.makeForDiagram(vis, "graph.nodes", "circle", "point", "box", false);
     }
 
     private void makeLayout() {

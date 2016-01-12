@@ -112,7 +112,7 @@ class D3ElementBuilder {
     private ElementDetails makeDetails() {
         // When we create diagrams this has the side effect of writing the data calls needed
         if (structure.isGraphEdge()) {
-            return ElementDetails.makeForDiagram("graph.links", "line", "edge", "box", false);
+            return ElementDetails.makeForDiagram(vis, "graph.links", "line", "edge", "box", false);
         } else if (diagram == null)
             return ElementDetails.makeForCoordinates(vis, getSymbol());
         else

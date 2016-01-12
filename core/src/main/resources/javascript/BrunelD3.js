@@ -201,23 +201,22 @@ var BrunelD3 = (function () {
         }
     }
 
-    function transposeBox(b) {
-        return {x: b.y, y: b.x, width: b.height, height: b.width};
-    }
-
     function boxLoc(svgItem, method, transposed) {
-        // Add 3 pixels padding
-        var b = svgItem.getBBox();
+        var ctm = svgItem.getCTM();
+        var b = svgItem.getBBox(), ox = b.x + ctm.e, oy = b.y + ctm.f;
         if (transposed) b = transposeBox(b);
-        var x = method == 'left' ? b.x - 3 : (method == 'right' ? b.x + b.width + 3 : b.x + b.width / 2);
-        var y = method == 'top' ? b.y - 3 : (method == 'bottom' ? b.y + b.height + 3 : b.y + b.height / 2);
+
+        // Add 3 pixels padding
+        var x = method == 'left' ? ox - 3 : (method == 'right' ? ox + b.width + 3 : ox + b.width / 2);
+        var y = method == 'top' ? oy - 3 : (method == 'bottom' ? oy + b.height + 3 : oy + b.height / 2);
         return {x: x, y: y, box: b}
     }
 
-    function transpose(loc, labeling) {
+    function transpose(loc, labeling, item) {
+        var ctm = item.getCTM();
         if (labeling.transposed)
             return {x: loc.y, y: loc.x, box: transposeBox(loc.box)};
-        return loc;
+        return {x:loc.x + ctm.e, y:loc.y + ctm.f};
     }
 
     // Returns an object with 'x', 'y' and 'box' that "surrounds" the text
@@ -226,18 +225,18 @@ var BrunelD3 = (function () {
         if (labeling.where) {
             var box = target.getBBox(),
                 p = labeling.where(box, s, datum);
-            return transpose({x: p.x, y: p.y, box: box}, labeling);
+            return transpose({x: p.x, y: p.y, box: box}, labeling, target);
         } else if (labeling.method == 'wedge')
-            return transpose(wedgeLoc(labeling.path, datum), labeling);
+            return transpose(wedgeLoc(labeling.path, datum), labeling, target);
         else if (labeling.method == 'poly')
-            return transpose(polyLoc(target), labeling);
+            return transpose(polyLoc(target), labeling, target);
         else if (labeling.method == 'area')
-            return transpose(areaLoc(target, s.length * 3.5), labeling);       // Guess at text length
+            return transpose(areaLoc(target, s.length * 3.5), labeling, target);       // Guess at text length
         else if (labeling.method == 'path') {
             if (labeling.path.centroid)
-                return transpose(centroidLoc(labeling.path, datum, target), labeling);
+                return transpose(centroidLoc(labeling.path, datum, target), labeling, target);
             else
-                return transpose(pathLoc(target), labeling);
+                return transpose(pathLoc(target), labeling, target);
         } else
             return boxLoc(target, labeling.method, labeling.transposed);
     }
