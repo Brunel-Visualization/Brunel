@@ -338,7 +338,7 @@ var BrunelD3 = (function () {
             // Abbreviate first word to just a letter
             result = parts[0].charAt(0) + " " + shorten(parts[1], len - 2);
         } else {
-            // Divide up sapce eventlu bewteen words
+            // Divide up space evenly between words
             n = Math.floor((len - (parts.length - 1)) / parts.length);     // Account for spaces between parts
             if (n < 1) return text.substr(0, len);
             for (i = 0; i < parts.length - 1; i++) result = result + parts[i].substr(0, n) + " ";

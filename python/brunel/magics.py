@@ -40,6 +40,8 @@ class BrunelMagics(Magics):
 
         parts = line.split('::')
         action = parts[0].strip()
+        datasets_in_brunel = brunel.get_dataset_names(action)
+        self.cache_data(datasets_in_brunel,datas)
         if len(parts) > 2:
             raise ValueError("Only one ':' allowed in brunel magic. Format is 'ACTION : key=value, ...'")
         if len(parts) > 1:
@@ -54,10 +56,17 @@ class BrunelMagics(Magics):
             height = self.find_term('height', extras, height)
             output = self.find_term('output', extras, output)
 
-        if data is None:
+        if data is None and len(datasets_in_brunel) == 0:
             data = self.best_match(self.get_vars(action), list(datas.values()))
         return brunel.display(action, data, width, height, output)
 
+    def cache_data(self, datasets_in_brunel, dataframes):
+        for data_name in datasets_in_brunel:
+            try:
+                data = dataframes[data_name]
+                brunel.cacheData(data_name, brunel.to_csv(data))
+            except:
+                pass
 
     def find_term(self, key, string, default=None):
         for expr in string.split(','):

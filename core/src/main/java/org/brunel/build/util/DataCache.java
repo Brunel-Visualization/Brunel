@@ -44,6 +44,18 @@ public class DataCache {
     public static synchronized void useCache(DatasetCache cache) {
         userCache = cache;
     }
+    
+    /**
+     * Store a dataset into the cache.  If a user cache is provided, the data will be stored there as well.
+     * @param dataKey unique identifier for data
+     * @param data the data to cache
+     */
+    public static synchronized void store(String dataKey, Dataset data) {
+    	localCache.store(dataKey, data);
+    	if (userCache != null) {
+    		userCache.store(dataKey, data);
+    	}
+    }
 
     /**
      * This method will return the value in the cache if it exists, and if not, it will read the data
@@ -89,6 +101,7 @@ public class DataCache {
 
         Dataset dataset = useCache ? localCache.retrieve(dataKey) : null;
         if (dataset != null) return dataset;
+        
 
         // Not found in local cache check if in user supplied cache.
         // If so, stick it back in the local cache
@@ -97,6 +110,7 @@ public class DataCache {
             if (dataset != null) localCache.store(dataKey, dataset);
         }
         if (dataset != null) return dataset;
+        
 
         // Actually read the data
         String content = is == null ? ContentReader.readContentFromUrl(uri) : ContentReader.readContent(is);

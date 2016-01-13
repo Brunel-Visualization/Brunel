@@ -42,10 +42,9 @@ lib_dir = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.c
 
 def display(brunel, data, width=800, height=600, output='d3'):
 
-    # CSV to pass to service
-    csvIO = io.StringIO()
-    data.to_csv(csvIO, index=False)
-    csv = csvIO.getvalue()
+    csv = None
+    if data is not None:
+        csv = to_csv(data)
 
     # unique identifier for HTML tags
     visid = "visid" + str(uuid.uuid1())
@@ -57,11 +56,27 @@ def display(brunel, data, width=800, height=600, output='d3'):
     else:
         raise ValueError("Valid Output Choices Are:   d3")
 
+def to_csv(df):
+        # CSV to pass to service
+        csvIO = io.StringIO()
+        df.to_csv(csvIO, index=False)
+        csv = csvIO.getvalue()
+        return csv
+
 #Uses jpype to call the main Brunel D3 integration method
 def brunel_jpype_call(data, brunel_src, width, height, visid):
-    start_JVM()
-    brunel_util = jpype.JPackage("org.brunel.util")
-    return brunel_util.D3Integration.createBrunelJSON(data, brunel_src, int(width), int(height), visid, None)
+    #commented out code allows display of Java stacktrace
+    #try:
+        return brunel_util_java.D3Integration.createBrunelJSON(data, brunel_src, int(width), int(height), visid, None)
+    #except jpype.JavaException as exception:
+    #    print (exception.message())
+    #    print (exception.stacktrace())
+
+def get_dataset_names(brunel_src):
+    return brunel_util_java.D3Integration.getDatasetNames(brunel_src)
+
+def cacheData(data_key, data):
+    brunel_util_java.D3Integration.cacheData(data_key, data)
 
 # D3 response should contain the D3 JS and D3 CSS
 def d3_output(response, visid, width, height):
@@ -121,3 +136,4 @@ def start_JVM():
 
 #Take the JVM startup hit once
 start_JVM()
+brunel_util_java = jpype.JPackage("org.brunel.util")

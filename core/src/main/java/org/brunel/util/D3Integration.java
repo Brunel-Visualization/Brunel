@@ -19,8 +19,11 @@ package org.brunel.util;
 
 
 import org.brunel.action.Action;
+import org.brunel.action.ActionUtil;
+import org.brunel.action.Param;
 import org.brunel.build.d3.D3Builder;
 import org.brunel.build.util.BuilderOptions;
+import org.brunel.build.util.DataCache;
 import org.brunel.data.Dataset;
 import org.brunel.data.io.CSV;
 import org.brunel.model.VisItem;
@@ -52,6 +55,43 @@ public class D3Integration {
     public static String createBrunelJSON(String data, String brunelSrc, int width,  int height, String visId, String controlsId) {
 				BrunelD3Result result = createBrunelResult(data, brunelSrc, width, height, visId, controlsId);
 				return gson.toJson(result) ;
+    }
+    
+    /**
+     * Store a dataset in the cache with the given key.  The key can then be used in Brunel data() statements to reference that data.
+     * @param dataKey a unique key name for the data
+     * @param data the dataset
+     */
+	//Note:   This method is called from other languages.
+	//Do not modify this method signature without checking all language integrations.
+    public static void cacheData(String dataKey, Dataset data) {
+    	DataCache.store(dataKey, data);
+    }
+    
+    /**
+     * Store a dataset provided as CSV in the cache with the given key.  The key can then be used in Brunel data() statements to reference that data.
+     * @param dataKey a unique key name for the data
+     * @param data the dataset as a CSV String
+     */
+	//Note:   This method is called from other languages.
+	//Do not modify this method signature without checking all language integrations.
+    public static void cacheData(String dataKey, String csv) {
+    	DataCache.store(dataKey, makeBrunelData(csv));
+    }
+    
+    /**
+     * Get all dataset names from data() statements that are supplied in the given brunel.
+     * @param brunel the brunel syntax
+     */
+	//Note:   This method is called from other languages.
+	//Do not modify this method signature without checking all language integrations.
+    public static String[] getDatasetNames(String brunel) {
+    	Param[] params = ActionUtil.dataParameters(Action.parse(brunel));
+    	String[] names = new String[params.length];
+    	for (int i=0; i< names.length; i++) {
+    		names[i] = params[i].asString();
+    	}
+    	return names;
     }
 
 	/**
@@ -93,7 +133,7 @@ public class D3Integration {
 
     //Create a Dataset instance given CSV
     private static Dataset makeBrunelData(String data) {
-    	if (data.isEmpty()) return null;
+    	if (data == null || data.isEmpty()) return null;
     	try {
             return  Dataset.make(CSV.read(data));
     	 } catch (Exception e) {
