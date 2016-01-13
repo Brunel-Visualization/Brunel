@@ -201,54 +201,67 @@ var BrunelD3 = (function () {
         }
     }
 
-    function boxLoc(svgItem, method, transposed) {
-        var ctm = svgItem.getCTM();
-        var b = svgItem.getBBox(), ox = b.x + ctm.e, oy = b.y + ctm.f;
-        if (transposed) b = transposeBox(b);
-
-        // Add 3 pixels padding
-        var x = method == 'left' ? ox - 3 : (method == 'right' ? ox + b.width + 3 : ox + b.width / 2);
-        var y = method == 'top' ? oy - 3 : (method == 'bottom' ? oy + b.height + 3 : oy + b.height / 2);
-        return {x: x, y: y, box: b}
+    function apply(m, x, y) {
+        return [m.a * x + m.c * y + m.e, m.b * x + m.d * y + m.f];
     }
 
-    function transpose(loc, labeling, item) {
-        var ctm = item.getCTM();
-        if (labeling.transposed)
-            return {x: loc.y, y: loc.x, box: transposeBox(loc.box)};
-        return {x:loc.x + ctm.e, y:loc.y + ctm.f};
+    function transformBox(box, matrix, transposed) {
+        var p = apply(matrix, box.x, box.y),
+            w = matrix.a * box.width + matrix.c * box.height,
+            h = matrix.b * box.width + matrix.d * box.height;
+        if (transposed)
+            return {x: p[1], y: p[0], width: h, height: w};
+        else
+            return {x: p[0], y: p[1], width: w, height: h};
+    }
+
+    function transformLoc(loc, matrix, transposed) {
+        var c = apply(matrix, loc.x, loc.y), b = transformBox(loc.box, matrix, transposed);
+        if (transposed)
+            return {x: c[1], y: c[0], box: b};
+        else
+            return {x: c[0], y: c[1], box: b};
     }
 
     // Returns an object with 'x', 'y' and 'box' that "surrounds" the text
     function makeLoc(target, labeling, s) {
-        var datum = target.__data__;                            // Associated data value
+        var datum = target.__data__,                            // Associated data value
+            box, loc, method = labeling.method;
         if (labeling.where) {
-            var box = target.getBBox(),
-                p = labeling.where(box, s, datum);
-            return transpose({x: p.x, y: p.y, box: box}, labeling, target);
-        } else if (labeling.method == 'wedge')
-            return transpose(wedgeLoc(labeling.path, datum), labeling, target);
-        else if (labeling.method == 'poly')
-            return transpose(polyLoc(target), labeling, target);
-        else if (labeling.method == 'area')
-            return transpose(areaLoc(target, s.length * 3.5), labeling, target);       // Guess at text length
-        else if (labeling.method == 'path') {
+            box = target.getBBox();
+            var p = labeling.where(box, s, datum);
+            loc = {x: p.x, y: p.y, box: box};
+        } else if (method == 'wedge')
+            loc = wedgeLoc(labeling.path, datum);
+        else if (method == 'poly')
+            loc = polyLoc(target);
+        else if (method == 'area')
+            loc = areaLoc(target, s.length * 3.5);       // Guess at text length
+        else if (method == 'path') {
             if (labeling.path.centroid)
-                return transpose(centroidLoc(labeling.path, datum, target), labeling, target);
+                loc = centroidLoc(labeling.path, datum, target);
             else
-                return transpose(pathLoc(target), labeling, target);
-        } else
-            return boxLoc(target, labeling.method, labeling.transposed);
+                loc = pathLoc(target);
+        } else {
+            box = transformBox(target.getBBox(), target.getCTM(), labeling.transposed);
+
+            // Add 3 pixels padding
+            var dx = method == 'left' ? -3 : (method == 'right' ? box.width + 3 : box.width / 2);
+            var dy = method == 'top' ? -3 : (method == 'bottom' ? box.height + 3 : box.height / 2);
+            return {x: box.x + dx, y: box.y + dy, box: box}
+        }
+        // Modify for the transpose and coords
+        return transformLoc(loc, target.getCTM(), labeling.transposed);
     }
 
 
     function makeTextSpan(loc, parent) {
-        var tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-        tspan.setAttribute('class', 'label');
-        tspan.setAttribute('x', loc.x);
-        tspan.setAttribute('y', loc.y);
-        parent.appendChild(tspan);
-        return tspan;
+        var span = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        span.setAttribute('class', 'label');
+        span.setAttribute('x', loc.x);
+        span.setAttribute('y', loc.y);
+        parent.appendChild(span);
+        return span;
     }
 
     function addEllipses(span, text, maxWidth) {
@@ -919,6 +932,15 @@ var BrunelD3 = (function () {
         nodes.selection().call(layout.drag)
     }
 
+    // Ensures a D3 item has no cumulative matrix transform
+    function undoTransform(selection) {
+        var node = selection.node(),                                    // SVG node
+            m = node.getCTM().inverse(),                                // Invert its matrix
+            t = node.ownerSVGElement.createSVGTransformFromMatrix(m);   // Convert to a transform
+        node.transform.baseVal.initialize(t);                           // Apply to create an overall identity transform
+        return selection;
+    }
+
     // Expose these methods
     return {
         'geometry': geometries,
@@ -929,6 +951,7 @@ var BrunelD3 = (function () {
         'centerInWedge': centerInArc,
         'makeRowsWithKeys': makeRowsWithKeys,
         'label': applyLabeling,
+        'undoTransform': undoTransform,
         'cloudLayout': cloud,
         'select': select,
         'shorten': shorten,

@@ -268,7 +268,6 @@ public class D3Builder extends AbstractBuilder {
                 .add("updateAll(transitionTime)").endStatement();
         out.indentLess().add("}").ln().ln();
 
-
         // Return the important items
         out.add("return {").indentMore().ln()
                 .add("dataPreProcess:").at(24).add("function(f) { if (f) pre = f; return pre },").ln()
@@ -314,10 +313,7 @@ public class D3Builder extends AbstractBuilder {
         if (builder.needsDiagramLabels())
             out.continueOnNextLine(",").add("diagramLabels = elementGroup.append('g').attr('class', 'diagram labels')");
 
-        // Need to undo transposing so we don't get flipped labels
-        out.continueOnNextLine(",").add("labels = elementGroup.append('g').attr('class', 'labels')");
-        if (scalesBuilder.coords == VisTypes.Coordinates.transposed) out.addChained(elementTransform);
-        out.endStatement();
+        out.continueOnNextLine(",").add("labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels'))").endStatement();
     }
 
     /*
