@@ -318,11 +318,28 @@ var BrunelD3 = (function () {
 
     function shorten(text, len) {
         if (!text || text.length <= len) return text;
-        var result = "", i, parts = text.split(/[ \t\n]+/);
+        if (!len) return "";
+        if (len == 1) return text.charAt(0);
+
+        var result = "", i, n, parts = text.split(/[ \t\n]+/);
         if (parts.length == len) {
-            for (i = 0; i < parts.length; i++) result += parts[i].substr(0, 1);
+            // One letter from each word
+            for (i = 0; i < parts.length; i++) result += parts[i].charAt(0);
+        } else if (parts.length == 1) {
+            // Remove vowels first, then cut off if it still is too long
+            var t = parts[0];
+            n = t.length - 2;
+            while (n > 0 && t.length > len) {
+                if ("aeiou".indexOf(t.charAt(n)) >= 0) t = t.substring(0, n) + t.substring(n + 1);
+                n--;
+            }
+            return t.length <= len ? t : t.substring(0, len);
+        } else if (parts.length == 2) {
+            // Abbreviate first word to just a letter
+            result = parts[0].charAt(0) + " " + shorten(parts[1], len - 2);
         } else {
-            var n = Math.floor((len - (parts.length - 1)) / parts.length);     // Account for spaces between parts
+            // Divide up sapce eventlu bewteen words
+            n = Math.floor((len - (parts.length - 1)) / parts.length);     // Account for spaces between parts
             if (n < 1) return text.substr(0, len);
             for (i = 0; i < parts.length - 1; i++) result = result + parts[i].substr(0, n) + " ";
             result += parts[parts.length - 1].substring(0, len - result.length);
