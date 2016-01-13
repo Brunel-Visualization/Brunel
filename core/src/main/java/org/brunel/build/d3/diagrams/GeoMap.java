@@ -20,6 +20,7 @@ import org.brunel.build.d3.D3Util;
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.util.BuilderOptions;
+import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
@@ -100,7 +101,8 @@ public class GeoMap extends D3Diagram {
         writeFeatureHookup(mapping, GeoInformation.getIDField(vis));
 
         if (vis.tElement == VisTypes.Element.point) {
-            return ElementDetails.makeForDiagram(vis, "data._rows", "circle", "point", "bottom", false);
+            return ElementDetails.makeForCoordinates(vis, ModelUtil.getElementSymbol(vis));
+//            return ElementDetails.makeForDiagram(vis, "data._rows", "circle", "point", "bottom", false);
         } else {
             out.add("var path = d3.geo.path().projection(projection)").endStatement();
 
@@ -166,9 +168,9 @@ public class GeoMap extends D3Diagram {
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
         if (vis.tElement == VisTypes.Element.point) {
             out.addChained("attr('transform', function(d) { return projectTransform(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999]) } )");
-            out.addChained("attr('r', " + D3Util.defineSafeRadius(elementDef.overallSize) + ")").endStatement();
+            definePoint(elementDef, details);
+            out.endStatement();
             addAestheticsAndTooltips(details, true);
-
         } else {
             // Set the given location using the transform
             out.addChained("attr('d', path )").endStatement();

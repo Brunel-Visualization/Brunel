@@ -313,7 +313,7 @@ public class D3Builder extends AbstractBuilder {
         if (builder.needsDiagramLabels())
             out.continueOnNextLine(",").add("diagramLabels = elementGroup.append('g').attr('class', 'diagram labels')");
 
-        out.continueOnNextLine(",").add("labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels'))").endStatement();
+        out.continueOnNextLine(",").add("labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels'), elementGroup)").endStatement();
     }
 
     /*

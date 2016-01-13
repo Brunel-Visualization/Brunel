@@ -18,6 +18,7 @@ package org.brunel.build.d3.diagrams;
 
 import org.brunel.action.Param;
 import org.brunel.build.d3.D3LabelBuilder;
+import org.brunel.build.d3.D3PointBuilder;
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.element.ElementStructure;
@@ -131,6 +132,11 @@ public abstract class D3Diagram {
         if (addLabels) labelBuilder.addElementLabeling();
 
     }
+
+    protected void definePoint(ElementDefinition elementDef, ElementDetails details) {
+        new D3PointBuilder(out).defineShapeGeometry(elementDef, details);
+    }
+
 
     void makeHierarchicalTree() {
         String[] positionFields = vis.positionFields();

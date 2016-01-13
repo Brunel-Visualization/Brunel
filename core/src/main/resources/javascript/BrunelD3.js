@@ -205,22 +205,17 @@ var BrunelD3 = (function () {
         return [m.a * x + m.c * y + m.e, m.b * x + m.d * y + m.f];
     }
 
-    function transformBox(box, matrix, transposed) {
+    function transformBox(box, matrix) {
         var p = apply(matrix, box.x, box.y),
             w = matrix.a * box.width + matrix.c * box.height,
             h = matrix.b * box.width + matrix.d * box.height;
-        if (transposed)
-            return {x: p[1], y: p[0], width: h, height: w};
-        else
-            return {x: p[0], y: p[1], width: w, height: h};
+        return {x: p[0], y: p[1], width: w, height: h};
     }
 
-    function transformLoc(loc, matrix, transposed) {
-        var c = apply(matrix, loc.x, loc.y), b = transformBox(loc.box, matrix, transposed);
-        if (transposed)
-            return {x: c[1], y: c[0], box: b};
-        else
-            return {x: c[0], y: c[1], box: b};
+    function transformLoc(loc, matrix) {
+        var c = apply(matrix, loc.x, loc.y),
+            b = transformBox(loc.box, matrix);
+        return {x: c[0], y: c[1], box: b};
     }
 
     // Returns an object with 'x', 'y' and 'box' that "surrounds" the text
@@ -243,15 +238,15 @@ var BrunelD3 = (function () {
             else
                 loc = pathLoc(target);
         } else {
-            box = transformBox(target.getBBox(), target.getCTM(), labeling.transposed);
+            box = transformBox(target.getBBox(), target.getCTM());
 
             // Add 3 pixels padding
             var dx = method == 'left' ? -3 : (method == 'right' ? box.width + 3 : box.width / 2);
             var dy = method == 'top' ? -3 : (method == 'bottom' ? box.height + 3 : box.height / 2);
             return {x: box.x + dx, y: box.y + dy, box: box}
         }
-        // Modify for the transpose and coords
-        return transformLoc(loc, target.getCTM(), labeling.transposed);
+        // Modify for the transform
+        return transformLoc(loc, target.getCTM());
     }
 
 
@@ -473,7 +468,6 @@ var BrunelD3 = (function () {
             }, 0);
             var s = Math.min(ext[0] / sx, ext[1] / sy) / 2;
 
-            console.log("scaled by " + s);
             svg.parentNode.setAttribute('transform', 'scale(' + s + ')');
         }
 
@@ -509,7 +503,6 @@ var BrunelD3 = (function () {
 
             var p = getScreenTipPosition(this, d);                          // get absolute location of the target
             var top = p.y - 10 - tooltip.offsetHeight;                      // top location
-
             if (top < 2 && p.y < geom['inner_height'] / 2) {                // We are in top half up AND overflow top
                 var old = labeling.method;                                  // save the original method
                 labeling.method = "bottom";                                 // switch to finding lower position
@@ -528,10 +521,10 @@ var BrunelD3 = (function () {
         });   // hide it
 
         function getScreenTipPosition(item, d) {
-            var labelPos = makeLoc(item, labeling, '', d);
-            pt.x = labelPos.x + (document.documentElement.scrollLeft || document.body.scrollLeft);
-            pt.y = labelPos.y + (document.documentElement.scrollTop || document.body.scrollTop);
-            return pt.matrixTransform(item.getScreenCTM());
+            var labelPos = makeLoc(item, labeling, '', d), ctm = svg.getScreenCTM();
+            pt.x = labelPos.x + ctm.e + (document.documentElement.scrollLeft || document.body.scrollLeft);
+            pt.y = labelPos.y + ctm.f + (document.documentElement.scrollTop || document.body.scrollTop);
+            return pt;
         }
 
     }
@@ -933,12 +926,12 @@ var BrunelD3 = (function () {
     }
 
     // Ensures a D3 item has no cumulative matrix transform
-    function undoTransform(selection) {
-        var node = selection.node(),                                    // SVG node
-            m = node.getCTM().inverse(),                                // Invert its matrix
+    function undoTransform(labels, element) {
+        var node = labels.node(),                                       // SVG node
+            m = element.node().getCTM().inverse(),                      // Invert its matrix
             t = node.ownerSVGElement.createSVGTransformFromMatrix(m);   // Convert to a transform
         node.transform.baseVal.initialize(t);                           // Apply to create an overall identity transform
-        return selection;
+        return labels;
     }
 
     // Expose these methods
