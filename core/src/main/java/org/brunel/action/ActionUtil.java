@@ -34,9 +34,26 @@ public class ActionUtil {
      * @return non-null array of all parameters
      */
     public static Param[] parameters(Action action) {
+    	return parametersByName(action, null);
+    }
+    
+    /**
+     * Get parameters for all data() statements
+     * @param action the action
+     * @return all parameters for all data() statements
+     */
+    public static Param[] dataParameters(Action action) {
+    	return parametersByName(action, "data");
+    }
+    
+    //Returns the parameters for a given brunel action name.  If actionName is null, all params are returned.
+    private static Param[] parametersByName(Action action, String actionName) {
         List<Param> parameters = new ArrayList<Param>();
-        for (ActionStep step : action.steps)
-            Collections.addAll(parameters, step.parameters);
+        for (ActionStep step : action.steps) {
+        	if (actionName == null || step.name.equals(actionName)) {
+        		Collections.addAll(parameters, step.parameters);
+        	}
+        }
         return parameters.toArray(new Param[parameters.size()]);
     }
 
@@ -98,4 +115,7 @@ public class ActionUtil {
     	return action;
 
     }
+    
+ 
+    
 }
