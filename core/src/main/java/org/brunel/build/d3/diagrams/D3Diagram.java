@@ -134,7 +134,7 @@ public abstract class D3Diagram {
     }
 
     protected void definePoint(ElementDefinition elementDef, ElementDetails details) {
-        new D3PointBuilder(out).defineShapeGeometry(elementDef, details);
+        new D3PointBuilder(out).defineShapeGeometry(vis, elementDef, details);
     }
 
 

@@ -58,7 +58,7 @@ public class D3LabelBuilder {
             out.add("BrunelD3.label(selection, labels, labeling, transitionMillis)").endStatement();
     }
 
-    public void addFontSizeAttribute(VisSingle vis) {
+    public static void addFontSizeAttribute(VisSingle vis, ScriptWriter out) {
         if (!vis.fSize.isEmpty()) {
             ModelUtil.Size parts = ModelUtil.getFontSize(vis);
             if (parts == null) {

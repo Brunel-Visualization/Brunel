@@ -100,9 +100,8 @@ public class GeoMap extends D3Diagram {
         out.indentLess().comment("Read in the feature data and call build again when done");
         writeFeatureHookup(mapping, GeoInformation.getIDField(vis));
 
-        if (vis.tElement == VisTypes.Element.point) {
+        if (vis.tElement == VisTypes.Element.point || vis.tElement == VisTypes.Element.text) {
             return ElementDetails.makeForCoordinates(vis, ModelUtil.getElementSymbol(vis));
-//            return ElementDetails.makeForDiagram(vis, "data._rows", "circle", "point", "bottom", false);
         } else {
             out.add("var path = d3.geo.path().projection(projection)").endStatement();
 
@@ -166,7 +165,7 @@ public class GeoMap extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
-        if (vis.tElement == VisTypes.Element.point) {
+        if (vis.tElement == VisTypes.Element.point || vis.tElement == VisTypes.Element.text) {
             out.addChained("attr('transform', function(d) { return projectTransform(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999]) } )");
             definePoint(elementDef, details);
             out.endStatement();

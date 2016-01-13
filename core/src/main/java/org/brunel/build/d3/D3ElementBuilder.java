@@ -235,13 +235,12 @@ class D3ElementBuilder {
         else if (details.producesPath)
             out.add(basicDef).addChained("attr('d', path)");                              // Simple path -- just util it
         else {
-            if (vis.tElement == VisTypes.Element.text)
-                defineText(basicDef, elementDef);
-            else if (vis.tElement == VisTypes.Element.bar)
+            if (vis.tElement == VisTypes.Element.bar)
                 defineBar(basicDef, elementDef);
             else if (vis.tElement == VisTypes.Element.edge)
                 defineEdge(basicDef, elementDef);
             else {
+                // Handles points (as circles, rects, etc.) and text
                 D3PointBuilder pointBuilder = new D3PointBuilder(out);
                 if (pointBuilder.needsExtentFunctions(details)) {
                     defineVerticalExtentFunctions(elementDef, true);
@@ -249,7 +248,7 @@ class D3ElementBuilder {
                 }
 
                 out.add(basicDef);
-                pointBuilder.defineShapeGeometry(elementDef, details);
+                pointBuilder.defineShapeGeometry(vis, elementDef, details);
             }
         }
     }
@@ -505,14 +504,6 @@ class D3ElementBuilder {
         if (vis.tElement == VisTypes.Element.line || vis.tElement == VisTypes.Element.area)
             params += ", x";
         out.add("var splits = BrunelD3.makePathSplits(" + params + ");").ln();
-    }
-
-    private void defineText(String basicDef, ElementDefinition elementDef) {
-        out.add(basicDef);
-        out.addChained("attr('x'," + elementDef.x.center + ")");
-        out.addChained("attr('y'," + elementDef.y.center + ")");
-        out.addChained("attr('dy', '0.35em').text(labeling.content)");
-        labelBuilder.addFontSizeAttribute(vis);
     }
 
     private void defineBar(String basicDef, ElementDefinition elementDef) {

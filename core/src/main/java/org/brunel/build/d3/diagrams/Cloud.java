@@ -16,6 +16,7 @@
 
 package org.brunel.build.d3.diagrams;
 
+import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
@@ -47,7 +48,7 @@ class Cloud extends D3Diagram {
         // The cloud needs to set all this stuff up front
         out.addChained("attr('dy', '0.3em').style('text-anchor', 'middle').classed('label', true)")
                 .addChained("text(labeling.content)");
-        labelBuilder.addFontSizeAttribute(vis);
+        D3LabelBuilder.addFontSizeAttribute(vis, out);
         out.endStatement();
     }
 }

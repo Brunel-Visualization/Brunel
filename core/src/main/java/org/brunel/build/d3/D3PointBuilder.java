@@ -19,6 +19,7 @@ package org.brunel.build.d3;
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
+import org.brunel.model.VisSingle;
 
 /**
  * This defines shapes ('marks') that will display the data.
@@ -37,14 +38,25 @@ public class D3PointBuilder {
         return details.elementType.equals("rect");
     }
 
-    public void defineShapeGeometry(ElementDefinition elementDef, ElementDetails details) {
+    public void defineShapeGeometry(VisSingle vis, ElementDefinition elementDef, ElementDetails details) {
         // Must be a point
         if (details.elementType.equals("rect"))
             defineRect(elementDef);
+        else if (details.elementType.equals("text"))
+            defineText(elementDef, vis);
         else
             defineCircle(elementDef);
 
     }
+
+    private void defineText(ElementDefinition elementDef, VisSingle vis) {
+        // If the center is not defined, this has been placed using a translation transform
+        if (elementDef.x.center != null) out.addChained("attr('x'," + elementDef.x.center + ")");
+        if (elementDef.y.center != null) out.addChained("attr('y'," + elementDef.y.center + ")");
+        out.addChained("attr('dy', '0.35em').text(labeling.content)");
+        D3LabelBuilder.addFontSizeAttribute(vis, out);
+    }
+
 
     private void defineCircle(ElementDefinition elementDef) {
         // If the center is not defined, this has been placed using a translation transform
