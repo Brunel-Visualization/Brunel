@@ -24,32 +24,31 @@ import org.brunel.data.auto.Auto;
  * Calculates a smooth fit function
  */
 public class Smooth implements Fit {
-    private final int delta;                                // Count of data either side to include in window
-    private final double[][] data;                          // [y,x] fields of data, sorted
+    private final double window;                              // Window width for the data
+    private final double[] x, y;                              // x and y fields of data, sorted by x
 
     public Smooth(Field y, Field x, Double windowPercent) {
         if (windowPercent == null) {
             // use the optimal bin count to chose a window size
             int n = Auto.optimalBinCount(x);
-            delta = Math.max(2, Math.round((x.valid() / n)));
+            window = (x.max() - x.min()) / n;
         } else {
-            delta = Math.max(2, (int) (x.valid() * windowPercent / 200));
+            window = (x.max() - x.min()) * windowPercent / 200;
         }
-        this.data = Regression.asPairs(y, x);
+        double[][] pairs = Regression.asPairs(y, x);
+        this.x = pairs[1];
+        this.y = pairs[0];
     }
 
     public Double get(Object value) {
         Double at = Data.asNumeric(value);
         if (at == null) return null;
 
-        double[] y = data[0], x = data[1];
-        int idx = search(at, x);                            // Closest index to the value 'at'
-        int low = Math.max(0, idx - delta);                 // low end of window
-        int high = Math.min(idx + delta, x.length - 1);     // high end of window
-        double window = Math.max(at-x[low], x[high]-at);    // window size
+        int low = search(at - window, x);                   // low end of window
+        int high = search(at + window, x);                  // high end of window
 
         double sy = 0, sw = 0;
-        for (int i = low; i <=high; i++) {
+        for (int i = low; i <= high; i++) {
             double d = (x[i] - at) / window;
             double w = 0.75 * (1 - d * d);
             sw += w;

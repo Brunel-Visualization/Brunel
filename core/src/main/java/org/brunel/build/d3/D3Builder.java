@@ -116,8 +116,8 @@ public class D3Builder extends AbstractBuilder {
         createBuilders(structure, chartMargins);
 
         // Write the class definition function
-        out.titleComment("Define chart #" + structure.chartIndex, "in the visualization");
-        out.add("charts[" + structure.chartIndex, "] = function() {").ln();
+        out.titleComment("Define chart #" + structure.chartID(), "in the visualization");
+        out.add("charts[" + structure.chartIndex + "] = function() {").ln();
         out.indentMore();
 
         double[] margins = scalesBuilder.marginsTLBR();
@@ -172,7 +172,7 @@ public class D3Builder extends AbstractBuilder {
     protected void defineElement(ElementStructure structure) {
         D3ElementBuilder elementBuilder = elementBuilders[structure.index];
 
-        out.titleComment("Define element #" + (structure.index + 1));
+        out.titleComment("Define element #" + structure.elementID());
         out.add("elements[" + structure.index + "] = function() {").indentMore();
         out.onNewLine().add("var original, processed,").at(40).comment("data sets passed in and then transformed")
                 .indentMore()
@@ -181,7 +181,7 @@ public class D3Builder extends AbstractBuilder {
                 .indentLess();
 
         // Add data variables used throughout
-        addElementGroups(elementBuilder, structure.getElementID());
+        addElementGroups(elementBuilder, "element" + structure.elementID());
 
         // Data transforms
         int datasetIndex = structure.getBaseDatasetIndex();
@@ -393,7 +393,7 @@ public class D3Builder extends AbstractBuilder {
 
     private void writeMainGroups(ChartStructure structure) {
         String axesTransform = makeTranslateTransform("geom.inner_left", "geom.inner_top");
-        out.add("var chart = vis.append('g').attr('class', '" + structure.getChartID() + "')")
+        out.add("var chart = vis.append('g').attr('class', '" + "chart" + structure.chartID() + "')")
                 .addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
                 .endStatement();
         out.add("var interior = chart.append('g').attr('class', 'interior')")
@@ -426,7 +426,7 @@ public class D3Builder extends AbstractBuilder {
 
     // returns an id that is unique to the chart and the visualization
     private String clipID(ChartStructure structure) {
-        return "clip_" + options.visIdentifier + "_" + structure.chartIndex;
+        return "clip_" + options.visIdentifier + "_" + structure.chartID();
     }
 
     public Controls getControls() {

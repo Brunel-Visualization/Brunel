@@ -161,8 +161,8 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
             controls.buildControls(structure.vis, structure.vis.getDataset());
             defineElement(structure);
             if (structure.vis.styles != null) {
-                StyleSheet styles = structure.vis.styles.replaceClass("currentElement", structure.getElementID());
-                visStyles.add(styles, structure.chart.getChartID());
+                StyleSheet styles = structure.vis.styles.replaceClass("currentElement", "element" + structure.elementID());
+                visStyles.add(styles, "chart" +structure.chart.chartID());
             }
         } catch (Exception e) {
             throw VisException.makeBuilding(e, structure.vis);

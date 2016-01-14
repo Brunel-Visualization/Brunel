@@ -57,7 +57,7 @@ public class BuildTests {
         VisItem vis = action.apply(data);
         builder.build(vis, 500, 500);
         assertTrue(builder.getVisualization().toString().length() > 100);
-        assertEquals("#visualization.brunel .chart0 .element0 .element {\n\tfill: red;\n}", builder.getStyleOverrides());
+        assertEquals("#visualization.brunel .chart1 .element1 .element {\n\tfill: red;\n}", builder.getStyleOverrides());
     }
 
     @Test

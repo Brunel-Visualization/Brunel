@@ -3240,33 +3240,31 @@ V.summary_Regression.prototype.get = function(value) {
 
 
 V.summary_Smooth = function(y, x, windowPercent) {
-    var n;
+    var n, pairs;
     if (windowPercent == null) {
         n = V.auto_Auto.optimalBinCount(x);
-        this.delta = Math.max(2, Math.round((x.valid() / n)));
+        this.window = (x.max() - x.min()) / n;
     } else {
-        this.delta = Math.max(2, Math.floor(x.valid() * windowPercent / 200));
+        this.window = (x.max() - x.min()) * windowPercent / 200;
     }
-    this.data = V.summary_Regression.asPairs(y, x);
+    pairs = V.summary_Regression.asPairs(y, x);
+    this.x = pairs[1];
+    this.y = pairs[0];
 };
 
 V.summary_Smooth.prototype.get = function(value) {
-    var d, high, i, idx, low, sw, sy, w, window, x, y;
+    var d, high, i, low, sw, sy, w;
     var at = V.Data.asNumeric(value);
     if (at == null) return null;
-    y = this.data[0];
-    x = this.data[1];
-    idx = this.search(at, x);
-    low = Math.max(0, idx - this.delta);
-    high = Math.min(idx + this.delta, x.length - 1);
-    window = Math.max(at - x[low], x[high] - at);
+    low = this.search(at - this.window, this.x);
+    high = this.search(at + this.window, this.x);
     sy = 0;
     sw = 0;
     for (i = low; i <= high; i++){
-        d = (x[i] - at) / window;
+        d = (this.x[i] - at) / this.window;
         w = 0.75 * (1 - d * d);
         sw += w;
-        sy += w * y[i];
+        sy += w * this.y[i];
     }
     return sw > 0 ? sy / sw : null;
 };

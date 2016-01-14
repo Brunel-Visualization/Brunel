@@ -53,8 +53,8 @@ public class ElementStructure {
         return chart.getBaseDatasetIndex(original);
     }
 
-    public String getElementID() {
-        return "element" + index;
+    public String elementID() {
+        return "" + (index+1);
     }
 
     public boolean isGraphEdge() {

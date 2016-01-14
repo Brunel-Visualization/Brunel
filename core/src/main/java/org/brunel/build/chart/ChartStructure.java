@@ -129,8 +129,8 @@ public class ChartStructure {
         throw new IllegalStateException("Could not find data set in array of datasets");
     }
 
-    public String getChartID() {
-        return "chart" + chartIndex;
+    public String chartID() {
+        return "" + (chartIndex+1);
     }
 
     public ElementStructure getEdge() {

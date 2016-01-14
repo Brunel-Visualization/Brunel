@@ -93,9 +93,10 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 
 - cpi       / x(food) y(housing) color(DATE) + line  x(food) y(housing) fit(housing) :: pass
 - whiskey   / bubble color(#count) size(#count) sort(#count) label(brand:1) | bubble color(#count) size(#count) sort(#count:ascending) label(brand:1) :: pass :: Two different sort orders
-- simple  / x(#row) y('reds') color(#row:reds) axes(y) legends(none) + x(#row) y('red') color(#row:red) legends(none) + x(#row) y('blues-reds') color(#row:[blues, reds]) legends(none) + x(#row) y('blue-red') color(#row:[blue, red]) legends(none)  + x(#row) y('blue-black-red') color(#row:[blue, black, red]) legends(none) + x(#row) y('nominal') color(#row:nominal) legends(none) + x(#row) y('w-w-w-c-m') color(#row:[#ffffff, #ffffff, #ffffff, cyan, magenta]) legends(none) :: pass
+- simple    / x(#row) y('reds') color(#row:reds) axes(y) legends(none) + x(#row) y('red') color(#row:red) legends(none) + x(#row) y('blues-reds') color(#row:[blues, reds]) legends(none) + x(#row) y('blue-red') color(#row:[blue, red]) legends(none)  + x(#row) y('blue-black-red') color(#row:[blue, black, red]) legends(none) + x(#row) y('nominal') color(#row:nominal) legends(none) + x(#row) y('w-w-w-c-m') color(#row:[#ffffff, #ffffff, #ffffff, cyan, magenta]) legends(none) :: pass
+- baseball  / line x(age) y(rbirate) smooth(rbirate) + line x(age) y(walkrate) smooth(walkrate) :: pass :: Note lines are two different colors
 
-- simple    / data('raw:A,B;a,b;a,c;a,d;b,c;a,e;e,f') edge key(A, B) + data('raw:I;a;b;c;d;e;f;g') network color(I) key(I) legends(none) style('fill-opacity:1;size:20px') label(I):: pass
+- simple    / data('raw:A,B;a,b;a,c;a,d;b,c;a,e;e,f;g,h;m,n;n,o') edge key(A, B) + network y(A, B) color(#values) label(#values) legends(none) style('fill-opacity:1;size:20px') :: pass
 
 
 #### Note
