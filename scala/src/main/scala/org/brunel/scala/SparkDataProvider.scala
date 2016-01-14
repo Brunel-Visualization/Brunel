@@ -25,11 +25,11 @@ import org.brunel.data.Data
 import java.util.HashMap
 
 //Brunel Provider implementation for Spark DataFrames typed to the expected data value types needed by Brunel.
-class
-SparkDataProvider[+T] (colIndex:Int, rows:Array[Row]) extends Provider {
+class SparkDataProvider[+T] (colIndex:Int, rows:Array[Row]) extends Provider {
 
   //Column structure created on-demand when needed to estimate memory
-  lazy val column : List[T]  = List.tabulate(rows.length) (x => rows(x).getAs[T](colIndex) )
+  //Note:  Missing data values are removed because of this issue in scala 2.10:  https://issues.scala-lang.org/browse/SI-6908
+  lazy val column : List[T]  = List.tabulate(rows.length) (x => rows(x).getAs[T](colIndex) ).filter(p => p != null)
 
   def compareRows(a: Int, b: Int, categoryOrder: HashMap[Object,Integer]): Int = {
     val p = rows(a).getAs[T](colIndex)

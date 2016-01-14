@@ -30,24 +30,33 @@ class Brunel extends CellMagic with IncludeInterpreter {
       code
     }
 
-    var data: Option[DataFrame] = None
+
     var width: Int = 500
     var height: Int = 400
     var action: String = null
     var extras: String = null
+    var dataFrameNames: Array[String] = null
+    var data: Option[DataFrame] = None
+    
     val parts = line.split("::")
-
     if (parts.length > 2) {
       throw new IllegalArgumentException("Only one ':' allowed in brunel magic. Format is 'ACTION : key=value, ...'")
     }
-
-    if (parts.length > 1) {
+    
+    if (parts.length > 0) {
       action = parts(0).trim
+      dataFrameNames = org.brunel.scala.Brunel.getDatasetNames(action)
+      if (dataFrameNames.length > 0) cacheDataFrames(dataFrameNames);
+    }    
+    
+    if (parts.length > 1) {
+
       extras = parts(1).trim
-      val dataName = findTerm("data", extras, "")
+      val dataName = findTerm("data", extras, null)
       if (dataName != null) {
         try {
           data = getData(dataName)
+          if (!data.nonEmpty) throw new IllegalArgumentException("Requested DataFrame: " + dataName + " was not found.")
         } catch {
           case e: Exception => e.printStackTrace
         }
@@ -58,7 +67,7 @@ class Brunel extends CellMagic with IncludeInterpreter {
 
     val visId = "visid" + java.util.UUID.randomUUID.toString
     val controlsId = "controlsId" + java.util.UUID.randomUUID.toString
-    val brunelOutput = org.brunel.scala.Brunel.create(data.getOrElse(throw new IllegalArgumentException("No dataset provided")), action, width, height, visId, controlsId)
+    val brunelOutput = org.brunel.scala.Brunel.create(data.orNull, action, width, height, visId, controlsId)
     val version = org.brunel.scala.Brunel.brunelVersion
 
     val d3js =  brunelOutput.js 
@@ -117,6 +126,15 @@ class Brunel extends CellMagic with IncludeInterpreter {
 
     CellMagicOutput(MIMEType.TextHtml -> html)
   }
+  
+  def cacheDataFrames(datasetNames: Array[String]) = {
+    for (name <- datasetNames) {
+      val data = getData(name)
+      if (data.nonEmpty) {
+        org.brunel.scala.Brunel.cacheData(name, data.get)
+      }
+    }
+  }
 
   def findTerm(key: String, str: String, default: String): String = {
     for (expr <- str.split(",")) {
@@ -128,7 +146,7 @@ class Brunel extends CellMagic with IncludeInterpreter {
         return terms(1).trim
       }
     }
-    default.toString
+    default
   }
 
   def getData(dataFrameName: String): Option[DataFrame] = {

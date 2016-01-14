@@ -43,14 +43,29 @@ object Brunel {
    * a D3 visualization.
    *
    */
-  def create(df: DataFrame, brunelSrc: String, width: Int, height: Int, visId: String, controlsId: String): BrunelOutput = {
+  def create(df:DataFrame, brunelSrc: String, width: Int, height: Int, visId: String, controlsId: String): BrunelOutput = {
     val dataset = makeDataset(df)
     val builder = D3Integration.makeD3(dataset, brunelSrc, width, height, visId, controlsId)
     new BrunelOutput(builder.getVisualization.toString, builder.getStyleOverrides, builder.getControls)
   }
+  
+  /**
+   * Get the names of all datasets specified in the brunel.
+   */
+  def getDatasetNames(brunel:String) : Array[String] = {
+    return D3Integration.getDatasetNames(brunel)
+  }
+  
+  /**
+   * Cache the contents of a DataFrame using their named references in the data() statement 
+   */
+  def cacheData(dataKey:String, df:DataFrame) = {
+    if (df != null) D3Integration.cacheData(dataKey, makeDataset(df))
+  }
 
   //Create a Brunel Dataset from a Spark DataFrame
   def makeDataset(df: DataFrame): Dataset = {
+    if (df == null) return null;
     val cols = df.columns
     val rows = df.collect()
     val dtypes = df.dtypes

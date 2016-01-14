@@ -23,7 +23,12 @@ import java.net.URI;
 public class ContentReader {
     public static String readContentFromUrl(URI uri) throws IOException {
         //TODO:  Centrally handle security
-        return readContent(uri.toURL().openStream());
+    	try {
+    		return readContent(uri.toURL().openStream());
+    	}
+    	catch(IllegalArgumentException ex) {
+    		throw new IllegalArgumentException("Could not read data from: " + uri.toString(),ex.getCause());
+    	}
     }
 
     public static String readContent(InputStream is) throws IOException {
