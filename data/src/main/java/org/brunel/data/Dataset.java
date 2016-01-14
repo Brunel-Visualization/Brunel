@@ -74,7 +74,7 @@ public class Dataset extends Informative implements Serializable {
         Field[] augmented = new Field[fields.length + 3];
         for (int i = 0; i < fields.length; i++)
             augmented[i] = Boolean.FALSE.equals(autoConvert) ? fields[i] : Auto.convert(fields[i]);
-        int len = fields[0].rowCount();
+        int len = fields.length == 0 ? 0 : fields[0].rowCount();
         augmented[fields.length] = Data.makeConstantField("#count", "Count", 1.0, len);
         augmented[fields.length + 1] = Data.makeIndexingField("#row", "Row", len);
 

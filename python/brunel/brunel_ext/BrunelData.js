@@ -1018,7 +1018,7 @@ V.Dataset.make = function(fields, autoConvert) {
     augmented = $.Array(fields.length + 3, null);
     for (i = 0; i < fields.length; i++)
         augmented[i] = false == autoConvert ? fields[i] : V.auto_Auto.convert(fields[i]);
-    len = fields[0].rowCount();
+    len = fields.length == 0 ? 0 : fields[0].rowCount();
     augmented[fields.length] = V.Data.makeConstantField("#count", "Count", 1.0, len);
     augmented[fields.length + 1] = V.Data.makeIndexingField("#row", "Row", len);
     selection = V.Data.makeConstantField("#selection", "Selection", "\u2717", len);
