@@ -26,6 +26,7 @@ import org.brunel.data.auto.Auto;
 public class Smooth implements Fit {
     private final double window;                              // Window width for the data
     private final double[] x, y;                              // x and y fields of data, sorted by x
+    private final double mean;                                // mean value
 
     public Smooth(Field y, Field x, Double windowPercent) {
         if (windowPercent == null) {
@@ -38,23 +39,32 @@ public class Smooth implements Fit {
         double[][] pairs = Regression.asPairs(y, x);
         this.x = pairs[1];
         this.y = pairs[0];
+        this.mean = y.numericProperty("mean");
     }
 
     public Double get(Object value) {
         Double at = Data.asNumeric(value);
         if (at == null) return null;
+        return eval(at, this.window);
+    }
 
-        int low = search(at - window, x);                   // low end of window
-        int high = search(at + window, x);                  // high end of window
+    private Double eval(double at, double h) {
+        int low = search(at - h, x);                   // low end of window
+        int high = search(at + h, x);                  // high end of window
 
         double sy = 0, sw = 0;
         for (int i = low; i <= high; i++) {
-            double d = (x[i] - at) / window;
+            double d = (x[i] - at) / h;
             double w = 0.75 * (1 - d * d);
-            sw += w;
-            sy += w * y[i];
+            if (w > 1e-5) {
+                sw += w;
+                sy += w * y[i];
+            }
         }
-        return sw > 0 ? sy / sw : null;
+        // If we have no data points, double the window size and try again
+        // But if that would casue the window to be 10x bigger than requested, give up and use the mean
+        if (sw < 1e-4) return h < window * 10 ? eval(at, h*2) : mean;
+        return sy / sw;
     }
 
     private int search(double at, double[] x) {

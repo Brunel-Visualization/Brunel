@@ -3250,23 +3250,32 @@ V.summary_Smooth = function(y, x, windowPercent) {
     pairs = V.summary_Regression.asPairs(y, x);
     this.x = pairs[1];
     this.y = pairs[0];
+    this.mean = y.numericProperty("mean");
 };
 
 V.summary_Smooth.prototype.get = function(value) {
-    var d, high, i, low, sw, sy, w;
     var at = V.Data.asNumeric(value);
     if (at == null) return null;
-    low = this.search(at - this.window, this.x);
-    high = this.search(at + this.window, this.x);
-    sy = 0;
-    sw = 0;
+    return this.eval(at, this.window);
+};
+
+V.summary_Smooth.prototype.eval = function(at, h) {
+    var d, i, w;
+    var low = this.search(at - h, this.x);
+    var high = this.search(at + h, this.x);
+    var sy = 0;
+    var sw = 0;
     for (i = low; i <= high; i++){
-        d = (this.x[i] - at) / this.window;
+        d = (this.x[i] - at) / h;
         w = 0.75 * (1 - d * d);
-        sw += w;
-        sy += w * this.y[i];
+        if (w > 1e-5) {
+            sw += w;
+            sy += w * this.y[i];
+        }
     }
-    return sw > 0 ? sy / sw : null;
+    if (sw < 1e-4)
+        return h < this.window * 10 ? this.eval(at, h * 2) : this.mean;
+    return sy / sw;
 };
 
 V.summary_Smooth.prototype.search = function(at, x) {

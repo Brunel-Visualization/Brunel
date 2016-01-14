@@ -55,11 +55,11 @@ var BrunelD3 = (function () {
 
     // Add a color legend
     function colorLegend(target, title, scale, ticks, labels) {
-        target.attr('class', 'legend').append('text').attr('x', 0).attr('y', 16).style('text-anchor', 'end')
-            .text(title).attr('class', 'title');
+        target.attr('class', 'legend').append('text').attr('x', 0).attr('y', 0)
+            .style('text-anchor', 'end').attr('dy', '0.85em') .text(title).attr('class', 'title');
         var legend = target.selectAll('legend').data(ticks).enter().append('g').attr('class', 'swatch')
             .attr('transform', function (d, i) {
-                return 'translate(-20,' + (25 + i * 20) + ')';
+                return 'translate(-20,' + (20 + i * 20) + ')';
             });
         legend.append('rect').attr('x', 6).attr('width', 14).attr('height', 14).style('fill', scale);
         legend.append('text').attr('y', 7).attr('dy', '.35em').style('text-anchor', 'end').text(function (d, i) {

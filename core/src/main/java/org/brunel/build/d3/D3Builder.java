@@ -408,7 +408,7 @@ public class D3Builder extends AbstractBuilder {
                     .addChained(axesTransform).endStatement();
         if (scalesBuilder.needsLegends())
             out.add("var legends = chart.append('g').attr('class', 'legend')")
-                    .addChained(makeTranslateTransform("geom.outer_width", "0")).endStatement();
+                    .addChained(makeTranslateTransform("(geom.outer_width - geom.chart_right - 3)", "0")).endStatement();
 
         // Make the clip path for this: we expand by a pixel to avoid ugly cut-offs right at the edge
         out.add("vis.append('clipPath').attr('id', '" + clipID(structure) + "').append('rect')");
