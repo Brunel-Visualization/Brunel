@@ -43,7 +43,7 @@ public class CSV {
         List<List<String>> lines = new ArrayList<List<String>>();
         List<String> line = new ArrayList<String>();
         char last = ' ';
-        boolean inQuote = false;
+        boolean inQuote = false, wasQuoted = false;
         int currentIndex = 0;
 
         char separator = findSeparator(data);
@@ -67,12 +67,12 @@ public class CSV {
             } else if (c == '\n' || c == '\r') {
                 // Ignore the second of a \n\r
                 if (last != '\r' || c != '\n') {
-                    if (line.isEmpty() && (building == null)) {
+                    if (line.isEmpty() && (building == null || building.trim().length() == 0)) {
                         // An empty line means the end of parsing
                         break;
                     }
                     // Add to the line and add the line to the list of lines
-                    line.add(saveMemory(building, common));
+                    line.add(saveMemory(building, common, wasQuoted));
                     lines.add(line);
                     if (fieldCount < 0)
                         fieldCount = line.size();
@@ -81,14 +81,17 @@ public class CSV {
                                 + fieldCount);
                     line = new ArrayList<String>();
                     building = null;
+                    wasQuoted = false;
                 }
             } else if (c == '\"') {
                 inQuote = true;
+                wasQuoted = true;
                 if (building == null) building = "";
             } else {
                 if (c == separator) {
-                    line.add(saveMemory(building, common));
+                    line.add(saveMemory(building, common, wasQuoted));
                     building = null;
+                    wasQuoted = false;
                 } else {
                     if (building == null)
                         building = "";
@@ -137,7 +140,10 @@ public class CSV {
         return best;
     }
 
-    private static String saveMemory(String s, Map<String, String> common) {
+    private static String saveMemory(String s, Map<String, String> common, boolean wasQuoted) {
+        if (s == null) return null;
+        if (!wasQuoted) s = s.trim();
+
         // Save memory by re-using common strings
         String t = common.get(s);
         if (t == null) {

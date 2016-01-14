@@ -136,8 +136,8 @@ public class VisSingle extends VisItem implements Cloneable {
         if (dataset == null) {
             // In future may handle more cases, for now, assume one item
             if (fData == null)
-                throw new IllegalArgumentException("Brunel requires a data statement for each element");
-            try {
+                dataset = Dataset.make(new Field[0], false);
+            else try {
                 dataset = DataCache.get(fData.asString());
             } catch (IOException e) {
                 throw VisException.makeBuilding(e, this);

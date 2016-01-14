@@ -45,12 +45,8 @@ public class Filter extends DataOperation {
      *      Each can be negated with a "!" in front of it, which also negates the type value
      */
     public static Dataset transform(Dataset base, String command) {
-        // We may need to remove filtered info from the categories?
-        if (!base.fields[0].hasProvider()) return base;
-
         String[] commands = parts(command);
         if (commands == null) return base;
-
         int N = commands.length;
 
         // Parse and assemble info for the commands

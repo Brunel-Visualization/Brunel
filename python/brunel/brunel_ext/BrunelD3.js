@@ -245,7 +245,7 @@ var BrunelD3 = (function () {
             var dy = method == 'top' ? -3 : (method == 'bottom' ? box.height + 3 : box.height / 2);
             return {x: box.x + dx, y: box.y + dy, box: box}
         }
-        // Modify for the transpose and coords
+        // Modify for the transform
         return transformLoc(loc, target.getCTM());
     }
 
@@ -318,11 +318,28 @@ var BrunelD3 = (function () {
 
     function shorten(text, len) {
         if (!text || text.length <= len) return text;
-        var result = "", i, parts = text.split(/[ \t\n]+/);
+        if (!len) return "";
+        if (len == 1) return text.charAt(0);
+
+        var result = "", i, n, parts = text.split(/[ \t\n]+/);
         if (parts.length == len) {
-            for (i = 0; i < parts.length; i++) result += parts[i].substr(0, 1);
+            // One letter from each word
+            for (i = 0; i < parts.length; i++) result += parts[i].charAt(0);
+        } else if (parts.length == 1) {
+            // Remove vowels first, then cut off if it still is too long
+            var t = parts[0];
+            n = t.length - 2;
+            while (n > 0 && t.length > len) {
+                if ("aeiou".indexOf(t.charAt(n)) >= 0) t = t.substring(0, n) + t.substring(n + 1);
+                n--;
+            }
+            return t.length <= len ? t : t.substring(0, len);
+        } else if (parts.length == 2) {
+            // Abbreviate first word to just a letter
+            result = parts[0].charAt(0) + " " + shorten(parts[1], len - 2);
         } else {
-            var n = Math.floor((len - (parts.length - 1)) / parts.length);     // Account for spaces between parts
+            // Divide up space evenly between words
+            n = Math.floor((len - (parts.length - 1)) / parts.length);     // Account for spaces between parts
             if (n < 1) return text.substr(0, len);
             for (i = 0; i < parts.length - 1; i++) result = result + parts[i].substr(0, n) + " ";
             result += parts[parts.length - 1].substring(0, len - result.length);
@@ -468,7 +485,6 @@ var BrunelD3 = (function () {
             }, 0);
             var s = Math.min(ext[0] / sx, ext[1] / sy) / 2;
 
-            console.log("scaled by " + s);
             svg.parentNode.setAttribute('transform', 'scale(' + s + ')');
         }
 
@@ -504,7 +520,6 @@ var BrunelD3 = (function () {
 
             var p = getScreenTipPosition(this, d);                          // get absolute location of the target
             var top = p.y - 10 - tooltip.offsetHeight;                      // top location
-
             if (top < 2 && p.y < geom['inner_height'] / 2) {                // We are in top half up AND overflow top
                 var old = labeling.method;                                  // save the original method
                 labeling.method = "bottom";                                 // switch to finding lower position
@@ -523,10 +538,10 @@ var BrunelD3 = (function () {
         });   // hide it
 
         function getScreenTipPosition(item, d) {
-            var labelPos = makeLoc(item, labeling, '', d);
-            pt.x = labelPos.x + (document.documentElement.scrollLeft || document.body.scrollLeft);
-            pt.y = labelPos.y + (document.documentElement.scrollTop || document.body.scrollTop);
-            return pt.matrixTransform(item.getScreenCTM());
+            var labelPos = makeLoc(item, labeling, '', d), ctm = svg.getScreenCTM();
+            pt.x = labelPos.x + ctm.e + (document.documentElement.scrollLeft || document.body.scrollLeft);
+            pt.y = labelPos.y + ctm.f + (document.documentElement.scrollTop || document.body.scrollTop);
+            return pt;
         }
 
     }

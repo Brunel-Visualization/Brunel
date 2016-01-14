@@ -22,16 +22,14 @@
 #description    Regions show population by shadings; points show winter mean temp by size and date of statehood by color
 #brunel         data('sample:US States.csv')
                 map color(population:greens) key(state) +
-                data('sample:US States.csv')
                 point map color(date:[black]) size(winter:400%) key(state)
 
 #id             mappaths
 #title          Minard's Map of Napoleon's march on Russia
-#width          600
-#height         400
+#width          700
+#height         300
 #description    The width of the path is proportional to the size of the army; city names are modern
 #brunel         data('sample:minard-troops.csv') map('russia', 'belarus', 'lithuania') +
-                data('sample:minard-troops.csv')
                 path x(long) y(lat) color(direction) size(survivors:400%) split(group) legends(none) + map(labels)
 
 #id             mapbackgroundonly
@@ -39,4 +37,12 @@
 #width          600
 #height         600
 #description    A background map with no data, just geography
-#brunel         data('sample:US States.csv') map('Europe', 'France')
+#brunel         map('Europe', 'France')
+
+
+#id             network
+#title          The Sierpinski Gasket
+#width          600
+#height         600
+#description    Layout of the Sierpinski data -- a purely abstract network
+#brunel         data('sample:sierpinski.csv') edge key(a, b) + network y(a, b) color(#values) label(#values) legends(none)
