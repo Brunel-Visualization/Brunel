@@ -22,7 +22,8 @@ public class CookBookBuilder extends DocBuilder {
 
     public static final String BASIC = "/org/brunel/app/basic.txt";
     public static final String STATS = "/org/brunel/app/stats.txt";
-    public static final String INFO_VIS = "/org/brunel/app/infovis.txt";
+	public static final String INFO_VIS = "/org/brunel/app/infovis.txt";
+	public static final String SPECIAL = "/org/brunel/app/special.txt";
 
     public static void main(String[] args) throws Exception {
 
@@ -37,9 +38,12 @@ public class CookBookBuilder extends DocBuilder {
     	out.append("***\n");
     	out.append("### Statistical Graphics\n");
     	run(STATS, ITEM_FORMAT);
-    	out.append("***\n");
-    	out.append("### Information Visualization\n");
-    	run(INFO_VIS, ITEM_FORMAT);
+		out.append("***\n");
+		out.append("### Information Visualization\n");
+		run(INFO_VIS, ITEM_FORMAT);
+		out.append("***\n");
+		out.append("### Maps and Networks\n");
+		run(SPECIAL, ITEM_FORMAT);
     	System.out.println(out.toString());
         display.showInBrowser();
 

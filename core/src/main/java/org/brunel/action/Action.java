@@ -176,8 +176,10 @@ public class Action implements Comparable<Action> {
         List<List<ActionStep>> splits = split(steps, "+");                              // Split list into elements
         if (splits == null) return applyNesting(steps, data);                           // Shortcut for a single element
         VisItem[] elements = new VisItem[splits.size()];                                // Multiple elements
-        for (int i = 0; i < elements.length; i++)                                       // For each element
+        for (int i = 0; i < elements.length; i++) {                                     // For each element
             elements[i] = applyNesting(splits.get(i), data);                            // ... make and nest if needed
+            data = elements[i].getDataSets()[0];
+        }
         return VisComposition.overlay(elements);                                        // Return the composition
     }
 
