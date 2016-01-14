@@ -36,7 +36,7 @@ class Bubble extends D3Diagram {
                 .addChained("value(function(d) { return d.value == null || d.value < 0 ? 0 : d.value })")
                 .addChained("sort(BrunelData.diagram_Hierarchical.compare)").endStatement();
         out.add("function keyFunction(d) { return d.key }").endStatement();
-        return ElementDetails.makeForDiagram("pack(tree.root)", "circle", "point", "box", true);
+        return ElementDetails.makeForDiagram(vis, "pack(tree.root)", "circle", "point", "box", true);
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {

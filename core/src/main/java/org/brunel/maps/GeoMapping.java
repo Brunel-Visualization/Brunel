@@ -37,10 +37,18 @@ import java.util.TreeMap;
  */
 public class GeoMapping {
 
+    /**
+     * Creates a mapping definition based on a polygonal regions to display
+     * @param polygon usually a convex hull for the space to show
+     * @param required any files that must be used
+     * @param geoAnalysis gloabl information on features
+     * @return a mappig structure, or null if no files could be found that matched up
+     */
     public static GeoMapping createGeoMapping(Poly polygon, List<GeoFile> required, GeoData geoAnalysis) {
         HashSet<Object> unmatched = new HashSet<Object>();
         MappedLists<GeoFile, Object> map = mapBoundsToFiles(polygon, geoAnalysis.getGeoFiles());
-        return new GeoMapping(required, unmatched, map);
+        GeoMapping mapping = new GeoMapping(required, unmatched, map);
+        return mapping.fileCount() > 0 ? mapping : null;
     }
 
     // Create a map from GeoFile index to the points that file contains.
@@ -56,12 +64,19 @@ public class GeoMapping {
         return map;
     }
 
+    /**
+     * Create a definition of how to map names to  features in feature files
+     * @param names the names to use
+     * @param required files that we are required to add in
+     * @param geoAnalysis global geographic information
+     * @return suitable mapping, or null if no usable files were identified
+     */
     static GeoMapping createGeoMapping(Object[] names, List<GeoFile> required, GeoData geoAnalysis) {
         HashSet<Object> unmatched = new HashSet<Object>();
         MappedLists<GeoFile, Object> map = geoAnalysis.mapFeaturesToFiles(names, unmatched);
         GeoMapping mapping = new GeoMapping(required, unmatched, map);
         mapping.buildFeatureMap();
-        return mapping;
+        return mapping.fileCount() > 0 ? mapping : null;
     }
 
     public boolean isReference() {

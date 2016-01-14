@@ -20,6 +20,7 @@ import org.brunel.build.d3.D3Util;
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.util.BuilderOptions;
+import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
@@ -27,6 +28,7 @@ import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
 import org.brunel.maps.projection.ProjectionBuilder;
 import org.brunel.model.VisSingle;
+import org.brunel.model.VisTypes;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -95,14 +97,17 @@ public class GeoMap extends D3Diagram {
     }
 
     public ElementDetails initalizeDiagram() {
-        out.add("var path = d3.geo.path().projection(projection)").endStatement();
-        out.indentLess();
-
-        out.comment("Read in the feature data and call build again when done");
+        out.indentLess().comment("Read in the feature data and call build again when done");
         writeFeatureHookup(mapping, GeoInformation.getIDField(vis));
 
-        // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
-        return ElementDetails.makeForDiagram("data._rows", "path", "polygon", "geo", false);
+        if (vis.tElement == VisTypes.Element.point || vis.tElement == VisTypes.Element.text) {
+            return ElementDetails.makeForCoordinates(vis, ModelUtil.getElementSymbol(vis));
+        } else {
+            out.add("var path = d3.geo.path().projection(projection)").endStatement();
+
+            // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
+            return ElementDetails.makeForDiagram(vis, "data._rows", "path", "polygon", "geo", false);
+        }
     }
 
     private void writeFeatureHookup(GeoMapping mapping, String idField) {
@@ -160,8 +165,15 @@ public class GeoMap extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
-        // Set the given location using the transform
-        out.addChained("attr('d', path )").endStatement();
+        if (vis.tElement == VisTypes.Element.point || vis.tElement == VisTypes.Element.text) {
+            out.addChained("attr('transform', function(d) { return projectTransform(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999]) } )");
+            definePoint(elementDef, details);
+            out.endStatement();
+            addAestheticsAndTooltips(details, true);
+        } else {
+            // Set the given location using the transform
+            out.addChained("attr('d', path )").endStatement();
+        }
         addAestheticsAndTooltips(details, true);
     }
 

@@ -56,7 +56,7 @@ public class D3Integration {
 				BrunelD3Result result = createBrunelResult(data, brunelSrc, width, height, visId, controlsId);
 				return gson.toJson(result) ;
     }
-    
+
     /**
      * Store a dataset in the cache with the given key.  The key can then be used in Brunel data() statements to reference that data.
      * @param dataKey a unique key name for the data
@@ -67,18 +67,18 @@ public class D3Integration {
     public static void cacheData(String dataKey, Dataset data) {
     	DataCache.store(dataKey, data);
     }
-    
+
     /**
      * Store a dataset provided as CSV in the cache with the given key.  The key can then be used in Brunel data() statements to reference that data.
      * @param dataKey a unique key name for the data
-     * @param data the dataset as a CSV String
+     * @param csv the dataset as a CSV String
      */
 	//Note:   This method is called from other languages.
 	//Do not modify this method signature without checking all language integrations.
     public static void cacheData(String dataKey, String csv) {
     	DataCache.store(dataKey, makeBrunelData(csv));
     }
-    
+
     /**
      * Get all dataset names from data() statements that are supplied in the given brunel.
      * @param brunel the brunel syntax

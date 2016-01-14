@@ -1,0 +1,48 @@
+#id             map
+#title          Map of the USA
+#width          600
+#height         400
+#description    USA by states, labeled
+#brunel         data('sample:US States.csv')
+                map key(state) label(state)
+
+#id             mapchoro
+#title          Rainfall over the United States
+#width          600
+#height         400
+#description    Choropleth map of the USA, showing average annual rainfall
+#brunel         data('sample:US States.csv')
+                map color(rain:[reds, blues]) key(state) label(state)
+
+
+#id             mapcombined
+#title          Multiple Attributes of States
+#width          600
+#height         400
+#description    Regions show population by shadings; points show winter mean temp by size and date of statehood by color
+#brunel         data('sample:US States.csv')
+                map color(population:greens) key(state) +
+                point map color(date:[black]) size(winter:400%) key(state)
+
+#id             mappaths
+#title          Minard's Map of Napoleon's march on Russia
+#width          700
+#height         300
+#description    The width of the path is proportional to the size of the army; city names are modern
+#brunel         data('sample:minard-troops.csv') map('russia', 'belarus', 'lithuania') +
+                path x(long) y(lat) color(direction) size(survivors:400%) split(group) legends(none) + map(labels)
+
+#id             mapbackgroundonly
+#title          Europe, highlighting France
+#width          600
+#height         600
+#description    A background map with no data, just geography
+#brunel         map('Europe', 'France')
+
+
+#id             network
+#title          The Sierpinski Gasket
+#width          600
+#height         600
+#description    Layout of the Sierpinski data -- a purely abstract network
+#brunel         data('sample:sierpinski.csv') edge key(a, b) + network y(a, b) color(#values) label(#values) legends(none)

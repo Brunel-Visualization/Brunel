@@ -19,9 +19,11 @@
 <h3>Data statement: <code>data('...')</code></h3>
 <p>
     Although some applications may allow you to specify a data set to use through their user interface (or is
-    predefined, like the example data set sued in this guide),
+    predefined, like the example data set used in this guide),
     the data statement allows you to specify a web location to read data for an element. A different data set can
-    be associated with each element, and we allow two custom location schemes as helpful utilities
+    be associated with each element, and we allow two custom location schemes as helpful utilities.
+    Data is inherited from the previous element in the Brunel command chain, until a data satement for an element
+    re-defines it.
 </p>
 <ul>
     <li><code>sample:???.csv</code> -- using this scheme directly accesses Brunel's sample data files, one of

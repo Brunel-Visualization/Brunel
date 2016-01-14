@@ -91,7 +91,6 @@ public class TestCSV {
         assertEquals("_123", CSV.identifier("123"));
         assertEquals("yo_1_2_3", CSV.identifier("yo 1 2 3"));
         assertEquals("ff0", CSV.identifier("ff0(?a,b)?"));
-
     }
 
     @Test
@@ -112,6 +111,17 @@ public class TestCSV {
         assertEquals("Row", data.fields[4].label);
         assertEquals("Selection", data.fields[5].label);
     }
+
+    @Test
+    public void testSpaces() {
+        Dataset data = Dataset.make(CSV.read("A, B\n a, b\ng,\" h \"\n \n RANDOM TEXT TO BE IGNORED"));
+        assertEquals("A", data.fields[0].name);
+        assertEquals("B", data.fields[1].name);
+        assertEquals(2, data.rowCount());
+        assertEquals("b", data.fields[1].value(0));
+        assertEquals(" h ", data.fields[1].value(1));
+    }
+
 
     @Test
     public void testReadableLabels() {

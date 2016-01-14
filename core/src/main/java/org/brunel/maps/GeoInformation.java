@@ -31,6 +31,7 @@ import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -97,7 +98,7 @@ public class GeoInformation {
     public GeoInformation(VisSingle[] elements, Dataset[] datas, ChartCoordinates positionFields) {
         this.elements = elements;
         Poly positionHull = getPositionPoints(positionFields);
-        this.geo = makeGeoMappings(elements, datas, positionHull);
+        this.geo = makeGeoMappings(datas, positionHull);
         Poly withoutReferenceMaps = combineForHull(positionHull, geo, false);
         if (withoutReferenceMaps.count() == 0) {
             this.hull = combineForHull(positionHull, geo, true);
@@ -188,27 +189,35 @@ public class GeoInformation {
     }
 
     // The whole array returned will be null if nothing is a map
-    private Map<VisSingle, GeoMapping> makeGeoMappings(VisSingle[] element, Dataset[] datas, Poly positionHull) {
+    private Map<VisSingle, GeoMapping> makeGeoMappings(Dataset[] datas, Poly positionHull) {
         Map<VisSingle, GeoMapping> map = new LinkedHashMap<VisSingle, GeoMapping>();
-        boolean oneValid = false;
-        for (int i = 0; i < element.length; i++) {
-            if (element[i].tDiagram == VisTypes.Diagram.map) {
-                GeoMapping mapping = makeMapping(element[i], datas[i], positionHull);
+        GeoFile[] validFiles = null;
+        for (int i = 0; i < elements.length; i++) {
+            if (elements[i].tDiagram == VisTypes.Diagram.map) {
+                GeoMapping mapping = makeMapping(elements[i], datas[i], positionHull);
                 if (mapping != null) {
                     map.put(elements[i], mapping);
-                    if (mapping.totalBounds() != null) oneValid = true;
+                    if (validFiles == null) validFiles = mapping.files;
                 }
             }
         }
 
-        if (!oneValid) {
+        if (validFiles == null) {
             // We were unable to create a valid map -- nothing provided location information.
             // We will build a world map. This is an edge case, but supports the simple Brunel 'map'
-            for (VisSingle e : element) {
+            GeoMapping world = GeoData.instance().world();
+            validFiles = world.files;
+            for (VisSingle e : elements) {
                 if (e.tDiagram == VisTypes.Diagram.map && e.tDiagramParameters.length == 0) {
-                    map.put(e, GeoData.instance().world());
+                    map.put(e, world);
                 }
             }
+        }
+
+        // Now run through any elements that should have a mapping, but do not
+        for (VisSingle e : elements) {
+            if (e.tDiagram == VisTypes.Diagram.map && map.get(e) == null)
+                map.put(e, GeoMapping.createGeoMapping(new Object[0], Arrays.asList(validFiles), GeoData.instance()));
         }
 
         return map;

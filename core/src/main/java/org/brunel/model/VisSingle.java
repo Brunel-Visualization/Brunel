@@ -59,7 +59,7 @@ public class VisSingle extends VisItem implements Cloneable {
     public boolean flipX;
     public boolean flipY;                  // reverse the X or y scale
     public List<Param> fKeys;              // Fields used as fKeys
-    public List<String> fData;             // Data sets used
+    public Param fData;                    // Data sets used
 
     public Map<VisTypes.Axes, Param[]> fAxes;               // Axes mapped to their parameters
     public Map<VisTypes.Interaction, Param> tInteraction;   // Which interactive features to support (with maps to options)
@@ -93,7 +93,6 @@ public class VisSingle extends VisItem implements Cloneable {
         fX = Collections.EMPTY_LIST;
         fY = Collections.EMPTY_LIST;
         fColor = Collections.EMPTY_LIST;
-        fData = Collections.EMPTY_LIST;
         fKeys = Collections.EMPTY_LIST;
         fOpacity = Collections.EMPTY_LIST;
         fSize = Collections.EMPTY_LIST;
@@ -136,10 +135,10 @@ public class VisSingle extends VisItem implements Cloneable {
     public Dataset getDataset() {
         if (dataset == null) {
             // In future may handle more cases, for now, assume one item
-            if (fData.size() != 1)
-                throw new IllegalArgumentException("Currently Brunel requires exactly one data statement");
-            try {
-                dataset = DataCache.get(fData.get(0));
+            if (fData == null)
+                dataset = Dataset.make(new Field[0], false);
+            else try {
+                dataset = DataCache.get(fData.asString());
             } catch (IOException e) {
                 throw VisException.makeBuilding(e, this);
             }
@@ -166,16 +165,14 @@ public class VisSingle extends VisItem implements Cloneable {
 
     /**
      * Define data references, usually as a URL.
-     * Multiple data statements are not currently supported, but in future are likely to support joins
      *
-     * @param dataReferences each defines a dataset
+     * @param dataReference defines the data to read
      * @return this
      */
-    public VisSingle data(Param... dataReferences) {
+    public VisSingle data(Param dataReference) {
         // Replaces all previous data statements
         dataset = null;
-        fData = new ArrayList<String>(dataReferences.length);
-        for (Param d : dataReferences) fData.add(d.asString());
+        fData = dataReference;
         return this;
     }
 

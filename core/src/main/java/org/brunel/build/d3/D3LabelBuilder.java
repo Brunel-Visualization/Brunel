@@ -58,7 +58,7 @@ public class D3LabelBuilder {
             out.add("BrunelD3.label(selection, labels, labeling, transitionMillis)").endStatement();
     }
 
-    public void addFontSizeAttribute(VisSingle vis) {
+    public static void addFontSizeAttribute(VisSingle vis, ScriptWriter out) {
         if (!vis.fSize.isEmpty()) {
             ModelUtil.Size parts = ModelUtil.getFontSize(vis);
             if (parts == null) {
@@ -73,11 +73,11 @@ public class D3LabelBuilder {
         if (vis.itemsTooltip.isEmpty()) return;
         out.onNewLine().ln();
         defineLabeling(details.modifyForTooltip(vis.coords == VisTypes.Coordinates.transposed),
-                prettify(vis.itemsTooltip, true), vis.coords,  true);
+                prettify(vis.itemsTooltip, true), true);
         out.add("BrunelD3.addTooltip(selection, tooltipLabeling, geom)").endStatement();
     }
 
-    public void defineLabeling(ElementDetails details, List<Param> items, VisTypes.Coordinates coordinateType, boolean forTooltip) {
+    public void defineLabeling(ElementDetails details, List<Param> items, boolean forTooltip) {
         if (vis.tElement != VisTypes.Element.text && items.isEmpty()) return;
         String name = forTooltip ? "tooltipLabeling" : "labeling";
         out.add("var", name, "= {").ln().indentMore();
@@ -90,8 +90,6 @@ public class D3LabelBuilder {
             out.onNewLine().add("method:", out.quote(textMethod), ", ");
         }
         out.onNewLine().add("fit:", details.textMustFit, ",");
-        if (coordinateType == VisTypes.Coordinates.transposed)
-            out.onNewLine().add("transposed: true,");
         if (textMethod.equals("path") || textMethod.equals("wedge"))
             out.onNewLine().add("path: path,");
 

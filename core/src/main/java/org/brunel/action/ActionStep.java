@@ -139,7 +139,7 @@ class ActionStep {
                 item.flip();
                 return item;
             } else if (name.equals("data")) {
-                item.data(parameters);
+                item.data(oneParam());
                 return item;
             }
 

@@ -1652,6 +1652,7 @@ V.io_CSV.parse = function(data) {
     var line = new $.List();
     var last = ' ';
     var inQuote = false;
+    var wasQuoted = false;
     var currentIndex = 0;
     var separator = V.io_CSV.findSeparator(data);
     var building = null;
@@ -1669,10 +1670,10 @@ V.io_CSV.parse = function(data) {
                 building += c;
         } else if (c == '\n' || c == '\r') {
             if (last != '\r' || c != '\n') {
-                if ($.isEmpty(line) && (building == null)) {
+                if ($.isEmpty(line) && (building == null || $.len(building.trim()) == 0)) {
                     break;
                 }
-                line.add(V.io_CSV.saveMemory(building, common));
+                line.add(V.io_CSV.saveMemory(building, common, wasQuoted));
                 lines.add(line);
                 if (fieldCount < 0)
                     fieldCount = line.size();
@@ -1681,14 +1682,17 @@ V.io_CSV.parse = function(data) {
                         + " entries; expected " + fieldCount);
                 line = new $.List();
                 building = null;
+                wasQuoted = false;
             }
         } else if (c == '\"') {
             inQuote = true;
+            wasQuoted = true;
             if (building == null) building = "";
         } else {
             if (c == separator) {
-                line.add(V.io_CSV.saveMemory(building, common));
+                line.add(V.io_CSV.saveMemory(building, common, wasQuoted));
                 building = null;
+                wasQuoted = false;
             } else {
                 if (building == null) building = "";
                 building += c;
@@ -1730,8 +1734,11 @@ V.io_CSV.findSeparator = function(data) {
     return best;
 };
 
-V.io_CSV.saveMemory = function(s, common) {
-    var t = common.get(s);
+V.io_CSV.saveMemory = function(s, common, wasQuoted) {
+    var t;
+    if (s == null) return null;
+    if (!wasQuoted) s = s.trim();
+    t = common.get(s);
     if (t == null) {
         common.put(s, s);
         return s;
@@ -2108,9 +2115,8 @@ V.modify_Filter = function() {
 $.extend(V.modify_Filter, V.modify_DataOperation);
 
 V.modify_Filter.transform = function(base, command) {
-    var N, c, commands, field, i, keep, p, par, params, q, results, t, type;
-    if (!base.fields[0].hasProvider()) return base;
-    commands = V.modify_DataOperation.parts(command);
+    var N, c, field, i, keep, p, par, params, q, results, t, type;
+    var commands = V.modify_DataOperation.parts(command);
     if (commands == null) return base;
     N = commands.length;
     field = $.Array(N, null);

@@ -56,7 +56,7 @@ class D3ElementBuilder {
         // Define paths needed in the element, and make data splits
         if (details.producesPath) definePathsAndSplits(elementDef);
 
-        labelBuilder.defineLabeling(details, vis.itemsLabel, vis.coords, false);   // Labels
+        labelBuilder.defineLabeling(details, vis.itemsLabel, false);   // Labels
 
         modifyGroupStyleName();             // Diagrams change the name so CSS style sheets will work well
 
@@ -112,7 +112,7 @@ class D3ElementBuilder {
     private ElementDetails makeDetails() {
         // When we create diagrams this has the side effect of writing the data calls needed
         if (structure.isGraphEdge()) {
-            return ElementDetails.makeForDiagram("graph.links", "line", "edge", "box", false);
+            return ElementDetails.makeForDiagram(vis, "graph.links", "line", "edge", "box", false);
         } else if (diagram == null)
             return ElementDetails.makeForCoordinates(vis, getSymbol());
         else
@@ -235,21 +235,46 @@ class D3ElementBuilder {
         else if (details.producesPath)
             out.add(basicDef).addChained("attr('d', path)");                              // Simple path -- just util it
         else {
-            if (vis.tElement == VisTypes.Element.text)
-                defineText(basicDef, elementDef);
-            else if (vis.tElement == VisTypes.Element.bar)
+            if (vis.tElement == VisTypes.Element.bar)
                 defineBar(basicDef, elementDef);
             else if (vis.tElement == VisTypes.Element.edge)
                 defineEdge(basicDef, elementDef);
             else {
-                // Must be a point
-                if (details.elementType.equals("rect"))
-                    defineRect(basicDef, elementDef);
-                else
-                    defineCircle(basicDef, elementDef);
+                // Handles points (as circles, rects, etc.) and text
+                D3PointBuilder pointBuilder = new D3PointBuilder(out);
+                if (pointBuilder.needsExtentFunctions(details)) {
+                    defineVerticalExtentFunctions(elementDef, true);
+                    defineHorizontalExtentFunctions(elementDef, true);
+                }
+
+                out.add(basicDef);
+                pointBuilder.defineShapeGeometry(vis, elementDef, details);
             }
         }
     }
+
+    private void defineHorizontalExtentFunctions(ElementDefinition elementDef, boolean withWidth) {
+        if (elementDef.x.left != null) {
+            // Use the left and right values
+            out.add("var x0 =", elementDef.x.left).endStatement();
+            out.add("var x1 =", elementDef.x.right).endStatement();
+        } else {
+            out.add("var x =", elementDef.x.center).endStatement();
+            if (withWidth) out.add("var w =", elementDef.x.size).endStatement();
+        }
+    }
+
+    private void defineVerticalExtentFunctions(ElementDefinition elementDef, boolean withHeight) {
+        if (elementDef.y.left != null) {
+            // Use the left and right values
+            out.add("var y0 =", elementDef.y.left).endStatement();
+            out.add("var y1 =", elementDef.y.right).endStatement();
+        } else {
+            out.add("var y =", elementDef.y.center).endStatement();
+            if (withHeight) out.add("var h =", elementDef.y.size).endStatement();
+        }
+    }
+
 
     private void writeCoordinateLabelingAndAesthetics(ElementDetails details) {
         // Define colors using the color function
@@ -473,31 +498,12 @@ class D3ElementBuilder {
         }
     }
 
-    private void defineVerticalExtentFunctions(ElementDefinition elementDef, boolean withHeight) {
-        if (elementDef.y.left != null) {
-            // Use the left and right values
-            out.add("var y0 =", elementDef.y.left).endStatement();
-            out.add("var y1 =", elementDef.y.right).endStatement();
-        } else {
-            out.add("var y =", elementDef.y.center).endStatement();
-            if (withHeight) out.add("var h =", elementDef.y.size).endStatement();
-        }
-    }
-
     private void constructSplitPath() {
         // We add the x function to signal we need the paths sorted
         String params = "data, path";
         if (vis.tElement == VisTypes.Element.line || vis.tElement == VisTypes.Element.area)
             params += ", x";
         out.add("var splits = BrunelD3.makePathSplits(" + params + ");").ln();
-    }
-
-    private void defineText(String basicDef, ElementDefinition elementDef) {
-        out.add(basicDef);
-        out.addChained("attr('x'," + elementDef.x.center + ")");
-        out.addChained("attr('y'," + elementDef.y.center + ")");
-        out.addChained("attr('dy', '0.35em').text(labeling.content)");
-        labelBuilder.addFontSizeAttribute(vis);
     }
 
     private void defineBar(String basicDef, ElementDefinition elementDef) {
@@ -522,7 +528,7 @@ class D3ElementBuilder {
                         .addChained("attr('height', function(d) {return Math.max(0,geom.inner_height - y(d)) }) ");
             }
         }
-        defineHorizontalExtent(elementDef);
+        new D3PointBuilder(out).defineHorizontalExtent(elementDef.x);
     }
 
     private void defineEdge(String basicDef, ElementDefinition elementDef) {
@@ -550,20 +556,7 @@ class D3ElementBuilder {
         }
     }
 
-    private void defineRect(String basicDef, ElementDefinition elementDef) {
-        defineVerticalExtentFunctions(elementDef, true);
-        defineHorizontalExtentFunctions(elementDef, true);
-        out.add(basicDef);
-        defineHorizontalExtent(elementDef);
-        defineVerticalExtent(elementDef);
-    }
 
-    private void defineCircle(String basicDef, ElementDefinition elementDef) {
-        out.add(basicDef);
-        out.addChained("attr('cx'," + elementDef.x.center + ")");
-        out.addChained("attr('cy'," + elementDef.y.center + ")");
-        out.addChained("attr('r'," + halve(elementDef.overallSize) + ")");
-    }
 
     private boolean allShowExtent(Field[] fields) {
         // Categorical and numeric fields both show elements as extents on the axis
@@ -578,65 +571,6 @@ class D3ElementBuilder {
         return s != null && (s.equals("iqr") || s.equals("range"));
     }
 
-    private void defineHorizontalExtentFunctions(ElementDefinition elementDef, boolean withWidth) {
-        if (elementDef.x.left != null) {
-            // Use the left and right values
-            out.add("var x0 =", elementDef.x.left).endStatement();
-            out.add("var x1 =", elementDef.x.right).endStatement();
-        } else {
-            out.add("var x =", elementDef.x.center).endStatement();
-            if (withWidth) out.add("var w =", elementDef.x.size).endStatement();
-        }
-    }
-
-    private void defineHorizontalExtent(ElementDefinition elementDef) {
-        String left, width;
-        if (elementDef.x.left != null) {
-            // Use the left and right values
-            left = "function(d) { return Math.min(x0(d), x1(d)) }";
-            width = "function(d) { return Math.abs(x1(d) - x0(d)) }";
-        } else {
-            // The width can either be a function or a numeric value
-            if (elementDef.x.size.startsWith("function"))
-                left = "function(d) { return x(d) - w(d)/2 }";
-            else
-                left = "function(d) { return x(d) - w/2 }";
-            width = "w";
-        }
-        out.addChained("attr('x', ", left, ")");
-
-        // Sadly, browsers are inconsistent in how they handle width. It can be considered either a style or a
-        // positional attribute, so we need to specify as both to make all browsers happy
-        out.addChained("attr('width', ", width, ")");
-        out.addChained("style('width', ", width, ")");
-    }
-
-    private void defineVerticalExtent(ElementDefinition elementDef) {
-        String top, height;
-        if (elementDef.y.left != null) {
-            // Use the left and right values
-            top = "function(d) { return Math.min(y0(d), y1(d)) }";
-            height = "function(d) { return Math.max(0.0001, Math.abs(y1(d) - y0(d))) }";
-        } else {
-            // The height can either be a function or a numeric value
-            if (elementDef.y.size.startsWith("function"))
-                top = "function(d) { return y(d) - h(d)/2 }";
-            else
-                top = "function(d) { return y(d) - h/2 }";
-            height = "h";
-        }
-        out.addChained("attr('y', ", top, ")");
-        out.addChained("attr('height', ", height, ")");
-    }
-
-    private String halve(String sizeText) {
-        // Put the "/2" factor inside the function if needed
-        String body = D3Util.stripFunction(sizeText);
-        if (body.equals(sizeText))
-            return body + " / 2";
-        else
-            return "function(d) { return " + body + " / 2 }";
-    }
 
     public void preBuildDefinitions() {
         if (diagram != null) diagram.preBuildDefinitions();
