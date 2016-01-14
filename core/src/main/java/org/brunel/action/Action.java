@@ -94,8 +94,10 @@ public class Action implements Comparable<Action> {
         List<List<ActionStep>> splits = split(all, "|");                        // Create a list per tiled chart
         if (splits == null) return applyChartElements(all, data);               // Shortcut for single list
         VisItem[] charts = new VisItem[splits.size()];                          // One chart per list
-        for (int i = 0; i < charts.length; i++)                                 // For each chart ..
+        for (int i = 0; i < charts.length; i++) {                               // For each chart ..
             charts[i] = applyChartElements(splits.get(i), data);                // .. build the chart elements
+            data = charts[i].getDataSets()[0];                                  // .. and use the data in it
+        }
         return VisComposition.tile(charts);                                     // Tile if needed
     }
 
