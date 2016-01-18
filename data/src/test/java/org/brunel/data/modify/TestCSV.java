@@ -114,14 +114,15 @@ public class TestCSV {
 
     @Test
     public void testSpaces() {
-        Dataset data = Dataset.make(CSV.read("A, B\n a, b\ng,\" h \"\n \n RANDOM TEXT TO BE IGNORED"));
+        Dataset data = Dataset.make(CSV.read("A, B\n a, b\ng,\" h \"\nx,\n \n RANDOM TEXT TO BE IGNORED"));
         assertEquals("A", data.fields[0].name);
         assertEquals("B", data.fields[1].name);
-        assertEquals(2, data.rowCount());
+        assertEquals(3, data.rowCount());
         assertEquals("b", data.fields[1].value(0));
         assertEquals(" h ", data.fields[1].value(1));
+        assertEquals("x", data.fields[0].value(2));
+        assertEquals(null, data.fields[1].value(2));
     }
-
 
     @Test
     public void testReadableLabels() {

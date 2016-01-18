@@ -80,6 +80,11 @@ class GeoNaming {
     public static List<String> variants(String name) {
         List<String> variants = new ArrayList<String>();
 
+        if (name.equals("east germany") || name.equals("west germany")) {
+            variants.add("germany");
+            return variants;
+        }
+
         String t = removeAccents(name);
         if (!name.equals(t)) variants.add(t);
 
@@ -97,6 +102,19 @@ class GeoNaming {
         p = name.indexOf('(');
         if (p > 0) {
             // Things like "Myanmar(burma)"
+            variants.add(name.substring(0, p).trim());
+        }
+
+        p = name.indexOf(" and ");
+        if (p>0) {
+            // "A and B" -- try just A and just B";
+            variants.add(name.substring(0, p).trim());
+            variants.add(name.substring(p+5).trim());
+        }
+
+        p = name.indexOf(" excl");
+        if (p>0) {
+            // "A excluding B" -- try just A;
             variants.add(name.substring(0, p).trim());
         }
 
