@@ -135,7 +135,7 @@ public class TestAnalyze {
         };
 
         GeoMapping a = GeoData.instance().make(names, new Param[0]);
-        assertEquals(a.getUnmatched().toString(), 6, a.getUnmatched().size());          // We get all except 6 small islands
+        assertEquals(a.getUnmatched().toString(), 4, a.getUnmatched().size());          // We get all except 4 small islands
 
     }
 
