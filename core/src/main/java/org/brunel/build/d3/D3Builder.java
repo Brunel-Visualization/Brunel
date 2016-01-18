@@ -261,7 +261,7 @@ public class D3Builder extends AbstractBuilder {
     protected void endVisSystem(VisItem main) {
 
         // Define visualization functions
-        out.add("function setData(rowData, i) { datasets[i||0] = BrunelData.Dataset.makeFromRows(rowData) }").ln();
+        out.add("function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }").ln();
         out.add("function updateAll(time)     { charts.forEach(function(x) {x.build(time || 20)}) }").ln();
         out.add("function buildAll() {").ln().indentMore()
                 .add("for (var i=0;i<arguments.length;i++) setData(arguments[i], i)").endStatement()

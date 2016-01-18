@@ -80,15 +80,28 @@ public class D3DataBuilder {
             }
 
             // Name the table with a numeric suffix for multiple tables
-            out.onNewLine().add("var", String.format(options.dataName, d + 1), "= [").ln().indentMore();
-            out.add("[");
+            out.onNewLine().add("var", String.format(options.dataName, d + 1), "= {").indentMore();
+
+            out.onNewLine().add(" names: [");
             for (int i = 0; i < fields.length; i++) {
+                if (fields[i].isSynthetic()) continue;
                 String name = fields[i].name;
-                if (name.startsWith("#")) continue;
                 if (i > 0) out.add(", ");
                 out.add("'").add(name).add("'");
             }
             out.add("], ");
+
+            out.onNewLine().add(" options: [");
+            for (int i = 0; i < fields.length; i++) {
+                if (fields[i].isSynthetic()) continue;
+                String name = fields[i].isDate() ? "date" : (fields[i].isNumeric() ? "numeric" : "string");
+                if (i > 0) out.add(", ");
+                out.add("'").add(name).add("'");
+            }
+            out.add("], ");
+
+            out.onNewLine().add(" rows: [");
+
             for (int r = 0; r < data.rowCount(); r++) {
                 if (r > 0) out.add(",");
                 String rowText = makeRowText(fields, r, format);
@@ -98,7 +111,8 @@ public class D3DataBuilder {
                     out.add(" ");
                 out.add(rowText);
             }
-            out.indentLess().onNewLine().add("]").endStatement();
+            out.add("]");
+            out.indentLess().onNewLine().add("}").endStatement();
         }
     }
 

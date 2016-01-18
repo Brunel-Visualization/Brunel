@@ -79,7 +79,7 @@ class BrunelSpec extends UnitSpec {
     val brunelOutput = Brunel.create(null, "data('a') x(mpg) y(horsepower) style('fill:red') filter(mpg)", 600, 600, "visid", "controls")
     assert(brunelOutput.js != null)
     assert(brunelOutput.css.length() > 0)
-    assert(brunelOutput.js.contains("['mpg', 'horsepower'], [123, 234.2], [123, 247.5], [189, 254], [187, null]"))
+    assert(brunelOutput.js.contains("[123, 234.2], [123, 247.5], [189, 254], [187, null]"))
     assert(brunelOutput.css.contains("fill: red;"))
 
   }

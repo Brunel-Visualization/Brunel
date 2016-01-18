@@ -53,6 +53,21 @@ var BrunelD3 = (function () {
     }
 
 
+    // Create a dataset from rows. Each object has three parts - names, types, rows
+    // The types are 'string', 'date' or 'numeric'
+    function makeDataset(data) {
+        var col, field, i, opt, fields = [];
+        for (i = 0; i < data.names.length; i++) {
+            col = data.rows.map(function(x) { return x[i] });                               // Extract i'th item
+            field = new BrunelData.Field(data.names[i], null, new BrunelData.values_ColumnProvider(col));
+            opt = data.options ? data.options[i] : "string";                                // Apply type options
+            if (opt == 'numeric') field = BrunelData.Data.toNumeric(field);
+            if (opt == 'date') field = BrunelData.Data.toDate(field);
+            fields.push(field);
+        }
+        return BrunelData.Dataset.make(fields, false);
+    }
+
     // Add a color legend
     function colorLegend(target, title, scale, ticks, labels) {
         target.attr('class', 'legend').append('text').attr('x', 0).attr('y', 0)
@@ -953,6 +968,7 @@ var BrunelD3 = (function () {
 
     // Expose these methods
     return {
+        'makeData' : makeDataset,
         'geometry': geometries,
         'addTooltip': makeTooltip,
         'makePathSplits': split,

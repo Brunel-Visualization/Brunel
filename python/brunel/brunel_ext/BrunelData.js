@@ -1404,15 +1404,15 @@ V.Field.prototype.makeDateStats = function() {
 };
 
 V.Field.prototype.isNumeric = function() {
-    return true == this.property("numeric");
+    return this.propertyTrue("numeric");
 };
 
 V.Field.prototype.isDate = function() {
-    return true == this.property("date");
+    return this.propertyTrue("date");
 };
 
 V.Field.prototype.isBinned = function() {
-    return true == this.property("binned");
+    return this.propertyTrue("binned");
 };
 
 V.Field.prototype.makeNumericStats = function() {
@@ -1440,10 +1440,6 @@ V.Field.prototype.dropData = function() {
     return new V.Field(this.name, this.label, null, this);
 };
 
-V.Field.prototype.hasProvider = function() {
-    return this.provider != null;
-};
-
 V.Field.prototype.max = function() {
     return this.property("max");
 };
@@ -1457,7 +1453,7 @@ V.Field.prototype.isSynthetic = function() {
 };
 
 V.Field.prototype.preferCategorical = function() {
-    return !this.isNumeric() || (true == this.property("binned"));
+    return !this.isNumeric() || this.isBinned();
 };
 
 V.Field.prototype.ordered = function() {
@@ -2922,7 +2918,7 @@ V.stats_DateStats.getUnit = function(days) {
 
 V.stats_DateStats.getFormat = function(unit, granularity) {
     if (granularity > 360) return V.util_DateFormat.Year;
-    if (granularity > 27) return V.util_DateFormat.YearMonth;
+    if (granularity > 13) return V.util_DateFormat.YearMonth;
     if (granularity > 0.9)
         return V.util_DateFormat.YearMonthDay;
     if (unit.ordinal() < V.util_DateUnit.hour.ordinal()) return V.util_DateFormat.DayHour;

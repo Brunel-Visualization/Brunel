@@ -120,15 +120,15 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public boolean isNumeric() {
-        return Boolean.TRUE.equals(property("numeric"));
+        return propertyTrue("numeric");
     }
 
     public boolean isDate() {
-        return Boolean.TRUE.equals(property("date"));
+        return propertyTrue("date");
     }
 
     public boolean isBinned() {
-        return Boolean.TRUE.equals(property("binned"));
+        return propertyTrue("binned");
     }
 
     private void makeNumericStats() {
@@ -160,10 +160,6 @@ public class Field extends Informative implements Comparable<Field> {
         return new Field(name, label, null, this);
     }
 
-    public boolean hasProvider() {
-        return provider != null;
-    }
-
     public Double max() {
         return (Double) property("max");
     }
@@ -178,7 +174,7 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public boolean preferCategorical() {
-        return !isNumeric() || Boolean.TRUE.equals(property("binned")) ;
+        return !isNumeric() || isBinned() ;
     }
 
     public boolean ordered() {

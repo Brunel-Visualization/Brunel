@@ -17,9 +17,13 @@
 package org.brunel.data;
 
 import org.brunel.data.util.DateUnit;
+import org.brunel.translator.JSTranslation;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Date;
+
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 public class TestField {
@@ -201,6 +205,36 @@ public class TestField {
         assertEquals(-1.557, uniformWithMissing.numericProperty("kurtosis"), 0.01);
         assertEquals(0.5, peak.numericProperty("kurtosis"), 0.01);
         assertEquals(1.983, skew.numericProperty("kurtosis"), 0.01);
+
+    }
+
+    @Test
+    @JSTranslation(ignore = true)
+    public void testJavaDates() {
+        long feb_1_1970 = 60907593600000L;
+        Field f = Data.makeColumnField("test", "dates", new Object[]{
+                new Date(feb_1_1970),
+                new Date(feb_1_1970 + 1000 * 60 * 60 * 24),
+                new Date(feb_1_1970 + 2 * 1000 * 60 * 60 * 24),
+                new Date(feb_1_1970 + 3 * 1000 * 60 * 60 * 24),
+                new Date(feb_1_1970 + 4 * 1000 * 60 * 60 * 24),
+                new Date(feb_1_1970 + 5 * 1000 * 60 * 60 * 24),
+                new Date(feb_1_1970 + 6 * 1000 * 60 * 60 * 24),
+                new Date(feb_1_1970 + 7 * 1000 * 60 * 60 * 24),
+                new Date(feb_1_1970 + 8 * 1000 * 60 * 60 * 24),
+                new Date(feb_1_1970 + 9 * 1000 * 60 * 60 * 24),
+                new Date(feb_1_1970 + 10 * 1000 * 60 * 60 * 24),
+                new Date(feb_1_1970 + 20 * 1000 * 60 * 60 * 24)
+        });
+
+        f.set("numeric", true);
+        f.set("date", true);
+        assertTrue(f.isDate());
+        assertEquals("Feb 1 00:00", f.valueFormatted(0));
+        assertEquals("Feb 2 00:00", f.valueFormatted(1));
+        assertEquals("Feb 3 00:00", f.valueFormatted(2));
+        assertEquals("Feb 11 00:00", f.valueFormatted(10));
+        assertEquals("Feb 21 00:00", f.valueFormatted(11));
 
     }
 

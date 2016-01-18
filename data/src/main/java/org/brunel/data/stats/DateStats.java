@@ -46,7 +46,7 @@ public class DateStats {
     private static DateFormat getFormat(DateUnit unit, double granularity) {
         // HourMinSec, HourMin, DayHour, YearMonthDay, YearMonth, Year;
         if (granularity > 360) return DateFormat.Year;
-        if (granularity > 27) return DateFormat.YearMonth;
+        if (granularity > 13) return DateFormat.YearMonth;
         if (granularity > 0.9) return DateFormat.YearMonthDay;
 
         // We want to show time, but do we also need the days?
