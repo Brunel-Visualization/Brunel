@@ -102,7 +102,6 @@ object Brunel {
 
     if (dateTypes.contains(colType)) {
       field.set("date", true)
-      field.set("numeric", true)
     }
 
   }
