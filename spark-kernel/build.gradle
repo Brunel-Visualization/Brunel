@@ -25,6 +25,14 @@ repositories {
         }  
 }
 
+uploadArchives {
+    repositories {
+       flatDir {
+           dirs '../out/java'
+       }
+    }
+}
+
 configurations {
     releaseJars
 }
@@ -43,7 +51,7 @@ version = project(":core").version
 archivesBaseName = 'spark-kernel-brunel-all'
 
 def mainProjects = [':data',':core',':scala', ":spark-kernel"]
-task fatJar(type: Jar) {
+jar {
 
     from files(mainProjects.collect{ project(it).sourceSets.main.output })
     from {configurations.releaseJars.collect { it.isDirectory() ? it : zipTree(it) } }  

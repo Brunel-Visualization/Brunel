@@ -107,7 +107,7 @@ task brunelSyntaxDoc(type: Copy) {
 
 
 task build(dependsOn: [project(':core').brunelJar, project(':etc').brunelJar, project(':data').brunelJar,
-	project(':service').brunelJar,  brunelJS, brunelJavadoc, brunelSyntaxDoc]) {
+	project(':service').brunelJar, 'spark-kernel:uploadArchives', brunelJS, brunelJavadoc, brunelSyntaxDoc]) {
 }
 
 task makeMinified(type: JavaExec, dependsOn: build) {
