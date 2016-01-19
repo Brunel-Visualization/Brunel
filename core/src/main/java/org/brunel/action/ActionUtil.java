@@ -46,6 +46,23 @@ public class ActionUtil {
     	return parametersByName(action, "data");
     }
     
+    /**
+     * Add a prefix to all data() statements.  This allows a client to supply unique data set names
+     * for any data placed into the cache.
+     * @param action the original action
+     * @param prefix the prefix to use
+     * @return The Brunel with the prefix for all data() statements.
+     */
+    public static String prefixAllDataStatements(Action action, String prefix) {
+        for (ActionStep step : action.steps) {
+        	if (step.name.equals("data")) {
+        		step.parameters[0] = Param.makeString(prefix + step.parameters[0].asString());
+        	}
+        }       
+        return action.toString();
+
+    }
+       
     //Returns the parameters for a given brunel action name.  If actionName is null, all params are returned.
     private static Param[] parametersByName(Action action, String actionName) {
         List<Param> parameters = new ArrayList<Param>();

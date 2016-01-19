@@ -31,5 +31,16 @@ public class D3IntegrationTest {
 		String json = D3Integration.createBrunelJSON(null, action, 100, 100, "visid", null);
 		assertNotNull(json);
 	}
+	
+	@Test
+	public void testDatanames() {
+		String brunel = "data('a') x(x) | data('b') x(x) y(y) + data('c') bubble | data('a') bar";
+		String[] datas = D3Integration.getDatasetNames(brunel);
+		assertEquals(datas.length, 4);
+		assertEquals(datas[0], "a");
+		assertEquals(datas[1], "b");
+		assertEquals(datas[2], "c");
+		assertEquals(datas[3], "a");
+	}
 
 }
