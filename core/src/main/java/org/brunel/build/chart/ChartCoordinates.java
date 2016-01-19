@@ -53,8 +53,8 @@ public class ChartCoordinates {
             if (yTransform == null) yTransform = getDefinedYTransform(elements[i]);
             x.put(elements[i], visXFields);
             y.put(elements[i], visYFields);
-            Collections.addAll(allX, visXFields);
-            Collections.addAll(allY, visYFields);
+            if (visXFields.length > 0) allX.add(visXFields[0]);             // Only first X field (rest are clustered)
+            Collections.addAll(allY, visYFields);                           // All Y fields (used in ranges)
         }
 
         this.allXFields = allX.toArray(new Field[allX.size()]);

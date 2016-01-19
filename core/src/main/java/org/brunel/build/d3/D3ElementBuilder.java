@@ -275,7 +275,6 @@ class D3ElementBuilder {
         }
     }
 
-
     private void writeCoordinateLabelingAndAesthetics(ElementDetails details) {
         // Define colors using the color function
         if (!vis.fColor.isEmpty()) out.addChained("style('" + details.colorAttribute + "', color)");
@@ -411,23 +410,37 @@ class D3ElementBuilder {
             // These are edges in a network layout
             dim.left = "function(d) { return d.source." + dimName + " }";
             dim.right = "function(d) { return d.target." + dimName + " }";
-        } else if (structure.dependent) {
+            return;
+        }
+
+        if (structure.dependent) {
+            // Positions are dependent on other elements
             setDependentLocations(dim, dimName, keys, scaleName);
-        } else if (fields.length == 0) {
+            return;
+        }
+
+        if (fields.length == 0) {
             // There are no fields -- we have a notional [0,1] extent, so use the center of that
             dim.center = "function() { return " + scaleName + "(0.5) }";
             dim.left = "function() { return " + scaleName + "(0) }";
             dim.right = "function() { return " + scaleName + "(1) }";
-        } else if (fields.length == 1) {
-            Field field = fields[0];                                // The single field
-            String dataFunction = D3Util.writeCall(field);          // A call to that field using the datum 'd'
+            return;
+        }
 
-            if (isRange(field)) {
+        Field main = fields[0];
+
+        // X axis only ever has one main field at most -- rest are clustered
+        boolean oneMainField = fields.length == 1 || dimName.equals("x");
+
+        if (oneMainField) {
+            String dataFunction = D3Util.writeCall(main);          // A call to that field using the datum 'd'
+
+            if (isRange(main)) {
                 // This is a range field, but we have not been asked to show both ends,
                 // so we use the difference between the top and bottom
                 dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".extent()) }";
                 // Left and Right are not defined
-            } else if (field.isBinned() && !categorical) {
+            } else if (main.isBinned() && !categorical) {
                 // A Binned value on a non-categorical axes
                 dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".mid) }";
                 dim.left = "function(d) { return " + scaleName + "(" + dataFunction + ".low) }";
@@ -439,17 +452,18 @@ class D3ElementBuilder {
             }
         } else {
             // The dimension contains two fields: a range
-            String lowDataFunc = D3Util.writeCall(fields[0]);          // A call to the low field using the datum 'd'
+            String lowDataFunc = D3Util.writeCall(main);          // A call to the low field using the datum 'd'
             String highDataFunc = D3Util.writeCall(fields[1]);         // A call to the high field using the datum 'd'
 
             // When one of the fields is a range, use the outermost value of that
-            if (isRange(fields[0])) lowDataFunc += ".low";
+            if (isRange(main)) lowDataFunc += ".low";
             if (isRange(fields[1])) highDataFunc += ".high";
 
             dim.left = "function(d) { return " + scaleName + "(" + lowDataFunc + ") }";
             dim.right = "function(d) { return " + scaleName + "(" + highDataFunc + ") }";
             dim.center = "function(d) { return " + scaleName + "( (" + highDataFunc + " + " + lowDataFunc + " )/2) }";
         }
+
 
     }
 
@@ -556,8 +570,6 @@ class D3ElementBuilder {
         }
     }
 
-
-
     private boolean allShowExtent(Field[] fields) {
         // Categorical and numeric fields both show elements as extents on the axis
         for (Field field : fields) {
@@ -570,7 +582,6 @@ class D3ElementBuilder {
         String s = field.stringProperty("summary");
         return s != null && (s.equals("iqr") || s.equals("range"));
     }
-
 
     public void preBuildDefinitions() {
         if (diagram != null) diagram.preBuildDefinitions();

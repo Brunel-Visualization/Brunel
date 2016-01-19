@@ -34,15 +34,11 @@ public class D3Interaction {
     private final D3ScaleBuilder scales;        // Scales for the chart
     private final ScriptWriter out;             // Write definitions here
     private final boolean zoomable;             // Same for all elements
-    private final boolean xScaleCategorical;    // True if any are
-    private final boolean yScaleCategorical;    // True if any are
 
     public D3Interaction(ChartStructure structure, D3ScaleBuilder scales, ScriptWriter out) {
         this.structure = structure;
         this.scales = scales;
         this.out = out;
-        this.xScaleCategorical = anyCategorical(structure.coordinates.allXFields);
-        this.yScaleCategorical = anyCategorical(structure.coordinates.allYFields);
         this.zoomable = isZoomable(structure.elementStructure);
     }
 
@@ -53,7 +49,8 @@ public class D3Interaction {
 
     private boolean isZoomable(ElementStructure[] elements) {
         // Check for things that just will not work currently
-        if (xScaleCategorical && yScaleCategorical) return false;                           // Only zoom numerical
+        if (structure.coordinates.xCategorical && structure.coordinates.yCategorical)
+            return false;  // Only zoom numerical
         if (structure.diagram != null || scales.coords == VisTypes.Coordinates.polar) return false;  // Doesn't work
 
         // If anything says we want it, we get it
@@ -111,11 +108,11 @@ public class D3Interaction {
         out.add("zoom");
         if (scales.coords == VisTypes.Coordinates.transposed) {
             // Attach x to y and y to x
-            if (!xScaleCategorical) out.add(".y(scale_x)");
-            if (!yScaleCategorical) out.add(".x(scale_y)");
+            if (!structure.coordinates.xCategorical) out.add(".y(scale_x)");
+            if (!structure.coordinates.yCategorical) out.add(".x(scale_y)");
         } else {
-            if (!xScaleCategorical) out.add(".x(scale_x)");
-            if (!yScaleCategorical) out.add(".y(scale_y)");
+            if (!structure.coordinates.xCategorical) out.add(".x(scale_x)");
+            if (!structure.coordinates.yCategorical) out.add(".y(scale_y)");
         }
         out.endStatement();
     }
