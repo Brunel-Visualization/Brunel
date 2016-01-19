@@ -141,8 +141,8 @@ class D3ElementBuilder {
             if (vis.tDiagram != VisTypes.Diagram.map)
                 setGeoLocations(e, x, y, keys);
             // Just use the default point size
-            e.x.size = getSize(getSizeCall(0), sizeWidth, new Field[0], "geom.default_point_size", null);
-            e.y.size = getSize(getSizeCall(1), sizeHeight, new Field[0], "geom.default_point_size", null);
+            e.x.size = getSize(getSizeCall(0), sizeWidth, new Field[0], "geom.default_point_size", null, false);
+            e.y.size = getSize(getSizeCall(1), sizeHeight, new Field[0], "geom.default_point_size", null, false);
         } else {
             if (structure.dependent && !structure.isGraphEdge()) {
                 if (keys.length == 1) {
@@ -153,8 +153,8 @@ class D3ElementBuilder {
             }
             setLocations(e.x, "x", x, keys, structure.chart.coordinates.xCategorical);
             setLocations(e.y, "y", y, keys, structure.chart.coordinates.yCategorical);
-            e.x.size = getSize(getSizeCall(0), sizeWidth, x, "geom.inner_width", "scale_x");
-            e.y.size = getSize(getSizeCall(1), sizeHeight, y, "geom.inner_height", "scale_y");
+            e.x.size = getSize(getSizeCall(0), sizeWidth, x, "geom.inner_width", "scale_x", x.length > 1);
+            e.y.size = getSize(getSizeCall(1), sizeHeight, y, "geom.inner_height", "scale_y", false);
         }
         e.overallSize = getOverallSize(vis, e);
         return e;
@@ -347,7 +347,8 @@ class D3ElementBuilder {
 
     }
 
-    private String getSize(String aestheticFunctionCall, ModelUtil.Size size, Field[] fields, String extent, String scaleName) {
+    private String getSize(String aestheticFunctionCall, ModelUtil.Size size, Field[] fields,
+                           String extent, String scaleName, boolean forClustering) {
 
         boolean needsFunction = aestheticFunctionCall != null;
         String baseAmount;
@@ -364,8 +365,13 @@ class D3ElementBuilder {
             }
         } else {
             // Use size of categories
-            int categories = scales.getCategories(fields).size();
-            Double granularity = scales.getGranularitySuitableForSizing(fields);
+            Field[] baseFields = fields;
+            if (forClustering) {
+                // Do not count the other fields
+                baseFields = new Field[] {fields[0]};
+            }
+            int categories = scales.getCategories(baseFields).size();
+            Double granularity = scales.getGranularitySuitableForSizing(baseFields);
             if (vis.tDiagram != null) {
                 // Diagrams do not define these things
                 granularity = null;
@@ -374,8 +380,8 @@ class D3ElementBuilder {
             if (categories > 0) {
                 baseAmount = (categories == 1) ? extent : extent + "/" + categories;
                 // Fill a category span (or 90% of it for categorical fields when percent not defined)
-                if ((size == null || !size.isPercent()) && !scales.allNumeric(fields))
-                    baseAmount = "0.9 * " + baseAmount;
+                if ((size == null || !size.isPercent()) && !scales.allNumeric(baseFields))
+                    baseAmount = (forClustering ? "0.75" :"0.9") + " * " + baseAmount;
             } else if (granularity != null) {
                 baseAmount = "Math.abs( " + scaleName + "(" + granularity + ") - " + scaleName + "(0) )";
             } else {
@@ -463,7 +469,6 @@ class D3ElementBuilder {
             dim.right = "function(d) { return " + scaleName + "(" + highDataFunc + ") }";
             dim.center = "function(d) { return " + scaleName + "( (" + highDataFunc + " + " + lowDataFunc + " )/2) }";
         }
-
 
     }
 
