@@ -124,7 +124,7 @@ public class Transform extends DataOperation {
         // Create map form current names to the new names
         Map<Object, Object> newNames = new HashMap<Object, Object>();
         for (int i = 0; i < order.length; i++)
-            newNames.put(categories[order[i]], i < desiredBinCount ? categories[order[i]] : "\u2026");
+            newNames.put(categories[order[i]], i < desiredBinCount-1 ? categories[order[i]] : "\u2026");
 
         Object[] data = new Object[f.rowCount()];
         for (int i = 0; i < data.length; i++) data[i] = newNames.get(f.value(i));
