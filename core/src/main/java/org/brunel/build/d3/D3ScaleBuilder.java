@@ -194,10 +194,14 @@ public class D3ScaleBuilder {
     }
 
     private boolean elementsFillHorizontal() {
-        boolean fillToEdge = true;
-        for (VisSingle e : elements)
-            if (e.tElement != VisTypes.Element.line && e.tElement != VisTypes.Element.area) fillToEdge = false;
-        return fillToEdge;
+        for (VisSingle e : elements) {
+            // All must be lines or areas to fill to the edge
+            if (e.tElement != VisTypes.Element.line && e.tElement != VisTypes.Element.area) return false;
+            // There must be no clustering on the X axis
+            if (e.fX.size() > 1) return false;
+        }
+
+        return true;
     }
 
     private Field fieldById(String fieldName, VisSingle vis) {
@@ -578,8 +582,9 @@ public class D3ScaleBuilder {
         if (colorLegendField.preferCategorical()) {
             // Categorical data can just grab it from the domain
             legendTicks = "scale_color.domain()";
-            // Binned data reads in opposite direction (bottom to top)
-            if (colorLegendField.isBinned()) legendTicks += ".reverse()";
+            // Binned numeric data reads in opposite direction (bottom to top)
+            if (colorLegendField.isBinned() && colorLegendField.isNumeric())
+                legendTicks += ".reverse()";
         } else {
             // Numeric must calculate a nice range
             NumericScale details = Auto.makeNumericScale(colorLegendField, true, new double[]{0, 0}, 0.25, 7, false);

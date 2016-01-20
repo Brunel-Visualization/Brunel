@@ -371,6 +371,11 @@ class D3ElementBuilder {
                 baseFields = new Field[] {fields[0]};
             }
             int categories = scales.getCategories(baseFields).size();
+            if (forClustering) {
+                // Each major cluster is divided into subclusters; effectively multiplying the number of categories
+                Object[] cats = fields[1].categories();
+                if (cats != null) categories *= cats.length;
+            }
             Double granularity = scales.getGranularitySuitableForSizing(baseFields);
             if (vis.tDiagram != null) {
                 // Diagrams do not define these things

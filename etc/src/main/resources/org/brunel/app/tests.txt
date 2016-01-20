@@ -1,5 +1,7 @@
 #### Action library to be used
 
+clusterBarCount :: bar x($1,$2) y(#count) color($2)                         :: categorical, categorical
+clusterLine     :: line x($1,$2) y($3) color($1)                            :: categorical, field, field
 colorScatter	:: x($1) y($2) color($3)                                    :: field, field, categorical
 line	        :: line x($1) y($2) color($3)                               :: field, field, categorical
 cloud           :: x($1) cloud size($2) color($2) sort($2) mean($2)         :: categorical, numeric
@@ -9,6 +11,11 @@ sizedBar	    :: bar x($1) y(#count) size($2:100) color($2:blue) mean($2) sort(#c
                 :: categorical, field
 
 #### The Tests
+
+clusterBarCount simple mammal aquatic                       :: fail     :: unimplemented
+clusterBarCount whiskey country category  / bin(category:4) :: fail     :: unimplemented
+clusterBarCount whiskey country rating / bin(rating:3)      :: fail     :: unimplemented
+clusterLine whiskey category age rating   / bin(category:4) :: fail     :: unimplemented
 
 
 colorScatter baseball Age HomeRunRate Salary        :: pass
