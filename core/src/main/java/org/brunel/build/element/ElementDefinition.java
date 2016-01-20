@@ -34,5 +34,6 @@ public class ElementDefinition {
         public String left;                            // Where the left is to be (right will also be defined)
         public String right;                           // Where the right is to be (left will also be defined)
         public String size;                            // What the size is to be
+        public String clusterSize;                     // The size of a cluster
     }
 }

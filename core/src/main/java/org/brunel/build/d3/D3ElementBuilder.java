@@ -141,8 +141,8 @@ class D3ElementBuilder {
             if (vis.tDiagram != VisTypes.Diagram.map)
                 setGeoLocations(e, x, y, keys);
             // Just use the default point size
-            e.x.size = getSize(getSizeCall(0), sizeWidth, new Field[0], "geom.default_point_size", null, false);
-            e.y.size = getSize(getSizeCall(1), sizeHeight, new Field[0], "geom.default_point_size", null, false);
+            e.x.size = getSize(getSizeCall(0), sizeWidth, new Field[0], "geom.default_point_size", null);
+            e.y.size = getSize(getSizeCall(1), sizeHeight, new Field[0], "geom.default_point_size", null);
         } else {
             if (structure.dependent && !structure.isGraphEdge()) {
                 if (keys.length == 1) {
@@ -153,8 +153,10 @@ class D3ElementBuilder {
             }
             setLocations(e.x, "x", x, keys, structure.chart.coordinates.xCategorical);
             setLocations(e.y, "y", y, keys, structure.chart.coordinates.yCategorical);
-            e.x.size = getSize(getSizeCall(0), sizeWidth, x, "geom.inner_width", "scale_x", x.length > 1);
-            e.y.size = getSize(getSizeCall(1), sizeHeight, y, "geom.inner_height", "scale_y", false);
+            e.x.size = getSize(getSizeCall(0), sizeWidth, x, "geom.inner_width", ScalePurpose.x);
+            e.y.size = getSize(getSizeCall(1), sizeHeight, y, "geom.inner_height", ScalePurpose.y);
+            if (x.length > 1)
+                e.x.clusterSize = getSize(null, sizeWidth, x, "geom.inner_width", ScalePurpose.inner);
         }
         e.overallSize = getOverallSize(vis, e);
         return e;
@@ -244,7 +246,7 @@ class D3ElementBuilder {
                 D3PointBuilder pointBuilder = new D3PointBuilder(out);
                 if (pointBuilder.needsExtentFunctions(details)) {
                     defineVerticalExtentFunctions(elementDef, true);
-                    defineHorizontalExtentFunctions(elementDef, true);
+                    defineHorizontalExtentFunctions(elementDef);
                 }
 
                 out.add(basicDef);
@@ -253,14 +255,17 @@ class D3ElementBuilder {
         }
     }
 
-    private void defineHorizontalExtentFunctions(ElementDefinition elementDef, boolean withWidth) {
+    private void defineHorizontalExtentFunctions(ElementDefinition elementDef) {
+        if (elementDef.x.clusterSize != null) {
+            out.add("var w1 =", elementDef.x.clusterSize).endStatement();
+        }
         if (elementDef.x.left != null) {
             // Use the left and right values
             out.add("var x0 =", elementDef.x.left).endStatement();
             out.add("var x1 =", elementDef.x.right).endStatement();
         } else {
             out.add("var x =", elementDef.x.center).endStatement();
-            if (withWidth) out.add("var w =", elementDef.x.size).endStatement();
+            out.add("var w =", elementDef.x.size).endStatement();
         }
     }
 
@@ -348,7 +353,7 @@ class D3ElementBuilder {
     }
 
     private String getSize(String aestheticFunctionCall, ModelUtil.Size size, Field[] fields,
-                           String extent, String scaleName, boolean forClustering) {
+                           String extent, ScalePurpose purpose) {
 
         boolean needsFunction = aestheticFunctionCall != null;
         String baseAmount;
@@ -366,13 +371,15 @@ class D3ElementBuilder {
         } else {
             // Use size of categories
             Field[] baseFields = fields;
-            if (forClustering) {
+            if (purpose == ScalePurpose.x || purpose == ScalePurpose.inner) {
                 // Do not count the other fields
-                baseFields = new Field[] {fields[0]};
+                baseFields = new Field[]{fields[0]};
             }
             int categories = scales.getCategories(baseFields).size();
-            if (forClustering) {
-                // Each major cluster is divided into subclusters; effectively multiplying the number of categories
+            if (purpose == ScalePurpose.x && fields.length > 1) {
+                // We want the size of the bars for a clustered chart
+                // Each major cluster is divided into subclusters so we multiply to find the number
+                // of paired categories
                 Object[] cats = fields[1].categories();
                 if (cats != null) categories *= cats.length;
             }
@@ -382,12 +389,23 @@ class D3ElementBuilder {
                 granularity = null;
                 categories = 0;
             }
+            // Use the categories to define the size to fill if thre are any categories
             if (categories > 0) {
+                // divide up the space by the number of categories
                 baseAmount = (categories == 1) ? extent : extent + "/" + categories;
-                // Fill a category span (or 90% of it for categorical fields when percent not defined)
-                if ((size == null || !size.isPercent()) && !scales.allNumeric(baseFields))
-                    baseAmount = (forClustering ? "0.75" :"0.9") + " * " + baseAmount;
+
+                // Create some spacing between categories -- ONLY if we have all categorical data,
+                // no size aesthetic and we are not getting the inner size (bars inside a cluster should all touch)
+                boolean gapsBetweenCategories = (size == null || !size.isPercent()) && !scales.allNumeric(baseFields);
+
+                if (gapsBetweenCategories) {
+                    if (purpose == ScalePurpose.inner || purpose == ScalePurpose.x && fields.length > 1)
+                        baseAmount = "0.75 * " + baseAmount;
+                    else
+                        baseAmount = "0.9 * " + baseAmount;
+                }
             } else if (granularity != null) {
+                String scaleName = "scale_" + purpose.name();
                 baseAmount = "Math.abs( " + scaleName + "(" + granularity + ") - " + scaleName + "(0) )";
             } else {
                 baseAmount = "geom.default_point_size";
@@ -444,23 +462,34 @@ class D3ElementBuilder {
         boolean oneMainField = fields.length == 1 || dimName.equals("x");
 
         if (oneMainField) {
+
+            // If defined, this is the cluster field on the X dimension
+            Field cluster = fields.length > 1 ? fields[1] : null;
+
             String dataFunction = D3Util.writeCall(main);          // A call to that field using the datum 'd'
 
             if (isRange(main)) {
                 // This is a range field, but we have not been asked to show both ends,
                 // so we use the difference between the top and bottom
-                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".extent()) }";
-                // Left and Right are not defined
+
+                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".extent())";
+                if (cluster != null) dim.center += addClusterMultiplier(cluster);
+                dim.center += " }";
+
             } else if (main.isBinned() && !categorical) {
                 // A Binned value on a non-categorical axes
                 dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".mid) }";
                 dim.left = "function(d) { return " + scaleName + "(" + dataFunction + ".low) }";
                 dim.right = "function(d) { return " + scaleName + "(" + dataFunction + ".high) }";
-
+                if (cluster != null)
+                    throw new UnsupportedOperationException();
             } else {
                 // Nothing unusual -- just define the center
-                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ") }";
+                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ")";
+                if (cluster != null) dim.center += addClusterMultiplier(cluster);
+                dim.center += " }";
             }
+
         } else {
             // The dimension contains two fields: a range
             String lowDataFunc = D3Util.writeCall(main);          // A call to the low field using the datum 'd'
@@ -475,6 +504,13 @@ class D3ElementBuilder {
             dim.center = "function(d) { return " + scaleName + "( (" + highDataFunc + " + " + lowDataFunc + " )/2) }";
         }
 
+    }
+
+    private String addClusterMultiplier(Field cluster) {
+        if (isRange(cluster))
+            return " + w1 * scale_inner(" + D3Util.writeCall(cluster) + ".mid)";
+        else
+            return " + w1 * scale_inner(" + D3Util.writeCall(cluster) + ")";
     }
 
     private void setDependentLocations(ElementDefinition.ElementDimensionDefinition dim, String dimName, Field[] keys, String scaleName) {
@@ -535,14 +571,14 @@ class D3ElementBuilder {
             // Stacked or range element goes from higher of the pair of values to the lower
             out.add("var y0 =", elementDef.y.left).endStatement();
             out.add("var y1 =", elementDef.y.right).endStatement();
-            defineHorizontalExtentFunctions(elementDef, true);
+            defineHorizontalExtentFunctions(elementDef);
             out.add(basicDef);
             out.addChained("attr('y', function(d) { return Math.min(y0(d), y1(d)) } )");
             out.addChained("attr('height', function(d) {return Math.max(0.001, Math.abs(y0(d) - y1(d))) })");
         } else {
             // Simple element; drop from the upper value to the baseline
             out.add("var y =", elementDef.y.center).endStatement();
-            defineHorizontalExtentFunctions(elementDef, true);
+            defineHorizontalExtentFunctions(elementDef);
             out.add(basicDef);
             if (vis.coords == VisTypes.Coordinates.transposed) {
                 out.addChained("attr('y', 0)")
@@ -589,6 +625,7 @@ class D3ElementBuilder {
     }
 
     private boolean isRange(Field field) {
+        if (field.isBinned()) return true;
         String s = field.stringProperty("summary");
         return s != null && (s.equals("iqr") || s.equals("range"));
     }

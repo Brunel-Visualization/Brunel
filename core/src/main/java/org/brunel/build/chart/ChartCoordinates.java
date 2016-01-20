@@ -33,7 +33,7 @@ import java.util.Map;
  */
 public class ChartCoordinates {
 
-    public final Field[] allXFields, allYFields;
+    public final Field[] allXFields, allYFields, allXClusterFields;
     public final String xTransform, yTransform;
     public final boolean xCategorical, yCategorical;
 
@@ -46,6 +46,7 @@ public class ChartCoordinates {
 
         ArrayList<Field> allX = new ArrayList<Field>();
         ArrayList<Field> allY = new ArrayList<Field>();
+        ArrayList<Field> allCluster = new ArrayList<Field>();
         for (int i = 0; i < elements.length; i++) {
             Field[] visXFields = getXFields(elements[i], elementData[i]);
             Field[] visYFields = getYFields(elements[i], elementData[i]);
@@ -54,11 +55,13 @@ public class ChartCoordinates {
             x.put(elements[i], visXFields);
             y.put(elements[i], visYFields);
             if (visXFields.length > 0) allX.add(visXFields[0]);             // Only first X field (rest are clustered)
+            if (visXFields.length > 1) allCluster.add(visXFields[1]);       // Add the clustered X field
             Collections.addAll(allY, visYFields);                           // All Y fields (used in ranges)
         }
 
         this.allXFields = allX.toArray(new Field[allX.size()]);
         this.allYFields = allY.toArray(new Field[allY.size()]);
+        this.allXClusterFields = allCluster.toArray(new Field[allCluster.size()]);
 
         // Set ordinal / categorical and derive transforms (if not explicitly set above)
         this.xCategorical = ModelUtil.combinationIsCategorical(allXFields, true);

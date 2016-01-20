@@ -103,7 +103,7 @@ public class D3ScaleBuilder {
          */
 
         vAxis.layoutVertically(chartHeight - hAxis.estimatedSimpleSizeWhenHorizontal());
-        hAxis.layoutHorizontally(chartWidth - vAxis.size - legendWidth, elementsFillHorizontal());
+        hAxis.layoutHorizontally(chartWidth - vAxis.size - legendWidth, elementsFillHorizontal(ScalePurpose.x));
 
         // Set the margins
         int marginTop = vAxis.topGutter;                                    // Only the vAxis needs space here
@@ -193,12 +193,12 @@ public class D3ScaleBuilder {
         return 6 + Math.max(spaceNeededForTicks, spaceNeededForTitle);                // Add some spacing
     }
 
-    private boolean elementsFillHorizontal() {
+    private boolean elementsFillHorizontal(ScalePurpose purpose) {
         for (VisSingle e : elements) {
             // All must be lines or areas to fill to the edge
             if (e.tElement != VisTypes.Element.line && e.tElement != VisTypes.Element.area) return false;
             // There must be no clustering on the X axis
-            if (e.fX.size() > 1) return false;
+            if (purpose == ScalePurpose.x && e.fX.size() > 1) return false;
         }
 
         return true;
@@ -376,13 +376,14 @@ public class D3ScaleBuilder {
     }
 
     public void writeCoordinateScales(D3Interaction interaction) {
-        writePositionScale("x", structure.coordinates.allXFields, getXRange(), elementsFillHorizontal());
-        writePositionScale("y", structure.coordinates.allYFields, getYRange(), false);
+        writePositionScale(ScalePurpose.x, structure.coordinates.allXFields, getXRange(), elementsFillHorizontal(ScalePurpose.x));
+        writePositionScale(ScalePurpose.inner, structure.coordinates.allXClusterFields,"[-0.5, 0.5]", elementsFillHorizontal(ScalePurpose.inner));
+        writePositionScale(ScalePurpose.y, structure.coordinates.allYFields, getYRange(), false);
         interaction.addScaleInteractivity();
     }
 
-    private void writePositionScale(String name, Field[] fields, String range, boolean fillToEdge) {
-        int categories = scaleWithDomain(name, fields, Purpose.valueOf(name), 2, "linear", null);
+    private void writePositionScale(ScalePurpose purpose, Field[] fields, String range, boolean fillToEdge) {
+        int categories = scaleWithDomain(purpose.name(), fields, purpose, 2, "linear", null);
 
         if (fields.length == 0) {
             out.addChained("range(" + range + ")");
@@ -415,7 +416,7 @@ public class D3ScaleBuilder {
         return reversed ? "[geom.inner_height,0]" : "[0, geom.inner_height]";
     }
 
-    private int scaleWithDomain(String name, Field[] fields, Purpose purpose, int numericDomainDivs, String defaultTransform, Object[] partitionPoints) {
+    private int scaleWithDomain(String name, Field[] fields, ScalePurpose purpose, int numericDomainDivs, String defaultTransform, Object[] partitionPoints) {
 
         out.onNewLine().add("var", "scale_" + name, "= ");
 
@@ -438,7 +439,7 @@ public class D3ScaleBuilder {
 
         // Determine how much we want to include zero (for size scale we always want it)
         double includeZero = getIncludeZeroFraction(fields, purpose);
-        if (purpose == Purpose.size) includeZero = 1.0;
+        if (purpose == ScalePurpose.size) includeZero = 1.0;
 
         // Build a combined scale field and force the desired transform on it for x and y dimensions
         Field scaleField = fields.length == 1 ? field : combineNumericFields(fields);
@@ -458,7 +459,7 @@ public class D3ScaleBuilder {
         double[] padding = getNumericPaddingFraction(purpose, coords);
 
         // Areas and line should fill the horizontal dimension, as should any binned field
-        if (scaleField.isBinned() || purpose == Purpose.x && elementsFillHorizontal()) {
+        if (scaleField.isBinned() || purpose == ScalePurpose.x && elementsFillHorizontal(ScalePurpose.x)) {
             nice = false;
             padding = new double[]{0, 0};
             includeZero = 0;
@@ -490,7 +491,7 @@ public class D3ScaleBuilder {
             if (name.equals("y")) transform = structure.coordinates.yTransform;
 
             // Size must not get a transform as it will seriously distort things
-            if (purpose == Purpose.size) transform = defaultTransform;
+            if (purpose == ScalePurpose.size) transform = defaultTransform;
             else if (transform == null) {
                 // We are free to choose -- the user did not specify
                 transform = (String) scaleField.property("transform");
@@ -516,11 +517,11 @@ public class D3ScaleBuilder {
         return new ArrayList<Object>(all);
     }
 
-    private double getIncludeZeroFraction(Field[] fields, Purpose purpose) {
+    private double getIncludeZeroFraction(Field[] fields, ScalePurpose purpose) {
 
-        if (purpose == Purpose.x) return 0.1;               // Really do not want much empty space on color axes
-        if (purpose == Purpose.size) return 0.9;            // Almost always want to go to zero
-        if (purpose == Purpose.color) return 0.2;           // Color
+        if (purpose == ScalePurpose.x) return 0.1;               // Really do not want much empty space on color axes
+        if (purpose == ScalePurpose.size) return 0.9;            // Almost always want to go to zero
+        if (purpose == ScalePurpose.color) return 0.2;           // Color
 
         // For 'Y'
 
@@ -553,9 +554,9 @@ public class D3ScaleBuilder {
         return combined;
     }
 
-    private double[] getNumericPaddingFraction(Purpose purpose, VisTypes.Coordinates coords) {
+    private double[] getNumericPaddingFraction(ScalePurpose purpose, VisTypes.Coordinates coords) {
         double[] padding = new double[]{0, 0};
-        if (purpose == Purpose.color || purpose == Purpose.size) return padding;                // None for aesthetics
+        if (purpose == ScalePurpose.color || purpose == ScalePurpose.size) return padding;                // None for aesthetics
         if (coords == VisTypes.Coordinates.polar) return padding;                               // None for polar angle
         for (VisSingle e : elements) {
             boolean noBottomYPadding = e.tElement == VisTypes.Element.bar || e.tElement == VisTypes.Element.area || e.tElement == VisTypes.Element.line;
@@ -563,7 +564,7 @@ public class D3ScaleBuilder {
                 // Text needs lot of padding
                 padding[0] = Math.max(padding[0], 0.1);
                 padding[1] = Math.max(padding[1], 0.1);
-            } else if (purpose == Purpose.y && noBottomYPadding) {
+            } else if (purpose == ScalePurpose.y && noBottomYPadding) {
                 // A little padding on the top only
                 padding[1] = Math.max(padding[1], 0.02);
             } else {
@@ -640,7 +641,7 @@ public class D3ScaleBuilder {
             largeElement = true;
 
         ColorMapping palette = Palette.makeColorMapping(f, p.modifiers(), largeElement);
-        scaleWithDomain("color", new Field[]{f}, Purpose.color, palette.values.length, "linear", palette.values);
+        scaleWithDomain("color", new Field[]{f}, ScalePurpose.color, palette.values.length, "linear", palette.values);
         out.addChained("range([ ").addQuoted(palette.colors).add("])").endStatement();
     }
 
@@ -648,7 +649,7 @@ public class D3ScaleBuilder {
         double min = p.hasModifiers() ? p.firstModifier().asDouble() : 0.2;
         Field f = fieldById(p, vis);
 
-        scaleWithDomain("opacity", new Field[]{f}, Purpose.color, 2, "linear", null);
+        scaleWithDomain("opacity", new Field[]{f}, ScalePurpose.color, 2, "linear", null);
         if (f.preferCategorical()) {
             int length = f.categories().length;
             double[] sizes = new double[length];
@@ -675,7 +676,7 @@ public class D3ScaleBuilder {
 
         Field f = fieldById(p, vis);
         Object[] divisions = f.isNumeric() ? null : f.categories();
-        scaleWithDomain(name, new Field[]{f}, Purpose.size, sizes.length, defaultTransform, divisions);
+        scaleWithDomain(name, new Field[]{f}, ScalePurpose.size, sizes.length, defaultTransform, divisions);
         out.addChained("range([ ").add(Data.join(sizes)).add("])").endStatement();
     }
 
@@ -707,16 +708,6 @@ public class D3ScaleBuilder {
         if (result.isEmpty()) return new Object[]{0.05, 1.0};
         if (result.size() == 1) result.add(0, 0.05);
         return result.toArray(new Object[result.size()]);
-    }
-
-    /* The purpose of a scale */
-    private enum Purpose {
-        x(true), y(true), size(false), color(false);
-        public final boolean isCoord;
-
-        Purpose(boolean isCoord) {
-            this.isCoord = isCoord;
-        }
     }
 
     private static final class AxisSpec {
