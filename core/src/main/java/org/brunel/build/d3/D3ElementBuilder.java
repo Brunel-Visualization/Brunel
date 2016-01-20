@@ -179,11 +179,15 @@ class D3ElementBuilder {
             return;
         }
 
-        // Now actual paths
+
+        // Add definition for the internal width of a cluster category
+        if (elementDef.x.clusterSize != null)
+            out.add("var w1 =", elementDef.x.clusterSize).endStatement();
 
         // Define the x function
         out.add("var x =", elementDef.x.center).endStatement();
 
+        // Now actual paths
         if (vis.tElement == VisTypes.Element.area) {
             if (vis.fRange == null && !vis.stacked)
                 out.add("var path = d3.svg.area().x(x).y1(y).y0(function(d) { return scale_y(0) })");
@@ -229,6 +233,7 @@ class D3ElementBuilder {
 
     private void writeCoordinateDefinition(ElementDetails details, ElementDefinition elementDef) {
 
+
         // This starts the transition or update going
         String basicDef = "BrunelD3.trans(selection,transitionMillis)";
 
@@ -237,6 +242,11 @@ class D3ElementBuilder {
         else if (details.producesPath)
             out.add(basicDef).addChained("attr('d', path)");                              // Simple path -- just util it
         else {
+            // Add definition for the internal width of a cluster category
+            if (elementDef.x.clusterSize != null) {
+                out.add("var w1 =", elementDef.x.clusterSize).endStatement();
+            }
+
             if (vis.tElement == VisTypes.Element.bar)
                 defineBar(basicDef, elementDef);
             else if (vis.tElement == VisTypes.Element.edge)
@@ -256,9 +266,6 @@ class D3ElementBuilder {
     }
 
     private void defineHorizontalExtentFunctions(ElementDefinition elementDef) {
-        if (elementDef.x.clusterSize != null) {
-            out.add("var w1 =", elementDef.x.clusterSize).endStatement();
-        }
         if (elementDef.x.left != null) {
             // Use the left and right values
             out.add("var x0 =", elementDef.x.left).endStatement();
@@ -395,15 +402,13 @@ class D3ElementBuilder {
                 baseAmount = (categories == 1) ? extent : extent + "/" + categories;
 
                 // Create some spacing between categories -- ONLY if we have all categorical data,
-                // no size aesthetic and we are not getting the inner size (bars inside a cluster should all touch)
-                boolean gapsBetweenCategories = (size == null || !size.isPercent()) && !scales.allNumeric(baseFields);
+                // or if we are clustering (in which case a larger gap is better)
 
-                if (gapsBetweenCategories) {
-                    if (purpose == ScalePurpose.inner || purpose == ScalePurpose.x && fields.length > 1)
-                        baseAmount = "0.75 * " + baseAmount;
-                    else
-                        baseAmount = "0.9 * " + baseAmount;
-                }
+                if (purpose == ScalePurpose.inner || purpose == ScalePurpose.x && fields.length > 1)
+                    baseAmount = "0.75 * " + baseAmount;
+                else if ((size == null || !size.isPercent()) && !scales.allNumeric(baseFields))
+                    baseAmount = "0.9 * " + baseAmount;
+
             } else if (granularity != null) {
                 String scaleName = "scale_" + purpose.name();
                 baseAmount = "Math.abs( " + scaleName + "(" + granularity + ") - " + scaleName + "(0) )";
@@ -470,9 +475,9 @@ class D3ElementBuilder {
 
             if (isRange(main)) {
                 // This is a range field, but we have not been asked to show both ends,
-                // so we use the difference between the top and bottom
+                // so we use the midpoint
 
-                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".extent())";
+                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".mid)";
                 if (cluster != null) dim.center += addClusterMultiplier(cluster);
                 dim.center += " }";
 

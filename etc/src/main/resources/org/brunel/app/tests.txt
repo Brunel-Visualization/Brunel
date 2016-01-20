@@ -1,7 +1,7 @@
 #### Action library to be used
 
 clusterBarCount :: bar x($1,$2) y(#count) color($2)                         :: categorical, categorical
-clusterLine     :: line x($1,$2) y($3) color($1)                            :: categorical, field, field
+clusterLine     :: line x($1,$2) y($3) color($1) smooth($3)                 :: categorical, field, field
 colorScatter	:: x($1) y($2) color($3)                                    :: field, field, categorical
 line	        :: line x($1) y($2) color($3)                               :: field, field, categorical
 cloud           :: x($1) cloud size($2) color($2) sort($2) mean($2)         :: categorical, numeric
@@ -11,12 +11,6 @@ sizedBar	    :: bar x($1) y(#count) size($2:100) color($2:blue) mean($2) sort(#c
                 :: categorical, field
 
 #### The Tests
-
-clusterBarCount simple mammal aquatic                       :: fail     :: unimplemented
-clusterBarCount whiskey country category  / bin(category:4) :: fail     :: unimplemented
-clusterBarCount whiskey country rating / bin(rating:3)      :: fail     :: unimplemented
-clusterLine whiskey category age rating   / bin(category:4) :: fail     :: unimplemented
-
 
 colorScatter baseball Age HomeRunRate Salary        :: pass
 colorScatter whiskey Rating Price Category          :: pass     :: Note the log Y axis
@@ -47,6 +41,11 @@ multiline cpi Date food housing health transport                    :: pass
 multiline cpi Date food housing health transport / stack            :: pass ::  Note that the stacking order is 'food housing health transport'
 multiline whiskey country rating abv / label(#series) sort(rating) size(#series:1000)  split(#series) :: pass :: Note that we have sorted by rating so that line should decrease left-to-right
 multiline whiskey rating country category / point bin(rating)       :: pass
+
+clusterBarCount simple mammal aquatic                               :: pass
+clusterBarCount whiskey country category  / bin(category:4)         :: pass
+clusterBarCount whiskey age abv                                     :: pass
+clusterLine whiskey category age rating / bin(category:4)           :: pass
 
 - cpi       / line x(Date) y(CLOTHING, HOUSING)                                 :: pass     :: Should split automatically
 - cpi       / line x(Date) y(CLOTHING, HOUSING) label(#series)                  :: pass     :: Should split automatically

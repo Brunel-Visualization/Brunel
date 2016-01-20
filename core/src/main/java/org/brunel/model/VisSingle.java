@@ -256,8 +256,13 @@ public class VisSingle extends VisItem implements Cloneable {
         Dataset dataset = getDataset();
         if (fX.size() > 1 && tElement != VisTypes.Element.edge) {
             Field x = dataset.field(fX.get(0).asField(dataset));
-            if (!x.preferCategorical() && !"bin".equals(fTransform.get(fX.get(0))))
-                error = addError(error, "when using multiple x fields, the first must be categorical");
+            if (!x.preferCategorical()) {
+                boolean isBinned = false;
+                for (Map.Entry<Param, String> e : fTransform.entrySet())
+                    if (e.getValue().equals("bin") && e.getKey().asField(dataset).equals(x.name)) isBinned = true;
+                if (!isBinned)
+                    error = addError(error, "when using multiple x fields, the first must be categorical or binned");
+            }
         }
 
         if (fY.size() < 2 && tDiagram != VisTypes.Diagram.network && containsSeriesField(usedFields(false)))

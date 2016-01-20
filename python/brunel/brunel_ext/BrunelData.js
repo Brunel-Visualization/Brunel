@@ -2846,7 +2846,7 @@ V.modify_Transform.binCategorical = function(f, desiredBinCount) {
     order = V.Data.order(f.property("categoryCounts"), false);
     newNames = new $.Map();
     for (i = 0; i < order.length; i++)
-        newNames.put(categories[order[i]], i < desiredBinCount ? categories[order[i]] : "\u2026");
+        newNames.put(categories[order[i]], i < desiredBinCount - 1 ? categories[order[i]] : "\u2026");
     data = $.Array(f.rowCount(), null);
     for (i = 0; i < data.length; i++)
         data[i] = newNames.get(f.value(i));
@@ -3304,14 +3304,13 @@ V.summary_SummaryValues.prototype.get = function(fieldIndex, m, xFields) {
     var categories, data, displayCount, f, high, i, low, mean, sum, windowPercent, x;
     var summary = m.measureFunction;
     if (summary == "count") return this.rows.size();
+    x = xFields.length == 0 ? null : xFields[xFields.length - 1];
     if (summary == "fit") {
-        x = xFields[0];
         if (m.fit == null)
             m.fit = new V.summary_Regression(m.field, x);
         return m.fit.get(x.value(this.rows.get(0)));
     }
     if (summary == "smooth") {
-        x = xFields[0];
         windowPercent = null;
         if (m.option != null)
             windowPercent = Number(m.option);

@@ -45,15 +45,14 @@ public final class SummaryValues {
     public Object get(int fieldIndex, MeasureField m, Field[] xFields) {
         String summary = m.measureFunction;
         if (summary.equals("count")) return rows.size();
+        Field x = xFields.length == 0 ? null : xFields[xFields.length-1];   // Innermost is the one
 
         if (summary.equals("fit")) {
-            Field x = xFields[0];
             if (m.fit == null) m.fit = new Regression(m.field, x);
             return m.fit.get(x.value(rows.get(0)));
         }
 
         if (summary.equals("smooth")) {
-            Field x = xFields[0];
             Double windowPercent = null;
             if (m.option != null)
                 windowPercent = Double.parseDouble(m.option);
