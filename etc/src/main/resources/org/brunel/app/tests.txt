@@ -59,7 +59,7 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 
 - simple	/ bar x(animal) y(size) color(animal) sort(size) filter(size, #row, animal, mammal) :: pass
 - simple	/ bar x(animal) y(size) color(mammal) transpose                                     :: pass
-- simple	/ bar x(aquatic, mammal) y(size) color(mammal)                                      :: fail :: clustered X axis not yet implemented
+- baseball  / x(age) y(salary) color(rbirate) | line x(age) y(rbirate) smooth(rbirate)          :: pass :: Legend should be attached to chart on left
 - simple	/ bar x(mammal) y(size) color(aquatic) stack label(#all) tooltip(aquatic, #count)   :: pass
 
 - whiskey	/ bar x(country) y(#count) color(category) stack                                    :: pass
