@@ -265,8 +265,8 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
             int width = getWidth() - 30;
             Dimension size = new Dimension(width, (int) (width / 1.618));
 
-            WebDisplay display = new WebDisplay("BrunelPad");
-            display.buildSingle(item, size.width, size.height, "index.html", options, "<h2 style='text-align:center'>" + a.toString() + "</h2>");
+            WebDisplay display = new WebDisplay(options, "BrunelPad");
+            display.buildSingle(item, size.width, size.height, "index.html", "<h2 style='text-align:center'>" + a.toString() + "</h2>");
             display.showInBrowser();
 
             if (transitory == null) addToHistory(descr);

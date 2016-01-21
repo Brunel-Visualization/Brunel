@@ -17,6 +17,7 @@
 package org.brunel.app;
 
 import org.brunel.action.Action;
+import org.brunel.build.util.BuilderOptions;
 import org.brunel.model.VisItem;
 import org.brunel.util.WebDisplay;
 
@@ -31,9 +32,13 @@ import java.util.Scanner;
 //Be sure to verify any changes do not break the service if you do not have that project locally.
 public abstract class DocBuilder {
 
+    private final BuilderOptions options;
     protected WebDisplay display; // Creating on-demand since this is now used to provide the gallery/cookbook via the service;
     protected final StringBuilder out = new StringBuilder();
 
+    public DocBuilder(BuilderOptions options) {
+        this.options = options;
+    }
 
     protected void run(String fileLoc, String itemFormat) throws Exception {
 
@@ -68,7 +73,7 @@ public abstract class DocBuilder {
     }
 
     protected void show(Map<String, String> tags, String itemFormat) throws UnsupportedEncodingException {
-    	if (display == null) display = new WebDisplay("Full Tests");
+    	if (display == null) display = new WebDisplay(options, "Full Tests");
         if (tags.isEmpty()) return;                                                     // Nothing defined yet
 
         String brunel = tags.get("#brunel");
@@ -92,7 +97,7 @@ public abstract class DocBuilder {
         try {
             Action a = Action.parse(brunel);
             VisItem item = a.apply();                       // data description should be included
-            display.buildOneOfMultiple(item, "all", id, new Dimension(WIDTH, HEIGHT), null);
+            display.buildOneOfMultiple(item, "all", id, new Dimension(WIDTH, HEIGHT));
         } catch (Exception e) {
             System.err.println("Error running gallery item: " + tags);
             e.printStackTrace();

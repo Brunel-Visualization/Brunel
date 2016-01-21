@@ -114,12 +114,14 @@ public class WebDisplay {
     private final File displayBaseDir;
     private static File home;            // Base directory
     private static File out;             // Main code location
+    private final BuilderOptions options;
 
     private int count = 0;
     private String menuString = "<html><head><title>Charts</title></head><body>\n";
     private final ArrayList<String> headers = new ArrayList<String>();
 
-    public WebDisplay(String dirName) {
+    public WebDisplay(BuilderOptions options, String dirName) {
+        this.options = options;
         // Set 'home' and 'out' directories
         ensureBaseDirectoriesBuilt();
 
@@ -135,9 +137,6 @@ public class WebDisplay {
         displayBaseDir = makeDir(dirName);
     }
 
-    public void addHeader(String s) {
-        headers.add(s);
-    }
 
     public File makeFile(String s) {
         return new File(displayBaseDir, s);
@@ -164,7 +163,7 @@ public class WebDisplay {
         new File(out, "/sumoselect").mkdirs();
     }
 
-    public void buildOneOfMultiple(VisItem target, String groupName, String name, Dimension size, BuilderOptions options) {
+    public void buildOneOfMultiple(VisItem target, String groupName, String name, Dimension size) {
         if (count == 0) writeToFile("index.html", NAV_BASE.replace("$TITLE$", displayBaseDir.getName()));
         String file = count + ".html";
 
@@ -174,14 +173,14 @@ public class WebDisplay {
 
         try {
             count++;
-            buildSingle(target, size.width, size.height, file, options, name);
+            buildSingle(target, size.width, size.height, file, name);
         } catch (Exception ex) {
             ex.printStackTrace();
             buildError(file);
         }
     }
 
-    public void buildSingle(VisItem target, int width, int height, String file, BuilderOptions options, String... titles) {
+    public void buildSingle(VisItem target, int width, int height, String file, String... titles) {
         D3Builder builder = D3Builder.make(options);
         builder.build(target, width, height);
         String html = writeHtml(builder, width, height, headers, null, titles);

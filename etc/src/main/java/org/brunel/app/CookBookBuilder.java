@@ -15,6 +15,8 @@
  */
 package org.brunel.app;
 
+import org.brunel.build.util.BuilderOptions;
+
 public class CookBookBuilder extends DocBuilder {
 
 	private static final String ITEM_FORMAT = "**[%s](%s)** %s\n\n`%s`\n\n";
@@ -26,12 +28,16 @@ public class CookBookBuilder extends DocBuilder {
 	public static final String SPECIAL = "/org/brunel/app/special.txt";
 
     public static void main(String[] args) throws Exception {
-
-        new CookBookBuilder().run();
+		BuilderOptions options = BuilderOptions.make(args);
+        new CookBookBuilder(options).run();
 
     }
 
-    private void run() throws Exception {
+	public CookBookBuilder(BuilderOptions options) {
+		super(options);
+	}
+
+	private void run() throws Exception {
     	out.append("***\n");
     	out.append("### Basic Charts\n");
     	run(BASIC, ITEM_FORMAT);

@@ -16,6 +16,8 @@
 
 package org.brunel.app;
 
+import org.brunel.build.util.BuilderOptions;
+
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
@@ -35,14 +37,16 @@ public class GalleryBuilder extends DocBuilder {
      */
 
     public static final String GALLERY = "/org/brunel/app/gallery.txt";
-    private int row = 0;
     private int column = 0;
 
     public static void main(String[] args) throws Exception {
-        new GalleryBuilder().run(GALLERY, ITEM_FORMAT);
+        BuilderOptions options = BuilderOptions.make(args);
+        new GalleryBuilder(options).run(GALLERY, ITEM_FORMAT);
     }
 
-
+    public GalleryBuilder(BuilderOptions options) {
+        super(options);
+    }
 
     protected void run(String fileLoc, String itemFormat) throws Exception {
 
@@ -67,7 +71,6 @@ public class GalleryBuilder extends DocBuilder {
         column++;
         if (column == 3) {
             column = 0;
-            row++;
             out.append("</tr>\n");
         }
 

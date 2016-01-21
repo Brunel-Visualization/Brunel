@@ -50,7 +50,7 @@ class VisualTests {
         whiskey = serializeCheck(Dataset.make(readResourceAsCSV("whiskey.csv")));
         simple = serializeCheck(Dataset.make(readResourceAsCSV("simple.csv")));
         library = Library.custom();
-        display = new WebDisplay("Full Tests");
+        display = new WebDisplay(options, "Full Tests");
     }
 
     private Dataset serializeCheck(Dataset dataset) {
@@ -137,7 +137,7 @@ class VisualTests {
         int HEIGHT = 350;
         int WIDTH = 500;
         try {
-            display.buildSingle(a.apply(base), WIDTH, HEIGHT, id + ".html", options, makeTitle(name, a, result), makeComments(comments, result));
+            display.buildSingle(a.apply(base), WIDTH, HEIGHT, id + ".html", makeTitle(name, a, result), makeComments(comments, result));
         } catch (Exception e) {
             System.err.println("Error running test: " + test);
             e.printStackTrace();

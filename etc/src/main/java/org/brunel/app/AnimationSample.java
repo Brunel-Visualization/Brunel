@@ -58,7 +58,7 @@ public class AnimationSample {
         options.generateBuildCode = false;
         D3Builder builder = D3Builder.make(options);
         builder.build(item, 800, 600);
-        AnimationSample sample = new AnimationSample("Animation Samples", text, builder);
+        AnimationSample sample = new AnimationSample("Animation Samples", text, builder, options);
         sample.showInBrowser("index.html");
 
     }
@@ -82,8 +82,8 @@ public class AnimationSample {
     private final File displayBaseDir;
 
     /* Pass in the subdirectory name to util */
-    private AnimationSample(String dirName, String action, D3Builder builder) {
-        WebDisplay display = new WebDisplay("Animation Sample");
+    private AnimationSample(String dirName, String action, D3Builder builder, BuilderOptions options) {
+        WebDisplay display = new WebDisplay(options, "Animation Sample");
         displayBaseDir = display.makeDir(dirName);
 
         String css = builder.getStyleOverrides();
