@@ -94,6 +94,21 @@ public class D3Integration {
     	return names;
     }
 
+    /**
+     * Prefix all data statements with a supplied String.  This is provided to allow unique data set
+     * names to be placed into the cache.  This will take the supplied Brunel along with a prefix presumed
+     * to be unique for the session and prefix it to all data() statements.
+     * @param brunel the original Brunel
+     * @param prefix the prefix to use
+     * @return new Brunel with all data() statements containing the suppplied prefix.
+     */
+	//Note:   This method is called from other languages.
+	//Do not modify this method signature without checking all language integrations.
+    public static String prefixAllDataStatements(String brunel, String prefix) {
+    	return ActionUtil.prefixAllDataStatements(Action.parse(brunel), prefix);
+
+    }
+
 	/**
 	 * Create and return the Brunel results as a String containing the Brunel JSON.
 	 * @param data the data as a CSV String
