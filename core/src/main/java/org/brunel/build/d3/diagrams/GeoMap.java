@@ -19,7 +19,6 @@ package org.brunel.build.d3.diagrams;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
-import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
@@ -145,11 +144,10 @@ public class GeoMap extends D3Diagram {
 
         // Write out the resulting structure
         out.add("{").indentMore();
-        String version = new BuilderOptions().version;
         for (int k = 0; k < files.length; k++) {
             if (k > 0) out.add(",").onNewLine();
             String fileName = files[k];
-            String source = Data.quote("http://brunelvis.org/geo/" + version + "/" + fileName + ".json");
+            String source = Data.quote(out.options.locMaps + "/" + out.options.version + "/" + fileName + ".json");
             out.onNewLine().add(source, ":{").indentMore();
             int i = 0;
             Map<Object, Integer> features = combined.get(fileName);

@@ -88,18 +88,18 @@ public class D3Builder extends AbstractBuilder {
                     + String.format(pattern, "http://code.jquery.com/ui/1.11.4/jquery-ui.js");
         }
 
-        if (options.localResources == null) {
-            base = base + String.format(pattern, "http://brunelvis.org/js/brunel." + options.version + ".min.js");
-            if (getControls().isNeeded())
-                base = base + String.format(pattern, "http://brunelvis.org/js/brunel.controls." + options.version + ".min.js");
-        } else {
+        if (options.locJavaScript.startsWith("file")) {
             base = base
-                    + String.format(pattern, options.localResources + "/BrunelData.js")
-                    + String.format(pattern, options.localResources + "/BrunelD3.js");
+                    + String.format(pattern, options.locJavaScript + "/BrunelData.js")
+                    + String.format(pattern, options.locJavaScript + "/BrunelD3.js");
             if (getControls().isNeeded()) base = base
-                    + String.format(pattern, options.localResources + "/BrunelEventHandlers.js")
-                    + String.format(pattern, options.localResources + "/BrunelJQueryControlFactory.js")
-                    + String.format(pattern, options.localResources + "/sumoselect/jquery.sumoselect.min.js");
+                    + String.format(pattern, options.locJavaScript + "/BrunelEventHandlers.js")
+                    + String.format(pattern, options.locJavaScript + "/BrunelJQueryControlFactory.js")
+                    + String.format(pattern, options.locJavaScript + "/sumoselect/jquery.sumoselect.min.js");
+        } else {
+            base = base + String.format(pattern, options.locJavaScript + "/brunel." + options.version + ".min.js");
+            if (getControls().isNeeded())
+                base = base + String.format(pattern, options.locJavaScript + "/brunel.controls." + options.version + ".min.js");
         }
         return base;
     }
@@ -211,7 +211,7 @@ public class D3Builder extends AbstractBuilder {
     protected void defineVisSystem(VisItem main, int width, int height) {
         this.visWidth = width;
         this.visHeight = height;
-        this.out = new ScriptWriter(options.readableJavascript);
+        this.out = new ScriptWriter(options);
 
         // Write the class definition function (and flag to use strict mode)
         out.add("function ", options.className, "(visId) {").ln().indentMore();
@@ -437,15 +437,15 @@ public class D3Builder extends AbstractBuilder {
         String pattern = "\t<link rel=\"stylesheet\" type=\"text/css\" href=\"%s\" charset=\"utf-8\"/>\n";
 
         String base;
-        if (options.localResources == null) {
-            base = String.format(pattern, "http://brunelvis.org/js/brunel." + options.version + ".css");
+        if (options.locJavaScript.startsWith("file")) {
+            base = String.format(pattern, options.locJavaScript + "/BrunelBaseStyles.css");
         } else {
-            base = String.format(pattern, options.localResources + "/BrunelBaseStyles.css");
+            base = String.format(pattern, options.locJavaScript + "/brunel." + options.version + ".css");
         }
 
         if (getControls().isNeeded()) {
             base = base + String.format(pattern, "http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css")
-                    + String.format(pattern, "http://brunelvis.org/js/sumoselect.css");
+                    + String.format(pattern, options.locJavaScript + "/sumoselect.css");
         }
         return base;
     }

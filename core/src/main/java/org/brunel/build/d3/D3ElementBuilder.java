@@ -28,6 +28,9 @@ import org.brunel.model.VisTypes;
 
 class D3ElementBuilder {
 
+    private static final String BAR_SPACING = "0.9";            // Spacing between categorical bars
+    private static final String CLUSTER_SPACING = "0.75";       // Spacing between clusters
+
     private final ScriptWriter out;                             // To write code out to
     private final VisSingle vis;                                // Element definition
 
@@ -179,7 +182,6 @@ class D3ElementBuilder {
             return;
         }
 
-
         // Add definition for the internal width of a cluster category
         if (elementDef.x.clusterSize != null)
             out.add("var w1 =", elementDef.x.clusterSize).endStatement();
@@ -232,7 +234,6 @@ class D3ElementBuilder {
     }
 
     private void writeCoordinateDefinition(ElementDetails details, ElementDefinition elementDef) {
-
 
         // This starts the transition or update going
         String basicDef = "BrunelD3.trans(selection,transitionMillis)";
@@ -405,9 +406,9 @@ class D3ElementBuilder {
                 // or if we are clustering (in which case a larger gap is better)
 
                 if (purpose == ScalePurpose.inner || purpose == ScalePurpose.x && fields.length > 1)
-                    baseAmount = "0.75 * " + baseAmount;
+                    baseAmount = CLUSTER_SPACING + " * " + baseAmount;
                 else if ((size == null || !size.isPercent()) && !scales.allNumeric(baseFields))
-                    baseAmount = "0.9 * " + baseAmount;
+                    baseAmount = BAR_SPACING + " * " + baseAmount;
 
             } else if (granularity != null) {
                 String scaleName = "scale_" + purpose.name();
@@ -462,6 +463,7 @@ class D3ElementBuilder {
         }
 
         Field main = fields[0];
+        boolean numericBins = main.isBinned() && !categorical;
 
         // X axis only ever has one main field at most -- rest are clustered
         boolean oneMainField = fields.length == 1 || dimName.equals("x");
@@ -473,21 +475,31 @@ class D3ElementBuilder {
 
             String dataFunction = D3Util.writeCall(main);          // A call to that field using the datum 'd'
 
-            if (isRange(main)) {
+            if (numericBins) {
+                // A Binned value on a non-categorical axes
+                if (cluster == null) {
+                    dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".mid) }";
+                    dim.left = "function(d) { return " + scaleName + "(" + dataFunction + ".low) }";
+                    dim.right = "function(d) { return " + scaleName + "(" + dataFunction + ".high) }";
+                } else {
+                    // Left of the cluster bar, right of the cluster bar, and distance along it
+                    String L = scaleName + "(" + dataFunction + ".low)";
+                    String R = scaleName + "(" + dataFunction + ".high)";
+                    String D;
+                    if (isRange(cluster))
+                        D = "scale_inner(" + D3Util.writeCall(cluster) + ".mid)";
+                    else
+                        D = "scale_inner(" + D3Util.writeCall(cluster) + ")";
+
+                    dim.center = "function(d) { var L=" + L + ", R=" + R + "; return (L+R)/2 + (L-R) * "
+                            + CLUSTER_SPACING + " * " + D + " }";
+                }
+            } else if (isRange(main)) {
                 // This is a range field, but we have not been asked to show both ends,
                 // so we use the midpoint
-
                 dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".mid)";
                 if (cluster != null) dim.center += addClusterMultiplier(cluster);
                 dim.center += " }";
-
-            } else if (main.isBinned() && !categorical) {
-                // A Binned value on a non-categorical axes
-                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".mid) }";
-                dim.left = "function(d) { return " + scaleName + "(" + dataFunction + ".low) }";
-                dim.right = "function(d) { return " + scaleName + "(" + dataFunction + ".high) }";
-                if (cluster != null)
-                    throw new UnsupportedOperationException();
             } else {
                 // Nothing unusual -- just define the center
                 dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ")";

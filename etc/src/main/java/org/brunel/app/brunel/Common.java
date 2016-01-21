@@ -69,14 +69,4 @@ public class Common {
         }
     }
 
-    /**
-     * Gets a version defined in the arguments
-     */
-    public static String getVersion(String[] args) {
-        for (int i = 0; i < args.length - 1; i++) {
-            if (args[i].equals("-v") || args[i].equals("-version"))
-                return args[i + 1];
-        }
-        return null;
-    }
 }

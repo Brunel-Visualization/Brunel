@@ -35,21 +35,21 @@ public class ScriptWriter {
     private final int lineMaxLength;
     private final PrintWriter out;
     private final StringWriter base;
-    public boolean readable = false;
+    public final BuilderOptions options;
     private int consecutiveNewLines = 0;
     private int indentLevel = 0;
     private boolean changed;
 
-    public ScriptWriter(boolean readableJavascript) {
-        readable = readableJavascript;
-        lineMaxLength = readable ? 100 : 400;
+    public ScriptWriter(BuilderOptions options) {
+        this.options = options;
+        lineMaxLength = options.readableJavascript ? 100 : 400;
         base = new StringWriter();
         out = new PrintWriter(base);
         consecutiveNewLines = 1;
     }
 
     public ScriptWriter addChained(Object... items) {
-        if (readable)
+        if (options.readableJavascript)
             return indentMore().onNewLine().add(".").add(items).indentLess();
         else
             return add(".").add(items);
@@ -62,7 +62,7 @@ public class ScriptWriter {
 
     public ScriptWriter add(Object... items) {
         // Add indentation if needed
-        if (readable && consecutiveNewLines > 0)
+        if (options.readableJavascript && consecutiveNewLines > 0)
             for (int i = 0; i < indentLevel; i++) out.print(INDENT);
 
         // Add items
@@ -108,7 +108,7 @@ public class ScriptWriter {
     public ScriptWriter addQuoted(Object... items) {
         indentMore().indentMore();
         for (int i = 0; i < items.length; i++) {
-            if (i > 0) out.print(readable ? ", " : ",");
+            if (i > 0) out.print(options.readableJavascript ? ", " : ",");
             if (currentColumn() > 77) ln();
             add(quote(items[i]));
         }
@@ -149,7 +149,7 @@ public class ScriptWriter {
      * @return this
      */
     public ScriptWriter at(int n) {
-        if (readable)
+        if (options.readableJavascript)
             for (int i = currentColumn(); i < n; i++) add(" ");
         return this;
     }
@@ -159,7 +159,7 @@ public class ScriptWriter {
     }
 
     public ScriptWriter comment(Object... items) {
-        if (readable) {
+        if (options.readableJavascript) {
             if (consecutiveNewLines == 0) add(" ");
             add("// ").add(items);
         }
@@ -175,7 +175,7 @@ public class ScriptWriter {
     public ScriptWriter continueOnNextLine(String... before) {
         for (String s : before) out.print(s);
         ln();
-        if (readable) out.print(INDENT);
+        if (options.readableJavascript) out.print(INDENT);
         return this;
     }
 
@@ -189,7 +189,7 @@ public class ScriptWriter {
 
     public ScriptWriter titleComment(Object... items) {
         ensureBlankLine();
-        if (readable) {
+        if (options.readableJavascript) {
             add("// ").add(items).add(" ");
             for (int i = currentColumn(); i < lineMaxLength; i++) add("/");
             ensureBlankLine();
@@ -198,7 +198,7 @@ public class ScriptWriter {
     }
 
     private void ensureBlankLine() {
-        if (readable) while (consecutiveNewLines < 2) ln();
+        if (options.readableJavascript) while (consecutiveNewLines < 2) ln();
         else if (consecutiveNewLines == 0) ln();
     }
 }

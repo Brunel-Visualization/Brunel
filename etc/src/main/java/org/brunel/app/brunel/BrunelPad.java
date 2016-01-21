@@ -17,6 +17,7 @@
 
 package org.brunel.app.brunel;
 
+import org.brunel.build.util.BuilderOptions;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.model.VisException;
@@ -42,28 +43,28 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
 
     /* use '-v version' to use a minified online library version */
     public static void main(String[] args) {
-        String definedVersion = Common.getVersion(args);
+        BuilderOptions options = BuilderOptions.make(args);
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (final Exception ignored) {
             // I guess we won't have anything nice
         }
 
-        new BrunelPad(definedVersion).start();
+        new BrunelPad(options).start();
     }
 
     private final Settings settings;
     private final ActionEditorPane actionEditor;
     private final SourcePanel sourcePanel;
     private final List<String> history = new ArrayList<String>();
-    private final String version;
+    private final BuilderOptions options;
     private Dataset base;
     private org.brunel.action.Action action;
     private org.brunel.action.Action transitory;
 
-    private BrunelPad(String version) {
+    private BrunelPad(BuilderOptions options) {
         super("BrunelPad");
-        this.version = version;
+        this.options = options;
         settings = new Settings("BrunelPad");
         settings.persistWindowLocation(this, "main", 50, 50, 800, 800);
         setTitle(null);
@@ -265,7 +266,7 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
             Dimension size = new Dimension(width, (int) (width / 1.618));
 
             WebDisplay display = new WebDisplay("BrunelPad");
-            display.buildSingle(item, size.width, size.height, "index.html", version,  "<h2 style='text-align:center'>" + a.toString() + "</h2>");
+            display.buildSingle(item, size.width, size.height, "index.html", options, "<h2 style='text-align:center'>" + a.toString() + "</h2>");
             display.showInBrowser();
 
             if (transitory == null) addToHistory(descr);
