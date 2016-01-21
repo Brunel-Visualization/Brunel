@@ -642,7 +642,7 @@ public class D3ScaleBuilder {
 
         ColorMapping palette = Palette.makeColorMapping(f, p.modifiers(), largeElement);
         scaleWithDomain("color", new Field[]{f}, ScalePurpose.color, palette.values.length, "linear", palette.values);
-        out.addChained("range([ ").addQuoted(palette.colors).add("])").endStatement();
+        out.addChained("range([ ").addQuoted((Object[]) palette.colors).add("])").endStatement();
     }
 
     private void addOpacityScale(Param p, VisSingle vis) {
