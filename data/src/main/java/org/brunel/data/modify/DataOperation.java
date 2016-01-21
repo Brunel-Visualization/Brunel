@@ -16,7 +16,7 @@
 
 package org.brunel.data.modify;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -33,7 +33,7 @@ public abstract class DataOperation {
     static Map<String, String> map(String command, String sep) {
         String[] parts = parts(command);
         if (parts == null) return null;
-        Map<String, String> result = new HashMap<String, String>();
+        Map<String, String> result = new LinkedHashMap<String, String>();
         for (String c : parts) {
             String[] s = c.split(sep);
             String key = s[0].trim();
