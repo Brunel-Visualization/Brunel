@@ -23,6 +23,7 @@ import java.util.Map;
 import org.brunel.app.CookBookBuilder;
 import org.brunel.app.DocBuilder;
 import org.brunel.app.GalleryBuilder;
+import org.brunel.build.util.BuilderOptions;
 
 import com.ibm.json.java.JSONArray;
 import com.ibm.json.java.JSONObject;
@@ -44,7 +45,9 @@ public class ExampleBuilder extends DocBuilder {
 		}
 	 }
 	 
+	 
 	 public ExampleBuilder(JSONArray jarray) {
+		 super(new BuilderOptions());
 		 this.current = jarray;
 	 }
 	 
