@@ -1950,12 +1950,12 @@ V.modify_DataOperation.map = function(command, sep) {
     var _i, c, key, result, s, value;
     var parts = V.modify_DataOperation.parts(command);
     if (parts == null) return null;
-    result = new $.Map();
+    result = new $.List();
     for(_i=$.iter(parts), c=_i.current; _i.hasNext(); c=_i.next()) {
         s = c.split(sep);
         key = s[0].trim();
         value = s.length > 1 ? s[1].trim() : "";
-        result.put(key, value);
+        result.add([key, value]);
     }
     return result;
 };
@@ -2638,23 +2638,28 @@ V.modify_Summarize = function(measures, dimensions, percentBase, rowCount) {
 $.extend(V.modify_Summarize, V.modify_DataOperation);
 
 V.modify_Summarize.transform = function(base, command) {
-    var _i, baseField, dimensions, fields, measureField, measures, name, operations, percentBase, s, values;
+    var _i, baseField, containsCount, containsRow, dimensions, fields, measureField,
+        measures, op, operations, percentBase, s, values;
     if (base.rowCount() == 0) return base;
     operations = V.modify_DataOperation.map(command, "=");
     if (operations == null) return base;
     measures = new $.List();
     dimensions = new $.List();
     percentBase = new $.List();
-    for(_i=$.iter(operations.keySet()), name=_i.current; _i.hasNext(); name=_i.next()) {
-        values = operations.get(name).split(":");
+    containsCount = false;
+    containsRow = false;
+    for(_i=$.iter(operations), op=_i.current; _i.hasNext(); op=_i.next()) {
+        if (op[0] == "#count") containsCount = true;
+        if (op[0] == "#row") containsRow = true;
+        values = op[1].split(":");
         baseField = base.field(values[0].trim());
         if (values.length == 1) {
-            dimensions.add(new V.summary_DimensionField(baseField, name));
+            dimensions.add(new V.summary_DimensionField(baseField, op[0]));
         } else if (values[1].trim() == "base") {
-            dimensions.add(new V.summary_DimensionField(baseField, name));
+            dimensions.add(new V.summary_DimensionField(baseField, op[0]));
             percentBase.add(baseField);
         } else {
-            measureField = new V.summary_MeasureField(baseField, name, values[1].trim());
+            measureField = new V.summary_MeasureField(baseField, op[0], values[1].trim());
             if (values.length > 2) {
                 measureField.option = values[2].trim();
             }
@@ -2663,10 +2668,9 @@ V.modify_Summarize.transform = function(base, command) {
     }
     $.sort(measures);
     $.sort(dimensions);
-    if (operations.get("#count") == null) {
+    if (!containsCount)
         measures.add(new V.summary_MeasureField(base.field("#count"), "#count", "sum"));
-    }
-    if (operations.get("#row") == null)
+    if (!containsRow)
         measures.add(new V.summary_MeasureField(base.field("#row"), "#row", "list"));
     s = new V.modify_Summarize(measures, dimensions, percentBase, base.rowCount());
     fields = s.make();
@@ -2785,13 +2789,17 @@ V.modify_Transform = function() {
 $.extend(V.modify_Transform, V.modify_DataOperation);
 
 V.modify_Transform.transform = function(base, command) {
-    var fields, i, operations;
+    var _i, fields, i, o, op, operations;
     if (base.rowCount() == 0) return base;
     operations = V.modify_DataOperation.map(command, "=");
     if (operations == null) return base;
     fields = $.Array(base.fields.length, null);
-    for (i = 0; i < fields.length; i++)
-        fields[i] = V.modify_Transform.modify(base.fields[i], operations.get(base.fields[i].name));
+    for (i = 0; i < fields.length; i++){
+        op = null;
+        for(_i=$.iter(operations), o=_i.current; _i.hasNext(); o=_i.next())
+            if ($.equals(o[0], base.fields[i].name)) op = o[1];
+        fields[i] = V.modify_Transform.modify(base.fields[i], op);
+    }
     return base.replaceFields(fields);
 };
 

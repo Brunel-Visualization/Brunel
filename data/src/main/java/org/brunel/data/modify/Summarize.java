@@ -27,7 +27,6 @@ import org.brunel.data.summary.SummaryValues;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Performs aggregation by defining a set of summarization commands:
@@ -54,7 +53,7 @@ public class Summarize extends DataOperation {
      */
     public static Dataset transform(Dataset base, String command) {
         if (base.rowCount() == 0) return base;
-        Map<String, String> operations = map(command, "=");
+        List<String[]> operations = map(command, "=");
         if (operations == null) return base;
 
         // Decode the operations into these collections
@@ -62,16 +61,21 @@ public class Summarize extends DataOperation {
         List<DimensionField> dimensions = new ArrayList<DimensionField>();
         List<Field> percentBase = new ArrayList<Field>();
 
-        for (String name : operations.keySet()) {
-            String[] values = operations.get(name).split(":");
+        boolean containsCount = false;
+        boolean containsRow = false;
+
+        for (String[] op : operations) {
+            if (op[0].equals("#count")) containsCount = true;
+            if (op[0].equals("#row")) containsRow = true;
+            String[] values = op[1].split(":");
             Field baseField = base.field(values[0].trim());
             if (values.length == 1) {
-                dimensions.add(new DimensionField(baseField, name));
+                dimensions.add(new DimensionField(baseField, op[0]));
             } else if (values[1].trim().equals("base")) {
-                dimensions.add(new DimensionField(baseField, name));
+                dimensions.add(new DimensionField(baseField, op[0]));
                 percentBase.add(baseField);
             } else {
-                MeasureField measureField = new MeasureField(baseField, name, values[1].trim());
+                MeasureField measureField = new MeasureField(baseField, op[0], values[1].trim());
                 if (values.length > 2) {
                     // Add the option info in
                     measureField.option = values[2].trim();
@@ -84,10 +88,8 @@ public class Summarize extends DataOperation {
         Collections.sort(dimensions);
 
         // ensure #count and #row are included
-        if (operations.get("#count") == null) {
-            measures.add(new MeasureField(base.field("#count"), "#count", "sum"));
-        }
-        if (operations.get("#row") == null) measures.add(new MeasureField(base.field("#row"), "#row", "list"));
+        if (!containsCount) measures.add(new MeasureField(base.field("#count"), "#count", "sum"));
+        if (!containsRow) measures.add(new MeasureField(base.field("#row"), "#row", "list"));
 
         Summarize s = new Summarize(measures, dimensions, percentBase, base.rowCount());
         Field[] fields = s.make();

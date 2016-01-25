@@ -26,6 +26,7 @@ import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,12 +49,15 @@ public class Transform extends DataOperation {
 
     public static Dataset transform(Dataset base, String command) {
         if (base.rowCount() == 0) return base;
-        Map<String, String> operations = map(command, "=");
+        List<String[]> operations = map(command, "=");
         if (operations == null) return base;
 
         Field[] fields = new Field[base.fields.length];
-        for (int i = 0; i < fields.length; i++)
-            fields[i] = modify(base.fields[i], operations.get(base.fields[i].name));
+        for (int i = 0; i < fields.length; i++) {
+            String op = null;
+            for (String[] o : operations) if (o[0].equals(base.fields[i].name)) op = o[1];
+            fields[i] = modify(base.fields[i],op);
+        }
 
         return base.replaceFields(fields);
     }

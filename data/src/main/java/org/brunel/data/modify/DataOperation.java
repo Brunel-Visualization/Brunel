@@ -16,8 +16,8 @@
 
 package org.brunel.data.modify;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Common code for Dataset transforms
@@ -30,15 +30,15 @@ public abstract class DataOperation {
      * @param command command to be split into sections
      * @return array of commands, or null if there are none
      */
-    static Map<String, String> map(String command, String sep) {
+    static List<String[]> map(String command, String sep) {
         String[] parts = parts(command);
         if (parts == null) return null;
-        Map<String, String> result = new LinkedHashMap<String, String>();
+        List<String[]> result = new ArrayList<String[]>();
         for (String c : parts) {
             String[] s = c.split(sep);
             String key = s[0].trim();
             String value = s.length > 1 ? s[1].trim() : "";
-            result.put(key, value);
+            result.add(new String[]{key, value});
         }
         return result;
     }
@@ -50,7 +50,7 @@ public abstract class DataOperation {
      * @return array of commands, or null if there are none
      */
     public static String[] parts(String command) {
-        if (command.endsWith(";")) command = command.substring(0, command.length()-1);
+        if (command.endsWith(";")) command = command.substring(0, command.length() - 1);
         String[] parts = command.split(";");
         for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim();
         return parts.length == 1 && parts[0].isEmpty() ? null : parts;
