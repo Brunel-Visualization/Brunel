@@ -311,9 +311,11 @@ public class D3Builder extends AbstractBuilder {
             out.continueOnNextLine(",").add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");
         out.continueOnNextLine(",").add("main = elementGroup.append('g').attr('class', 'main')");
         if (builder.needsDiagramLabels())
-            out.continueOnNextLine(",").add("diagramLabels = elementGroup.append('g').attr('class', 'diagram labels')");
+            out.continueOnNextLine(",")
+                    .add("diagramLabels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'diagram labels'), elementGroup)");
 
-        out.continueOnNextLine(",").add("labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels'), elementGroup)").endStatement();
+        out.continueOnNextLine(",")
+                .add("labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels'), elementGroup)").endStatement();
     }
 
     /*
