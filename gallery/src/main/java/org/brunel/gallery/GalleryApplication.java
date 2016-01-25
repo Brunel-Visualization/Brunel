@@ -33,6 +33,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 
+import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ContentReader;
 import org.brunel.build.util.DataCache;
 import org.brunel.data.Data;
@@ -57,6 +58,7 @@ public class GalleryApplication extends Application {
 
 	private static final String INDEX_LOCATION = "/org/brunel/gallery/RenderTemplate.html";
 	private static final GalleryCache GALLERY_CACHE = new GalleryCache();
+	private static final BuilderOptions OPTIONS = new BuilderOptions();
 	private static final String HTML = new Scanner(
 			GalleryApplication.class.getResourceAsStream(INDEX_LOCATION),
 			"UTF-8").useDelimiter("\\A").next();
@@ -120,7 +122,7 @@ public class GalleryApplication extends Application {
 		width = width != null ? width : "800";
 		height = height != null ? height : "450";
 		controlHeight = controlHeight != null ? controlHeight : "0";
-		brunelSrc = brunelSrc != null ? brunelSrc : "data('sample:US States.csv') bubble label(abbr) size(population) color(dem_rep)";
+		brunelSrc = brunelSrc != null ? brunelSrc : "data('sample:US States.csv') bubble label(abbr) size(population) color(dem_rep:reds-blues)";
 		
 		String htmlVersion =HTML;
 		
@@ -130,6 +132,7 @@ public class GalleryApplication extends Application {
 		html = html.replace("$WIDTH$", width);
 		html = html.replace("$HEIGHT$", height);
 		html = html.replace("$CONTROL_SIZE$", controlHeight);
+		html = html.replace("$VERSION$", OPTIONS.version);
 		return html;
 	}
 	
