@@ -25,24 +25,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class SummaryValues {
-    private final Field[] fields;                                    // the fields we use
-    public final List<Integer> rows = new ArrayList<Integer>();    // Which data rows have been aggregated into this
+    private final Field[] fields;                                   // the fields we use
+    private final Field[] xFields;                                  // the fields to use as 'X' values
+    private final Field[] allDimensions;                            // all fields that are inputs (x fields AND dimensions)
+    public final List<Integer> rows = new ArrayList<Integer>();     // Which data rows have been aggregated into this
     public double[] percentSums;
 
-    public SummaryValues(Field[] fields) {
+    public SummaryValues(Field[] fields, Field[] xFields, Field[] allDimensions) {
         this.fields = fields;
+        this.xFields = xFields;
+        this.allDimensions = allDimensions;
     }
 
     public int firstRow() {
         return rows.get(0);
     }
 
-    /*
-     * Possible summaries are:
-     * [numeric] mean, min, max, range, iqr, median, stddev
-     * [any] count, mode, unique
+    /**
+     * Calculate the summary vale
+     * @param fieldIndex the index of the output field within this.fields
+     * @param m the measure we wish to calculate
+     * @return the summary value
      */
-    public Object get(int fieldIndex, MeasureField m, Field[] xFields) {
+    public Object get(int fieldIndex, MeasureField m) {
         String summary = m.measureFunction;
         if (summary.equals("count")) return rows.size();
         Field x = xFields.length == 0 ? null : xFields[xFields.length-1];   // Innermost is the one

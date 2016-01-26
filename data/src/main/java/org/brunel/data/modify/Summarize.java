@@ -115,7 +115,6 @@ public class Summarize extends DataOperation {
     }
 
     private Field[] make() {
-        // Do not add slow percent base calculations unless needed
 
         // Assemble arrays of fields
         Field[] dimensionFields = getFields(dimensions);
@@ -138,7 +137,8 @@ public class Summarize extends DataOperation {
 
         // Create the summary values for each group, and percentage sums
         SummaryValues[] summaries = new SummaryValues[groupCount];
-        for (int i = 0; i < summaries.length; i++) summaries[i] = new SummaryValues(measureFields);
+        for (int i = 0; i < summaries.length; i++)
+            summaries[i] = new SummaryValues(measureFields, percentBaseFields, dimensionFields);
         double[][] percentSums = new double[percentGroupCount][measureFields.length];
 
         // Perform the Aggregation
@@ -171,7 +171,7 @@ public class Summarize extends DataOperation {
             // Set the measure values
             for (int i = 0; i < measures.size(); i++) {
                 MeasureField m = measures.get(i);
-                measureData[i][g] = values.get(i, m, percentBaseFields);
+                measureData[i][g] = values.get(i, m);
             }
         }
 
