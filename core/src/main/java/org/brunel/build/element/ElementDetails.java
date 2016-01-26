@@ -95,11 +95,11 @@ public class ElementDetails {
         this.elementType = elementType;
         this.classes = "'element " + elementClass + "'";
         this.textMethod = textMethod;
-        this.textMustFit = textFits;
+        this.textMustFit = textMethod.equals("inside") || textFits;             // inside REQUIRES a fit
     }
 
     /* Modify the method to give better text location for tooltips */
-    public ElementDetails modifyForTooltip(boolean transposed) {
+    public ElementDetails modifyForTooltip() {
         String method = textMethod.equals("box") ? "top" : textMethod;
         if (method.equals("left") || method.equals("right") || method.equals("bottom")) method = "top";
         return makeForDiagram(null, dataSource, elementType, "point", method, false);

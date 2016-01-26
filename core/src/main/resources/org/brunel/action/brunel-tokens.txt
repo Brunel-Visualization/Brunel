@@ -22,7 +22,7 @@ cloud diagram
 pack diagram
 tree diagram
 treemap diagram
-network diagram
+network diagram - NUMBER
 map diagram - STRING+ labels
 
 ## X and Y locations

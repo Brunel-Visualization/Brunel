@@ -114,6 +114,10 @@
     fill: none;
 }
 
+.brunel .diagram .element.point {
+    fill-opacity:1;
+}
+
 .brunel .label {
     fill: black;
     font-size: 12px;

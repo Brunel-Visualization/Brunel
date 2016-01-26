@@ -82,7 +82,7 @@ public class GeoMap extends D3Diagram {
                 .onNewLine().add("if (!q) q = [-9e9,9e9]").endStatement()
                 .onNewLine().add("return 'translate(' + q[0] + ',' + q[1] + ')'")
                 .indentLess().onNewLine().add("}");
-        out.onNewLine().add("function proj(p) { return p ? projection(p) : [null,null] }").ln();
+        out.onNewLine().add("function proj(p) { var q = p ? projection(p) : null; return q || [null,null] }").ln();
 
     }
 
