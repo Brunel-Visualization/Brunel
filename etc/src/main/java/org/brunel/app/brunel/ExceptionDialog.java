@@ -26,7 +26,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 
-class ExceptionDialog extends JDialog implements ActionListener {
+public class ExceptionDialog extends JDialog implements ActionListener {
 
     private static ExceptionDialog dialog;
 

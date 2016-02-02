@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.TooManyListenersException;
 
 @SuppressWarnings("serial")
- class SourcePanel extends JPanel implements SourceTransfer.Droppable {
+ public class SourcePanel extends JPanel implements SourceTransfer.Droppable {
 
     private final JList<Field> list = new JList<Field>();
     private final AppEventListener listener;

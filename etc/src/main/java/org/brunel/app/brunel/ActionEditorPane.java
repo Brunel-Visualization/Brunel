@@ -29,7 +29,7 @@ import javax.swing.text.StyleContext;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
-class ActionEditorPane extends JTextPane implements DocumentListener, Runnable {
+public class ActionEditorPane extends JTextPane implements DocumentListener, Runnable {
 
     private final Style defaultStyle;
     private final Parser parser = new Parser();
