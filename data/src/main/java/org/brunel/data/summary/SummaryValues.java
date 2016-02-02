@@ -27,14 +27,21 @@ import java.util.List;
 public final class SummaryValues {
     private final Field[] fields;                                   // the fields we use
     private final Field[] xFields;                                  // the fields to use as 'X' values
-    private final Field[] allDimensions;                            // all fields that are inputs (x fields AND dimensions)
     public final List<Integer> rows = new ArrayList<Integer>();     // Which data rows have been aggregated into this
+    private final ArrayList<Field> groupFields;                     // Fields that group results
     public double[] percentSums;
 
     public SummaryValues(Field[] fields, Field[] xFields, Field[] allDimensions) {
         this.fields = fields;
         this.xFields = xFields;
-        this.allDimensions = allDimensions;
+
+        // Create an array of fields that group the results
+        this.groupFields = new ArrayList<Field>();
+        for (Field f: allDimensions) {
+            boolean isGroup = true;
+            for  (Field x : xFields) if (x == f) isGroup = false;
+            if (isGroup) groupFields.add(f);
+        }
     }
 
     public int firstRow() {
@@ -42,27 +49,35 @@ public final class SummaryValues {
     }
 
     /**
-     * Calculate the summary vale
+     * Calculate the summary value
+     *
      * @param fieldIndex the index of the output field within this.fields
-     * @param m the measure we wish to calculate
+     * @param m          the measure we wish to calculate
      * @return the summary value
      */
     public Object get(int fieldIndex, MeasureField m) {
         String summary = m.measureFunction;
         if (summary.equals("count")) return rows.size();
-        Field x = xFields.length == 0 ? null : xFields[xFields.length-1];   // Innermost is the one
+        Field x = xFields.length == 0 ? null : xFields[xFields.length - 1];   // Innermost is the one
+        int index = rows.get(0);
 
         if (summary.equals("fit")) {
-            if (m.fit == null) m.fit = new Regression(m.field, x);
-            return m.fit.get(x.value(rows.get(0)));
+            Fit fit = m.getFit(groupFields, index);
+            if (fit == null) fit = new Regression(m.field, x, validForGroup(index));
+            m.setFit(groupFields, index, fit);
+            return fit.get(x.value(index));
         }
 
         if (summary.equals("smooth")) {
-            Double windowPercent = null;
-            if (m.option != null)
-                windowPercent = Double.parseDouble(m.option);
-            if (m.fit == null) m.fit = new Smooth(m.field, x, windowPercent);
-            return m.fit.get(x.value(rows.get(0)));
+            Fit fit = m.getFit(groupFields, index);
+            if (fit == null) {
+                Double windowPercent = null;
+                if (m.option != null)
+                    windowPercent = Double.parseDouble(m.option);
+                fit = new Smooth(m.field, x, windowPercent, validForGroup(index));
+            }
+            m.setFit(groupFields, index, fit);
+            return fit.get(x.value(rows.get(0)));
         }
 
         Object[] data = new Object[rows.size()];
@@ -104,6 +119,17 @@ public final class SummaryValues {
             return categories;
         }
         return f.property(summary);
+    }
+
+    private List<Integer> validForGroup(int index) {
+        ArrayList<Integer> list = new ArrayList<Integer>();
+        int n = fields[0].rowCount();
+        for (int i = 0; i< n; i++) {
+            boolean valid = true;
+            for (Field f: groupFields) if (f.compareRows(index, i) != 0) valid = false;
+            if (valid) list.add(i);
+        }
+        return list;
     }
 
 }

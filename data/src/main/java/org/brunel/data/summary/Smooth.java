@@ -20,6 +20,8 @@ import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
 
+import java.util.List;
+
 /**
  * Calculates a smooth fit function
  */
@@ -28,7 +30,7 @@ public class Smooth implements Fit {
     private final double[] x, y;                              // x and y fields of data, sorted by x
     private final double mean;                                // mean value
 
-    public Smooth(Field y, Field x, Double windowPercent) {
+    public Smooth(Field y, Field x, Double windowPercent, List<Integer> rows) {
         if (windowPercent == null) {
             // use the optimal bin count to chose a window size
             int n = Auto.optimalBinCount(x);
@@ -36,7 +38,7 @@ public class Smooth implements Fit {
         } else {
             window = (x.max() - x.min()) * windowPercent / 200;
         }
-        double[][] pairs = Regression.asPairs(y, x);
+        double[][] pairs = Regression.asPairs(y, x, rows);
         this.x = pairs[1];
         this.y = pairs[0];
         this.mean = y.numericProperty("mean");

@@ -18,11 +18,15 @@ package org.brunel.data.summary;
 
 import org.brunel.data.Field;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 public class MeasureField extends DimensionField {
 
-    public final String measureFunction;
-    public String option;
-    public Fit fit;
+    public final String measureFunction;                                // Defines the function
+    public String option;                                               // Option for it
+    public Map<String,Fit> fits = new HashMap<String, Fit>();            // Per-group fits
 
     public MeasureField(Field field, String rename, String measureFunction) {
         super(field, rename == null && field == null ? measureFunction : rename);
@@ -34,9 +38,36 @@ public class MeasureField extends DimensionField {
             this.measureFunction = measureFunction;
     }
 
+    /**
+     * Find the fit function for the given group
+     * @param groupFields fields used to define g
+     * @param index the row to find the group fit for
+     * @return defined fit (or null if none yet created)
+     */
+    public Fit getFit(ArrayList<Field> groupFields, int index) {
+        return this.fits.get(makeKey(groupFields, index));
+    }
+
+    /**
+     * Define the fit function for the given group
+     * @param groupFields fields used to define g
+     * @param index the row to find the group fit for
+     * @param fit the fit to use for this group
+     */
+    public void setFit(ArrayList<Field> groupFields, int index, Fit fit) {
+        this.fits.put(makeKey(groupFields, index), fit);
+    }
+
+    private String makeKey(ArrayList<Field> groupFields, int index) {
+        String key = "|";
+        for (Field f: groupFields) key += f.value(index) + "|";
+        return key;
+    }
+
     public boolean isPercent() {
         return measureFunction.equals("percent");
     }
+
 
     public String toString() {
         if (field != null && field.name.equals(rename)) return label();

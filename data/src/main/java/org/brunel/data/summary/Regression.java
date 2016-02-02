@@ -28,8 +28,8 @@ import java.util.List;
 public class Regression implements Fit {
     private Double m, b;                                            // Slope and intercept
 
-    public Regression(Field y, Field x) {
-        double[][] data = asPairs(y, x);
+    public Regression(Field y, Field x, List<Integer> rows) {
+        double[][] data = asPairs(y, x, rows);
         int n = data[0].length;
         if (n == 0) return;                                      // No data
         double my = mean(data[0]);
@@ -58,13 +58,15 @@ public class Regression implements Fit {
      *
      * @param y    y field
      * @param x    x field
+     * @param rows the rows to include in this data array
      * @return array of length two, each of which is a field of data
      */
-    static double[][] asPairs(Field y, Field x) {
+    static double[][] asPairs(Field y, Field x, List<Integer> rows) {
         List<Double> xList = new ArrayList<Double>();
         List<Double> yList = new ArrayList<Double>();
-        int n = x.rowCount();
-        for (int i=0; i< n; i++) {
+        int n = rows.size();
+        for (int k=0; k< n; k++) {
+            int i = rows.get(k);
             Double xv = Data.asNumeric(x.value(i));
             Double yv = Data.asNumeric(y.value(i));
             if (xv != null && yv != null) {

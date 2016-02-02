@@ -2690,7 +2690,7 @@ V.modify_Summarize.prototype.make = function() {
     var percentGroupCount = this.percentNeeded ? this.makeGroups(percentGroup, percentBaseComparison) : 0;
     var summaries = $.Array(groupCount, null);
     for (i = 0; i < summaries.length; i++)
-        summaries[i] = new V.summary_SummaryValues(measureFields);
+        summaries[i] = new V.summary_SummaryValues(measureFields, percentBaseFields, dimensionFields);
     percentSums = $.Array(percentGroupCount, measureFields.length, 0);
     for (row = 0; row < this.rowCount; row++){
         value = summaries[group[row]];
@@ -2715,7 +2715,7 @@ V.modify_Summarize.prototype.make = function() {
             dimData[i][g] = dimensionFields[i].value(originalRow);
         for (i = 0; i < this.measures.size(); i++){
             m = this.measures.get(i);
-            measureData[i][g] = values.get(i, m, percentBaseFields);
+            measureData[i][g] = values.get(i, m);
         }
     }
     fields = $.Array(dimData.length + measureData.length, null);
@@ -3142,7 +3142,7 @@ V.summary_FieldRowComparison.prototype.makeSortedOrder = function(len) {
 
 V.summary_MeasureField = function(field, rename, measureFunction) {
     this.option = null;
-    this.fit = null;
+    this.fit = new $.Map();
     V.summary_MeasureField.$superConstructor.call(this, field, rename ==
         null && field == null ? measureFunction : rename);
     if (field != null && (measureFunction == "mean") && !field.isNumeric())
@@ -3153,8 +3153,24 @@ V.summary_MeasureField = function(field, rename, measureFunction) {
 
 $.extend(V.summary_MeasureField, V.summary_DimensionField);
 
+V.summary_MeasureField.prototype.getFit = function(groupFields, index) {
+    return this.fit.get(this.makeKey(groupFields, index));
+};
+
+V.summary_MeasureField.prototype.makeKey = function(groupFields, index) {
+    var _i, f;
+    var key = "|";
+    for(_i=$.iter(groupFields), f=_i.current; _i.hasNext(); f=_i.next())
+        key += f.value(index) + "|";
+    return key;
+};
+
 V.summary_MeasureField.prototype.isPercent = function() {
     return this.measureFunction == "percent";
+};
+
+V.summary_MeasureField.prototype.setFit = function(groupFields, index, fit) {
+    this.fit.put(this.makeKey(groupFields, index), fit);
 };
 
 V.summary_MeasureField.prototype.toString = function() {
@@ -3178,11 +3194,11 @@ V.summary_MeasureField.prototype.label = function() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-V.summary_Regression = function(y, x) {
+V.summary_Regression = function(y, x, rows) {
     var i, mx, my, sxx, sxy, xv, yv;
     this.m = null;
     this.b = null;
-    var data = V.summary_Regression.asPairs(y, x);
+    var data = V.summary_Regression.asPairs(y, x, rows);
     var n = data[0].length;
     if (n == 0) return;
     my = V.summary_Regression.mean(data[0]);
@@ -3209,12 +3225,13 @@ V.summary_Regression.mean = function(values) {
     return s / values.length;
 };
 
-V.summary_Regression.asPairs = function(y, x) {
-    var i, order, xv, xx, yv, yy;
+V.summary_Regression.asPairs = function(y, x, rows) {
+    var i, k, order, xv, xx, yv, yy;
     var xList = new $.List();
     var yList = new $.List();
-    var n = x.rowCount();
-    for (i = 0; i < n; i++){
+    var n = rows.size();
+    for (k = 0; k < n; k++){
+        i = rows.get(k);
         xv = V.Data.asNumeric(x.value(i));
         yv = V.Data.asNumeric(y.value(i));
         if (xv != null && yv != null) {
@@ -3243,7 +3260,7 @@ V.summary_Regression.prototype.get = function(value) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-V.summary_Smooth = function(y, x, windowPercent) {
+V.summary_Smooth = function(y, x, windowPercent, rows) {
     var n, pairs;
     if (windowPercent == null) {
         n = V.auto_Auto.optimalBinCount(x);
@@ -3251,7 +3268,7 @@ V.summary_Smooth = function(y, x, windowPercent) {
     } else {
         this.window = (x.max() - x.min()) * windowPercent / 200;
     }
-    pairs = V.summary_Regression.asPairs(y, x);
+    pairs = V.summary_Regression.asPairs(y, x, rows);
     this.x = pairs[1];
     this.y = pairs[0];
     this.mean = y.numericProperty("mean");
@@ -3299,32 +3316,47 @@ V.summary_Smooth.prototype.search = function(at, x) {
 ////////////////////// SummaryValues ///////////////////////////////////////////////////////////////////////////////////
 
 
-V.summary_SummaryValues = function(fields) {
+V.summary_SummaryValues = function(fields, xFields, allDimensions) {
+    var _i, _j, f, isGroup, x;
     this.rows = new $.List();
     this.percentSums = null;this.fields = fields;
+    this.xFields = xFields;
+    this.groupFields = new $.List();
+    for(_i=$.iter(allDimensions), f=_i.current; _i.hasNext(); f=_i.next()) {
+        isGroup = true;
+        for(_j=$.iter(xFields), x=_j.current; _j.hasNext(); x=_j.next())
+            if (x == f) isGroup = false;
+        if (isGroup) this.groupFields.add(f);
+    }
 };
 
 V.summary_SummaryValues.prototype.firstRow = function() {
     return this.rows.get(0);
 };
 
-V.summary_SummaryValues.prototype.get = function(fieldIndex, m, xFields) {
-    var categories, data, displayCount, f, high, i, low, mean, sum, windowPercent, x;
+V.summary_SummaryValues.prototype.get = function(fieldIndex, m) {
+    var categories, data, displayCount, f, fit, high, i, index, low, mean, sum, windowPercent, x;
     var summary = m.measureFunction;
     if (summary == "count") return this.rows.size();
-    x = xFields.length == 0 ? null : xFields[xFields.length - 1];
+    x = this.xFields.length == 0 ? null : this.xFields[this.xFields.length - 1];
+    index = this.rows.get(0);
     if (summary == "fit") {
-        if (m.fit == null)
-            m.fit = new V.summary_Regression(m.field, x);
-        return m.fit.get(x.value(this.rows.get(0)));
+        fit = m.getFit(this.groupFields, index);
+        if (fit == null)
+            fit = new V.summary_Regression(m.field, x, this.validForGroup(index));
+        m.setFit(this.groupFields, index, fit);
+        return fit.get(x.value(index));
     }
     if (summary == "smooth") {
-        windowPercent = null;
-        if (m.option != null)
-            windowPercent = Number(m.option);
-        if (m.fit == null)
-            m.fit = new V.summary_Smooth(m.field, x, windowPercent);
-        return m.fit.get(x.value(this.rows.get(0)));
+        fit = m.getFit(this.groupFields, index);
+        if (fit == null) {
+            windowPercent = null;
+            if (m.option != null)
+                windowPercent = Number(m.option);
+            fit = new V.summary_Smooth(m.field, x, windowPercent, this.validForGroup(index));
+        }
+        m.setFit(this.groupFields, index, fit);
+        return fit.get(x.value(this.rows.get(0)));
     }
     data = $.Array(this.rows.size(), null);
     for (i = 0; i < data.length; i++)
@@ -3361,6 +3393,19 @@ V.summary_SummaryValues.prototype.get = function(fieldIndex, m, xFields) {
         return categories;
     }
     return f.property(summary);
+};
+
+V.summary_SummaryValues.prototype.validForGroup = function(index) {
+    var _i, f, i, valid;
+    var list = new $.List();
+    var n = this.fields[0].rowCount();
+    for (i = 0; i < n; i++){
+        valid = true;
+        for(_i=$.iter(this.groupFields), f=_i.current; _i.hasNext(); f=_i.next())
+            if (f.compareRows(index, i) != 0) valid = false;
+        if (valid) list.add(i);
+    }
+    return list;
 };
 
 ////////////////////// DateFormat //////////////////////////////////////////////////////////////////////////////////////

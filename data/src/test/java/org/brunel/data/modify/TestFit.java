@@ -29,9 +29,9 @@ public class TestFit {
             "C,X,Y",
             "a,1,1",
             "a,2,2",
-            "b,1,5",
-            "b,2,4",
-            "c,3,3"
+            "b,1,3",
+            "b,2,3",
+            "b,3,3"
     }, "\n");
 
     private static final Dataset simple = Dataset.make(CSV.read(csv));
@@ -40,17 +40,18 @@ public class TestFit {
 
     @Test
     public void testSimple() {
-        // Fit the whole thing --  a flat line (Y == 3)
+        // Fit the whole thing --  the line Y = 1.5 + 0.5x
         Dataset a = simple.summarize("Y=Y:fit; X=X:base");
-        Assert.assertEquals("X|Y|#count|#row -- 1|3|2|1, 3 -- 2|3|2|2, 4 -- 3|3|1|5", CannedData.dump(a));
+        Assert.assertEquals("X|Y|#count|#row -- 1|2|2|1, 3 -- 2|2.5|2|2, 4 -- 3|3|1|5", CannedData.dump(a));
     }
 
     @Test
     public void testGrouped() {
         // Fit two groups -- two lines
+        // first is y=x, second is y=3
 
         Dataset a = simple.summarize("Y=Y:fit; X=X:base; C=C");
-        Assert.assertEquals("#series|#values|D|#row|#count -- C|1|4|1|1 -- C|2|3|2|1 -- C|1|2|3|1 -- C|2|1|4|1 -- D|4|4|1|1 -- D|3|3|2|1 -- D|2|2|3|1 -- D|1|1|4|1", CannedData.dump(a));
+        Assert.assertEquals("C|X|Y|#count|#row -- a|1|1|1|1 -- a|2|2|1|2 -- b|1|3|1|3 -- b|2|3|1|4 -- b|3|3|1|5", CannedData.dump(a));
     }
 
 
