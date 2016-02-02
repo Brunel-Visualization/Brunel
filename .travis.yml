@@ -9,7 +9,7 @@ deploy:
   file: 
      - "brunel-all.tar.gz"
      - "brunel-all.zip"
-     - "out/java/spark-kernel-brunel-all-0.9.jar"
+     - "out/java/spark-kernel-brunel-all-1.0.jar"
   skip_cleanup: true
   on:
     repo: Brunel-Visualization/Brunel
