@@ -3142,7 +3142,7 @@ V.summary_FieldRowComparison.prototype.makeSortedOrder = function(len) {
 
 V.summary_MeasureField = function(field, rename, measureFunction) {
     this.option = null;
-    this.fit = new $.Map();
+    this.fits = new $.Map();
     V.summary_MeasureField.$superConstructor.call(this, field, rename ==
         null && field == null ? measureFunction : rename);
     if (field != null && (measureFunction == "mean") && !field.isNumeric())
@@ -3154,7 +3154,11 @@ V.summary_MeasureField = function(field, rename, measureFunction) {
 $.extend(V.summary_MeasureField, V.summary_DimensionField);
 
 V.summary_MeasureField.prototype.getFit = function(groupFields, index) {
-    return this.fit.get(this.makeKey(groupFields, index));
+    return this.fits.get(this.makeKey(groupFields, index));
+};
+
+V.summary_MeasureField.prototype.setFit = function(groupFields, index, fit) {
+    this.fits.put(this.makeKey(groupFields, index), fit);
 };
 
 V.summary_MeasureField.prototype.makeKey = function(groupFields, index) {
@@ -3167,10 +3171,6 @@ V.summary_MeasureField.prototype.makeKey = function(groupFields, index) {
 
 V.summary_MeasureField.prototype.isPercent = function() {
     return this.measureFunction == "percent";
-};
-
-V.summary_MeasureField.prototype.setFit = function(groupFields, index, fit) {
-    this.fit.put(this.makeKey(groupFields, index), fit);
 };
 
 V.summary_MeasureField.prototype.toString = function() {

@@ -143,6 +143,11 @@ class ActionStep {
                 return item;
             }
 
+            else if (name.equals("annotation")) {
+                // Ignore it
+                return item;
+            }
+
             for (VisTypes.Element t : VisTypes.Element.values())
                 if (t.name().equals(name)) {
                     item.element(t);

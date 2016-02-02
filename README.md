@@ -10,7 +10,7 @@ visualization technologies typically used by application engineers such as RAVE 
 It can operate stand-alone and integrated into Jupyter (iPython) notebooks with further integrations as well as other low-level
 rendering support depending on the desires of the community.
 
-Articles and notes on Brunel can be found in the [brunelvis.org blog](http://brunelvis.org).
+Articles and notes on Brunel can be found in the [brunelvis.org blog](http://www.brunelvis.org).
 
 ## Zero to Visualization in Sixty Seconds
 

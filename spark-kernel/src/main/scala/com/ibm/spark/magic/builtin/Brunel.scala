@@ -37,18 +37,18 @@ class Brunel extends CellMagic with IncludeInterpreter {
     var extras: String = null
     var dataFrameNames: Array[String] = null
     var data: Option[DataFrame] = None
-    
+
     val parts = line.split("::")
     if (parts.length > 2) {
       throw new IllegalArgumentException("Only one ':' allowed in brunel magic. Format is 'ACTION : key=value, ...'")
     }
-    
+
     if (parts.length > 0) {
       action = parts(0).trim
       dataFrameNames = org.brunel.scala.Brunel.getDatasetNames(action)
       if (dataFrameNames.length > 0) cacheDataFrames(dataFrameNames);
-    }    
-    
+    }
+
     if (parts.length > 1) {
 
       extras = parts(1).trim
@@ -70,14 +70,14 @@ class Brunel extends CellMagic with IncludeInterpreter {
     val brunelOutput = org.brunel.scala.Brunel.create(data.orNull, action, width, height, visId, controlsId)
     val version = org.brunel.scala.Brunel.brunelVersion
 
-    val d3js =  brunelOutput.js 
-    val d3dynamicCss = brunelOutput.css 
+    val d3js =  brunelOutput.js
+    val d3dynamicCss = brunelOutput.css
 
     val html =
-      
+
       s"""
-         <link rel="stylesheet" type="text/css" href="http://brunelvis.org/js/brunel.$version.css" charset="utf-8">
-         <link rel="stylesheet" type="text/css" href="http://brunelvis.org/js/sumoselect.css" charset="utf-8">
+         <link rel="stylesheet" type="text/css" href="http://www.brunelvis.org/js/brunel.$version.css" charset="utf-8">
+         <link rel="stylesheet" type="text/css" href="http://www.brunelvis.org/js/sumoselect.css" charset="utf-8">
          <style> $d3dynamicCss </style>
          <div id="$controlsId" class="brunel"/>
          |<svg id="$visId" width="$width" height="$height"></svg>
@@ -87,8 +87,8 @@ class Brunel extends CellMagic with IncludeInterpreter {
             waitSeconds: 60,
             paths: {
                 'd3': '//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min',
-                'brunel' : 'http://brunelvis.org/js/brunel.$version.min',
-                'brunelControls' : 'http://brunelvis.org/js/brunel.controls.$version.min'
+                'brunel' : 'http://www.brunelvis.org/js/brunel.$version.min',
+                'brunelControls' : 'http://www.brunelvis.org/js/brunel.controls.$version.min'
             },
 
             shim: {
@@ -126,7 +126,7 @@ class Brunel extends CellMagic with IncludeInterpreter {
 
     CellMagicOutput(MIMEType.TextHtml -> html)
   }
-  
+
   def cacheDataFrames(datasetNames: Array[String]) = {
     for (name <- datasetNames) {
       val data = getData(name)
