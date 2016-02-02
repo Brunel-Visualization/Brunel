@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 IBM Corporation and others.
+ * Copyright (c) 2016 IBM Corporation and others.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * You may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.brunel.action.Param;
  *
  */
 
-public class ActionParameterChoice extends ScoredChoice {
+class ActionParameterChoice extends ScoredChoice {
 
 	private final Param param;
 	private final int dualEncodedLinkIndex;

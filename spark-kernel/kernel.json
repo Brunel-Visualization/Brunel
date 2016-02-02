@@ -6,7 +6,7 @@
         "--profile",
         "{connection_file}",
         "--magic-url",
-        "file:{PATH TO GIT}/brunel/spark-kernel/build/libs/spark-kernel-brunel-all-0.9.jar"
+        "file:{PATH TO GIT}/brunel/spark-kernel/build/libs/spark-kernel-brunel-all-1.0.jar"
     ],
     "codemirror_mode": "scala",
     "env": {

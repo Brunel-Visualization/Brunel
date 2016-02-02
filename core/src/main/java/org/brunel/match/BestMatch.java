@@ -47,14 +47,13 @@ public class BestMatch {
 	public static Action match(Dataset originalData, Dataset newData, Action a) {
 		List<BestActionParameterSet> parmSets = buildActionParameterSets(originalData, newData, a);
 		List<ActionChoice> choices = buildActionChoices(a,parmSets);
-
 		return choices.get(0).getAction();
 	}
 
 	/**
 	 * Find the best matching action
 	 * @param brunel brunel presumed to contain a data() statement
-	 * @param newData the new data to use to do the match
+	 * @param newData the new data to use1 to do the match
 	 * @return new Brunel
 	 * @throws IOException if data cannot be properly retrieved
 	 */

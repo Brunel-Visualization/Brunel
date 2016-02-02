@@ -153,7 +153,6 @@ public class GeoMap extends D3Diagram {
             Map<Object, Integer> features = combined.get(fileName);
             for (Map.Entry<Object, Integer> s : features.entrySet()) {
                 if (i++ > 0) out.add(", ");
-                if (i % 5 == 0) out.onNewLine();
                 out.addQuoted(s.getKey()).add(":").add(s.getValue());
             }
             out.indentLess().onNewLine().add("}");

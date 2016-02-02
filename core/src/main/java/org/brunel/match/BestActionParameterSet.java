@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 IBM Corporation and others.
+ * Copyright (c) 2016 IBM Corporation and others.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * You may not use this file except in compliance with the License.
@@ -26,18 +26,20 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Generates a set of the best alternate ActionParameters for a given Action based on scores.  Non field Actions and synthetic fields are preserved as is from
+ * Generates a set of the best alternate ActionParameters for a given Action based on scores.
+ * Non field Actions and synthetic fields are preserved as is from
  * the original.  Dual encoded field actions will retain an index to the first use of the field in the original action.
  *
- * Scoring is currently done by comparing the field names as well as the categorical preference and the number of unique values.  Continous fields are
+ * Scoring is currently done by comparing the field names as well as the categorical preference and the number
+ * of unique values.  Continuous fields are
  * matched using closeness of their distribution properties (variance, skewness and kurtosis).
  *
  * @author drope
  */
 class BestActionParameterSet {
 
-    private ArrayList<ActionParameterChoice> actionChoices;     //Individual parameter choices
-    private final int numChoices;                               //Upper limit on number choices to retain.
+    private ArrayList<ActionParameterChoice> actionChoices;     // Individual parameter choices
+    private final int numChoices;                               // Upper limit on number choices to retain.
     private static final double REALLY_BAD = .000001;           //A very poor score
 
     public BestActionParameterSet(Dataset originalData, Dataset newData, Param[] originalParams,
@@ -178,6 +180,7 @@ class BestActionParameterSet {
         }
         return false;
     }
+
     //Score based on field name closeness
     private double scoreFieldByNameCloseness(String origName, String newName) {
 

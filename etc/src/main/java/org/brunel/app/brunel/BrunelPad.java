@@ -20,6 +20,7 @@ package org.brunel.app.brunel;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.match.BestMatch;
 import org.brunel.model.VisException;
 import org.brunel.model.VisItem;
 import org.brunel.util.Library;
@@ -276,11 +277,13 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
     }
 
     private void useSource(Dataset source) {
+        if (action != null && base != null)
+            action = BestMatch.match(base, source, action);
+        transitory = null;
         base = source;
         sourcePanel.setSource(source);
         if (source.stringProperty("uri") != null) settings.putString("last-source", source.stringProperty("uri"));
         setTitle(source.name());
-        transitory = null;
         updateVis();
     }
 
