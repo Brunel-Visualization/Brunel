@@ -13,6 +13,14 @@
 #description    Average rainfall for each region sorted by the average value.
 #brunel         data('sample:US States.csv')
                 bar x(Region) y(Rain) mean(Rain) sort(Rain)
+                
+#id             clusteredbars
+#title          Clustered Bar Chart
+#width          600
+#height         400
+#description    Counts of presidential choices of states within region.
+#brunel         data('sample:US States.csv')
+                bar x(Region, Presidential_Choice) y(#count) color(Presidential_Choice)                
 
 #id             horizontalbar
 #title          Horizontal Bars

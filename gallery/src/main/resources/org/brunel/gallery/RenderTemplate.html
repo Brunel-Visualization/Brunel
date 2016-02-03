@@ -121,18 +121,20 @@
  				 	<a class="dropdown-toggle" data-toggle="dropdown" href="#">
                         Cookbook  <i class="fa fa-caret-down"></i>
                     </a>
-                    <div class="dropdown-menu" id="cookbook_dropdown" style="width:700px">
+                    <div class="dropdown-menu" id="cookbook_dropdown" style="width:900px">
 
                     	<table style="width:100%">
                     		<thead><tr>
                     			<th>Basic Charts</th>
                     			<th>Statistical Graphics</th>
-                    			<th>Information Visualization</th>
+                    			<th>InfoVis</th>
+                    			<th>Maps & Networks</th>
                     		</tr></thead>
                     		<tbody><tr>
                     			<td style="vertical-align: top" id='basic_charts'></td>
                     			<td style="vertical-align: top" id='stat_graphics'></td>
                     			<td style="vertical-align: top" id='info_vis'></td>
+                    			<td style="vertical-align: top" id='maps_networks'></td>
                     		</tr></tbody>
                     	</table>
                     	<hr>
@@ -661,6 +663,10 @@
 
 		var infovis = makeCookbookCell(cookbookJson.info_vis, "info_vis");
 		$(infovis).appendTo('#info_vis');
+		
+		var infovis = makeCookbookCell(cookbookJson.special, "special");
+		$(infovis).appendTo('#maps_networks');
+		
 	}
 
 	//Keep checkboxes for gallery/cookbook matching in sync

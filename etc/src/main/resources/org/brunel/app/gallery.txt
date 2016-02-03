@@ -38,8 +38,7 @@
 #height         500
 #brunel         data('sample:BGG Top 2000 Games.csv')
                 path x(published) y(categories) color(categories) size(voters:200%) top(published:1800) sum(voters) legends(none)
-                + data('sample:BGG Top 2000 Games.csv')
-                x(published) y(categories) size(voters:300%) tooltip('#', rank, ': ', title) top(published:1800, rating:20)
+                + x(published) y(categories) size(voters:300%) tooltip('#', rank, ': ', title) top(published:1800, rating:20)
 
 #id             statesbar
 #title          State temperatures
@@ -63,8 +62,7 @@
 #brunel         data('sample:US States.csv')
                 x(Income) y(Violent_Crimes) color(#count:blue) label(#selection) bin(violent_crimes, income)
                 legends(none) style('.label {font-size:40px}') interaction(select)
-                | data('sample:US States.csv')
-                bubble color(violent_crimes:reds)
+                | bubble color(violent_crimes:reds)
                 size(population) sort(population) label(abbr) interaction(filter)
 
 #id             airlinesDelay
@@ -118,7 +116,7 @@
                 + data('sample:minard-cities.csv') text x(long) y(lat) label(city) style('fill:black;font-family:Times; font-size:12pt')
                 + data('sample:minard-troops.csv') x(long) y(lat) size(survivors:1250%) tooltip(group, survivors, direction) style('fill-opacity:0;stroke-opacity:0')
                 | data('sample:minard-temp.csv') line x(long) y(temp) at(0, 60, 110, 100) style('stroke:green')
-                + data('sample:minard-temp.csv') text x(long) y(temp) label(temp, 'C ', month, ' ', day) style('font-family: Times; font-style:italic; fill:black')
+                +  text x(long) y(temp) label(temp, 'C ', month, ' ', day) style('font-family: Times; font-style:italic; fill:black')
 
 #id             whiskeydd
 #title          Whiskey Drill-Down
@@ -130,11 +128,8 @@
 #height         900
 #brunel         data('sample:whiskey.csv')
                 bubble x(Country) color(Country) size(#count) label(Country) tooltip(#all) legends(none) at(0,0, 60, 50) interaction(select) |
-                data('sample:whiskey.csv')
                 x(Price) y(Age) tooltip(Name) at(60, 10, 100, 45) interaction(filter)  +
-                data('sample:whiskey.csv')
                 line x(Price) y(Age) fit(Age) interaction(filter)   |
-                data('sample:whiskey.csv')
                 cloud color(Rating:continuous) label(Category) mean(Rating) interaction(filter)   at(0, 50, 100, 100)
 
 #id             moby
