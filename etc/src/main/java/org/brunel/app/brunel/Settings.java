@@ -23,7 +23,7 @@ import java.awt.event.ComponentEvent;
 import java.io.File;
 import java.util.prefs.Preferences;
 
- class Settings {
+ public class Settings {
 
     public final String name;
 

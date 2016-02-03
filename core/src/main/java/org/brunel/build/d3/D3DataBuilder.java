@@ -213,10 +213,11 @@ public class D3DataBuilder {
 
         writeTransform("stack", params.stackCommand);               // Stack must come after all else
 
-
         if (vis.tDiagram == VisTypes.Diagram.network && vis.fY.size() > 1) {
             writeTransform("summarize", "#values=#values");
         }
+
+        writeTransform("sortRows", params.sortRowsCommand);
 
 
         out.endStatement();

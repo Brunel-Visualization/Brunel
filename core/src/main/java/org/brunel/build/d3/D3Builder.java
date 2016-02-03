@@ -454,7 +454,7 @@ public class D3Builder extends AbstractBuilder {
 
     public DataTransformParameters modifyParameters(DataTransformParameters params, VisSingle vis) {
         String stackCommand = "";
-        String sortCommand = params.sortCommand;
+        String sortRows = params.sortRowsCommand;
 
         if (vis.stacked) {
             // For stacked data we need to build the stack command
@@ -472,15 +472,15 @@ public class D3Builder extends AbstractBuilder {
             // d3 needs the data sorted by 'x' order for lines and paths
             // If we have defined 'x' order, that takes precedence
             String x = vis.fX.get(0).asField() + ":ascending";
-            if (sortCommand.isEmpty())
-                sortCommand = x;
+            if (sortRows.isEmpty())
+                sortRows = x;
             else
-                sortCommand = sortCommand + "; " + x;
+                sortRows = sortRows + "; " + x;
         }
 
         // Replace the stack and sort commands with updated versions
         return new DataTransformParameters(params.constantsCommand, params.filterCommand, params.transformCommand, params.summaryCommand,
-                stackCommand, sortCommand, params.seriesCommand, params.usedCommand);
+                stackCommand, params.sortCommand, sortRows, params.seriesCommand, params.usedCommand);
     }
 
 }

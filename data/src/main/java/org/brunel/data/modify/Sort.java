@@ -35,7 +35,7 @@ import java.util.Map;
  */
 public class Sort extends DataOperation {
 
-    public static Dataset transform(Dataset base, String command) {
+    public static Dataset transform(Dataset base, String command, boolean sortCategories) {
         String[] sortFields = parts(command);
         if (sortFields == null) return base;
         // Build the dimensional information
@@ -53,20 +53,19 @@ public class Sort extends DataOperation {
 
         Field[] fields = new Field[base.fields.length];
         for (int i = 0; i < fields.length; i++) {
-            Object[] newOrder = null;
             Field field = base.fields[i];
-            if (!field.ordered())
-                newOrder = makeOrder(field, dimensions, ascending);
             fields[i] = Data.permute(field, rowOrder, true);
-            if (newOrder != null) fields[i].setCategories(newOrder);
+            if (!field.ordered() && sortCategories) {
+                Object[] newCategoryOrder = makeOrder(field, dimensions, ascending);
+                fields[i].setCategories(newCategoryOrder);
+            }
         }
-
         return base.replaceFields(fields);
     }
 
     private static Object[] makeOrder(Field field, Field[] dimensions, boolean[] ascending) {
 
-        // Map from field categories to rows for taht field
+        // Map from field categories to rows for that field
         Map<Object, List<Integer>> categorySums = new HashMap<Object, List<Integer>>();
         for (int i = 0; i < field.rowCount(); i++) {
             Object category = field.value(i);

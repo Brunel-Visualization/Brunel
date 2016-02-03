@@ -32,7 +32,7 @@ import java.io.File;
 import java.io.IOException;
 
 @SuppressWarnings("serial")
- class SourceTransfer extends TransferHandler implements DropTargetListener {
+ public class SourceTransfer extends TransferHandler implements DropTargetListener {
 
 
     private final int BORDER = 5;
@@ -118,7 +118,7 @@ import java.io.IOException;
                 || support.isDataFlavorSupported(DataFlavor.stringFlavor);
     }
 
-    interface Droppable {
+    public interface Droppable {
 
        boolean handleFile(File file);
 

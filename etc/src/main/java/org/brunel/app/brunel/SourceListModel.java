@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("serial")
-class SourceListModel extends DefaultListModel<Field> {
+public class SourceListModel extends DefaultListModel<Field> {
 
     private final List<Field> fields;
     final Dataset source;

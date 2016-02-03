@@ -59,7 +59,7 @@ public class DataBuilder {
         String usedFields = required();
 
         DataTransformParameters params = new DataTransformParameters(constantsCommand,
-                filterCommand, binCommand, summaryCommand, "", sortCommand, seriesYFields,
+                filterCommand, binCommand, summaryCommand, "", sortCommand, "", seriesYFields,
                 usedFields);
 
         // Call the engine to see if it has any special needs
@@ -72,6 +72,7 @@ public class DataBuilder {
         data = data.summarize(params.summaryCommand);                                   // summarize data
         data = data.series(params.seriesCommand);                                       // convert series
         data = data.sort(params.sortCommand);                                           // sort data
+        data = data.sortRows(params.sortRowsCommand);                                   // sort rows only
         data = data.stack(params.stackCommand);                                         // stack data
         data.set("parameters", params);                                                 // Params used to build this
         return data;

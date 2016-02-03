@@ -17,7 +17,7 @@
 
 package org.brunel.app.brunel;
 
- interface AppEventListener {
+ public interface AppEventListener {
 
     void handleEvent(String tag, Object source, Object item);
 

@@ -1111,7 +1111,11 @@ V.Dataset.prototype.series = function(command) {
 };
 
 V.Dataset.prototype.sort = function(command) {
-    return V.modify_Sort.transform(this, command);
+    return V.modify_Sort.transform(this, command, true);
+};
+
+V.Dataset.prototype.sortRows = function(command) {
+    return V.modify_Sort.transform(this, command, false);
 };
 
 V.Dataset.prototype.stack = function(command) {
@@ -2234,8 +2238,8 @@ V.modify_Sort = function() {
 
 $.extend(V.modify_Sort, V.modify_DataOperation);
 
-V.modify_Sort.transform = function(base, command) {
-    var ascending, dimensions, f, field, fields, i, newOrder, rowOrder;
+V.modify_Sort.transform = function(base, command, sortCategories) {
+    var ascending, dimensions, f, field, fields, i, newCategoryOrder, rowOrder;
     var sortFields = V.modify_DataOperation.parts(command);
     if (sortFields == null) return base;
     dimensions = V.modify_Sort.getFields(base, sortFields);
@@ -2248,13 +2252,12 @@ V.modify_Sort.transform = function(base, command) {
     }
     fields = $.Array(base.fields.length, null);
     for (i = 0; i < fields.length; i++){
-        newOrder = null;
         field = base.fields[i];
-        if (!field.ordered())
-            newOrder = V.modify_Sort.makeOrder(field, dimensions, ascending);
         fields[i] = V.Data.permute(field, rowOrder, true);
-        if (newOrder != null)
-            fields[i].setCategories(newOrder);
+        if (!field.ordered() && sortCategories) {
+            newCategoryOrder = V.modify_Sort.makeOrder(field, dimensions, ascending);
+            fields[i].setCategories(newCategoryOrder);
+        }
     }
     return base.replaceFields(fields);
 };
