@@ -56,6 +56,7 @@ public class ExampleBuilder extends DocBuilder {
 		 make(COOKBOOK, "basic", CookBookBuilder.BASIC);
 		 make(COOKBOOK, "info_vis", CookBookBuilder.INFO_VIS);
 		 make(COOKBOOK, "stats", CookBookBuilder.STATS);
+		 make(COOKBOOK, "special", CookBookBuilder.SPECIAL);
 		
 	 }
 	 
