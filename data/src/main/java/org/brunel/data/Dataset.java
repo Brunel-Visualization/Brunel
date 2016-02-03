@@ -233,7 +233,19 @@ public class Dataset extends Informative implements Serializable {
      * @return sorted data set
      */
     public Dataset sort(String command) {
-        return Sort.transform(this, command);
+        return Sort.transform(this, command, true);
+    }
+
+    /**
+     * Create a new data set based on this one, but applying a sort
+     *
+     * The sort is based on the fields indicated, and is applied both the rows only
+     *
+     * @param command the fields to sort by. This is an ordered list, with the first as the primary sort key
+     * @return sorted data set
+     */
+    public Dataset sortRows(String command) {
+        return Sort.transform(this, command, false);
     }
 
     /**

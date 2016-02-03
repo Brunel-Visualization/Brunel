@@ -118,7 +118,7 @@ import java.io.IOException;
                 || support.isDataFlavorSupported(DataFlavor.stringFlavor);
     }
 
-    interface Droppable {
+    public interface Droppable {
 
        boolean handleFile(File file);
 

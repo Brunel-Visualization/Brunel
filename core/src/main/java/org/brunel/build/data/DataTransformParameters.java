@@ -49,6 +49,10 @@ public class DataTransformParameters {
      */
     public final String sortCommand;
     /**
+     * Command to sort data only
+     */
+    public final String sortRowsCommand;
+    /**
      * Command to transform to a series
      */
     public final String seriesCommand;
@@ -61,13 +65,14 @@ public class DataTransformParameters {
      * Initialize all the relevant parameters
      */
     public DataTransformParameters(String constantsCommand, String filterCommand, String binCommand, String summaryCommand,
-                                   String stackCommand, String sortCommand, String seriesCommand, String usedCommand) {
+                                   String stackCommand, String sortCommand, String sortRowsCommand, String seriesCommand, String usedCommand) {
         this.constantsCommand = constantsCommand;
         this.filterCommand = filterCommand;
         this.transformCommand = binCommand;
         this.summaryCommand = summaryCommand;
         this.stackCommand = stackCommand;
         this.sortCommand = sortCommand;
+        this.sortRowsCommand = sortRowsCommand;
         this.seriesCommand = seriesCommand;
         this.usedCommand = usedCommand;
     }
