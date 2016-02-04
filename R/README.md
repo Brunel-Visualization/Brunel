@@ -5,7 +5,7 @@ This project contains code for integrating Brunel into Jupyter using the [IRkern
 ## Dependencies
 
 * The [IRkernel](https://github.com/IRkernel/IRkernel) must be installed into Jupyter.  This code will only work via a Jupyter notebook.  It will not work in R desktop.
-* Follow set up instructions in `/python` since this includes the installation of Brunel for Jupyter
+* Follow the [R Notebooks set up instructions](https://github.com/Brunel-Visualization/Brunel/wiki/Local-Brunel-Install-For-Jupyter) 
 
 ## Setup For Usage
 

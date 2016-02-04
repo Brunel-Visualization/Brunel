@@ -7,6 +7,7 @@ Brunel defines a highly succinct and novel language that produces interactive da
 * Articles and notes on Brunel can be found in the `brunelvis.org <http://www.brunelvis.org>`_ blog.
 * Details about the language can be found in the `Brunel Language Tutorial <http://brunel.mybluemix.net/docs>`_
 * Examples can be found in the `Brunel Visualization Gallery  <https://github.com/Brunel-Visualization/Brunel/wiki>`_ and the `Brunel Visualization Cookbook <https://github.com/Brunel-Visualization/Brunel/wiki/Brunel-Visualization-Cookbook>`_.
+* See the `1.0 Release Notes <https://github.com/Brunel-Visualization/Brunel/blob/master/1.0%20Release%20Notes.md>` for new features and changes.
 
 Please report any issues on our `Github  <https://github.com/Brunel-Visualization/Brunel>`_
 site.
@@ -37,5 +38,6 @@ Sample code that reads data from a ``CSV`` file and creates a simple bar chart o
 
     cars = pd.read_csv("data/Cars.csv")
 
-    %brunel x(origin) y(horsepower) mean(horsepower) bar tooltip(#all) :: width=300, height=300, data=cars
+    %brunel data('cars') x(origin) y(horsepower) mean(horsepower) bar tooltip(#all) :: width=300, height=300
+
 

@@ -13,6 +13,6 @@ It is simplest to install the provided plug-ins for Eclipse.
 
 Also needed:
 
-* Brunel .jar files for `core`, `data` and `service`
+* Brunel .jar files for `core`, `data`, `etc`, and `service`
 * Gson (Brunel execution dependency)
 

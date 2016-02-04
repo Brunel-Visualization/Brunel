@@ -322,19 +322,19 @@
           <button type="button" class="close" data-dismiss="modal">&times;</button>
           <h4 class="modal-title">Source Code</h4>
         </div>
-        <form method='post' action='http://jsfiddle.net/api/post/library/pure/' style="width:100%;height:100%" target='_blank'>
+        <form method='post' action='http://jsfiddle.net/api/post/jquery/1.10/' style="width:100%;height:100%" target='_blank'>
 
         <div class="modal-body">
           <p>HTML</p>
           <div class="well well-lg"><textarea  cols="62" readonly style="font-family:monospace;" name='html' id ="embed_html">
           </textarea></div>
-          <p>Javascript</p>
+          <p>Javascript <small>(External JS libraries are required.  Deploy to JSFiddle to see.)</small></p>
           <div class="well well-lg"><textarea cols="62" readonly style="font-family:monospace; " name='js' id ="embed_js"></textarea></div>
           <p>CSS</p>
           <div class="well well-lg"><textarea cols="62" readonly style="font-family:monospace; " name='css' id ="embed_css"></textarea></div>
           <button type="submit" class="btn btn-default">Try it on JSFiddle!</button>
-          <textarea style="display:none" name='resources'>http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js,http://www.brunelvis.org/js/brunel.$VERSION$.min.js,http://www.brunelvis.org/js/brunel.$VERSION$.css</textarea>
- 		  <input style="display:none" type='text' name='wrap' value='l'/>
+          <textarea style="display:none" name='resources'>http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js,http://code.jquery.com/ui/1.11.4/jquery-ui.js,http://www.brunelvis.org/js/brunel.$VERSION$.min.js,http://www.brunelvis.org/js/brunel.controls.$VERSION$.min.js,http://www.brunelvis.org/js/brunel.$VERSION$.css,http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css,http://www.brunelvis.org/js/sumoselect.css</textarea>
+ 		  <input style="display:none" type='text' name='wrap' value='d'/>
          </div>
         </form>
 
@@ -525,7 +525,7 @@
 
 	function getPostUrl() {
 		return baseUrl() + "/brunel/interpret/d3?src=" + encodeURIComponent(removeLineBreaks($("#actionText").val())) +
-    	locSize + "&visid=visualization";
+    	locSize + "&visid=visualization&controlsid=controls";
 	}
 
 	function setEmbedUrl() {
