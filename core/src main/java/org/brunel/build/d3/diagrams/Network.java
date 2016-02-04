@@ -89,7 +89,9 @@ class Network extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
-        out.addChained("attr('r',", elementDef.overallSize, ")").endStatement();
+        String overallSize = elementDef.overallSize;
+        if (overallSize.startsWith("geom")) overallSize += " / 2";
+        out.addChained("attr('r',", overallSize, ")").endStatement();
         addAestheticsAndTooltips(details, true);
     }
 
