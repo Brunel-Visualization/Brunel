@@ -51,7 +51,7 @@
 #title          When top games were published
 #description    The main path element shows, by size, the number of games published each year, with
                 points superimposed to show the top 20 games, with tooltips. The data has been trimmed
-                to remove the earliest 100 games, as they are from the early parts fo the century.
+                to remove the earliest 100 games, as they are from the early parts for the century.
 #width          800
 #height         500
 #brunel         data('sample:BGG Top 2000 Games.csv')
