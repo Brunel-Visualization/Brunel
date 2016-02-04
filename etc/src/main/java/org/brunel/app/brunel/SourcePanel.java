@@ -33,21 +33,13 @@ import java.util.TooManyListenersException;
 @SuppressWarnings("serial")
  public class SourcePanel extends JPanel implements SourceTransfer.Droppable {
 
-    private final JList<Field> list = new JList<Field>();
+    public final JList<Field> list = new JList<Field>();
     private final AppEventListener listener;
 
     public SourcePanel(final AppEventListener listener) {
         super(new BorderLayout());
         this.listener = listener;
-        list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
-        list.setVisibleRowCount(-1);
-        list.setBackground(Common.BLUE8);
-        list.setBorder(BorderFactory.createMatteBorder(5, 5, 5, 5, Common.BLUE8));
-        list.setForeground(Common.BLUE3);
-        list.setFont(Common.MEDIUM);
-        list.setAutoscrolls(true);
-        JScrollPane scroller = new JScrollPane(list);
-        add(scroller);
+        initializeList();
 
         // Annoying issue with mouse release outside component needs this kludge to avoid triggering fake select events
         list.addListSelectionListener(new ListSelectionListener() {
@@ -70,9 +62,6 @@ import java.util.TooManyListenersException;
             }
         });
 
-        scroller.setBorder(null);
-        scroller.setBackground(Common.BLUE8);
-        scroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         SourceTransfer dropHandler = new SourceTransfer(this);
         setTransferHandler(dropHandler);
@@ -81,6 +70,21 @@ import java.util.TooManyListenersException;
         } catch (TooManyListenersException ex) {
             //Silently fail, but not sure this can actually happen
         }
+    }
+
+    protected void initializeList() {
+        list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+        list.setVisibleRowCount(-1);
+        list.setBackground(Common.BLUE8);
+        list.setBorder(BorderFactory.createMatteBorder(5, 5, 5, 5, Common.BLUE8));
+        list.setForeground(Common.BLUE3);
+        list.setFont(Common.MEDIUM);
+        list.setAutoscrolls(true);
+        JScrollPane scroller = new JScrollPane(list);
+        add(scroller);
+        scroller.setBorder(null);
+        scroller.setBackground(Common.BLUE8);
+        scroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     }
 
     private Field[] getSelectedFields() {

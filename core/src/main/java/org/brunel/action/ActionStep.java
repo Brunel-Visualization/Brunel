@@ -25,14 +25,13 @@ import org.brunel.model.VisTypes;
 import java.util.Arrays;
 import java.util.Set;
 
-class ActionStep {
-
+public class ActionStep {
     // Use the parser to retrieve the list of summary and transform methods
     private static final Set<String> SUMMARY_METHODS = ParseGrammar.instance().getSummaryMethods();
     private static final Set<String> TRANSFORM_METHODS = ParseGrammar.instance().getTransformMethods();
 
-    final String name;
-    final Param[] parameters;
+    public final String name;
+    public final Param[] parameters;
 
     ActionStep(String actionName, Param... params) {
         name = actionName.toLowerCase();

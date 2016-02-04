@@ -95,7 +95,7 @@ public class GeoMap extends D3Diagram {
             throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
     }
 
-    public ElementDetails initalizeDiagram() {
+    public ElementDetails initializeDiagram() {
         out.indentLess().comment("Read in the feature data and call build again when done");
         writeFeatureHookup(mapping, GeoInformation.getIDField(vis));
 

@@ -51,7 +51,7 @@ public class Action implements Comparable<Action> {
     }
 
     /* The sequence of action commands */
-    final ActionStep[] steps;
+    public final ActionStep[] steps;
 
     /* Basic Constructor */
     Action(ActionStep... actions) {

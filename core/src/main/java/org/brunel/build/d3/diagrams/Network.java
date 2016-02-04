@@ -68,7 +68,7 @@ class Network extends D3Diagram {
         out.add("var graph;").at(50).comment("Graph used for nodes and links");
     }
 
-    public ElementDetails initalizeDiagram() {
+    public ElementDetails initializeDiagram() {
         String edgeDataset = "elements[" + edges.getBaseDatasetIndex() + "].data()";
         String nodeField = quoted(nodeID);
 
@@ -89,7 +89,9 @@ class Network extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
-        out.addChained("attr('r',", elementDef.overallSize, ")").endStatement();
+        String overallSize = elementDef.overallSize;
+        if (overallSize.startsWith("geom")) overallSize += " / 2";
+        out.addChained("attr('r',", overallSize, ")").endStatement();
         addAestheticsAndTooltips(details, true);
     }
 

@@ -98,7 +98,7 @@ public abstract class D3Diagram {
         // By default, do nothing
     }
 
-    public abstract ElementDetails initalizeDiagram();
+    public abstract ElementDetails initializeDiagram();
 
     public abstract void writeDefinition(ElementDetails details, ElementDefinition elementDef);
 
