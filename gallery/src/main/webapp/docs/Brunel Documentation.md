@@ -72,9 +72,10 @@ Basic Concepts
 
 ### Data statement: `data('...')`
 Although some applications may allow you to specify a data set to use through their user interface
-(or is predefined, like the example data set sued in this guide), the data statement allows you to
+(or is predefined, like the example data set used in this guide), the data statement allows you to
 specify a web location to read data for an element. A different data set can be associated with each
-element, and we allow two custom location schemes as helpful utilities
+element, and we allow two custom location schemes as helpful utilities. Data is inherited from the
+previous element in the Brunel command chain, until a data satement for an element re-defines it.
 
  * `sample:???.csv` -- using this scheme directly accesses Brunel's sample data files, one of
 AirlineDelays.csv, BGG Top 2000 Games.csv, BigTenWins.csv, Conferences.csv, minard.csv,
@@ -177,8 +178,11 @@ different transform:
 
     x(density:root) y(population:root)
 
-Multiple fields specified for `x` are reserved for future use -- they will allow clustering, or
-nesting of dimensions within the X axis.
+Multiple fields specified for `x` provide clustering of dimensions within the X axis.
+
+<!-- examples -->
+
+    bar x(Region, Presidential_Choice) y(#count) color(Presidential_Choice)
 
 Multiple fields specified for `y` define multiple series; one series for each field specified. This
 is particularly useful with time series where we have different comparable fields in different
@@ -554,9 +558,9 @@ desired top, bottom, inner or outer values for that number of items.
 
 <!-- examples -->
 
-    stack top(5) label(state, " (", population, ")") color(population) legends(none)
+    stack top(population:5) label(state, " (", population, ")") color(population) legends(none)
 
-    stack bottom(5) label(state, " (", population, ")") color(population) legends(none)
+    stack bottom(population:5) label(state, " (", population, ")") color(population) legends(none)
 
     bar x(region) yrange(income) range(income) inner(income:10) + text x(region) y(income)
     outer(income:10) label(abbr)
@@ -766,6 +770,49 @@ bubbles. Unlike cloud, bubble uses multiple fields to form a hiearachy, like tre
 
 
 
+Maps
+----
+Brunel maps provide geographic features that can be referenced by the name of the geography. The
+geography to display is chosen automatically based on the requested content.
+
+`map` can match a geographic location either to the values in a field or to specific geographic
+regions. Specific geographic locations are supplied directly to the `map` action. Geographic matches
+based on the contents of a field (like names of US states) are done by providing the field name
+containing the geographic names to `x`. Labels that are specific to the chosen geography can be
+requested using the `labels` parameter on `map`; whereas labels that are present in the data can use
+the `label` action with the data field containing the labels.
+
+<!-- examples -->
+
+    map('usa', 'canada')
+
+    map x(state) color(income)
+
+    map x(state) color(income) label(state)
+
+    map x(state) color(income) + map(labels:10)
+
+
+Networks
+--------
+Networks typically (but not always) require one data source for the nodes and a separate data source
+for the connections. The nodes data should contain unique names for each node and the edges data
+should contain two fields that define which nodes are connected to each other. An overlay ( `+`)
+between an `edge` and a `network` is used to draw the nodes and edges. The `key` action indicates
+the fields that are used across the `edge` and `network` defining the network visualization.
+
+A network can be created from a single data source by indicating the connection fields in the `key`
+for the `edge` and `y` for the `network`. The `#values` field is generated and contains the contents
+of the fields used to define the connections.
+
+Additional overlays ( `+`) can be provided using longitude and latitude values for `x` and `y`.
+
+<!-- examples -->
+
+    edge key(state, region) + network y(state, region) label(#values) legends(none)
+
+
+
 Label and Tooltip
 -----------------
 Labels and tooltips are text that is associated with each graphical item. They have the same command
@@ -824,17 +871,27 @@ Axes and Style
 --------------
 
 ### Axes
-The axes command controls which axes are displayed. Legal values are `none, all, x, y, auto`
+The axes command controls which axes are displayed. Legal values are `none, x, y`
 
 <!-- examples -->
 
     bar x(region) y(#count) axes(none)
 
-    bar x(region) y(#count) axes(all)
+    bar x(region) y(#count) axes(x, y)
 
     bar x(region) y(#count) axes(x)
 
     bar x(region) y(#count) axes(y)
+
+In addition, the `x` and `y` options can take string and/or numeric parameters. The numbers give a
+hint as to the number of ticks desired on a numeric axis, and the string sets the title for the
+axis. The empty string suppresses the axis
+
+<!-- examples -->
+
+    bar x(region) y(#count) axes(x:'Geo Area')
+
+    bar x(region) y(#count) axes(y:2:'Numbers', x:10)
 
 
 ### Legends
@@ -901,7 +958,7 @@ completely override any other definition. So if you do `style('* {fill:blue}')` 
 brunel blue...
  * SVG CSS is used, so we do not use "color" for color -- instead use "fill" or "stroke"
 
-Brunel also extends these CSS defintions with `size`, which allows you to set the size of SVG
+Brunel also extends these CSS definitions with `size`, which allows you to set the size of SVG
 elements, and `label-location`, which can be defined for either an element or a label, and allows
 you to change where a label is located relative to the shape. The valid values are: `left, right, top, bottom, middle`
 .
