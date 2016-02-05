@@ -58,7 +58,9 @@ var BrunelD3 = (function () {
     function makeDataset(data) {
         var col, field, i, opt, fields = [];
         for (i = 0; i < data.names.length; i++) {
-            col = data.rows.map(function(x) { return x[i] });                               // Extract i'th item
+            col = data.rows.map(function (x) {
+                return x[i]
+            });                               // Extract i'th item
             field = new BrunelData.Field(data.names[i], null, new BrunelData.values_ColumnProvider(col));
             opt = data.options ? data.options[i] : "string";                                // Apply type options
             if (opt == 'numeric') field = BrunelData.Data.toNumeric(field);
@@ -71,7 +73,7 @@ var BrunelD3 = (function () {
     // Add a color legend
     function colorLegend(target, title, scale, ticks, labels) {
         target.attr('class', 'legend').append('text').attr('x', 0).attr('y', 0)
-            .style('text-anchor', 'end').attr('dy', '0.85em') .text(title).attr('class', 'title');
+            .style('text-anchor', 'end').attr('dy', '0.85em').text(title).attr('class', 'title');
         var legend = target.selectAll('legend').data(ticks).enter().append('g').attr('class', 'swatch')
             .attr('transform', function (d, i) {
                 return 'translate(-20,' + (20 + i * 20) + ')';
@@ -907,39 +909,62 @@ var BrunelD3 = (function () {
     function makeNetworkLayout(layout, graph, nodes, edges, geom, density) {
         // "D" is the desired distance we would like to have between nodes
         var N = graph.nodes.length, E = graph.links.length,
-            pad = geom.default_point_size * 2,
-            D = (density || 1) * 0.5 * Math.sqrt((geom.inner_width - 2 * pad) * (geom.inner_height - 2 * pad) / N),
+            pad = geom.default_point_size,
+            W = geom.inner_width / 2 - pad, H = geom.inner_height / 2 - pad,
+            D = (density || 1) * 1.57 * Math.min(W, H) / Math.sqrt(N),
             R = D * Math.max(1, D - 3) / 5 / Math.max(1, E / N);
 
         layout.nodes(graph.nodes).links(graph.links)
-            .size([geom.inner_width, geom.inner_height])
+            .size([W, H])
             .linkDistance(D).charge(-R)
             .start();
 
         layout.on("tick", function () {
+            var minx, maxx, miny, maxy;
+            var r, cx, cy;
             nodes.selection()
+                .each(function (d, i) {
+                    if (i) {
+                        minx = Math.min(minx, d.x);
+                        maxx = Math.max(maxx, d.x);
+                        miny = Math.min(miny, d.y);
+                        maxy = Math.max(maxy, d.y);
+                    } else {
+                        minx = maxx = d.x;
+                        miny = maxy = d.y;
+                    }
+                })
+                .call(function () {
+                    cx = (minx + maxx) / 2;
+                    cy = (miny + maxy) / 2;
+                    r = 2 * Math.min(W / (maxx - minx), H / (maxy - miny));
+                    if (r > 1.05) r = 1.05;
+                    if (r < 0.95) r = 0.95;
+                })
                 .attr('cx', function (d) {
-                    return d.x = Math.min(Math.max(d.x, pad), geom.inner_width - pad)
+                    return d.x = (d.x - cx) * r + geom.inner_width/2;
                 })
                 .attr('cy', function (d) {
-                    return d.y = Math.min(Math.max(d.y, pad), geom.inner_height - pad)
-                }).each(function (d) {
-                    var txt = this.__label__;
-                    if (!txt) return;
-                    if (txt.__off__) {
-                        // We have calculated the position, just need to move it
-                        txt.attr('x', txt.__off__.dx + d.px);
-                        txt.attr('y', txt.__off__.dy + d.py);
-                    } else {
-                        // First time placement, and then record the offset relative to the node
-                        labelItem(this, null, txt.__labeling__);
-                        txt.__off__ = {
-                            dx: +txt.attr('x') - d.x,
-                            dy: +txt.attr('y') - d.y
+                    return d.y = (d.y - cy) * r + geom.inner_height/2;
+                })
+                .each(function (d) {
+                        var txt = this.__label__;
+                        if (!txt) return;
+                        if (txt.__off__) {
+                            // We have calculated the position, just need to move it
+                            txt.attr('x', txt.__off__.dx + d.px);
+                            txt.attr('y', txt.__off__.dy + d.py);
+                        } else {
+                            // First time placement, and then record the offset relative to the node
+                            labelItem(this, null, txt.__labeling__);
+                            txt.__off__ = {
+                                dx: +txt.attr('x') - d.x,
+                                dy: +txt.attr('y') - d.y
+                            }
                         }
                     }
-                }
-            );
+                );
+
             edges.selection()
                 .attr('x1', function (d) {
                     return d.source.x
@@ -968,7 +993,7 @@ var BrunelD3 = (function () {
 
     // Expose these methods
     return {
-        'makeData' : makeDataset,
+        'makeData': makeDataset,
         'geometry': geometries,
         'addTooltip': makeTooltip,
         'makePathSplits': split,
