@@ -14,10 +14,14 @@ Articles and notes on Brunel can be found in the [brunelvis.org blog](http://www
 
 ## Zero to Visualization in Sixty Seconds
 
+Users:
 * [Try it out online](http://brunel.mybluemix.net/gallery_app/renderer?title=Bubble+chart+of+2000+games&brunel_src=data%28%27http%3A%2F%2Fwillsfamily.org%2Ffiles%2Fvis%2Fdata%2FBGG+Top+2000+Games.csv%27%29+bubble+color%28rating%29+size%28voters%29+sort%28rating%29+label%28title%29+tooltip%28title%2C+%23all%29+legends%28none%29+style%28%27*+%7Bfont-size%3A+7pt%7D%27%29&description=A+simple+bubble+chart+showing+the+top+ranked+games.+The+color+shows+the+BGG+rating+and+the+size+of+each+bubble+represents+the+number+of+voters+for+that+game.+The+data+is+already+sorted+by+rank%2C+so+no+sort+was+needed.+Data+is+from+March+2015) (and add your own data)
+* Try it out in Jupyter notebooks: [Python](https://pypi.python.org/pypi/brunel) or [Spark](https://github.com/Brunel-Visualization/Brunel/tree/master/spark-kernel)
 * View the [gallery](https://github.com/Brunel-Visualization/Brunel/wiki)
 * Check out the [Brunel Visualization Cookbook](https://github.com/Brunel-Visualization/Brunel/wiki/Brunel-Visualization-Cookbook)
 * Use the interactive [language tutorial](http://brunel.mybluemix.net/docs)
+
+Developers:
 * Download the [latest build](https://github.com/Brunel-Visualization/Brunel/releases)
 * Sample Java ["Hello World"](https://github.com/Brunel-Visualization/Brunel/blob/master/etc/src/main/java/org/brunel/app/SampleApp.java) App
 * Sample Javascript ["Hello World"](https://github.com/Brunel-Visualization/Brunel/blob/master/etc/src/main/resources/html/SampleJSApp.html) App
@@ -25,12 +29,13 @@ Articles and notes on Brunel can be found in the [brunelvis.org blog](http://www
 
 ## Core Features of Brunel
 
+* Supports standard charts, diagrams, maps and network graphs
 * Automatically chooses good transforms, mappings, and formatting for your data
-* Allows multiple combinations of visualization â€œelementsâ€� â€” overlay points, bars, lines, paths, areas and text freely and in a coordinated space.
+* Allows multiple combinations of visualization elements overlay bars, lines, paths, areas and text freely and in a coordinated space.
 * Handles building structures for D3 diagram like hierarchies, treemaps and chords
 * Handles data ranges, binning and stacking automatically
 * Automatically wraps and fits text, even when animating
-* Intelligently works out a good layout for the chart aspects, taking into account the data (so you donâ€™t have to guess axis sizes, for example)
+* Intelligently works out a good layout for the chart aspects, taking into account the data (so you don't have to guess axis sizes, for example)
 * Provides flexible interactivity including tooltips, pan/zoom and interactive brushing
 * Coordinates multiple visualizations in the same space, including interactive brushing
 * Adds features such as Word clouds and paths with smoothly varying size
