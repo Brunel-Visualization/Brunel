@@ -217,7 +217,7 @@ public class D3DataBuilder {
             // We are using the 'Y' values to generate a set of identifier
             // We need to ensure the values are set in the summary, as well as any aesthetics
             String command = "#values=#values";
-            for (String s : vis.aestheticFields()) command += ";" + s + "=" + s;
+            for (String s : vis.aestheticFields()) if (!s.equals("#values")) command += ";" + s + "=" + s;
             writeTransform("summarize", command);
         }
 

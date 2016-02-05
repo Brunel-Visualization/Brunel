@@ -410,7 +410,8 @@ public class VisSingle extends VisItem implements Cloneable {
         if (fY.size() > 1) {
             if (tElement == VisTypes.Element.edge)
                 convertYsToRange = true;
-            else {
+            else if (tDiagram != VisTypes.Diagram.network) {
+                // Networks with 2 Y's are using them for IDs, so do not split
                 addSeriesSplit = true;
                 for (String s : aestheticFields()) if (s.equals("#series")) addSeriesSplit = false;
             }
