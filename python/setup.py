@@ -30,9 +30,9 @@ except:
 
 setup(
     name='brunel',
-    version='1.0.0',
+    version='1.0.1',
     packages=['brunel'],
-    install_requires= ['pandas', 'jinja2', 'ipython', 'jupyter-pip', 'JPype1-py3'],
+    install_requires= ['pandas', 'jinja2', 'ipython', 'jupyter-pip', 'JPype1-py3', 'ipywidgets', 'traitlets'],
     package_data= {
         'brunel': ['*.js', '*.html', 'lib/*.jar', 'brunel_ext/*.*']
     },

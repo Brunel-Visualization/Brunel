@@ -19,6 +19,13 @@ import os
 import inspect
 import fnmatch
 import jpype
+import sys
+
+#Package migration starting in Python 3.5
+if sys.version_info >= (3,5):
+    import ipywidgets
+    import traitlets
+
 import brunel.brunelWidgets as brunelWidgets
 import brunel.brunel_util as brunel_util
 import jinja2 as jin
