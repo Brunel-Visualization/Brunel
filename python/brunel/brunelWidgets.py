@@ -12,9 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from IPython.html import widgets
-from IPython.utils.traitlets import Unicode
-from IPython.utils.traitlets import CFloat, List
+import sys
+#Package migration starting in Python 3.5
+if sys.version_info >= (3,5):
+    import notebook
+    from ipywidgets import widgets
+    from traitlets import Unicode
+    from traitlets import CFloat, List
+else:
+    from IPython.html import widgets
+    from IPython.utils.traitlets import Unicode
+    from IPython.utils.traitlets import CFloat, List
 
 # Uses Brunel 'controls' to create IPython Widgets.
 # Widgets are the same regardless of visualization rendering technique.

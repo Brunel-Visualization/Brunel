@@ -2,6 +2,7 @@
 (Formerly known as "spark-kernel")
 
 This project contains code for integrating Brunel into Apache Toree allowing scala notebooks to use Brunel with Apache Spark in Jupyter.
+Continued support for the prior project 'spark-kernel' will be included for a limited time.
 
 ## Dependencies
 
