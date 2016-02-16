@@ -81,7 +81,9 @@ public class ElementDetails {
             this.textMethod = "box";
         }
 
-        this.textMustFit = filled && element != VisTypes.Element.point || "box".equals(textLocation);
+        this.textMustFit = filled
+                && element != VisTypes.Element.point && element != VisTypes.Element.polygon
+                || "box".equals(textLocation);
 
         // Only edges need the stroke width setting
         this.needsStrokeSize = !vis.fSize.isEmpty() && vis.tElement == VisTypes.Element.edge;

@@ -63,7 +63,7 @@ public class DataBuilder {
                 usedFields);
 
         // Call the engine to see if it has any special needs
-        params = modifier.modifyParameters(params, vis);
+        if (modifier != null) params = modifier.modifyParameters(params, vis);
 
         Dataset data = vis.getDataset();                                                // The data to use
         data = data.addConstants(params.constantsCommand);                              // add constant fields
@@ -76,6 +76,16 @@ public class DataBuilder {
         data = data.stack(params.stackCommand);                                         // stack data
         data.set("parameters", params);                                                 // Params used to build this
         return data;
+    }
+
+    /**
+     * Utility to get the built data from a Vis
+     *
+     * @param vis target to get the built data from
+     * @return transformed data set
+     */
+    public static Dataset getTransformedData(VisSingle vis) {
+        return new DataBuilder(vis.resolve(), null).build();
     }
 
     protected int getParameterIntValue(Param param, int defaultValue) {
