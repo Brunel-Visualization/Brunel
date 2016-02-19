@@ -221,7 +221,6 @@ public class Stack extends DataOperation {
 
     private static Field[] orderRows(Dataset base, Field[] keyFields) {
         Field[] baseFields = base.fields;
-        FieldRowComparison comparison = new FieldRowComparison(keyFields, null, true);
         List<Integer> items = new ArrayList<Integer>();
         int n = base.rowCount();
         for (int i = 0; i < n; i++) {
@@ -229,6 +228,11 @@ public class Stack extends DataOperation {
             for (Field f : keyFields) if (f.value(i) == null) valid = false;
             if (valid) items.add(i);
         }
+
+        // We need descending order so stacking works bottom-up
+        boolean[] ascending = new boolean[keyFields.length];
+        for (int i = 0; i < ascending.length; i++) ascending[i] = false;
+        FieldRowComparison comparison = new FieldRowComparison(keyFields, ascending, true);
         Collections.sort(items, comparison);
         Integer[] rowOrder = items.toArray(new Integer[items.size()]);
 

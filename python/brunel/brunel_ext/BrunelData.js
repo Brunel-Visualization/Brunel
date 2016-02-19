@@ -2593,9 +2593,8 @@ V.modify_Stack.nextIndex = function(keys, index) {
 };
 
 V.modify_Stack.orderRows = function(base, keyFields) {
-    var _i, f, fields, i, rowOrder, valid;
+    var _i, ascending, comparison, f, fields, i, rowOrder, valid;
     var baseFields = base.fields;
-    var comparison = new V.summary_FieldRowComparison(keyFields, null, true);
     var items = new $.List();
     var n = base.rowCount();
     for (i = 0; i < n; i++){
@@ -2604,6 +2603,10 @@ V.modify_Stack.orderRows = function(base, keyFields) {
             if (f.value(i) == null) valid = false;
         if (valid) items.add(i);
     }
+    ascending = $.Array(keyFields.length, false);
+    for (i = 0; i < ascending.length; i++)
+        ascending[i] = false;
+    comparison = new V.summary_FieldRowComparison(keyFields, ascending, true);
     $.sort(items, comparison);
     rowOrder = items.toArray();
     fields = $.Array(baseFields.length, null);

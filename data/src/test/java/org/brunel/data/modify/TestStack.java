@@ -55,7 +55,7 @@ public class TestStack {
         */
 
         assertEquals(6, a.rowCount());
-        assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- a|x|1|4|0|4|1|1 -- a|y|?|?|4|4|?|? -- b|x|2|3|0|3|1|2 -- b|y|?|?|3|3|?|? -- c|x|2|1|0|1|1|4 -- c|y|1|2|1|3|1|3",
+        assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- a|x|?|?|0|0|?|? -- a|y|?|?|0|0|?|? -- b|x|?|?|0|0|?|? -- b|y|?|?|0|0|?|? -- c|x|?|?|0|0|?|? -- c|y|1|2|0|2|1|3",
                 CannedData.dump(a));
 
     }
@@ -72,7 +72,7 @@ public class TestStack {
             c   x   2   1   0   1
             c   y   1   2   1   3
         */
-        assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- c|x|2|1|0|1|1|4 -- c|y|1|2|1|3|1|3 -- b|x|2|3|3|6|1|2 -- a|x|1|4|6|10|1|1",
+        assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- a|x|1|4|0|4|1|1 -- b|x|2|3|4|7|1|2 -- c|y|1|2|7|9|1|3 -- c|x|2|1|9|10|1|4",
                 CannedData.dump(a));
     }
 
@@ -89,7 +89,7 @@ public class TestStack {
             c   x   2   1   0   1
             c   y   1   2   1   3
         */
-        assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- c|y|1|2|0|2|1|3 -- c|x|2|1|2|3|1|4 -- b|x|2|3|3|6|1|2 -- a|x|1|4|6|10|1|1",
+        assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- a|x|1|4|0|4|1|1 -- b|x|2|3|4|7|1|2 -- c|x|2|1|7|8|1|4 -- c|y|1|2|8|10|1|3",
                 CannedData.dump(a));
     }
 
@@ -137,7 +137,7 @@ public class TestStack {
             c   y   1   2   1   3
         */
 
-        assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- a|x|1|4|0|4|1|1 -- b|x|2|3|0|3|1|2 -- c|x|2|1|0|1|1|4 -- c|y|1|2|1|3|1|3",
+        assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- c|y|1|2|0|2|1|3 -- c|x|2|1|2|3|1|4 -- b|x|2|3|0|3|1|2 -- a|x|1|4|0|4|1|1",
                 CannedData.dump(a));
     }
 
