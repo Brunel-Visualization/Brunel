@@ -1,4 +1,6 @@
 # Brunel Visualization [![Build Status](https://travis-ci.org/Brunel-Visualization/Brunel.svg?branch=master)](https://travis-ci.org/Brunel-Visualization/Brunel)
+
+[![Join the chat at https://gitter.im/Brunel-Visualization/Brunel](https://badges.gitter.im/Brunel-Visualization/Brunel.svg)](https://gitter.im/Brunel-Visualization/Brunel?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ![Brunel Visualization](https://raw.github.com/Brunel-Visualization/Brunel/master/brunel.png)
 
 ## What is Brunel?
