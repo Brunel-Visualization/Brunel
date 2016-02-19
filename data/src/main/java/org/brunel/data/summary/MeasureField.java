@@ -17,6 +17,7 @@
 package org.brunel.data.summary;
 
 import org.brunel.data.Field;
+import org.brunel.data.modify.Transform;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,7 +46,7 @@ public class MeasureField extends DimensionField {
      * @return defined fit (or null if none yet created)
      */
     public Fit getFit(ArrayList<Field> groupFields, int index) {
-        return this.fits.get(makeKey(groupFields, index));
+        return this.fits.get(Transform.makeKey(groupFields, index));
     }
 
     /**
@@ -55,13 +56,7 @@ public class MeasureField extends DimensionField {
      * @param fit the fit to use for this group
      */
     public void setFit(ArrayList<Field> groupFields, int index, Fit fit) {
-        this.fits.put(makeKey(groupFields, index), fit);
-    }
-
-    private String makeKey(ArrayList<Field> groupFields, int index) {
-        String key = "|";
-        for (Field f: groupFields) key += f.value(index) + "|";
-        return key;
+        this.fits.put(Transform.makeKey(groupFields, index), fit);
     }
 
     public boolean isPercent() {

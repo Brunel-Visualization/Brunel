@@ -25,6 +25,7 @@ import org.brunel.data.summary.FieldRowComparison;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +61,12 @@ public class Transform extends DataOperation {
         }
 
         return base.replaceFields(fields);
+    }
+
+    public static String makeKey(Collection<Field> groupFields, int index) {
+        String key = "|";
+        for (Field f: groupFields) key += f.value(index) + "|";
+        return key;
     }
 
     /*

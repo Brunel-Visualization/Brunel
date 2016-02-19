@@ -26,7 +26,9 @@ import org.brunel.data.modify.Sort;
 import org.brunel.data.modify.Stack;
 import org.brunel.data.modify.Summarize;
 import org.brunel.data.modify.Transform;
+import org.brunel.data.summary.FieldRowComparison;
 import org.brunel.data.util.Informative;
+import org.brunel.data.util.ItemsList;
 import org.brunel.data.values.ColumnProvider;
 import org.brunel.translator.JSTranslation;
 
@@ -290,6 +292,68 @@ public class Dataset extends Informative implements Serializable {
         return dataset;
     }
 
+    /**
+     * Modify the #selection field but applying the designated operation to the listed rows.
+     * It takes the current selection states and modifies them by applying the supplied method
+     * with the supplied rows. So, for example, "tog" toggles the selection status of the rows passed in
+     *
+     * Thsi method is called from JS to do selection
+     *
+     * @param method one of "add", "sub", "sel", "tog"
+     * @param row    the row from the source data to use in the operation
+     * @param source the Dataset in which we found the rows
+     */
+    public void modifySelection(String method, int row, Dataset source) {
+        String off = Field.VAL_UNSELECTED, on = Field.VAL_SELECTED;
+        Field sel = field("#selection");
+        int n = rowCount();
+
+        // For simple selection (no modifiers) everything is initially cleared
+        for (int i = 0; i < n; i++) sel.setValue(off, i);
+
+        Set<Integer> expanded = source.expandedOriginalRows(row);
+        for (int i : expanded) {
+            if (method.equals("sel") || method.equals("add")) sel.setValue(on, i);
+            else if (method.equals("sub")) sel.setValue(off, i);
+            else sel.setValue(sel.value(i) == on ? off : on, i);
+        }
+
+    }
+
+    /**
+     * Expands this row to find similar rows, then returns all rows for the original data for those rows
+     *
+     * @param row target
+     * @return target rows (zero based)
+     */
+    private Set<Integer> expandedOriginalRows(int row) {
+        int n = rowCount();
+
+        // Get all the fields we want to use for comparison
+        // No synthetic or summary fields are desired
+        Set<Field> important = new HashSet<Field>();
+        for (Field f : fields)
+            if (!f.isSynthetic() && f.property("summary") == null)
+                important.add(f);
+
+        Field[] targetFields = important.toArray(new Field[important.size()]);
+        FieldRowComparison compare = new FieldRowComparison(targetFields, null, false);
+
+        Field rowField = field("#row");
+
+        // Create a set of all rows similar to the target one
+        Set<Integer> expanded = new HashSet<Integer>();
+        for (int i = 0; i < n; i++)
+            if (compare.compare(i, row) == 0) {
+                Object o = rowField.value(i);
+                if (o instanceof ItemsList) {
+                    ItemsList list = (ItemsList) o;
+                    for (Object item : list) expanded.add((Integer) item - 1);
+                } else if (o != null)
+                    expanded.add((Integer) o - 1);
+            }
+        return expanded;
+    }
 
     @JSTranslation(ignore = true)
     private void writeObject(java.io.ObjectOutputStream out) throws IOException {
@@ -300,9 +364,9 @@ public class Dataset extends Informative implements Serializable {
     private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
         ByteArrayOutputStream store = new ByteArrayOutputStream();
         byte[] block = new byte[10240];
-        for(;;) {
+        for (; ; ) {
             int len = in.read(block);
-            if (len <0) break;
+            if (len < 0) break;
             store.write(block, 0, len);
         }
         Dataset d = (Dataset) Serialize.deserialize(store.toByteArray());
@@ -311,7 +375,5 @@ public class Dataset extends Informative implements Serializable {
         info = new HashMap<String, Object>();
         copyPropertiesFrom(d);
     }
-
-
 
 }

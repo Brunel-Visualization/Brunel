@@ -374,30 +374,15 @@ var BrunelD3 = (function () {
             func.call();
     }
 
-    // Select the indicated rows of the data. This will wait until any transition is completed, and
-    // will then call the desired rebuild function
-    function select(row, data, target, func) {
-
-        var i, j,
-            rows = row ? (row.items ? row.items : [row]) : [],// 'row' can be null, a single integer, or a collection of
-            sel = data.field("#selection"),                     // Selection field
-            method = "sel";                                     // how to select the data (add, subtract, toggle, select)
-
-        if (d3.event.altKey) method = d3.event.altKey ? "tog" : "sub";
-        else if (d3.event.shiftKey) method = "add";
-
-        // For simple selection (no modifiers) everything is initially cleared
-        if (method == "sel") for (i = 0; i < sel.rowCount(); i++) sel.setValue('\u2717', i);
-
-        for (i in rows) {
-            // rows are 1-based, so need to subtract off one when setting selection using them
-            j = rows[i] - 1;
-            if (method == "sel" || method == "add") sel.setValue('\u2713', j);
-            else if (method == "sub") sel.setValue('\u2717', j);
-            else sel.setValue(sel.value(j) == '\u2717' ? '\u2713' : '\u2717', j);
-        }
-
-        callWhenReady(func, target);
+    // Select the indicated rows of the data.
+    // This will wait until any transition is completed, and will then call the desired rebuild function
+    // The row selected refers into the rowData dataset, but the selection to be modified is in the data dataset
+    function select(row, rowData, data, target, func) {
+        var sel = data.field("#selection"),                     // Selection field
+            method = d3.event.altKey ? "tog" : "sel";           // how to select the data (add, subtract, toggle, select)
+        if (d3.event.shiftKey) method =  d3.event.altKey ? "sub" : "add";
+        data.modifySelection(method, row, rowData);             // Modify the selection
+        callWhenReady(func, target);                            // Request a redraw after current transition done
     }
 
 
@@ -942,10 +927,10 @@ var BrunelD3 = (function () {
                     if (r < 0.95) r = 0.95;
                 })
                 .attr('cx', function (d) {
-                    return d.x = (d.x - cx) * r + geom.inner_width/2;
+                    return d.x = (d.x - cx) * r + geom.inner_width / 2;
                 })
                 .attr('cy', function (d) {
-                    return d.y = (d.y - cy) * r + geom.inner_height/2;
+                    return d.y = (d.y - cy) * r + geom.inner_height / 2;
                 })
                 .each(function (d) {
                         var txt = this.__label__;

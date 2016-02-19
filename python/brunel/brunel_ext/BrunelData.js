@@ -1128,6 +1128,48 @@ V.Dataset.prototype.summarize = function(command) {
     return dataset;
 };
 
+V.Dataset.prototype.modifySelection = function(method, row, source) {
+    var _i, expanded, i;
+    var off = V.Field.VAL_UNSELECTED;
+    var on = V.Field.VAL_SELECTED;
+    var sel = this.field("#selection");
+    var n = this.rowCount();
+    for (i = 0; i < n; i++)
+        sel.setValue(off, i);
+    expanded = source.expandedOriginalRows(row);
+    for(_i=$.iter(expanded), i=_i.current; _i.hasNext(); i=_i.next()) {
+        if ((method == "sel") || (method == "add"))
+            sel.setValue(on, i);
+        else if (method == "sub")
+            sel.setValue(off, i);
+        else
+            sel.setValue(sel.value(i) == on ? off : on, i);
+    }
+};
+
+V.Dataset.prototype.expandedOriginalRows = function(row) {
+    var _i, compare, expanded, f, i, item, list, o, rowField, targetFields;
+    var n = this.rowCount();
+    var important = new $.Set();
+    for(_i=$.iter(this.fields), f=_i.current; _i.hasNext(); f=_i.next())
+        if (!f.isSynthetic() && f.property("summary") == null) important.add(f);
+    targetFields = important.toArray();
+    compare = new V.summary_FieldRowComparison(targetFields, null, false);
+    rowField = this.field("#row");
+    expanded = new $.Set();
+    for (i = 0; i < n; i++)
+        if (compare.compare(i, row) == 0) {
+            o = rowField.value(i);
+            if (o instanceof V.util_ItemsList) {
+                list = o;
+                for(_i=$.iter(list), item=_i.current; _i.hasNext(); item=_i.next())
+                    expanded.add(item - 1);
+            } else if (o != null)
+                expanded.add(o - 1);
+        }
+    return expanded;
+};
+
 ////////////////////// Chord ///////////////////////////////////////////////////////////////////////////////////////////
 //
 //   A chord diagram shows sized links between two categorical fields.
@@ -2809,6 +2851,14 @@ V.modify_Transform.transform = function(base, command) {
     return base.replaceFields(fields);
 };
 
+V.modify_Transform.makeKey = function(groupFields, index) {
+    var _i, f;
+    var key = "|";
+    for(_i=$.iter(groupFields), f=_i.current; _i.hasNext(); f=_i.next())
+        key += f.value(index) + "|";
+    return key;
+};
+
 V.modify_Transform.modify = function(field, operation) {
     var desiredBinCount, name, option, parts;
     if (operation == null) return field;
@@ -3160,19 +3210,11 @@ V.summary_MeasureField = function(field, rename, measureFunction) {
 $.extend(V.summary_MeasureField, V.summary_DimensionField);
 
 V.summary_MeasureField.prototype.getFit = function(groupFields, index) {
-    return this.fits.get(this.makeKey(groupFields, index));
+    return this.fits.get(V.modify_Transform.makeKey(groupFields, index));
 };
 
 V.summary_MeasureField.prototype.setFit = function(groupFields, index, fit) {
-    this.fits.put(this.makeKey(groupFields, index), fit);
-};
-
-V.summary_MeasureField.prototype.makeKey = function(groupFields, index) {
-    var _i, f;
-    var key = "|";
-    for(_i=$.iter(groupFields), f=_i.current; _i.hasNext(); f=_i.next())
-        key += f.value(index) + "|";
-    return key;
+    this.fits.put(V.modify_Transform.makeKey(groupFields, index), fit);
 };
 
 V.summary_MeasureField.prototype.isPercent = function() {
