@@ -88,7 +88,7 @@ legends other auto none all color size
 at other NUMBER+
 style other STRING
 interaction other select panzoom filter auto none
-annotation other - + fit frequency neighbor explain
+annotation other - + fit frequency neighbor cluster split
 
 ## Combination actions
 + combination
