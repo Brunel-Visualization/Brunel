@@ -72,12 +72,10 @@ def to_csv(df):
 
 #Uses jpype to call the main Brunel D3 integration method
 def brunel_jpype_call(data, brunel_src, width, height, visid):
-    #commented out code allows display of Java stacktrace
-    #try:
+    try:
         return brunel_util_java.D3Integration.createBrunelJSON(data, brunel_src, int(width), int(height), visid, None)
-    #except jpype.JavaException as exception:
-    #    print (exception.message())
-    #    print (exception.stacktrace())
+    except jpype.JavaException as exception:
+        raise ValueError(exception.message())
 
 def get_dataset_names(brunel_src):
     return brunel_util_java.D3Integration.getDatasetNames(brunel_src)
