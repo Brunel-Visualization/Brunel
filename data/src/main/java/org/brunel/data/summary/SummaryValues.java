@@ -37,9 +37,9 @@ public final class SummaryValues {
 
         // Create an array of fields that group the results
         this.groupFields = new ArrayList<Field>();
-        for (Field f: allDimensions) {
+        for (Field f : allDimensions) {
             boolean isGroup = true;
-            for  (Field x : xFields) if (x == f) isGroup = false;
+            for (Field x : xFields) if (x == f) isGroup = false;
             if (isGroup) groupFields.add(f);
         }
     }
@@ -89,8 +89,12 @@ public final class SummaryValues {
         Double mean = f.numericProperty("mean");
         if (summary.equals("percent")) {
             if (mean == null) return null;
-            double sum = percentSums[fieldIndex];
-            return sum > 0 ? 100 * mean * f.numericProperty("valid") / sum : null;
+            double sum;
+            if ("overall".equals(m.option))
+                sum = m.field.valid() * m.field.numericProperty("mean");
+            else
+                sum = percentSums[fieldIndex];
+            return sum > 0 ? 100 * mean * f.valid() / sum : null;
         }
 
         if (summary.equals("range")) {
@@ -124,9 +128,9 @@ public final class SummaryValues {
     private List<Integer> validForGroup(int index) {
         ArrayList<Integer> list = new ArrayList<Integer>();
         int n = fields[0].rowCount();
-        for (int i = 0; i< n; i++) {
+        for (int i = 0; i < n; i++) {
             boolean valid = true;
-            for (Field f: groupFields) if (f.compareRows(index, i) != 0) valid = false;
+            for (Field f : groupFields) if (f.compareRows(index, i) != 0) valid = false;
             if (valid) list.add(i);
         }
         return list;

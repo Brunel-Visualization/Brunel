@@ -3451,8 +3451,11 @@ V.summary_SummaryValues.prototype.get = function(fieldIndex, m) {
     mean = f.numericProperty("mean");
     if (summary == "percent") {
         if (mean == null) return null;
-        sum = this.percentSums[fieldIndex];
-        return sum > 0 ? 100 * mean * f.numericProperty("valid") / sum : null;
+        if ("overall" == m.option)
+            sum = m.field.valid() * m.field.numericProperty("mean");
+        else
+            sum = this.percentSums[fieldIndex];
+        return sum > 0 ? 100 * mean * f.valid() / sum : null;
     }
     if (summary == "range") {
         if (mean == null) return null;

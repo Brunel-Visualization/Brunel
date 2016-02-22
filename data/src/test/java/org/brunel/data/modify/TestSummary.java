@@ -67,6 +67,14 @@ public class TestSummary {
     }
 
     @Test
+    public void testPercentOverall() {
+        Dataset a = Summarize.transform(data, "gender=gender:base; #percent=#count:percent:overall");
+        Assert.assertEquals("gender|#percent|#count|#row -- " +
+                "Female|48%|12|3, 4, 8, 9, 10, 11, 14, 20, 21, 23, 24, 25 -- " +
+                "Male|52%|13|1, 2, 5, 6, 7, 12, 13, 15, 16, 17, 18, \u2026", CannedData.dump(a));
+    }
+
+    @Test
     public void testEmptyData() {
         Field x = Data.makeColumnField("x", null, new Object[]{1, 2});
         Field y = Data.makeConstantField("y", null, null, 2);
