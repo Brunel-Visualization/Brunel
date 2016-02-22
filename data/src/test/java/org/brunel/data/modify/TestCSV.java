@@ -38,6 +38,24 @@ public class TestCSV {
                     ",\"\",";
 
     @Test
+    public void testListsInCells() {
+        Field[] fields = CSV.read("A,B\n three,\"1,2, 3\"\n five,2;3;5;6;100\n one,3\n zero,\n two,6;1");
+        Assert.assertEquals(2, fields.length);
+        Assert.assertEquals(5, fields[0].rowCount());
+        assertEquals("three", fields[0].value(0));
+        assertEquals("1,2, 3", fields[1].value(0));
+
+        assertEquals("five", fields[0].value(1));
+        assertEquals("2;3;5;6;100", fields[1].value(1));
+
+        assertEquals("one", fields[0].value(2));
+
+        assertEquals("zero", fields[0].value(3));
+
+        assertEquals("two", fields[0].value(4));
+    }
+
+    @Test
     public void testBank() {
         Field[] fields = CSV.read(CannedData.bank);
         Assert.assertEquals(8, fields.length);

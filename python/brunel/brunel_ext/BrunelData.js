@@ -502,8 +502,9 @@ V.auto_Auto.optimalBinCount = function(f) {
 };
 
 V.auto_Auto.convert = function(base) {
-    var N, asNumeric, i, j, n, nDate, nNumeric, o, order, t;
+    var N, _i, asMulti, asNumeric, i, j, n, nDate, nNumeric, o, order, s, t;
     if (base.isSynthetic() || base.isDate()) return base;
+    if (base.propertyTrue("multiCategories")) return base;
     N = base.valid();
     order = $.Array(base.rowCount(), 0);
     for (i = 0; i < order.length; i++)
@@ -542,10 +543,44 @@ V.auto_Auto.convert = function(base) {
         n++;
         if (V.Data.asDate(o) != null) nDate++;
     }
-    if (nDate > V.auto_Auto.FRACTION_TO_CONVERT * n)
-        return V.Data.toDate(base);
-    else
-        return base;
+    if (nDate > V.auto_Auto.FRACTION_TO_CONVERT * n) return V.Data.toDate(base);
+    for(_i=$.iter(["\\,", "\\;", "\\|"]), s=_i.current; _i.hasNext(); s=_i.next()) {
+        asMulti = V.auto_Auto.tryAsMulti(base, s);
+        if (asMulti != null) return asMulti;
+    }
+    return base;
+};
+
+V.auto_Auto.tryAsMulti = function(base, sep) {
+    var _i, common, commonParts, counts, f, i, items, o, parts, s, valid;
+    var n = base.rowCount();
+    if (n < 3) return null;
+    commonParts = new $.Set();
+    counts = $.Array(4, 0);
+    items = $.Array(n, null);
+    for (i = 0; i < n; i++){
+        o = base.value(i);
+        if (o == null) continue;
+        parts = o.toString().split(sep);
+        valid = new $.List();
+        for(_i=$.iter(parts), s=_i.current; _i.hasNext(); s=_i.next()) {
+            s = s.trim();
+            if ($.len(s) > 0) {
+                valid.add(s);
+                commonParts.add(s);
+            }
+        }
+        parts = valid.toArray();
+        items[i] = new V.util_ItemsList(parts, null);
+        counts[Math.min(3, parts.length)]++;
+    }
+    if (counts[1] / 5.0 > counts[2] + counts[3]) return null;
+    if (counts[2] / 10.0 > counts[1] + counts[3]) return null;
+    f = V.Data.makeColumnField(base.name, base.label, items);
+    common = commonParts.toArray();
+    $.sort(common);
+    f.set("multiCategories", common);
+    return f;
 };
 
 V.auto_Auto.isYearly = function(asNumeric) {

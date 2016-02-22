@@ -18,8 +18,14 @@ package org.brunel.data.auto;
 
 import org.brunel.data.Data;
 import org.brunel.data.Field;
+import org.brunel.data.util.ItemsList;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Contains a number of static methods for automatic processing.
@@ -48,7 +54,8 @@ public class Auto {
         if (desiredTickCount < 1) desiredTickCount = Math.min(optimalBinCount(f), 20) + 1;
         if (f.isDate()) return NumericScale.makeDateScale(f, nice, padFraction, desiredTickCount);
         String p = f.stringProperty("transform");
-        if (p.equals("log")) return NumericScale.makeLogScale(f, nice, padFraction, includeZeroTolerance, desiredTickCount);
+        if (p.equals("log"))
+            return NumericScale.makeLogScale(f, nice, padFraction, includeZeroTolerance, desiredTickCount);
 
         // We need to modify the scale for a root transform, as we need a smaller pad fraction near zero
         // as that will show more space than expected
@@ -93,7 +100,8 @@ public class Auto {
     }
 
     public static Field convert(Field base) {
-        if (base.isSynthetic() || base.isDate()) return base;   // Already set
+        if (base.isSynthetic() || base.isDate()) return base;           // Already set
+        if (base.propertyTrue("multiCategories")) return base;       // Already a multi-set
 
         int N = base.valid();
 
@@ -142,8 +150,58 @@ public class Auto {
 
         if (nDate > FRACTION_TO_CONVERT * n)
             return Data.toDate(base);
-        else
-            return base;
+
+        // Try conversion to a multi-set (lists of similar categories)
+
+        for (String s : new String[]{"\\,", "\\;", "\\|"}) {
+            Field asMulti = tryAsMulti(base, s);
+            if (asMulti != null) return asMulti;
+        }
+
+        return base;
+    }
+
+    private static Field tryAsMulti(Field base, String sep) {
+        int n = base.rowCount();
+        if (n < 3) return null;
+
+        Set<String> commonParts = new HashSet<String>();
+        int[] counts = new int[4];
+
+        // Create items lists and accumulate general info
+        ItemsList[] items = new ItemsList[n];
+        for (int i = 0; i < n; i++) {
+            Object o = base.value(i);
+            if (o == null) continue;
+
+            // Find the non-empty split parts
+            String[] parts = o.toString().split(sep);
+            List<String> valid = new ArrayList<String>();
+            for (String s : parts) {
+                s = s.trim();
+                if (s.length() > 0) {
+                    valid.add(s);
+                    commonParts.add(s);
+                }
+            }
+            parts = valid.toArray(new String[valid.size()]);
+            items[i] = new ItemsList(parts, null);
+            counts[Math.min(3, parts.length)]++;
+        }
+
+        int m = commonParts.size();
+        if (m * m > n) return null;                                 // We need fewer multi-items
+
+        // Check we have a good distribution of lengths
+        if (counts[2] + counts[3] == 0) return null;                // Found no multis
+        if (counts[1] + counts[3] == 0) return null;                // All pairs
+
+        // Passed the tests so return the details!
+        Field f = Data.makeColumnField(base.name, base.label, items);
+        String[] common = commonParts.toArray(new String[m]);
+        Arrays.sort(common);
+        f.set("multiCategories", common);
+        return f;
     }
 
     private static boolean isYearly(Field asNumeric) {

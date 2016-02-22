@@ -20,6 +20,7 @@ import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
 import org.brunel.data.auto.NumericScale;
+import org.brunel.data.util.ItemsList;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -99,6 +100,21 @@ public class TestAuto {
         Assert.assertEquals(true, a == b);
         Assert.assertEquals(false, b.isNumeric());
         Assert.assertEquals(false, b.isDate());
+    }
+
+    @Test
+    public void testAutoConvertLists() {
+        Field a = Data.makeColumnField("field", null, new Object[]{"a,b,c", "c,a", null, "a ,e", ""});
+        Field b = Auto.convert(a);
+        Assert.assertEquals(false, a == b);
+        Assert.assertEquals(false, b.isNumeric());
+        Assert.assertEquals(false, b.isDate());
+        Assert.assertEquals(new ItemsList(new String[]{"a", "b", "c"}, null), b.value(0));
+        Assert.assertEquals(new ItemsList(new String[]{"c", "a"}, null), b.value(1));
+        Assert.assertEquals(null, b.value(2));
+        Assert.assertEquals(new ItemsList(new String[]{"a", "e"}, null), b.value(3));
+        Assert.assertEquals(new ItemsList(new String[]{}, null), b.value(4));
+
     }
 
     @Test
@@ -218,11 +234,11 @@ public class TestAuto {
         Field a = Data.toNumeric(Data.makeColumnField("a", "label", new Object[]{100, 200, 120, 200, 3100}));
         a.set("transform", "linear");
         Assert.assertEquals("linear : 70 3130 : |500|1000|1500|2000|2500|3000",
-                asString(NumericScale.makeLinearScale(a, false, 0.0, new double[] {0.01, 0.01}, 5, false), a));
+                asString(NumericScale.makeLinearScale(a, false, 0.0, new double[]{0.01, 0.01}, 5, false), a));
 
         // Does not pad past zero
         Assert.assertEquals("linear : -200 3400 : |0|1000|2000|3000",
-                asString(NumericScale.makeLinearScale(a, false, 0.0, new double[] {0.1, 0.1}, 5, false), a));
+                asString(NumericScale.makeLinearScale(a, false, 0.0, new double[]{0.1, 0.1}, 5, false), a));
     }
 
     @Test
