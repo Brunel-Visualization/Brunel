@@ -194,7 +194,7 @@ public class CSV {
             }
             last = d;
         }
-        return result.length() == 0 ? "_" : result;
+        return result.length() == 0 ? "_" : result.replaceFirst("^[^A-Za-z]+", "");
     }
 
     public static String readable(String text) {
