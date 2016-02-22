@@ -190,7 +190,7 @@ public class Auto {
         }
 
         int m = commonParts.size();
-        if (m * m > n) return null;                                 // We need fewer multi-items
+        if (m * m > n && m > 10) return null;                       // We need fewer multi-items
 
         // Check we have a good distribution of lengths
         if (counts[2] + counts[3] == 0) return null;                // Found no multis
