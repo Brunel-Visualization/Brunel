@@ -403,6 +403,7 @@ public class D3ScaleBuilder {
         if (coords == VisTypes.Coordinates.polar) return "[0, geom.inner_radius]";
 
         boolean reversed = coords == VisTypes.Coordinates.transposed && structure.coordinates.xCategorical;
+        if (reverseRange(structure.coordinates.allXFields)) reversed = !reversed;
         return reversed ? "[geom.inner_width,0]" : "[0, geom.inner_width]";
     }
 
@@ -413,7 +414,16 @@ public class D3ScaleBuilder {
         // If we are on the vertical axis and all the position  are numeric, but the lowest at the start, not the end
         // This means that vertical numeric axes run bottom-to-top, as expected.
         if (coords != VisTypes.Coordinates.transposed) reversed = !structure.coordinates.yCategorical;
+        if (reverseRange(structure.coordinates.allYFields)) reversed = !reversed;
         return reversed ? "[geom.inner_height,0]" : "[0, geom.inner_height]";
+    }
+
+    private boolean reverseRange(Field[] fields) {
+        if (fields.length == 0)return false;
+        // Ranking causes us to reverse the order
+        for (Field f : fields) if (!"rank".equals(f.stringProperty("summary")))
+            return false;
+        return true;
     }
 
     private int scaleWithDomain(String name, Field[] fields, ScalePurpose purpose, int numericDomainDivs, String defaultTransform, Object[] partitionPoints) {

@@ -58,6 +58,7 @@ public class Transform extends DataOperation {
             String op = null;
             for (String[] o : operations) if (o[0].equals(base.fields[i].name)) op = o[1];
             fields[i] = modify(base.fields[i],op);
+            fields[i].set("summary", op);
         }
 
         return base.replaceFields(fields);
