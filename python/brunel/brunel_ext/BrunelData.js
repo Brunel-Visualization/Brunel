@@ -552,7 +552,7 @@ V.auto_Auto.convert = function(base) {
 };
 
 V.auto_Auto.tryAsMulti = function(base, sep) {
-    var _i, common, commonParts, counts, f, i, items, o, parts, s, valid;
+    var _i, common, commonParts, counts, f, i, items, m, o, parts, s, valid;
     var n = base.rowCount();
     if (n < 3) return null;
     commonParts = new $.Set();
@@ -574,8 +574,10 @@ V.auto_Auto.tryAsMulti = function(base, sep) {
         items[i] = new V.util_ItemsList(parts, null);
         counts[Math.min(3, parts.length)]++;
     }
-    if (counts[1] / 5.0 > counts[2] + counts[3]) return null;
-    if (counts[2] / 10.0 > counts[1] + counts[3]) return null;
+    m = commonParts.size();
+    if (m * m > n && m > 10) return null;
+    if (counts[2] + counts[3] == 0) return null;
+    if (counts[1] + counts[3] == 0) return null;
     f = V.Data.makeColumnField(base.name, base.label, items);
     common = commonParts.toArray();
     $.sort(common);
@@ -1849,9 +1851,10 @@ V.io_CSV.identifier = function(text) {
         if (V.io_CSV.isDigit(c)) {
             if (i == 0) result = "_";
             d = c;
-        } else if ((c == "_") || V.io_CSV.isLower(c) || V.io_CSV.isUpper(c) || V.io_CSV.isDigit(c))
+        } else if ((c == "_") || V.io_CSV.isLower(c) || V.io_CSV.isUpper(c)) {
+            if (result == "_") result = "";
             d = c;
-        else {
+        } else {
             d = "_";
         }
         if (d == "_") {
