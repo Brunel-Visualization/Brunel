@@ -252,11 +252,8 @@ public class BrunelService extends Application {
     private WebApplicationException makeException(String message, Exception thrown, int code, boolean formatted) {
 
     	String separator =  formatted ? "<P><P>": "\n";
-    	Throwable cause = thrown.getCause();
-    	while (cause != null) {
-    		message += separator + cause.getMessage();
-    		if (cause instanceof VisException) break; else cause = cause.getCause();
-    	}
+    	message += D3Integration.buildExceptionMessage(thrown, message, separator);
+
     	String t = MediaType.TEXT_PLAIN;
     	if (formatted) {
     		t = MediaType.TEXT_HTML;

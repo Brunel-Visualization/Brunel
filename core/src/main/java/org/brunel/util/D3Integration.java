@@ -26,6 +26,7 @@ import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.DataCache;
 import org.brunel.data.Dataset;
 import org.brunel.data.io.CSV;
+import org.brunel.model.VisException;
 import org.brunel.model.VisItem;
 
 import com.google.gson.Gson;
@@ -53,8 +54,13 @@ public class D3Integration {
 	//Note:   This method is called from other languages.
 	//Do not modify this method signature without checking all language integrations.
     public static String createBrunelJSON(String data, String brunelSrc, int width,  int height, String visId, String controlsId) {
+			try {
 				BrunelD3Result result = createBrunelResult(data, brunelSrc, width, height, visId, controlsId);
 				return gson.toJson(result) ;
+			}
+			catch (Exception ex) {
+	    		throw new RuntimeException(buildExceptionMessage(ex,ex.getMessage(), ".  "));
+	    	}
     }
 
     /**
@@ -127,6 +133,25 @@ public class D3Integration {
 				result.js = builder.getVisualization().toString();
 				result.controls = builder.getControls();
 				return result;
+    }
+    
+    
+    /**
+     * Append Brunel exception messages following the cause of a given exception stack trace, stopping when reaching a VisException.  
+     * @param thrown the Exception that was thrown.  The message for this exception is not included in the results.
+     * @param message An initial message (or a blank string)
+     * @param messageSeparator A separator for the individual messages
+     * @return the full message
+     */
+    
+    public static String buildExceptionMessage (Throwable thrown, String message, String messageSeparator) {
+    	Throwable cause = thrown.getCause();
+    	while (cause != null) {
+    		message += messageSeparator + cause.getMessage();
+    		if (cause instanceof VisException) break; else cause = cause.getCause();
+    	}
+    	
+    	return message;
     }
 
 
