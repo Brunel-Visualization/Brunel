@@ -22,13 +22,19 @@ var BrunelData = (function () {
 var $ = {
     // Naive and simple extension mechanism
     extend: function (childClass, parentClass) {
-        var inner = function () {};
+        var inner = function () {
+        };
         childClass.prototype = new inner();
         childClass.prototype.constructor = childClass;
         childClass.$superConstructor = parentClass;
         childClass.$super = parentClass.prototype;
         for (var v in parentClass.prototype)
             childClass.prototype[v] = parentClass.prototype[v];
+    },
+
+    // Within the child, call this to initialize superclasses
+    superconstruct: function (child) {
+        child.constructor.$superConstructor.apply(child, Array.prototype.slice.call(arguments, 1));
     },
 
     extendEnum: function (cls) {
@@ -115,9 +121,35 @@ var $ = {
         if (typeof (b) == "function")
             a.sort(b);
         else if (b)
-            a.sort( function(i,j) { return b.compare.call(b, i,j) } );
+            a.sort(function (i, j) {
+                return b.compare.call(b, i, j)
+            });
         else
             a.sort($.compare);
+    },
+
+    toString: function (v) {
+        if (!v) return null;
+        if (Array.isArray(v)) {
+            var i, s;
+            for (i in v) {
+                if (!s) s = "[" + $.toString(v[i]);
+                else s += ", " + $.toString(v[i]);
+            }
+            return s + "]";
+        }
+        if (typeof (v.toString) == 'function') return v.toString();
+        return "" + v;
+    },
+
+    copyOf: function (array, n) {
+        var i, c = $.Array(n, 0), n = Math.min(n, $.len(array));
+        for (i = 0; i < n; i++) c[i] = array[i];
+        return c;
+    },
+
+    fill: function(a, v) {
+        for (i in a) a[i] = v;
     },
 
     len: function (a) {
@@ -378,6 +410,15 @@ $.Map.prototype = {
                 this.put(list[j][0], list[j][1]);
         }
     },
+    values : function() {
+        var keys = new $.List();
+        for (var key in this.items) {
+            var list = this.items[key];
+            for (var j = 0; j < list.length; j++)
+                keys.add(list[j][1]);
+        }
+        return keys;
+    },
     get: function (key) {
         var list = this.items[$.hash(key)];
         var idx = this._findInArray(key, list);
@@ -431,12 +472,19 @@ $.Set.prototype.toString = function () {
 
 // Polyfill for String trim
 if (!String.prototype.trim) {
-    (function() {
+    (function () {
         var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
-        String.prototype.trim = function() {
+        String.prototype.trim = function () {
             return this.replace(rtrim, '');
         };
     })();
+}
+
+// Polyfill for Array.isArray
+if (!Array.isArray) {
+    Array.isArray = function (arg) {
+        return Object.prototype.toString.call(arg) === '[object Array]';
+    };
 }
 
 // The object we augment and make publicly available
@@ -502,9 +550,9 @@ V.auto_Auto.optimalBinCount = function(f) {
 };
 
 V.auto_Auto.convert = function(base) {
-    var N, _i, asMulti, asNumeric, i, j, n, nDate, nNumeric, o, order, s, t;
+    var N, asList, asNumeric, i, j, n, nDate, nNumeric, o, order, t;
     if (base.isSynthetic() || base.isDate()) return base;
-    if (base.propertyTrue("multiCategories")) return base;
+    if (base.propertyTrue("listCategories")) return base;
     N = base.valid();
     order = $.Array(base.rowCount(), 0);
     for (i = 0; i < order.length; i++)
@@ -544,45 +592,28 @@ V.auto_Auto.convert = function(base) {
         if (V.Data.asDate(o) != null) nDate++;
     }
     if (nDate > V.auto_Auto.FRACTION_TO_CONVERT * n) return V.Data.toDate(base);
-    for(_i=$.iter(["\\,", "\\;", "\\|"]), s=_i.current; _i.hasNext(); s=_i.next()) {
-        asMulti = V.auto_Auto.tryAsMulti(base, s);
-        if (asMulti != null) return asMulti;
-    }
+    asList = V.Data.toList(base);
+    if (V.auto_Auto.goodLists(asList)) return asList;
     return base;
 };
 
-V.auto_Auto.tryAsMulti = function(base, sep) {
-    var _i, common, commonParts, counts, f, i, items, m, o, parts, s, valid;
-    var n = base.rowCount();
-    if (n < 3) return null;
-    commonParts = new $.Set();
-    counts = $.Array(4, 0);
-    items = $.Array(n, null);
-    for (i = 0; i < n; i++){
-        o = base.value(i);
+V.auto_Auto.goodLists = function(f) {
+    var i, n, nList, o;
+    var nValid = f.valid();
+    if (nValid < 3) return false;
+    n = -1;
+    for (i = 1; i < f.rowCount(); i++){
+        o = f.value(i);
         if (o == null) continue;
-        parts = o.toString().split(sep);
-        valid = new $.List();
-        for(_i=$.iter(parts), s=_i.current; _i.hasNext(); s=_i.next()) {
-            s = s.trim();
-            if ($.len(s) > 0) {
-                valid.add(s);
-                commonParts.add(s);
-            }
+        if (n < 0)
+            n = o.size();
+        else if (o.size() != n) {
+            if (nValid < 20) return true;
+            nList = f.property("listCategories").length;
+            return (nList * nList < nValid * 2);
         }
-        parts = valid.toArray();
-        items[i] = new V.util_ItemsList(parts, null);
-        counts[Math.min(3, parts.length)]++;
     }
-    m = commonParts.size();
-    if (m * m > n && m > 10) return null;
-    if (counts[2] + counts[3] == 0) return null;
-    if (counts[1] + counts[3] == 0) return null;
-    f = V.Data.makeColumnField(base.name, base.label, items);
-    common = commonParts.toArray();
-    $.sort(common);
-    f.set("multiCategories", common);
-    return f;
+    return false;
 };
 
 V.auto_Auto.isYearly = function(asNumeric) {
@@ -898,6 +929,51 @@ V.Data.toNumeric = function(f) {
     return result;
 };
 
+V.Data.toList = function(base) {
+    var _i, _j, c, common, commonParts, f, i, items, n, o, parts, s, valid;
+    var sep = ',';
+    var nSep = -1;
+    for(_i=$.iter([',', ';', '|']), s=_i.current; _i.hasNext(); s=_i.next()) {
+        c = 0;
+        for(_j=$.iter(base.categories()), o=_j.current; _j.hasNext(); o=_j.next())
+            if (o.toString().indexOf(c) >= 0) c++;
+        if (c > nSep) {
+            sep = s;
+            nSep = c;
+        }
+    }
+    n = base.rowCount();
+    commonParts = new $.Map();
+    items = $.Array(n, null);
+    for (i = 0; i < n; i++){
+        o = base.value(i);
+        if (o == null) continue;
+        valid = new $.List();
+        for(_i=$.iter(V.Data.split(o.toString(), sep)), s=_i.current; _i.hasNext(); s=_i.next()) {
+            s = s.trim();
+            if ($.len(s) > 0) {
+                common = commonParts.get(s);
+                if (common == null) {
+                    common = s;
+                    commonParts.put(common, s);
+                }
+                valid.add(common);
+            }
+        }
+        items[i] = new V.util_ItemsList(valid.toArray(), null);
+    }
+    f = V.Data.makeColumnField(base.name, base.label, items);
+    parts = commonParts.values();
+    common = parts.toArray();
+    $.sort(common);
+    f.set("listCategories", common);
+    return f;
+};
+
+V.Data.split = function(text, sep) {
+    return text.split(sep);
+};
+
 V.Data.permute = function(field, order, onlyOrderChanged) {
     var f;
     if (onlyOrderChanged)
@@ -1025,7 +1101,7 @@ V.util_Informative.prototype.set = function(key, value) {
 
 V.Dataset = function(fields) {
     var _i, f;
-    V.Dataset.$superConstructor.call(this);
+    $.superconstruct(this);
     this.fields = null;
     this.fieldByName = null;this.fields = V.Dataset.ensureUniqueNames(fields);
     this.fieldByName = new $.Map();
@@ -1410,7 +1486,7 @@ V.diagram_Node = function(row, value, innerNodeName, children) {
 
 
 V.Field = function(name, label, provider, base) {
-    V.Field.$superConstructor.call(this);
+    $.superconstruct(this);
     this.provider = null;
     this.calculatedNominal = null;
     this.calculatedNumeric = null;
@@ -2071,8 +2147,7 @@ V.modify_DataOperation.list = function(items) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 V.modify_AddConstantFields = function() {
-    V.modify_AddConstantFields.$superConstructor.call(this);
-};
+    $.superconstruct(this);};
 
 $.extend(V.modify_AddConstantFields, V.modify_DataOperation);
 
@@ -2104,8 +2179,7 @@ V.modify_AddConstantFields.transform = function(base, command) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 V.modify_ConvertSeries = function() {
-    V.modify_ConvertSeries.$superConstructor.call(this);
-};
+    $.superconstruct(this);};
 
 $.extend(V.modify_ConvertSeries, V.modify_DataOperation);
 
@@ -2189,8 +2263,7 @@ V.modify_ConvertSeries.makeIndexing = function(m, reps) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 V.modify_Filter = function() {
-    V.modify_Filter.$superConstructor.call(this);
-};
+    $.superconstruct(this);};
 
 $.extend(V.modify_Filter, V.modify_DataOperation);
 
@@ -2313,8 +2386,7 @@ V.modify_Filter.matchAny = function(v, params) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 V.modify_Sort = function() {
-    V.modify_Sort.$superConstructor.call(this);
-};
+    $.superconstruct(this);};
 
 $.extend(V.modify_Sort, V.modify_DataOperation);
 
@@ -2507,8 +2579,7 @@ V.modify_Sort.categoriesFromRanks = function(field, rowRanking) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 V.modify_Stack = function() {
-    V.modify_Stack.$superConstructor.call(this);
-};
+    $.superconstruct(this);};
 
 $.extend(V.modify_Stack, V.modify_DataOperation);
 
@@ -2710,8 +2781,7 @@ V.modify_Stack.orderRows = function(base, keyFields) {
 
 V.modify_Summarize = function(measures, dimensions, percentBase, rowCount) {
     var _i, m, percentNeeded;
-    V.modify_Summarize.$superConstructor.call(this);
-    this.measures = measures;
+    $.superconstruct(this);this.measures = measures;
     this.dimensions = dimensions;
     this.percentBase = percentBase;
     this.rowCount = rowCount;
@@ -2869,8 +2939,7 @@ V.modify_Summarize.prototype.setProperties = function(to, from, summary) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 V.modify_Transform = function() {
-    V.modify_Transform.$superConstructor.call(this);
-};
+    $.superconstruct(this);};
 
 $.extend(V.modify_Transform, V.modify_DataOperation);
 
@@ -2885,6 +2954,7 @@ V.modify_Transform.transform = function(base, command) {
         for(_i=$.iter(operations), o=_i.current; _i.hasNext(); o=_i.next())
             if ($.equals(o[0], base.fields[i].name)) op = o[1];
         fields[i] = V.modify_Transform.modify(base.fields[i], op);
+        fields[i].set("summary", op);
     }
     return base.replaceFields(fields);
 };
@@ -3237,8 +3307,7 @@ V.summary_FieldRowComparison.prototype.makeSortedOrder = function(len) {
 V.summary_MeasureField = function(field, rename, measureFunction) {
     this.option = null;
     this.fits = new $.Map();
-    V.summary_MeasureField.$superConstructor.call(this, field, rename ==
-        null && field == null ? measureFunction : rename);
+    $.superconstruct(this, field, rename == null && field == null ? measureFunction : rename);
     if (field != null && (measureFunction == "mean") && !field.isNumeric())
         this.measureFunction = "mode";
     else
@@ -3600,7 +3669,7 @@ $.extendEnum(V.util_DateUnit);
 
 
 V.util_ItemsList = function(items, df) {
-    V.util_ItemsList.$superConstructor.call(this);
+    $.superconstruct(this);
     this.displayCount = 12;this.dateFormat = df;
     $.addAll(this, items);
 };

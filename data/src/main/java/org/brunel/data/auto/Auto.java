@@ -20,12 +20,7 @@ import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.data.util.ItemsList;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Contains a number of static methods for automatic processing.
@@ -101,7 +96,7 @@ public class Auto {
 
     public static Field convert(Field base) {
         if (base.isSynthetic() || base.isDate()) return base;           // Already set
-        if (base.propertyTrue("multiCategories")) return base;       // Already a multi-set
+        if (base.propertyTrue("listCategories")) return base;           // Already a multi-set
 
         int N = base.valid();
 
@@ -151,57 +146,34 @@ public class Auto {
         if (nDate > FRACTION_TO_CONVERT * n)
             return Data.toDate(base);
 
-        // Try conversion to a multi-set (lists of similar categories)
-
-        for (String s : new String[]{"\\,", "\\;", "\\|"}) {
-            Field asMulti = tryAsMulti(base, s);
-            if (asMulti != null) return asMulti;
-        }
+        // Try conversion to a lists
+        Field asList = Data.toList(base);
+        if (goodLists(asList)) return asList;
 
         return base;
     }
 
-    private static Field tryAsMulti(Field base, String sep) {
-        int n = base.rowCount();
-        if (n < 3) return null;
-
-        Set<String> commonParts = new HashSet<String>();
-        int[] counts = new int[4];
-
-        // Create items lists and accumulate general info
-        ItemsList[] items = new ItemsList[n];
-        for (int i = 0; i < n; i++) {
-            Object o = base.value(i);
+    private static boolean goodLists(Field f) {
+        int nValid = f.valid();
+        if (nValid < 3) return false;                                   // Too few to autoconvert
+        // We need at least one different length list
+        int n = -1;
+        for (int i = 1; i < f.rowCount(); i++) {
+            ItemsList o = (ItemsList) f.value(i);
             if (o == null) continue;
-
-            // Find the non-empty split parts
-            String[] parts = o.toString().split(sep);
-            List<String> valid = new ArrayList<String>();
-            for (String s : parts) {
-                s = s.trim();
-                if (s.length() > 0) {
-                    valid.add(s);
-                    commonParts.add(s);
-                }
+            if (n < 0)
+                n = o.size();
+            else if (o.size() != n) {
+                // Lists of different length -- good!
+                // With small number of rows, assume OK
+                if (nValid < 20) return true;
+                // Otherwise see if the list categories strongly reduce the others
+                int nList = ((Object[]) f.property("listCategories")).length;
+                return (nList * nList < nValid * 2);
             }
-            parts = valid.toArray(new String[valid.size()]);
-            items[i] = new ItemsList(parts, null);
-            counts[Math.min(3, parts.length)]++;
         }
+        return false;                                                  // All lists of the same length
 
-        int m = commonParts.size();
-        if (m * m > n && m > 10) return null;                       // We need fewer multi-items
-
-        // Check we have a good distribution of lengths
-        if (counts[2] + counts[3] == 0) return null;                // Found no multis
-        if (counts[1] + counts[3] == 0) return null;                // All pairs
-
-        // Passed the tests so return the details!
-        Field f = Data.makeColumnField(base.name, base.label, items);
-        String[] common = commonParts.toArray(new String[m]);
-        Arrays.sort(common);
-        f.set("multiCategories", common);
-        return f;
     }
 
     private static boolean isYearly(Field asNumeric) {

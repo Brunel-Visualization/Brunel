@@ -17,6 +17,7 @@
 package org.brunel.data;
 
 import org.brunel.data.util.Dates;
+import org.brunel.data.util.ItemsList;
 import org.brunel.data.util.Range;
 import org.brunel.data.values.ColumnProvider;
 import org.brunel.data.values.ConstantProvider;
@@ -25,10 +26,14 @@ import org.brunel.data.values.RowProvider;
 import org.brunel.translator.JSTranslation;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Data {
 
@@ -286,6 +291,64 @@ public class Data {
         Field result = changed ? makeColumnField(f.name, f.label, data) : f;
         result.set("numeric", true);
         return result;
+    }
+
+    public static Field toList(Field base) {
+        // Find the best separator -- the one occurring in most lines
+        char sep = ',';
+        int nSep = -1;
+        for (char s : new char[]{',', ';', '|'}) {
+            int c = 0;
+            for (Object o : base.categories())
+                if (o.toString().indexOf(c) >= 0) c++;
+            if (c > nSep) {
+                sep = s;
+                nSep = c;
+            }
+        }
+
+        int n = base.rowCount();
+
+        // Maps to common list items; used to get the list categories and
+        // also to pool strings
+        Map<String, String> commonParts = new HashMap<String, String>();
+
+        // Create items lists and accumulate general info
+        ItemsList[] items = new ItemsList[n];
+        for (int i = 0; i < n; i++) {
+            Object o = base.value(i);
+            if (o == null) continue;
+
+            // These are the valid items in the list
+            List<String> valid = new ArrayList<String>();
+
+            for (String s : Data.split(o.toString(), sep)) {
+                s = s.trim();
+                if (s.length() > 0) {
+                    String common = commonParts.get(s);
+                    if (common == null) {
+                        common = s;
+                        commonParts.put(common, s);
+                    }
+                    valid.add(common);
+                }
+            }
+            items[i] = new ItemsList(valid.toArray(new String[valid.size()]), null);
+        }
+
+        // Passed the tests so return the details!
+        Field f = makeColumnField(base.name, base.label, items);
+        Collection<String> parts = commonParts.values();
+        String[] common = parts.toArray(new String[parts.size()]);
+        Arrays.sort(common);
+        f.set("listCategories", common);
+        return f;
+    }
+
+    // Java does not use regexes for split; Java does
+    @JSTranslation(js = {"return text.split(sep);"})
+    public static String[] split(String text, char sep) {
+        return text.split("\\" + sep);
     }
 
     /**
