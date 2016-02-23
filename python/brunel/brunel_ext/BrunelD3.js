@@ -65,6 +65,7 @@ var BrunelD3 = (function () {
             opt = data.options ? data.options[i] : "string";                                // Apply type options
             if (opt == 'numeric') field = BrunelData.Data.toNumeric(field);
             if (opt == 'date') field = BrunelData.Data.toDate(field);
+            if (opt == 'list') field = BrunelData.Data.toList(field);
             fields.push(field);
         }
         return BrunelData.Dataset.make(fields, false);

@@ -553,6 +553,8 @@ V.auto_Auto.convert = function(base) {
     var N, asList, asNumeric, i, j, n, nDate, nNumeric, o, order, t;
     if (base.isSynthetic() || base.isDate()) return base;
     if (base.propertyTrue("listCategories")) return base;
+    asList = V.Data.toList(base);
+    if (V.auto_Auto.goodLists(asList)) return asList;
     N = base.valid();
     order = $.Array(base.rowCount(), 0);
     for (i = 0; i < order.length; i++)
@@ -592,8 +594,6 @@ V.auto_Auto.convert = function(base) {
         if (V.Data.asDate(o) != null) nDate++;
     }
     if (nDate > V.auto_Auto.FRACTION_TO_CONVERT * n) return V.Data.toDate(base);
-    asList = V.Data.toList(base);
-    if (V.auto_Auto.goodLists(asList)) return asList;
     return base;
 };
 
@@ -774,8 +774,10 @@ V.auto_NumericScale.makeLogScale = function(f, nice, padFraction, includeZeroTol
     var add5, d, data, factor, high, low, n, tolerantHigh, x;
     var a = Math.log(f.min()) / Math.log(10);
     var b = Math.log(f.max()) / Math.log(10);
-    a -= padFraction[0] * (b - a);
-    b += padFraction[1] * (b - a);
+    var pad = Math.max(padFraction[0], padFraction[1]);
+    a -= pad * (b - a);
+    b += pad * (b - a);
+    if (includeZeroTolerance > 0.5 && a == 0) a = -0.5;
     if (a > 0 && a / b <= includeZeroTolerance) a = 0;
     if (nice) {
         a = Math.floor(a);
@@ -988,6 +990,7 @@ V.Data.copyBaseProperties = function(target, source) {
     target.set("binned", source.property("binned"));
     target.set("summary", source.property("summary"));
     target.set("transform", source.property("transform"));
+    target.set("listCategories", source.property("listCategories"));
     if (source.propertyTrue("categoriesOrdered")) {
         target.set("categoriesOrdered", true);
         target.set("categories", source.property("categories"));

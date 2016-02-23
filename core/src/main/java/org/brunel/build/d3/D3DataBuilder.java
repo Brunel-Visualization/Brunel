@@ -94,7 +94,15 @@ public class D3DataBuilder {
             out.onNewLine().add(" options: [");
             for (int i = 0; i < fields.length; i++) {
                 if (fields[i].isSynthetic()) continue;
-                String name = fields[i].isDate() ? "date" : (fields[i].isNumeric() ? "numeric" : "string");
+                String name;
+                if (fields[i].isDate())
+                    name = "date";
+                else if (fields[i].property("listCategories") != null)
+                    name = "list";
+                else if (fields[i].isNumeric())
+                    name = "numeric";
+                else
+                    name = "string";
                 if (i > 0) out.add(", ");
                 out.add("'").add(name).add("'");
             }

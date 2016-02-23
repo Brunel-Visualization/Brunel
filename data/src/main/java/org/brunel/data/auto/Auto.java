@@ -98,6 +98,11 @@ public class Auto {
         if (base.isSynthetic() || base.isDate()) return base;           // Already set
         if (base.propertyTrue("listCategories")) return base;           // Already a multi-set
 
+
+        // Try conversion to a lists
+        Field asList = Data.toList(base);
+        if (goodLists(asList)) return asList;
+
         int N = base.valid();
 
         // Create a random order
@@ -145,10 +150,6 @@ public class Auto {
 
         if (nDate > FRACTION_TO_CONVERT * n)
             return Data.toDate(base);
-
-        // Try conversion to a lists
-        Field asList = Data.toList(base);
-        if (goodLists(asList)) return asList;
 
         return base;
     }

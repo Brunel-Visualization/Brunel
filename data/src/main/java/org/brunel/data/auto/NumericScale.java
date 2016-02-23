@@ -191,10 +191,14 @@ public class NumericScale {
         double a = Math.log(f.min()) / Math.log(10);
         double b = Math.log(f.max()) / Math.log(10);
 
-        a -= padFraction[0] * (b - a);
-        b += padFraction[1] * (b - a);
+        double pad = Math.max(padFraction[0], padFraction[1]);
+        a -= pad * (b - a);
+        b += pad * (b - a);
 
-        // Include zero (actually one in untransformed space) if it doesn't expand too much
+        if (includeZeroTolerance > 0.5 && a == 0) a = -0.5;
+
+
+            // Include zero (actually one in untransformed space) if it doesn't expand too much
         if (a > 0 && a / b <= includeZeroTolerance) a = 0;
 
         if (nice) {

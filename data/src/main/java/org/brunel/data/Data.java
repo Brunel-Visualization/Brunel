@@ -373,6 +373,7 @@ public class Data {
         target.set("binned", source.property("binned"));
         target.set("summary", source.property("summary"));
         target.set("transform", source.property("transform"));
+        target.set("listCategories", source.property("listCategories"));
         if (source.propertyTrue("categoriesOrdered")) {
             target.set("categoriesOrdered", true);
             target.set("categories", source.property("categories"));
