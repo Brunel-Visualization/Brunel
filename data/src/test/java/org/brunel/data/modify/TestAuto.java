@@ -282,7 +282,7 @@ public class TestAuto {
         Assert.assertEquals("log : 1 3345 : |1|10|100|1000", asString(NumericScale.makeLogScale(a, false, pad, 0.2, 3), a));
         Assert.assertEquals("log : 1 10,000 : |1|100|10,000", asString(NumericScale.makeLogScale(a, true, pad, 0.0, 3), a));
         Assert.assertEquals("log : 1 10,000 : |1|10|100|1000|10,000", asString(NumericScale.makeLogScale(a, true, pad, 0.0, 5), a));
-        Assert.assertEquals("log : 1 5000 : |1|5|10|50|100|500|1000|5000", asString(NumericScale.makeLogScale(a, true, pad, 0.0, 10), a));
+        Assert.assertEquals("log : 1 5000 : |1|3|10|30|100|300|1000|3000", asString(NumericScale.makeLogScale(a, true, pad, 0.0, 10), a));
 
         a = Data.makeColumnField("a", "label", new Object[]{45, 120, 200, 3345});
         a = Data.toNumeric(a);

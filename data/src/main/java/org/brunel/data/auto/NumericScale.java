@@ -35,6 +35,8 @@ import java.util.List;
  */
 public class NumericScale {
 
+    private static final double HALF_LOG = 3;
+
     public static NumericScale makeDateScale(Field f, boolean nice, double[] padFraction, int desiredTickCount) {
         double a = f.min();
         double b = f.max();
@@ -198,7 +200,7 @@ public class NumericScale {
         if (includeZeroTolerance > 0.5 && a == 0) a = -0.5;
 
 
-            // Include zero (actually one in untransformed space) if it doesn't expand too much
+        // Include zero (actually one in untransformed space) if it doesn't expand too much
         if (a > 0 && a / b <= includeZeroTolerance) a = 0;
 
         if (nice) {
@@ -207,7 +209,7 @@ public class NumericScale {
         }
 
         double n = b - a + 1;
-        boolean add5 = n < desiredTickCount * 0.666;
+        boolean add5 = n < desiredTickCount * 0.666;                    //If true, add divisions at '5's
         double factor = n > desiredTickCount * 1.66 ? 100 : 10;
 
         List<Double> d = new ArrayList<Double>();
@@ -218,7 +220,7 @@ public class NumericScale {
         double tolerantHigh = high * 1.001;
         while (x < tolerantHigh) {
             d.add(x);
-            if (add5 && x * 5 < tolerantHigh) d.add(x * 5);
+            if (add5 && x * HALF_LOG < tolerantHigh) d.add(x * HALF_LOG);
             x *= factor;
         }
 

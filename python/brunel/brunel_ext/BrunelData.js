@@ -643,6 +643,8 @@ V.auto_NumericScale = function(type, min, max, divs, granular) {
     this.granular = granular;
 };
 
+V.auto_NumericScale.HALF_LOG = 3;
+
 V.auto_NumericScale.makeDateScale = function(f, nice, padFraction, desiredTickCount) {
     var d, data, desiredDaysGap, multiple, unit, v, x;
     var a = f.min();
@@ -794,7 +796,7 @@ V.auto_NumericScale.makeLogScale = function(f, nice, padFraction, includeZeroTol
     tolerantHigh = high * 1.001;
     while (x < tolerantHigh) {
         d.add(x);
-        if (add5 && x * 5 < tolerantHigh) d.add(x * 5);
+        if (add5 && x * V.auto_NumericScale.HALF_LOG < tolerantHigh) d.add(x * V.auto_NumericScale.HALF_LOG);
         x *= factor;
     }
     data = d.toArray();

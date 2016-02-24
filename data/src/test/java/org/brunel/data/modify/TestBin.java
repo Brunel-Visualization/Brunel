@@ -73,7 +73,7 @@ public class TestBin {
         Assert.assertEquals("1|100|10,000", binsToString(binned));
 
         binned = Transform.bin(f, 8);
-        Assert.assertEquals("1|5|10|50|100|500|1000|5000", binsToString(binned));
+        Assert.assertEquals("1|3|10|30|100|300|1000|3000", binsToString(binned));
 
     }
 
