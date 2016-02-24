@@ -62,7 +62,7 @@ public class Stack extends DataOperation {
 
         // Get all fields, permuted so they are in the order required by the key
         // This also removes any rows with null keys
-        Field[] allFields = makeOrderedFields(base, keyFields, x.length);
+        Field[] allFields = makeStackOrderedFields(base, keyFields, x.length);
 
         // When we need full combinations, we expand out our base data
         if (full) allFields = new AllCombinations(allFields, x.length, aesthetics.length).make();
@@ -137,43 +137,47 @@ public class Stack extends DataOperation {
     }
 
     /**
-     * This orders the field in a suitabel way for stacking.
+     * This orders the field in a suitable way for stacking.
      * The fields are in the order x, groups, other
      * The rows are ordered the way we want stacking to work
-     * @param base base data set
-     * @param keyFields those fields that are key fields
+     *
+     * @param base        base data set
+     * @param keyFields   those fields that are key fields
      * @param xFieldCount of the key fields, the number that are X fields
-     * @return
+     * @return fields (in order) with rows (in order)
      */
-    private static Field[] makeOrderedFields(Dataset base, Field[] keyFields, int xFieldCount) {
+    private static Field[] makeStackOrderedFields(Dataset base, Field[] keyFields, int xFieldCount) {
         Field[] baseFields = orderFields(base, keyFields);
-
-        List<Integer> items = new ArrayList<Integer>();
-        int n = base.rowCount();
-        for (int i = 0; i < n; i++) {
-            boolean valid = true;
-            for (Field f : keyFields) if (f.value(i) == null) valid = false;
-            if (valid) items.add(i);
-        }
-
-        // We need descending order so stacking works bottom-up
-        boolean[] ascending = new boolean[keyFields.length];
-        for (int i = 0; i < ascending.length; i++) ascending[i] = i < xFieldCount;
-        FieldRowComparison comparison = new FieldRowComparison(keyFields, ascending, true);
-        Collections.sort(items, comparison);
-        Integer[] rowOrder = items.toArray(new Integer[items.size()]);
-
+        Integer[] rowOrder = makeStackDataOrder(baseFields, keyFields.length, xFieldCount);
         Field[] fields = new Field[baseFields.length];
         for (int i = 0; i < baseFields.length; i++)
             fields[i] = Data.permute(baseFields[i], Data.toPrimitive(rowOrder), true);
         return fields;
     }
 
+    public static Integer[] makeStackDataOrder(Field[] fields, int keyFieldCount, int xFieldCount) {
+        List<Integer> items = new ArrayList<Integer>();
+        int n = fields[0].rowCount();
+        for (int i = 0; i < n; i++) {
+            boolean valid = true;
+            for (int j = 0; j < keyFieldCount; j++)
+                if (fields[j].value(i) == null) valid = false;
+            if (valid) items.add(i);
+        }
+
+        // We need descending order so stacking works bottom-up
+        boolean[] ascending = new boolean[keyFieldCount];
+        for (int i = 0; i < ascending.length; i++) ascending[i] = i < xFieldCount;
+        FieldRowComparison comparison = new FieldRowComparison(fields, ascending, true);
+        Collections.sort(items, comparison);
+        return items.toArray(new Integer[items.size()]);
+    }
+
     private static Field[] orderFields(Dataset base, Field[] keyFields) {
         Field[] baseFields = new Field[base.fields.length];
 
         Set<Field> used = new HashSet<Field>();
-        for (int i=0; i<keyFields.length; i++){
+        for (int i = 0; i < keyFields.length; i++) {
             baseFields[i] = keyFields[i];
             used.add(keyFields[i]);
         }

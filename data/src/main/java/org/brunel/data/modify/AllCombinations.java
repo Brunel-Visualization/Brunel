@@ -18,27 +18,25 @@ package org.brunel.data.modify;
 
 import org.brunel.data.Data;
 import org.brunel.data.Field;
-import org.brunel.data.summary.FieldRowComparison;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by graham on 2/24/16.
+ * Expands out a set of data so it has all combinations of the X and group fields.
+ * This ensures that stacking liens and areas works, as they require that each one have
+ * the full range of data.
  */
 public class AllCombinations {
-    private final Field[] fields;
-    private final int xCount;
-    private final int groupCount;
-    private final int keyLength;
-    private final int[] index;
-    private final Object[][] categories;
+    private final Field[] fields;               // All fields, in the order X, groups, other
+    private final int xCount;                   // The number of 'x' fields (to be sorted ascending)
+    private final int keyLength;                // The first 'keyLength' fields are keys
+    private final Object[][] categories;        // The field categories in the order we want to use them
+    private final int[] index;                  // multi-dimensional index into the categories
 
     public AllCombinations(Field[] fields, int xCount, int groupCount) {
         this.fields = fields;
         this.xCount = xCount;
-        this.groupCount = groupCount;
         this.keyLength = xCount + groupCount;           // These are used for the keys
         this.index = new int[keyLength];                // The index of the current row we are considering
         this.categories = makeFieldCategories();
@@ -48,69 +46,47 @@ public class AllCombinations {
         Object[][] result = new Object[keyLength][];
         for (int i = 0; i < keyLength; i++) {
             Object[] objects = fields[i].categories();
+            // The X fields keep the order, the group ones need reversed order
             if (i < xCount)
                 result[i] = objects;
             else if (i >= xCount) {
                 result[i] = new Object[objects.length];
-                for (int j = 0; j < objects.length; j++) result[i][j] = objects[objects.length - 1 - j];
+                for (int j = 0; j < objects.length; j++)
+                    result[i][j] = objects[objects.length - 1 - j];
             }
         }
         return result;
     }
 
+    /**
+     * Build new fields giving all combinations of the key fields
+     * @return combined data
+     */
     Field[] make() {
-
-        int N = fields[0].rowCount();
-        List<Object[]> rows = new ArrayList<Object[]>();
-        Integer[] rowOrder = makeRowOrderForRealData();
+        // Create the order in which the real data will be encountered
+        Integer[] rowOrder = Stack.makeStackDataOrder(fields, keyLength, xCount);
 
         int dataIndex = 0;                                              // Which row of real data to use
-        int nextRealRow = rowOrder[dataIndex];                          // The index of the next real row to use
+        List<Object[]> rows = new ArrayList<Object[]>();                // The resulting rows we will use
 
         while (true) {
-            Object[] row = makeKeyRow();
-            boolean matched = false;
-            while (matchesCurrent(row, nextRealRow)) {
-                matched = true;
-                rows.add(makeRealRow(nextRealRow));
-                if (++dataIndex >= N) break;
-                nextRealRow = rowOrder[dataIndex];
+            Object[] row = makeKeyRow();                                // Only key values in this
+            boolean matched = false;                                    // Did we match to real data?
+            while (matchesCurrent(row, rowOrder, dataIndex)) {          // .. test to see if we match
+                matched = true;                                         // .. and remember if we did
+                rows.add(makeRealRow(rowOrder[dataIndex++]));           // add the real row to the results
             }
-            if (!matched) rows.add(row);
-            if (!nextIndex()) break;
+            if (!matched) rows.add(row);                                // If we didn't match, add the 'key only' row
+            if (!nextIndex()) break;                                    // Done when no more generated combinations
         }
 
-//
-//        int[] index = new int[keys.length];                    // Index to step through all combinations
-//        while (index != null) {
-//            Object[] row = makeGeneratedRow(fields, keyIndices, index);
-//            boolean matched = false;
-//            while (matchKeys(row, currentRow, keyIndices)) {
-//                rows.add(currentRow);                                       // Add the matching row
-//                currentRow = makeRealRow(fields, ++currentRowIndex);    // Try the next one
-//                matched = true;
-//            }
-//            if (!matched) rows.add(row);                                    // only add fake row if there is no real row
-//            index = nextIndex(keys, index);
-//        }
-//
+        // Convert list of data to real rows
         Field[] built = new Field[fields.length];
         for (int i = 0; i < fields.length; i++) {
             built[i] = Data.makeColumnField(fields[i].name, fields[i].label, extractColumn(rows, i));
             Data.copyBaseProperties(built[i], fields[i]);
         }
         return built;
-    }
-
-    private Integer[] makeRowOrderForRealData() {
-        // We need descending order so stacking works bottom-up
-        List<Integer> items = new ArrayList<Integer>();
-        for (int i = 0; i < fields[0].rowCount(); i++) items.add(i);
-        boolean[] ascending = new boolean[keyLength];
-        for (int i = 0; i < ascending.length; i++) ascending[i] = i < xCount;
-        FieldRowComparison comparison = new FieldRowComparison(fields, ascending, true);
-        Collections.sort(items, comparison);
-        return items.toArray(new Integer[items.size()]);
     }
 
     private Object[] extractColumn(List<Object[]> rows, int index) {
@@ -139,7 +115,9 @@ public class AllCombinations {
         return row;
     }
 
-    private boolean matchesCurrent(Object[] row, int dataRow) {
+    private boolean matchesCurrent(Object[] row, Integer[] dataRowOrder, int dataIndex) {
+        if (dataIndex >= dataRowOrder.length) return false;             // Past the end -- no match
+        int dataRow = dataRowOrder[dataIndex];
         for (int i = 0; i < keyLength; i++)
             if (Data.compare(row[i], fields[i].value(dataRow)) != 0) return false;
         return true;
@@ -148,11 +126,10 @@ public class AllCombinations {
     // Increment the index, returning false if we are done
     private boolean nextIndex() {
         for (int p = index.length - 1; p >= 0; p--) {
-            int max = fields[p].categories().length;        // the max value this index can be
-            if (++index[p] < max) return true;
-            index[p] = 0;                                   // not successful, set to zero and loop to next position
+            if (++index[p] < categories[p].length) return true; // Done if we can increment and not overflow
+            index[p] = 0;                                       // Reset this dimension and try the next dim
         }
-        return false;                                       // Ran out of indices
+        return false;                                           // Ran out of dimensions -- must be done
     }
 
 }

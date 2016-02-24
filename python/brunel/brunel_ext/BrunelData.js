@@ -2173,7 +2173,9 @@ V.modify_AddConstantFields.transform = function(base, command) {
 
 ////////////////////// AllCombinations /////////////////////////////////////////////////////////////////////////////////
 //
-//   Created by graham on 2/24/16.
+//   Expands out a set of data so it has all combinations of the X and group fields.
+//   This ensures that stacking liens and areas works, as they require that each one have
+//   the full range of data.
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2181,7 +2183,6 @@ V.modify_AddConstantFields.transform = function(base, command) {
 V.modify_AllCombinations = function(fields, xCount, groupCount) {
     this.fields = fields;
     this.xCount = xCount;
-    this.groupCount = groupCount;
     this.keyLength = xCount + groupCount;
     this.index = $.Array(this.keyLength, 0);
     this.categories = this.makeFieldCategories();
@@ -2205,19 +2206,15 @@ V.modify_AllCombinations.prototype.makeFieldCategories = function() {
 
 V.modify_AllCombinations.prototype.make = function() {
     var built, i, matched, row;
-    var N = this.fields[0].rowCount();
-    var rows = new $.List();
-    var rowOrder = this.makeRowOrderForRealData();
+    var rowOrder = V.modify_Stack.makeStackDataOrder(this.fields, this.keyLength, this.xCount);
     var dataIndex = 0;
-    var nextRealRow = rowOrder[dataIndex];
+    var rows = new $.List();
     while (true) {
         row = this.makeKeyRow();
         matched = false;
-        while (this.matchesCurrent(row, nextRealRow)) {
+        while (this.matchesCurrent(row, rowOrder, dataIndex)) {
             matched = true;
-            rows.add(this.makeRealRow(nextRealRow));
-            if (++dataIndex >= N) break;
-            nextRealRow = rowOrder[dataIndex];
+            rows.add(this.makeRealRow(rowOrder[dataIndex++]));
         }
         if (!matched) rows.add(row);
         if (!this.nextIndex()) break;
@@ -2228,19 +2225,6 @@ V.modify_AllCombinations.prototype.make = function() {
         V.Data.copyBaseProperties(built[i], this.fields[i]);
     }
     return built;
-};
-
-V.modify_AllCombinations.prototype.makeRowOrderForRealData = function() {
-    var ascending, comparison, i;
-    var items = new $.List();
-    for (i = 0; i < this.fields[0].rowCount(); i++)
-        items.add(i);
-    ascending = $.Array(this.keyLength, false);
-    for (i = 0; i < ascending.length; i++)
-        ascending[i] = i < this.xCount;
-    comparison = new V.summary_FieldRowComparison(this.fields, ascending, true);
-    $.sort(items, comparison);
-    return items.toArray();
 };
 
 V.modify_AllCombinations.prototype.extractColumn = function(rows, index) {
@@ -2269,18 +2253,19 @@ V.modify_AllCombinations.prototype.makeRealRow = function(index) {
     return row;
 };
 
-V.modify_AllCombinations.prototype.matchesCurrent = function(row, dataRow) {
-    var i;
+V.modify_AllCombinations.prototype.matchesCurrent = function(row, dataRowOrder, dataIndex) {
+    var dataRow, i;
+    if (dataIndex >= dataRowOrder.length) return false;
+    dataRow = dataRowOrder[dataIndex];
     for (i = 0; i < this.keyLength; i++)
         if (V.Data.compare(row[i], this.fields[i].value(dataRow)) != 0) return false;
     return true;
 };
 
 V.modify_AllCombinations.prototype.nextIndex = function() {
-    var max, p;
+    var p;
     for (p = this.index.length - 1; p >= 0; p--){
-        max = this.fields[p].categories().length;
-        if (++this.index[p] < max) return true;
+        if (++this.index[p] < this.categories[p].length) return true;
         this.index[p] = 0;
     }
     return false;
@@ -2712,7 +2697,7 @@ V.modify_Stack.transform = function(base, command) {
     if (x == null) x = $.Array(0, null);
     if (aesthetics == null) aesthetics = $.Array(0, null);
     keyFields = V.modify_Stack.getFields(base.fields, x, aesthetics, [yField]);
-    allFields = V.modify_Stack.makeOrderedFields(base, keyFields, x.length);
+    allFields = V.modify_Stack.makeStackOrderedFields(base, keyFields, x.length);
     if (full)
         allFields = new V.modify_AllCombinations(allFields, x.length, aesthetics.length).make();
     fields = V.modify_Stack.makeStackedValues(allFields, V.modify_Stack.getField(allFields,
@@ -2781,27 +2766,32 @@ V.modify_Stack.makeStackedValues = function(allFields, y, x, full) {
     return fields;
 };
 
-V.modify_Stack.makeOrderedFields = function(base, keyFields, xFieldCount) {
-    var _i, ascending, comparison, f, fields, i, rowOrder, valid;
+V.modify_Stack.makeStackOrderedFields = function(base, keyFields, xFieldCount) {
+    var i;
     var baseFields = V.modify_Stack.orderFields(base, keyFields);
-    var items = new $.List();
-    var n = base.rowCount();
-    for (i = 0; i < n; i++){
-        valid = true;
-        for(_i=$.iter(keyFields), f=_i.current; _i.hasNext(); f=_i.next())
-            if (f.value(i) == null) valid = false;
-        if (valid) items.add(i);
-    }
-    ascending = $.Array(keyFields.length, false);
-    for (i = 0; i < ascending.length; i++)
-        ascending[i] = i < xFieldCount;
-    comparison = new V.summary_FieldRowComparison(keyFields, ascending, true);
-    $.sort(items, comparison);
-    rowOrder = items.toArray();
-    fields = $.Array(baseFields.length, null);
+    var rowOrder = V.modify_Stack.makeStackDataOrder(baseFields, keyFields.length, xFieldCount);
+    var fields = $.Array(baseFields.length, null);
     for (i = 0; i < baseFields.length; i++)
         fields[i] = V.Data.permute(baseFields[i], V.Data.toPrimitive(rowOrder), true);
     return fields;
+};
+
+V.modify_Stack.makeStackDataOrder = function(fields, keyFieldCount, xFieldCount) {
+    var ascending, comparison, i, j, valid;
+    var items = new $.List();
+    var n = fields[0].rowCount();
+    for (i = 0; i < n; i++){
+        valid = true;
+        for (j = 0; j < keyFieldCount; j++)
+            if (fields[j].value(i) == null) valid = false;
+        if (valid) items.add(i);
+    }
+    ascending = $.Array(keyFieldCount, false);
+    for (i = 0; i < ascending.length; i++)
+        ascending[i] = i < xFieldCount;
+    comparison = new V.summary_FieldRowComparison(fields, ascending, true);
+    $.sort(items, comparison);
+    return items.toArray();
 };
 
 V.modify_Stack.orderFields = function(base, keyFields) {
