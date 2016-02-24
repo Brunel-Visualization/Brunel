@@ -384,19 +384,19 @@ public class VisSingle extends VisItem implements Cloneable {
 
     public VisSingle resolve() {
 
-        ensureCanonical(fColor);
-        ensureCanonical(fSize);
-        ensureCanonical(fOpacity);
-        ensureCanonical(fFilter);
-        ensureCanonical(fSort);
-        ensureCanonical(fKeys);
-        ensureCanonical(fSplits);
-        ensureCanonical(fX);
-        ensureCanonical(fY);
-        ensureCanonical(itemsLabel);
-        ensureCanonical(itemsTooltip);
-        ensureCanonical(fSummarize);
-        ensureCanonical(fTransform);
+        ensureCanonical(fColor, "color");
+        ensureCanonical(fSize, "size");
+        ensureCanonical(fOpacity, "opacity");
+        ensureCanonical(fFilter, "filter");
+        ensureCanonical(fSort, "sort");
+        ensureCanonical(fKeys, "key");
+        ensureCanonical(fSplits, "split");
+        ensureCanonical(fX, "x");
+        ensureCanonical(fY, "y");
+        ensureCanonical(itemsLabel, "label");
+        ensureCanonical(itemsTooltip, "tooltip");
+        ensureCanonical(fSummarize, "summarization");
+        ensureCanonical(fTransform, "transform");
 
         makeUsedFields();
 
@@ -473,34 +473,57 @@ public class VisSingle extends VisItem implements Cloneable {
         return result;
     }
 
-    private void ensureCanonical(List<Param> list) {
+    private void ensureCanonical(List<Param> list, String reason) {
         if (list.isEmpty()) return;
         Dataset dataset = getDataset();
         for (int i = 0; i < list.size(); i++) {
             Param p = list.get(i);
             if (p.isField()) {
                 String name = p.asField(dataset);
-                if (name == null) throw new IllegalStateException("Could not find field: " + p);
+                if (name == null)  {
+                    NullPointerException cause = new NullPointerException(makeFieldErrorMessage(p, reason));
+                    throw VisException.makeBuilding(cause, this);
+                }
                 // If the name is not the canonical one, replace it with the correct one
                 if (!name.equals(p.asString())) list.set(i, Param.makeField(name).addModifiers(p.modifiers()));
             }
         }
     }
 
-    private void ensureCanonical(Map<Param, String> map) {
+    private void ensureCanonical(Map<Param, String> map, String reason) {
         if (map.isEmpty()) return;
         Dataset dataset = getDataset();
         for (Param p : new ArrayList<Param>(map.keySet())) {
-            if (p.isField() && !p.asField(dataset).startsWith("#")) {
+            if (!p.isField()) continue;
+
+            // Find the name this was known as in the original dataset
+            String originalName = p.asField(dataset);
+            if (originalName == null) {
+                NullPointerException cause = new NullPointerException(makeFieldErrorMessage(p, reason));
+                throw VisException.makeBuilding(cause, this);
+            }
+
+            // It might be slightly different in the new one
+            if (p.isField() && !originalName.startsWith("#")) {
                 String name = p.asField(getDataset());
                 // If the name is not the canonical one, replace it with the correct one
-                if (!name.equals(p.asString())) {
+                if (!name.equals(originalName)) {
                     Param newParameter = Param.makeField(name).addModifiers(p.modifiers());
                     map.put(newParameter, map.get(p));
                     map.remove(p);
                 }
             }
         }
+    }
+
+    /**
+     * Report a reason why the field parameter was not found
+     * @param p parameter which caused the failure
+     * @param reason the reason we needed this field
+     * @return a user-readable message
+     */
+    private String makeFieldErrorMessage(Param p, String reason) {
+        return "Could not find the " + reason + " field '" + p.asField() + "'";
     }
 
     private List<Param> replaceAllField(List<Param> items, LinkedHashSet<String> replacementFieldNames) {

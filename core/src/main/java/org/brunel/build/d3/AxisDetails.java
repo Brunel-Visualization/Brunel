@@ -91,6 +91,7 @@ class AxisDetails {
         if (!exists()) return;
 
         int tickWidth = maxCategoryWidth() + 5;
+        if (tickWidth > availableSpace * 0.5) tickWidth = (int) (availableSpace * 0.5);
         int tickCount = countTicks(fields);
 
         if (!categorical) fillToEdge = true;        // Numeric ticks may go right to edge
