@@ -207,7 +207,7 @@ public class D3DataBuilder {
 
         writeTransform("filter", params.filterCommand);
         writeTransform("each", params.eachCommand);
-        writeTransform("bin", params.transformCommand);
+        writeTransform("transform", params.transformCommand);
         writeTransform("summarize", params.summaryCommand);
 
         // Because series creates duplicates of fields, it is an expensive transformation
@@ -260,7 +260,7 @@ public class D3DataBuilder {
         out.indentLess();
 
         // Define the key function
-        out.add("var keyFunction = ");
+        out.add("var keyFunc = ");
         defineKeyFieldFunction(makeKeyFields(), false, fieldsToIndex);
         out.endStatement();
 
@@ -281,7 +281,8 @@ public class D3DataBuilder {
         out.add("_split:").at(24);
         defineKeyFieldFunction(makeSplitFields(), true, fieldsToIndex);
         out.add(",").ln();
-        out.add("_rows:").at(24).add("BrunelD3.makeRowsWithKeys(keyFunction, processed.rowCount())");
+        out.add("_key:").at(24).add("keyFunc").add(",").ln();
+        out.add("_rows:").at(24).add("BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())");
 
         if (vis.fKeys.size() == 1 && vis.fX.size() == 1 && vis.fY.size() == 1) {
             out.add(",").ln();
@@ -335,8 +336,8 @@ public class D3DataBuilder {
             if (suitableForKey(result)) return result;
         }
 
-        // Positions are the keys for trees and treemaps
-        if (vis.tDiagram == VisTypes.Diagram.treemap || vis.tDiagram == VisTypes.Diagram.map) {
+        // Positions are the keys  treemaps
+        if (vis.tDiagram == VisTypes.Diagram.map) {
             // Otherwise just use the position fields as usual
             return Arrays.asList(vis.positionFields());
         }
@@ -359,7 +360,16 @@ public class D3DataBuilder {
         // Default is the row values
         List<String> result = new ArrayList<String>();
         result.add("#row");
-        if (vis.fY.size() > 1) result.add("#series");           // Because multiple rows have the same "#row"
+
+        // Multiple rows have the same "#row" when we do make series
+        if (vis.fY.size() > 1) result.add("#series");
+
+        // Multiple rows have the same "#row" when we split up a list field using "each"
+        for (Map.Entry<Param, String> e : vis.fTransform.entrySet()) {
+            if (e.getValue().equals("each")) result.add(e.getKey().asField());
+        }
+
+
         return result;
     }
 

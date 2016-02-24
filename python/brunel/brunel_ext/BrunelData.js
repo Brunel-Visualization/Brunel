@@ -1410,17 +1410,12 @@ V.diagram_Hierarchical = function(data, sizeFieldName, fieldNames) {
     var fields = this.toFields(data, fieldNames);
     this.root = this.makeInternalNode("");
     this.makeNodesUsingCollections(data, size, fields);
-    this.replaceCollections(data.field("#row"), this.root);
+    this.replaceCollections(this.root);
 };
 
 V.diagram_Hierarchical.makeByNestingFields = function(data, sizeField) {
     var fields = Array.prototype.slice.call(arguments, 2);
     return new V.diagram_Hierarchical(data, sizeField, fields);
-};
-
-V.diagram_Hierarchical.compare = function(a, b) {
-    var d = a.row - b.row;
-    return d != 0 ? d : V.Data.compare(a.key, b.key);
 };
 
 V.diagram_Hierarchical.prototype.makeInternalNode = function(label) {
@@ -1450,17 +1445,15 @@ V.diagram_Hierarchical.prototype.makeNodesUsingCollections = function(data, size
     }
 };
 
-V.diagram_Hierarchical.prototype.replaceCollections = function(dataRowField, current, parentKey) {
+V.diagram_Hierarchical.prototype.replaceCollections = function(current, parentKey) {
     var _i, child;
     var array = current.children;
-    if (array == null) {
-        current.key = dataRowField == null ? current.row : dataRowField.value(current.row);
-    } else {
+    if (array != null) {
         current.children = array.toArray();
         current.temp = null;
         current.key = parentKey == null ? current.innerNodeName : parentKey + "-" + current.innerNodeName;
         for(_i=$.iter(array), child=_i.current; _i.hasNext(); child=_i.next())
-            this.replaceCollections(dataRowField, child, current.key);
+            this.replaceCollections(child, current.key);
     }
 };
 

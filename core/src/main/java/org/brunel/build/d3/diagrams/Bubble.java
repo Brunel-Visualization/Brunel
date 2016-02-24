@@ -35,7 +35,6 @@ class Bubble extends D3Diagram {
         out.add("var pack = d3.layout.pack().size([geom.inner_width, geom.inner_height])")
                 .addChained("value(function(d) { return d.value == null || d.value < 0 ? 0 : d.value })")
                 .addChained("sort(BrunelData.diagram_Hierarchical.compare)").endStatement();
-        out.add("function keyFunction(d) { return d.key }").endStatement();
         return ElementDetails.makeForDiagram(vis, "pack(tree.root)", "circle", "point", "box", true);
     }
 
@@ -46,5 +45,9 @@ class Bubble extends D3Diagram {
                 .addChained("attr('cy', function(d) { return d.y; })")
                 .addChained("attr('r', function(d) { return d.r; })").endStatement();
         addAestheticsAndTooltips(details, true);
+    }
+
+    public String getRowKey() {
+        return "d.key || data._key(d.row)";
     }
 }
