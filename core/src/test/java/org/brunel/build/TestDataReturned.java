@@ -32,7 +32,7 @@ public class TestDataReturned {
     @Test
     public void testGetSimpleData() {
         String command = "data('sample:US States.csv') x(region) y(population)";
-        VisSingle vis = Action.parse(command).apply().getSingle();
+        VisSingle vis = Action.parse(command).apply().getSingle().makeCanonical();
 
         DataBuilder builder = new DataBuilder(vis, null);
         Dataset d = builder.build();
@@ -43,7 +43,7 @@ public class TestDataReturned {
     @Test
     public void testGetSummarizedData() {
         String command = "data('sample:US States.csv') x(region) y(population) sum(population)";
-        VisSingle vis = Action.parse(command).apply().getSingle();
+        VisSingle vis = Action.parse(command).apply().getSingle().makeCanonical();
 
         Dataset d = DataBuilder.getTransformedData(vis);
         assertEquals(6, d.rowCount());

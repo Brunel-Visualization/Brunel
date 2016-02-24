@@ -382,7 +382,14 @@ public class VisSingle extends VisItem implements Cloneable {
         return nonPos;
     }
 
-    public VisSingle resolve() {
+    /**
+     * Create a new vis based on the old one that has correct field names and resolves the "#all" field
+     * This method must be called before any building can be done on a vis item and the
+     * building performed on the returned vis
+     *
+     * @return
+     */
+    public VisSingle makeCanonical() {
 
         ensureCanonical(fColor, "color");
         ensureCanonical(fSize, "size");
@@ -480,7 +487,7 @@ public class VisSingle extends VisItem implements Cloneable {
             Param p = list.get(i);
             if (p.isField()) {
                 String name = p.asField(dataset);
-                if (name == null)  {
+                if (name == null) {
                     NullPointerException cause = new NullPointerException(makeFieldErrorMessage(p, reason));
                     throw VisException.makeBuilding(cause, this);
                 }
@@ -496,29 +503,26 @@ public class VisSingle extends VisItem implements Cloneable {
         for (Param p : new ArrayList<Param>(map.keySet())) {
             if (!p.isField()) continue;
 
-            // Find the name this was known as in the original dataset
-            String originalName = p.asField(dataset);
-            if (originalName == null) {
+            String name = p.asField(dataset);         // This is either null, or the strict field name
+            if (name == null) {
                 NullPointerException cause = new NullPointerException(makeFieldErrorMessage(p, reason));
                 throw VisException.makeBuilding(cause, this);
             }
 
-            // It might be slightly different in the new one
-            if (p.isField() && !originalName.startsWith("#")) {
-                String name = p.asField(getDataset());
-                // If the name is not the canonical one, replace it with the correct one
-                if (!name.equals(originalName)) {
-                    Param newParameter = Param.makeField(name).addModifiers(p.modifiers());
-                    map.put(newParameter, map.get(p));
-                    map.remove(p);
-                }
-            }
+            // do not rename if a synthetic fields or the Field name is the same as the parameter name
+            if (dataset.field(name).isSynthetic() || name.equals(p.asString())) continue;
+
+            // Replace the parameter with the new, canonical name
+            Param newParameter = Param.makeField(name).addModifiers(p.modifiers());
+            map.put(newParameter, map.get(p));
+            map.remove(p);
         }
     }
 
     /**
      * Report a reason why the field parameter was not found
-     * @param p parameter which caused the failure
+     *
+     * @param p      parameter which caused the failure
      * @param reason the reason we needed this field
      * @return a user-readable message
      */

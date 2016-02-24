@@ -175,7 +175,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         Dataset[] data = new Dataset[items.length];
         VisSingle[] elements = new VisSingle[items.length];
         for (int i = 0; i < items.length; i++) {
-            elements[i] = items[i].getSingle().resolve();
+            elements[i] = items[i].getSingle().makeCanonical();
             data[i] = new DataBuilder(elements[i], this).build();
         }
 

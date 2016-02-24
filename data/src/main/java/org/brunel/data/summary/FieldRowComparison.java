@@ -35,7 +35,7 @@ public class FieldRowComparison implements Comparator<Integer> {
         this.fields = fields;
         this.ascending = ascending;
         this.rowsBreakTies = rowsBreakTies;
-        this.n = fields.length;
+        this.n = ascending == null ? fields.length : ascending.length;
     }
 
     public int compare(Integer a, Integer b) {

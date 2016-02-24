@@ -24,7 +24,9 @@ import org.brunel.data.summary.FieldRowComparison;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This transform takes a single y field and produces two new fields; a lower and an upper value.
@@ -60,13 +62,10 @@ public class Stack extends DataOperation {
 
         // Get all fields, permuted so they are in the order required by the key
         // This also removes any rows with null keys
-        Field[] allFields = orderRows(base, keyFields);
+        Field[] allFields = makeOrderedFields(base, keyFields, x.length);
 
         // When we need full combinations, we expand out our base data
-        if (full) {
-            Field[] comboFields = getFields(allFields, x, aesthetics);  // X and aesthetic fields
-            allFields = addAllCombinations(allFields, comboFields);     // Add in all combinations
-        }
+        if (full) allFields = new AllCombinations(allFields, x.length, aesthetics.length).make();
 
         // Make the stacking using the new ordered fields
         Field[] fields = makeStackedValues(allFields,
@@ -74,48 +73,6 @@ public class Stack extends DataOperation {
                 getFields(allFields, x), full);
 
         return base.replaceFields(fields);
-    }
-
-    private static Field[] addAllCombinations(Field[] baseFields, Field[] keys) {
-
-        // Create an array that gives the indices of the keys into the base fields
-        int[] keyIndices = new int[keys.length];
-        for (int i = 0; i < keys.length; i++) {
-            for (int j = 0; j < baseFields.length; j++)
-                if (baseFields[j] == keys[i]) keyIndices[i] = j;
-        }
-
-        List<Object[]> rows = new ArrayList<Object[]>();
-
-        int currentRowIndex = 0;                                            // The next row of real data to use
-        Object[] currentRow = makeRealRow(baseFields, currentRowIndex);     // And the actual values
-
-        int[] index = new int[keys.length];                    // Index to step through all combinations
-        while (index != null) {
-            Object[] row = makeGeneratedRow(baseFields, keyIndices, index);
-            boolean matched = false;
-            while (matchKeys(row, currentRow, keyIndices)) {
-                rows.add(currentRow);                                       // Add the matching row
-                currentRow = makeRealRow(baseFields, ++currentRowIndex);    // Try the next one
-                matched = true;
-            }
-            if (!matched) rows.add(row);                                    // only add fake row if there is no real row
-            index = nextIndex(keys, index);
-        }
-
-        Field[] fields = new Field[baseFields.length];
-        for (int i = 0; i < baseFields.length; i++) {
-            fields[i] = Data.makeColumnField(baseFields[i].name, baseFields[i].label, extractColumn(rows, i));
-            Data.copyBaseProperties(fields[i], baseFields[i]);
-        }
-        return fields;
-
-    }
-
-    private static Object[] extractColumn(List<Object[]> rows, int index) {
-        Object[] result = new Object[rows.size()];
-        for (int i = 0; i < result.length; i++) result[i] = rows.get(i)[index];
-        return result;
     }
 
     private static Field getField(Field[] fields, String name) {
@@ -131,29 +88,6 @@ public class Stack extends DataOperation {
                 if (!fName.isEmpty()) result.add(getField(fields, fName));
             }
         return result.toArray(new Field[result.size()]);
-    }
-
-    // Generate a row only having values for the keys
-    private static Object[] makeGeneratedRow(Field[] fields, int[] keyIndices, int[] index) {
-        int n = fields.length;
-        Object[] row = new Object[n];
-        // Step through all the key values and set those values. All non-key values will be missing
-        for (int i = 0; i < keyIndices.length; i++) {
-            int j = keyIndices[i];
-            // The column at j has its value set to the category of the corresponding field with the current index
-            row[j] = fields[j].categories()[index[i]];
-        }
-        return row;
-    }
-
-    // Copy data from columns into the row
-    private static Object[] makeRealRow(Field[] fields, int index) {
-        if (index >= fields[0].rowCount()) return null;             // No more real rows!
-        int n = fields.length;
-        Object[] row = new Object[n];
-        for (int i = 0; i < fields.length; i++)
-            row[i] = fields[i].value(index);
-        return row;
     }
 
     private static Field[] makeStackedValues(Field[] allFields, Field y, Field[] x, boolean full) {
@@ -202,25 +136,18 @@ public class Stack extends DataOperation {
         return fields;
     }
 
-    private static boolean matchKeys(Object[] a, Object[] b, int[] indices) {
-        if (a == null || b == null) return false;
-        for (int i : indices)
-            if (Data.compare(a[i], b[i]) != 0) return false;
-        return true;
-    }
+    /**
+     * This orders the field in a suitabel way for stacking.
+     * The fields are in the order x, groups, other
+     * The rows are ordered the way we want stacking to work
+     * @param base base data set
+     * @param keyFields those fields that are key fields
+     * @param xFieldCount of the key fields, the number that are X fields
+     * @return
+     */
+    private static Field[] makeOrderedFields(Dataset base, Field[] keyFields, int xFieldCount) {
+        Field[] baseFields = orderFields(base, keyFields);
 
-    // Increment the index, returning null if we are done
-    private static int[] nextIndex(Field[] keys, int[] index) {
-        for (int p = index.length - 1; p >= 0; p--) {
-            int max = keys[p].categories().length;          // the max value this index can be
-            if (++index[p] < max) return index;             // successful increment!
-            index[p] = 0;                                   // not successful, set to zero and loop to next position
-        }
-        return null;
-    }
-
-    private static Field[] orderRows(Dataset base, Field[] keyFields) {
-        Field[] baseFields = base.fields;
         List<Integer> items = new ArrayList<Integer>();
         int n = base.rowCount();
         for (int i = 0; i < n; i++) {
@@ -231,7 +158,7 @@ public class Stack extends DataOperation {
 
         // We need descending order so stacking works bottom-up
         boolean[] ascending = new boolean[keyFields.length];
-        for (int i = 0; i < ascending.length; i++) ascending[i] = false;
+        for (int i = 0; i < ascending.length; i++) ascending[i] = i < xFieldCount;
         FieldRowComparison comparison = new FieldRowComparison(keyFields, ascending, true);
         Collections.sort(items, comparison);
         Integer[] rowOrder = items.toArray(new Integer[items.size()]);
@@ -240,6 +167,19 @@ public class Stack extends DataOperation {
         for (int i = 0; i < baseFields.length; i++)
             fields[i] = Data.permute(baseFields[i], Data.toPrimitive(rowOrder), true);
         return fields;
+    }
+
+    private static Field[] orderFields(Dataset base, Field[] keyFields) {
+        Field[] baseFields = new Field[base.fields.length];
+
+        Set<Field> used = new HashSet<Field>();
+        for (int i=0; i<keyFields.length; i++){
+            baseFields[i] = keyFields[i];
+            used.add(keyFields[i]);
+        }
+        int at = keyFields.length;
+        for (Field f : base.fields) if (!used.contains(f)) baseFields[at++] = f;
+        return baseFields;
     }
 
 }

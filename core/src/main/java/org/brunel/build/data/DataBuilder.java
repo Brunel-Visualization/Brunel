@@ -50,6 +50,7 @@ public class DataBuilder {
      * @return built dataset
      */
     public Dataset build() {
+
         String constantsCommand = makeConstantsCommand();
         String filterCommand = makeFilterCommands();
         String binCommand = makeTransformCommands();
@@ -85,7 +86,7 @@ public class DataBuilder {
      * @return transformed data set
      */
     public static Dataset getTransformedData(VisSingle vis) {
-        return new DataBuilder(vis.resolve(), null).build();
+        return new DataBuilder(vis.makeCanonical(), null).build();
     }
 
     protected int getParameterIntValue(Param param, int defaultValue) {
@@ -107,6 +108,7 @@ public class DataBuilder {
         HashSet<String> fields = new HashSet<String>(Arrays.asList(vis.usedFields(false)));
         fields.remove("#series");
         fields.remove("#values");
+        fields.remove("#all");
 
         // Add the summary measures
         for (Map.Entry<Param, String> e : vis.fSummarize.entrySet()) {
