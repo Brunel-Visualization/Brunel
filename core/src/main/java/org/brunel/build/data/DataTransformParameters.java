@@ -33,6 +33,10 @@ public class DataTransformParameters {
      */
     public final String filterCommand;
     /**
+     * Command to extract multiple values from a field's text
+     */
+    public final String eachCommand;
+    /**
      * Command to transform the data without aggregation (bin, rank, inner, outer)
      */
     public final String transformCommand;
@@ -64,10 +68,11 @@ public class DataTransformParameters {
     /**
      * Initialize all the relevant parameters
      */
-    public DataTransformParameters(String constantsCommand, String filterCommand, String binCommand, String summaryCommand,
+    public DataTransformParameters(String constantsCommand, String filterCommand, String eachCommand, String binCommand, String summaryCommand,
                                    String stackCommand, String sortCommand, String sortRowsCommand, String seriesCommand, String usedCommand) {
         this.constantsCommand = constantsCommand;
         this.filterCommand = filterCommand;
+        this.eachCommand = eachCommand;
         this.transformCommand = binCommand;
         this.summaryCommand = summaryCommand;
         this.stackCommand = stackCommand;

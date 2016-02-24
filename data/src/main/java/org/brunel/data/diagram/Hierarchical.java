@@ -84,7 +84,7 @@ public class Hierarchical {
         List<Node> array = ((List<Node>) current.children);
         if (array == null) {
             // Leaf node
-            current.key = dataRowField.value(current.row);
+            current.key = dataRowField == null ? current.row : dataRowField.value(current.row);
         } else {
             // Internal node
             current.children = array.toArray(new Node[array.size()]);

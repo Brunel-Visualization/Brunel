@@ -53,6 +53,7 @@ public class DataBuilder {
 
         String constantsCommand = makeConstantsCommand();
         String filterCommand = makeFilterCommands();
+        String eachCommand = makeEachCommands();
         String binCommand = makeTransformCommands();
         String summaryCommand = buildSummaryCommands();
         String sortCommand = makeFieldCommands();
@@ -60,7 +61,7 @@ public class DataBuilder {
         String usedFields = required();
 
         DataTransformParameters params = new DataTransformParameters(constantsCommand,
-                filterCommand, binCommand, summaryCommand, "", sortCommand, "", seriesYFields,
+                filterCommand, eachCommand, binCommand, summaryCommand, "", sortCommand, "", seriesYFields,
                 usedFields);
 
         // Call the engine to see if it has any special needs
@@ -69,7 +70,8 @@ public class DataBuilder {
         Dataset data = vis.getDataset();                                                // The data to use
         data = data.addConstants(params.constantsCommand);                              // add constant fields
         data = data.filter(params.filterCommand);                                       // filter data
-        data = data.bin(params.transformCommand);                                       // bin data
+        data = data.each(params.eachCommand);                                           // divide up fields into parts
+        data = data.transform(params.transformCommand);                                 // bin, rank, ... on data
         data = data.summarize(params.summaryCommand);                                   // summarize data
         data = data.series(params.seriesCommand);                                       // convert series
         data = data.sort(params.sortCommand);                                           // sort data
@@ -230,6 +232,20 @@ public class DataBuilder {
 
         return Data.join(commands, "; ");
     }
+
+    private String makeEachCommands() {
+        List<String> commands = new ArrayList<String>();
+        for (Map.Entry<Param, String> e : vis.fTransform.entrySet()) {
+            String operation = e.getValue();
+            Param key = e.getKey();
+            String name = getParameterFieldValue(key);
+            Field f = vis.getDataset().field(name);
+            if (operation.equals("each"))
+                commands.add(f.name);
+        }
+        return Data.join(commands, "; ");
+    }
+
 
     private String makeSeriesCommand() {
         // Only have a series for 2+ y fields

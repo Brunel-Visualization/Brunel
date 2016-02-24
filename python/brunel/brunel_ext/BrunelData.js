@@ -1163,7 +1163,7 @@ V.Dataset.ensureUniqueNames = function(fields) {
     return result;
 };
 
-V.Dataset.prototype.bin = function(command) {
+V.Dataset.prototype.transform = function(command) {
     return V.modify_Transform.transform(this, command);
 };
 
@@ -1195,6 +1195,10 @@ V.Dataset.prototype.field = function(name, lax) {
 
 V.Dataset.prototype.filter = function(command) {
     return V.modify_Filter.transform(this, command);
+};
+
+V.Dataset.prototype.each = function(command) {
+    return V.modify_Each.transform(this, command);
 };
 
 V.Dataset.prototype.replaceFields = function(fields) {
@@ -1450,7 +1454,7 @@ V.diagram_Hierarchical.prototype.replaceCollections = function(dataRowField, cur
     var _i, child;
     var array = current.children;
     if (array == null) {
-        current.key = dataRowField.value(current.row);
+        current.key = dataRowField == null ? current.row : dataRowField.value(current.row);
     } else {
         current.children = array.toArray();
         current.temp = null;
@@ -2352,6 +2356,56 @@ V.modify_ConvertSeries.makeIndexing = function(m, reps) {
         for (j = 0; j < reps; j++)
             blocks[i * reps + j] = j;
     return blocks;
+};
+
+////////////////////// Each ////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   This transform takes data and multiplies rows
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+V.modify_Each = function() {
+    $.superconstruct(this);};
+
+$.extend(V.modify_Each, V.modify_DataOperation);
+
+V.modify_Each.transform = function(base, command) {
+    var _i, f, s;
+    var fieldNames = V.modify_DataOperation.parts(command);
+    if (fieldNames == null) return base;
+    for(_i=$.iter(fieldNames), s=_i.current; _i.hasNext(); s=_i.next()) {
+        f = base.field(s);
+        if (f.property("listCategories") != null)
+            base = V.modify_Each.splitFieldValues(base, f);
+    }
+    return base;
+};
+
+V.modify_Each.splitFieldValues = function(base, target) {
+    var _i, data, f, i, idx, list, o, results;
+    var nulls = new V.util_ItemsList($.Array(1, null), null);
+    var index = new $.List();
+    var splitValues = new $.List();
+    for (i = 0; i < target.rowCount(); i++){
+        list = target.value(i);
+        if (list == null) list = nulls;
+        for(_i=$.iter(list), o=_i.current; _i.hasNext(); o=_i.next()) {
+            splitValues.add(o);
+            index.add(i);
+        }
+    }
+    idx = V.Data.toPrimitive(index.toArray());
+    results = $.Array(base.fields.length, null);
+    for (i = 0; i < results.length; i++){
+        f = base.fields[i];
+        if (f == target) {
+            data = splitValues.toArray();
+            results[i] = V.Data.makeColumnField(f.name, f.label, data);
+        } else {
+            results[i] = V.Data.permute(f, idx, false);
+        }
+    }
+    return base.replaceFields(results);
 };
 
 ////////////////////// Filter //////////////////////////////////////////////////////////////////////////////////////////

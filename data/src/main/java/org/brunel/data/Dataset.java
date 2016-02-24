@@ -21,6 +21,7 @@ import org.brunel.data.io.Serialize;
 import org.brunel.data.modify.AddConstantFields;
 import org.brunel.data.modify.ConvertSeries;
 import org.brunel.data.modify.DataOperation;
+import org.brunel.data.modify.Each;
 import org.brunel.data.modify.Filter;
 import org.brunel.data.modify.Sort;
 import org.brunel.data.modify.Stack;
@@ -123,7 +124,7 @@ public class Dataset extends Informative implements Serializable {
      * @param command the fields to bin, semi-colon separated
      * @return binned data set
      */
-    public Dataset bin(String command) {
+    public Dataset transform(String command) {
         return Transform.transform(this, command);
     }
 
@@ -180,6 +181,17 @@ public class Dataset extends Informative implements Serializable {
      */
     public Dataset filter(String command) {
         return Filter.transform(this, command);
+    }
+
+    /**
+     * Create a new data set based on this one, with multiple rows for each source row
+     * A list row will be split into the component pieces
+     *
+     * @param command the fields to 'each', separated by semi-colons
+     * @return increased data set
+     */
+    public Dataset each(String command) {
+        return Each.transform(this, command);
     }
 
     public Dataset replaceFields(Field[] fields) {

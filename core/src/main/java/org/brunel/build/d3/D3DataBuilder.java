@@ -206,6 +206,7 @@ public class D3DataBuilder {
         }
 
         writeTransform("filter", params.filterCommand);
+        writeTransform("each", params.eachCommand);
         writeTransform("bin", params.transformCommand);
         writeTransform("summarize", params.summaryCommand);
 

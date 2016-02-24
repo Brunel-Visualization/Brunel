@@ -479,7 +479,7 @@ public class D3Builder extends AbstractBuilder {
         }
 
         // Replace the stack and sort commands with updated versions
-        return new DataTransformParameters(params.constantsCommand, params.filterCommand, params.transformCommand, params.summaryCommand,
+        return new DataTransformParameters(params.constantsCommand, params.filterCommand, params.eachCommand, params.transformCommand, params.summaryCommand,
                 stackCommand, params.sortCommand, sortRows, params.seriesCommand, params.usedCommand);
     }
 
