@@ -21,6 +21,7 @@ import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.summary.FieldRowComparison;
 import org.brunel.data.Fields;
+import org.brunel.data.util.MapInt;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -116,18 +117,9 @@ public class Sort extends DataOperation {
     private static Object mode(Field field, List<Integer> rows) {
         Object mode = null;
         int max = 0;
-        Map<Object, Integer> count = new HashMap<Object, Integer>();
-        for (int i : rows) {
-            Object v = field.value(i);
-            Integer c = count.get(v);
-            if (c == null) c = 0;
-            if (++c > max) {
-                max = c;
-                mode = v;
-            }
-            count.put(v, c);
-        }
-        return mode;
+        MapInt count = new MapInt();
+        for (int i : rows) count.increment(field.value(i));
+        return count.mode();
     }
 
     /* Convert an order (possibly with ties) into a ranking for the original rows */
@@ -195,8 +187,7 @@ public class Sort extends DataOperation {
         for (int i = 0; i < means.length; i++) means[i] = i / 100.0 / means.length; // Bias towards current order
 
         // Map categories to an index
-        Map<Object, Integer> index = new HashMap<Object, Integer>();
-        for (Object o : categories) index.put(o, index.size());
+        MapInt index = new MapInt().index(categories);
 
         // Sum ranks for this category
         for (int i = 0; i < n; i++) {

@@ -22,10 +22,9 @@ import org.brunel.data.stats.NumericStats;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Informative;
 import org.brunel.data.util.ItemsList;
+import org.brunel.data.util.MapInt;
 import org.brunel.data.util.Range;
 import org.brunel.data.values.Provider;
-
-import java.util.HashMap;
 
 public class Field extends Informative implements Comparable<Field> {
 
@@ -37,7 +36,7 @@ public class Field extends Informative implements Comparable<Field> {
     Provider provider;                          // Provides values for the field (not final as it may need conversion)
 
     private boolean calculatedNominal, calculatedNumeric, calculatedDate;   // True when we calculate these
-    private HashMap<Object, Integer> categoryOrder;                             // order of the categories
+    private MapInt categoryOrder;                                           // order of the categories
 
     public Field(String name, String label, Provider provider) {
         this(name, label, provider, null);
@@ -76,11 +75,9 @@ public class Field extends Informative implements Comparable<Field> {
 
     public int compareRows(int a, int b) {
         if (categoryOrder == null) {
-            categoryOrder = new HashMap<Object, Integer>();         // Build it no matter what so next call is faster
-            if (preferCategorical()) {
-                Object[] cats = categories();
-                for (int i = 0; i < cats.length; i++) categoryOrder.put(cats[i], i);
-            }
+            // Build it no matter what so next call is faster
+            categoryOrder = new MapInt();
+            if (preferCategorical())  categoryOrder.index(categories());
         }
         return provider.compareRows(a, b, categoryOrder);
     }

@@ -16,7 +16,7 @@
 
 package org.brunel.data.values;
 
-import java.util.HashMap;
+import org.brunel.data.util.MapInt;
 
 public class ConstantProvider implements Provider {
 
@@ -28,7 +28,7 @@ public class ConstantProvider implements Provider {
         this.len = len;
     }
 
-    public int compareRows(int a, int b, HashMap<Object, Integer> categoryOrder) {
+    public int compareRows(int a, int b, MapInt categoryOrder) {
         return 0;
     }
 

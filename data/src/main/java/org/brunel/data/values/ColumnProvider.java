@@ -17,6 +17,7 @@
 package org.brunel.data.values;
 
 import org.brunel.data.Data;
+import org.brunel.data.util.MapInt;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -73,7 +74,7 @@ public class ColumnProvider implements Provider {
         return this;
     }
 
-    public int compareRows(int a, int b, HashMap<Object, Integer> categoryOrder) {
+    public int compareRows(int a, int b, MapInt categoryOrder) {
         // Use the defined order if given
         Object p = column[a];
         Object q = column[b];

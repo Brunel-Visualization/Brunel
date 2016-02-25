@@ -1257,21 +1257,13 @@ V.Dataset.prototype.expandedOriginalRows = function(row) {
 
 
 V.diagram_Chord = function(data, fieldA, fieldB, fieldSize) {
-    var N, _i, i, i1, i2, o, size;
+    var i, i1, i2, size;
     var a = data.field(fieldA);
     var b = data.field(fieldB);
     var s = data.field(fieldSize);
-    var indices = new $.Map();
-    for(_i=$.iter(a.categories()), o=_i.current; _i.hasNext(); o=_i.next())
-        if (indices.get(o) == null)
-            indices.put(o, indices.size());
-    for(_i=$.iter(b.categories()), o=_i.current; _i.hasNext(); o=_i.next())
-        if (indices.get(o) == null)
-            indices.put(o, indices.size());
-    N = indices.size();
-    this.names = $.Array(N, null);
-    for(_i=$.iter(indices.keySet()), o=_i.current; _i.hasNext(); o=_i.next())
-        this.names[indices.get(o)] = o;
+    var indices = new V.util_MapInt().index(a.categories()).index(b.categories());
+    var N = indices.size();
+    this.names = indices.getIndexedKeys();
     this.mtx = $.Array(N, N, 0);
     this.idx = $.Array(N, N, 0);
     for (i = 0; i < a.rowCount(); i++){
@@ -1472,14 +1464,10 @@ V.Field.prototype.setValue = function(o, index) {
 };
 
 V.Field.prototype.compareRows = function(a, b) {
-    var cats, i;
     if (this.categoryOrder == null) {
-        this.categoryOrder = new $.Map();
-        if (this.preferCategorical()) {
-            cats = this.categories();
-            for (i = 0; i < cats.length; i++)
-                this.categoryOrder.put(cats[i], i);
-        }
+        this.categoryOrder = new V.util_MapInt();
+        if (this.preferCategorical())
+            this.categoryOrder.index(this.categories());
     }
     return this.provider.compareRows(a, b, this.categoryOrder);
 };
@@ -2588,21 +2576,13 @@ V.modify_Sort.sum = function(field, rows) {
 };
 
 V.modify_Sort.mode = function(field, rows) {
-    var _i, c, i, v;
+    var _i, i;
     var mode = null;
     var max = 0;
-    var count = new $.Map();
-    for(_i=$.iter(rows), i=_i.current; _i.hasNext(); i=_i.next()) {
-        v = field.value(i);
-        c = count.get(v);
-        if (c == null) c = 0;
-        if (++c > max) {
-            max = c;
-            mode = v;
-        }
-        count.put(v, c);
-    }
-    return mode;
+    var count = new V.util_MapInt();
+    for(_i=$.iter(rows), i=_i.current; _i.hasNext(); i=_i.next())
+        count.increment(field.value(i));
+    return count.mode();
 };
 
 V.modify_Sort.makeRowRanking = function(order, comparison) {
@@ -2667,16 +2647,14 @@ V.modify_Sort.moveCatchAllToEnd = function(order, f) {
 };
 
 V.modify_Sort.categoriesFromRanks = function(field, rowRanking) {
-    var _i, cats, i, idx, index, o, which;
+    var cats, i, idx, index, o, which;
     var n = field.rowCount();
     var categories = field.categories();
     var counts = field.property("categoryCounts");
     var means = $.Array(counts.length, 0);
     for (i = 0; i < means.length; i++)
         means[i] = i / 100.0 / means.length;
-    index = new $.Map();
-    for(_i=$.iter(categories), o=_i.current; _i.hasNext(); o=_i.next())
-        index.put(o, index.size());
+    index = new V.util_MapInt().index(categories);
     for (i = 0; i < n; i++){
         o = field.value(i);
         if (o == null) continue;
@@ -3171,55 +3149,26 @@ V.stats_DateStats.creates = function(key) {
 V.stats_NominalStats = function() {};
 
 V.stats_NominalStats.populate = function(f) {
-    var c, cats, counts, i, naturalOrder, o, sortedModes, value;
-    var count = new $.Map();
-    var modes = new $.Set();
+    var i, naturalOrder;
+    var counts = new V.util_MapInt();
     var N = f.rowCount();
-    var maxCount = 0;
-    var valid = 0;
-    for (i = 0; i < N; i++){
-        o = f.value(i);
-        if (o == null) continue;
-        valid++;
-        c = count.get(o);
-        value = c == null ? 1 : c + 1;
-        count.put(o, value);
-        if (value > maxCount) modes.clear();
-        if (value >= maxCount) {
-            modes.add(o);
-            maxCount = value;
-        }
-    }
+    for (i = 0; i < N; i++)
+        counts.increment(f.value(i));
     f.set("n", N);
-    f.set("unique", count.size());
-    f.set("valid", valid);
-    if ($.isEmpty(modes)) {
-        f.set("mode");
-    } else {
-        sortedModes = modes.toArray();
-        V.Data.sort(sortedModes);
-        f.set("mode", sortedModes[Math.floor((sortedModes.length - 1) / 2)]);
-    }
+    f.set("unique", counts.size());
+    f.set("valid", counts.getTotalCount());
+    f.set("mode", counts.mode());
     if (f.propertyTrue("categoriesOrdered")) {
         naturalOrder = f.categories();
     } else {
         if (f.name == "#selection") {
-            if (!count.containsKey(V.Field.VAL_UNSELECTED))
-                count.put(V.Field.VAL_UNSELECTED, 0);
-            if (!count.containsKey(V.Field.VAL_SELECTED))
-                count.put(V.Field.VAL_SELECTED, 0);
             naturalOrder = [V.Field.VAL_UNSELECTED, V.Field.VAL_SELECTED];
         } else {
-            cats = count.keySet();
-            naturalOrder = cats.toArray();
-            V.Data.sort(naturalOrder);
+            naturalOrder = counts.sortedKeys();
         }
         f.set("categories", naturalOrder);
     }
-    counts = $.Array(naturalOrder.length, 0);
-    for (i = 0; i < naturalOrder.length; i++)
-        counts[i] = count.get(naturalOrder[i]);
-    f.set("categoryCounts", counts);
+    f.set("categoryCounts", counts.getCounts(naturalOrder));
 };
 
 V.stats_NominalStats.creates = function(key) {
@@ -3786,6 +3735,88 @@ V.util_ItemsList.prototype.toString = function(dateFormat) {
         }
     }
     return s;
+};
+
+////////////////////// MapInt //////////////////////////////////////////////////////////////////////////////////////////
+//
+//   Associates items with integers
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+V.util_MapInt = function() {
+    this.map = new $.Map();
+    this.totalCount = 0;
+    this.maxCount = 0;
+};
+
+V.util_MapInt.prototype.get = function(o) {
+    var v = this.map.get(o);
+    return v == null ? 0 : v;
+};
+
+V.util_MapInt.prototype.getCounts = function(vals) {
+    var i;
+    var result = $.Array(vals.length, 0);
+    for (i = 0; i < result.length; i++)
+        result[i] = this.get(vals[i]);
+    return result;
+};
+
+V.util_MapInt.prototype.getIndexedKeys = function() {
+    var _i, o;
+    var results = $.Array(this.size(), null);
+    for(_i=$.iter(this.map.keySet()), o=_i.current; _i.hasNext(); o=_i.next())
+        results[this.map.get(o)] = o;
+    return results;
+};
+
+V.util_MapInt.prototype.increment = function(o) {
+    var v;
+    if (o != null) {
+        v = this.get(o) + 1;
+        this.map.put(o, v);
+        this.totalCount++;
+        this.maxCount = Math.max(this.maxCount, v);
+    }
+};
+
+V.util_MapInt.prototype.getTotalCount = function() {
+    return this.totalCount;
+};
+
+V.util_MapInt.prototype.mode = function() {
+    var _i, array, list, s;
+    if ($.isEmpty(this)) return null;
+    list = new $.List();
+    for(_i=$.iter(this.map.keySet()), s=_i.current; _i.hasNext(); s=_i.next())
+        if (this.map.get(s) == this.maxCount) list.add(s);
+    array = list.toArray();
+    V.Data.sort(array);
+    return array[Math.floor((array.length - 1) / 2)];
+};
+
+V.util_MapInt.prototype.index = function(keys) {
+    var _i, o;
+    for(_i=$.iter(keys), o=_i.current; _i.hasNext(); o=_i.next())
+        if (!this.map.containsKey(o)) {
+            this.map.put(o, this.map.size());
+        }
+    return this;
+};
+
+V.util_MapInt.prototype.isEmpty = function() {
+    return $.isEmpty(this.map);
+};
+
+V.util_MapInt.prototype.size = function() {
+    return this.map.size();
+};
+
+V.util_MapInt.prototype.sortedKeys = function() {
+    var s = this.map.keySet();
+    var array = s.toArray();
+    V.Data.sort(array);
+    return array;
 };
 
 ////////////////////// Range ///////////////////////////////////////////////////////////////////////////////////////////
