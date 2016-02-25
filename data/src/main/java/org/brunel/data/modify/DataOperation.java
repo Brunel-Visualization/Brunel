@@ -65,7 +65,7 @@ public abstract class DataOperation {
     static String[] list(String items) {
         String[] parts = items.split(",");
         for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim();
-        return parts.length == 1 && parts[0].isEmpty() ? null : parts;
+        return parts.length == 1 && parts[0].isEmpty() ? new String[0] : parts;
     }
 
 }

@@ -67,11 +67,6 @@ public class Fields {
         return new Field(name, label, new ColumnProvider(data));
     }
 
-    private static void setTypeFor(Field field, Object o) {
-        if (Data.asNumeric(o) != null)
-            field.setNumeric();
-    }
-
     /**
      * Create a new field that indexes into the original field
      *

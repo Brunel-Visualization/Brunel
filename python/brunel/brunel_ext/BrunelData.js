@@ -1655,10 +1655,6 @@ V.Fields.makeColumnField = function(name, label, data) {
     return new V.Field(name, label, new V.values_ColumnProvider(data));
 };
 
-V.Fields.setTypeFor = function(field, o) {
-    if (V.Data.asNumeric(o) != null) field.setNumeric();
-};
-
 V.Fields.permute = function(field, order, onlyOrderChanged) {
     var f;
     if (onlyOrderChanged)
@@ -2143,7 +2139,7 @@ V.modify_DataOperation.list = function(items) {
     var parts = items.split(",");
     for (i = 0; i < parts.length; i++)
         parts[i] = parts[i].trim();
-    return parts.length == 1 && $.isEmpty(parts[0]) ? null : parts;
+    return parts.length == 1 && $.isEmpty(parts[0]) ? $.Array(0, null) : parts;
 };
 
 ////////////////////// AddConstantFields ///////////////////////////////////////////////////////////////////////////////
@@ -2292,24 +2288,40 @@ V.modify_ConvertSeries = function() {
 $.extend(V.modify_ConvertSeries, V.modify_DataOperation);
 
 V.modify_ConvertSeries.transform = function(base, commands) {
-    var N, _i, f, fieldName, fields, indexing, otherFields, resultFields, sections, series, values, yFields;
+    var _i, data, f, fieldName, fields, i, j, nR, nY, otherFields, resultFields, sections, series,
+        seriesIndexing, temp, values, valuesIndexing, y, yFields;
     if ($.isEmpty(commands)) return base;
     sections = V.modify_DataOperation.parts(commands);
     yFields = V.modify_DataOperation.list(sections[0]);
-    if (yFields == null || yFields.length < 2) return base;
+    nY = yFields.length;
+    nR = base.rowCount();
+    if (nY < 2) return base;
     otherFields = V.modify_ConvertSeries.addRequired(V.modify_DataOperation.list(
         sections.length < 2 ? "" : sections[1]));
-    N = base.rowCount();
-    series = V.modify_ConvertSeries.makeSeries(yFields, N);
-    values = V.modify_ConvertSeries.makeValues(yFields, base, N);
-    indexing = V.modify_ConvertSeries.makeIndexing(yFields.length, N);
+    y = $.Array(nY, null);
+    for (i = 0; i < nY; i++)
+        y[i] = base.field(yFields[i]);
+    seriesIndexing = $.Array(nY * nR, 0);
+    valuesIndexing = $.Array(nY * nR, 0);
+    data = $.Array(nY * nR, null);
+    for (i = 0; i < nY; i++)
+        for (j = 0; j < nR; j++){
+            seriesIndexing[i * nR + j] = i;
+            valuesIndexing[i * nR + j] = j;
+            data[i * nR + j] = y[i].value(j);
+        }
+    values = V.Fields.makeColumnField("#values", V.Data.join(yFields), data);
+    V.Fields.copyBaseProperties(values, y[0]);
+    temp = V.Fields.makeColumnField("#series", "Series", yFields);
+    series = V.Fields.permute(temp, seriesIndexing, false);
+    series.setCategories(yFields);
     resultFields = new $.List();
     resultFields.add(series);
     resultFields.add(values);
     for(_i=$.iter(otherFields), fieldName=_i.current; _i.hasNext(); fieldName=_i.next()) {
         if ((fieldName == "#series") || (fieldName == "#values")) continue;
         f = base.field(fieldName);
-        resultFields.add(V.Fields.permute(f, indexing, false));
+        resultFields.add(V.Fields.permute(f, valuesIndexing, false));
     }
     fields = resultFields.toArray();
     return base.replaceFields(fields);
@@ -2317,46 +2329,10 @@ V.modify_ConvertSeries.transform = function(base, commands) {
 
 V.modify_ConvertSeries.addRequired = function(list) {
     var result = new $.List();
-    if (list != null)
-        $.addAll(result, list);
+    $.addAll(result, list);
     if (!result.contains("#row")) result.add("#row");
     if (!result.contains("#count")) result.add("#count");
     return result.toArray();
-};
-
-V.modify_ConvertSeries.makeSeries = function(names, reps) {
-    var field, i, j;
-    var temp = V.Fields.makeColumnField("#series", "Series", names);
-    var blocks = $.Array(names.length * reps, 0);
-    for (i = 0; i < names.length; i++)
-        for (j = 0; j < reps; j++)
-            blocks[i * reps + j] = i;
-    field = V.Fields.permute(temp, blocks, false);
-    field.setCategories(names);
-    return field;
-};
-
-V.modify_ConvertSeries.makeValues = function(yNames, base, n) {
-    var data, field, i, j;
-    var y = $.Array(yNames.length, null);
-    for (i = 0; i < y.length; i++)
-        y[i] = base.field(yNames[i]);
-    data = $.Array(y.length * n, null);
-    for (i = 0; i < y.length; i++)
-        for (j = 0; j < n; j++)
-            data[i * n + j] = y[i].value(j);
-    field = V.Fields.makeColumnField("#values", V.Data.join(yNames), data);
-    V.Fields.copyBaseProperties(field, y[0]);
-    return field;
-};
-
-V.modify_ConvertSeries.makeIndexing = function(m, reps) {
-    var i, j;
-    var blocks = $.Array(m * reps, 0);
-    for (i = 0; i < m; i++)
-        for (j = 0; j < reps; j++)
-            blocks[i * reps + j] = j;
-    return blocks;
 };
 
 ////////////////////// Each ////////////////////////////////////////////////////////////////////////////////////////////
@@ -2748,8 +2724,6 @@ V.modify_Stack.transform = function(base, command) {
     x = V.modify_DataOperation.list(p[1]);
     aesthetics = V.modify_DataOperation.list(p[2]);
     full = $.equalsIgnoreCase(p[3], "true");
-    if (x == null) x = $.Array(0, null);
-    if (aesthetics == null) aesthetics = $.Array(0, null);
     keyFields = V.modify_Stack.getFields(base.fields, x, aesthetics, [yField]);
     allFields = V.modify_Stack.makeStackOrderedFields(base, keyFields, x.length);
     if (full)

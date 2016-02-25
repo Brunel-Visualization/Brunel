@@ -55,9 +55,6 @@ public class Stack extends DataOperation {
         String[] aesthetics = list(p[2]);
         boolean full = p[3].equalsIgnoreCase("true");
 
-        if (x == null) x = new String[0];
-        if (aesthetics == null) aesthetics = new String[0];
-
         // We sort the data in the order: X first, then aesthetics, then Y (the last to break ties)
         Field[] keyFields = getFields(base.fields, x, aesthetics, new String[]{yField});
 
