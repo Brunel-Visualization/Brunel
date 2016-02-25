@@ -28,6 +28,7 @@ import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
 import org.brunel.data.auto.NumericScale;
 import org.brunel.data.util.DateFormat;
+import org.brunel.data.Fields;
 import org.brunel.data.util.Range;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
@@ -559,7 +560,7 @@ public class D3ScaleBuilder {
                 } else
                     data.add(Data.asNumeric(value));
             }
-        Field combined = Data.makeColumnField("combined", null, data.toArray(new Object[data.size()]));
+        Field combined = Fields.makeColumnField("combined", null, data.toArray(new Object[data.size()]));
         combined.set("numeric", true);
         return combined;
     }

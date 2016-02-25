@@ -78,11 +78,11 @@ public class Dataset extends Informative implements Serializable {
         for (int i = 0; i < fields.length; i++)
             augmented[i] = Boolean.FALSE.equals(autoConvert) ? fields[i] : Auto.convert(fields[i]);
         int len = fields.length == 0 ? 0 : fields[0].rowCount();
-        augmented[fields.length] = Data.makeConstantField("#count", "Count", 1.0, len);
-        augmented[fields.length + 1] = Data.makeIndexingField("#row", "Row", len);
+        augmented[fields.length] = Fields.makeConstantField("#count", "Count", 1.0, len);
+        augmented[fields.length + 1] = Fields.makeIndexingField("#row", "Row", len);
 
         // The selection data
-        Field selection = Data.makeConstantField("#selection", "Selection", "\u2717", len);
+        Field selection = Fields.makeConstantField("#selection", "Selection", "\u2717", len);
 
         augmented[fields.length + 2] = selection;
         return new Dataset(augmented);
@@ -196,7 +196,7 @@ public class Dataset extends Informative implements Serializable {
 
     public Dataset replaceFields(Field[] fields) {
         Dataset result = new Dataset(fields);
-        result.copyPropertiesFrom(this);
+        result.copyAllProperties(this);
         return result;
     }
 
@@ -385,7 +385,7 @@ public class Dataset extends Informative implements Serializable {
         fields = d.fields;
         fieldByName = d.fieldByName;
         info = new HashMap<String, Object>();
-        copyPropertiesFrom(d);
+        copyAllProperties(d);
     }
 
 }

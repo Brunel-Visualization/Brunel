@@ -23,6 +23,7 @@ import org.brunel.data.summary.DimensionField;
 import org.brunel.data.summary.FieldRowComparison;
 import org.brunel.data.summary.MeasureField;
 import org.brunel.data.summary.SummaryValues;
+import org.brunel.data.Fields;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -179,12 +180,12 @@ public class Summarize extends DataOperation {
         Field[] fields = new Field[dimData.length + measureData.length];
         for (int i = 0; i < dimData.length; i++) {
             DimensionField f = dimensions.get(i);
-            fields[i] = Data.makeColumnField(f.rename, f.label(), dimData[i]);
+            fields[i] = Fields.makeColumnField(f.rename, f.label(), dimData[i]);
             setProperties(fields[i], f.field, null);
         }
         for (int i = 0; i < measureData.length; i++) {
             MeasureField m = measures.get(i);
-            Field result = Data.makeColumnField(m.rename, m.label(), measureData[i]);
+            Field result = Fields.makeColumnField(m.rename, m.label(), measureData[i]);
             setProperties(result, m.field, m.measureFunction);
             result.set("summary", m.measureFunction);
             if (m.field != null) result.set("originalLabel", m.field.label);
@@ -215,10 +216,10 @@ public class Summarize extends DataOperation {
     private void setProperties(Field to, Field from, String summary) {
         if (summary == null || summary.equals("mode"))
             // Copied directly from the 'from' field
-            Data.copyBaseProperties(to, from);
+            Fields.copyBaseProperties(to, from);
         else {
             if (!summary.equals("count") && !summary.equals("valid") && !summary.equals("unique"))
-                Data.copyBaseProperties(to, from);
+                Fields.copyBaseProperties(to, from);
             to.set("numeric", !summary.equals("list") && !summary.equals("shorten"));
         }
     }

@@ -18,6 +18,7 @@ package org.brunel.data.modify;
 
 import org.brunel.data.Data;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,8 +84,8 @@ public class AllCombinations {
         // Convert list of data to real rows
         Field[] built = new Field[fields.length];
         for (int i = 0; i < fields.length; i++) {
-            built[i] = Data.makeColumnField(fields[i].name, fields[i].label, extractColumn(rows, i));
-            Data.copyBaseProperties(built[i], fields[i]);
+            built[i] = Fields.makeColumnField(fields[i].name, fields[i].label, extractColumn(rows, i));
+            Fields.copyBaseProperties(built[i], fields[i]);
         }
         return built;
     }

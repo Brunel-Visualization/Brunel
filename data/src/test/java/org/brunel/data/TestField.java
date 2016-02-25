@@ -30,13 +30,13 @@ public class TestField {
 
     @Test
     public void testEmptyField() {
-        Field f = Data.makeColumnField("a", "label", new Object[0]);
+        Field f = Fields.makeColumnField("a", "label", new Object[0]);
         assertEquals(0, f.rowCount());
     }
 
     @Test
     public void testProperties() {
-        Field f = Data.makeColumnField("a", "label", new Object[0]);
+        Field f = Fields.makeColumnField("a", "label", new Object[0]);
         assertEquals(null, f.property("xyz"));
         f.set("xyz", "12");
         assertEquals("12", f.stringProperty("xyz"));
@@ -51,11 +51,11 @@ public class TestField {
 
     @Test
     public void testTiedValues() {
-        Field f = Data.makeColumnField("a", "label", new Object[]{200, 100, 400, 500, 100});
-        Field g = Data.makeColumnField("a", "label", new Object[]{200, 100, 400, 500, 600});
-        Field h = Data.makeColumnField("a", "label", new Object[]{200, 100, 400, 100, 200});
-        Field i = Data.makeColumnField("a", "label", new Object[]{100, 100, 100, 500, 500});
-        Field j = Data.makeColumnField("a", "label", new Object[]{1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 3, 4});
+        Field f = Fields.makeColumnField("a", "label", new Object[]{200, 100, 400, 500, 100});
+        Field g = Fields.makeColumnField("a", "label", new Object[]{200, 100, 400, 500, 600});
+        Field h = Fields.makeColumnField("a", "label", new Object[]{200, 100, 400, 100, 200});
+        Field i = Fields.makeColumnField("a", "label", new Object[]{100, 100, 100, 500, 500});
+        Field j = Fields.makeColumnField("a", "label", new Object[]{1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 3, 4});
 
         assertEquals(100, f.numericProperty("mode"), 0.01);
         assertEquals(400, g.numericProperty("mode"), 0.01);
@@ -66,11 +66,11 @@ public class TestField {
 
     @Test
     public void testBasicFieldStats() {
-        Field f = Data.makeColumnField("a", "label", new Object[]{"1", "2", "a", "2", null, 0});
-        Field g = Data.makeColumnField("a", "label", new Object[]{100, 200, 400, 500, 600});
-        Field h = Data.makeColumnField("a", "label", new Object[]{"a", "b", "c", "c"});
-        Field i = Data.makeIndexingField("a", "label", 20);
-        Field c = Data.makeConstantField("a", "label", 5.0, 2000);
+        Field f = Fields.makeColumnField("a", "label", new Object[]{"1", "2", "a", "2", null, 0});
+        Field g = Fields.makeColumnField("a", "label", new Object[]{100, 200, 400, 500, 600});
+        Field h = Fields.makeColumnField("a", "label", new Object[]{"a", "b", "c", "c"});
+        Field i = Fields.makeIndexingField("a", "label", 20);
+        Field c = Fields.makeConstantField("a", "label", 5.0, 2000);
 
         assertEquals(0, f.min(), 0.01);
         assertEquals(2, f.max(), 0.01);
@@ -103,77 +103,77 @@ public class TestField {
     public void testDate() {
         Field a;
 
-        a = Data.toDate(Data.makeColumnField("a", "label", new Object[]{"January 1, 1970", "January 1, 1970 00:00:01"}));
+        a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 1, 1970", "January 1, 1970 00:00:01"}));
         assertEquals(0.0, a.min(), 1e-9);
         assertEquals(1.0 / 3600 / 24, a.max(), 1e-9);
         assertEquals(DateUnit.second, a.property("dateUnit"));
 
-        a = Data.toDate(Data.makeColumnField("a", "label", new Object[]{"January 1, 1970", "January 1, 1970 00:04:00"}));
+        a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 1, 1970", "January 1, 1970 00:04:00"}));
         assertEquals(0.0, a.min(), 1e-9);
         assertEquals(4.0 / 60 / 24, a.max(), 1e-9);
         assertEquals(DateUnit.minute, a.property("dateUnit"));
 
-        a = Data.toDate(Data.makeColumnField("a", "label", new Object[]{"January 1, 1970", "January 1, 1970 00:06:00"}));
+        a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 1, 1970", "January 1, 1970 00:06:00"}));
         assertEquals(0.0, a.min(), 1e-9);
         assertEquals(6.0 / 60 / 24, a.max(), 1e-9);
         assertEquals(DateUnit.minute, a.property("dateUnit"));
 
-        a = Data.toDate(Data.makeColumnField("a", "label", new Object[]{"January 1, 1970", "January 1, 1970 00:45:00"}));
+        a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 1, 1970", "January 1, 1970 00:45:00"}));
         assertEquals(0.0, a.min(), 1e-9);
         assertEquals(45.0 / 60 / 24, a.max(), 1e-9);
         assertEquals(DateUnit.minute, a.property("dateUnit"));
 
-        a = Data.toDate(Data.makeColumnField("a", "label", new Object[]{"January 1, 1970", "January 1, 1970 04:59:00"}));
+        a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 1, 1970", "January 1, 1970 04:59:00"}));
         assertEquals(0.0, a.min(), 1e-9);
         assertEquals(DateUnit.hour, a.property("dateUnit"));
 
-        a = Data.toDate(Data.makeColumnField("a", "label", new Object[]{"January 1, 1970", "January 1, 1970 05:00:00"}));
+        a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 1, 1970", "January 1, 1970 05:00:00"}));
         assertEquals(0.0, a.min(), 1e-9);
         assertEquals(5.0 / 24, a.max(), 1e-9);
         assertEquals(DateUnit.hour, a.property("dateUnit"));
 
-        a = Data.toDate(Data.makeColumnField("a", "label", new Object[]{"January 1, 1970", "January 4, 1970"}));
+        a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 1, 1970", "January 4, 1970"}));
         assertEquals(0.0, a.min(), 1e-9);
         assertEquals(3.0, a.max(), 1e-9);
         assertEquals(DateUnit.day, a.property("dateUnit"));
 
         // Note that only three days are needed to get days as a unit -- this an exception to the usual "5 ticks" rule
-        a = Data.toDate(Data.makeColumnField("a", "label", new Object[]{"January 10, 1970", "January 2, 1970"}));
+        a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 10, 1970", "January 2, 1970"}));
         assertEquals(1.0, a.min(), 1e-9);
         assertEquals(9.0, a.max(), 1e-9);
         assertEquals(DateUnit.day, a.property("dateUnit"));
 
-        a = Data.toDate(Data.makeColumnField("a", "label", new Object[]{"January 10, 1970", "March 2, 1970"}));
+        a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 10, 1970", "March 2, 1970"}));
         assertEquals(9.0, a.min(), 1e-9);
         assertEquals(60.0, a.max(), 1e-9);
         assertEquals(DateUnit.week, a.property("dateUnit"));
 
-        a = Data.toDate(Data.makeColumnField("a", "label", new Object[]{"January 10, 1970", "December 31, 1970"}));
+        a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 10, 1970", "December 31, 1970"}));
         assertEquals(9.0, a.min(), 1e-9);
         assertEquals(364.0, a.max(), 1e-9);
         assertEquals(DateUnit.quarter, a.property("dateUnit"));
 
-        a = Data.toDate(Data.makeColumnField("a", "label", new Object[]{"January 10, 1970", "January 10, 1972"}));
+        a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 10, 1970", "January 10, 1972"}));
         assertEquals(9.0, a.min(), 1e-9);
         assertEquals(2 * 365 + 9, a.max(), 1e-9);
         assertEquals(DateUnit.quarter, a.property("dateUnit"));
 
-        a = Data.toDate(Data.makeColumnField("a", "label", new Object[]{"January 10, 1970", "January 10, 1974"}));
+        a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 10, 1970", "January 10, 1974"}));
         assertEquals(9.0, a.min(), 1e-9);
         assertEquals(4 * 365 + 1 + 9, a.max(), 1e-9);
         assertEquals(DateUnit.year, a.property("dateUnit"));
 
-        a = Data.toDate(Data.makeColumnField("a", "label", new Object[]{"January 10, 1970", "January 10, 1976"}));
+        a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 10, 1970", "January 10, 1976"}));
         assertEquals(9.0, a.min(), 1e-9);
         assertEquals(6 * 365 + 1 + 9, a.max(), 1e-9);
         assertEquals(DateUnit.year, a.property("dateUnit"));
 
-        a = Data.toDate(Data.makeColumnField("a", "label", new Object[]{"January 10, 1970", "January 10, 2030"}));
+        a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 10, 1970", "January 10, 2030"}));
         assertEquals(9.0, a.min(), 1e-9);
         assertEquals(60 * 365 + 15 + 9, a.max(), 1e-9);
         assertEquals(DateUnit.decade, a.property("dateUnit"));
 
-        a = Data.toDate(Data.toDate(Data.makeColumnField("a", "label", new Object[]{"09:45:22", "09:45:24"}), null));
+        a = Data.toDate(Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"09:45:22", "09:45:24"}), null));
         assertEquals((9 + 45 / 60.0 + 22 / 3600.0) / 24.0, a.min(), 1e-9);
         assertEquals((9 + 45 / 60.0 + 24 / 3600.0) / 24.0, a.max(), 1e-9);
         assertEquals(DateUnit.second, a.property("dateUnit"));
@@ -181,10 +181,10 @@ public class TestField {
 
     @Test
     public void testMomentFieldStats() {
-        Field uniform = Data.makeColumnField("a", "label", new Object[]{100, 200, 300, 400, 500, 600});
-        Field uniformWithMissing = Data.makeColumnField("a", "label", new Object[]{100, 200, null, 300, "a", 400, 500, 600});
-        Field peak = Data.makeColumnField("b", "label", new Object[]{1, 2, 2, 2, 2, 2, 2, 3});
-        Field skew = Data.makeColumnField("c", "label", new Object[]{1, 1, 1, 1, 1, 2, 2, 2, 5, 10});
+        Field uniform = Fields.makeColumnField("a", "label", new Object[]{100, 200, 300, 400, 500, 600});
+        Field uniformWithMissing = Fields.makeColumnField("a", "label", new Object[]{100, 200, null, 300, "a", 400, 500, 600});
+        Field peak = Fields.makeColumnField("b", "label", new Object[]{1, 2, 2, 2, 2, 2, 2, 3});
+        Field skew = Fields.makeColumnField("c", "label", new Object[]{1, 1, 1, 1, 1, 2, 2, 2, 5, 10});
 
         assertEquals(350, uniform.numericProperty("mean"), 0.01);
         assertEquals(350, uniformWithMissing.numericProperty("mean"), 0.01);
@@ -212,7 +212,7 @@ public class TestField {
     @JSTranslation(ignore = true)
     public void testJavaDates() {
         long feb_1_1970 = 60907593600000L;
-        Field f = Data.makeColumnField("test", "dates", new Object[]{
+        Field f = Fields.makeColumnField("test", "dates", new Object[]{
                 new Date(feb_1_1970),
                 new Date(feb_1_1970 + 1000 * 60 * 60 * 24),
                 new Date(feb_1_1970 + 2 * 1000 * 60 * 60 * 24),
@@ -240,12 +240,12 @@ public class TestField {
 
     @Test
     public void testOrderFieldStats() {
-        Field uniform = Data.makeColumnField("a", "label", new Object[]{100, 200, 300, 400, 500, 600});
-        Field uniformWithMissing = Data.makeColumnField("a", "label", new Object[]{100, 200, null, 300, "a", 400, 500, 600});
-        Field peak = Data.makeColumnField("b", "label", new Object[]{1, 2, 2, 2, 2, 2, 2, 3});
-        Field skew = Data.makeColumnField("c", "label", new Object[]{1, 1, 1, 1, 1, 2, 2, 2, 5, 10});
-        Field a = Data.makeColumnField("f", "label", new Object[]{0, 1, 1, 1, 1, 2, 2, 2, 5, 10, 100, 1000});
-        Field b = Data.makeColumnField("f", "label", new Object[]{10, 20, 30, 40, 22, 50, 60});
+        Field uniform = Fields.makeColumnField("a", "label", new Object[]{100, 200, 300, 400, 500, 600});
+        Field uniformWithMissing = Fields.makeColumnField("a", "label", new Object[]{100, 200, null, 300, "a", 400, 500, 600});
+        Field peak = Fields.makeColumnField("b", "label", new Object[]{1, 2, 2, 2, 2, 2, 2, 3});
+        Field skew = Fields.makeColumnField("c", "label", new Object[]{1, 1, 1, 1, 1, 2, 2, 2, 5, 10});
+        Field a = Fields.makeColumnField("f", "label", new Object[]{0, 1, 1, 1, 1, 2, 2, 2, 5, 10, 100, 1000});
+        Field b = Fields.makeColumnField("f", "label", new Object[]{10, 20, 30, 40, 22, 50, 60});
 
         assertEquals(350, uniform.numericProperty("median"), 0.01);
         assertEquals(350, uniformWithMissing.numericProperty("median"), 0.01);

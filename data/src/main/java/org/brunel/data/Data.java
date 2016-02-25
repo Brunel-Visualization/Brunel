@@ -19,10 +19,6 @@ package org.brunel.data;
 import org.brunel.data.util.Dates;
 import org.brunel.data.util.ItemsList;
 import org.brunel.data.util.Range;
-import org.brunel.data.values.ColumnProvider;
-import org.brunel.data.values.ConstantProvider;
-import org.brunel.data.values.ReorderedProvider;
-import org.brunel.data.values.RowProvider;
 import org.brunel.translator.JSTranslation;
 
 import java.text.DecimalFormat;
@@ -160,13 +156,6 @@ public class Data {
         return join(items, null);
     }
 
-    /* Makes a field that is a constant value */
-    public static Field makeConstantField(String name, String label, Object o, int len) {
-        Field field = new Field(name, label, new ConstantProvider(o, len));
-        if (Data.asNumeric(o) != null) field.set("numeric", true);
-        return field;
-    }
-
     @JSTranslation(js = {
             "if (c == null) return null;",
             "if (c && c.asNumeric) return c.asNumeric();",
@@ -195,13 +184,6 @@ public class Data {
         }
 
         return d == null || Double.isNaN(d) ? null : d;
-    }
-
-    /* Makes a field that indexes the data */
-    public static Field makeIndexingField(String name, String label, int len) {
-        Field field = new Field(name, label, new RowProvider(len));
-        field.set("numeric", true);
-        return field;
     }
 
     @JSTranslation(js = {"$.sort(data, $$CLASS$$.compare)"})
@@ -251,7 +233,7 @@ public class Data {
                 data[i] = asDate(o);
             if (!changed) changed = Data.compare(o, data[i]) != 0;
         }
-        Field result = makeColumnField(f.name, f.label, data);
+        Field result = Fields.makeColumnField(f.name, f.label, data);
         result.set("date", true);
         result.set("numeric", true);
         return result;
@@ -270,15 +252,6 @@ public class Data {
         return Dates.parse(c);
     }
 
-    /* Makes a field from a column of data */
-    public static Field makeColumnField(String name, String label, Object[] data) {
-        return new Field(name, label, new ColumnProvider(data));
-    }
-
-    public static Field makeIndexedColumnField(String name, String label, Object[] items, int[] indices) {
-        return new Field(name, label, new ReorderedProvider(new ColumnProvider(items), indices));
-    }
-
     public static Field toNumeric(Field f) {
         if (f.isNumeric()) return f;
         boolean changed = false;
@@ -288,7 +261,7 @@ public class Data {
             data[i] = asNumeric(o);
             if (!changed) changed = Data.compare(o, data[i]) != 0;
         }
-        Field result = changed ? makeColumnField(f.name, f.label, data) : f;
+        Field result = changed ? Fields.makeColumnField(f.name, f.label, data) : f;
         result.set("numeric", true);
         return result;
     }
@@ -337,7 +310,7 @@ public class Data {
         }
 
         // Passed the tests so return the details!
-        Field f = makeColumnField(base.name, base.label, items);
+        Field f = Fields.makeColumnField(base.name, base.label, items);
         Collection<String> parts = commonParts.values();
         String[] common = parts.toArray(new String[parts.size()]);
         Arrays.sort(common);
@@ -349,40 +322,6 @@ public class Data {
     @JSTranslation(js = {"return text.split(sep);"})
     public static String[] split(String text, char sep) {
         return text.split("\\" + sep);
-    }
-
-    /**
-     * Modify the data for the field
-     *
-     * @param field            field to permute
-     * @param order            the new order
-     * @param onlyOrderChanged true if this is a true permutation only
-     * @return new field
-     */
-    public static Field permute(Field field, int[] order, boolean onlyOrderChanged) {
-        if (onlyOrderChanged)
-            return new Field(field.name, field.label, new ReorderedProvider(field.provider, order), field);
-
-        Field f = new Field(field.name, field.label, new ReorderedProvider(field.provider, order));
-        Data.copyBaseProperties(f, field);
-        return f;
-    }
-
-    public static void copyBaseProperties(Field target, Field source) {
-        target.set("numeric", source.property("numeric"));
-        target.set("binned", source.property("binned"));
-        target.set("summary", source.property("summary"));
-        target.set("transform", source.property("transform"));
-        target.set("listCategories", source.property("listCategories"));
-        if (source.propertyTrue("categoriesOrdered")) {
-            target.set("categoriesOrdered", true);
-            target.set("categories", source.property("categories"));
-        }
-        if (source.isDate()) {
-            target.set("date", true);
-            target.set("dateUnit", source.property("dateUnit"));
-            target.set("dateFormat", source.property("dateFormat"));
-        }
     }
 
     public static boolean isQuoted(String txt) {

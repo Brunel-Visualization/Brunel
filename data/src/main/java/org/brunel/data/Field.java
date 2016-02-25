@@ -55,7 +55,7 @@ public class Field extends Informative implements Comparable<Field> {
                 base.makeNumericStats();
                 base.makeDateStats();
             }
-            copyPropertiesFrom(base);
+            copyAllProperties(base);
         }
     }
 
@@ -123,6 +123,11 @@ public class Field extends Informative implements Comparable<Field> {
         return propertyTrue("numeric");
     }
 
+    public void setNumeric() {
+        set("numeric", true);
+    }
+
+
     public boolean isDate() {
         return propertyTrue("date");
     }
@@ -169,7 +174,6 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public boolean isSynthetic() {
-        //Probably should use a property to indicate this instead
         return name.startsWith("#");
     }
 
@@ -183,7 +187,7 @@ public class Field extends Informative implements Comparable<Field> {
 
     public Field rename(String name, String label) {
         Field field = new Field(name, label, provider);
-        field.copyPropertiesFrom(this);
+        field.copyAllProperties(this);
         return field;
     }
 

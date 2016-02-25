@@ -21,6 +21,7 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.io.CSV;
+import org.brunel.data.Fields;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -173,9 +174,9 @@ public class TestStack {
             c[i] = (double) Math.round(s / (i%4+1));
         }
 
-        Field fa = Data.makeColumnField("a", null, a);
-        Field fb = Data.makeColumnField("b", null, b);
-        Field fc = Data.makeColumnField("c", null, c);
+        Field fa = Fields.makeColumnField("a", null, a);
+        Field fb = Fields.makeColumnField("b", null, b);
+        Field fc = Fields.makeColumnField("c", null, c);
 
         Dataset data = Dataset.make(new Field[] {fa, fb, fc});
         long t1 = System.currentTimeMillis();

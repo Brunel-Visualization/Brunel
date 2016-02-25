@@ -16,8 +16,8 @@
 
 package org.brunel.data.io;
 
-import org.brunel.data.Data;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -165,7 +165,7 @@ public class CSV {
             for (int j = 0; j < column.length; j++)
                 column[j] = data[j + 1][i];
             String name = data[0][i] == null ? "" : data[0][i].toString();
-            fields[i] = Data.makeColumnField(identifier(name), readable(name), column);
+            fields[i] = Fields.makeColumnField(identifier(name), readable(name), column);
         }
         return fields;
     }

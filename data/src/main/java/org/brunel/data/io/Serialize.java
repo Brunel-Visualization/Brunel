@@ -16,9 +16,9 @@
 
 package org.brunel.data.io;
 
-import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -140,7 +140,7 @@ public class Serialize {
             int len = d.readNumber().intValue();
             int[] indices = new int[len];
             for (int i=0; i<len; i++) indices[i] = d.readNumber().intValue();
-            Field field = Data.makeIndexedColumnField(name, label, items, indices);
+            Field field = Fields.permute(Fields.makeColumnField(name, label, items), indices, false);
 
             if (b == NUMBER || b == DATE) field.set("numeric", true);
             if (b == DATE) field.set("date", true);

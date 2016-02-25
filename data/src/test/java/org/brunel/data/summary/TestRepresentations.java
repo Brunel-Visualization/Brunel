@@ -16,8 +16,8 @@
 
 package org.brunel.data.summary;
 
-import org.brunel.data.Data;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -26,7 +26,7 @@ public class TestRepresentations {
 
     @Test
     public void testFieldRepresentations() {
-        Field basic = Data.makeIndexingField("basic", null, 1);
+        Field basic = Fields.makeIndexingField("basic", null, 1);
 
         assertEquals("basic", new DimensionField(basic, null).toString());
         assertEquals("basic[->bob]", new DimensionField(basic, "bob").toString());

@@ -20,6 +20,7 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.summary.FieldRowComparison;
+import org.brunel.data.Fields;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,7 +55,7 @@ public class Sort extends DataOperation {
         Field[] fields = new Field[base.fields.length];
         for (int i = 0; i < fields.length; i++) {
             Field field = base.fields[i];
-            fields[i] = Data.permute(field, rowOrder, true);
+            fields[i] = Fields.permute(field, rowOrder, true);
             if (!field.ordered() && sortCategories) {
                 Object[] newCategoryOrder = makeOrder(field, dimensions, ascending);
                 fields[i].setCategories(newCategoryOrder);
@@ -93,7 +94,7 @@ public class Sort extends DataOperation {
         }
         Field[] summaries = new Field[dimensions.length];
         for (int i = 0; i < dimensions.length; i++) {
-            summaries[i] = Data.makeColumnField("", null, dimensionData[i]);
+            summaries[i] = Fields.makeColumnField("", null, dimensionData[i]);
             if (dimensions[i].isNumeric()) summaries[i].set("numeric", true);
         }
         int[] order = new FieldRowComparison(summaries, ascending, true).makeSortedOrder(n);

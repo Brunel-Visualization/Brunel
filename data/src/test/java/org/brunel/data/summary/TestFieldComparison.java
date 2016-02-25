@@ -18,6 +18,7 @@ package org.brunel.data.summary;
 
 import org.brunel.data.Data;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -26,7 +27,7 @@ public class TestFieldComparison {
 
     @Test
     public void testSort() {
-        Field a = Data.makeColumnField("A", null, new Object[]{1, 4, 2, 4, 6, 1});
+        Field a = Fields.makeColumnField("A", null, new Object[]{1, 4, 2, 4, 6, 1});
         FieldRowComparison compare = new FieldRowComparison(new Field[] {a}, null, true);
         int[] order = compare.makeSortedOrder(a.rowCount());
         assertEquals("0, 5, 2, 1, 3, 4", Data.join(order));

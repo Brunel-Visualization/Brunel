@@ -20,6 +20,7 @@ import org.brunel.data.CannedData;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 import org.brunel.translator.JSTranslation;
 import org.junit.Test;
 
@@ -62,7 +63,7 @@ public class TestSerialize {
 
     @Test
     public void testSerializeFieldBasics() {
-        Field a = Data.makeConstantField("foo", "bar", 10, 1000);
+        Field a = Fields.makeConstantField("foo", "bar", 10, 1000);
         assertEquals(true, a.isNumeric());
         byte[] bytes = Serialize.serializeField(a);
         Field b = (Field) Serialize.deserialize(bytes);
@@ -75,7 +76,7 @@ public class TestSerialize {
 
     @Test
     public void testSerializeFieldNumericData() {
-        Field a = Data.makeColumnField("a", "b", new Object[]{1.0, 2.0, null, 9.0});
+        Field a = Fields.makeColumnField("a", "b", new Object[]{1.0, 2.0, null, 9.0});
         a = Data.toNumeric(a);
 
         byte[] bytes = Serialize.serializeField(a);
@@ -90,7 +91,7 @@ public class TestSerialize {
     public void testSerializeFieldDateData() {
         Date date1 = new Date();
         Date date2 = new Date(date1.getTime() + 86400000 * 12);
-        Field a = Data.makeColumnField("a", "b", new Object[]{date1, null, date2});
+        Field a = Fields.makeColumnField("a", "b", new Object[]{date1, null, date2});
         a = Data.toDate(a);
         assertTrue(a.isNumeric());
         assertTrue(a.isDate());

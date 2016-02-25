@@ -19,6 +19,7 @@ package org.brunel.data.modify;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 import org.brunel.data.util.ItemsList;
 
 import java.util.ArrayList;
@@ -72,9 +73,9 @@ public class Each extends DataOperation {
             Field f = base.fields[i];
             if (f == target) {
                 Object[] data = splitValues.toArray(new Object[splitValues.size()]);
-                results[i] = Data.makeColumnField(f.name, f.label, data);
+                results[i] = Fields.makeColumnField(f.name, f.label, data);
             } else {
-                results[i] = Data.permute(f, idx, false);
+                results[i] = Fields.permute(f, idx, false);
             }
         }
 

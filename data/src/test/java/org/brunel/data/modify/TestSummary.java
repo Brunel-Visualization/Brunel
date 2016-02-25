@@ -17,10 +17,10 @@
 package org.brunel.data.modify;
 
 import org.brunel.data.CannedData;
-import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.io.CSV;
+import org.brunel.data.Fields;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -76,8 +76,8 @@ public class TestSummary {
 
     @Test
     public void testEmptyData() {
-        Field x = Data.makeColumnField("x", null, new Object[]{1, 2});
-        Field y = Data.makeConstantField("y", null, null, 2);
+        Field x = Fields.makeColumnField("x", null, new Object[]{1, 2});
+        Field y = Fields.makeConstantField("y", null, null, 2);
         Dataset a = Dataset.make(new Field[]{x, y});
         a = Summarize.transform(a, "x=x; y1=y:min; y2=y:sum; y3=y:iqr; y4=y:valid; y5=y:median");
         Assert.assertEquals("x|y1|y2|y3|y4|y5|#count|#row -- " +

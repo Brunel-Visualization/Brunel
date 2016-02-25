@@ -57,7 +57,7 @@ public class TestData {
 
     @Test
     public void testDateConversion() {
-        Field f = Data.makeColumnField("a", "label", new Object[]{"Jan 4, 1980", "Jan 4, 1988", "a", "2", null, "Jan 9, 1978"});
+        Field f = Fields.makeColumnField("a", "label", new Object[]{"Jan 4, 1980", "Jan 4, 1988", "a", "2", null, "Jan 9, 1978"});
 
         Field g = Data.toDate(f, null);
         assertNotEquals(f, g);
@@ -74,7 +74,7 @@ public class TestData {
     public void testDateConversionForBadDates() {
         Object[] data = new Object[1000];
         for (int i=0; i<data.length; i++) data[i] = i% 10 == 0 ? "name" :"-";
-        Field f = Data.makeColumnField("a", "label", data);
+        Field f = Fields.makeColumnField("a", "label", data);
         Field g = Data.toDate(f);
         assertNotEquals(f, g);
 
@@ -129,7 +129,7 @@ public class TestData {
 
     @Test
     public void testMakingField() {
-        Field f = Data.makeColumnField("a", "label", new Object[]{"1", "2", "a", "2", null, 1});
+        Field f = Fields.makeColumnField("a", "label", new Object[]{"1", "2", "a", "2", null, 1});
         assertEquals("a", f.name);
         assertEquals("label", f.label);
         assertEquals(6, f.rowCount());
@@ -138,7 +138,7 @@ public class TestData {
 
     @Test
     public void testNumericConversion() {
-        Field f = Data.makeColumnField("a", "label", new Object[]{"1", "2", "a", "2", null, 1});
+        Field f = Fields.makeColumnField("a", "label", new Object[]{"1", "2", "a", "2", null, 1});
         Field g = Data.toNumeric(f);
         assertNotEquals(f, g);
         assertEquals("a", g.name);

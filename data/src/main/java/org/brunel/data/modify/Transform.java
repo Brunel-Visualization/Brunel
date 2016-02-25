@@ -23,6 +23,7 @@ import org.brunel.data.auto.Auto;
 import org.brunel.data.auto.NumericScale;
 import org.brunel.data.summary.FieldRowComparison;
 import org.brunel.data.util.DateFormat;
+import org.brunel.data.Fields;
 import org.brunel.data.util.Range;
 
 import java.util.Collection;
@@ -107,7 +108,7 @@ public class Transform extends DataOperation {
                 ranks[order[i]] = (p + q + 1) / 2.0;  // All tied ranks get the same averaged value
             p = q;
         }
-        Field result = Data.makeColumnField(f.name, f.label, ranks);// New data
+        Field result = Fields.makeColumnField(f.name, f.label, ranks);// New data
         result.set("numeric", true);                        // Which is numeric
         return result;
     }
@@ -141,7 +142,7 @@ public class Transform extends DataOperation {
         Object[] data = new Object[f.rowCount()];
         for (int i = 0; i < data.length; i++) data[i] = newNames.get(f.value(i));
 
-        return Data.makeColumnField(f.name, f.label, data);
+        return Fields.makeColumnField(f.name, f.label, data);
     }
 
     private static Field binNumeric(Field f, int desiredBinCount) {
@@ -151,7 +152,7 @@ public class Transform extends DataOperation {
         DateFormat dateFormat = isDate ? (DateFormat) f.property("dateFormat") : null;
         Range[] ranges = makeBinRanges(divisions, dateFormat, scale.granular);
         Object[] data = binData(f, divisions, ranges);
-        Field result = Data.makeColumnField(f.name, f.label, data);
+        Field result = Fields.makeColumnField(f.name, f.label, data);
         if (f.isDate())
             result.set("date", true);       // We do not simply use the date format and unit -- different now!
         result.set("numeric", true);        // But it IS numeric!

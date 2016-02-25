@@ -24,7 +24,7 @@ public class TestProviders {
 
     @Test
     public void testConstant() {
-        Field a = Data.makeConstantField("a", "b", "foo", 50);
+        Field a = Fields.makeConstantField("a", "b", "foo", 50);
         assertEquals("a", a.name);
         assertEquals("b", a.label);
         assertEquals(50, a.rowCount());
@@ -37,7 +37,7 @@ public class TestProviders {
 
     @Test
     public void testIndexing() {
-        Field a = Data.makeIndexingField("a", "b", 30);
+        Field a = Fields.makeIndexingField("a", "b", 30);
         assertEquals("a", a.name);
         assertEquals("b", a.label);
         assertEquals(30, a.rowCount());
@@ -52,8 +52,8 @@ public class TestProviders {
 
     @Test
     public void testPermute() {
-        Field base = Data.makeIndexingField("a", "b", 10);
-        Field a = Data.permute(base, new int[]{0, 0, 0, 1, 1, 2, 2, 3}, false);
+        Field base = Fields.makeIndexingField("a", "b", 10);
+        Field a = Fields.permute(base, new int[]{0, 0, 0, 1, 1, 2, 2, 3}, false);
         assertEquals(true, a.isNumeric());
         assertEquals("a", a.name);
         assertEquals("b", a.label);

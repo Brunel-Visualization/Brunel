@@ -16,8 +16,8 @@
 
 package org.brunel.data.summary;
 
-import org.brunel.data.Data;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 import org.brunel.data.util.ItemsList;
 import org.brunel.data.util.Range;
 
@@ -84,7 +84,7 @@ public final class SummaryValues {
         for (int i = 0; i < data.length; i++)
             data[i] = fields[fieldIndex].value(rows.get(i));
 
-        Field f = Data.makeColumnField("temp", null, data);
+        Field f = Fields.makeColumnField("temp", null, data);
 
         Double mean = f.numericProperty("mean");
         if (summary.equals("percent")) {

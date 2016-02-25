@@ -20,6 +20,7 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.summary.FieldRowComparison;
+import org.brunel.data.Fields;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -132,10 +133,10 @@ public class Stack extends DataOperation {
         int n = allFields.length;
         Field[] fields = new Field[n + 2];
         for (int i = 0; i < n; i++) fields[i] = allFields[i];
-        fields[n] = Data.makeColumnField(y.name + "$lower", y.label, bounds[0]);
-        fields[n + 1] = Data.makeColumnField(y.name + "$upper", y.label, bounds[1]);
-        Data.copyBaseProperties(fields[n], y);
-        Data.copyBaseProperties(fields[n + 1], y);
+        fields[n] = Fields.makeColumnField(y.name + "$lower", y.label, bounds[0]);
+        fields[n + 1] = Fields.makeColumnField(y.name + "$upper", y.label, bounds[1]);
+        Fields.copyBaseProperties(fields[n], y);
+        Fields.copyBaseProperties(fields[n + 1], y);
         Arrays.sort(fields);
         return fields;
     }
@@ -155,7 +156,7 @@ public class Stack extends DataOperation {
         Integer[] rowOrder = makeStackDataOrder(baseFields, keyFields.length, xFieldCount);
         Field[] fields = new Field[baseFields.length];
         for (int i = 0; i < baseFields.length; i++)
-            fields[i] = Data.permute(baseFields[i], Data.toPrimitive(rowOrder), true);
+            fields[i] = Fields.permute(baseFields[i], Data.toPrimitive(rowOrder), true);
         return fields;
     }
 

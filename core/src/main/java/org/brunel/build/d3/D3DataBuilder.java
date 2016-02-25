@@ -25,6 +25,7 @@ import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.summary.FieldRowComparison;
 import org.brunel.data.util.DateFormat;
+import org.brunel.data.Fields;
 import org.brunel.data.util.Range;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
@@ -76,7 +77,7 @@ public class D3DataBuilder {
 
             if (fields.length == 0) {
                 // A Chart that doesn't actually use the data ... just meta values
-                fields = new Field[]{Data.makeConstantField("_dummy_", "Dummy", 1.0, data.rowCount())};
+                fields = new Field[]{Fields.makeConstantField("_dummy_", "Dummy", 1.0, data.rowCount())};
             }
 
             // Name the table with a numeric suffix for multiple tables

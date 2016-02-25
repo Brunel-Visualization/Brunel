@@ -17,14 +17,25 @@
 package org.brunel.data.util;
 
 import org.brunel.data.Data;
+import org.brunel.data.Field;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class Informative {
-    protected  Map<String, Object> info = new HashMap<String, Object>();                    // Store the info
+    protected  Map<String, Object> info = new HashMap<String, Object>();    // Stores the info
 
-    public void copyPropertiesFrom(Informative other) {
+    /**
+     * Copy properties form a source.
+     * Note that missing values in the source are made missing in this also
+     * @param source where to get the values
+     * @param items the keys to copy over
+     */
+    public void copyProperties(Field source, String... items) {
+        for (String s: items) set(s, source.property(s));
+    }
+
+    public void copyAllProperties(Informative other) {
         info.putAll(other.info);
     }
 

@@ -22,6 +22,7 @@ import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
 import org.brunel.data.io.CSV;
+import org.brunel.data.Fields;
 import org.brunel.data.util.Range;
 import org.junit.Assert;
 import org.junit.Test;
@@ -62,7 +63,7 @@ public class TestBin {
 
     @Test
     public void testBinLog() {
-        Field f = Auto.convert(Data.makeColumnField("a", null, new Object[]{3, 4, 5, 14, 201, 1003}));
+        Field f = Auto.convert(Fields.makeColumnField("a", null, new Object[]{3, 4, 5, 14, 201, 1003}));
         f.set("transform", "log");
         Field binned;
 

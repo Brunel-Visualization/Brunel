@@ -19,6 +19,7 @@ package org.brunel.data.modify;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,7 +74,7 @@ public class ConvertSeries extends DataOperation {
             // The special fields have already been added
             if (fieldName.equals("#series") || fieldName.equals("#values")) continue;
             Field f = base.field(fieldName);
-            resultFields.add(Data.permute(f, indexing, false));
+            resultFields.add(Fields.permute(f, indexing, false));
         }
 
         Field[] fields = resultFields.toArray(new Field[resultFields.size()]);
@@ -92,11 +93,11 @@ public class ConvertSeries extends DataOperation {
 
     private static Field makeSeries(String[] names, int reps) {
         // Make a block that looks like 0,0,0,0,   1,1,1,1,   2,2,2,2   (for a dataset with four rows, three names)
-        Field temp = Data.makeColumnField("#series", "Series", names);
+        Field temp = Fields.makeColumnField("#series", "Series", names);
         int[] blocks = new int[names.length * reps];
         for (int i = 0; i < names.length; i++)
             for (int j = 0; j < reps; j++) blocks[i * reps + j] = i;
-        Field field = Data.permute(temp, blocks, false);
+        Field field = Fields.permute(temp, blocks, false);
         field.setCategories(names);
         return field;
     }
@@ -107,8 +108,8 @@ public class ConvertSeries extends DataOperation {
         Object[] data = new Object[y.length * n];
         for (int i = 0; i < y.length; i++)
             for (int j = 0; j < n; j++) data[i * n + j] = y[i].value(j);
-        Field field = Data.makeColumnField("#values", Data.join(yNames), data);
-        Data.copyBaseProperties(field, y[0]);  // Should use the numeric and date properties
+        Field field = Fields.makeColumnField("#values", Data.join(yNames), data);
+        Fields.copyBaseProperties(field, y[0]);  // Should use the numeric and date properties
         return field;
     }
 
