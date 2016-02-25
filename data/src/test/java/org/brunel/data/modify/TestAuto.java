@@ -77,7 +77,6 @@ public class TestAuto {
     public void testAutoConvertNumeric() {
         Field a = Fields.makeColumnField("field", null, new Object[]{1, 2, 3, 4});
         Field b = Auto.convert(a);
-        assertEquals(a, b);
         Assert.assertEquals(true, b.isNumeric());
         Assert.assertEquals(false, b.isDate());
         Assert.assertEquals(2.5, b.numericProperty("mean"), 0.001);

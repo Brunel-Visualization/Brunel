@@ -235,7 +235,7 @@ public class Data {
         }
         Field result = Fields.makeColumnField(f.name, f.label, data);
         result.set("date", true);
-        result.set("numeric", true);
+        result.setNumeric();
         return result;
     }
 
@@ -254,15 +254,13 @@ public class Data {
 
     public static Field toNumeric(Field f) {
         if (f.isNumeric()) return f;
-        boolean changed = false;
         Number[] data = new Number[f.rowCount()];
         for (int i = 0; i < data.length; i++) {
             Object o = f.value(i);
             data[i] = asNumeric(o);
-            if (!changed) changed = Data.compare(o, data[i]) != 0;
         }
-        Field result = changed ? Fields.makeColumnField(f.name, f.label, data) : f;
-        result.set("numeric", true);
+        Field result = Fields.makeColumnField(f.name, f.label, data);
+        result.setNumeric();
         return result;
     }
 

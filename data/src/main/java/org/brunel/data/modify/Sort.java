@@ -95,7 +95,7 @@ public class Sort extends DataOperation {
         Field[] summaries = new Field[dimensions.length];
         for (int i = 0; i < dimensions.length; i++) {
             summaries[i] = Fields.makeColumnField("", null, dimensionData[i]);
-            if (dimensions[i].isNumeric()) summaries[i].set("numeric", true);
+            if (dimensions[i].isNumeric()) summaries[i].setNumeric();
         }
         int[] order = new FieldRowComparison(summaries, ascending, true).makeSortedOrder(n);
         Object[] result = new Object[n];

@@ -21,8 +21,6 @@ import org.brunel.data.values.ConstantProvider;
 import org.brunel.data.values.ReorderedProvider;
 import org.brunel.data.values.RowProvider;
 
-import java.util.Date;
-
 /**
  * Utilities for manipulating fields
  */
@@ -39,7 +37,7 @@ public class Fields {
      */
     public static Field makeConstantField(String name, String label, Object o, int len) {
         Field field = new Field(name, label, new ConstantProvider(o, len));
-        setTypeFor(field, o);
+        if (Data.asNumeric(o) != null) field.setNumeric();
         return field;
     }
 
@@ -70,11 +68,8 @@ public class Fields {
     }
 
     private static void setTypeFor(Field field, Object o) {
-        if (o instanceof Number) field.setNumeric();
-        if (o instanceof Date) {
+        if (Data.asNumeric(o) != null)
             field.setNumeric();
-            field.set("date", true);
-        }
     }
 
     /**
@@ -94,12 +89,11 @@ public class Fields {
     }
 
     public static void copyBaseProperties(Field target, Field source) {
-        target.copyProperties(source, "numeric", "binned", "summary", "transform", "listCategories", "date", "categoriesOrdered");
+        target.copyProperties(source, "numeric", "binned", "summary", "transform",
+                "listCategories", "date", "categoriesOrdered", "dateUnit", "dateFormat");
+
+        // Only copy the categories if the order is important
         if (source.propertyTrue("categoriesOrdered"))
             target.set("categories", source.property("categories"));
-        if (source.isDate()) {
-            target.set("dateUnit", source.property("dateUnit"));
-            target.set("dateFormat", source.property("dateFormat"));
-        }
     }
 }

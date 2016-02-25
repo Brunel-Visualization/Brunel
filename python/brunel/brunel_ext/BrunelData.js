@@ -847,12 +847,6 @@ V.Data.formatNumeric = function(d, useGrouping) {
     return $.formatFixed(d, useGrouping);
 };
 
-V.Data.makeConstantField = function(name, label, o, len) {
-    var field = new V.Field(name, label, new V.values_ConstantProvider(o, len));
-    if (V.Data.asNumeric(o) != null) field.set("numeric", true);
-    return field;
-};
-
 V.Data.asNumeric = function(c) {
     if (c == null) return null;
     if (c && c.asNumeric) return c.asNumeric();
@@ -860,12 +854,6 @@ V.Data.asNumeric = function(c) {
     var v = Number(c);
     if (!isNaN(v)) return v;
     return null;
-};
-
-V.Data.makeIndexingField = function(name, label, len) {
-    var field = new V.Field(name, label, new V.values_RowProvider(len));
-    field.set("numeric", true);
-    return field;
 };
 
 V.Data.sort = function(data) {
@@ -895,9 +883,9 @@ V.Data.toDate = function(f, method) {
         if (!changed)
             changed = V.Data.compare(o, data[i]) != 0;
     }
-    result = V.Data.makeColumnField(f.name, f.label, data);
+    result = V.Fields.makeColumnField(f.name, f.label, data);
     result.set("date", true);
-    result.set("numeric", true);
+    result.setNumeric();
     return result;
 };
 
@@ -909,27 +897,16 @@ V.Data.asDate = function(c) {
     return null;
 };
 
-V.Data.makeColumnField = function(name, label, data) {
-    return new V.Field(name, label, new V.values_ColumnProvider(data));
-};
-
-V.Data.makeIndexedColumnField = function(name, label, items, indices) {
-    return new V.Field(name, label, new V.values_ReorderedProvider(new V.values_ColumnProvider(items), indices));
-};
-
 V.Data.toNumeric = function(f) {
-    var changed, data, i, o, result;
+    var data, i, o, result;
     if (f.isNumeric()) return f;
-    changed = false;
     data = $.Array(f.rowCount(), 0);
     for (i = 0; i < data.length; i++){
         o = f.value(i);
         data[i] = V.Data.asNumeric(o);
-        if (!changed)
-            changed = V.Data.compare(o, data[i]) != 0;
     }
-    result = changed ? V.Data.makeColumnField(f.name, f.label, data) : f;
-    result.set("numeric", true);
+    result = V.Fields.makeColumnField(f.name, f.label, data);
+    result.setNumeric();
     return result;
 };
 
@@ -966,7 +943,7 @@ V.Data.toList = function(base) {
         }
         items[i] = new V.util_ItemsList(valid.toArray(), null);
     }
-    f = V.Data.makeColumnField(base.name, base.label, items);
+    f = V.Fields.makeColumnField(base.name, base.label, items);
     parts = commonParts.values();
     common = parts.toArray();
     $.sort(common);
@@ -976,32 +953,6 @@ V.Data.toList = function(base) {
 
 V.Data.split = function(text, sep) {
     return text.split(sep);
-};
-
-V.Data.permute = function(field, order, onlyOrderChanged) {
-    var f;
-    if (onlyOrderChanged)
-        return new V.Field(field.name, field.label, new V.values_ReorderedProvider(field.provider, order), field);
-    f = new V.Field(field.name, field.label, new V.values_ReorderedProvider(field.provider, order));
-    V.Data.copyBaseProperties(f, field);
-    return f;
-};
-
-V.Data.copyBaseProperties = function(target, source) {
-    target.set("numeric", source.property("numeric"));
-    target.set("binned", source.property("binned"));
-    target.set("summary", source.property("summary"));
-    target.set("transform", source.property("transform"));
-    target.set("listCategories", source.property("listCategories"));
-    if (source.propertyTrue("categoriesOrdered")) {
-        target.set("categoriesOrdered", true);
-        target.set("categories", source.property("categories"));
-    }
-    if (source.isDate()) {
-        target.set("date", true);
-        target.set("dateUnit", source.property("dateUnit"));
-        target.set("dateFormat", source.property("dateFormat"));
-    }
 };
 
 V.Data.isQuoted = function(txt) {
@@ -1072,7 +1023,14 @@ V.util_Informative = function() {
     this.info = new $.Map();
 };
 
-V.util_Informative.prototype.copyPropertiesFrom = function(other) {
+V.util_Informative.prototype.copyProperties = function(source) {
+    var items = Array.prototype.slice.call(arguments, 1);
+    var _i, s;
+    for(_i=$.iter(items), s=_i.current; _i.hasNext(); s=_i.next())
+        this.set(s, source.property(s));
+};
+
+V.util_Informative.prototype.copyAllProperties = function(other) {
     this.info.putAll(other.info);
 };
 
@@ -1137,9 +1095,9 @@ V.Dataset.make = function(fields, autoConvert) {
     for (i = 0; i < fields.length; i++)
         augmented[i] = false == autoConvert ? fields[i] : V.auto_Auto.convert(fields[i]);
     len = fields.length == 0 ? 0 : fields[0].rowCount();
-    augmented[fields.length] = V.Data.makeConstantField("#count", "Count", 1.0, len);
-    augmented[fields.length + 1] = V.Data.makeIndexingField("#row", "Row", len);
-    selection = V.Data.makeConstantField("#selection", "Selection", "\u2717", len);
+    augmented[fields.length] = V.Fields.makeConstantField("#count", "Count", 1.0, len);
+    augmented[fields.length + 1] = V.Fields.makeIndexingField("#row", "Row", len);
+    selection = V.Fields.makeConstantField("#selection", "Selection", "\u2717", len);
     augmented[fields.length + 2] = selection;
     return new V.Dataset(augmented);
 };
@@ -1205,7 +1163,7 @@ V.Dataset.prototype.each = function(command) {
 
 V.Dataset.prototype.replaceFields = function(fields) {
     var result = new V.Dataset(fields);
-    result.copyPropertiesFrom(this);
+    result.copyAllProperties(this);
     return result;
 };
 
@@ -1502,7 +1460,7 @@ V.Field = function(name, label, provider, base) {
             base.makeNumericStats();
             base.makeDateStats();
         }
-        this.copyPropertiesFrom(base);
+        this.copyAllProperties(base);
     }
 };
 
@@ -1568,6 +1526,10 @@ V.Field.prototype.isNumeric = function() {
     return this.propertyTrue("numeric");
 };
 
+V.Field.prototype.setNumeric = function() {
+    this.set("numeric", true);
+};
+
 V.Field.prototype.isDate = function() {
     return this.propertyTrue("date");
 };
@@ -1623,7 +1585,7 @@ V.Field.prototype.ordered = function() {
 
 V.Field.prototype.rename = function(name, label) {
     var field = new V.Field(name, label, this.provider);
-    field.copyPropertiesFrom(this);
+    field.copyAllProperties(this);
     return field;
 };
 
@@ -1667,6 +1629,50 @@ V.Field.prototype.format = function(v) {
         return d == null ? "?" : V.Data.formatNumeric(d, true);
     }
     return v.toString();
+};
+
+////////////////////// Fields //////////////////////////////////////////////////////////////////////////////////////////
+//
+//   Utilities for manipulating fields
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+V.Fields = function() {};
+
+V.Fields.makeConstantField = function(name, label, o, len) {
+    var field = new V.Field(name, label, new V.values_ConstantProvider(o, len));
+    if (V.Data.asNumeric(o) != null) field.setNumeric();
+    return field;
+};
+
+V.Fields.makeIndexingField = function(name, label, len) {
+    var field = new V.Field(name, label, new V.values_RowProvider(len));
+    field.setNumeric();
+    return field;
+};
+
+V.Fields.makeColumnField = function(name, label, data) {
+    return new V.Field(name, label, new V.values_ColumnProvider(data));
+};
+
+V.Fields.setTypeFor = function(field, o) {
+    if (V.Data.asNumeric(o) != null) field.setNumeric();
+};
+
+V.Fields.permute = function(field, order, onlyOrderChanged) {
+    var f;
+    if (onlyOrderChanged)
+        return new V.Field(field.name, field.label, new V.values_ReorderedProvider(field.provider, order), field);
+    f = new V.Field(field.name, field.label, new V.values_ReorderedProvider(field.provider, order));
+    V.Fields.copyBaseProperties(f, field);
+    return f;
+};
+
+V.Fields.copyBaseProperties = function(target, source) {
+    target.copyProperties(source, "numeric", "binned", "summary", "transform", "listCategories",
+        "date", "categoriesOrdered", "dateUnit", "dateFormat");
+    if (source.propertyTrue("categoriesOrdered"))
+        target.set("categories", source.property("categories"));
 };
 
 ////////////////////// ByteInput ///////////////////////////////////////////////////////////////////////////////////////
@@ -1912,7 +1918,7 @@ V.io_CSV.makeFields = function(data) {
         for (j = 0; j < column.length; j++)
             column[j] = data[j + 1][i];
         name = data[0][i] == null ? "" : data[0][i].toString();
-        fields[i] = V.Data.makeColumnField(V.io_CSV.identifier(name), V.io_CSV.readable(name), column);
+        fields[i] = V.Fields.makeColumnField(V.io_CSV.identifier(name), V.io_CSV.readable(name), column);
     }
     return fields;
 };
@@ -2079,8 +2085,8 @@ V.io_Serialize.readFromByteInput = function(d) {
         indices = $.Array(len, 0);
         for (i = 0; i < len; i++)
             indices[i] = d.readNumber();
-        field = V.Data.makeIndexedColumnField(name, label, items, indices);
-        if (b == V.io_Serialize.NUMBER || b == V.io_Serialize.DATE) field.set("numeric", true);
+        field = V.Fields.permute(V.Fields.makeColumnField(name, label, items), indices, false);
+        if (b == V.io_Serialize.NUMBER || b == V.io_Serialize.DATE) field.setNumeric();
         if (b == V.io_Serialize.DATE) field.set("date", true);
         return field;
     } else if (b == V.io_Serialize.DATA_SET) {
@@ -2161,9 +2167,9 @@ V.modify_AddConstantFields.transform = function(base, command) {
     for (i = 0; i < additional.length; i++){
         name = additional[i];
         if (V.Data.isQuoted(name))
-            fields[i] = V.Data.makeConstantField(name, V.Data.deQuote(name), V.Data.deQuote(name), base.rowCount());
+            fields[i] = V.Fields.makeConstantField(name, V.Data.deQuote(name), V.Data.deQuote(name), base.rowCount());
         else
-            fields[i] = V.Data.makeConstantField(name, name, V.Data.asNumeric(name), base.rowCount());
+            fields[i] = V.Fields.makeConstantField(name, name, V.Data.asNumeric(name), base.rowCount());
     }
     for (i = 0; i < base.fields.length; i++)
         fields[i + additional.length] = base.fields[i];
@@ -2220,8 +2226,8 @@ V.modify_AllCombinations.prototype.make = function() {
     }
     built = $.Array(this.fields.length, null);
     for (i = 0; i < this.fields.length; i++){
-        built[i] = V.Data.makeColumnField(this.fields[i].name, this.fields[i].label, this.extractColumn(rows, i));
-        V.Data.copyBaseProperties(built[i], this.fields[i]);
+        built[i] = V.Fields.makeColumnField(this.fields[i].name, this.fields[i].label, this.extractColumn(rows, i));
+        V.Fields.copyBaseProperties(built[i], this.fields[i]);
     }
     return built;
 };
@@ -2303,7 +2309,7 @@ V.modify_ConvertSeries.transform = function(base, commands) {
     for(_i=$.iter(otherFields), fieldName=_i.current; _i.hasNext(); fieldName=_i.next()) {
         if ((fieldName == "#series") || (fieldName == "#values")) continue;
         f = base.field(fieldName);
-        resultFields.add(V.Data.permute(f, indexing, false));
+        resultFields.add(V.Fields.permute(f, indexing, false));
     }
     fields = resultFields.toArray();
     return base.replaceFields(fields);
@@ -2320,12 +2326,12 @@ V.modify_ConvertSeries.addRequired = function(list) {
 
 V.modify_ConvertSeries.makeSeries = function(names, reps) {
     var field, i, j;
-    var temp = V.Data.makeColumnField("#series", "Series", names);
+    var temp = V.Fields.makeColumnField("#series", "Series", names);
     var blocks = $.Array(names.length * reps, 0);
     for (i = 0; i < names.length; i++)
         for (j = 0; j < reps; j++)
             blocks[i * reps + j] = i;
-    field = V.Data.permute(temp, blocks, false);
+    field = V.Fields.permute(temp, blocks, false);
     field.setCategories(names);
     return field;
 };
@@ -2339,8 +2345,8 @@ V.modify_ConvertSeries.makeValues = function(yNames, base, n) {
     for (i = 0; i < y.length; i++)
         for (j = 0; j < n; j++)
             data[i * n + j] = y[i].value(j);
-    field = V.Data.makeColumnField("#values", V.Data.join(yNames), data);
-    V.Data.copyBaseProperties(field, y[0]);
+    field = V.Fields.makeColumnField("#values", V.Data.join(yNames), data);
+    V.Fields.copyBaseProperties(field, y[0]);
     return field;
 };
 
@@ -2395,9 +2401,9 @@ V.modify_Each.splitFieldValues = function(base, target) {
         f = base.fields[i];
         if (f == target) {
             data = splitValues.toArray();
-            results[i] = V.Data.makeColumnField(f.name, f.label, data);
+            results[i] = V.Fields.makeColumnField(f.name, f.label, data);
         } else {
-            results[i] = V.Data.permute(f, idx, false);
+            results[i] = V.Fields.permute(f, idx, false);
         }
     }
     return base.replaceFields(results);
@@ -2446,7 +2452,7 @@ V.modify_Filter.transform = function(base, command) {
     if (keep == null) return base;
     results = $.Array(base.fields.length, null);
     for (i = 0; i < results.length; i++)
-        results[i] = V.Data.permute(base.fields[i], keep, false);
+        results[i] = V.Fields.permute(base.fields[i], keep, false);
     return base.replaceFields(results);
 };
 
@@ -2557,7 +2563,7 @@ V.modify_Sort.transform = function(base, command, sortCategories) {
     fields = $.Array(base.fields.length, null);
     for (i = 0; i < fields.length; i++){
         field = base.fields[i];
-        fields[i] = V.Data.permute(field, rowOrder, true);
+        fields[i] = V.Fields.permute(field, rowOrder, true);
         if (!field.ordered() && sortCategories) {
             newCategoryOrder = V.modify_Sort.makeOrder(field, dimensions, ascending);
             fields[i].setCategories(newCategoryOrder);
@@ -2593,9 +2599,8 @@ V.modify_Sort.makeOrder = function(field, dimensions, ascending) {
     }
     summaries = $.Array(dimensions.length, null);
     for (i = 0; i < dimensions.length; i++){
-        summaries[i] = V.Data.makeColumnField("", null, dimensionData[i]);
-        if (dimensions[i].isNumeric())
-            summaries[i].set("numeric", true);
+        summaries[i] = V.Fields.makeColumnField("", null, dimensionData[i]);
+        if (dimensions[i].isNumeric()) summaries[i].setNumeric();
     }
     order = new V.summary_FieldRowComparison(summaries, ascending, true).makeSortedOrder(n);
     result = $.Array(n, null);
@@ -2763,13 +2768,16 @@ V.modify_Stack.getField = function(fields, name) {
 
 V.modify_Stack.getFields = function(fields) {
     var namesList = Array.prototype.slice.call(arguments, 1);
-    var _i, _j, fName, s;
+    var _i, _j, fName, field, s;
     var result = new $.List();
+    var found = new $.Set();
     for(_i=$.iter(namesList), s=_i.current; _i.hasNext(); s=_i.next())
         for(_j=$.iter(s), fName=_j.current; _j.hasNext(); fName=_j.next()) {
             fName = fName.trim();
-            if (!$.isEmpty(fName))
-                result.add(V.modify_Stack.getField(fields, fName));
+            if (!$.isEmpty(fName)) {
+                field = V.modify_Stack.getField(fields, fName);
+                if (found.add(field)) result.add(field);
+            }
         }
     return result.toArray();
 };
@@ -2807,10 +2815,10 @@ V.modify_Stack.makeStackedValues = function(allFields, y, x, full) {
     fields = $.Array(n + 2, null);
     for (i = 0; i < n; i++)
         fields[i] = allFields[i];
-    fields[n] = V.Data.makeColumnField(y.name + "$lower", y.label, bounds[0]);
-    fields[n + 1] = V.Data.makeColumnField(y.name + "$upper", y.label, bounds[1]);
-    V.Data.copyBaseProperties(fields[n], y);
-    V.Data.copyBaseProperties(fields[n + 1], y);
+    fields[n] = V.Fields.makeColumnField(y.name + "$lower", y.label, bounds[0]);
+    fields[n + 1] = V.Fields.makeColumnField(y.name + "$upper", y.label, bounds[1]);
+    V.Fields.copyBaseProperties(fields[n], y);
+    V.Fields.copyBaseProperties(fields[n + 1], y);
     $.sort(fields);
     return fields;
 };
@@ -2821,7 +2829,7 @@ V.modify_Stack.makeStackOrderedFields = function(base, keyFields, xFieldCount) {
     var rowOrder = V.modify_Stack.makeStackDataOrder(baseFields, keyFields.length, xFieldCount);
     var fields = $.Array(baseFields.length, null);
     for (i = 0; i < baseFields.length; i++)
-        fields[i] = V.Data.permute(baseFields[i], V.Data.toPrimitive(rowOrder), true);
+        fields[i] = V.Fields.permute(baseFields[i], V.Data.toPrimitive(rowOrder), true);
     return fields;
 };
 
@@ -2968,19 +2976,27 @@ V.modify_Summarize.prototype.make = function() {
     fields = $.Array(dimData.length + measureData.length, null);
     for (i = 0; i < dimData.length; i++){
         f = this.dimensions.get(i);
-        fields[i] = V.Data.makeColumnField(f.rename, f.label(), dimData[i]);
-        this.setProperties(fields[i], f.field);
+        fields[i] = V.Fields.makeColumnField(f.rename, f.label(), dimData[i]);
+        V.Fields.copyBaseProperties(fields[i], f.field);
     }
     for (i = 0; i < measureData.length; i++){
         m = this.measures.get(i);
-        result = V.Data.makeColumnField(m.rename, m.label(), measureData[i]);
-        this.setProperties(result, m.field, m.measureFunction);
+        result = V.Fields.makeColumnField(m.rename, m.label(), measureData[i]);
+        this.setProperties(m.measureFunction, result, m.field);
         result.set("summary", m.measureFunction);
         if (m.field != null)
             result.set("originalLabel", m.field.label);
         fields[dimData.length + i] = result;
     }
     return fields;
+};
+
+V.modify_Summarize.prototype.setProperties = function(f, to, src) {
+    if (f == "list") return;
+    if ((f == "count") || (f == "percent") || (f == "valid") || (f == "unique"))
+        to.setNumeric();
+    else
+        V.Fields.copyBaseProperties(to, src);
 };
 
 V.modify_Summarize.prototype.getFields = function(list) {
@@ -3000,16 +3016,6 @@ V.modify_Summarize.prototype.makeGroups = function(group, dimComparison) {
         group[order[i]] = currentGroup;
     }
     return currentGroup + 1;
-};
-
-V.modify_Summarize.prototype.setProperties = function(to, from, summary) {
-    if (summary == null || (summary == "mode"))
-        V.Data.copyBaseProperties(to, from);
-    else {
-        if (!(summary == "count") && !(summary == "valid") && !(summary == "unique"))
-            V.Data.copyBaseProperties(to, from);
-        to.set("numeric", !(summary == "list") && !(summary == "shorten"));
-    }
 };
 
 ////////////////////// Transform ///////////////////////////////////////////////////////////////////////////////////////
@@ -3089,8 +3095,8 @@ V.modify_Transform.rank = function(f, ascending) {
             ranks[order[i]] = (p + q + 1) / 2.0;
         p = q;
     }
-    result = V.Data.makeColumnField(f.name, f.label, ranks);
-    result.set("numeric", true);
+    result = V.Fields.makeColumnField(f.name, f.label, ranks);
+    result.setNumeric();
     return result;
 };
 
@@ -3113,7 +3119,7 @@ V.modify_Transform.binCategorical = function(f, desiredBinCount) {
     data = $.Array(f.rowCount(), null);
     for (i = 0; i < data.length; i++)
         data[i] = newNames.get(f.value(i));
-    return V.Data.makeColumnField(f.name, f.label, data);
+    return V.Fields.makeColumnField(f.name, f.label, data);
 };
 
 V.modify_Transform.binNumeric = function(f, desiredBinCount) {
@@ -3123,9 +3129,9 @@ V.modify_Transform.binNumeric = function(f, desiredBinCount) {
     var dateFormat = isDate ? f.property("dateFormat") : null;
     var ranges = V.modify_Transform.makeBinRanges(divisions, dateFormat, scale.granular);
     var data = V.modify_Transform.binData(f, divisions, ranges);
-    var result = V.Data.makeColumnField(f.name, f.label, data);
+    var result = V.Fields.makeColumnField(f.name, f.label, data);
     if (f.isDate()) result.set("date", true);
-    result.set("numeric", true);
+    result.setNumeric();
     result.set("categories", ranges);
     result.set("transform", f.property("transform"));
     return result;
@@ -3607,7 +3613,7 @@ V.summary_SummaryValues.prototype.get = function(fieldIndex, m) {
     data = $.Array(this.rows.size(), null);
     for (i = 0; i < data.length; i++)
         data[i] = this.fields[fieldIndex].value(this.rows.get(i));
-    f = V.Data.makeColumnField("temp", null, data);
+    f = V.Fields.makeColumnField("temp", null, data);
     mean = f.numericProperty("mean");
     if (summary == "percent") {
         if (mean == null) return null;

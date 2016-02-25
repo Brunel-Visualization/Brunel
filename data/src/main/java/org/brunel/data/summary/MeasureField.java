@@ -27,7 +27,7 @@ public class MeasureField extends DimensionField {
 
     public final String measureFunction;                                // Defines the function
     public String option;                                               // Option for it
-    public Map<String,Fit> fits = new HashMap<String, Fit>();            // Per-group fits
+    public Map<String, Fit> fits = new HashMap<String, Fit>();          // Per-group fits
 
     public MeasureField(Field field, String rename, String measureFunction) {
         super(field, rename == null && field == null ? measureFunction : rename);
@@ -41,8 +41,9 @@ public class MeasureField extends DimensionField {
 
     /**
      * Find the fit function for the given group
+     *
      * @param groupFields fields used to define g
-     * @param index the row to find the group fit for
+     * @param index       the row to find the group fit for
      * @return defined fit (or null if none yet created)
      */
     public Fit getFit(ArrayList<Field> groupFields, int index) {
@@ -51,9 +52,10 @@ public class MeasureField extends DimensionField {
 
     /**
      * Define the fit function for the given group
+     *
      * @param groupFields fields used to define g
-     * @param index the row to find the group fit for
-     * @param fit the fit to use for this group
+     * @param index       the row to find the group fit for
+     * @param fit         the fit to use for this group
      */
     public void setFit(ArrayList<Field> groupFields, int index, Fit fit) {
         this.fits.put(Transform.makeKey(groupFields, index), fit);
@@ -62,7 +64,6 @@ public class MeasureField extends DimensionField {
     public boolean isPercent() {
         return measureFunction.equals("percent");
     }
-
 
     public String toString() {
         if (field != null && field.name.equals(rename)) return label();

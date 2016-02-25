@@ -142,7 +142,7 @@ public class Serialize {
             for (int i=0; i<len; i++) indices[i] = d.readNumber().intValue();
             Field field = Fields.permute(Fields.makeColumnField(name, label, items), indices, false);
 
-            if (b == NUMBER || b == DATE) field.set("numeric", true);
+            if (b == NUMBER || b == DATE) field.setNumeric();
             if (b == DATE) field.set("date", true);
 
             return field;

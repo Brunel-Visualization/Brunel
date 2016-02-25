@@ -98,18 +98,18 @@ public class Transform extends DataOperation {
         FieldRowComparison comparison = new FieldRowComparison(new Field[]{f}, new boolean[]{ascending}, true);
         int[] order = comparison.makeSortedOrder(N);
 
-        Object[] ranks = new Object[N];                            // We will put the ranks in here
-        int p = 0;                                                  // Step through runs of same items
+        Object[] ranks = new Object[N];                                 // We will put the ranks in here
+        int p = 0;                                                      // Step through runs of same items
         while (p < N) {
             int rowP = order[p];
             int q = p + 1;
-            while (q < N && f.compareRows(rowP, order[q]) == 0) q++;  // Set q to be just past the end of a run
+            while (q < N && f.compareRows(rowP, order[q]) == 0) q++;    // Set q to be just past the end of a run
             for (int i = p; i < q; i++)
-                ranks[order[i]] = (p + q + 1) / 2.0;  // All tied ranks get the same averaged value
+                ranks[order[i]] = (p + q + 1) / 2.0;                    // All tied ranks get the same averaged value
             p = q;
         }
-        Field result = Fields.makeColumnField(f.name, f.label, ranks);// New data
-        result.set("numeric", true);                        // Which is numeric
+        Field result = Fields.makeColumnField(f.name, f.label, ranks);  // New data
+        result.setNumeric();                                            // Which is numeric
         return result;
     }
 
@@ -155,7 +155,7 @@ public class Transform extends DataOperation {
         Field result = Fields.makeColumnField(f.name, f.label, data);
         if (f.isDate())
             result.set("date", true);       // We do not simply use the date format and unit -- different now!
-        result.set("numeric", true);        // But it IS numeric!
+        result.setNumeric();                // But it IS numeric!
         result.set("categories", ranges);   // Include all bins in the categories, not just those that exist
         result.set("transform", f.property("transform"));   // Include all bins in the categories, not just those that exist
         return result;

@@ -181,17 +181,28 @@ public class Summarize extends DataOperation {
         for (int i = 0; i < dimData.length; i++) {
             DimensionField f = dimensions.get(i);
             fields[i] = Fields.makeColumnField(f.rename, f.label(), dimData[i]);
-            setProperties(fields[i], f.field, null);
+            Fields.copyBaseProperties(fields[i], f.field);
         }
         for (int i = 0; i < measureData.length; i++) {
             MeasureField m = measures.get(i);
             Field result = Fields.makeColumnField(m.rename, m.label(), measureData[i]);
-            setProperties(result, m.field, m.measureFunction);
+            setProperties(m.measureFunction, result, m.field);
             result.set("summary", m.measureFunction);
             if (m.field != null) result.set("originalLabel", m.field.label);
             fields[dimData.length + i] = result;
         }
         return fields;
+    }
+
+    private void setProperties(String f, Field to, Field src) {
+        // Nothing to set for a list
+        if (f.equals("list")) return;
+
+        // These are numeric, but do not preserve properties
+        if (f.equals("count")|| f.equals("percent") || f.equals("valid") || f.equals("unique"))
+            to.setNumeric();
+        else
+            Fields.copyBaseProperties(to, src);
     }
 
     private Field[] getFields(List<? extends DimensionField> list) {
@@ -212,15 +223,4 @@ public class Summarize extends DataOperation {
         return currentGroup + 1;
     }
 
-    /* Copy the relevant detail over and set properties */
-    private void setProperties(Field to, Field from, String summary) {
-        if (summary == null || summary.equals("mode"))
-            // Copied directly from the 'from' field
-            Fields.copyBaseProperties(to, from);
-        else {
-            if (!summary.equals("count") && !summary.equals("valid") && !summary.equals("unique"))
-                Fields.copyBaseProperties(to, from);
-            to.set("numeric", !summary.equals("list") && !summary.equals("shorten"));
-        }
-    }
 }
