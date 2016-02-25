@@ -82,10 +82,14 @@ public class Stack extends DataOperation {
 
     private static Field[] getFields(Field[] fields, String[]... namesList) {
         List<Field> result = new ArrayList<Field>();
+        Set<Field> found = new HashSet<Field>();
         for (String[] s : namesList)
             for (String fName : s) {
                 fName = fName.trim();
-                if (!fName.isEmpty()) result.add(getField(fields, fName));
+                if (!fName.isEmpty()) {
+                    Field field = getField(fields, fName);
+                    if (found.add(field)) result.add(field);
+                }
             }
         return result.toArray(new Field[result.size()]);
     }

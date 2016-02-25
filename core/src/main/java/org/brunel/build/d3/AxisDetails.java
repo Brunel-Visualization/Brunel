@@ -61,14 +61,13 @@ class AxisDetails {
     /* Return the title for the axis */
     private static String title(Field[] fields) {
 
-        if (fields.length == 1) {
-            // Do not title '#row', '#count', "#series", "#values" -- otherwise just use the label
-            return fields[0].isSynthetic() ? null : fields[0].label;
-        }
+        // Get all the valid fields
+        List<Field> real = new ArrayList<Field>();
+        for (Field f : fields) if (!f.isSynthetic() && !f.name.startsWith("'")) real.add(f);
 
         LinkedHashSet<String> titles = new LinkedHashSet<String>();             // All the titles
         LinkedHashSet<String> originalTitles = new LinkedHashSet<String>();     // Only using names before summary
-        for (Field f : fields) {
+        for (Field f : real) {
             titles.add(f.label);
             String originalLabel = (String) f.property("originalLabel");
             originalTitles.add(originalLabel == null ? f.label : originalLabel);
