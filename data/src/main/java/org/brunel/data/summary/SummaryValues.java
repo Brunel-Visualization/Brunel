@@ -56,7 +56,7 @@ public final class SummaryValues {
      * @return the summary value
      */
     public Object get(int fieldIndex, MeasureField m) {
-        String summary = m.measureFunction;
+        String summary = m.method;
         if (summary.equals("count")) return rows.size();
         Field x = xFields.length == 0 ? null : xFields[xFields.length - 1];   // Innermost is the one
         int index = rows.get(0);

@@ -45,7 +45,7 @@ public class Sort extends DataOperation {
         boolean[] ascending = getAscending(dimensions, sortFields);
 
         // Sort the rows to get the new row order
-        int[] rowOrder = new FieldRowComparison(dimensions, ascending, true).makeSortedOrder(base.rowCount());
+        int[] rowOrder = new FieldRowComparison(dimensions, ascending, true).makeSortedOrder();
 
         // Ensure that any data binned to the "..." catch-all category is moved to the end
         for (int i = base.fields.length - 1; i >= 0; i--) {
@@ -98,7 +98,7 @@ public class Sort extends DataOperation {
             summaries[i] = Fields.makeColumnField("", null, dimensionData[i]);
             if (dimensions[i].isNumeric()) summaries[i].setNumeric();
         }
-        int[] order = new FieldRowComparison(summaries, ascending, true).makeSortedOrder(n);
+        int[] order = new FieldRowComparison(summaries, ascending, true).makeSortedOrder();
         Object[] result = new Object[n];
         for (int i = 0; i < n; i++) result[i] = categories[order[i]];
         return result;

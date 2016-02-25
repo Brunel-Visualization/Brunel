@@ -96,7 +96,7 @@ public class Transform extends DataOperation {
 
         // Sort the rows to get the new row order
         FieldRowComparison comparison = new FieldRowComparison(new Field[]{f}, new boolean[]{ascending}, true);
-        int[] order = comparison.makeSortedOrder(N);
+        int[] order = comparison.makeSortedOrder();
 
         Object[] ranks = new Object[N];                                 // We will put the ranks in here
         int p = 0;                                                      // Step through runs of same items

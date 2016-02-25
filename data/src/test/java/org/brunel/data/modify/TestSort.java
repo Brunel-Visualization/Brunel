@@ -58,7 +58,7 @@ public class TestSort {
         FieldRowComparison comparisonWithRows = new FieldRowComparison(new Field[] { simple.field("B")}, null, true);
 
         // The order should be 0,1,3,2
-        int[] order = comparisonWithRows.makeSortedOrder(4);
+        int[] order = comparisonWithRows.makeSortedOrder();
         assertEquals(0, order[0]);
         assertEquals(1, order[1]);
         assertEquals(3, order[2]);

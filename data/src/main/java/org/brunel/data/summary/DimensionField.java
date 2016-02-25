@@ -19,6 +19,7 @@ package org.brunel.data.summary;
 import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.data.util.DateFormat;
+import org.brunel.translator.JSTranslation;
 
 public class DimensionField implements Comparable<DimensionField> {
 
@@ -46,6 +47,7 @@ public class DimensionField implements Comparable<DimensionField> {
         return field == null ? rename : field.label;
     }
 
+    @JSTranslation(ignore = true)
     public String toString() {
         return rename.equals(field.name) ? rename : field.name + "[->" + rename + "]";
     }

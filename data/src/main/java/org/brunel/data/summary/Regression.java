@@ -73,10 +73,10 @@ public class Regression implements Fit {
             }
         }
 
-        Integer[] order = Data.order(xList.toArray(new Double[xList.size()]), true);
-        double[] xx = new double[order.length];
-        double[] yy = new double[order.length];
-        for (int i = 0; i < order.length; i++) {
+        int n = xList.size();
+        Integer[] order = Data.order(xList.toArray(new Double[n]), true);
+        double[] xx = new double[n], yy = new double[n];
+        for (int i = 0; i < n; i++) {
             xx[i] = xList.get(order[i]);
             yy[i] = yList.get(order[i]);
         }

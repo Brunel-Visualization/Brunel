@@ -128,13 +128,13 @@ public class Summarize extends DataOperation {
 
         // group[row] gives the index of the summary group for row 'row'; 'groupCount' is the number of groups
         int[] group = new int[rowCount];
-        int groupCount = makeGroups(group, dimComparison);
+        int groupCount = buildGroups(group, dimComparison);
 
         // These are just like the summary groups, but only for the percent bases
         // The percent groups nest within each base group: rows with the same group have the same summary group also
         // we do not create these if they are not needed, for efficiency
         int[] percentGroup = percentNeeded ? new int[rowCount] : null;
-        int percentGroupCount = percentNeeded ? makeGroups(percentGroup, percentBaseComparison) : 0;
+        int percentGroupCount = percentNeeded ? buildGroups(percentGroup, percentBaseComparison) : 0;
 
         // Create the summary values for each group, and percentage sums
         SummaryValues[] summaries = new SummaryValues[groupCount];
@@ -186,8 +186,8 @@ public class Summarize extends DataOperation {
         for (int i = 0; i < measureData.length; i++) {
             MeasureField m = measures.get(i);
             Field result = Fields.makeColumnField(m.rename, m.label(), measureData[i]);
-            setProperties(m.measureFunction, result, m.field);
-            result.set("summary", m.measureFunction);
+            setProperties(m.method, result, m.field);
+            result.set("summary", m.method);
             if (m.field != null) result.set("originalLabel", m.field.label);
             fields[dimData.length + i] = result;
         }
@@ -214,8 +214,9 @@ public class Summarize extends DataOperation {
         return result;
     }
 
-    private int makeGroups(int[] group, FieldRowComparison dimComparison) {
-        int[] order = dimComparison.makeSortedOrder(rowCount);
+    private int buildGroups(int[] group, FieldRowComparison dimComparison) {
+        if (dimComparison.isEmpty()) return 1;
+        int[] order = dimComparison.makeSortedOrder();
         int currentGroup = 0;
         for (int i = 0; i < group.length; i++) {
             // If the comparison indicates the dimensions are different, move to a new group

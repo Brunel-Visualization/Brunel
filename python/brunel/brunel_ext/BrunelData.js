@@ -2510,7 +2510,7 @@ V.modify_Sort.transform = function(base, command, sortCategories) {
     if (sortFields.length == 0) return base;
     dimensions = V.modify_Sort.getFields(base, sortFields);
     ascending = V.modify_Sort.getAscending(dimensions, sortFields);
-    rowOrder = new V.summary_FieldRowComparison(dimensions, ascending, true).makeSortedOrder(base.rowCount());
+    rowOrder = new V.summary_FieldRowComparison(dimensions, ascending, true).makeSortedOrder();
     for (i = base.fields.length - 1; i >= 0; i--){
         f = base.fields[i];
         if (f.isBinned() && f.preferCategorical())
@@ -2558,7 +2558,7 @@ V.modify_Sort.makeOrder = function(field, dimensions, ascending) {
         summaries[i] = V.Fields.makeColumnField("", null, dimensionData[i]);
         if (dimensions[i].isNumeric()) summaries[i].setNumeric();
     }
-    order = new V.summary_FieldRowComparison(summaries, ascending, true).makeSortedOrder(n);
+    order = new V.summary_FieldRowComparison(summaries, ascending, true).makeSortedOrder();
     result = $.Array(n, null);
     for (i = 0; i < n; i++)
         result[i] = categories[order[i]];
@@ -2883,9 +2883,9 @@ V.modify_Summarize.prototype.make = function() {
     var dimComparison = new V.summary_FieldRowComparison(dimensionFields, null, false);
     var percentBaseComparison = new V.summary_FieldRowComparison(percentBaseFields, null, false);
     var group = $.Array(this.rowCount, 0);
-    var groupCount = this.makeGroups(group, dimComparison);
+    var groupCount = this.buildGroups(group, dimComparison);
     var percentGroup = this.percentNeeded ? $.Array(this.rowCount, 0) : null;
-    var percentGroupCount = this.percentNeeded ? this.makeGroups(percentGroup, percentBaseComparison) : 0;
+    var percentGroupCount = this.percentNeeded ? this.buildGroups(percentGroup, percentBaseComparison) : 0;
     var summaries = $.Array(groupCount, null);
     for (i = 0; i < summaries.length; i++)
         summaries[i] = new V.summary_SummaryValues(measureFields, percentBaseFields, dimensionFields);
@@ -2925,8 +2925,8 @@ V.modify_Summarize.prototype.make = function() {
     for (i = 0; i < measureData.length; i++){
         m = this.measures.get(i);
         result = V.Fields.makeColumnField(m.rename, m.label(), measureData[i]);
-        this.setProperties(m.measureFunction, result, m.field);
-        result.set("summary", m.measureFunction);
+        this.setProperties(m.method, result, m.field);
+        result.set("summary", m.method);
         if (m.field != null)
             result.set("originalLabel", m.field.label);
         fields[dimData.length + i] = result;
@@ -2952,10 +2952,11 @@ V.modify_Summarize.prototype.getFields = function(list) {
     return result;
 };
 
-V.modify_Summarize.prototype.makeGroups = function(group, dimComparison) {
-    var i;
-    var order = dimComparison.makeSortedOrder(this.rowCount);
-    var currentGroup = 0;
+V.modify_Summarize.prototype.buildGroups = function(group, dimComparison) {
+    var currentGroup, i, order;
+    if ($.isEmpty(dimComparison)) return 1;
+    order = dimComparison.makeSortedOrder();
+    currentGroup = 0;
     for (i = 0; i < group.length; i++){
         if (i > 0 && dimComparison.compare(order[i], order[i - 1]) != 0) currentGroup++;
         group[order[i]] = currentGroup;
@@ -3029,7 +3030,7 @@ V.modify_Transform.rank = function(f, ascending) {
     var i, q, result, rowP;
     var N = f.rowCount();
     var comparison = new V.summary_FieldRowComparison([f], [ascending], true);
-    var order = comparison.makeSortedOrder(N);
+    var order = comparison.makeSortedOrder();
     var ranks = $.Array(N, null);
     var p = 0;
     while (p < N) {
@@ -3277,10 +3278,6 @@ V.summary_DimensionField.prototype.label = function() {
     return this.field == null ? this.rename : this.field.label;
 };
 
-V.summary_DimensionField.prototype.toString = function() {
-    return $.equals(this.rename, this.field.name) ? this.rename : this.field.name + "[->" + this.rename + "]";
-};
-
 ////////////////////// FieldRowComparison //////////////////////////////////////////////////////////////////////////////
 //
 //   Details on how to compare rows
@@ -3305,10 +3302,15 @@ V.summary_FieldRowComparison.prototype.compare = function(a, b) {
     return this.rowsBreakTies ? (a - b) : 0;
 };
 
-V.summary_FieldRowComparison.prototype.makeSortedOrder = function(len) {
+V.summary_FieldRowComparison.prototype.isEmpty = function() {
+    return this.fields.length == 0;
+};
+
+V.summary_FieldRowComparison.prototype.makeSortedOrder = function() {
     var i;
-    var items = $.Array(len, 0);
-    for (i = 0; i < len; i++)
+    var n = this.fields[0].rowCount();
+    var items = $.Array(n, 0);
+    for (i = 0; i < n; i++)
         items[i] = i;
     $.sort(items, this);
     return V.Data.toPrimitive(items);
@@ -3322,9 +3324,9 @@ V.summary_MeasureField = function(field, rename, measureFunction) {
     this.fits = new $.Map();
     $.superconstruct(this, field, rename == null && field == null ? measureFunction : rename);
     if (field != null && (measureFunction == "mean") && !field.isNumeric())
-        this.measureFunction = "mode";
+        this.method = "mode";
     else
-        this.measureFunction = measureFunction;
+        this.method = measureFunction;
 };
 
 $.extend(V.summary_MeasureField, V.summary_DimensionField);
@@ -3338,21 +3340,20 @@ V.summary_MeasureField.prototype.setFit = function(groupFields, index, fit) {
 };
 
 V.summary_MeasureField.prototype.isPercent = function() {
-    return this.measureFunction == "percent";
-};
-
-V.summary_MeasureField.prototype.toString = function() {
-    if (this.field != null && $.equals(this.field.name, this.rename)) return this.label();
-    return this.label() + "[->" + this.rename + "]";
+    return this.method == "percent";
 };
 
 V.summary_MeasureField.prototype.label = function() {
     var a, b;
-    if ((this.measureFunction == "sum") && (this.field.name == "#count")) return this.field.label;
-    if ((this.measureFunction == "percent") && (this.field.name == "#count")) return "Percent";
-    a = this.measureFunction.substring(0, 1).toUpperCase();
-    b = this.measureFunction.substring(1);
-    return a + b + "(" + (this.field == null ? "" : this.field.label) + ")";
+    if (this.method == "list") return this.field.label;
+    if (this.method == "count") return "Count";
+    if (this.field == null || (this.field.name == "#count")) {
+        if (this.method == "sum") return this.field.label;
+        if (this.method == "percent") return "Percent";
+    }
+    a = this.method.substring(0, 1).toUpperCase();
+    b = this.method.substring(1);
+    return a + b + "(" + this.field.label + ")";
 };
 
 ////////////////////// Regression //////////////////////////////////////////////////////////////////////////////////////
@@ -3394,7 +3395,7 @@ V.summary_Regression.mean = function(values) {
 };
 
 V.summary_Regression.asPairs = function(y, x, rows) {
-    var _i, i, order, xv, xx, yv, yy;
+    var _i, i, n, order, xv, xx, yv, yy;
     var xList = new $.List();
     var yList = new $.List();
     for(_i=$.iter(rows), i=_i.current; _i.hasNext(); i=_i.next()) {
@@ -3405,10 +3406,11 @@ V.summary_Regression.asPairs = function(y, x, rows) {
             yList.add(yv);
         }
     }
+    n = xList.size();
     order = V.Data.order(xList.toArray(), true);
-    xx = $.Array(order.length, 0);
-    yy = $.Array(order.length, 0);
-    for (i = 0; i < order.length; i++){
+    xx = $.Array(n, 0);
+    yy = $.Array(n, 0);
+    for (i = 0; i < n; i++){
         xx[i] = xList.get(order[i]);
         yy[i] = yList.get(order[i]);
     }
@@ -3502,7 +3504,7 @@ V.summary_SummaryValues.prototype.firstRow = function() {
 
 V.summary_SummaryValues.prototype.get = function(fieldIndex, m) {
     var categories, data, displayCount, f, fit, high, i, index, low, mean, sum, windowPercent, x;
-    var summary = m.measureFunction;
+    var summary = m.method;
     if (summary == "count") return this.rows.size();
     x = this.xFields.length == 0 ? null : this.xFields[this.xFields.length - 1];
     index = this.rows.get(0);

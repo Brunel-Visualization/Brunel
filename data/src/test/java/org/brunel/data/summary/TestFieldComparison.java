@@ -29,7 +29,7 @@ public class TestFieldComparison {
     public void testSort() {
         Field a = Fields.makeColumnField("A", null, new Object[]{1, 4, 2, 4, 6, 1});
         FieldRowComparison compare = new FieldRowComparison(new Field[] {a}, null, true);
-        int[] order = compare.makeSortedOrder(a.rowCount());
+        int[] order = compare.makeSortedOrder();
         assertEquals("0, 5, 2, 1, 3, 4", Data.join(order));
     }
 }

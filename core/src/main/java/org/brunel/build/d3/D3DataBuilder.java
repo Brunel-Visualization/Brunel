@@ -402,7 +402,7 @@ public class D3DataBuilder {
         for (int i = 0; i < fields.length; i++) fields[i] = data.field(result.get(i));
         // Sort and see if any adjacent 'keys' are the same
         FieldRowComparison rowComparison = new FieldRowComparison(fields, null, false);
-        int[] order = rowComparison.makeSortedOrder(data.rowCount());
+        int[] order = rowComparison.makeSortedOrder();
         for (int i = 1; i < order.length; i++)
             if (rowComparison.compare(order[i], order[i - 1]) == 0) return false;
         return true;
