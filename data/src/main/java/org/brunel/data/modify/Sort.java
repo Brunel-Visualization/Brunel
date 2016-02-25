@@ -37,8 +37,8 @@ import java.util.Map;
 public class Sort extends DataOperation {
 
     public static Dataset transform(Dataset base, String command, boolean sortCategories) {
-        String[] sortFields = parts(command);
-        if (sortFields == null) return base;
+        String[] sortFields = strings(command, ';');
+        if (sortFields.length == 0) return base;
         // Build the dimensional information
         Field[] dimensions = getFields(base, sortFields);
         boolean[] ascending = getAscending(dimensions, sortFields);
@@ -151,9 +151,8 @@ public class Sort extends DataOperation {
         for (int i = 0; i < fields.length; i++) {
             String name = names[i].split(":")[0];
             fields[i] = base.field(name.trim());
-            if (fields[i] == null) {
+            if (fields[i] == null)
                 throw new IllegalArgumentException("Could not find field: " + name);
-            }
         }
         return fields;
     }

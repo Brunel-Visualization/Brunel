@@ -49,7 +49,7 @@ public class Regression implements Fit {
 
     static double mean(double[] values) {
         double s = 0;
-        for (int i = 0; i < values.length; i++) s += values[i];
+        for (double value : values) s += value;
         return s / values.length;
     }
 
@@ -64,9 +64,7 @@ public class Regression implements Fit {
     static double[][] asPairs(Field y, Field x, List<Integer> rows) {
         List<Double> xList = new ArrayList<Double>();
         List<Double> yList = new ArrayList<Double>();
-        int n = rows.size();
-        for (int k=0; k< n; k++) {
-            int i = rows.get(k);
+        for (int i : rows) {
             Double xv = Data.asNumeric(x.value(i));
             Double yv = Data.asNumeric(y.value(i));
             if (xv != null && yv != null) {

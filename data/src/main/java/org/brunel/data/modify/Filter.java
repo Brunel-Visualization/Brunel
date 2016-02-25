@@ -46,9 +46,9 @@ public class Filter extends DataOperation {
      *      Each can be negated with a "!" in front of it, which also negates the type value
      */
     public static Dataset transform(Dataset base, String command) {
-        String[] commands = parts(command);
-        if (commands == null) return base;
+        String[] commands = strings(command, ';');
         int N = commands.length;
+        if (N == 0) return base;
 
         // Parse and assemble info for the commands
 

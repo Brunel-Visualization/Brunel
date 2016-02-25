@@ -85,7 +85,7 @@ public class AllCombinations {
         Field[] built = new Field[fields.length];
         for (int i = 0; i < fields.length; i++) {
             built[i] = Fields.makeColumnField(fields[i].name, fields[i].label, extractColumn(rows, i));
-            Fields.copyBaseProperties(built[i], fields[i]);
+            Fields.copyBaseProperties(fields[i], built[i]);
         }
         return built;
     }

@@ -78,8 +78,8 @@ public class Range implements Comparable<Range> {
     }
 
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        return obj instanceof Range && ((Range) obj).low == low && ((Range) obj).high == high;
+        return this == obj ||
+                obj instanceof Range && ((Range) obj).low == low && ((Range) obj).high == high;
     }
 
     public String toString() {

@@ -39,8 +39,8 @@ public class ConvertSeries extends DataOperation {
 
         // The first section consists of a list of 'y' values to be made into series and values
         // The second section is a list of fields to be preserved as-is
-        String[] sections = parts(commands);
-        String[] yFields = list(sections[0]);
+        String[] sections = strings(commands, ';');
+        String[] yFields = strings(sections[0], ',');
 
         int nY = yFields.length;            // Number of Y fields
         int nR = base.rowCount();           // The rows in the original data
@@ -49,7 +49,8 @@ public class ConvertSeries extends DataOperation {
         if (nY < 2) return base;
 
         // If there are no other fields, there is only one section
-        String[] otherFields = addRequired(list(sections.length < 2 ? "" : sections[1]));
+        String items = sections.length < 2 ? "" : sections[1];
+        String[] otherFields = addRequired(strings(items, ','));
 
         Field[] y = new Field[nY];
         for (int i = 0; i < nY; i++) y[i] = base.field(yFields[i]);
@@ -80,7 +81,7 @@ public class ConvertSeries extends DataOperation {
 
         // Make the field for values, copying properties from the first Y field (we assume they are simialr)
         Field values = Fields.makeColumnField("#values", Data.join(yFields), data);
-        Fields.copyBaseProperties(values, y[0]);
+        Fields.copyBaseProperties(y[0], values);
 
         // Create the series field
         Field temp = Fields.makeColumnField("#series", "Series", yFields);

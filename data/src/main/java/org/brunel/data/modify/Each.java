@@ -35,33 +35,27 @@ public class Each extends DataOperation {
      * Command is a list of fields to use to split rows
      */
     public static Dataset transform(Dataset base, String command) {
-        // Step through all valid fields
-        String[] fieldNames = parts(command);
-        if (fieldNames == null) return base;
-
         // Apply successively to each usable field
-        for (String s : fieldNames) {
+        for (String s : strings(command, ';')) {
             Field f = base.field(s);
-            if (f.property("listCategories") != null)
+            if (f.propertyTrue("list"))
                 base = splitFieldValues(base, f);
         }
-
         return base;
-
     }
 
     private static Dataset splitFieldValues(Dataset base, Field target) {
 
-       ItemsList nulls = new ItemsList(new Object[1], null);
+       ItemsList nulls = new ItemsList(new Object[1]);
 
         List<Integer> index = new ArrayList<Integer>();         // For the non-target fields
         List<Object> splitValues = new ArrayList<Object>();     // For the target field
         for (int i = 0; i < target.rowCount(); i++) {
             ItemsList list = (ItemsList) target.value(i);
-            if (list == null) list = nulls;                // Treat a null as a list with a single null item
-            for (Object o : list) {
-                splitValues.add(o);                         // Add the actual value
-                index.add(i);                               // Repeat the index for each list case
+            if (list == null) list = nulls;                     // Treat a null as a list with a single null item
+            for (int j=0; j<list.size(); j++) {
+                splitValues.add(list.get(i));                   // Add the actual value
+                index.add(i);                                   // Repeat the index for each list case
             }
         }
 

@@ -19,11 +19,11 @@ package org.brunel.data.modify;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 import org.brunel.data.summary.DimensionField;
 import org.brunel.data.summary.FieldRowComparison;
 import org.brunel.data.summary.MeasureField;
 import org.brunel.data.summary.SummaryValues;
-import org.brunel.data.Fields;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,8 +54,8 @@ public class Summarize extends DataOperation {
      */
     public static Dataset transform(Dataset base, String command) {
         if (base.rowCount() == 0) return base;
-        List<String[]> operations = map(command, "=");
-        if (operations == null) return base;
+        List<String[]> operations = map(command);
+        if (operations.isEmpty()) return base;
 
         // Decode the operations into these collections
         List<MeasureField> measures = new ArrayList<MeasureField>();
@@ -181,7 +181,7 @@ public class Summarize extends DataOperation {
         for (int i = 0; i < dimData.length; i++) {
             DimensionField f = dimensions.get(i);
             fields[i] = Fields.makeColumnField(f.rename, f.label(), dimData[i]);
-            Fields.copyBaseProperties(fields[i], f.field);
+            Fields.copyBaseProperties(f.field, fields[i]);
         }
         for (int i = 0; i < measureData.length; i++) {
             MeasureField m = measures.get(i);
@@ -196,13 +196,16 @@ public class Summarize extends DataOperation {
 
     private void setProperties(String f, Field to, Field src) {
         // Nothing to set for a list
-        if (f.equals("list")) return;
-
-        // These are numeric, but do not preserve properties
-        if (f.equals("count")|| f.equals("percent") || f.equals("valid") || f.equals("unique"))
+        if (f.equals("list")) {
+            // Need to keep the date format
+            to.copyProperties(src, "dateFormat");
+            to.set("list", true);
+        } else if (f.equals("count") || f.equals("percent") || f.equals("valid") || f.equals("unique"))
+            // These are numeric, but do not preserve properties
             to.setNumeric();
         else
-            Fields.copyBaseProperties(to, src);
+            // All properties copy over
+            Fields.copyBaseProperties(src, to);
     }
 
     private Field[] getFields(List<? extends DimensionField> list) {

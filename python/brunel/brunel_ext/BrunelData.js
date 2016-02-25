@@ -552,7 +552,7 @@ V.auto_Auto.optimalBinCount = function(f) {
 V.auto_Auto.convert = function(base) {
     var N, asList, asNumeric, i, j, n, nDate, nNumeric, o, order, t;
     if (base.isSynthetic() || base.isDate()) return base;
-    if (base.propertyTrue("listCategories")) return base;
+    if (base.propertyTrue("list")) return base;
     asList = V.Data.toList(base);
     if (V.auto_Auto.goodLists(asList)) return asList;
     N = base.valid();
@@ -941,12 +941,13 @@ V.Data.toList = function(base) {
                 valid.add(common);
             }
         }
-        items[i] = new V.util_ItemsList(valid.toArray(), null);
+        items[i] = new V.util_ItemsList(valid.toArray());
     }
     f = V.Fields.makeColumnField(base.name, base.label, items);
     parts = commonParts.values();
     common = parts.toArray();
     $.sort(common);
+    f.set("list", true);
     f.set("listCategories", common);
     return f;
 };
@@ -1076,18 +1077,6 @@ V.Dataset = function(fields) {
 
 $.extend(V.Dataset, V.util_Informative);
 
-V.Dataset.makeFromRows = function(rows) {
-    var column, i, j;
-    var fields = $.Array(rows[0].length, null);
-    for (j = 0; j < fields.length; j++){
-        column = $.Array(rows.length - 1, null);
-        for (i = 1; i < rows.length; i++)
-            column[i - 1] = rows[i][j];
-        fields[j] = new V.Field(rows[0][j].toString(), null, new V.values_ColumnProvider(column));
-    }
-    return V.Dataset.make(fields);
-};
-
 V.Dataset.make = function(fields, autoConvert) {
     var augmented, i, len, selection;
     fields = V.Dataset.ensureUniqueNames(fields);
@@ -1153,6 +1142,15 @@ V.Dataset.prototype.field = function(name, lax) {
     return (field != null || !lax) ? field : this.fieldByName.get(name.toLowerCase());
 };
 
+V.Dataset.prototype.fieldArray = function() {
+    var names = Array.prototype.slice.call(arguments, 0);
+    var i;
+    var ff = $.Array(names.length, null);
+    for (i = 0; i < ff.length; i++)
+        ff[i] = this.field(names[i], false);
+    return ff;
+};
+
 V.Dataset.prototype.filter = function(command) {
     return V.modify_Filter.transform(this, command);
 };
@@ -1178,7 +1176,7 @@ V.Dataset.prototype.name = function() {
 V.Dataset.prototype.reduce = function(command) {
     var _i, f, ff;
     var names = new $.Set();
-    $.addAll(names, V.modify_DataOperation.parts(command));
+    $.addAll(names, V.modify_DataOperation.strings(command, ';'));
     ff = new $.List();
     for(_i=$.iter(this.fields), f=_i.current; _i.hasNext(); f=_i.next()) {
         if ($.startsWith(f.name, "#") || names.contains(f.name)) ff.add(f);
@@ -1228,7 +1226,7 @@ V.Dataset.prototype.modifySelection = function(method, row, source) {
 };
 
 V.Dataset.prototype.expandedOriginalRows = function(row) {
-    var _i, compare, expanded, f, i, item, list, o, rowField, targetFields;
+    var _i, compare, expanded, f, i, j, list, o, rowField, targetFields;
     var n = this.rowCount();
     var important = new $.Set();
     for(_i=$.iter(this.fields), f=_i.current; _i.hasNext(); f=_i.next())
@@ -1242,8 +1240,8 @@ V.Dataset.prototype.expandedOriginalRows = function(row) {
             o = rowField.value(i);
             if (o instanceof V.util_ItemsList) {
                 list = o;
-                for(_i=$.iter(list), item=_i.current; _i.hasNext(); item=_i.next())
-                    expanded.add(item - 1);
+                for (j = 0; j < list.size(); j++)
+                    expanded.add(list.get(j) - 1);
             } else if (o != null)
                 expanded.add(o - 1);
         }
@@ -1503,10 +1501,14 @@ V.Field.prototype.property = function(key) {
             o = V.Field.$super.property.call(this, key);
         }
         if (!this.calculatedDate && V.stats_DateStats.creates(key)) {
-            if (!this.calculatedNominal) this.makeNominalStats();
-            if (!this.calculatedNumeric) this.makeNumericStats();
-            this.makeDateStats();
-            o = V.Field.$super.property.call(this, key);
+            if (this.isDate()) {
+                if (!this.calculatedNominal) this.makeNominalStats();
+                if (!this.calculatedNumeric) this.makeNumericStats();
+                this.makeDateStats();
+                o = V.Field.$super.property.call(this, key);
+            } else {
+                this.calculatedDate = true;
+            }
         }
     }
     return o;
@@ -1628,6 +1630,8 @@ V.Field.prototype.format = function(v) {
         d = V.Data.asNumeric(v);
         return d == null ? "?" : V.Data.formatNumeric(d, true);
     }
+    if (this.propertyTrue("list"))
+        return v.toString(this.property("dateFormat"));
     return v.toString();
 };
 
@@ -1657,15 +1661,21 @@ V.Fields.makeColumnField = function(name, label, data) {
 
 V.Fields.permute = function(field, order, onlyOrderChanged) {
     var f;
+    if (field.provider instanceof V.values_ConstantProvider) {
+        if (onlyOrderChanged)
+            return field;
+        else
+            return V.Fields.makeConstantField(field.name, field.label, field.value(0), field.rowCount());
+    }
     if (onlyOrderChanged)
         return new V.Field(field.name, field.label, new V.values_ReorderedProvider(field.provider, order), field);
     f = new V.Field(field.name, field.label, new V.values_ReorderedProvider(field.provider, order));
-    V.Fields.copyBaseProperties(f, field);
+    V.Fields.copyBaseProperties(field, f);
     return f;
 };
 
-V.Fields.copyBaseProperties = function(target, source) {
-    target.copyProperties(source, "numeric", "binned", "summary", "transform", "listCategories",
+V.Fields.copyBaseProperties = function(source, target) {
+    target.copyProperties(source, "numeric", "binned", "summary", "transform", "list", "listCategories",
         "date", "categoriesOrdered", "dateUnit", "dateFormat");
     if (source.propertyTrue("categoriesOrdered"))
         target.set("categories", source.property("categories"));
@@ -2110,33 +2120,17 @@ V.io_Serialize.readFromByteInput = function(d) {
 
 V.modify_DataOperation = function() {};
 
-V.modify_DataOperation.map = function(command, sep) {
-    var _i, c, key, result, s, value;
-    var parts = V.modify_DataOperation.parts(command);
-    if (parts == null) return null;
-    result = new $.List();
-    for(_i=$.iter(parts), c=_i.current; _i.hasNext(); c=_i.next()) {
-        s = c.split(sep);
-        key = s[0].trim();
-        value = s.length > 1 ? s[1].trim() : "";
-        result.add([key, value]);
-    }
+V.modify_DataOperation.map = function(command) {
+    var _i, c;
+    var result = new $.List();
+    for(_i=$.iter(V.modify_DataOperation.strings(command, ';')), c=_i.current; _i.hasNext(); c=_i.next())
+        result.add(V.modify_DataOperation.strings(c, '='));
     return result;
 };
 
-V.modify_DataOperation.parts = function(command) {
-    var i, parts;
-    if ($.endsWith(command, ";"))
-        command = command.substring(0, $.len(command) - 1);
-    parts = command.split(";");
-    for (i = 0; i < parts.length; i++)
-        parts[i] = parts[i].trim();
-    return parts.length == 1 && $.isEmpty(parts[0]) ? null : parts;
-};
-
-V.modify_DataOperation.list = function(items) {
+V.modify_DataOperation.strings = function(items, sep) {
     var i;
-    var parts = items.split(",");
+    var parts = V.Data.split(items, sep);
     for (i = 0; i < parts.length; i++)
         parts[i] = parts[i].trim();
     return parts.length == 1 && $.isEmpty(parts[0]) ? $.Array(0, null) : parts;
@@ -2157,8 +2151,8 @@ $.extend(V.modify_AddConstantFields, V.modify_DataOperation);
 
 V.modify_AddConstantFields.transform = function(base, command) {
     var fields, i, name;
-    var additional = V.modify_DataOperation.parts(command);
-    if (additional == null) return base;
+    var additional = V.modify_DataOperation.strings(command, ';');
+    if (additional.length == 0) return base;
     fields = $.Array(base.fields.length + additional.length, null);
     for (i = 0; i < additional.length; i++){
         name = additional[i];
@@ -2223,7 +2217,7 @@ V.modify_AllCombinations.prototype.make = function() {
     built = $.Array(this.fields.length, null);
     for (i = 0; i < this.fields.length; i++){
         built[i] = V.Fields.makeColumnField(this.fields[i].name, this.fields[i].label, this.extractColumn(rows, i));
-        V.Fields.copyBaseProperties(built[i], this.fields[i]);
+        V.Fields.copyBaseProperties(this.fields[i], built[i]);
     }
     return built;
 };
@@ -2288,16 +2282,16 @@ V.modify_ConvertSeries = function() {
 $.extend(V.modify_ConvertSeries, V.modify_DataOperation);
 
 V.modify_ConvertSeries.transform = function(base, commands) {
-    var _i, data, f, fieldName, fields, i, j, nR, nY, otherFields, resultFields, sections, series,
+    var _i, data, f, fieldName, fields, i, items, j, nR, nY, otherFields, resultFields, sections, series,
         seriesIndexing, temp, values, valuesIndexing, y, yFields;
     if ($.isEmpty(commands)) return base;
-    sections = V.modify_DataOperation.parts(commands);
-    yFields = V.modify_DataOperation.list(sections[0]);
+    sections = V.modify_DataOperation.strings(commands, ';');
+    yFields = V.modify_DataOperation.strings(sections[0], ',');
     nY = yFields.length;
     nR = base.rowCount();
     if (nY < 2) return base;
-    otherFields = V.modify_ConvertSeries.addRequired(V.modify_DataOperation.list(
-        sections.length < 2 ? "" : sections[1]));
+    items = sections.length < 2 ? "" : sections[1];
+    otherFields = V.modify_ConvertSeries.addRequired(V.modify_DataOperation.strings(items, ','));
     y = $.Array(nY, null);
     for (i = 0; i < nY; i++)
         y[i] = base.field(yFields[i]);
@@ -2311,7 +2305,7 @@ V.modify_ConvertSeries.transform = function(base, commands) {
             data[i * nR + j] = y[i].value(j);
         }
     values = V.Fields.makeColumnField("#values", V.Data.join(yFields), data);
-    V.Fields.copyBaseProperties(values, y[0]);
+    V.Fields.copyBaseProperties(y[0], values);
     temp = V.Fields.makeColumnField("#series", "Series", yFields);
     series = V.Fields.permute(temp, seriesIndexing, false);
     series.setCategories(yFields);
@@ -2348,26 +2342,24 @@ $.extend(V.modify_Each, V.modify_DataOperation);
 
 V.modify_Each.transform = function(base, command) {
     var _i, f, s;
-    var fieldNames = V.modify_DataOperation.parts(command);
-    if (fieldNames == null) return base;
-    for(_i=$.iter(fieldNames), s=_i.current; _i.hasNext(); s=_i.next()) {
+    for(_i=$.iter(V.modify_DataOperation.strings(command, ';')), s=_i.current; _i.hasNext(); s=_i.next()) {
         f = base.field(s);
-        if (f.property("listCategories") != null)
+        if (f.propertyTrue("list"))
             base = V.modify_Each.splitFieldValues(base, f);
     }
     return base;
 };
 
 V.modify_Each.splitFieldValues = function(base, target) {
-    var _i, data, f, i, idx, list, o, results;
-    var nulls = new V.util_ItemsList($.Array(1, null), null);
+    var data, f, i, idx, j, list, results;
+    var nulls = new V.util_ItemsList($.Array(1, null));
     var index = new $.List();
     var splitValues = new $.List();
     for (i = 0; i < target.rowCount(); i++){
         list = target.value(i);
         if (list == null) list = nulls;
-        for(_i=$.iter(list), o=_i.current; _i.hasNext(); o=_i.next()) {
-            splitValues.add(o);
+        for (j = 0; j < list.size(); j++){
+            splitValues.add(list.get(i));
             index.add(i);
         }
     }
@@ -2402,10 +2394,10 @@ V.modify_Filter = function() {
 $.extend(V.modify_Filter, V.modify_DataOperation);
 
 V.modify_Filter.transform = function(base, command) {
-    var N, c, field, i, keep, p, par, params, q, results, t, type;
-    var commands = V.modify_DataOperation.parts(command);
-    if (commands == null) return base;
-    N = commands.length;
+    var c, field, i, keep, p, par, params, q, results, t, type;
+    var commands = V.modify_DataOperation.strings(command, ';');
+    var N = commands.length;
+    if (N == 0) return base;
     field = $.Array(N, null);
     type = $.Array(N, 0);
     params = $.Array(N, null);
@@ -2526,8 +2518,8 @@ $.extend(V.modify_Sort, V.modify_DataOperation);
 
 V.modify_Sort.transform = function(base, command, sortCategories) {
     var ascending, dimensions, f, field, fields, i, newCategoryOrder, rowOrder;
-    var sortFields = V.modify_DataOperation.parts(command);
-    if (sortFields == null) return base;
+    var sortFields = V.modify_DataOperation.strings(command, ';');
+    if (sortFields.length == 0) return base;
     dimensions = V.modify_Sort.getFields(base, sortFields);
     ascending = V.modify_Sort.getAscending(dimensions, sortFields);
     rowOrder = new V.summary_FieldRowComparison(dimensions, ascending, true).makeSortedOrder(base.rowCount());
@@ -2632,9 +2624,8 @@ V.modify_Sort.getFields = function(base, names) {
     for (i = 0; i < fields.length; i++){
         name = names[i].split(":")[0];
         fields[i] = base.field(name.trim());
-        if (fields[i] == null) {
+        if (fields[i] == null)
             throw new $.Exception("Could not find field: " + name);
-        }
     }
     return fields;
 };
@@ -2719,10 +2710,10 @@ $.extend(V.modify_Stack, V.modify_DataOperation);
 V.modify_Stack.transform = function(base, command) {
     var aesthetics, allFields, fields, full, keyFields, p, x, yField;
     if ($.isEmpty(command)) return base;
-    p = V.modify_DataOperation.parts(command);
+    p = V.modify_DataOperation.strings(command, ';');
     yField = p[0];
-    x = V.modify_DataOperation.list(p[1]);
-    aesthetics = V.modify_DataOperation.list(p[2]);
+    x = V.modify_DataOperation.strings(p[1], ',');
+    aesthetics = V.modify_DataOperation.strings(p[2], ',');
     full = $.equalsIgnoreCase(p[3], "true");
     keyFields = V.modify_Stack.getFields(base.fields, x, aesthetics, [yField]);
     allFields = V.modify_Stack.makeStackOrderedFields(base, keyFields, x.length);
@@ -2791,8 +2782,8 @@ V.modify_Stack.makeStackedValues = function(allFields, y, x, full) {
         fields[i] = allFields[i];
     fields[n] = V.Fields.makeColumnField(y.name + "$lower", y.label, bounds[0]);
     fields[n + 1] = V.Fields.makeColumnField(y.name + "$upper", y.label, bounds[1]);
-    V.Fields.copyBaseProperties(fields[n], y);
-    V.Fields.copyBaseProperties(fields[n + 1], y);
+    V.Fields.copyBaseProperties(y, fields[n]);
+    V.Fields.copyBaseProperties(y, fields[n + 1]);
     $.sort(fields);
     return fields;
 };
@@ -2870,8 +2861,8 @@ V.modify_Summarize.transform = function(base, command) {
     var _i, baseField, containsCount, containsRow, dimensions, fields, measureField,
         measures, op, operations, percentBase, s, values;
     if (base.rowCount() == 0) return base;
-    operations = V.modify_DataOperation.map(command, "=");
-    if (operations == null) return base;
+    operations = V.modify_DataOperation.map(command);
+    if ($.isEmpty(operations)) return base;
     measures = new $.List();
     dimensions = new $.List();
     percentBase = new $.List();
@@ -2951,7 +2942,7 @@ V.modify_Summarize.prototype.make = function() {
     for (i = 0; i < dimData.length; i++){
         f = this.dimensions.get(i);
         fields[i] = V.Fields.makeColumnField(f.rename, f.label(), dimData[i]);
-        V.Fields.copyBaseProperties(fields[i], f.field);
+        V.Fields.copyBaseProperties(f.field, fields[i]);
     }
     for (i = 0; i < measureData.length; i++){
         m = this.measures.get(i);
@@ -2966,11 +2957,13 @@ V.modify_Summarize.prototype.make = function() {
 };
 
 V.modify_Summarize.prototype.setProperties = function(f, to, src) {
-    if (f == "list") return;
-    if ((f == "count") || (f == "percent") || (f == "valid") || (f == "unique"))
+    if (f == "list") {
+        to.copyProperties(src, "dateFormat");
+        to.set("list", true);
+    } else if ((f == "count") || (f == "percent") || (f == "valid") || (f == "unique"))
         to.setNumeric();
     else
-        V.Fields.copyBaseProperties(to, src);
+        V.Fields.copyBaseProperties(src, to);
 };
 
 V.modify_Summarize.prototype.getFields = function(list) {
@@ -3017,8 +3010,8 @@ $.extend(V.modify_Transform, V.modify_DataOperation);
 V.modify_Transform.transform = function(base, command) {
     var _i, fields, i, o, op, operations;
     if (base.rowCount() == 0) return base;
-    operations = V.modify_DataOperation.map(command, "=");
-    if (operations == null) return base;
+    operations = V.modify_DataOperation.map(command);
+    if ($.isEmpty(operations)) return base;
     fields = $.Array(base.fields.length, null);
     for (i = 0; i < fields.length; i++){
         op = null;
@@ -3444,20 +3437,18 @@ V.summary_Regression = function(y, x, rows) {
 };
 
 V.summary_Regression.mean = function(values) {
-    var i;
+    var _i, value;
     var s = 0;
-    for (i = 0; i < values.length; i++)
-        s += values[i];
+    for(_i=$.iter(values), value=_i.current; _i.hasNext(); value=_i.next())
+        s += value;
     return s / values.length;
 };
 
 V.summary_Regression.asPairs = function(y, x, rows) {
-    var i, k, order, xv, xx, yv, yy;
+    var _i, i, order, xv, xx, yv, yy;
     var xList = new $.List();
     var yList = new $.List();
-    var n = rows.size();
-    for (k = 0; k < n; k++){
-        i = rows.get(k);
+    for(_i=$.iter(rows), i=_i.current; _i.hasNext(); i=_i.next()) {
         xv = V.Data.asNumeric(x.value(i));
         yv = V.Data.asNumeric(y.value(i));
         if (xv != null && yv != null) {
@@ -3614,7 +3605,7 @@ V.summary_SummaryValues.prototype.get = function(fieldIndex, m) {
         return mean * f.numericProperty("valid");
     }
     if (summary == "list") {
-        categories = new V.util_ItemsList(f.property("categories"), m.getDateFormat());
+        categories = new V.util_ItemsList(f.property("categories"));
         if (m.option != null) {
             displayCount = Number(m.option);
             categories.setDisplayCount(displayCount);
@@ -3739,13 +3730,9 @@ $.extendEnum(V.util_DateUnit);
 ////////////////////// ItemsList ///////////////////////////////////////////////////////////////////////////////////////
 
 
-V.util_ItemsList = function(items, df) {
-    $.superconstruct(this);
-    this.displayCount = 12;this.dateFormat = df;
-    $.addAll(this, items);
+V.util_ItemsList = function(items) {
+    this.displayCount = 12;this.items = items;
 };
-
-$.extend(V.util_ItemsList, $.List);
 
 V.util_ItemsList.prototype.equals = function(obj) {
     return this == obj || obj instanceof V.util_ItemsList && this.compareTo(obj) == 0;
@@ -3761,21 +3748,36 @@ V.util_ItemsList.prototype.compareTo = function(o) {
     return this.size() - o.size();
 };
 
+V.util_ItemsList.prototype.get = function(i) {
+    return this.items[i];
+};
+
+V.util_ItemsList.prototype.size = function() {
+    return this.items.length;
+};
+
 V.util_ItemsList.prototype.setDisplayCount = function(displayCount) {
     this.displayCount = displayCount;
 };
 
-V.util_ItemsList.prototype.toString = function() {
-    var d, i, v;
+V.util_ItemsList.prototype.toString = function(dateFormat) {
+    var d, i, p, t, v;
     var s = "";
     var n = this.size();
     for (i = 0; i < n; i++){
         if (i > 0) s += ", ";
         if (i == this.displayCount - 1 && n > this.displayCount) return s + "\u2026";
         v = this.get(i);
-        if (this.dateFormat != null)
-            s += this.dateFormat.format(V.Data.asDate(v));
-        else {
+        if (dateFormat != null) {
+            t = dateFormat.format(V.Data.asDate(v));
+            p = t.indexOf(',');
+            if (p > 0) {
+                s += t.substring(0, p);
+                s += t.substring(p + 1);
+            } else {
+                s += t;
+            }
+        } else {
             d = V.Data.asNumeric(v);
             if (d != null)
                 s += V.Data.formatNumeric(d, false);
@@ -3833,8 +3835,7 @@ V.util_Range.prototype.hashCode = function() {
 };
 
 V.util_Range.prototype.equals = function(obj) {
-    if (this == obj) return true;
-    return obj instanceof V.util_Range && obj.low == this.low && obj.high == this.high;
+    return this == obj || obj instanceof V.util_Range && obj.low == this.low && obj.high == this.high;
 };
 
 V.util_Range.prototype.toString = function() {
@@ -3941,8 +3942,17 @@ V.values_ConstantProvider.prototype.value = function(index) {
 
 
 V.values_ReorderedProvider = function(base, order) {
-    this.base = base;
-    this.order = order;
+    var i, other;
+    if (base instanceof V.values_ReorderedProvider) {
+        other = base;
+        this.base = other.base;
+        this.order = $.Array(order.length, 0);
+        for (i = 0; i < order.length; i++)
+            this.order[i] = other.order[order[i]];
+    } else {
+        this.base = base;
+        this.order = order;
+    }
 };
 
 V.values_ReorderedProvider.prototype.compareRows = function(a, b, categoryOrder) {

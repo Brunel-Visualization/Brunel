@@ -95,19 +95,19 @@ public class ChartCoordinates {
         } else if (vis.fY.size() > 1) {
             // Handle series
             if (vis.stacked)
-                return new Field[]{data.field("#values$lower"), data.field("#values$upper")};
+                return data.fieldArray("#values$lower", "#values$upper");
             else
-                return new Field[]{data.field("#values")};
+                return data.fieldArray("#values");
         }
 
         // We have a single Y field
         String s = vis.fY.get(0).asField();
         if (vis.stacked) {
             // Stacked has been handled by adding two new fields, so add them
-            return new Field[]{data.field(s + "$lower"), data.field(s + "$upper")};
+            return data.fieldArray(s + "$lower",s + "$upper");
         } else {
             // Simple case, a single y field
-            return new Field[]{data.field(s)};
+            return data.fieldArray(s);
         }
     }
 

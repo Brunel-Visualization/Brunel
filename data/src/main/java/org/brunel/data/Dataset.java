@@ -30,7 +30,6 @@ import org.brunel.data.modify.Transform;
 import org.brunel.data.summary.FieldRowComparison;
 import org.brunel.data.util.Informative;
 import org.brunel.data.util.ItemsList;
-import org.brunel.data.values.ColumnProvider;
 import org.brunel.translator.JSTranslation;
 
 import java.io.ByteArrayOutputStream;
@@ -45,23 +44,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class Dataset extends Informative implements Serializable {
-
-    /**
-     * Make a dataset from rows of data, the first row are field names
-     * Required for JavaScript
-     *
-     * @param rows input data
-     * @return result data set, autoconverted
-     */
-    public static Dataset makeFromRows(Object[][] rows) {
-        Field[] fields = new Field[rows[0].length];
-        for (int j = 0; j < fields.length; j++) {
-            Object[] column = new Object[rows.length - 1];
-            for (int i = 1; i < rows.length; i++) column[i - 1] = rows[i][j];
-            fields[j] = new Field(rows[0][j].toString(), null, new ColumnProvider(column));
-        }
-        return make(fields);
-    }
 
     @JSTranslation(ignore = true)
     public static Dataset make(Field[] fields) {
@@ -166,6 +148,13 @@ public class Dataset extends Informative implements Serializable {
         return (field != null || !lax) ? field : fieldByName.get(name.toLowerCase());
     }
 
+    public Field[] fieldArray(String... names) {
+        Field[] ff = new Field[names.length];
+        for (int i = 0; i < ff.length; i++) ff[i] = field(names[i], false);
+        return ff;
+    }
+
+
     /**
      * Create a new data set based on this one, with some rows filtered out
      *
@@ -216,7 +205,7 @@ public class Dataset extends Informative implements Serializable {
      */
     public Dataset reduce(String command) {
         Set<String> names = new HashSet<String>();
-        Collections.addAll(names, DataOperation.parts(command));
+        Collections.addAll(names, DataOperation.strings(command, ';'));
         // keep special and used fields
         List<Field> ff = new ArrayList<Field>();
         for (Field f : this.fields) {
@@ -360,7 +349,7 @@ public class Dataset extends Informative implements Serializable {
                 Object o = rowField.value(i);
                 if (o instanceof ItemsList) {
                     ItemsList list = (ItemsList) o;
-                    for (Object item : list) expanded.add((Integer) item - 1);
+                    for (int j=0; j<list.size(); j++) expanded.add((Integer) list.get(j) - 1);
                 } else if (o != null)
                     expanded.add((Integer) o - 1);
             }

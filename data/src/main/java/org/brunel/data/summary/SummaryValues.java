@@ -115,7 +115,7 @@ public final class SummaryValues {
             return mean * f.numericProperty("valid");
         }
         if (summary.equals("list")) {
-            ItemsList categories = new ItemsList((Object[]) f.property("categories"), m.getDateFormat());
+            ItemsList categories = new ItemsList((Object[]) f.property("categories"));
             if (m.option != null) {
                 int displayCount = Integer.parseInt(m.option);
                 categories.setDisplayCount(displayCount);

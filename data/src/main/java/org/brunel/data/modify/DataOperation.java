@@ -16,6 +16,8 @@
 
 package org.brunel.data.modify;
 
+import org.brunel.data.Data;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,45 +27,20 @@ import java.util.List;
 public abstract class DataOperation {
 
     /**
-     * Splits the command into parts using the semi-colon as separator, then the indicated separator for map keys
+     * Splits the command into parts using the semi-colon as separator, then = for map keys
      *
      * @param command command to be split into sections
      * @return array of commands, or null if there are none
      */
-    static List<String[]> map(String command, String sep) {
-        String[] parts = parts(command);
-        if (parts == null) return null;
+    static List<String[]> map(String command) {
         List<String[]> result = new ArrayList<String[]>();
-        for (String c : parts) {
-            String[] s = c.split(sep);
-            String key = s[0].trim();
-            String value = s.length > 1 ? s[1].trim() : "";
-            result.add(new String[]{key, value});
-        }
+        for (String c : strings(command, ';'))
+            result.add(strings(c, '='));
         return result;
     }
 
-    /**
-     * Splits the command into parts using the semi-colon as separator
-     *
-     * @param command
-     * @return array of commands, or null if there are none
-     */
-    public static String[] parts(String command) {
-        if (command.endsWith(";")) command = command.substring(0, command.length() - 1);
-        String[] parts = command.split(";");
-        for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim();
-        return parts.length == 1 && parts[0].isEmpty() ? null : parts;
-    }
-
-    /**
-     * Splits the command into parts using the comma as separator
-     *
-     * @param items items as a comm-separated list
-     * @return array of commands, or null if there are none
-     */
-    static String[] list(String items) {
-        String[] parts = items.split(",");
+    public static String[] strings(String items, char sep) {
+        String[] parts = Data.split(items, sep);
         for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim();
         return parts.length == 1 && parts[0].isEmpty() ? new String[0] : parts;
     }

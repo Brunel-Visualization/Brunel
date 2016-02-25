@@ -110,11 +110,11 @@ public class TestAuto {
         Assert.assertEquals(false, a == b);
         Assert.assertEquals(false, b.isNumeric());
         Assert.assertEquals(false, b.isDate());
-        Assert.assertEquals(new ItemsList(new String[]{"a", "b", "c"}, null), b.value(0));
-        Assert.assertEquals(new ItemsList(new String[]{"c", "a"}, null), b.value(1));
+        Assert.assertEquals(new ItemsList(new String[]{"a", "b", "c"}), b.value(0));
+        Assert.assertEquals(new ItemsList(new String[]{"c", "a"}), b.value(1));
         Assert.assertEquals(null, b.value(2));
-        Assert.assertEquals(new ItemsList(new String[]{"a", "e"}, null), b.value(3));
-        Assert.assertEquals(new ItemsList(new String[]{}, null), b.value(4));
+        Assert.assertEquals(new ItemsList(new String[]{"a", "e"}), b.value(3));
+        Assert.assertEquals(new ItemsList(new String[]{}), b.value(4));
 
     }
 

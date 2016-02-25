@@ -51,8 +51,8 @@ public class Transform extends DataOperation {
 
     public static Dataset transform(Dataset base, String command) {
         if (base.rowCount() == 0) return base;
-        List<String[]> operations = map(command, "=");
-        if (operations == null) return base;
+        List<String[]> operations = map(command);
+        if (operations.isEmpty()) return base;
 
         Field[] fields = new Field[base.fields.length];
         for (int i = 0; i < fields.length; i++) {

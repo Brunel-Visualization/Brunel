@@ -96,7 +96,7 @@ public class Auto {
 
     public static Field convert(Field base) {
         if (base.isSynthetic() || base.isDate()) return base;           // Already set
-        if (base.propertyTrue("listCategories")) return base;           // Already a multi-set
+        if (base.propertyTrue("list")) return base;                     // Already a multi-set
 
 
         // Try conversion to a lists

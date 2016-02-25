@@ -98,7 +98,7 @@ public class D3DataBuilder {
                 String name;
                 if (fields[i].isDate())
                     name = "date";
-                else if (fields[i].property("listCategories") != null)
+                else if (fields[i].propertyTrue("list"))
                     name = "list";
                 else if (fields[i].isNumeric())
                     name = "numeric";

@@ -260,7 +260,7 @@ public class TestSerialize {
         byte[] bytes = Serialize.serializeDataset(dataset);
         bytes[1] = (byte) 0;
         try {
-            Object o = Serialize.deserialize(bytes);
+            Serialize.deserialize(bytes);
         } catch (IllegalStateException e) {
             assertTrue(true);
             return;

@@ -49,10 +49,10 @@ public class Stack extends DataOperation {
     public static Dataset transform(Dataset base, String command) {
         if (command.isEmpty()) return base;
 
-        String[] p = parts(command);
+        String[] p = strings(command, ';');
         String yField = p[0];
-        String[] x = list(p[1]);
-        String[] aesthetics = list(p[2]);
+        String[] x = strings(p[1], ',');
+        String[] aesthetics = strings(p[2], ',');
         boolean full = p[3].equalsIgnoreCase("true");
 
         // We sort the data in the order: X first, then aesthetics, then Y (the last to break ties)
@@ -132,8 +132,8 @@ public class Stack extends DataOperation {
         for (int i = 0; i < n; i++) fields[i] = allFields[i];
         fields[n] = Fields.makeColumnField(y.name + "$lower", y.label, bounds[0]);
         fields[n + 1] = Fields.makeColumnField(y.name + "$upper", y.label, bounds[1]);
-        Fields.copyBaseProperties(fields[n], y);
-        Fields.copyBaseProperties(fields[n + 1], y);
+        Fields.copyBaseProperties(y, fields[n]);
+        Fields.copyBaseProperties(y, fields[n + 1]);
         Arrays.sort(fields);
         return fields;
     }

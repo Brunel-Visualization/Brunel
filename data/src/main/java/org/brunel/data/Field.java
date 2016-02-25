@@ -21,6 +21,7 @@ import org.brunel.data.stats.NominalStats;
 import org.brunel.data.stats.NumericStats;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Informative;
+import org.brunel.data.util.ItemsList;
 import org.brunel.data.util.Range;
 import org.brunel.data.values.Provider;
 
@@ -64,7 +65,8 @@ public class Field extends Informative implements Comparable<Field> {
      * This method is used by selection to set the selection results.
      * It should not be used by general programming, as fields may share data and so setting the value in one
      * field may affect other fields -- or cached data sets.
-     * @param o value to set
+     *
+     * @param o     value to set
      * @param index index at which to set the value
      */
     public void setValue(Object o, int index) {
@@ -100,10 +102,15 @@ public class Field extends Informative implements Comparable<Field> {
                 o = super.property(key);
             }
             if (!calculatedDate && DateStats.creates(key)) {
-                if (!calculatedNominal) makeNominalStats();
-                if (!calculatedNumeric) makeNumericStats();
-                makeDateStats();
-                o = super.property(key);
+                if (isDate()) {
+                    if (!calculatedNominal) makeNominalStats();
+                    if (!calculatedNumeric) makeNumericStats();
+                    makeDateStats();
+                    o = super.property(key);
+                } else {
+                    // No need
+                    calculatedDate = true;
+                }
             }
         }
         return o;
@@ -126,7 +133,6 @@ public class Field extends Informative implements Comparable<Field> {
     public void setNumeric() {
         set("numeric", true);
     }
-
 
     public boolean isDate() {
         return propertyTrue("date");
@@ -178,7 +184,7 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public boolean preferCategorical() {
-        return !isNumeric() || isBinned() ;
+        return !isNumeric() || isBinned();
     }
 
     public boolean ordered() {
@@ -230,6 +236,8 @@ public class Field extends Informative implements Comparable<Field> {
             Double d = Data.asNumeric(v);
             return d == null ? "?" : Data.formatNumeric(d, true);
         }
+        if (propertyTrue("list"))
+            return ((ItemsList) v).toString((DateFormat) property("dateFormat"));
         return v.toString();
     }
 

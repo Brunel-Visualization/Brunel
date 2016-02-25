@@ -304,7 +304,7 @@ public class Data {
                     valid.add(common);
                 }
             }
-            items[i] = new ItemsList(valid.toArray(new String[valid.size()]), null);
+            items[i] = new ItemsList(valid.toArray(new String[valid.size()]));
         }
 
         // Passed the tests so return the details!
@@ -312,6 +312,7 @@ public class Data {
         Collection<String> parts = commonParts.values();
         String[] common = parts.toArray(new String[parts.size()]);
         Arrays.sort(common);
+        f.set("list", true);
         f.set("listCategories", common);
         return f;
     }

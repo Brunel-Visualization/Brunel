@@ -29,8 +29,8 @@ import org.brunel.data.Fields;
 public class AddConstantFields extends DataOperation {
 
     public static Dataset transform(Dataset base, String command) {
-        String[] additional = parts(command);
-        if (additional == null) return base;
+        String[] additional = strings(command, ';');
+        if (additional.length == 0) return base;
 
         // This is the new set of fields
         Field[] fields = new Field[base.fields.length + additional.length];

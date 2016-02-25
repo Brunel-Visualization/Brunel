@@ -17,21 +17,18 @@
 package org.brunel.data.util;
 
 import org.brunel.data.Data;
+import org.brunel.translator.JSTranslation;
 
-import java.util.ArrayList;
-import java.util.Collections;
+public class ItemsList implements Comparable<ItemsList> {
 
-public class ItemsList extends ArrayList<Object> implements Comparable<ItemsList> {
-
-    private final DateFormat dateFormat;            // Needed to format as dates
+    private final Object[] items;                   // Items
     private int displayCount = 12;                  // Number of items to display before going to ellipses
 
-    public ItemsList(Object[] items, DateFormat df) {
-        dateFormat = df;
-        Collections.addAll(this, items);
+    public ItemsList(Object[] items) {
+        this.items = items;
     }
 
-     public boolean equals(Object obj) {
+    public boolean equals(Object obj) {
         return this == obj || obj instanceof ItemsList && compareTo((ItemsList) obj) == 0;
     }
 
@@ -44,21 +41,43 @@ public class ItemsList extends ArrayList<Object> implements Comparable<ItemsList
         return size() - o.size();
     }
 
+    public Object get(int i) {
+        return items[i];
+    }
+
+    public int size() {
+        return items.length;
+    }
+
     public void setDisplayCount(int displayCount) {
         this.displayCount = displayCount;
     }
 
+    @JSTranslation(ignore = true)
     public String toString() {
+        return toString(null);
+    }
+
+    public String toString(DateFormat dateFormat) {
         String s = "";
         int n = size();
         for (int i = 0; i < n; i++) {
             if (i > 0) s += ", ";
             // Check for overflowing display requested size
-            if (i == displayCount-1 && n > displayCount)
+            if (i == displayCount - 1 && n > displayCount)
                 return s + "\u2026";
             Object v = get(i);
-            if (dateFormat != null)
-                s += dateFormat.format(Data.asDate(v));
+            if (dateFormat != null) {
+                // Need to strip out commas from dates
+                String t = dateFormat.format(Data.asDate(v));
+                int p = t.indexOf(',');
+                if (p>0) {
+                    s += t.substring(0,p);
+                    s += t.substring(p+1);
+                } else {
+                    s += t;
+                }
+            }
             else {
                 Double d = Data.asNumeric(v);
                 if (d != null)
@@ -69,5 +88,4 @@ public class ItemsList extends ArrayList<Object> implements Comparable<ItemsList
         }
         return s;
     }
-
 }

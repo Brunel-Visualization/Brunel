@@ -76,16 +76,26 @@ public class Fields {
      * @return constructed field
      */
     public static Field permute(Field field, int[] order, boolean onlyOrderChanged) {
+        if (field.provider instanceof ConstantProvider) {
+            // No ned for hard work here -- a permuted constant is still a constant
+            if (onlyOrderChanged) return field;
+            else return makeConstantField(field.name, field.label, field.value(0), field.rowCount());
+        }
         if (onlyOrderChanged)
             return new Field(field.name, field.label, new ReorderedProvider(field.provider, order), field);
         Field f = new Field(field.name, field.label, new ReorderedProvider(field.provider, order));
-        copyBaseProperties(f, field);
+        copyBaseProperties(field, f);
         return f;
     }
 
-    public static void copyBaseProperties(Field target, Field source) {
+    /**
+     * Copy properties from one field to another
+     * @param source source field
+     * @param target target field
+     */
+    public static void copyBaseProperties(Field source, Field target) {
         target.copyProperties(source, "numeric", "binned", "summary", "transform",
-                "listCategories", "date", "categoriesOrdered", "dateUnit", "dateFormat");
+                "list", "listCategories", "date", "categoriesOrdered", "dateUnit", "dateFormat");
 
         // Only copy the categories if the order is important
         if (source.propertyTrue("categoriesOrdered"))

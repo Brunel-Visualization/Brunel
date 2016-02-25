@@ -108,7 +108,8 @@ class BestActionParameterSet {
         //Note, #all is not actually a field but seems to be reported as such
         String s = parm.asField();
 
-        if (s.equals("#all") || s.equals("#series") || s.equals("#values") || (parm.isField() && originalData.field(s, true).isSynthetic())) {
+        if (s.equals("#all") || s.equals("#series") || s.equals("#values") ||
+                (parm.isField() && originalData.field(s, true).isSynthetic())) {
             leaveAsIs(new ActionParameterChoice(parm, 1.0));
             return true;
         }
