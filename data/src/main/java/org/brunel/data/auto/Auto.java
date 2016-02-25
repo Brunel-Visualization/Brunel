@@ -48,7 +48,7 @@ public class Auto {
         // If the tick count is not set, calculate the optimal value, but no more than 20 bins
         if (desiredTickCount < 1) desiredTickCount = Math.min(optimalBinCount(f), 20) + 1;
         if (f.isDate()) return NumericScale.makeDateScale(f, nice, padFraction, desiredTickCount);
-        String p = f.stringProperty("transform");
+        String p = f.strProperty("transform");
         if (p.equals("log"))
             return NumericScale.makeLogScale(f, nice, padFraction, includeZeroTolerance, desiredTickCount);
 
@@ -67,7 +67,7 @@ public class Auto {
 
     public static void setTransform(Field f) {
         if (f.property("transform") != null) return;
-        Double skew = f.numericProperty("skew");
+        Double skew = f.numProperty("skew");
 
         if (skew == null) {
             // Only numeric fields can have transforms
@@ -85,8 +85,8 @@ public class Auto {
     public static int optimalBinCount(Field f) {
         // Using Freedman-Diaconis for the optimal bin width OR Scott's normal reference rule
         // Whichever has a large bin size
-        double h1 = 2 * (f.numericProperty("q3") - f.numericProperty("q1")) / Math.pow(f.valid(), 0.33333);
-        double h2 = 3.5 * f.numericProperty("stddev") / Math.pow(f.valid(), 0.33333);
+        double h1 = 2 * (f.numProperty("q3") - f.numProperty("q1")) / Math.pow(f.valid(), 0.33333);
+        double h2 = 3.5 * f.numProperty("stddev") / Math.pow(f.valid(), 0.33333);
         double h = Math.max(h1, h2);
         if (h == 0)
             return 1;
@@ -96,7 +96,7 @@ public class Auto {
 
     public static Field convert(Field base) {
         if (base.isSynthetic() || base.isDate()) return base;           // Already set
-        if (base.propertyTrue("list")) return base;                     // Already a multi-set
+        if (base.isProperty("list")) return base;                     // Already a multi-set
 
 
         // Try conversion to a lists
@@ -180,7 +180,7 @@ public class Auto {
     private static boolean isYearly(Field asNumeric) {
         if (asNumeric.min() < 1600) return false;
         if (asNumeric.max() > 2100) return false;
-        Double d = asNumeric.numericProperty("granularity");
+        Double d = asNumeric.numProperty("granularity");
         return d != null && d - Math.floor(d) < 1e-6;
     }
 }

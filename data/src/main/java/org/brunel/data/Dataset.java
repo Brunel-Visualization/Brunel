@@ -194,7 +194,7 @@ public class Dataset extends Informative implements Serializable {
     }
 
     public String name() {
-        return stringProperty("name");
+        return strProperty("name");
     }
 
     /**

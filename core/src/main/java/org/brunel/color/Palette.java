@@ -169,7 +169,7 @@ public class Palette {
         // Default to divergent, except for given cases below
         boolean divergent = true;
         if (f.name.startsWith("#")) divergent = false;
-        String summary = f.stringProperty("summary");
+        String summary = f.strProperty("summary");
         if ("sum".equals(summary) || "percent".equals(summary)) divergent = false;
 
         // Ask for the appropriate named mapping
@@ -221,7 +221,7 @@ public class Palette {
 
     public static Object[] fieldSplits(Field f, int n) {
         Auto.setTransform(f);
-        String t = f.stringProperty("transform");
+        String t = f.strProperty("transform");
         Object[] objects = new Object[n];
         double min = f.min();
         double max = f.max();

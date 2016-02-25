@@ -79,21 +79,21 @@ public class TestAuto {
         Field b = Auto.convert(a);
         Assert.assertEquals(true, b.isNumeric());
         Assert.assertEquals(false, b.isDate());
-        Assert.assertEquals(2.5, b.numericProperty("mean"), 0.001);
+        Assert.assertEquals(2.5, b.numProperty("mean"), 0.001);
 
         a = Fields.makeColumnField("field", null, new Object[]{"1", "2", "3", "4"});
         b = Auto.convert(a);
         Assert.assertEquals(false, a == b);
         Assert.assertEquals(true, b.isNumeric());
         Assert.assertEquals(false, b.isDate());
-        Assert.assertEquals(2.5, b.numericProperty("mean"), 0.001);
+        Assert.assertEquals(2.5, b.numProperty("mean"), 0.001);
 
         a = Fields.makeColumnField("field", null, new Object[]{"a", "2", "3", "4"});
         b = Auto.convert(a);
         Assert.assertEquals(false, a == b);
         Assert.assertEquals(true, b.isNumeric());
         Assert.assertEquals(false, b.isDate());
-        Assert.assertEquals(3.0, b.numericProperty("mean"), 0.001);
+        Assert.assertEquals(3.0, b.numProperty("mean"), 0.001);
 
         a = Fields.makeColumnField("field", null, new Object[]{"a", "2", "c", "4"});
         b = Auto.convert(a);
@@ -136,13 +136,13 @@ public class TestAuto {
         Auto.setTransform(f);
         Auto.setTransform(g);
 
-        Assert.assertEquals("linear", a.stringProperty("transform"));
-        Assert.assertEquals("linear", b.stringProperty("transform"));
-        Assert.assertEquals("linear", c.stringProperty("transform"));
-        Assert.assertEquals("root", d.stringProperty("transform"));
-        Assert.assertEquals("log", e.stringProperty("transform"));
-        Assert.assertEquals("root", f.stringProperty("transform"));
-        Assert.assertEquals("linear", g.stringProperty("transform"));
+        Assert.assertEquals("linear", a.strProperty("transform"));
+        Assert.assertEquals("linear", b.strProperty("transform"));
+        Assert.assertEquals("linear", c.strProperty("transform"));
+        Assert.assertEquals("root", d.strProperty("transform"));
+        Assert.assertEquals("log", e.strProperty("transform"));
+        Assert.assertEquals("root", f.strProperty("transform"));
+        Assert.assertEquals("linear", g.strProperty("transform"));
     }
 
     @Test

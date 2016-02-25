@@ -124,7 +124,7 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public boolean isNumeric() {
-        return propertyTrue("numeric");
+        return isProperty("numeric");
     }
 
     public void setNumeric() {
@@ -132,11 +132,11 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public boolean isDate() {
-        return propertyTrue("date");
+        return isProperty("date");
     }
 
     public boolean isBinned() {
-        return propertyTrue("binned");
+        return isProperty("binned");
     }
 
     private void makeNumericStats() {
@@ -195,7 +195,7 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public int rowCount() {
-        return provider != null ? provider.count() : numericProperty("n").intValue();
+        return provider != null ? provider.count() : numProperty("n").intValue();
     }
 
     public String toString() {
@@ -203,7 +203,7 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public int uniqueValuesCount() {
-        return (int) Math.round(numericProperty("unique"));
+        return (int) Math.round(numProperty("unique"));
     }
 
     public int valid() {
@@ -233,7 +233,7 @@ public class Field extends Informative implements Comparable<Field> {
             Double d = Data.asNumeric(v);
             return d == null ? "?" : Data.formatNumeric(d, true);
         }
-        if (propertyTrue("list"))
+        if (isProperty("list"))
             return ((ItemsList) v).toString((DateFormat) property("dateFormat"));
         return v.toString();
     }

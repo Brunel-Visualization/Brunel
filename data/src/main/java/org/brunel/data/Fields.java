@@ -98,7 +98,7 @@ public class Fields {
                 "list", "listCategories", "date", "categoriesOrdered", "dateUnit", "dateFormat");
 
         // Only copy the categories if the order is important
-        if (source.propertyTrue("categoriesOrdered"))
+        if (source.isProperty("categoriesOrdered"))
             target.set("categories", source.property("categories"));
     }
 }

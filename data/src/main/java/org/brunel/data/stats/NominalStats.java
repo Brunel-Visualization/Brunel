@@ -35,7 +35,7 @@ public class NominalStats {
         f.set("mode", counts.mode());
 
         Object[] naturalOrder;
-        if (f.propertyTrue("categoriesOrdered")) {
+        if (f.isProperty("categoriesOrdered")) {
             naturalOrder = f.categories();
         } else {
             if (f.name.equals("#selection")) {

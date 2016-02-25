@@ -74,7 +74,7 @@ public class GeoInformation {
             }
             f.set(KEY_GEO_NAMES, count / f.valid());
         }
-        return f.numericProperty(KEY_GEO_NAMES);
+        return f.numProperty(KEY_GEO_NAMES);
     }
 
     public List<LabelPoint> getLabelsWithinScaleBounds() {

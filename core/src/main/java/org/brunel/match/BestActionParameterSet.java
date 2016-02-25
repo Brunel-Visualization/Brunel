@@ -254,8 +254,8 @@ class BestActionParameterSet {
 
     private double propertyDiffScore(String numericProperty, Field f1, Field f2) {
 
-        Double p1 = f1.numericProperty(numericProperty);
-        Double p2 = f2.numericProperty(numericProperty);
+        Double p1 = f1.numProperty(numericProperty);
+        Double p2 = f2.numProperty(numericProperty);
         if (p1 == null || p2 == null) return Double.NaN;
         return pctDiffScore(p1, p2);
 

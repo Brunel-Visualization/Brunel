@@ -136,7 +136,7 @@ public class ChartCoordinates {
         for (Field f : fields) {
             if (f.min() == null) continue;
             Auto.setTransform(f);
-            String s = f.stringProperty("transform");
+            String s = f.strProperty("transform");
             if ("log".equals(s)) best = "log";
             else if ("root".equals(s) && !best.equals("log")) best = "root";
             if (f.isNumeric())

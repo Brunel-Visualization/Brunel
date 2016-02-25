@@ -236,7 +236,7 @@ public class D3ScaleBuilder {
         Double r = null;
         for (Field f : ff) {
             if (f.isDate()) continue;   // No date granularity use
-            Double g = f.numericProperty("granularity");
+            Double g = f.numProperty("granularity");
             if (g != null && g / (f.max() - f.min()) > 0.02) {
                 if (r == null || g < r) r = g;
             }
@@ -422,7 +422,7 @@ public class D3ScaleBuilder {
     private boolean reverseRange(Field[] fields) {
         if (fields.length == 0)return false;
         // Ranking causes us to reverse the order
-        for (Field f : fields) if (!"rank".equals(f.stringProperty("summary")))
+        for (Field f : fields) if (!"rank".equals(f.strProperty("summary")))
             return false;
         return true;
     }
@@ -538,7 +538,7 @@ public class D3ScaleBuilder {
 
         // If any position are  counts or sums, always include zero
         for (Field f : fields)
-            if (f.name.equals("#count") || "sum".equals(f.stringProperty("summary"))) return 1.0;
+            if (f.name.equals("#count") || "sum".equals(f.strProperty("summary"))) return 1.0;
 
         // Really want it for bar/area charts that are not ranges
         for (VisSingle e : elements)

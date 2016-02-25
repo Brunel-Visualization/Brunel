@@ -643,7 +643,7 @@ class D3ElementBuilder {
 
     private boolean isRange(Field field) {
         if (field.isBinned() && field.isNumeric()) return true;
-        String s = field.stringProperty("summary");
+        String s = field.strProperty("summary");
         return s != null && (s.equals("iqr") || s.equals("range"));
     }
 

@@ -38,7 +38,7 @@ public class Each extends DataOperation {
         // Apply successively to each usable field
         for (String s : strings(command, ';')) {
             Field f = base.field(s);
-            if (f.propertyTrue("list"))
+            if (f.isProperty("list"))
                 base = splitFieldValues(base, f);
         }
         return base;

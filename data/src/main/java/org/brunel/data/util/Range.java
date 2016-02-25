@@ -29,6 +29,7 @@ public class Range implements Comparable<Range> {
     }
 
     public static Range make(Double low, Double high, DateFormat dateFormat) {
+        if (low == null || high == null) return null;
         return dateFormat == null ? makeNumeric(low, high, false) : makeDate(low, high, false, dateFormat);
     }
 

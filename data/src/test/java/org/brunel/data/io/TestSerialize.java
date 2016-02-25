@@ -58,7 +58,7 @@ public class TestSerialize {
         in.close();
         fileIn.close();
 
-        assertEquals(dataset.field("Rating").numericProperty("mean"), copy.field("Rating").numericProperty("mean"));
+        assertEquals(dataset.field("Rating").numProperty("mean"), copy.field("Rating").numProperty("mean"));
     }
 
     @Test
@@ -84,7 +84,7 @@ public class TestSerialize {
         assertEquals("a", b.name);
         assertEquals("b", b.label);
         assertEquals(4, b.rowCount());
-        assertEquals(4.0, b.numericProperty("mean"), 1e-6);
+        assertEquals(4.0, b.numProperty("mean"), 1e-6);
     }
 
     @Test
@@ -113,7 +113,7 @@ public class TestSerialize {
 
         Dataset d = (Dataset) Serialize.deserialize(bytes);
         assertEquals(dataset.rowCount(), d.rowCount());
-        assertEquals(dataset.field("rating").numericProperty("mean"), d.field("rating").numericProperty("mean"), 0.001);
+        assertEquals(dataset.field("rating").numProperty("mean"), d.field("rating").numProperty("mean"), 0.001);
         assertEquals("Count", d.field("#count").label);
     }
 

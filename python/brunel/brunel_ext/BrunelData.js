@@ -509,7 +509,7 @@ V.auto_Auto.makeNumericScale = function(f, nice, padFraction, includeZeroToleran
         desiredTickCount = Math.min(V.auto_Auto.optimalBinCount(f), 20) + 1;
     if (f.isDate())
         return V.auto_NumericScale.makeDateScale(f, nice, padFraction, desiredTickCount);
-    p = f.stringProperty("transform");
+    p = f.strProperty("transform");
     if (p == "log")
         return V.auto_NumericScale.makeLogScale(f, nice, padFraction, includeZeroTolerance, desiredTickCount);
     if (p == "root") {
@@ -526,7 +526,7 @@ V.auto_Auto.makeNumericScale = function(f, nice, padFraction, includeZeroToleran
 V.auto_Auto.setTransform = function(f) {
     var skew;
     if (f.property("transform") != null) return;
-    skew = f.numericProperty("skew");
+    skew = f.numProperty("skew");
     if (skew == null) {
         f.set("transform", "linear");
         return;
@@ -540,8 +540,8 @@ V.auto_Auto.setTransform = function(f) {
 };
 
 V.auto_Auto.optimalBinCount = function(f) {
-    var h1 = 2 * (f.numericProperty("q3") - f.numericProperty("q1")) / Math.pow(f.valid(), 0.33333);
-    var h2 = 3.5 * f.numericProperty("stddev") / Math.pow(f.valid(), 0.33333);
+    var h1 = 2 * (f.numProperty("q3") - f.numProperty("q1")) / Math.pow(f.valid(), 0.33333);
+    var h2 = 3.5 * f.numProperty("stddev") / Math.pow(f.valid(), 0.33333);
     var h = Math.max(h1, h2);
     if (h == 0)
         return 1;
@@ -552,7 +552,7 @@ V.auto_Auto.optimalBinCount = function(f) {
 V.auto_Auto.convert = function(base) {
     var N, asList, asNumeric, i, j, n, nDate, nNumeric, o, order, t;
     if (base.isSynthetic() || base.isDate()) return base;
-    if (base.propertyTrue("list")) return base;
+    if (base.isProperty("list")) return base;
     asList = V.Data.toList(base);
     if (V.auto_Auto.goodLists(asList)) return asList;
     N = base.valid();
@@ -620,7 +620,7 @@ V.auto_Auto.isYearly = function(asNumeric) {
     var d;
     if (asNumeric.min() < 1600) return false;
     if (asNumeric.max() > 2100) return false;
-    d = asNumeric.numericProperty("granularity");
+    d = asNumeric.numProperty("granularity");
     return d != null && d - Math.floor(d) < 1e-6;
 };
 
@@ -716,8 +716,8 @@ V.auto_NumericScale.makeLinearScale = function(f, nice,
         a = Math.min(0, 2 * a);
     }
     desiredDivCount = Math.max(desiredTickCount - 1, 1);
-    transform = f.stringProperty("transform");
-    granularity = f.numericProperty("granularity");
+    transform = f.strProperty("transform");
+    granularity = f.numProperty("granularity");
     granularDivs = (b - a) / granularity;
     if ((forBinning || f.preferCategorical()) && granularDivs >
         desiredDivCount / 2 && granularDivs < desiredDivCount * 2) {
@@ -1035,7 +1035,7 @@ V.util_Informative.prototype.copyAllProperties = function(other) {
     this.info.putAll(other.info);
 };
 
-V.util_Informative.prototype.numericProperty = function(key) {
+V.util_Informative.prototype.numProperty = function(key) {
     return V.Data.asNumeric(this.property(key));
 };
 
@@ -1043,12 +1043,12 @@ V.util_Informative.prototype.property = function(key) {
     return this.info.get(key);
 };
 
-V.util_Informative.prototype.stringProperty = function(key) {
+V.util_Informative.prototype.strProperty = function(key) {
     var v = this.property(key);
     return v == null ? null : v.toString();
 };
 
-V.util_Informative.prototype.propertyTrue = function(key) {
+V.util_Informative.prototype.isProperty = function(key) {
     var v = this.property(key);
     return v != null && v;
 };
@@ -1170,7 +1170,7 @@ V.Dataset.prototype.rowCount = function() {
 };
 
 V.Dataset.prototype.name = function() {
-    return this.stringProperty("name");
+    return this.strProperty("name");
 };
 
 V.Dataset.prototype.reduce = function(command) {
@@ -1513,7 +1513,7 @@ V.Field.prototype.makeDateStats = function() {
 };
 
 V.Field.prototype.isNumeric = function() {
-    return this.propertyTrue("numeric");
+    return this.isProperty("numeric");
 };
 
 V.Field.prototype.setNumeric = function() {
@@ -1521,11 +1521,11 @@ V.Field.prototype.setNumeric = function() {
 };
 
 V.Field.prototype.isDate = function() {
-    return this.propertyTrue("date");
+    return this.isProperty("date");
 };
 
 V.Field.prototype.isBinned = function() {
-    return this.propertyTrue("binned");
+    return this.isProperty("binned");
 };
 
 V.Field.prototype.makeNumericStats = function() {
@@ -1580,7 +1580,7 @@ V.Field.prototype.rename = function(name, label) {
 };
 
 V.Field.prototype.rowCount = function() {
-    return this.provider != null ? this.provider.count() : this.numericProperty("n");
+    return this.provider != null ? this.provider.count() : this.numProperty("n");
 };
 
 V.Field.prototype.toString = function() {
@@ -1588,7 +1588,7 @@ V.Field.prototype.toString = function() {
 };
 
 V.Field.prototype.uniqueValuesCount = function() {
-    return Math.round(this.numericProperty("unique"));
+    return Math.round(this.numProperty("unique"));
 };
 
 V.Field.prototype.valid = function() {
@@ -1618,7 +1618,7 @@ V.Field.prototype.format = function(v) {
         d = V.Data.asNumeric(v);
         return d == null ? "?" : V.Data.formatNumeric(d, true);
     }
-    if (this.propertyTrue("list"))
+    if (this.isProperty("list"))
         return v.toString(this.property("dateFormat"));
     return v.toString();
 };
@@ -1665,7 +1665,7 @@ V.Fields.permute = function(field, order, onlyOrderChanged) {
 V.Fields.copyBaseProperties = function(source, target) {
     target.copyProperties(source, "numeric", "binned", "summary", "transform", "list", "listCategories",
         "date", "categoriesOrdered", "dateUnit", "dateFormat");
-    if (source.propertyTrue("categoriesOrdered"))
+    if (source.isProperty("categoriesOrdered"))
         target.set("categories", source.property("categories"));
 };
 
@@ -2332,7 +2332,7 @@ V.modify_Each.transform = function(base, command) {
     var _i, f, s;
     for(_i=$.iter(V.modify_DataOperation.strings(command, ';')), s=_i.current; _i.hasNext(); s=_i.next()) {
         f = base.field(s);
-        if (f.propertyTrue("list"))
+        if (f.isProperty("list"))
             base = V.modify_Each.splitFieldValues(base, f);
     }
     return base;
@@ -3117,7 +3117,7 @@ V.stats_DateStats.populate = function(f) {
     if (days == 0) days = f.max();
     unit = V.stats_DateStats.getUnit(days);
     f.set("dateUnit", unit);
-    granularity = f.numericProperty("granularity");
+    granularity = f.numProperty("granularity");
     factor = Math.min(1.0, Math.sqrt(f.valid()) / 7);
     f.set("dateFormat", V.stats_DateStats.getFormat(unit, granularity * factor));
 };
@@ -3159,7 +3159,7 @@ V.stats_NominalStats.populate = function(f) {
     f.set("unique", counts.size());
     f.set("valid", counts.getTotalCount());
     f.set("mode", counts.mode());
-    if (f.propertyTrue("categoriesOrdered")) {
+    if (f.isProperty("categoriesOrdered")) {
         naturalOrder = f.categories();
     } else {
         if (f.name == "#selection") {
@@ -3439,7 +3439,7 @@ V.summary_Smooth = function(y, x, windowPercent, rows) {
     pairs = V.summary_Regression.asPairs(y, x, rows);
     this.x = pairs[1];
     this.y = pairs[0];
-    this.mean = y.numericProperty("mean");
+    this.mean = y.numProperty("mean");
 };
 
 V.summary_Smooth.prototype.get = function(value) {
@@ -3503,7 +3503,7 @@ V.summary_SummaryValues.prototype.firstRow = function() {
 };
 
 V.summary_SummaryValues.prototype.get = function(fieldIndex, m) {
-    var categories, data, displayCount, f, fit, high, i, index, low, mean, sum, windowPercent, x;
+    var categories, data, displayCount, f, fit, i, index, mean, sum, windowPercent, x;
     var summary = m.method;
     if (summary == "count") return this.rows.size();
     x = this.xFields.length == 0 ? null : this.xFields[this.xFields.length - 1];
@@ -3530,30 +3530,22 @@ V.summary_SummaryValues.prototype.get = function(fieldIndex, m) {
     for (i = 0; i < data.length; i++)
         data[i] = this.fields[fieldIndex].value(this.rows.get(i));
     f = V.Fields.makeColumnField("temp", null, data);
-    mean = f.numericProperty("mean");
+    mean = f.numProperty("mean");
     if (summary == "percent") {
         if (mean == null) return null;
         if ("overall" == m.option)
-            sum = m.field.valid() * m.field.numericProperty("mean");
+            sum = m.field.valid() * m.field.numProperty("mean");
         else
             sum = this.percentSums[fieldIndex];
         return sum > 0 ? 100 * mean * f.valid() / sum : null;
     }
-    if (summary == "range") {
-        if (mean == null) return null;
-        low = f.numericProperty("min");
-        high = f.numericProperty("max");
-        return low == null ? null : V.util_Range.make(low, high, m.getDateFormat());
-    }
-    if (summary == "iqr") {
-        if (mean == null) return null;
-        low = f.numericProperty("q1");
-        high = f.numericProperty("q3");
-        return low == null ? null : V.util_Range.make(low, high, m.getDateFormat());
-    }
+    if (summary == "range")
+        return this.makeRange(m, f, "min", "max");
+    if (summary == "iqr")
+        return this.makeRange(m, f, "q1", "q3");
     if (summary == "sum") {
         if (mean == null) return null;
-        return mean * f.numericProperty("valid");
+        return mean * f.numProperty("valid");
     }
     if (summary == "list") {
         categories = new V.util_ItemsList(f.property("categories"));
@@ -3564,6 +3556,10 @@ V.summary_SummaryValues.prototype.get = function(fieldIndex, m) {
         return categories;
     }
     return f.property(summary);
+};
+
+V.summary_SummaryValues.prototype.makeRange = function(m, f, a, b) {
+    return V.util_Range.make(f.numProperty(a), f.numProperty(b), m.getDateFormat());
 };
 
 V.summary_SummaryValues.prototype.validForGroup = function(index) {
@@ -3832,6 +3828,7 @@ V.util_Range = function(low, high, mid, name) {
 };
 
 V.util_Range.make = function(low, high, dateFormat) {
+    if (low == null || high == null) return null;
     return dateFormat == null ? V.util_Range.makeNumeric(low, high, false)
         : V.util_Range.makeDate(low, high, false, dateFormat);
 };

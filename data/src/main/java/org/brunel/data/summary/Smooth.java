@@ -41,7 +41,7 @@ public class Smooth implements Fit {
         double[][] pairs = Regression.asPairs(y, x, rows);
         this.x = pairs[1];
         this.y = pairs[0];
-        this.mean = y.numericProperty("mean");
+        this.mean = y.numProperty("mean");
     }
 
     public Double get(Object value) {

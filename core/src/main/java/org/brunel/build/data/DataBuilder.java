@@ -194,7 +194,7 @@ public class DataBuilder {
         for (String s : pos) {
             Field f = vis.getDataset().field(s);
             if (f == null) continue;        // May have been added as a constant -- no need to filter
-            if (f.numericProperty("valid") < f.rowCount())
+            if (f.numProperty("valid") < f.rowCount())
                 commands.add(s + " valid");
         }
 

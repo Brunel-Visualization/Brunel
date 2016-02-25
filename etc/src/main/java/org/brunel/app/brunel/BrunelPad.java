@@ -282,7 +282,7 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
         transitory = null;
         base = source;
         sourcePanel.setSource(source);
-        if (source.stringProperty("uri") != null) settings.putString("last-source", source.stringProperty("uri"));
+        if (source.strProperty("uri") != null) settings.putString("last-source", source.strProperty("uri"));
         setTitle(source.name());
         updateVis();
     }

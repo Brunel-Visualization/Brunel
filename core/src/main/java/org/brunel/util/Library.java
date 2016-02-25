@@ -170,7 +170,7 @@ public class Library {
 
     private boolean goodForWordle(Field f) {
         if (!f.preferCategorical()) return false;
-        if (f.numericProperty("unique") > 100 || f.numericProperty("unique") < 7) return false;
+        if (f.numProperty("unique") > 100 || f.numProperty("unique") < 7) return false;
         // Too long names are not good
         for (Object c : f.categories())
             if (c.toString().length() > 20) return false;
@@ -179,7 +179,7 @@ public class Library {
 
     private Action makeLineChart(Field x, Field y) {
         // If there is close to one data point per x coordinate just use lines
-        if (x.numericProperty("unique") > 0.95 * x.numericProperty("validNumeric"))
+        if (x.numProperty("unique") > 0.95 * x.numProperty("validNumeric"))
             return get("line").apply(x, y);
         // Otherwise show lines and points
         return get("lineWithPoints").apply(x, y);

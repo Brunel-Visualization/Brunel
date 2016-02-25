@@ -86,33 +86,24 @@ public final class SummaryValues {
 
         Field f = Fields.makeColumnField("temp", null, data);
 
-        Double mean = f.numericProperty("mean");
+        Double mean = f.numProperty("mean");
         if (summary.equals("percent")) {
             if (mean == null) return null;
             double sum;
             if ("overall".equals(m.option))
-                sum = m.field.valid() * m.field.numericProperty("mean");
+                sum = m.field.valid() * m.field.numProperty("mean");
             else
                 sum = percentSums[fieldIndex];
             return sum > 0 ? 100 * mean * f.valid() / sum : null;
         }
 
-        if (summary.equals("range")) {
-            if (mean == null) return null;
-            Double low = f.numericProperty("min");
-            Double high = f.numericProperty("max");
-            return low == null ? null : Range.make(low, high, m.getDateFormat());
-        }
-        if (summary.equals("iqr")) {
-            if (mean == null) return null;
-            Double low = f.numericProperty("q1");
-            Double high = f.numericProperty("q3");
-            return low == null ? null : Range.make(low, high, m.getDateFormat());
-        }
+        if (summary.equals("range")) return makeRange(m, f, "min", "max");
+
+        if (summary.equals("iqr")) return makeRange(m, f, "q1", "q3");
 
         if (summary.equals("sum")) {
             if (mean == null) return null;
-            return mean * f.numericProperty("valid");
+            return mean * f.numProperty("valid");
         }
         if (summary.equals("list")) {
             ItemsList categories = new ItemsList((Object[]) f.property("categories"));
@@ -123,6 +114,10 @@ public final class SummaryValues {
             return categories;
         }
         return f.property(summary);
+    }
+
+    protected Object makeRange(MeasureField m, Field f, String a, String b) {
+        return Range.make(f.numProperty(a), f.numProperty(b), m.getDateFormat());
     }
 
     private List<Integer> validForGroup(int index) {

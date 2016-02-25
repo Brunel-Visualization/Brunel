@@ -125,8 +125,8 @@ public class NumericScale {
 
         double desiredDivCount = Math.max(desiredTickCount - 1, 1);
 
-        String transform = f.stringProperty("transform");
-        double granularity = f.numericProperty("granularity");
+        String transform = f.strProperty("transform");
+        double granularity = f.numProperty("granularity");
         double granularDivs = (b - a) / granularity;
         if ((forBinning || f.preferCategorical()) && granularDivs > desiredDivCount / 2 && granularDivs < desiredDivCount * 2) {
             Double[] data = makeGranularDivisions(a, b, granularity, nice);

@@ -73,12 +73,12 @@ public class Stack extends DataOperation {
         return base.replaceFields(fields);
     }
 
-    private static Field getField(Field[] fields, String name) {
+    public static Field getField(Field[] fields, String name) {
         for (Field f : fields) if (f.name.equals(name)) return f;
         throw new IllegalArgumentException("Could not find field: " + name);
     }
 
-    private static Field[] getFields(Field[] fields, String[]... namesList) {
+    public static Field[] getFields(Field[] fields, String[]... namesList) {
         List<Field> result = new ArrayList<Field>();
         Set<Field> found = new HashSet<Field>();
         for (String[] s : namesList)
