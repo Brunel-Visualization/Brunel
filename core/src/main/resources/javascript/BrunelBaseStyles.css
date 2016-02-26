@@ -19,13 +19,9 @@
     font-size: 12px;
 }
 
-.brunel .background {
-    fill: white;
-    padding: 5px;
-}
-
-.brunel .coordinates {
-    opacity: 0
+.brunel .inner, .brunel .background {
+    fill: none;
+    stroke: none;
 }
 
 .brunel .title {

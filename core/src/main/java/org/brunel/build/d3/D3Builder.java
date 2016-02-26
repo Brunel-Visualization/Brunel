@@ -398,9 +398,15 @@ public class D3Builder extends AbstractBuilder {
         out.add("var chart = vis.append('g').attr('class', '" + "chart" + structure.chartID() + "')")
                 .addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
                 .endStatement();
+        out.add("chart.append('rect').attr('class', 'background')")
+                .add(".attr('width', geom.outer_width).attr('height', geom.outer_height)")
+                .endStatement();
         out.add("var interior = chart.append('g').attr('class', 'interior')")
                 .addChained(axesTransform)
                 .addChained("attr('clip-path', 'url(#" + clipID(structure) + ")')")
+                .endStatement();
+        out.add("interior.append('rect').attr('class', 'inner')")
+                .add(".attr('width', geom.inner_width).attr('height', geom.inner_height)")
                 .endStatement();
 
         interaction.addPrerequisites();

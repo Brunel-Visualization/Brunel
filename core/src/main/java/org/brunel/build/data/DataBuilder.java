@@ -69,10 +69,10 @@ public class DataBuilder {
 
         Dataset data = vis.getDataset();                                                // The data to use
         data = data.addConstants(params.constantsCommand);                              // add constant fields
-        data = data.filter(params.filterCommand);                                       // filter data
         data = data.each(params.eachCommand);                                           // divide up fields into parts
         data = data.transform(params.transformCommand);                                 // bin, rank, ... on data
         data = data.summarize(params.summaryCommand);                                   // summarize data
+        data = data.filter(params.filterCommand);                                       // filter data
         data = data.series(params.seriesCommand);                                       // convert series
         data = data.sort(params.sortCommand);                                           // sort data
         data = data.sortRows(params.sortRowsCommand);                                   // sort rows only

@@ -206,10 +206,10 @@ public class D3DataBuilder {
                 writeTransform("filter", "#selection is " + Field.VAL_SELECTED);
         }
 
-        writeTransform("filter", params.filterCommand);
         writeTransform("each", params.eachCommand);
         writeTransform("transform", params.transformCommand);
         writeTransform("summarize", params.summaryCommand);
+        writeTransform("filter", params.filterCommand);
 
         // Because series creates duplicates of fields, it is an expensive transformation
         // So we do not want to make it work on all fields, only the fields that are necessary.
