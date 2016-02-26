@@ -39,14 +39,13 @@ class Cloud extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
-        // Set the given location using the transform
-        out.addChained("attr('transform', cloud.transform)").endStatement();
+        out.addChained("each(cloud.prepare).call(cloud.build)").endStatement();
         addAestheticsAndTooltips(details, false);
     }
 
     public void writeDiagramEnter() {
         // The cloud needs to set all this stuff up front
-        out.addChained("attr('dy', '0.3em').style('text-anchor', 'middle').classed('label', true)")
+        out.addChained("style('text-anchor', 'middle').classed('label', true)")
                 .addChained("text(labeling.content)");
         D3LabelBuilder.addFontSizeAttribute(vis, out);
         out.endStatement();
