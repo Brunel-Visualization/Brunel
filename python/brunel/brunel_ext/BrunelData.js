@@ -22,14 +22,15 @@ var BrunelData = (function () {
 var $ = {
     // Naive and simple extension mechanism
     extend: function (childClass, parentClass) {
-        var inner = function () {
+        var v, sup = parentClass.prototype, inner = function () {
         };
         childClass.prototype = new inner();
         childClass.prototype.constructor = childClass;
         childClass.$superConstructor = parentClass;
-        childClass.$super = parentClass.prototype;
-        for (var v in parentClass.prototype)
-            childClass.prototype[v] = parentClass.prototype[v];
+        childClass.$super = sup;
+        for (v in sup)
+            if (sup.hasOwnProperty(v))
+                childClass.prototype[v] = sup[v];
     },
 
     // Within the child, call this to initialize superclasses
@@ -60,7 +61,7 @@ var $ = {
         }
     },
 
-    copy: function(dest, src) {
+    copy: function (dest, src) {
         for (var i in src) dest[i] = src[i];
     },
 
@@ -78,9 +79,9 @@ var $ = {
     },
 
     hash: function (a) {
-        if (!a) return "";
+        if (!a) return "#";
         if (typeof (a.hashCode) == "function") return a.hashCode();
-        return String(a);
+        return "#" + String(a);
     },
 
     toArray: function (a) {
@@ -136,7 +137,7 @@ var $ = {
         if (!v) return null;
         if (Array.isArray(v)) {
             var i, s;
-            for (i in v) {
+            for (i in v) if (v.hasOwnProperty(i)) {
                 if (!s) s = "[" + $.toString(v[i]);
                 else s += ", " + $.toString(v[i]);
             }
@@ -147,13 +148,13 @@ var $ = {
     },
 
     copyOf: function (array, n) {
-        var i, c = $.Array(n, 0), n = Math.min(n, $.len(array));
-        for (i = 0; i < n; i++) c[i] = array[i];
+        var i, c = $.Array(n, 0), m = Math.min(n, $.len(array));
+        for (i = 0; i < m; i++) c[i] = array[i];
         return c;
     },
 
-    fill: function(a, v) {
-        for (i in a) a[i] = v;
+    fill: function (a, v) {
+        for (i in a) if (a.hasOwnProperty(i)) a[i] = v;
     },
 
     len: function (a) {
@@ -408,17 +409,18 @@ $.Map.prototype = {
         return list.splice(idx, 1)[0][1];
     },
     putAll: function (map) {
-        for (var key in map.items) {
-            var list = map.items[key];
-            for (var j = 0; j < list.length; j++)
+        var key, list, j, items = map.items;
+        for (key in items) if (items.hasOwnProperty(key)) {
+            list = items[key];
+            for (j = 0; j < list.length; j++)
                 this.put(list[j][0], list[j][1]);
         }
     },
-    values : function() {
-        var keys = new $.List();
-        for (var key in this.items) {
-            var list = this.items[key];
-            for (var j = 0; j < list.length; j++)
+    values: function () {
+        var key, list, j, keys = new $.List(), items = this.items;
+        for (key in items) if (items.hasOwnProperty(key)) {
+            list = items[key];
+            for (j = 0; j < list.length; j++)
                 keys.add(list[j][1]);
         }
         return keys;
@@ -429,10 +431,10 @@ $.Map.prototype = {
         return idx >= 0 ? list[idx][1] : null;
     },
     keySet: function () {
-        var keys = new $.Set();
-        for (var key in this.items) {
-            var list = this.items[key];
-            for (var j = 0; j < list.length; j++)
+        var key, list, j, keys = new $.Set(), items = this.items;
+        for (key in items) if (items.hasOwnProperty(key)) {
+            list = items[key];
+            for (j = 0; j < list.length; j++)
                 keys.add(list[j][0]);
         }
         return keys;
@@ -442,10 +444,10 @@ $.Map.prototype = {
         return this._findInArray(key, list) >= 0;
     },
     toArray: function () {
-        var a = [];
-        for (var key in this.items) {
-            var list = this.items[key];
-            for (var j = 0; j < list.length; j++)
+        var key, list, j, a = [], items = this.items;
+        for (key in items) if (items.hasOwnProperty(key)) {
+            list = items[key];
+            for (j = 0; j < list.length; j++)
                 a.push(list[j][0]);
         }
         return a;
