@@ -108,8 +108,7 @@ public class D3Builder extends AbstractBuilder {
 
         // Calculate the margins for this chart within the overall size
         double[] chartMargins = new double[]{
-                (visHeight * location[0] / 100), (visWidth * location[1] / 100),
-                (visHeight * (1 - location[2] / 100)), (visWidth * (1 - location[3] / 100))
+                location[0] / 100, location[1] / 100, location[2] / 100, location[3] / 100
         };
 
         // Create the scales and element builders
