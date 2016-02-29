@@ -21,12 +21,17 @@ var BrunelD3 = (function () {
     // Return geometries for the given target given the desired margins
     function geometries(target, chart_top, chart_left, chart_bottom, chart_right,
                         inner_top, inner_left, inner_bottom, inner_right) {
-        var attrs = target.attributes, w = +attrs.width.value, h = +attrs.height.value,
-            x = attrs.x ? +attrs.x.value : 0, y = attrs.y ? +attrs.y.value : 0;
+        var b = target.getBBox(),
+            x = b.x, y = b.y, w = b.width, h = b.height;
+        if (!w && !h) {
+            w = target.getAttribute('width');
+            h = target.getAttribute('height');
+        }
+
         var g = {
-            outer_width: w, outer_height: h,
             chart_top: y + h * chart_top, chart_bottom: y + h * chart_bottom,
             chart_left: x + w * chart_left, chart_right: x + w * chart_right,
+            outer_width: w, outer_height: h,
             inner_top: inner_top, inner_bottom: inner_bottom,
             inner_left: inner_left, inner_right: inner_right,
 
@@ -530,10 +535,11 @@ var BrunelD3 = (function () {
         }
     }
 
-    // Parameters are: a D3 selection target, labeling info struct and the brunel geom object
-    function makeTooltip(d3Target, labeling, geom) {
-        var svg = d3Target.node().ownerSVGElement;                          // Owning SVG
-        var pt = svg.createSVGPoint();                                      // For matrix calculations
+    // Parameters are: a D3 selection target, labeling info struct
+    function makeTooltip(d3Target, labeling) {
+        var svg = d3Target.node().ownerSVGElement,                          // Owning SVG
+            w = +svg.attributes.width.value, h = +svg.attributes.height.value,  // width and height
+            pt = svg.createSVGPoint();                                      // For matrix calculations
 
         d3Target.on('mouseover', function (d) {
             var content = labeling.content(d);                              // To set html content
@@ -548,13 +554,13 @@ var BrunelD3 = (function () {
             tooltip.style.width = null;   								    // Allow free width (for now)
             tooltip.innerHTML = content;                                    // set html content
 
-            var max_width = geom['inner_width'] / 3;                        // One third width at most
+            var max_width = w / 3;                                          // One third width at most
             if (tooltip.offsetWidth > max_width)                            // If too wide, set a width for the div
                 tooltip.style.width = max_width + "px";
 
             var p = getScreenTipPosition(this, d);                          // get absolute location of the target
             var top = p.y - 10 - tooltip.offsetHeight;                      // top location
-            if (top < 2 && p.y < geom['inner_height'] / 2) {                // We are in top half up AND overflow top
+            if (top < 2 && p.y < h / 2) {                                   // We are in top half up AND overflow top
                 var old = labeling.method;                                  // save the original method
                 labeling.method = "bottom";                                 // switch to finding lower position
                 p = getScreenTipPosition(this, d);                          // get modified location of the target

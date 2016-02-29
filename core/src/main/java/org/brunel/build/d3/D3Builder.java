@@ -421,13 +421,16 @@ public class D3Builder extends AbstractBuilder {
         if (structure.nested()) {
             out.add("vis = d3.select(parentNode.parentNode);").comment("nested charts top is not the real top");
         }
-        String axesTransform = makeTranslateTransform("geom.inner_left", "geom.inner_top");
         out.add("var chart = vis.append('g').attr('class', '" + "chart" + structure.chartID() + "')")
                 .addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
                 .endStatement();
         out.add("chart.append('rect').attr('class', 'background')")
-                .add(".attr('width', geom.outer_width).attr('height', geom.outer_height)")
+                .add(".attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top)")
                 .endStatement();
+
+
+        String axesTransform = makeTranslateTransform("geom.inner_left", "geom.inner_top");
+
         out.add("var interior = chart.append('g').attr('class', 'interior')")
                 .addChained(axesTransform);
 
