@@ -19,7 +19,6 @@ package org.brunel.data.modify;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
-import org.brunel.data.Fields;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,14 +74,8 @@ public class Filter extends DataOperation {
 
         // Returns null when indexing is the same as the whole data
         int[] keep = makeRowsToKeep(field, type, params);
-        if (keep == null) return base;
 
-        // Make the reduced fields and return them
-        Field[] results = new Field[base.fields.length];
-        for (int i = 0; i < results.length; i++)
-            results[i] = Fields.permute(base.fields[i], keep, false);
-
-        return base.replaceFields(results);
+        return keep == null ? base : base.retainRows(keep);
 
     }
 

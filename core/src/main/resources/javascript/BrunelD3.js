@@ -29,8 +29,8 @@ var BrunelD3 = (function () {
             'margin_left': chart_left + inner_left,
             'margin_bottom': chart_bottom + inner_bottom,
             'margin_right': chart_right + inner_right,
-            'chart_top': chart_top,
-            'chart_left': chart_left,
+            'chart_top': chart_top + attrs.y ? attrs.y.value : 0,
+            'chart_left': chart_left + attrs.x ? attrs.x.value : 0,
             'chart_bottom': chart_bottom,
             'chart_right': chart_right,
             'inner_top': inner_top,
@@ -1012,6 +1012,15 @@ var BrunelD3 = (function () {
         return labels;
     }
 
+    function facet(chart, parentElement, time) {
+        parentElement.selection().each( function(d, i) {
+            if (d.row == null) return;
+            var items = parentElement.data().field("#row").value(d.row).items;  // Get rows as array of integers
+            var c = chart(this, items.map(function(v) { return v-1}));          // Convert 1-based items to 0-based rows
+            c.build(time);
+        });
+    }
+
     // Expose these methods
     return {
         'makeData': makeDataset,
@@ -1033,6 +1042,7 @@ var BrunelD3 = (function () {
         'addFeatures': makeMap,
         'symbol': makeSymbol,
         'network': makeNetworkLayout,
+        'facet':facet,
         'time': time
     }
 

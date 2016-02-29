@@ -39,13 +39,15 @@ public class ChartStructure {
     public final GeoInformation geo;
     public final VisTypes.Diagram diagram;
     public final ElementStructure[] elementStructure;
+    private final VisSingle outer;                      // If non-null, the enclosing element for a nested chart
 
     private final Dataset[] baseDataSets;
 
-    public ChartStructure(int chartIndex, VisSingle[] elements, Dataset[] data, Dataset[] dataSets) {
+    public ChartStructure(int chartIndex, VisSingle[] elements, Dataset[] data, Dataset[] dataSets, VisSingle outer) {
         this.baseDataSets = dataSets;
         this.chartIndex = chartIndex;
         this.elements = elements;
+        this.outer = outer;
         this.coordinates = new ChartCoordinates(elements, data);
         this.elementStructure = new ElementStructure[elements.length];
         this.diagram = findDiagram();
@@ -60,6 +62,10 @@ public class ChartStructure {
             elementStructure[i] = new ElementStructure(this, i, vis, data[i], geoMapping, isDependent);
         }
 
+    }
+
+    public boolean nested() {
+        return outer != null;
     }
 
     private VisTypes.Diagram findDiagram() {
@@ -130,7 +136,7 @@ public class ChartStructure {
     }
 
     public String chartID() {
-        return "" + (chartIndex+1);
+        return "" + (chartIndex + 1);
     }
 
     public ElementStructure getEdge() {

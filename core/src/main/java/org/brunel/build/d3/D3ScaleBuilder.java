@@ -161,8 +161,8 @@ public class D3ScaleBuilder {
             }
         }
 
-        // If auto, check for the coordinate system / diagram to determine what is wanted
-        if (auto) if (coords == VisTypes.Coordinates.polar || structure.diagram != null)
+        // If auto, check for the coordinate system / diagram / nesting to determine what is wanted
+        if (auto) if (coords == VisTypes.Coordinates.polar || structure.diagram != null || structure.nested())
             return new AxisSpec[2];
         else
             return new AxisSpec[]{AxisSpec.DEFAULT, AxisSpec.DEFAULT};
@@ -174,6 +174,7 @@ public class D3ScaleBuilder {
         Field result = null;
         for (VisSingle vis : elements) {
             boolean auto = vis.tLegends == VisTypes.Legends.auto;
+            if (auto && structure.nested()) continue;                       // No default legend for nested charts
             if (vis.fColor.isEmpty()) continue;                             // No color means no color legend
             if (vis.tLegends == VisTypes.Legends.none) continue;            // No legend if not asked for one
 
