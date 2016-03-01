@@ -200,6 +200,17 @@ public class D3Builder extends AbstractBuilder {
         out.add("function build(transitionMillis) {").ln().indentMore();
         elementBuilder.generate(structure.index);
         interaction.addElementHandlers(structure.vis);
+
+        // If a chart is nested within us, build its facets
+        Integer index = structure.chart.innerChartIndex;
+        if (index != null) {
+            String id = ChartStructure.makeChartID(index);
+            out.onNewLine().comment("Build the faceted charts within this chart's selection");
+            out.add("vis.select('g.chart" + id + "').selectAll('*').remove()").endStatement()
+                    .add("BrunelD3.facet(charts[" + index + "], element, transitionMillis)").endStatement();
+
+        }
+
         out.indentLess().onNewLine().add("}").ln().ln();
 
         // Expose the methods and variables we want the user to have access to
@@ -282,7 +293,6 @@ public class D3Builder extends AbstractBuilder {
             out.add("function updateAll(time) {").indentMore().ln()
                     .add("var t = time || 20").endStatement()
                     .add("charts[0].build(0)").endStatement()
-                    .add("BrunelD3.facet(charts[1], charts[0].elements[0], t)").endStatement()
                     .indentLess().add("}").ln();
         }
 
@@ -418,16 +428,30 @@ public class D3Builder extends AbstractBuilder {
     }
 
     private void writeMainGroups(ChartStructure structure) {
+        String chartClassID = "chart" + structure.chartID();                    // The class for our group
+
         if (structure.nested()) {
-            out.add("vis = d3.select(parentNode.parentNode);").comment("nested charts top is not the real top");
+            out.onNewLine().comment("Nesting -- create an outer chart and place groups inside for each facet");
+
+            // We only want one outer group, but this function gets called for each facet, so check to see if it is
+            // present and only create the chart group if it has not already been created.
+            out.add("var outer = vis.select('g." + chartClassID + "')").endStatement();
+            out.add("if (outer.empty()) outer = vis.append('g').attr('class', '" + chartClassID + "')").endStatement();
+
+            // Now create the facet group that will contain the chart with data for the indicated facet
+            out.add("var chart = outer.append('g').attr('class', 'facet')");
+
+        } else {
+            // For non-faceted charts, we only need the simple chart group to hold all the other parts
+            out.add("var chart = vis.append('g').attr('class', '" + chartClassID + "')");
         }
-        out.add("var chart = vis.append('g').attr('class', '" + "chart" + structure.chartID() + "')")
-                .addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
+
+        out.addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
                 .endStatement();
+
         out.add("chart.append('rect').attr('class', 'background')")
                 .add(".attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top)")
                 .endStatement();
-
 
         String axesTransform = makeTranslateTransform("geom.inner_left", "geom.inner_top");
 

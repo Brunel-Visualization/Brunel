@@ -21,11 +21,17 @@ var BrunelD3 = (function () {
     // Return geometries for the given target given the desired margins
     function geometries(target, chart_top, chart_left, chart_bottom, chart_right,
                         inner_top, inner_left, inner_bottom, inner_right) {
-        var b = target.getBBox(),
-            x = b.x, y = b.y, w = b.width, h = b.height;
-        if (!w && !h) {
-            w = target.getAttribute('width');
-            h = target.getAttribute('height');
+
+        var b = target.getBoundingClientRect(),
+            x = b.left, y = b.top, w = b.width, h = b.height;
+        var owner = target.ownerSVGElement;
+        if (owner) {
+            var c = owner.getBoundingClientRect();
+            x -= c.left;
+            y -= c.top;
+        } else {
+            x = 0;
+            y = 0;
         }
 
         var g = {
@@ -1017,7 +1023,8 @@ var BrunelD3 = (function () {
     function facet(chart, parentElement, time) {
         parentElement.selection().each(function (d, i) {
             if (d.row == null) return;
-            var items = parentElement.data().field("#row").value(d.row).items;  // Get rows as array of integers
+            var value = parentElement.data().field("#row").value(d.row);
+            var items = value.items ? value.items : [ value ];          // If just a single row, make it into an array
             var c = chart(this, items.map(function (v) {
                 return v - 1
             }));          // Convert 1-based items to 0-based rows

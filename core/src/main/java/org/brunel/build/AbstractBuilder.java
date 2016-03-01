@@ -104,7 +104,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
             } else if (compositionMethod == VisTypes.Composition.overlay) {
                 // If we have a set of compositions, they are placed into the whole area
                 double[] loc = new ChartLayout(width, height, main).getLocation(0);
-                buildSingleChart(0, children, loc, null);
+                buildSingleChart(0, children, loc, null, null);
             } else if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
                 // The following rules should be ensured by the parser
                 if (children.length != 2)
@@ -126,9 +126,9 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         nesting.put(1, 0);
 
         double[] loc = new ChartLayout(width, height, outer).getLocation(0);
-        buildSingleChart(0, new VisItem[] {outer}, loc, null);
+        ChartStructure outerStructure = buildSingleChart(0, new VisItem[] {outer}, loc, null, 1);
         loc = new ChartLayout(width, height, inner).getLocation(0);
-        buildSingleChart(1, new VisItem[] {inner}, loc, outer);
+        buildSingleChart(1, new VisItem[] {inner}, loc, outerStructure, null);
     }
 
     public final BuilderOptions getOptions() {
@@ -192,7 +192,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         }
     }
 
-    private void buildSingleChart(int chartIndex, VisItem[] items, double[] loc, VisSingle outer) {
+    private ChartStructure buildSingleChart(int chartIndex, VisItem[] items, double[] loc, ChartStructure outer, Integer innerChartIndex) {
 
         // Assemble the elements and data
         Dataset[] data = new Dataset[items.length];
@@ -203,10 +203,11 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         }
 
 
-        ChartStructure structure = new ChartStructure(chartIndex, elements, data, datasets, outer);
+        ChartStructure structure = new ChartStructure(chartIndex, elements, data, datasets, outer, innerChartIndex);
         defineChart(structure, loc);
         for (ElementStructure e : structure.elementStructure) buildElement(e);
         endChart(structure);
+        return structure;
     }
 
     /* Build independent charts tiled into the same display area */
@@ -219,9 +220,9 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
             VisItem[] items = chart.children();
             if (items == null) {
                 // The chart is a single element
-                buildSingleChart(i, new VisItem[]{chart}, loc, null);
+                buildSingleChart(i, new VisItem[]{chart}, loc, null, null);
             } else {
-                buildSingleChart(i, items, loc, null);
+                buildSingleChart(i, items, loc, null, null);
             }
 
         }

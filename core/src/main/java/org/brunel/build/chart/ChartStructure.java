@@ -39,20 +39,21 @@ public class ChartStructure {
     public final GeoInformation geo;
     public final VisTypes.Diagram diagram;
     public final ElementStructure[] elementStructure;
-    private final VisSingle outer;                      // If non-null, the enclosing element for a nested chart
+    public final ChartStructure outer;                      // If non-null, the enclosing element for a nested chart
+    public final Integer innerChartIndex;                  // If non-null, the index of the chart we enclose
 
     private final Dataset[] baseDataSets;
 
-    public ChartStructure(int chartIndex, VisSingle[] elements, Dataset[] data, Dataset[] dataSets, VisSingle outer) {
+    public ChartStructure(int chartIndex, VisSingle[] elements, Dataset[] data, Dataset[] dataSets, ChartStructure outer, Integer innerChartIndex) {
         this.baseDataSets = dataSets;
         this.chartIndex = chartIndex;
         this.elements = elements;
         this.outer = outer;
+        this.innerChartIndex = innerChartIndex;
         this.coordinates = new ChartCoordinates(elements, data);
         this.elementStructure = new ElementStructure[elements.length];
         this.diagram = findDiagram();
         this.sourceIndex = findSourceElement(elements);
-
         this.geo = makeGeo(elements, data);
 
         for (int i = 0; i < elements.length; i++) {
@@ -62,6 +63,10 @@ public class ChartStructure {
             elementStructure[i] = new ElementStructure(this, i, vis, data[i], geoMapping, isDependent);
         }
 
+    }
+
+    public static String makeChartID(int index) {
+        return "" + (index + 1);
     }
 
     public boolean nested() {
@@ -136,7 +141,7 @@ public class ChartStructure {
     }
 
     public String chartID() {
-        return "" + (chartIndex + 1);
+        return makeChartID(chartIndex);
     }
 
     public ElementStructure getEdge() {
