@@ -69,7 +69,7 @@ public class BuildTests {
         // 500 width @ 40% and 80% results in left and right insets of 200, 100
         // 500 height @ 30% and 50% results in top and bottom insets of 150, 250
         // Order of insets is  TOP(150) LEFT(200) BOTTOM(250) RIGHT(100)
-        assertTrue(javascript.contains("150, 200, 250, 100"));
+        assertTrue(javascript.contains("BrunelD3.geometry(parentNode || vis.node(), 0.3, 0.4, 0.5, 0.8"));
     }
 
     @Test
