@@ -21,22 +21,25 @@ var BrunelD3 = (function () {
     // Return geometries for the given target given the desired margins
     function geometries(target, chart_top, chart_left, chart_bottom, chart_right,
                         inner_top, inner_left, inner_bottom, inner_right) {
-        var attrs = target.attributes;
+
+        var b = target.getBoundingClientRect(),
+            x = b.left, y = b.top, w = b.width, h = b.height;
+        var owner = target.ownerSVGElement;
+        if (owner) {
+            var c = owner.getBoundingClientRect();
+            x -= c.left;
+            y -= c.top;
+        } else {
+            x = 0;
+            y = 0;
+        }
+
         var g = {
-            'outer_width': attrs.width.value,
-            'outer_height': attrs.height.value,
-            'margin_top': chart_top + inner_top,
-            'margin_left': chart_left + inner_left,
-            'margin_bottom': chart_bottom + inner_bottom,
-            'margin_right': chart_right + inner_right,
-            'chart_top': chart_top + attrs.y ? attrs.y.value : 0,
-            'chart_left': chart_left + attrs.x ? attrs.x.value : 0,
-            'chart_bottom': chart_bottom,
-            'chart_right': chart_right,
-            'inner_top': inner_top,
-            'inner_left': inner_left,
-            'inner_bottom': inner_bottom,
-            'inner_right': inner_right,
+            chart_top: y + h * chart_top, chart_bottom: y + h * chart_bottom,
+            chart_left: x + w * chart_left, chart_right: x + w * chart_right,
+            outer_width: w, outer_height: h,
+            inner_top: inner_top, inner_bottom: inner_bottom,
+            inner_left: inner_left, inner_right: inner_right,
 
             // Allow the inner coords to be transposed
             'transpose': function () {
@@ -45,10 +48,14 @@ var BrunelD3 = (function () {
                 this['inner_height'] = t;
             }
         };
-        g['inner_width'] = g['outer_width'] - g['margin_left'] - g['margin_right'];
-        g['inner_height'] = g['outer_height'] - g['margin_top'] - g['margin_bottom'];
-        g['inner_radius'] = Math.min(g['inner_width'], g['inner_height']) / 2;
-        g['default_point_size'] = Math.max(6, g['inner_radius'] * 0.035);
+        g.margin_top = g.chart_top + g.inner_top;
+        g.margin_left = g.chart_left + g.inner_left;
+        g.margin_bottom = h - g.chart_bottom + g.inner_bottom;
+        g.margin_right = w - g.chart_right + g.inner_right;
+        g.inner_width = g.outer_width - g.margin_left - g.margin_right;
+        g.inner_height = g.outer_height - g.margin_top - g.margin_bottom;
+        g.inner_radius = Math.min(g.inner_width, g.inner_height) / 2;
+        g.default_point_size = Math.max(6, g.inner_radius * 0.035);
         return g;
     }
 
@@ -534,10 +541,11 @@ var BrunelD3 = (function () {
         }
     }
 
-    // Parameters are: a D3 selection target, labeling info struct and the brunel geom object
-    function makeTooltip(d3Target, labeling, geom) {
-        var svg = d3Target.node().ownerSVGElement;                          // Owning SVG
-        var pt = svg.createSVGPoint();                                      // For matrix calculations
+    // Parameters are: a D3 selection target, labeling info struct
+    function makeTooltip(d3Target, labeling) {
+        var svg = d3Target.node().ownerSVGElement,                          // Owning SVG
+            w = +svg.attributes.width.value, h = +svg.attributes.height.value,  // width and height
+            pt = svg.createSVGPoint();                                      // For matrix calculations
 
         d3Target.on('mouseover', function (d) {
             var content = labeling.content(d);                              // To set html content
@@ -552,13 +560,13 @@ var BrunelD3 = (function () {
             tooltip.style.width = null;   								    // Allow free width (for now)
             tooltip.innerHTML = content;                                    // set html content
 
-            var max_width = geom['inner_width'] / 3;                        // One third width at most
+            var max_width = w / 3;                                          // One third width at most
             if (tooltip.offsetWidth > max_width)                            // If too wide, set a width for the div
                 tooltip.style.width = max_width + "px";
 
             var p = getScreenTipPosition(this, d);                          // get absolute location of the target
             var top = p.y - 10 - tooltip.offsetHeight;                      // top location
-            if (top < 2 && p.y < geom['inner_height'] / 2) {                // We are in top half up AND overflow top
+            if (top < 2 && p.y < h / 2) {                                   // We are in top half up AND overflow top
                 var old = labeling.method;                                  // save the original method
                 labeling.method = "bottom";                                 // switch to finding lower position
                 p = getScreenTipPosition(this, d);                          // get modified location of the target
@@ -1013,10 +1021,13 @@ var BrunelD3 = (function () {
     }
 
     function facet(chart, parentElement, time) {
-        parentElement.selection().each( function(d, i) {
+        parentElement.selection().each(function (d, i) {
             if (d.row == null) return;
-            var items = parentElement.data().field("#row").value(d.row);
-            var c = chart(this, items.items);
+            var value = parentElement.data().field("#row").value(d.row);
+            var items = value.items ? value.items : [ value ];          // If just a single row, make it into an array
+            var c = chart(this, items.map(function (v) {
+                return v - 1
+            }));          // Convert 1-based items to 0-based rows
             c.build(time);
         });
     }
@@ -1042,7 +1053,7 @@ var BrunelD3 = (function () {
         'addFeatures': makeMap,
         'symbol': makeSymbol,
         'network': makeNetworkLayout,
-        'facet':facet,
+        'facet': facet,
         'time': time
     }
 
