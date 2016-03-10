@@ -119,13 +119,17 @@ def start_JVM():
         #Use Brunel .jar files
         lib_ext = "-Djava.ext.dirs=" + lib_dir
 
+        #headless execution of java is needed due to
+        #calls to AWT.  See git issue #70
+        headless = "-Djava.awt.headless=true"
+
         try:
             #First use explicit path if provided
             if brunel_util.JVM_PATH != "":
-                jpype.startJVM(brunel_util.JVM_PATH, lib_ext)
+                jpype.startJVM(brunel_util.JVM_PATH, headless, lib_ext)
             else:
                 #Try jpype's default way
-                jpype.startJVM(jpype.getDefaultJVMPath(),lib_ext)
+                jpype.startJVM(jpype.getDefaultJVMPath(), headless, lib_ext)
         except:
             #jpype could not find JVM (this happens currently for IBM JDK)
             #Try to find the JVM starting from JAVA_HOME either as a .dll or a .so
@@ -137,7 +141,7 @@ def start_JVM():
                                  "set before starting IPython.  If it still fails, try to manually set the JVM using:  "
                                  "brunel.brunel_util.JVM_PATH=[path]. Where 'path' is the location of the JVM file (not "
                                  "directory). Typically this is the full path to 'jvm.dll' on Windows or 'libjvm.so' on Unix ")
-            jpype.startJVM(jvms[0],lib_ext)
+            jpype.startJVM(jvms[0], headless, lib_ext)
 
 #Take the JVM startup hit once
 start_JVM()
