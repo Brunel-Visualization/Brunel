@@ -155,7 +155,7 @@ class BestActionParameterSet {
                 //geo-mean the current two scores
                 double scoreName = scoreFieldByNameCloseness(originalField.label, f.label);
                 double scoreFieldValueCloseness = scoreFieldByValueCloseness(originalField, f, declaredNominal(parm));
-                double score = Double.isNaN(scoreName) ? scoreFieldValueCloseness : Math.sqrt(scoreName * scoreFieldValueCloseness);
+                double score = Math.sqrt(scoreName * scoreFieldValueCloseness);
                 Param newParam = Param.makeField(f.name).addModifiers(parm.modifiers());
                 actionChoices.add(new ActionParameterChoice(newParam, score));
             }
@@ -192,7 +192,7 @@ class BestActionParameterSet {
         double score = (double) lcs / (double) origName.length();
 
         //If we didn't org.brunel.app.match at least 75% of the characters then it probably does not matter.
-        return score >= .75 ? score : Double.NaN;
+        return score >= .75 ? score : 0.1;
 
     }
 
@@ -220,55 +220,77 @@ class BestActionParameterSet {
     }
 
     //Score based closeness of the values of the fields
-    private double scoreFieldByValueCloseness(Field origField, Field newField, boolean declaredNominal) {
+    private double scoreFieldByValueCloseness(Field origField, Field newField, boolean originalDeclaredNominal) {
 
-        //Nominal not specifically requested, so simple.
-        if (!declaredNominal) {
-            //Mismatch in categorical preference is generally a bad choice
-            if (origField.preferCategorical() != newField.preferCategorical()) return REALLY_BAD;
-
-            //Use distribution properties if comparing a continuous field to a continuous slot
-            if (!origField.preferCategorical() && !newField.preferCategorical())
-                return scoreByDistributionCloseness(origField, newField);
+        // Check for a "key" or identifier status -- if so, that's all we want to know
+        boolean originalLooksLikeKey = origField.uniqueValuesCount() > 0.7 * origField.rowCount() && origField.preferCategorical();
+        if (originalLooksLikeKey) {
+            double keyLikeScore = ((double)newField.uniqueValuesCount()) / newField.rowCount();
+            if (newField.preferCategorical())
+                return 0.1 * keyLikeScore;
+            else
+                return keyLikeScore;
         }
 
-        //Pct difference in number unique values
-        int oc = origField.uniqueValuesCount();
-        int nc = newField.uniqueValuesCount();
-        double score = pctDiffScore((double) oc, (double) nc);
+        double scoreSimilarCounts = fractionDifferent(origField.uniqueValuesCount(), newField.uniqueValuesCount());
 
-        //score is a decent measure if original field preferred categorical or the action wished to use it as such
-        if (origField.preferCategorical() || (declaredNominal && newField.preferCategorical())) return score;
-        return score * .5;
+
+        if (originalDeclaredNominal) {
+            // When we actually request a nominal field, the type of the other field is less important
+            // Return the fraction difference in number unique values; that's all we care about
+            return scoreSimilarCounts;
+        }
+
+        // Categorical mismatch: We do not like it, so only 10% as good as a real categorical match
+        if (origField.preferCategorical() != newField.preferCategorical())
+            return 0.1 * scoreSimilarCounts;
+
+        // Categorical correct match!
+        if (origField.preferCategorical())
+            return scoreSimilarCounts;
+
+        // At this point we know we are looking for a numeric match
+
+        // If they are both dates, this is good
+        if (origField.isDate() && newField.isDate()) {
+            // This is a pretty good match -- make it at least 90% good match
+            // Remaining 10% is similarity of date scale
+            double meanSimilarity = propertyDiffScore("mean", origField, newField);
+            return 0.9 + 0.1 * meanSimilarity;
+        }
+
+        // We have numeric types (at least one of which is not a date) and will compare by distributions
+        // We also include a minimal factor of 0.5 because the types are good!
+
+        // Multiply a factor in to account for dates vs. non-dates
+        double typeMatch = (origField.isDate() == newField.isDate()) ? 1.0 : 0.3;
+        return typeMatch * (0.5 + 0.5 * scoreByDistributionCloseness(origField, newField));
     }
 
     //Will do all positive value comparisons.
     //Assumption on skewness is that the sign does not really make a difference when choosing fields.
-    private double pctDiffScore(double v1, double v2) {
+    private double fractionDifferent(double v1, double v2) {
         double av1 = Math.abs(v1);
         double av2 = Math.abs(v2);
         double max = Math.max(av1, av2);
-        return 1.0 - (double) Math.abs(av1 - av2) / max;
+        return 1.0 - Math.abs(av1 - av2) / max;
     }
 
     private double propertyDiffScore(String numericProperty, Field f1, Field f2) {
-
         Double p1 = f1.numericProperty(numericProperty);
         Double p2 = f2.numericProperty(numericProperty);
         if (p1 == null || p2 == null) return Double.NaN;
-        return pctDiffScore(p1, p2);
+        return fractionDifferent(p1, p2);
 
     }
 
     private double scoreByDistributionCloseness(Field origField, Field newField) {
-
-        //Pct. differences for distribution properties
-        double varianceScore = propertyDiffScore("variance", origField, newField);
+        //Pct. differences for distribution properties -- the measures which are location-independent
         double skewScore = propertyDiffScore("skew", origField, newField);
         double kurtosisScore = propertyDiffScore("kurtosis", origField, newField);
 
         //Geo-mean of the three measures
-        double geoMean = geoMeanNoMissing(varianceScore, skewScore, kurtosisScore);
+        double geoMean = geoMeanNoMissing(skewScore, kurtosisScore);
 
         //No distribution properties probably a poor choice for a continuous field
         return Double.isNaN(geoMean) ? REALLY_BAD : geoMean;
@@ -277,17 +299,17 @@ class BestActionParameterSet {
 
     //Skip any missing values
     private double geoMeanNoMissing(double... vals) {
-        int count = 0;
-        double mult = 1.0;
+        double count = 0;
+        double sum = 1.0;
 
         for (double val : vals) {
             if (!Double.isNaN(val)) {
-                mult *= val;
+                sum *= val;
                 count++;
             }
         }
 
-        return count > 0 ? Math.pow(mult, 1.0 / (double) count) : Double.NaN;
+        return count > 0 ? Math.pow(sum, 1.0 / count) : Double.NaN;
     }
 
 }
