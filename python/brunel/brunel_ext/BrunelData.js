@@ -651,7 +651,7 @@ V.auto_NumericScale = function(type, min, max, divs, granular) {
     this.max = max;
     this.divisions = divs;
     this.granular = granular;
-}
+};
 V.auto_NumericScale.HALF_LOG = 3;
 
 $.copy(V.auto_NumericScale, {
@@ -906,7 +906,10 @@ $.copy(V.Data, {
     asDate: function(c) {
         if (c==null) return null;
         if (c.getTime) return c;
-        if (typeof c == 'string') {d = $.parseDate(c); return d == null || isNaN(d.getTime()) ? null : d };
+        if (typeof c == 'string') {
+            d = $.parseDate(c);
+            return d == null || isNaN(d.getTime()) ? null : d
+        }
         if (!isNaN(c)) return new Date(c*86400000);
         return null;
     },
@@ -1093,7 +1096,7 @@ V.Dataset = function(fields) {
         this.fieldByName.put(f.name.toLowerCase(), f);
     for(_i=$.iter(fields), f=_i.current; _i.hasNext(); f=_i.next())
         this.fieldByName.put(f.name, f);
-}
+};
 $.extend(V.Dataset, V.util_Informative);
 
 $.copy(V.Dataset, {
@@ -1312,7 +1315,7 @@ V.diagram_Chord = function(data, fieldA, fieldB, fieldSize) {
             this.idx[i2][i1] = i;
         }
     }
-}
+};
 
 $.copy(V.diagram_Chord, {
 
@@ -1350,7 +1353,7 @@ V.diagram_Edge = function(a, b, row) {
     this.source = a;
     this.target = b;
     this.key = a.key + "--" + b.key;
-}
+};
 ////////////////////// Graph ///////////////////////////////////////////////////////////////////////////////////////////
 //
 //   A graph layout coordinates graphs and links
@@ -1380,7 +1383,7 @@ V.diagram_Graph = function(nd, a, b) {
     }
     this.nodes = nds.toArray();
     this.links = lks.toArray();
-}
+};
 
 $.copy(V.diagram_Graph, {
 
@@ -1407,7 +1410,7 @@ V.diagram_Hierarchical = function(data, sizeFieldName, fieldNames) {
     this.root = this.makeInternalNode("");
     this.makeNodesUsingCollections(data, size, fields);
     this.replaceCollections(this.root);
-}
+};
 
 $.copy(V.diagram_Hierarchical, {
 
@@ -1484,7 +1487,7 @@ V.diagram_Node = function(row, value, innerNodeName, children) {
     this.value = value;
     this.innerNodeName = innerNodeName;
     this.children = children;
-}
+};
 ////////////////////// Field ///////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1505,7 +1508,7 @@ V.Field = function(name, label, provider, base) {
         }
         this.copyAllProperties(base);
     }
-}
+};
 V.Field.VAL_SELECTED = "\u2713";
 V.Field.VAL_UNSELECTED = "\u2717";
 
@@ -1739,7 +1742,7 @@ $.copy(V.Fields, {
 V.io_ByteInput = function(data) {
     this.p = null;this.data = data;
     this.p = 0;
-}
+};
 
 $.copy(V.io_ByteInput.prototype, {
 
@@ -1771,7 +1774,7 @@ $.copy(V.io_ByteInput.prototype, {
     },
 
     readString: function() {
-        var i, len, c, d, char2, char3, out=''
+        var i, len, c, d, char2, char3, out='';
         for(;;) {
           c = this.readByte();
           if (c == 3 && out == '') return null;    // 03 at start encodes a null
@@ -1802,7 +1805,7 @@ $.copy(V.io_ByteInput.prototype, {
 
 V.io_ByteOutput = function() {
     this.out=[];
-}
+};
 
 $.copy(V.io_ByteOutput.prototype, {
 
@@ -1846,7 +1849,7 @@ $.copy(V.io_ByteOutput.prototype, {
         for (var i = 0; i < s.length; i++) {
           var c = s.charCodeAt(i);
           if (c < 128)
-            this.addByte(c)
+            this.addByte(c);
           else if (c < 2048)
             this.addByte((c >> 6) | 192).addByte((c & 63) | 128);
           else
@@ -2254,7 +2257,7 @@ V.modify_AllCombinations = function(fields, xCount, groupCount) {
     this.keyLength = xCount + groupCount;
     this.index = $.Array(this.keyLength, 0);
     this.categories = this.makeFieldCategories();
-}
+};
 
 $.copy(V.modify_AllCombinations.prototype, {
 
@@ -2936,7 +2939,7 @@ V.modify_Summarize = function(measures, dimensions, percentBase, rowCount) {
     for(_i=$.iter(measures), m=_i.current; _i.hasNext(); m=_i.next())
         if (m.isPercent()) percentNeeded = true;
     this.percentNeeded = percentNeeded;
-}
+};
 $.extend(V.modify_Summarize, V.modify_DataOperation);
 
 $.copy(V.modify_Summarize, {
@@ -3388,7 +3391,7 @@ $.copy(V.stats_NumericStats, {
 V.summary_DimensionField = function(field, rename) {
     this.field = field;
     this.rename = rename == null ? field.name : rename;
-}
+};
 
 $.copy(V.summary_DimensionField.prototype, {
 
@@ -3422,7 +3425,7 @@ V.summary_FieldRowComparison = function(fields, ascending, rowsBreakTies) {
     this.ascending = ascending;
     this.rowsBreakTies = rowsBreakTies;
     this.n = ascending == null ? fields.length : ascending.length;
-}
+};
 
 $.copy(V.summary_FieldRowComparison.prototype, {
 
@@ -3463,7 +3466,7 @@ V.summary_MeasureField = function(field, rename, measureFunction) {
         this.method = "mode";
     else
         this.method = measureFunction;
-}
+};
 $.extend(V.summary_MeasureField, V.summary_DimensionField);
 
 $.copy(V.summary_MeasureField.prototype, {
@@ -3523,7 +3526,7 @@ V.summary_Regression = function(y, x, rows) {
         this.m = sxy / sxx;
         this.b = my - this.m * mx;
     }
-}
+};
 
 $.copy(V.summary_Regression, {
 
@@ -3587,7 +3590,7 @@ V.summary_Smooth = function(y, x, windowPercent, rows) {
     this.x = pairs[1];
     this.y = pairs[0];
     this.mean = y.numProperty("mean");
-}
+};
 
 $.copy(V.summary_Smooth.prototype, {
 
@@ -3647,7 +3650,7 @@ V.summary_SummaryValues = function(fields, xFields, allDimensions) {
             if (x == f) isGroup = false;
         if (isGroup) this.groupFields.add(f);
     }
-}
+};
 
 $.copy(V.summary_SummaryValues.prototype, {
 
@@ -3766,7 +3769,7 @@ $.extendEnum(V.util_DateFormat);
 V.util_DateUnit = function(days, base) {
     this.approxDaysPerUnit = days;
     this.base = base;
-}
+};
 
 $.copy(V.util_DateUnit, {
 
@@ -3842,7 +3845,7 @@ $.extendEnum(V.util_DateUnit);
 
 V.util_ItemsList = function(items) {
     this.displayCount = 12;this.items = items;
-}
+};
 
 $.copy(V.util_ItemsList.prototype, {
 
@@ -3996,7 +3999,7 @@ V.util_Range = function(low, high, mid, name) {
     this.high = high;
     this.mid = mid;
     this.name = name;
-}
+};
 
 $.copy(V.util_Range, {
 
@@ -4068,7 +4071,7 @@ V.values_ColumnProvider = function(column) {
             this.column[i] = stored;
         }
     }
-}
+};
 
 $.copy(V.values_ColumnProvider, {
 
@@ -4133,7 +4136,7 @@ $.copy(V.values_ColumnProvider.prototype, {
 V.values_ConstantProvider = function(o, len) {
     this.o = o;
     this.len = len;
-}
+};
 
 $.copy(V.values_ConstantProvider.prototype, {
 
@@ -4174,7 +4177,7 @@ V.values_ReorderedProvider = function(base, order) {
         this.base = base;
         this.order = order;
     }
-}
+};
 
 $.copy(V.values_ReorderedProvider.prototype, {
 
@@ -4205,7 +4208,7 @@ $.copy(V.values_ReorderedProvider.prototype, {
 
 V.values_RowProvider = function(len) {
     this.len = len;
-}
+};
 
 $.copy(V.values_RowProvider.prototype, {
 

@@ -403,7 +403,7 @@
 		$('#actionResult').css({
 			width: width,
 			height: height
-		})
+		});
 
 		if (update) {
 			var text = $("#actionText").val();
@@ -663,10 +663,10 @@
 
 		var infovis = makeCookbookCell(cookbookJson.info_vis, "info_vis");
 		$(infovis).appendTo('#info_vis');
-		
+
 		var infovis = makeCookbookCell(cookbookJson.special, "special");
 		$(infovis).appendTo('#maps_networks');
-		
+
 	}
 
 	//Keep checkboxes for gallery/cookbook matching in sync
@@ -740,12 +740,12 @@
 	}
 
 	function setNewTitleAndDescription() {
-		$('#title').html($('#new_title').val())
+		$('#title').html($('#new_title').val());
 		$('#description').html($('#new_description').val())
 	}
 
 	function setModalTitleAndDescription() {
-		$('textarea#new_title').val($('#title').html())
+		$('textarea#new_title').val($('#title').html());
 		$('textarea#new_description').val($('#description').html())
 	}
 

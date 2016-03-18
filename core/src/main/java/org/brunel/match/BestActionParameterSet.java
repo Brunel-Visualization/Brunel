@@ -249,7 +249,7 @@ class BestActionParameterSet {
         double av1 = Math.abs(v1);
         double av2 = Math.abs(v2);
         double max = Math.max(av1, av2);
-        return 1.0 - (double) Math.abs(av1 - av2) / max;
+        return 1.0 - Math.abs(av1 - av2) / max;
     }
 
     private double propertyDiffScore(String numericProperty, Field f1, Field f2) {
