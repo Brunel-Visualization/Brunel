@@ -537,7 +537,7 @@ var BrunelD3 = (function () {
         // Return the functions that make X and Y locations
         return {
             'prepare': prepare,
-            'build': build,
+            'build': build
         }
     }
 

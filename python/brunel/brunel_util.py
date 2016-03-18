@@ -15,4 +15,4 @@
 
 # If the JVM cannot be located automatically, use this variable to force the location.  It should be the fully qualified
 # path to the JVM.  Typically jvm.dll on Windows or libjvm.so on Unix
-JVM_PATH=""
+JVM_PATH = ""

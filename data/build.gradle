@@ -25,20 +25,20 @@ archivesBaseName = 'brunel-data'
 task(testTranslate, dependsOn: 'classes', type: JavaExec) {
     main = 'org.brunel.translator.DoTranslate'
     classpath = configurations.runtime
-    args  '-log', 'warning'
-    args  '-name', 'BrunelData'
-    args  '-out', 'build/translated/BrunelDataTest.js'
-    args  '-html', 'build/translated/BrunelDataTest.html'
-    args  'src/main/java', 'src/test/java'
+    args '-log', 'warning'
+    args '-name', 'BrunelData'
+    args '-out', 'build/translated/BrunelDataTest.js'
+    args '-html', 'build/translated/BrunelDataTest.html'
+    args 'src/main/java', 'src/test/java'
 }
 
 task(doTranslate, dependsOn: ['classes', testTranslate], type: JavaExec) {
-	main = 'org.brunel.translator.DoTranslate'
-	classpath = configurations.runtime
-    args  '-log', 'warning'
-	args  '-name', 'BrunelData'
-	args  '-out', 'build/translated/BrunelData.js'
-	args  'src/main/java'
+    main = 'org.brunel.translator.DoTranslate'
+    classpath = configurations.runtime
+    args '-log', 'warning'
+    args '-name', 'BrunelData'
+    args '-out', 'build/translated/BrunelData.js'
+    args 'src/main/java'
 }
 
 //For development only

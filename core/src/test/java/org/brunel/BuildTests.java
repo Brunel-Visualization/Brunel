@@ -52,15 +52,6 @@ public class BuildTests {
     }
 
     @Test
-    public void testStyles() throws Exception {
-        Action action = Action.parse("x(winter) y(summer) style('fill:red')");
-        VisItem vis = action.apply(data);
-        builder.build(vis, 500, 500);
-        assertTrue(builder.getVisualization().toString().length() > 100);
-        assertEquals("#visualization.brunel .chart1 .element1 .element {\n\tfill: red;\n}", builder.getStyleOverrides());
-    }
-
-    @Test
     public void testSingleAt() throws Exception {
         Action action = Action.parse("x(winter) y(summer) at(40,30,80,50)");
         VisItem vis = action.apply(data);
@@ -82,5 +73,13 @@ public class BuildTests {
         assertTrue(javascript.contains(".ticks(4)"));
     }
 
+    @Test
+    public void testStyles() throws Exception {
+        Action action = Action.parse("x(winter) y(summer) style('fill:red')");
+        VisItem vis = action.apply(data);
+        builder.build(vis, 500, 500);
+        assertTrue(builder.getVisualization().toString().length() > 100);
+        assertEquals("#visualization.brunel .chart1 .element1 .element {\n\tfill: red;\n}", builder.getStyleOverrides());
+    }
 
 }

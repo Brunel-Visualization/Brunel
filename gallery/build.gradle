@@ -15,7 +15,7 @@
  */
 
 task copyWebFiles(type: Copy) {
- 	description 'Copy Required Web Support Files To Development WebApp Folder'
+    description 'Copy Required Web Support Files To Development WebApp Folder'
     from webFiles
     exclude '*Test*'
     into 'src/main/webapp/brunelsupport'

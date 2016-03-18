@@ -347,7 +347,8 @@ public class D3ScaleBuilder {
             else if (axis.tickCount != null)
                 out.addChained("ticks(").add(axis.tickCount).add(")");
             else if (axis == hAxis){
-                out.addChained("ticks(Math.max(10, Math.round(geom.inner_width / " + axis.maxCategoryWidth() +")))");
+                // 10 ticks, unless the space is too small to allow that many
+                out.addChained("ticks(Math.min(10, Math.round(geom.inner_width / " + (1.5*axis.maxCategoryWidth()) +")))");
             }
 
             if (axis.inMillions())

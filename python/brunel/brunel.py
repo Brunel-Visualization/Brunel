@@ -21,10 +21,9 @@ import fnmatch
 import jpype
 import sys
 
-#Package migration starting in Python 3.5
-if sys.version_info >= (3,5):
-    import ipywidgets
-    import traitlets
+# Package migration starting in Python 3.5
+if sys.version_info >= (3, 5):
+    pass
 
 import brunel.brunelWidgets as brunelWidgets
 import brunel.brunel_util as brunel_util
@@ -32,10 +31,9 @@ import jinja2 as jin
 from IPython.display import Javascript, HTML
 from IPython.display import display as ipydisplay
 
-
 # JS & HTML Files.
-D3_TEMPLATE_FILE ="D3_Template.js"
-D3_TEMPLATE_HTML_FILE =  "D3_Template.html"
+D3_TEMPLATE_FILE = "D3_Template.js"
+D3_TEMPLATE_HTML_FILE = "D3_Template.html"
 
 # Jinja templates
 templateLoader = jin.PackageLoader("brunel", "")
@@ -43,12 +41,11 @@ templateEnv = jin.Environment(loader=templateLoader)
 D3_TEMPLATE = templateEnv.get_template(D3_TEMPLATE_FILE)
 D3_TEMPLATE_HTML = templateEnv.get_template(D3_TEMPLATE_HTML_FILE)
 
-#Directory containing the Brunel .jar files
+# Directory containing the Brunel .jar files
 lib_dir = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), "lib")
 
 
 def display(brunel, data, width=800, height=600, output='d3'):
-
     csv = None
     if data is not None:
         csv = to_csv(data)
@@ -63,25 +60,30 @@ def display(brunel, data, width=800, height=600, output='d3'):
     else:
         raise ValueError("Valid Output Choices Are:   d3")
 
-def to_csv(df):
-        # CSV to pass to service
-        csvIO = io.StringIO()
-        df.to_csv(csvIO, index=False)
-        csv = csvIO.getvalue()
-        return csv
 
-#Uses jpype to call the main Brunel D3 integration method
+def to_csv(df):
+    # CSV to pass to service
+    csvIO = io.StringIO()
+    df.to_csv(csvIO, index=False)
+    csv = csvIO.getvalue()
+    return csv
+
+
+# Uses jpype to call the main Brunel D3 integration method
 def brunel_jpype_call(data, brunel_src, width, height, visid):
     try:
         return brunel_util_java.D3Integration.createBrunelJSON(data, brunel_src, int(width), int(height), visid, None)
     except jpype.JavaException as exception:
         raise ValueError(exception.message())
 
+
 def get_dataset_names(brunel_src):
     return brunel_util_java.D3Integration.getDatasetNames(brunel_src)
 
+
 def cacheData(data_key, data):
     brunel_util_java.D3Integration.cacheData(data_key, data)
+
 
 # D3 response should contain the D3 JS and D3 CSS
 def d3_output(response, visid, width, height):
@@ -101,7 +103,8 @@ def d3_output(response, visid, width, height):
         js = D3_TEMPLATE.render({'d3js': d3js, 'controls': ""})
         return Javascript(js)
 
-#File search given a path.  Used to find the JVM if needed
+
+# File search given a path.  Used to find the JVM if needed
 def find_file(pattern, path):
     result = []
     for root, dirs, files in os.walk(path):
@@ -110,39 +113,41 @@ def find_file(pattern, path):
                 result.append(os.path.join(root, name))
     return result
 
-#Start the JVM using jpype
-def start_JVM():
 
-    #only start JVM once since it is expensive
+# Start the JVM using jpype
+def start_JVM():
+    # only start JVM once since it is expensive
     if (not jpype.isJVMStarted()):
 
-        #Use Brunel .jar files
+        # Use Brunel .jar files
         lib_ext = "-Djava.ext.dirs=" + lib_dir
 
-        #headless execution of java is needed due to
-        #calls to AWT.  See git issue #70
+        # headless execution of java is needed due to
+        # calls to AWT.  See git issue #70
         headless = "-Djava.awt.headless=true"
 
         try:
-            #First use explicit path if provided
+            # First use explicit path if provided
             if brunel_util.JVM_PATH != "":
                 jpype.startJVM(brunel_util.JVM_PATH, headless, lib_ext)
             else:
-                #Try jpype's default way
+                # Try jpype's default way
                 jpype.startJVM(jpype.getDefaultJVMPath(), headless, lib_ext)
         except:
-            #jpype could not find JVM (this happens currently for IBM JDK)
-            #Try to find the JVM starting from JAVA_HOME either as a .dll or a .so
+            # jpype could not find JVM (this happens currently for IBM JDK)
+            # Try to find the JVM starting from JAVA_HOME either as a .dll or a .so
             jvms = find_file('jvm.dll', os.environ['JAVA_HOME'])
             if (not jvms):
                 jvms = find_file('libjvm.so', os.environ['JAVA_HOME'])
             if (not jvms):
-                raise ValueError("No JVM was found.  First be sure the JAVA_HOME environment variable has been properly "
-                                 "set before starting IPython.  If it still fails, try to manually set the JVM using:  "
-                                 "brunel.brunel_util.JVM_PATH=[path]. Where 'path' is the location of the JVM file (not "
-                                 "directory). Typically this is the full path to 'jvm.dll' on Windows or 'libjvm.so' on Unix ")
+                raise ValueError(
+                    "No JVM was found.  First be sure the JAVA_HOME environment variable has been properly "
+                    "set before starting IPython.  If it still fails, try to manually set the JVM using:  "
+                    "brunel.brunel_util.JVM_PATH=[path]. Where 'path' is the location of the JVM file (not "
+                    "directory). Typically this is the full path to 'jvm.dll' on Windows or 'libjvm.so' on Unix ")
             jpype.startJVM(jvms[0], headless, lib_ext)
 
-#Take the JVM startup hit once
+
+# Take the JVM startup hit once
 start_JVM()
 brunel_util_java = jpype.JPackage("org.brunel.util")

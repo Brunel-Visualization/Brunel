@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2015 IBM Corporation and others.
  *
@@ -22,12 +21,14 @@ println 'Required environment variable values are: '
 println 'TOMCAT_HOME is ' + tomcatHome
 println 'BRUNEL_SERVER is ' + brunelServer
 
-if (tomcatHome == null) tomcatHome ="tomcat"
+if (tomcatHome == null) tomcatHome = "tomcat"
 if (brunelServer == null) brunelServer = "http://locahost:8080/brunel-service"
 
 //All JS/CSS files needed to run Brunel under the assumption the translator has been run
 ext.webFiles = files(project(':core').file('src/main/resources/javascript'), project(':data').file('build/translated'))
 def distName = 'brunel-all'
+
+version = 1.1
 
 
 configure([project(":data"), project(":core"), project(":etc"), project(":service")]) {
@@ -46,25 +47,21 @@ configure([project(":data"), project(":core"), project(":etc"), project(":servic
     }
 
     uploadArchives {
-	    repositories {
-	       flatDir {
-	           dirs '../out/java'
-	       }
-	    }
-	}
+        repositories {
+            flatDir {
+                dirs '../out/java'
+            }
+        }
+    }
 
 
-	task brunelJar (dependsOn: [build, uploadArchives])  {
-		description "Build and Creation of Brunel JAR/WAR artifacts to brunel/out/java"
-	}
+    task brunelJar(dependsOn: [build, uploadArchives]) {
+        description "Build and Creation of Brunel JAR/WAR artifacts to brunel/out/java"
+    }
 
     dependencies {
         testCompile group: 'junit', name: 'junit', version: '4.+'
     }
-
-
-
-    version = '1.0'
 
     jar {
         manifest.attributes provider: 'org.brunel'
@@ -85,29 +82,29 @@ dependencies {
 
 //Aggregated Javadocs
 task brunelJavadoc(type: Javadoc) {
-	description 'Create aggregated javadocs for all Java projects'
-    def doccing = [project(':core'), project(':data'),  project(':etc'), project(':service')]
-    source doccing.collect {project -> project.sourceSets.main.allJava }
-    classpath = files(doccing.collect {project -> project.sourceSets.main.compileClasspath})
+    description 'Create aggregated javadocs for all Java projects'
+    def doccing = [project(':core'), project(':data'), project(':etc'), project(':service')]
+    source doccing.collect { project -> project.sourceSets.main.allJava }
+    classpath = files(doccing.collect { project -> project.sourceSets.main.compileClasspath })
     destinationDir = new File(projectDir, 'out/javadocs')
     options.encoding = "UTF-8"
 }
 
 task brunelJS(type: Copy, dependsOn: [project(':core').build, project(':data').build]) {
-	from webFiles
-	exclude '*Test*'
-	into 'out/javascript'
+    from webFiles
+    exclude '*Test*'
+    into 'out/javascript'
 }
 
 task brunelSyntaxDoc(type: Copy) {
-	from project(':gallery').file('src/main/webapp/docs/Brunel Documentation.pdf')
-	exclude '*Test*'
-	into 'out'
+    from project(':gallery').file('src/main/webapp/docs/Brunel Documentation.pdf')
+    exclude '*Test*'
+    into 'out'
 }
 
 
 task build(dependsOn: [project(':core').brunelJar, project(':etc').brunelJar, project(':data').brunelJar,
-	project(':service').brunelJar, 'spark-kernel:uploadArchives', brunelJS, brunelJavadoc, brunelSyntaxDoc]) {
+                       project(':service').brunelJar, 'spark-kernel:uploadArchives', brunelJS, brunelJavadoc, brunelSyntaxDoc]) {
 }
 
 task makeMinified(type: JavaExec, dependsOn: build) {
@@ -117,10 +114,17 @@ task makeMinified(type: JavaExec, dependsOn: build) {
     def closureArgs = []
     closureArgs << "--charset" << "utf-8"
     closureArgs << "--compilation_level" << "SIMPLE_OPTIMIZATIONS"
-    closureArgs << "--js_output_file" << "out/javascript/brunel.1.0.min.js"
+    closureArgs << "--js_output_file" << "out/javascript/brunel." + version + ".min.js"
     closureArgs << "out/javascript/BrunelD3.js"
     closureArgs << "out/javascript/BrunelData.js"
     args closureArgs
+}
+
+task makeCSS(type: Copy) {
+    from('out/javascript')
+    into('out/javascript')
+    include('Brunel.css')
+    rename('Brunel.css', 'brunel.' + version + '.css')
 }
 
 task makeMinifiedControls(type: JavaExec, dependsOn: build) {
@@ -130,24 +134,24 @@ task makeMinifiedControls(type: JavaExec, dependsOn: build) {
     def closureArgs = []
     closureArgs << "--charset" << "utf-8"
     closureArgs << "--compilation_level" << "SIMPLE_OPTIMIZATIONS"
-    closureArgs << "--js_output_file" << "out/javascript/brunel.controls.1.0.min.js"
+    closureArgs << "--js_output_file" << "out/javascript/brunel.controls." + version + ".min.js"
     closureArgs << "out/javascript/sumoselect/jquery.sumoselect.min.js"
     closureArgs << "out/javascript/BrunelEventHandlers.js"
     closureArgs << "out/javascript/BrunelJQueryControlFactory.js"
     args closureArgs
 }
 
-task makeZip(type:Zip, dependsOn: [build, makeMinified] ) {
+task makeZip(type: Zip, dependsOn: [build, makeMinified, makeMinifiedControls, makeCSS]) {
     description 'Create a .zip of the contents of the build output (/out)'
-	from ('out/')
-	archiveName distName + ".zip"
+    from('out/')
+    archiveName distName + ".zip"
 }
 
-task makeTar(type:Tar, dependsOn: [build, makeMinified] ) {
+task makeTar(type: Tar, dependsOn: [build, makeMinified, makeMinifiedControls, makeCSS]) {
     description 'Create a compressed tar of the contents of the build output (/out)'
-	from ('out/')
-	compression = Compression.GZIP
-	archiveName distName + ".tar.gz"
+    from('out/')
+    compression = Compression.GZIP
+    archiveName distName + ".tar.gz"
 }
 
 task makeArchives(dependsOn: [makeZip, makeTar]) {

@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from setuptools import setup
-from os import path
 from codecs import open
+from os import path
+from setuptools import setup
 
 here = path.abspath(path.dirname(__file__))
 
@@ -26,14 +26,16 @@ try:
     from jupyterpip import cmdclass
 except:
     import pip, importlib
-    pip.main(['install', 'jupyter-pip']); cmdclass = importlib.import_module('jupyterpip').cmdclass
+
+    pip.main(['install', 'jupyter-pip']);
+    cmdclass = importlib.import_module('jupyterpip').cmdclass
 
 setup(
     name='brunel',
     version='1.0.1',
     packages=['brunel'],
-    install_requires= ['pandas', 'jinja2', 'ipython', 'jupyter-pip', 'JPype1-py3', 'ipywidgets', 'traitlets'],
-    package_data= {
+    install_requires=['pandas', 'jinja2', 'ipython', 'jupyter-pip', 'JPype1-py3', 'ipywidgets', 'traitlets'],
+    package_data={
         'brunel': ['*.js', '*.html', 'lib/*.jar', 'brunel_ext/*.*']
     },
     description='Brunel Visualization For Jupyter/IPython Notebooks',

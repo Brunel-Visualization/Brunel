@@ -504,7 +504,7 @@ public class D3Builder extends AbstractBuilder {
 
         String base;
         if (options.locJavaScript.startsWith("file")) {
-            base = String.format(pattern, options.locJavaScript + "/BrunelBaseStyles.css");
+            base = String.format(pattern, options.locJavaScript + "/Brunel.css");
         } else {
             base = String.format(pattern, options.locJavaScript + "/brunel." + options.version + ".css");
         }

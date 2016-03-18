@@ -128,7 +128,7 @@ public class WebDisplay {
         // Copy source files and resources over
         ensureResourceExists("BrunelD3.js");
         ensureResourceExists("BrunelData.js");
-        ensureResourceExists("BrunelBaseStyles.css");
+        ensureResourceExists("Brunel.css");
         ensureResourceExists("BrunelEventHandlers.js");
         ensureResourceExists("BrunelJQueryControlFactory.js");
         ensureResourceExists("sumoselect/jquery.sumoselect.min.js");

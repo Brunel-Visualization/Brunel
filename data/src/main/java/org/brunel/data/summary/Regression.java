@@ -84,6 +84,6 @@ public class Regression implements Fit {
     }
 
     public Double get(Object value) {
-        return m == null ? null : m * Data.asNumeric(value) + b;
+        return m == null || value == null ? null : m * Data.asNumeric(value) + b;
     }
 }

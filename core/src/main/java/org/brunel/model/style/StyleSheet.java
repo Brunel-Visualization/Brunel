@@ -39,7 +39,7 @@ public class StyleSheet {
     private static void ensureDefaultBuilt() {
         if (brunelDefault == null) {
             // Create this when it is needed
-            String text = new Scanner(Builder.class.getResourceAsStream("/javascript/BrunelBaseStyles.css"), "UTF-8").useDelimiter("\\A").next();
+            String text = new Scanner(Builder.class.getResourceAsStream("/javascript/Brunel.css"), "UTF-8").useDelimiter("\\A").next();
             brunelDefault = StyleFactory.instance().makeStyleSheet(text);
         }
     }

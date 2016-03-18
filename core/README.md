@@ -62,7 +62,7 @@ In addition, we may add modifiers to a field to modify the way the action works 
 When using Brunel in a web environment, the following files need importing / linking:
 
 ````
-<link rel="stylesheet" type="text/css" href="../out/BrunelBaseStyles.css">
+<link rel="stylesheet" type="text/css" href="../out/Brunel.css">
 <link rel="stylesheet" type="text/css" href="http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
@@ -75,7 +75,7 @@ When using Brunel in a web environment, the following files need importing / lin
 <style>
 ````
 
-In addition, Brunel uses extended characters, and so the page *must* define the use of the UTF-8 character set.  
+In addition, Brunel uses extended characters, and so the page *must* define the use of the UTF-8 character set.
 
 Note that the local files are common to all visualizations, and so can be placed in a common location on your server.
 
@@ -93,7 +93,7 @@ Thus a skeleton page to include Brunel will look like this
 <html>
 <head>
 <meta charset="UTF-8">
-<link rel="stylesheet" type="text/css" href="../out/BrunelBaseStyles.css">
+<link rel="stylesheet" type="text/css" href="../out/Brunel.css">
 <link rel="stylesheet" type="text/css" href="http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
@@ -177,10 +177,10 @@ The Brunel engine can generate Javascript that can be used to supply interactivi
 Brunel Javascript.  This is done separately because it is expected that different Brunel integrations will
 manage Javascript differently to supply Brunel interactivity.
 
-Integrators can retrieve the state needed for interactive controls as JSON in Java using `Builder.getControls()`.  
+Integrators can retrieve the state needed for interactive controls as JSON in Java using `Builder.getControls()`.
 `BrunelJQueryControlFactory.js` can then produce standard Brunel controls using this state, but any Javascript with a matching public
 API can be used instead.  `BrunelEventHandlers.js` contains code to manage events between the controls and the
-visualization and is expected to be used in any integration.  `BrunelBaseStyles.css` contains CSS used by the UI controls.
+visualization and is expected to be used in any integration.  `Brunel.css` contains CSS used by the UI controls.
 
 ### Exposed members of the Brunel Visualization class
 

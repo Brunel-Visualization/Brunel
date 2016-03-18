@@ -14,46 +14,54 @@
   ~ limitations under the License.
   -->
 
-<link rel="stylesheet" type="text/css" href="/nbextensions/brunel_ext/BrunelBaseStyles.css">
+<link rel="stylesheet" type="text/css" href="/nbextensions/brunel_ext/Brunel.css">
 <link rel="stylesheet" type="text/css" href="/nbextensions/brunel_ext/sumoselect/sumoselect.css">
 <style>
-    {{d3css}}
+    {
+    {
+        d3css
+    }
+    }
 </style>
 
 <div id="{{controlsid}}" class="brunel"/>
 <svg id="{{visId}}" width="{{width}}" height="{{height}}"></svg>
 
 <script>
-require.config({
-    waitSeconds: 60,
-    paths: {
-        'd3': '//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min',
-        'BrunelD3': '/nbextensions/brunel_ext/BrunelD3',
-        'BrunelData': '/nbextensions/brunel_ext/BrunelData',
-        'BrunelEventHandlers': '/nbextensions/brunel_ext/BrunelEventHandlers',
-        'BrunelJQueryControlFactory': '/nbextensions/brunel_ext/BrunelJQueryControlFactory',
-        'SumoSelect': '/nbextensions/brunel_ext/sumoselect/jquery.sumoselect.min'
-    },
-    shim: {
-        'BrunelD3': {
-            exports: 'BrunelD3'
+    require.config({
+        waitSeconds: 60,
+        paths: {
+            'd3': '//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min',
+            'BrunelD3': '/nbextensions/brunel_ext/BrunelD3',
+            'BrunelData': '/nbextensions/brunel_ext/BrunelData',
+            'BrunelEventHandlers': '/nbextensions/brunel_ext/BrunelEventHandlers',
+            'BrunelJQueryControlFactory': '/nbextensions/brunel_ext/BrunelJQueryControlFactory',
+            'SumoSelect': '/nbextensions/brunel_ext/sumoselect/jquery.sumoselect.min'
         },
-        'BrunelData': {
-            exports: 'BrunelData'
-        },
-        'BrunelEventHandlers': {
-            exports: 'BrunelEventHandlers'
-        },
-        'BrunelJQueryControlFactory': {
-            exports: 'BrunelJQueryControlFactory'
+        shim: {
+            'BrunelD3': {
+                exports: 'BrunelD3'
+            },
+            'BrunelData': {
+                exports: 'BrunelData'
+            },
+            'BrunelEventHandlers': {
+                exports: 'BrunelEventHandlers'
+            },
+            'BrunelJQueryControlFactory': {
+                exports: 'BrunelJQueryControlFactory'
+            }
         }
-    }
 
-});
+    });
 
-require(["d3"], function(d3) {
-require(["BrunelD3", "BrunelData", "BrunelEventHandlers", "BrunelJQueryControlFactory", "SumoSelect"], function(BrunelD3, BrunelData,BrunelEventHandlers,BrunelJQueryControlFactory, SumoSelect) {
-    {{d3js}}
-});
-});
+    require(["d3"], function (d3) {
+        require(["BrunelD3", "BrunelData", "BrunelEventHandlers", "BrunelJQueryControlFactory", "SumoSelect"], function (BrunelD3, BrunelData, BrunelEventHandlers, BrunelJQueryControlFactory, SumoSelect) {
+            {
+                {
+                    d3js
+                }
+            }
+        });
+    });
 </script>
