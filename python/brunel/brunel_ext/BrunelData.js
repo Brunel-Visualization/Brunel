@@ -1137,6 +1137,14 @@ $.copy(V.Dataset, {
 
 $.copy(V.Dataset.prototype, {
 
+    retainRows: function(keep) {
+        var i;
+        var results = $.Array(this.fields.length, null);
+        for (i = 0; i < results.length; i++)
+            results[i] = V.Fields.permute(this.fields[i], keep, false);
+        return this.replaceFields(results);
+    },
+
     transform: function(command) {
         return V.modify_Transform.transform(this, command);
     },
@@ -2473,7 +2481,7 @@ $.extend(V.modify_Filter, V.modify_DataOperation);
 $.copy(V.modify_Filter, {
 
     transform: function(base, command) {
-        var c, field, i, keep, p, par, params, q, results, t, type;
+        var c, field, i, keep, p, par, params, q, t, type;
         var commands = V.modify_DataOperation.strings(command, ';');
         var N = commands.length;
         if (N == 0) return base;
@@ -2496,11 +2504,7 @@ $.copy(V.modify_Filter, {
             params[i] = par;
         }
         keep = V.modify_Filter.makeRowsToKeep(field, type, params);
-        if (keep == null) return base;
-        results = $.Array(base.fields.length, null);
-        for (i = 0; i < results.length; i++)
-            results[i] = V.Fields.permute(base.fields[i], keep, false);
-        return base.replaceFields(results);
+        return keep == null ? base : base.retainRows(keep);
     },
 
     getRankedObjects: function(field, p1, p2) {

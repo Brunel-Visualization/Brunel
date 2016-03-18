@@ -25,10 +25,10 @@ import org.brunel.color.ColorMapping;
 import org.brunel.color.Palette;
 import org.brunel.data.Data;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 import org.brunel.data.auto.Auto;
 import org.brunel.data.auto.NumericScale;
 import org.brunel.data.util.DateFormat;
-import org.brunel.data.Fields;
 import org.brunel.data.util.Range;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
@@ -161,8 +161,8 @@ public class D3ScaleBuilder {
             }
         }
 
-        // If auto, check for the coordinate system / diagram to determine what is wanted
-        if (auto) if (coords == VisTypes.Coordinates.polar || structure.diagram != null)
+        // If auto, check for the coordinate system / diagram / nesting to determine what is wanted
+        if (auto) if (coords == VisTypes.Coordinates.polar || structure.diagram != null || structure.nested())
             return new AxisSpec[2];
         else
             return new AxisSpec[]{AxisSpec.DEFAULT, AxisSpec.DEFAULT};
@@ -174,6 +174,7 @@ public class D3ScaleBuilder {
         Field result = null;
         for (VisSingle vis : elements) {
             boolean auto = vis.tLegends == VisTypes.Legends.auto;
+            if (auto && structure.nested()) continue;                       // No default legend for nested charts
             if (vis.fColor.isEmpty()) continue;                             // No color means no color legend
             if (vis.tLegends == VisTypes.Legends.none) continue;            // No legend if not asked for one
 
@@ -345,6 +346,13 @@ public class D3ScaleBuilder {
             if (axis.isLog()) out.addChained("ticks(7, ',.g3')");
             else if (axis.tickCount != null)
                 out.addChained("ticks(").add(axis.tickCount).add(")");
+            else if (axis == hAxis){
+                out.addChained("ticks(Math.max(10, Math.round(geom.inner_width / " + axis.maxCategoryWidth() +")))");
+            }
+
+            if (axis.inMillions())
+                out.addChained("tickFormat(  function(x) { return BrunelData.Data.format(x/1e6) + 'M' })");
+
             out.endStatement();
         }
     }

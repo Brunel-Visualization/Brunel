@@ -31,6 +31,9 @@ import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 import org.brunel.model.style.StyleSheet;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * The abstract builder does as much work as possible in building the visualizations. A descendant of this class
  * must define the specific methods that will define the main artifacts.
@@ -58,8 +61,11 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
     private StyleSheet visStyles;                   // Collection of style overrides for this visualization
     private Dataset[] datasets;                     // datasets used by this visualization
 
+    protected final Map<Integer, Integer> nesting;    // Which charts are nested within which other ones
+
     public AbstractBuilder(BuilderOptions options) {
         this.options = options;
+        nesting = new HashMap<Integer, Integer>();
     }
 
     /**
@@ -85,7 +91,8 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         // - build the data (giving it a an ID that is unique within the vis)
         // - build the item, which stores controls and styles, and then calls the descendant's createSingle method
 
-        if (main.children() == null) {
+        VisItem[] children = main.children();
+        if (children == null) {
             // For a single, one-element visualization, treat as a tiling of one chart
             buildTiledCharts(width, height, new VisItem[]{main.getSingle()});
         } else {
@@ -93,19 +100,35 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
 
             if (compositionMethod == VisTypes.Composition.tile) {
                 // We define a set of charts and build them, tiling them into the space.
-                buildTiledCharts(width, height, main.children());
+                buildTiledCharts(width, height, children);
             } else if (compositionMethod == VisTypes.Composition.overlay) {
                 // If we have a set of compositions, they are placed into the whole area
                 double[] loc = new ChartLayout(width, height, main).getLocation(0);
-                buildSingleChart(0, main.children(), loc);
+                buildSingleChart(0, children, loc, null, null);
             } else if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
-                // Nesting not yet implemented, so simply util the first element and pretend it is tiled
-                buildTiledCharts(width, height, new VisItem[]{main.getSingle()});
+                // The following rules should be ensured by the parser
+                if (children.length != 2)
+                    throw new IllegalStateException("Nested charts only implemented for exactly one inner, one outer");
+                if (children[0].children() != null)
+                    throw new IllegalStateException("Inner chart in nesting must be atomic");
+                if (children[1].children() != null)
+                    throw new IllegalStateException("Outer chart in nesting must be atomic");
+                buildNestedCharts(width, height, children[1].getSingle(), children[0].getSingle());
             }
 
         }
 
         endVisSystem(main);
+    }
+
+    private void buildNestedCharts(int width, int height, VisSingle inner, VisSingle outer) {
+        // For now, just deal with simple case of two charts, 0 and 1
+        nesting.put(1, 0);
+
+        double[] loc = new ChartLayout(width, height, outer).getLocation(0);
+        ChartStructure outerStructure = buildSingleChart(0, new VisItem[] {outer}, loc, null, 1);
+        loc = new ChartLayout(width, height, inner).getLocation(0);
+        buildSingleChart(1, new VisItem[] {inner}, loc, outerStructure, null);
     }
 
     public final BuilderOptions getOptions() {
@@ -162,14 +185,14 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
             defineElement(structure);
             if (structure.vis.styles != null) {
                 StyleSheet styles = structure.vis.styles.replaceClass("currentElement", "element" + structure.elementID());
-                visStyles.add(styles, "chart" +structure.chart.chartID());
+                visStyles.add(styles, "chart" + structure.chart.chartID());
             }
         } catch (Exception e) {
             throw VisException.makeBuilding(e, structure.vis);
         }
     }
 
-    private void buildSingleChart(int chartIndex, VisItem[] items, double[] loc) {
+    private ChartStructure buildSingleChart(int chartIndex, VisItem[] items, double[] loc, ChartStructure outer, Integer innerChartIndex) {
 
         // Assemble the elements and data
         Dataset[] data = new Dataset[items.length];
@@ -179,10 +202,12 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
             data[i] = new DataBuilder(elements[i], this).build();
         }
 
-        ChartStructure structure = new ChartStructure(chartIndex, elements, data, datasets);
+
+        ChartStructure structure = new ChartStructure(chartIndex, elements, data, datasets, outer, innerChartIndex);
         defineChart(structure, loc);
         for (ElementStructure e : structure.elementStructure) buildElement(e);
         endChart(structure);
+        return structure;
     }
 
     /* Build independent charts tiled into the same display area */
@@ -195,9 +220,9 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
             VisItem[] items = chart.children();
             if (items == null) {
                 // The chart is a single element
-                buildSingleChart(i, new VisItem[]{chart}, loc);
+                buildSingleChart(i, new VisItem[]{chart}, loc, null, null);
             } else {
-                buildSingleChart(i, items, loc);
+                buildSingleChart(i, items, loc, null, null);
             }
 
         }

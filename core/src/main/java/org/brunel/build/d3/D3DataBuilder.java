@@ -193,6 +193,7 @@ public class D3DataBuilder {
         DataTransformParameters params = (DataTransformParameters) data.property("parameters");
         D3Util.addTiming("Data Start", out);
         out.add("original = datasets[" + datasetIndex + "]").endStatement();
+        out.add("if (filterRows) original = original.retainRows(filterRows)").endStatement();
         out.add("processed = pre(original,", datasetIndex, ")");
         out.mark();
         writeTransform("addConstants", params.constantsCommand);

@@ -100,6 +100,13 @@ public class Dataset extends Informative implements Serializable {
         for (Field f : fields) fieldByName.put(f.name, f);
     }
 
+    public Dataset retainRows(int[] keep) {
+        Field[] results = new Field[fields.length];
+        for (int i = 0; i < results.length; i++)
+            results[i] = Fields.permute(fields[i], keep, false);
+        return replaceFields(results);
+    }
+
     /**
      * Create a new data set based on this one, with the designated fields binned
      *

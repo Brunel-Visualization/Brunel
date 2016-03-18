@@ -43,6 +43,7 @@ class AxisDetails {
 
     private final Field[] fields;                      // Fields used in this axis
     private final boolean categorical;                 // True if the axis is categorical
+    private final boolean inMillions;                  // True if the fields values are nicely shown in millions
 
     /* Constructs the axis for the given fields */
     public AxisDetails(String dimension, Field[] definedFields, boolean categorical, String userTitle, int tickCount) {
@@ -56,6 +57,15 @@ class AxisDetails {
         else
             this.title = title(fields);
 
+        this.inMillions = !categorical && isInMillions(definedFields);
+
+    }
+
+    private boolean isInMillions(Field[] definedFields) {
+        for (Field f : definedFields) {
+            if (!f.isDate() && f.max() - f.min() > 2e6) return true;
+        }
+        return false;
     }
 
     /* Return the title for the axis */
@@ -74,6 +84,10 @@ class AxisDetails {
         }
         if (originalTitles.size() < titles.size()) titles = originalTitles;     // If shorter, use that
         return titles.isEmpty() ? null : Data.join(titles);
+    }
+
+    public boolean inMillions() {
+        return inMillions;
     }
 
     public boolean isLog() {
