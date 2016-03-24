@@ -50,7 +50,7 @@ public class BestMatchTest {
 		Action b = BestMatch.match(data, data1, a);
 		assertEquals(ActionUtil.parameters(a).length, ActionUtil.parameters(b).length);
 
-		ArrayList<String> fields = new ArrayList<String>();
+		ArrayList<String> fields = new ArrayList<>();
 		boolean duplicateFound = false;
 
 		for (Param p : ActionUtil.parameters(b)) {
@@ -74,7 +74,7 @@ public class BestMatchTest {
 		Param[] parms2 = ActionUtil.parameters(b);
 		assertEquals(parms1.length, parms2.length);
 
-		ArrayList<String> fields = new ArrayList<String>();
+		ArrayList<String> fields = new ArrayList<>();
 		boolean dualEncodedFound = false;
 
 		for (int i=0;i < parms1.length; i++) {

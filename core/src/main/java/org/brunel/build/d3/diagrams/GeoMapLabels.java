@@ -22,6 +22,7 @@ import org.brunel.build.element.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
+import org.brunel.geom.Point;
 import org.brunel.geom.Rect;
 import org.brunel.maps.LabelPoint;
 import org.brunel.model.VisSingle;
@@ -119,8 +120,8 @@ public class GeoMapLabels extends D3Diagram {
         Rect bds = structure.geo.projectedBounds();
         double scale = Math.min(800 / bds.width(), 600 / bds.height());
 
-        ArrayList<LabelPoint> result = new ArrayList<LabelPoint>();
-        ArrayList<Rect> accepted = new ArrayList<Rect>();
+        ArrayList<LabelPoint> result = new ArrayList<>();
+        ArrayList<Rect> accepted = new ArrayList<>();
 
         Font font = new Font("Helvetica", Font.PLAIN, 12);
         FontRenderContext frc = new FontRenderContext(null, true, true);
@@ -128,7 +129,7 @@ public class GeoMapLabels extends D3Diagram {
         for (LabelPoint p : points) {
             boolean intersects = false;
 
-            org.brunel.geom.Point pp = structure.geo.transform(p);
+            Point pp = structure.geo.transform(p);
             double x = pp.x * scale, y = pp.y * scale;
             Rectangle2D size = font.getStringBounds(p.label, frc);
             Rect s = new Rect(x - 15, x + size.getWidth() + 15, y, y + size.getHeight());

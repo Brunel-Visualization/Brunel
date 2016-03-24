@@ -62,7 +62,7 @@ public class TestChord {
     @Test
     public void testMatrix() {
         double[][] data = new Chord(simple, "A", "B", null).matrix();
-        Assert.assertEquals(5, data.length);
+        assertEquals(5, data.length);
         // Columns:   a  b  c  x  y
         assertEquals("0, 0, 0, 1, 0", Data.join(data[0]));      // a -> x
         assertEquals("0, 0, 0, 1, 0", Data.join(data[1]));      // b -> x
@@ -71,7 +71,7 @@ public class TestChord {
         assertEquals("0, 0, 2, 0, 0", Data.join(data[4]));      // y ->
 
         data = new Chord(simple, "A", "B", "C").matrix();
-        Assert.assertEquals(5, data.length);
+        assertEquals(5, data.length);
         // Columns:   a  b  c  x  y
         assertEquals("0, 0, 0, 1, 0", Data.join(data[0]));      // a -> x
         assertEquals("0, 0, 0, 2, 0", Data.join(data[1]));      // b -> x

@@ -17,8 +17,10 @@
 package org.brunel.build.d3;
 
 import org.brunel.action.Param;
+import org.brunel.build.d3.D3Util.DateBuilder;
 import org.brunel.build.data.DataTransformParameters;
 import org.brunel.build.util.BuilderOptions;
+import org.brunel.build.util.BuilderOptions.DataMethod;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
@@ -30,6 +32,9 @@ import org.brunel.data.util.Range;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Diagram;
+import org.brunel.model.VisTypes.Element;
+import org.brunel.model.VisTypes.Interaction;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -41,6 +46,7 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Write the Javascript for the data
@@ -48,8 +54,8 @@ import java.util.Map;
 public class D3DataBuilder {
 
     public static void writeTables(VisItem main, ScriptWriter out, BuilderOptions options) {
-        if (options.includeData == BuilderOptions.DataMethod.none) return;
-        if (options.includeData == BuilderOptions.DataMethod.minimal) {
+        if (options.includeData == DataMethod.none) return;
+        if (options.includeData == DataMethod.minimal) {
             throw new UnsupportedOperationException("Cannot make minimal data yet");
         }
 
@@ -65,9 +71,9 @@ public class D3DataBuilder {
             Dataset data = datasets[d];
             Field[] fields;
 
-            if (options.includeData == BuilderOptions.DataMethod.columns) {
+            if (options.includeData == DataMethod.columns) {
                 // Only the fields needed by the vis items
-                LinkedHashSet<Field> fieldsAsSet = new LinkedHashSet<Field>();
+                LinkedHashSet<Field> fieldsAsSet = new LinkedHashSet<>();
                 addUsedFields(main, data, fieldsAsSet);
                 fields = fieldsAsSet.toArray(new Field[fieldsAsSet.size()]);
             } else {
@@ -143,7 +149,7 @@ public class D3DataBuilder {
     // If the row contains any nulls, return null for the whole row
     private static String makeRowText(Field[] fields, int r, NumberFormat format) {
         StringBuilder row = new StringBuilder();
-        D3Util.DateBuilder dateBuilder = new D3Util.DateBuilder();
+        DateBuilder dateBuilder = new DateBuilder();
         row.append("[");
         for (int i = 0; i < fields.length; i++) {
             Field field = fields[i];
@@ -199,7 +205,7 @@ public class D3DataBuilder {
         writeTransform("addConstants", params.constantsCommand);
 
         // Check for selection filtering
-        Param param = vis.tInteraction.get(VisTypes.Interaction.filter);
+        Param param = vis.tInteraction.get(Interaction.filter);
         if (param != null) {
             if ("unselected".equals(param.asString()))
                 writeTransform("filter", "#selection is " + Field.VAL_UNSELECTED);
@@ -224,7 +230,7 @@ public class D3DataBuilder {
 
         writeTransform("stack", params.stackCommand);               // Stack must come after all else
 
-        if (vis.tDiagram == VisTypes.Diagram.network && vis.fY.size() > 1) {
+        if (vis.tDiagram == Diagram.network && vis.fY.size() > 1) {
             // We are using the 'Y' values to generate a set of identifier
             // We need to ensure the values are set in the summary, as well as any aesthetics
             String command = "#values=#values";
@@ -245,7 +251,7 @@ public class D3DataBuilder {
 
         // Get the list of fields we need as an array
         String[] fields = new String[fieldsToIndex.size()];
-        for (Map.Entry<String, Integer> e : fieldsToIndex.entrySet()) {
+        for (Entry<String, Integer> e : fieldsToIndex.entrySet()) {
             fields[e.getValue()] = e.getKey();
         }
 
@@ -331,20 +337,20 @@ public class D3DataBuilder {
         // If we have defined keys, util them
         if (!vis.fKeys.isEmpty()) return asFields(vis.fKeys);
 
-        if (vis.tDiagram == VisTypes.Diagram.chord) {
-            List<String> result = new ArrayList<String>();
+        if (vis.tDiagram == Diagram.chord) {
+            List<String> result = new ArrayList<>();
             Collections.addAll(result, vis.positionFields());
             Collections.addAll(result, vis.aestheticFields());
             if (suitableForKey(result)) return result;
         }
 
         // Positions are the keys  treemaps
-        if (vis.tDiagram == VisTypes.Diagram.map) {
+        if (vis.tDiagram == Diagram.map) {
             // Otherwise just use the position fields as usual
             return Arrays.asList(vis.positionFields());
         }
 
-        if (vis.tDiagram == VisTypes.Diagram.network) {
+        if (vis.tDiagram == Diagram.network) {
             // The following handles the case when we use the edges as y values to make a key field for the nodes
             if (vis.fY.size() > 1) return Collections.singletonList("#values");
         }
@@ -360,14 +366,14 @@ public class D3DataBuilder {
         }
 
         // Default is the row values
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         result.add("#row");
 
         // Multiple rows have the same "#row" when we do make series
         if (vis.fY.size() > 1) result.add("#series");
 
         // Multiple rows have the same "#row" when we split up a list field using "each"
-        for (Map.Entry<Param, String> e : vis.fTransform.entrySet()) {
+        for (Entry<Param, String> e : vis.fTransform.entrySet()) {
             if (e.getValue().equals("each")) result.add(e.getKey().asField());
         }
 
@@ -377,7 +383,7 @@ public class D3DataBuilder {
 
     private List<String> makeSplitFields() {
         // Start with all the aesthetics
-        ArrayList<String> splitters = new ArrayList<String>();
+        ArrayList<String> splitters = new ArrayList<>();
 
         // Always add splits and color
         for (Param p : vis.fSplits) splitters.add(p.asField());
@@ -385,7 +391,7 @@ public class D3DataBuilder {
         for (Param p : vis.fOpacity) splitters.add(p.asField());
 
         // We handle sized areas specially -- don't split using the size for them
-        if (vis.tElement != VisTypes.Element.line && vis.tElement != VisTypes.Element.path) {
+        if (vis.tElement != Element.line && vis.tElement != Element.path) {
             for (Param p : vis.fSize) splitters.add(p.asField());
         }
 
@@ -393,7 +399,7 @@ public class D3DataBuilder {
     }
 
     private List<String> asFields(List<Param> items) {
-        List<String> fields = new ArrayList<String>();
+        List<String> fields = new ArrayList<>();
         for (Param p : items) fields.add(p.asField());
         return fields;
     }

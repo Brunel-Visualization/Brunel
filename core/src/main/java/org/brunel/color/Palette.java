@@ -20,6 +20,7 @@ import org.brunel.action.Param;
 import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,11 +52,11 @@ public class Palette {
     private static final Map<String, String> COLORS_BY_NAME;        // Colors by name
 
     static {
-        COLORS_BY_NAME = new HashMap<String, String>();
+        COLORS_BY_NAME = new HashMap<>();
         Scanner scanner = new Scanner(Palette.class.getResourceAsStream("/org/brunel/color/colors.txt")).useDelimiter("\n");
 
-        List<String> boyntonColors = new ArrayList<String>();
-        List<String> kellyColors = new ArrayList<String>();
+        List<String> boyntonColors = new ArrayList<>();
+        List<String> kellyColors = new ArrayList<>();
         while (scanner.hasNext()) {
             String s = scanner.next();
             String[] parts = s.split("[\t]+");
@@ -83,7 +84,7 @@ public class Palette {
     public Palette(String definition) {
         String[] parts = definition.split(";");
         this.name = parts[0].trim();
-        this.colorTags = new HashSet<String>();
+        this.colorTags = new HashSet<>();
         for (String s : parts[1].split(",")) colorTags.add(s.trim());
         String[] cols = parts[2].split(",");
         items = new String[cols.length];
@@ -94,7 +95,7 @@ public class Palette {
     public Palette(String name, List<String> colors, boolean singleColor) {
         this.name = name;
         this.singleColor = singleColor ? colors.get(colors.size() - 1) : null;
-        this.colorTags = Collections.EMPTY_SET;
+        this.colorTags = Collections.emptySet();
         this.items = colors.toArray(new String[colors.size()]);
     }
 
@@ -106,7 +107,7 @@ public class Palette {
             base = makeDefaultMapping(f);
         } else {
             List<Param> params = modifiers[0].asList();
-            List<String> names = new ArrayList<String>();
+            List<String> names = new ArrayList<>();
             for (Param p : params) {
                 String s = p.asString();
                 if (s.equals("=")) mutingLevel = 0;
@@ -145,7 +146,7 @@ public class Palette {
             return makeDivergent(f, makeNamedPalette(a), makeNamedPalette(b));
         } else {
             // Either individual values or interpolations == but all define exact colors
-            List<String> colors = new ArrayList<String>();
+            List<String> colors = new ArrayList<>();
             for (String s : paletteParts) {
                 Palette p = makeNamedPalette(s);
                 if (p.singleColor != null) colors.add(p.singleColor);
@@ -207,13 +208,13 @@ public class Palette {
     }
 
     private static Palette makeSingleHue(String c) {
-        java.awt.Color base = java.awt.Color.decode(c);
-        float[] hsv = java.awt.Color.RGBtoHSB(base.getRed(), base.getGreen(), base.getBlue(), new float[3]);
+        Color base = Color.decode(c);
+        float[] hsv = Color.RGBtoHSB(base.getRed(), base.getGreen(), base.getBlue(), new float[3]);
         int n = 5;
-        List<String> colors = new ArrayList<String>(n);
+        List<String> colors = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
             float r = i / (n - 1.0f);
-            java.awt.Color a = java.awt.Color.getHSBColor(hsv[0], r * hsv[1], (1 - r) + r * hsv[2]);
+            Color a = Color.getHSBColor(hsv[0], r * hsv[1], (1 - r) + r * hsv[2]);
             colors.add(String.format("#%02X%02X%02X", a.getRed(), a.getGreen(), a.getBlue()));
         }
         return new Palette(c, colors, true);

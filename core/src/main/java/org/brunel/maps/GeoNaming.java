@@ -17,6 +17,7 @@
 package org.brunel.maps;
 
 import java.text.Normalizer;
+import java.text.Normalizer.Form;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +37,7 @@ class GeoNaming {
             "|us:united states of america|unitedstatesofamerica:united states of america" +
             "|burma:myanmar|vatican city:vatican";
 
-    private static final Map<String, String> commonNames = new HashMap<String, String>();
+    private static final Map<String, String> commonNames = new HashMap<>();
 
     static {
         for (String s : MAPPING.split("\\|")) {
@@ -67,7 +68,7 @@ class GeoNaming {
     }
 
     private static String removeAccents(String s) {
-        String decomposed = Normalizer.normalize(s, Normalizer.Form.NFD);
+        String decomposed = Normalizer.normalize(s, Form.NFD);
         return PATTERN.matcher(decomposed).replaceAll("");
     }
 
@@ -78,7 +79,7 @@ class GeoNaming {
     }
 
     public static List<String> variants(String name) {
-        List<String> variants = new ArrayList<String>();
+        List<String> variants = new ArrayList<>();
 
         if (name.equals("east germany") || name.equals("west germany")) {
             variants.add("germany");

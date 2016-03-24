@@ -27,7 +27,7 @@ import java.util.List;
 public final class SummaryValues {
     private final Field[] fields;                                   // the fields we use
     private final Field[] xFields;                                  // the fields to use as 'X' values
-    public final List<Integer> rows = new ArrayList<Integer>();     // Which data rows have been aggregated into this
+    public final List<Integer> rows = new ArrayList<>();     // Which data rows have been aggregated into this
     private final ArrayList<Field> groupFields;                     // Fields that group results
     public double[] percentSums;
 
@@ -36,7 +36,7 @@ public final class SummaryValues {
         this.xFields = xFields;
 
         // Create an array of fields that group the results
-        this.groupFields = new ArrayList<Field>();
+        this.groupFields = new ArrayList<>();
         for (Field f : allDimensions) {
             boolean isGroup = true;
             for (Field x : xFields) if (x == f) isGroup = false;
@@ -121,7 +121,7 @@ public final class SummaryValues {
     }
 
     private List<Integer> validForGroup(int index) {
-        ArrayList<Integer> list = new ArrayList<Integer>();
+        ArrayList<Integer> list = new ArrayList<>();
         int n = fields[0].rowCount();
         for (int i = 0; i < n; i++) {
             boolean valid = true;

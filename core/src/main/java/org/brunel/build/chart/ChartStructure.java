@@ -22,6 +22,8 @@ import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Diagram;
+import org.brunel.model.VisTypes.Element;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -37,7 +39,7 @@ public class ChartStructure {
     public final int chartIndex;
     public final VisSingle[] elements;
     public final GeoInformation geo;
-    public final VisTypes.Diagram diagram;
+    public final Diagram diagram;
     public final ElementStructure[] elementStructure;
     public final ChartStructure outer;                      // If non-null, the enclosing element for a nested chart
     public final Integer innerChartIndex;                  // If non-null, the index of the chart we enclose
@@ -73,7 +75,7 @@ public class ChartStructure {
         return outer != null;
     }
 
-    private VisTypes.Diagram findDiagram() {
+    private Diagram findDiagram() {
         // Any diagram make the chart all diagram. Mixing diagrams and non-diagrams will
         // likely be useless at best, but we will not throw an error for it
         for (VisSingle e : elements) if (e.tDiagram != null) return e.tDiagram;
@@ -104,7 +106,7 @@ public class ChartStructure {
     public GeoInformation makeGeo(VisSingle[] elements, Dataset[] data) {
         // If any element specifies a map, we make the map information for all to share
         for (VisSingle vis : elements)
-            if (vis.tDiagram == VisTypes.Diagram.map)
+            if (vis.tDiagram == Diagram.map)
                 return new GeoInformation(elements, data, coordinates);
         return null;
     }
@@ -123,8 +125,8 @@ public class ChartStructure {
                 if (aa.tDiagram == null && bb.tDiagram != null) return 1;
 
                 // Edges go last
-                if (aa.tElement == VisTypes.Element.edge && bb.tElement != VisTypes.Element.edge) return 1;
-                if (aa.tElement != VisTypes.Element.edge && bb.tElement == VisTypes.Element.edge) return -1;
+                if (aa.tElement == Element.edge && bb.tElement != Element.edge) return 1;
+                if (aa.tElement != Element.edge && bb.tElement == Element.edge) return -1;
 
                 // Otherwise the more keys you have, the later you are built
                 return aa.fKeys.size() - bb.fKeys.size();

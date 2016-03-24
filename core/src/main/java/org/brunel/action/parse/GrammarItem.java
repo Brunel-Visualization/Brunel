@@ -35,8 +35,8 @@ public class GrammarItem {
     GrammarItem(String[] description) {
         this.name = description[0];
         this.type = description[1];
-        this.parameters = new TreeSet<String>();
-        this.options = new TreeSet<String>();
+        this.parameters = new TreeSet<>();
+        this.options = new TreeSet<>();
 
         boolean canBeEmpty = false, canBeMulti = false;
         for (int i = 2; i < description.length; i++) {

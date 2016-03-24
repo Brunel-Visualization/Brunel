@@ -37,16 +37,16 @@ public class ChartCoordinates {
     public final String xTransform, yTransform;
     public final boolean xCategorical, yCategorical;
 
-    private final Map<VisSingle, Field[]> x = new HashMap<VisSingle, Field[]>();
-    private final Map<VisSingle, Field[]> y = new HashMap<VisSingle, Field[]>();
+    private final Map<VisSingle, Field[]> x = new HashMap<>();
+    private final Map<VisSingle, Field[]> y = new HashMap<>();
 
     public ChartCoordinates(VisSingle[] elements, Dataset[] elementData) {
 
         String xTransform = null, yTransform = null;                // If defined by the VisSingle
 
-        ArrayList<Field> allX = new ArrayList<Field>();
-        ArrayList<Field> allY = new ArrayList<Field>();
-        ArrayList<Field> allCluster = new ArrayList<Field>();
+        ArrayList<Field> allX = new ArrayList<>();
+        ArrayList<Field> allY = new ArrayList<>();
+        ArrayList<Field> allCluster = new ArrayList<>();
         for (int i = 0; i < elements.length; i++) {
             Field[] visXFields = getXFields(elements[i], elementData[i]);
             Field[] visYFields = getYFields(elements[i], elementData[i]);

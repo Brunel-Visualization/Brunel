@@ -43,8 +43,8 @@ public class Graph {
     public Graph(Field nd, Field a, Field b) {
 
         // Create the nodes
-        Map<Object, Node> nodeByID = new HashMap<Object, Node>();
-        List<Node> nds = new ArrayList<Node>();
+        Map<Object, Node> nodeByID = new HashMap<>();
+        List<Node> nds = new ArrayList<>();
         for (int i = 0; i < nd.rowCount(); i++) {
             Object o = nd.value(i);
             if (o != null) {
@@ -56,7 +56,7 @@ public class Graph {
         }
 
         // Create the edges only when validly defined
-        List<Edge> lks = new ArrayList<Edge>();
+        List<Edge> lks = new ArrayList<>();
         for (int i = 0; i < a.rowCount(); i++) {
             Node s = nodeByID.get(a.value(i));
             Node t = nodeByID.get(b.value(i));

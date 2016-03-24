@@ -46,16 +46,16 @@ public class TestBin {
         Field binned;
 
         binned = Transform.bin(field, 4);
-        Assert.assertEquals("1930|1940|1950|1960|1970|1980", binsToString(binned));
+        assertEquals("1930|1940|1950|1960|1970|1980", binsToString(binned));
         binned = Transform.bin(field, 8);
-        Assert.assertEquals("1930|1935|1940|1945|1950|1955|1960|1965|1970|1975", binsToString(binned));
+        assertEquals("1930|1935|1940|1945|1950|1955|1960|1965|1970|1975", binsToString(binned));
         binned = Transform.bin(field, 2);
-        Assert.assertEquals("1920|1940|1960|1980", binsToString(binned));
+        assertEquals("1920|1940|1960|1980", binsToString(binned));
         binned = Transform.bin(field, 20);
-        Assert.assertEquals("1932|1934|1936|1938|1940|1942|1944|1946|1948|1950|1952|1954|1956|1958|1960|1962|1964|1966 ...",
+        assertEquals("1932|1934|1936|1938|1940|1942|1944|1946|1948|1950|1952|1954|1956|1958|1960|1962|1964|1966 ...",
                 binsToString(binned));
         binned = Transform.bin(field, 100);
-        Assert.assertEquals(
+        assertEquals(
                 "Jul 1933|Oct 1933|Jan 1934|Apr 1934|Jul 1934|Oct 1934|Jan 1935|Apr 1935|Jul 1935|Oct 1935|Jan 1936|Apr 1936|Jul 1936|Oct 1936|Jan 1937|Apr 1937|Jul 1937|Oct 1937 ...",
                 binsToString(binned));
 
@@ -68,13 +68,13 @@ public class TestBin {
         Field binned;
 
         binned = Transform.bin(f, 4);
-        Assert.assertEquals("1|10|100|1000|10,000", binsToString(binned));
+        assertEquals("1|10|100|1000|10,000", binsToString(binned));
 
         binned = Transform.bin(f, 2);
-        Assert.assertEquals("1|100|10,000", binsToString(binned));
+        assertEquals("1|100|10,000", binsToString(binned));
 
         binned = Transform.bin(f, 8);
-        Assert.assertEquals("1|3|10|30|100|300|1000|3000", binsToString(binned));
+        assertEquals("1|3|10|30|100|300|1000|3000", binsToString(binned));
 
     }
 
@@ -89,7 +89,7 @@ public class TestBin {
                 s += "|";
                 s += f.format(r.high);
             } else {
-                s += o.toString() + "|";
+                s += o + "|";
             }
             if (i > 15) {
                 s += " ...";
@@ -103,9 +103,9 @@ public class TestBin {
     public void testBinningNominal() {
         Field base = data1.fields[10];
         Field binned = Transform.bin(base, 3);
-        Assert.assertEquals("Contemporary Fiction|Science Fiction|\u2026|", binsToString(binned));
+        assertEquals("Contemporary Fiction|Science Fiction|\u2026|", binsToString(binned));
         binned = Transform.bin(base, 4);
-        Assert.assertEquals("Contemporary Fiction|Historical Fiction|Science Fiction|Super Hero|", binsToString(binned));
+        assertEquals("Contemporary Fiction|Historical Fiction|Science Fiction|Super Hero|", binsToString(binned));
         binned = Transform.bin(base, -1);
         assertEquals(base, binned);
     }
@@ -118,13 +118,13 @@ public class TestBin {
         Field binned;
 
         binned = Transform.bin(data.fields[1], 4);
-        Assert.assertEquals("10,000|15,000|20,000|25,000", binsToString(binned));
+        assertEquals("10,000|15,000|20,000|25,000", binsToString(binned));
         binned = Transform.bin(data.fields[1], 8);
-        Assert.assertEquals("10,000|12,000|14,000|16,000|18,000|20,000|22,000|24,000|26,000", binsToString(binned));
+        assertEquals("10,000|12,000|14,000|16,000|18,000|20,000|22,000|24,000|26,000", binsToString(binned));
         binned = Transform.bin(data.fields[1], 2);
-        Assert.assertEquals("10,000|20,000|30,000", binsToString(binned));
+        assertEquals("10,000|20,000|30,000", binsToString(binned));
         binned = Transform.bin(data.fields[1], 20);
-        Assert.assertEquals(
+        assertEquals(
                 "10,000|11,000|12,000|13,000|14,000|15,000|16,000|17,000|18,000|19,000|20,000|21,000|22,000|23,000|24,000|25,000",
                 binsToString(binned));
 
@@ -136,13 +136,13 @@ public class TestBin {
 
         // 'educ' is in the range 8 .. 16
         binned = Transform.bin(data.fields[2], 4);
-        Assert.assertEquals("8|10|12|14|16", binsToString(binned));
+        assertEquals("8|10|12|14|16", binsToString(binned));
         binned = Transform.bin(data.fields[2], 8);
-        Assert.assertEquals("7.5|8.5|9.5|10.5|11.5|12.5|13.5|14.5|15.5|16.5", binsToString(binned));
+        assertEquals("7.5|8.5|9.5|10.5|11.5|12.5|13.5|14.5|15.5|16.5", binsToString(binned));
         binned = Transform.bin(data.fields[2], 2);
-        Assert.assertEquals("0|10|20", binsToString(binned));
+        assertEquals("0|10|20", binsToString(binned));
         binned = Transform.bin(data.fields[2], 20);
-        Assert.assertEquals("8|8.5|9|9.5|10|10.5|11|11.5|12|12.5|13|13.5|14|14.5|15|15.5|16", binsToString(binned));
+        assertEquals("8|8.5|9|9.5|10|10.5|11|11.5|12|12.5|13|13.5|14|14.5|15|15.5|16", binsToString(binned));
     }
 
 }

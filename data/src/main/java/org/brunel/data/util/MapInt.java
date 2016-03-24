@@ -28,9 +28,9 @@ import java.util.Set;
  * Associates items with integers
  */
 public class MapInt {
-    private final Map<Object, Integer> map = new HashMap<Object, Integer>();
-    private int totalCount = 0;
-    private int maxCount = 0;
+    private final Map<Object, Integer> map = new HashMap<>();
+    private int totalCount;
+    private int maxCount;
 
     public int get(Object o) {
         Integer v = map.get(o);
@@ -69,7 +69,7 @@ public class MapInt {
 
     public Object mode() {
         if (isEmpty()) return null;
-        List<Object> list = new ArrayList<Object>();
+        List<Object> list = new ArrayList<>();
         for (Object s : map.keySet())
             if (map.get(s) == maxCount) list.add(s);
 

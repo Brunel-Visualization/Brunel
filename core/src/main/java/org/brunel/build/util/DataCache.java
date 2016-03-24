@@ -32,8 +32,8 @@ public class DataCache {
 
     public static final String SAMPLE_DATA_LOCATION = "http://brunel.mybluemix.net/sample_data/";
     // Local cache is needed because Brunel needs identical Datasets to be the same instance
-    private static DatasetCache localCache = new SimpleCache();
-    private static DatasetCache userCache = null;
+    private static final DatasetCache localCache = new SimpleCache();
+    private static DatasetCache userCache;
 
     /**
      * Specify an alternative cache implementation for storing Datasets by key.

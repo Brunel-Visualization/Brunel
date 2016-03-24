@@ -68,13 +68,13 @@ public class Sort extends DataOperation {
     private static Object[] makeOrder(Field field, Field[] dimensions, boolean[] ascending) {
 
         // Map from field categories to rows for that field
-        Map<Object, List<Integer>> categorySums = new HashMap<Object, List<Integer>>();
+        Map<Object, List<Integer>> categorySums = new HashMap<>();
         for (int i = 0; i < field.rowCount(); i++) {
             Object category = field.value(i);
             if (category == null) continue;
             List<Integer> value = categorySums.get(category);
             if (value == null) {
-                value = new ArrayList<Integer>();
+                value = new ArrayList<>();
                 categorySums.put(category, value);
             }
             value.add(i);
@@ -168,7 +168,7 @@ public class Sort extends DataOperation {
 
     private static int[] moveCatchAllToEnd(int[] order, Field f) {
         int[] result = new int[order.length];
-        List<Integer> atEnd = new ArrayList<Integer>();
+        List<Integer> atEnd = new ArrayList<>();
         int at = 0;
         for (int j : order) {
             if ("\u2026".equals(f.value(j))) atEnd.add(j);

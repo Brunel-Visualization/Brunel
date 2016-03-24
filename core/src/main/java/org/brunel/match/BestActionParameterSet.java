@@ -98,7 +98,7 @@ class BestActionParameterSet {
 
     //Ensures only one alternative
     private void leaveAsIs(ActionParameterChoice choice) {
-        actionChoices = new ArrayList<ActionParameterChoice>(1);
+        actionChoices = new ArrayList<>(1);
         actionChoices.add(choice);
     }
 
@@ -148,7 +148,7 @@ class BestActionParameterSet {
         Field[] fields = newData.fields;
         Field originalField = originalData.field(parm.asField(), true);
 
-        actionChoices = new ArrayList<ActionParameterChoice>(fields.length);
+        actionChoices = new ArrayList<>(fields.length);
 
         for (Field f : fields) {
             //skip any synthetic fields
@@ -202,9 +202,9 @@ class BestActionParameterSet {
             return 0;
 
         int maxLen = 0;
-        final int lenA = a.length();
-        final int lenB = b.length();
-        final int[][] table = new int[lenA + 1][lenB + 1];
+        int lenA = a.length();
+        int lenB = b.length();
+        int[][] table = new int[lenA + 1][lenB + 1];
 
         for (int i = 1; i <= lenA; i++)
             for (int j = 1; j <= lenB; j++)

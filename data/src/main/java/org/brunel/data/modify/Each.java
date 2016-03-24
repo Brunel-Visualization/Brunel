@@ -48,8 +48,8 @@ public class Each extends DataOperation {
 
        ItemsList nulls = new ItemsList(new Object[1]);
 
-        List<Integer> index = new ArrayList<Integer>();         // For the non-target fields
-        List<Object> splitValues = new ArrayList<Object>();     // For the target field
+        List<Integer> index = new ArrayList<>();         // For the non-target fields
+        List<Object> splitValues = new ArrayList<>();     // For the target field
         for (int i = 0; i < target.rowCount(); i++) {
             ItemsList list = (ItemsList) target.value(i);
             if (list == null) list = nulls;                     // Treat a null as a list with a single null item

@@ -78,7 +78,7 @@ public class Library {
         return library;
     }
 
-    private final Map<String, LibraryItem> store = new HashMap<String, LibraryItem>();
+    private final Map<String, LibraryItem> store = new HashMap<>();
 
     private void add(LibraryItem item) {
         store.put(item.name(), item);

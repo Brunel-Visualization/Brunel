@@ -73,7 +73,7 @@ public class Range implements Comparable<Range> {
         return Data.asNumeric(high) - Data.asNumeric(low);
     }
 
-    @JSTranslation(js = {"return this.name;"})
+    @JSTranslation(js = "return this.name;")
     public int hashCode() {
         return low.hashCode() + 31 * high.hashCode();
     }

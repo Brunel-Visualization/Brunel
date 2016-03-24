@@ -186,7 +186,7 @@ public class Data {
         return d == null || Double.isNaN(d) ? null : d;
     }
 
-    @JSTranslation(js = {"$.sort(data, $$CLASS$$.compare)"})
+    @JSTranslation(js = "$.sort(data, $$CLASS$$.compare)")
     public static void sort(Object[] data) {
         Arrays.sort(data, new Comparator<Object>() {
 
@@ -282,7 +282,7 @@ public class Data {
 
         // Maps to common list items; used to get the list categories and
         // also to pool strings
-        Map<String, String> commonParts = new HashMap<String, String>();
+        Map<String, String> commonParts = new HashMap<>();
 
         // Create items lists and accumulate general info
         ItemsList[] items = new ItemsList[n];
@@ -291,7 +291,7 @@ public class Data {
             if (o == null) continue;
 
             // These are the valid items in the list
-            List<String> valid = new ArrayList<String>();
+            List<String> valid = new ArrayList<>();
 
             for (String s : Data.split(o.toString(), sep)) {
                 s = s.trim();
@@ -318,7 +318,7 @@ public class Data {
     }
 
     // Java does not use regexes for split; Java does
-    @JSTranslation(js = {"return text.split(sep);"})
+    @JSTranslation(js = "return text.split(sep);")
     public static String[] split(String text, char sep) {
         return text.split("\\" + sep);
     }
@@ -387,7 +387,7 @@ public class Data {
         return o;
     }
 
-    @JSTranslation(js = {"return items;"})
+    @JSTranslation(js = "return items;")
     public static int[] toPrimitive(Integer[] items) {
         int[] result = new int[items.length];
         for (int i = 0; i < items.length; i++) result[i] = items[i];

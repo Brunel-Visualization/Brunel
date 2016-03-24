@@ -28,7 +28,7 @@ import org.brunel.model.VisComposition;
 import org.brunel.model.VisException;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Composition;
 import org.brunel.model.style.StyleSheet;
 
 import java.util.HashMap;
@@ -65,7 +65,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
 
     public AbstractBuilder(BuilderOptions options) {
         this.options = options;
-        nesting = new HashMap<Integer, Integer>();
+        nesting = new HashMap<>();
     }
 
     /**
@@ -96,16 +96,16 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
             // For a single, one-element visualization, treat as a tiling of one chart
             buildTiledCharts(width, height, new VisItem[]{main.getSingle()});
         } else {
-            VisTypes.Composition compositionMethod = ((VisComposition) main).method;
+            Composition compositionMethod = ((VisComposition) main).method;
 
-            if (compositionMethod == VisTypes.Composition.tile) {
+            if (compositionMethod == Composition.tile) {
                 // We define a set of charts and build them, tiling them into the space.
                 buildTiledCharts(width, height, children);
-            } else if (compositionMethod == VisTypes.Composition.overlay) {
+            } else if (compositionMethod == Composition.overlay) {
                 // If we have a set of compositions, they are placed into the whole area
                 double[] loc = new ChartLayout(width, height, main).getLocation(0);
                 buildSingleChart(0, children, loc, null, null);
-            } else if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
+            } else if (compositionMethod == Composition.inside || compositionMethod == Composition.nested) {
                 // The following rules should be ensured by the parser
                 if (children.length != 2)
                     throw new IllegalStateException("Nested charts only implemented for exactly one inner, one outer");

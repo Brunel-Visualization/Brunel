@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
@@ -95,7 +96,7 @@ public class StyleSheet {
     private boolean sorted;                         // If true, most specific first
 
     public StyleSheet() {
-        entries = new ArrayList<StyleSheetEntry>();
+        entries = new ArrayList<>();
         sorted = false;
     }
 
@@ -110,12 +111,12 @@ public class StyleSheet {
     public Map<String, String> stylesFor(StyleTarget parent, String type, String... classes) {
         ensureSorted();
         StyleTarget target = new StyleTarget(type, parent, classes);
-        Map<String, String> result = new TreeMap<String, String>();
+        Map<String, String> result = new TreeMap<>();
 
         // Only add the first occurrences of each org.brunel.app.match as they override each color in order
         for (StyleSheetEntry e : entries) {
             if (e.selector.match(target)) {
-                for (Map.Entry<String, String> o : e.options.entrySet()) {
+                for (Entry<String, String> o : e.options.entrySet()) {
                     if (!result.containsKey(o.getKey())) result.put(o.getKey(), o.getValue());
                 }
             }
@@ -155,7 +156,7 @@ public class StyleSheet {
             writer.write(e.selector.toString());
             writer.write(" {");
             writer.append('\n');
-            Set<String> keys = new TreeSet<String>(e.options.keySet());
+            Set<String> keys = new TreeSet<>(e.options.keySet());
             for (String key : keys) {
                 writer.write("\t");
                 writer.write(key);

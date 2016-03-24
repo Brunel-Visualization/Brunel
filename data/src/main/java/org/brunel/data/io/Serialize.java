@@ -31,14 +31,14 @@ import java.util.Map;
  */
 public class Serialize {
 
-    public final static int DATA_SET = 1;
-    public final static int FIELD = 2;
-    public final static int NUMBER = 3;
-    public final static int STRING = 4;
-    public final static int DATE = 5;
-    public final static int VERSION=6;
+    public static final int DATA_SET = 1;
+    public static final int FIELD = 2;
+    public static final int NUMBER = 3;
+    public static final int STRING = 4;
+    public static final int DATE = 5;
+    public static final int VERSION=6;
 
-    public final static int DATASET_VERSION_NUMBER = 1;   //Must be incremented if serialization is changed in an incompatible way
+    public static final int DATASET_VERSION_NUMBER = 1;   //Must be incremented if serialization is changed in an incompatible way
 
 
     /**
@@ -79,8 +79,8 @@ public class Serialize {
         s.addByte(FIELD).addString(field.name).addString(field.label);
 
         // Assemble map of data to indices
-        Map<Object, Integer> items = new HashMap<Object, Integer>();
-        List<Object> uniques = new ArrayList<Object>();
+        Map<Object, Integer> items = new HashMap<>();
+        List<Object> uniques = new ArrayList<>();
         for (int i = 0; i < N; i++) {
             Object value = field.value(i);
             if (!items.containsKey(value)) {

@@ -41,7 +41,7 @@ public class VisException extends RuntimeException {
     private final Object source;
 
     private VisException(String info, Throwable cause, Object source) {
-        super(makeMessage(cause) +  " while " + info + ": " + source.toString(), cause);
+        super(makeMessage(cause) +  " while " + info + ": " + source, cause);
         this.info = info;
         this.cause = cause;
         this.source = source;

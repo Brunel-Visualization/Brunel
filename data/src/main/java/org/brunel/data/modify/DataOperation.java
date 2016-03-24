@@ -33,7 +33,7 @@ public abstract class DataOperation {
      * @return array of commands, or null if there are none
      */
     static List<String[]> map(String command) {
-        List<String[]> result = new ArrayList<String[]>();
+        List<String[]> result = new ArrayList<>();
         for (String c : strings(command, ';'))
             result.add(strings(c, '='));
         return result;

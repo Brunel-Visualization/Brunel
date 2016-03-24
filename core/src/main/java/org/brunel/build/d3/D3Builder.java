@@ -29,6 +29,8 @@ import org.brunel.data.Data;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Coordinates;
+import org.brunel.model.VisTypes.Element;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -127,7 +129,7 @@ public class D3Builder extends AbstractBuilder {
                 .indentLess();
 
         // Transpose if needed
-        if (scalesBuilder.coords == VisTypes.Coordinates.transposed) out.add("geom.transpose()").endStatement();
+        if (scalesBuilder.coords == Coordinates.transposed) out.add("geom.transpose()").endStatement();
 
         for (D3ElementBuilder builder : elementBuilders) builder.writePerChartDefinitions();
 
@@ -356,7 +358,7 @@ public class D3Builder extends AbstractBuilder {
         Builds a mapping from the fields we will use in the built data object to an indexing 0,1,2,3, ...
      */
     private Map<String, Integer> createResultFields(VisSingle vis) {
-        LinkedHashSet<String> needed = new LinkedHashSet<String>();
+        LinkedHashSet<String> needed = new LinkedHashSet<>();
         if (vis.fY.size() > 1) {
             // A series needs special handling -- Y's are different in output than input
             if (vis.stacked) {
@@ -387,7 +389,7 @@ public class D3Builder extends AbstractBuilder {
         needed.add("#row");
 
         // Convert to map for easy lookup
-        Map<String, Integer> result = new HashMap<String, Integer>();
+        Map<String, Integer> result = new HashMap<>();
         for (String s : needed) result.put(s, result.size());
         return result;
     }
@@ -410,10 +412,10 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}").endStatement();
     }
 
-    private String makeElementTransform(VisTypes.Coordinates coords) {
-        if (coords == VisTypes.Coordinates.transposed)
+    private String makeElementTransform(Coordinates coords) {
+        if (coords == Coordinates.transposed)
             return "attr('transform','matrix(0,1,1,0,0,0)')";
-        else if (coords == VisTypes.Coordinates.polar)
+        else if (coords == Coordinates.polar)
             return makeTranslateTransform("geom.inner_width/2", "geom.inner_height/2");
         else
             return null;
@@ -422,7 +424,7 @@ public class D3Builder extends AbstractBuilder {
     private void writeFieldName(String name, List<Param> fieldNames) {
         if (fieldNames.isEmpty()) return;
         if (out.changedSinceMark()) out.add(",");
-        List<String> names = new ArrayList<String>();
+        List<String> names = new ArrayList<>();
         for (Param p : fieldNames) names.add(p.asField());
         out.onNewLine().add(name, ":").at(24).add("[").addQuotedCollection(names).add("]");
     }
@@ -479,7 +481,7 @@ public class D3Builder extends AbstractBuilder {
             // Make the clip path for this: we expand by a pixel to avoid ugly cut-offs right at the edge
             out.add("vis.append('clipPath').attr('id', '" + clipID(structure) + "').append('rect')");
             out.addChained("attr('x', -1).attr('y', -1)");
-            if (scalesBuilder.coords == VisTypes.Coordinates.transposed)
+            if (scalesBuilder.coords == Coordinates.transposed)
                 out.addChained("attr('width', geom.inner_height+2).attr('height', geom.inner_width+2)").endStatement();
             else
                 out.addChained("attr('width', geom.inner_width+2).attr('height', geom.inner_height+2)").endStatement();
@@ -531,7 +533,7 @@ public class D3Builder extends AbstractBuilder {
             }
             // Apply stacking to the data
             stackCommand += "; " + Data.join(vis.fX) + "; " + Data.join(vis.aestheticFields()) + "; " + vis.tElement.producesSingleShape;
-        } else if (vis.tElement == VisTypes.Element.line || vis.tElement == VisTypes.Element.area) {
+        } else if (vis.tElement == Element.line || vis.tElement == Element.area) {
             // If we have stacked, we do not need to do anything as it sorts the data. Otherwise ...
             // d3 needs the data sorted by 'x' order for lines and paths
             // If we have defined 'x' order, that takes precedence

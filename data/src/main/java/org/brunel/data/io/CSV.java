@@ -39,9 +39,9 @@ public class CSV {
      * Reads CSV formatted data and converts to array of values
      */
     public static String[][] parse(String data) {
-        Map<String, String> common = new HashMap<String, String>();
-        List<List<String>> lines = new ArrayList<List<String>>();
-        List<String> line = new ArrayList<String>();
+        Map<String, String> common = new HashMap<>();
+        List<List<String>> lines = new ArrayList<>();
+        List<String> line = new ArrayList<>();
         char last = ' ';
         boolean inQuote = false, wasQuoted = false;
         int currentIndex = 0;
@@ -79,7 +79,7 @@ public class CSV {
                     else if (fieldCount != line.size())
                         throw new IllegalArgumentException("Line " + lines.size() + " had " + line.size() + " entries; expected "
                                 + fieldCount);
-                    line = new ArrayList<String>();
+                    line = new ArrayList<>();
                     building = null;
                     wasQuoted = false;
                 }

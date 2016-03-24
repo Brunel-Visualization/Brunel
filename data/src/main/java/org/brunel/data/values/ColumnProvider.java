@@ -36,7 +36,7 @@ public class ColumnProvider implements Provider {
 
     public ColumnProvider(Object[] column) {
         // Use a common store so common copies are not duplicated
-        Map<Object, Object> common = new HashMap<Object, Object>();
+        Map<Object, Object> common = new HashMap<>();
         this.column = new Object[column.length];
         for (int i = 0; i < column.length; i++) {
             Object value = column[i];
@@ -55,7 +55,7 @@ public class ColumnProvider implements Provider {
     }
 
     public int expectedSize() {
-        Set<Object> seen = new HashSet<Object>();
+        Set<Object> seen = new HashSet<>();
         int total = 24 + 4 * column.length;
         for (Object c : column) {
             if (c == null) continue;

@@ -35,11 +35,11 @@ class ActionSimplification {
 
     public ActionSimplification(ActionStep[] steps) {
         this.grammar = ParseGrammar.instance();
-        this.items = new ArrayList<ActionStep>(Arrays.asList(steps));
+        this.items = new ArrayList<>(Arrays.asList(steps));
     }
 
     public ActionStep[] make() {
-        ArrayList<ActionStep> result = new ArrayList<ActionStep>();
+        ArrayList<ActionStep> result = new ArrayList<>();
         int last = 0;
         for (int i = 0; i < items.size(); i++) {
             String name = items.get(i).name;
@@ -141,7 +141,7 @@ class ActionSimplification {
     }
 
     private ArrayList<ActionStep> process(List<ActionStep> subList) {
-        ArrayList<ActionStep> base = new ArrayList<ActionStep>(subList);
+        ArrayList<ActionStep> base = new ArrayList<>(subList);
         dropAllExceptLast(base, "element", true);
         dropAllExceptLast(base, "diagram", true);
         dropAllExceptLast(base, "data", false);
@@ -155,7 +155,7 @@ class ActionSimplification {
     }
 
     static {
-        ORDER = new HashMap<String, Integer>();
+        ORDER = new HashMap<>();
         for (String s : ParseGrammar.getCommands())
             ORDER.put(s, ORDER.size());
     }

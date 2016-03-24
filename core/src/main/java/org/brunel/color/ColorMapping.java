@@ -18,6 +18,8 @@ package org.brunel.color;
 
 import org.brunel.data.Field;
 
+import java.awt.Color;
+
 /**
  * How to map a field to a color
  */
@@ -56,9 +58,9 @@ public class ColorMapping {
     }
 
     private String mute(String color, float r) {
-        java.awt.Color base = java.awt.Color.decode(color);
-        float[] hsv = java.awt.Color.RGBtoHSB(base.getRed(), base.getGreen(), base.getBlue(), new float[3]);
-        java.awt.Color a = java.awt.Color.getHSBColor(hsv[0], r * hsv[1], (1 - r) + r * hsv[2]);
+        Color base = Color.decode(color);
+        float[] hsv = Color.RGBtoHSB(base.getRed(), base.getGreen(), base.getBlue(), new float[3]);
+        Color a = Color.getHSBColor(hsv[0], r * hsv[1], (1 - r) + r * hsv[2]);
         return String.format("#%02X%02X%02X", a.getRed(), a.getGreen(), a.getBlue());
     }
 

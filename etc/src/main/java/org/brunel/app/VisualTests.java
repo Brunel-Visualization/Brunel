@@ -42,10 +42,8 @@ class VisualTests {
     private final Dataset baseball, cpi, whiskey, simple;             // Data sets to use
     private final Library library;                          // Library we build
     private final WebDisplay display;
-    private final BuilderOptions options;
 
     private VisualTests(BuilderOptions options) {
-        this.options = options;
         baseball = serializeCheck(Dataset.make(readResourceAsCSV("baseball2004.csv")));
         cpi = serializeCheck(Dataset.make(readResourceAsCSV("UK_CPI.csv")));
         whiskey = serializeCheck(Dataset.make(readResourceAsCSV("whiskey.csv")));

@@ -62,8 +62,8 @@ public class Regression implements Fit {
      * @return array of length two, each of which is a field of data
      */
     static double[][] asPairs(Field y, Field x, List<Integer> rows) {
-        List<Double> xList = new ArrayList<Double>();
-        List<Double> yList = new ArrayList<Double>();
+        List<Double> xList = new ArrayList<>();
+        List<Double> yList = new ArrayList<>();
         for (int i : rows) {
             Double xv = Data.asNumeric(x.value(i));
             Double yv = Data.asNumeric(y.value(i));

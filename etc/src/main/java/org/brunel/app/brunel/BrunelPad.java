@@ -17,6 +17,8 @@
 
 package org.brunel.app.brunel;
 
+import org.brunel.action.Action;
+import org.brunel.app.brunel.SourceTransfer.Droppable;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
@@ -40,14 +42,14 @@ import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings("serial")
-public class BrunelPad extends JFrame implements AppEventListener, SourceTransfer.Droppable {
+public class BrunelPad extends JFrame implements AppEventListener, Droppable {
 
     /* use '-v version' to use a minified online library version */
     public static void main(String[] args) {
         BuilderOptions options = BuilderOptions.make(args);
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (final Exception ignored) {
+        } catch (Exception ignored) {
             // I guess we won't have anything nice
         }
 
@@ -57,11 +59,11 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
     private final Settings settings;
     private final ActionEditorPane actionEditor;
     private final SourcePanel sourcePanel;
-    private final List<String> history = new ArrayList<String>();
+    private final List<String> history = new ArrayList<>();
     private final BuilderOptions options;
     private Dataset base;
-    private org.brunel.action.Action action;
-    private org.brunel.action.Action transitory;
+    private Action action;
+    private Action transitory;
 
     private BrunelPad(BuilderOptions options) {
         super("BrunelPad");
@@ -74,7 +76,7 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
         sourcePanel = new SourcePanel(this);
         try {
             buildGUI();
-        } catch (final Throwable t) {
+        } catch (Throwable t) {
             t.printStackTrace();
             System.exit(-1);
         }
@@ -119,7 +121,7 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
     }
 
     private void initialize() {
-        final String s = settings.getString("last-source");
+        String s = settings.getString("last-source");
         if (s != null) {
             URI u = URI.create(s);
             sourcePanel.handleFile(new File(u));
@@ -223,7 +225,7 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
 
     private void setAction(String text) {
         try {
-            action = org.brunel.action.Action.parse(text);
+            action = Action.parse(text);
             transitory = null;
             updateVis();
         } catch (Throwable ex) {
@@ -232,7 +234,7 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
 
     }
 
-    private void setAction(org.brunel.action.Action a) {
+    private void setAction(Action a) {
         try {
             action = a;
             transitory = null;
@@ -244,7 +246,7 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
     }
 
     private void showFields(Field[] fields) {
-        org.brunel.action.Action a = Library.choose(fields);
+        Action a = Library.choose(fields);
         setAction(a);
 
     }
@@ -252,7 +254,7 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
     private void updateVis() {
         if (base == null || action == null) return;
         try {
-            org.brunel.action.Action a = action;
+            Action a = action;
             if (transitory != null) a = a.append(transitory);
             VisItem item = a.apply(base);
 
@@ -267,7 +269,7 @@ public class BrunelPad extends JFrame implements AppEventListener, SourceTransfe
             Dimension size = new Dimension(width, (int) (width / 1.618));
 
             WebDisplay display = new WebDisplay(options, "BrunelPad");
-            display.buildSingle(item, size.width, size.height, "index.html", "<h2 style='text-align:center'>" + a.toString() + "</h2>");
+            display.buildSingle(item, size.width, size.height, "index.html", "<h2 style='text-align:center'>" + a + "</h2>");
             display.showInBrowser();
 
             if (transitory == null) addToHistory(descr);

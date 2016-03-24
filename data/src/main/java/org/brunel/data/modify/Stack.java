@@ -79,8 +79,8 @@ public class Stack extends DataOperation {
     }
 
     public static Field[] getFields(Field[] fields, String[]... namesList) {
-        List<Field> result = new ArrayList<Field>();
-        Set<Field> found = new HashSet<Field>();
+        List<Field> result = new ArrayList<>();
+        Set<Field> found = new HashSet<>();
         for (String[] s : namesList)
             for (String fName : s) {
                 fName = fName.trim();
@@ -158,7 +158,7 @@ public class Stack extends DataOperation {
     }
 
     public static Integer[] makeStackDataOrder(Field[] fields, int keyFieldCount, int xFieldCount) {
-        List<Integer> items = new ArrayList<Integer>();
+        List<Integer> items = new ArrayList<>();
         int n = fields[0].rowCount();
         for (int i = 0; i < n; i++) {
             boolean valid = true;
@@ -178,7 +178,7 @@ public class Stack extends DataOperation {
     private static Field[] orderFields(Dataset base, Field[] keyFields) {
         Field[] baseFields = new Field[base.fields.length];
 
-        Set<Field> used = new HashSet<Field>();
+        Set<Field> used = new HashSet<>();
         for (int i = 0; i < keyFields.length; i++) {
             baseFields[i] = keyFields[i];
             used.add(keyFields[i]);

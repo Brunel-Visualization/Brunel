@@ -28,7 +28,7 @@ public class MeasureField extends DimensionField {
 
     public final String method;                                // Defines the function
     public String option;                                               // Option for it
-    public final Map<String, Fit> fits = new HashMap<String, Fit>();    // Per-group fits
+    public final Map<String, Fit> fits = new HashMap<>();    // Per-group fits
 
     public MeasureField(Field field, String rename, String measureFunction) {
         super(field, rename == null && field == null ? measureFunction : rename);

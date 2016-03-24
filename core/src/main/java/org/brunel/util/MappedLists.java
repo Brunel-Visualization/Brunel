@@ -35,7 +35,7 @@ public class MappedLists<S, T> extends HashMap<S, List<T>> {
     public List<T> get(Object key) {
         List<T> list = super.get(key);
         if (list == null) {
-            list = new ArrayList<T>();
+            list = new ArrayList<>();
             super.put((S) key, list);
         }
         return list;

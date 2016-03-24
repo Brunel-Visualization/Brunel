@@ -31,7 +31,7 @@ require.config({
         },
         'BrunelEventHandlers': {
             exports: 'BrunelEventHandlers'
-        },
+        }
     }
 
 });

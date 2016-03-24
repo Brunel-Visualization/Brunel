@@ -81,7 +81,7 @@ public class Filter extends DataOperation {
 
     /* Get the object that are at the indicated positions for the field, by rank */
     private static Object[] getRankedObjects(Field field, double p1, double p2) {
-        ArrayList<Object> data = new ArrayList<Object>();
+        ArrayList<Object> data = new ArrayList<>();
         int n = field.rowCount();
         for (int i = 0; i < n; i++) {
             Object o = field.value(i);
@@ -120,7 +120,7 @@ public class Filter extends DataOperation {
     }
 
     private static int[] makeRowsToKeep(Field[] field, int[] type, Object[][] params) {
-        List<Integer> rows = new ArrayList<Integer>();
+        List<Integer> rows = new ArrayList<>();
         int n = field[0].rowCount();
         for (int row = 0; row < n; row++) {
             boolean bad = false;

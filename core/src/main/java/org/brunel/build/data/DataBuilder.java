@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Created by graham on 12/16/15.
@@ -103,17 +104,17 @@ public class DataBuilder {
     }
 
     private String buildSummaryCommands() {
-        Map<String, String> spec = new HashMap<String, String>();
+        Map<String, String> spec = new HashMap<>();
 
         // We must account for all of these except for the special fields series and values
         // As they will be handled later
-        HashSet<String> fields = new HashSet<String>(Arrays.asList(vis.usedFields(false)));
+        HashSet<String> fields = new HashSet<>(Arrays.asList(vis.usedFields(false)));
         fields.remove("#series");
         fields.remove("#values");
         fields.remove("#all");
 
         // Add the summary measures
-        for (Map.Entry<Param, String> e : vis.fSummarize.entrySet()) {
+        for (Entry<Param, String> e : vis.fSummarize.entrySet()) {
             Param p = e.getKey();
             String name = p.asField();
             String measure = e.getValue();
@@ -138,7 +139,7 @@ public class DataBuilder {
         if (spec.containsKey("#count") || vis.fSummarize.size() > 0) {
             String[] result = new String[spec.size()];
             int n = 0;
-            for (Map.Entry<String, String> e : spec.entrySet())
+            for (Entry<String, String> e : spec.entrySet())
                 result[n++] = e.getKey() + "=" + e.getValue();
             return Data.join(result, "; ");
         } else
@@ -162,7 +163,7 @@ public class DataBuilder {
     }
 
     private String makeConstantsCommand() {
-        List<String> toAdd = new ArrayList<String>();
+        List<String> toAdd = new ArrayList<>();
         for (String f : vis.usedFields(false)) {
             if (!f.startsWith("#") && vis.getDataset().field(f) == null) {
                 // Field does not exist -- assume it is a constant and add it
@@ -187,7 +188,7 @@ public class DataBuilder {
     }
 
     private String makeFilterCommands() {
-        List<String> commands = new ArrayList<String>();
+        List<String> commands = new ArrayList<>();
 
         // All position fields must be valid -- filter if not
         String[] pos = vis.positionFields();
@@ -198,7 +199,7 @@ public class DataBuilder {
                 commands.add(s + " valid");
         }
 
-        for (Map.Entry<Param, String> e : vis.fTransform.entrySet()) {
+        for (Entry<Param, String> e : vis.fTransform.entrySet()) {
             String operation = e.getValue();
             Param key = e.getKey();
             String name = getParameterFieldValue(key);
@@ -234,8 +235,8 @@ public class DataBuilder {
     }
 
     private String makeEachCommands() {
-        List<String> commands = new ArrayList<String>();
-        for (Map.Entry<Param, String> e : vis.fTransform.entrySet()) {
+        List<String> commands = new ArrayList<>();
+        for (Entry<Param, String> e : vis.fTransform.entrySet()) {
             String operation = e.getValue();
             Param key = e.getKey();
             String name = getParameterFieldValue(key);
@@ -259,7 +260,7 @@ public class DataBuilder {
             #series and #values are always generated, so need to retain them additionally
         */
 
-        LinkedHashSet<String> keep = new LinkedHashSet<String>();
+        LinkedHashSet<String> keep = new LinkedHashSet<>();
         for (Param p : vis.fX) keep.add(p.asString());
         Collections.addAll(keep, vis.nonPositionFields());
         keep.remove("#series");
@@ -275,7 +276,7 @@ public class DataBuilder {
     private String makeTransformCommands() {
         if (vis.fTransform.isEmpty()) return "";
         StringBuilder b = new StringBuilder();
-        for (Map.Entry<Param, String> e : vis.fTransform.entrySet()) {
+        for (Entry<Param, String> e : vis.fTransform.entrySet()) {
             Param p = e.getKey();
             String name = p.asField();
             String measure = e.getValue();
@@ -290,7 +291,7 @@ public class DataBuilder {
 
     private String required() {
         String[] fields = vis.usedFields(true);
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         Collections.addAll(result, fields);
 
         // ensure we always have #row and #count

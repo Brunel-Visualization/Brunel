@@ -68,7 +68,7 @@ public class AllCombinations {
         Integer[] rowOrder = Stack.makeStackDataOrder(fields, keyLength, xCount);
 
         int dataIndex = 0;                                              // Which row of real data to use
-        List<Object[]> rows = new ArrayList<Object[]>();                // The resulting rows we will use
+        List<Object[]> rows = new ArrayList<>();                // The resulting rows we will use
 
         while (true) {
             Object[] row = makeKeyRow();                                // Only key values in this

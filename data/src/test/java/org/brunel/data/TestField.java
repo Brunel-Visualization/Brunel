@@ -88,9 +88,9 @@ public class TestField {
         assertEquals(5.0, c.max(), 0.01);
 
         int[] counts = (int[]) h.property("categoryCounts");
-        Assert.assertEquals(1, counts[0]);
-        Assert.assertEquals(1, counts[1]);
-        Assert.assertEquals(2, counts[2]);
+        assertEquals(1, counts[0]);
+        assertEquals(1, counts[1]);
+        assertEquals(2, counts[2]);
 
         assertEquals(4, f.uniqueValuesCount());
         assertEquals(5, g.uniqueValuesCount());

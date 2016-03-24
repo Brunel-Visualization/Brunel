@@ -34,6 +34,8 @@ import org.brunel.translator.JSTranslation;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -71,7 +73,7 @@ public class Dataset extends Informative implements Serializable {
     }
 
     private static Field[] ensureUniqueNames(Field[] fields) {
-        Set<String> cannotUse = new HashSet<String>();
+        Set<String> cannotUse = new HashSet<>();
         cannotUse.add("");  // Cannot use an empty name
         Field[] result = new Field[fields.length];
         for (int i = 0; i < fields.length; i++) {
@@ -95,7 +97,7 @@ public class Dataset extends Informative implements Serializable {
 
     private Dataset(Field[] fields) {
         this.fields = ensureUniqueNames(fields);
-        this.fieldByName = new HashMap<String, Field>();
+        this.fieldByName = new HashMap<>();
         for (Field f : fields) fieldByName.put(f.name.toLowerCase(), f);
         for (Field f : fields) fieldByName.put(f.name, f);
     }
@@ -121,7 +123,7 @@ public class Dataset extends Informative implements Serializable {
      * Remove the special fields form this data set -- useful when serializing
      */
     public Dataset removeSpecialFields() {
-        List<Field> removed = new ArrayList<Field>();
+        List<Field> removed = new ArrayList<>();
         for (Field f : fields) if (!f.name.startsWith("#")) removed.add(f);
         Field[] fields1 = removed.toArray(new Field[removed.size()]);
 
@@ -211,10 +213,10 @@ public class Dataset extends Informative implements Serializable {
      * @return reduced data set
      */
     public Dataset reduce(String command) {
-        Set<String> names = new HashSet<String>();
+        Set<String> names = new HashSet<>();
         Collections.addAll(names, DataOperation.strings(command, ';'));
         // keep special and used fields
-        List<Field> ff = new ArrayList<Field>();
+        List<Field> ff = new ArrayList<>();
         for (Field f : this.fields) {
             if (f.name.startsWith("#") || names.contains(f.name))
                 ff.add(f);
@@ -339,7 +341,7 @@ public class Dataset extends Informative implements Serializable {
 
         // Get all the fields we want to use for comparison
         // No synthetic or summary fields are desired
-        Set<Field> important = new HashSet<Field>();
+        Set<Field> important = new HashSet<>();
         for (Field f : fields)
             if (!f.isSynthetic() && f.property("summary") == null)
                 important.add(f);
@@ -350,7 +352,7 @@ public class Dataset extends Informative implements Serializable {
         Field rowField = field("#row");
 
         // Create a set of all rows similar to the target one
-        Set<Integer> expanded = new HashSet<Integer>();
+        Set<Integer> expanded = new HashSet<>();
         for (int i = 0; i < n; i++)
             if (compare.compare(i, row) == 0) {
                 Object o = rowField.value(i);
@@ -364,12 +366,12 @@ public class Dataset extends Informative implements Serializable {
     }
 
     @JSTranslation(ignore = true)
-    private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+    private void writeObject(ObjectOutputStream out) throws IOException {
         out.write(Serialize.serializeDataset(this));
     }
 
     @JSTranslation(ignore = true)
-    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+    private void readObject(ObjectInputStream in) throws IOException {
         ByteArrayOutputStream store = new ByteArrayOutputStream();
         byte[] block = new byte[10240];
         for (; ; ) {
@@ -380,7 +382,7 @@ public class Dataset extends Informative implements Serializable {
         Dataset d = (Dataset) Serialize.deserialize(store.toByteArray());
         fields = d.fields;
         fieldByName = d.fieldByName;
-        info = new HashMap<String, Object>();
+        info = new HashMap<>();
         copyAllProperties(d);
     }
 

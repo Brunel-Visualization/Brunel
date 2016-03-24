@@ -38,7 +38,7 @@ public class Common {
     private static final Font BIG = new Font("Inconsolata, Arial", Font.BOLD, 14);
 
     public static JMenuItem makeMenuItem(String s, ActionListener listener) {
-        final JMenuItem item = new JMenuItem(s);
+        JMenuItem item = new JMenuItem(s);
         item.setBackground(BLUE8);
         item.setForeground(BLUE3);
         item.setFont(MEDIUM);

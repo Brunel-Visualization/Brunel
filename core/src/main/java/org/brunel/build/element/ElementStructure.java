@@ -23,6 +23,8 @@ import org.brunel.data.Field;
 import org.brunel.maps.GeoMapping;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Diagram;
+import org.brunel.model.VisTypes.Element;
 
 /**
  * Created by graham on 12/15/15.
@@ -59,8 +61,8 @@ public class ElementStructure {
 
     public boolean isGraphEdge() {
         return
-                (chart.diagram == VisTypes.Diagram.network || chart.diagram == VisTypes.Diagram.tree)
-                && vis.tElement == VisTypes.Element.edge
+                (chart.diagram == Diagram.network || chart.diagram == Diagram.tree)
+                && vis.tElement == Element.edge
                 && (vis.fKeys.size() == 2 || vis.positionFields().length == 2);
     }
 

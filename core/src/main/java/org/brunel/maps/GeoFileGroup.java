@@ -40,7 +40,7 @@ class GeoFileGroup {
      */
     public static GeoFileGroup makeEmpty(MappedLists<GeoFile, Object> containedItems) {
         // Count the number of features we can match
-        Set<Object> all = new HashSet<Object>();
+        Set<Object> all = new HashSet<>();
         for (List<Object> f : containedItems.values()) all.addAll(f);
         return new GeoFileGroup(all.size(), containedItems, Collections.<GeoFile>emptySet(), Collections.emptySet());
     }
@@ -53,8 +53,8 @@ class GeoFileGroup {
     private GeoFileGroup(int requiredCount, MappedLists<GeoFile, Object> itemsMap, Collection<GeoFile> files, Collection<?> features) {
         this.requiredContentCount = requiredCount;
         this.itemsMap = itemsMap;
-        this.files = new LinkedHashSet<GeoFile>(files);
-        this.content = new HashSet<Object>(features);
+        this.files = new LinkedHashSet<>(files);
+        this.content = new HashSet<>(features);
     }
 
     /**
@@ -65,9 +65,9 @@ class GeoFileGroup {
      */
     public GeoFileGroup add(GeoFile file) {
         if (files.contains(file)) return null;                              // Already included so no need to add
-        Set<Object> combinedFeatures = new HashSet<Object>(content);
+        Set<Object> combinedFeatures = new HashSet<>(content);
         if (!combinedFeatures.addAll(itemsMap.get(file))) return null;      // Failed to add features
-        Set<GeoFile> combinedFiles = new HashSet<GeoFile>(files);
+        Set<GeoFile> combinedFiles = new HashSet<>(files);
         combinedFiles.add(file);
         return new GeoFileGroup(requiredContentCount, itemsMap, combinedFiles, combinedFeatures);
     }

@@ -34,12 +34,12 @@ class ByteOutput {
     @JSTranslation(ignore = true)
     static final Charset ENCODING = Charset.forName("utf-8");
 
-    @JSTranslation(js = {"this.out=[];"})
+    @JSTranslation(js = "this.out=[];")
     ByteOutput() {
         out = new ByteArrayOutputStream();
     }
 
-    @JSTranslation(js = {"this.out.push(b); return this"})
+    @JSTranslation(js = "this.out.push(b); return this")
     public ByteOutput addByte(int b) {
         assert (b >= 0 && b <= 255);
         out.write(b);
@@ -86,8 +86,8 @@ class ByteOutput {
             addString(Data.formatNumeric(value.doubleValue(), false));
     }
 
-    public ByteOutput addDate(Date date) {
-        return addNumber(Data.asNumeric(date));
+    public void addDate(Date date) {
+        addNumber(Data.asNumeric(date));
     }
 
     @JSTranslation(js = {
@@ -114,7 +114,7 @@ class ByteOutput {
         return this;
     }
 
-    @JSTranslation(js = {"return this.out;"})
+    @JSTranslation(js = "return this.out;")
     byte[] asBytes() {
         return out.toByteArray();
     }

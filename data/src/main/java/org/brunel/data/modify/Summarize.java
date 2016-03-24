@@ -58,9 +58,9 @@ public class Summarize extends DataOperation {
         if (operations.isEmpty()) return base;
 
         // Decode the operations into these collections
-        List<MeasureField> measures = new ArrayList<MeasureField>();
-        List<DimensionField> dimensions = new ArrayList<DimensionField>();
-        List<Field> percentBase = new ArrayList<Field>();
+        List<MeasureField> measures = new ArrayList<>();
+        List<DimensionField> dimensions = new ArrayList<>();
+        List<Field> percentBase = new ArrayList<>();
 
         boolean containsCount = false;
         boolean containsRow = false;

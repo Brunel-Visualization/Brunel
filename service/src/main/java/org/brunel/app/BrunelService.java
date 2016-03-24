@@ -22,7 +22,6 @@ import org.brunel.build.util.ContentReader;
 import org.brunel.build.util.DataCache;
 import org.brunel.data.Dataset;
 import org.brunel.match.BestMatch;
-import org.brunel.model.VisException;
 import org.brunel.util.BrunelD3Result;
 import org.brunel.util.D3Integration;
 import org.brunel.util.WebDisplay;

@@ -32,7 +32,7 @@ class AxisDetails {
 
     public final String title;                         // Title for the axis
     public final String scale;                         // Name for the scale to use for this axis
-    public boolean rotatedTicks = false;               // If true, ticks are to be rotated
+    public boolean rotatedTicks;               // If true, ticks are to be rotated
     public Object[] tickValues;                        // If non-null, ony show these ticks
     public Integer tickCount;                          // If non-null, request this many ticks for the axis
     public int size;                                   // The size for this axis (perpendicular to axis direction)
@@ -72,11 +72,11 @@ class AxisDetails {
     private static String title(Field[] fields) {
 
         // Get all the valid fields
-        List<Field> real = new ArrayList<Field>();
+        List<Field> real = new ArrayList<>();
         for (Field f : fields) if (!f.isSynthetic() && !f.name.startsWith("'")) real.add(f);
 
-        LinkedHashSet<String> titles = new LinkedHashSet<String>();             // All the titles
-        LinkedHashSet<String> originalTitles = new LinkedHashSet<String>();     // Only using names before summary
+        LinkedHashSet<String> titles = new LinkedHashSet<>();             // All the titles
+        LinkedHashSet<String> originalTitles = new LinkedHashSet<>();     // Only using names before summary
         for (Field f : real) {
             titles.add(f.label);
             String originalLabel = (String) f.property("originalLabel");
@@ -188,7 +188,7 @@ class AxisDetails {
         double spacePerTick = width / count;
         int skipFrequency = (int) Math.round(20 / spacePerTick);
         if (skipFrequency < 2) return null;
-        List<Object> useThese = new ArrayList<Object>();
+        List<Object> useThese = new ArrayList<>();
         int at = 0;
         for (Field f : fields) {
             for (Object s : f.categories())

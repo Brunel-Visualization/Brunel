@@ -16,6 +16,7 @@
 
 package org.brunel.action;
 
+import org.brunel.action.Param.Type;
 import org.brunel.action.parse.GrammarItem;
 import org.brunel.action.parse.ParseGrammar;
 import org.brunel.data.Data;
@@ -86,7 +87,7 @@ public class Parser {
     private static List<Param> tryAsDashSeparatedList(String content) {
         String[] parts = content.split("-");
         if (parts.length < 2) return null;               // Need multiples for this
-        List<Param> list = new ArrayList<Param>();
+        List<Param> list = new ArrayList<>();
         for (String p : parts) list.add(parseModifier(p));
         return list;
     }
@@ -112,7 +113,7 @@ public class Parser {
 
     public List<BrunelToken> tokenize(String text) {
         try {
-            ArrayList<BrunelToken> list = new ArrayList<BrunelToken>();
+            ArrayList<BrunelToken> list = new ArrayList<>();
             int runStart = 0;
             while (runStart < text.length()) {
                 char c = text.charAt(runStart);
@@ -132,7 +133,7 @@ public class Parser {
     }
 
     List<ActionStep> getActionSteps(List<BrunelToken> tokens) {
-        List<ActionStep> actions = new ArrayList<ActionStep>();
+        List<ActionStep> actions = new ArrayList<>();
         for (int at = 0; at < tokens.size(); at++) {
             BrunelToken s = tokens.get(at);
             ActionStep action;
@@ -158,7 +159,7 @@ public class Parser {
                 expect("(", tokens.get(++at));
                 int parametersEnd = findParametersEnd(tokens, ++at);
                 if (parametersEnd < at + 1) throw new IllegalArgumentException("Empty parameters in " + s);
-                Stack<Param> params = new Stack<Param>();
+                Stack<Param> params = new Stack<>();
 
                 boolean expectParameter = true;                     // false if we expect a colon or comma
                 boolean foundOption = false, foundParam = false;    // set t true when we find oen in the list already
@@ -166,7 +167,7 @@ public class Parser {
                     BrunelToken token = tokens.get(i);
                     if (expectParameter) {
                         Param p = parseParameter(token, definition, foundOption, foundParam);
-                        if (p.type() == Param.Type.option) foundOption = true;
+                        if (p.type() == Type.option) foundOption = true;
                         else foundParam = true;
                         token.parsedType = p.type().toString();
                         params.push(p);
@@ -183,7 +184,7 @@ public class Parser {
                             if (nextToken.content.equals("[")) {
                                 // Handle a list of values
                                 nextToken.parsedType = "syntax";
-                                List<Param> listContent = new ArrayList<Param>();
+                                List<Param> listContent = new ArrayList<>();
                                 while (i < parametersEnd) {
                                     nextToken = tokens.get(++i);
                                     listContent.add(parseModifier(nextToken));

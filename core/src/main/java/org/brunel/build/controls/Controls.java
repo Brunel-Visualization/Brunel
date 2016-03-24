@@ -38,7 +38,7 @@ public class Controls {
 
     public Controls(BuilderOptions options) {
         this.options = options;
-        this.filters = new ArrayList<FilterControl>();
+        this.filters = new ArrayList<>();
     }
 
     public void buildControls(VisSingle vis, Dataset data) {
@@ -52,7 +52,7 @@ public class Controls {
     }
 
     public void write(ScriptWriter out) {
-    	if (options.controlsIdentifier != null) 
+    	if (options.controlsIdentifier != null)
     		write(options.controlsIdentifier, "BrunelJQueryControlFactory", out);
     }
 

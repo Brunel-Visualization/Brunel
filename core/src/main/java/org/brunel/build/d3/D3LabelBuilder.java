@@ -19,12 +19,15 @@ package org.brunel.build.d3;
 import org.brunel.action.Param;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.util.ModelUtil;
+import org.brunel.build.util.ModelUtil.Size;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Diagram;
+import org.brunel.model.VisTypes.Element;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,19 +51,19 @@ public class D3LabelBuilder {
     public void addElementLabeling() {
         if (vis.itemsLabel.isEmpty()) return;
         // Networks are updated on ticks., so just attach once -- no transitions
-        if (vis.tDiagram == VisTypes.Diagram.network) {
+        if (vis.tDiagram == Diagram.network) {
             out.add("BrunelD3.label(selection, labels, labeling, 0)").endStatement();
             return;
         }
 
         // Text elements define labeling as the main item; they do not need labels attached, which is what this does
-        if (vis.tElement != VisTypes.Element.text )
+        if (vis.tElement != Element.text )
             out.add("BrunelD3.label(selection, labels, labeling, transitionMillis)").endStatement();
     }
 
     public static void addFontSizeAttribute(VisSingle vis, ScriptWriter out) {
         if (!vis.fSize.isEmpty()) {
-            ModelUtil.Size parts = ModelUtil.getFontSize(vis);
+            Size parts = ModelUtil.getFontSize(vis);
             if (parts == null) {
                 out.addChained("style('font-size', function(d) { return (100*size(d)) + '%' })");
             } else {
@@ -78,7 +81,7 @@ public class D3LabelBuilder {
     }
 
     public void defineLabeling(ElementDetails details, List<Param> items, boolean forTooltip) {
-        if (vis.tElement != VisTypes.Element.text && items.isEmpty()) return;
+        if (vis.tElement != Element.text && items.isEmpty()) return;
         String name = forTooltip ? "tooltipLabeling" : "labeling";
         out.add("var", name, "= {").ln().indentMore();
         String textMethod = details.textMethod;
@@ -109,7 +112,7 @@ public class D3LabelBuilder {
         // If we have nothing but field names, and at least two, we add separators
         if (items.size() < 2) return items;    // One item does not get prettified
 
-        ArrayList<Param> result = new ArrayList<Param>();
+        ArrayList<Param> result = new ArrayList<>();
         for (int i = 0; i < items.size(); i++) {
             Param p = items.get(i);
             if (!p.isField()) return items;            // Any non-field and we do not prettify

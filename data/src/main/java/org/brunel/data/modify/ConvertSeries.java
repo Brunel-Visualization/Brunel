@@ -89,7 +89,7 @@ public class ConvertSeries extends DataOperation {
         series.setCategories(yFields);
 
         // All other fields use the valuesIndexing
-        List<Field> resultFields = new ArrayList<Field>();
+        List<Field> resultFields = new ArrayList<>();
         resultFields.add(series);
         resultFields.add(values);
         for (String fieldName : otherFields) {
@@ -106,7 +106,7 @@ public class ConvertSeries extends DataOperation {
 
     private static String[] addRequired(String[] list) {
         // Ensure #count and #row are present
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         Collections.addAll(result, list);
         if (!result.contains("#row")) result.add("#row");
         if (!result.contains("#count")) result.add("#count");

@@ -16,7 +16,6 @@
 
 package org.brunel.build.util;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -28,12 +27,8 @@ public class ContentReader {
     		return readContent(uri.toURL().openStream());
     	}
     	catch(IllegalArgumentException ex) {
-    		throw new IllegalArgumentException("Could not read data from: " + uri.toString(),ex.getCause());
+    		throw new IllegalArgumentException("Could not read data from: " + uri,ex.getCause());
     	}
-    	catch(FileNotFoundException ex) {
-    		throw new IllegalArgumentException("Could not read data from: " + uri.toString(),ex.getCause());
-    	}
-    	
     }
 
     public static String readContent(InputStream is) throws IOException {

@@ -23,6 +23,7 @@ import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Coordinates;
 
 class Tree extends D3Diagram {
 
@@ -38,7 +39,7 @@ class Tree extends D3Diagram {
         makeHierarchicalTree();
         out.add("var treeLayout = d3.layout.tree()")
                 .addChained("sort(BrunelData.diagram_Hierarchical.compare)");
-        if (vis.coords == VisTypes.Coordinates.polar) {
+        if (vis.coords == Coordinates.polar) {
             out.addChained("size([360, geom.inner_radius-" + pad + "])");
         } else {
             out.addChained("size([geom.inner_width-" + 2 * pad + ", geom.inner_height-" + 2 * pad + "])");
@@ -47,7 +48,7 @@ class Tree extends D3Diagram {
         out.add("function keyFunction(d) { return d.key }").endStatement();
 
         // Do not override the polar coordinates!
-        if (vis.coords != VisTypes.Coordinates.polar)
+        if (vis.coords != Coordinates.polar)
             out.add("elementGroup.attr('transform', 'translate(" + pad + ", " + pad + ")')").endStatement();
         return ElementDetails.makeForDiagram(vis, "treeLayout(tree.root)", "circle", "point", "box", false);
     }
@@ -55,7 +56,7 @@ class Tree extends D3Diagram {
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
         out.addChained("attr('class', function(d) { return (d.children ? 'L' + d.depth : 'leaf element " + element.name() + "') })");
 
-        if (vis.coords == VisTypes.Coordinates.polar) {
+        if (vis.coords == Coordinates.polar) {
             out.addChained("attr('transform', function(d) { return 'rotate(' + (d.x - 90) + ') translate(' + d.y + ')' })");
         } else {
             out.addChained("attr('cx', function(d) { return d.x })")
@@ -78,7 +79,7 @@ class Tree extends D3Diagram {
         out.add("BrunelD3.trans(edgeGroup,transitionMillis)")
                 .addChained("attr('d', d3.svg.diagonal");
 
-        if (vis.coords == VisTypes.Coordinates.polar) {
+        if (vis.coords == Coordinates.polar) {
             out.add(".radial().projection(function(d) { return [d.y, d.x / 180 * Math.PI] }))");
         } else {
             out.add("())");

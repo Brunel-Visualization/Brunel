@@ -135,7 +135,7 @@ public class Transform extends DataOperation {
         Integer[] order = Data.order((int[]) f.property("categoryCounts"), false);
 
         // Create map form current names to the new names
-        Map<Object, Object> newNames = new HashMap<Object, Object>();
+        Map<Object, Object> newNames = new HashMap<>();
         for (int i = 0; i < order.length; i++)
             newNames.put(categories[order[i]], i < desiredBinCount-1 ? categories[order[i]] : "\u2026");
 

@@ -18,13 +18,19 @@ package org.brunel.build.d3;
 
 import org.brunel.build.d3.diagrams.D3Diagram;
 import org.brunel.build.element.ElementDefinition;
+import org.brunel.build.element.ElementDefinition.ElementDimensionDefinition;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.element.ElementStructure;
 import org.brunel.build.util.ModelUtil;
+import org.brunel.build.util.ModelUtil.Size;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Coordinates;
+import org.brunel.model.VisTypes.Diagram;
+import org.brunel.model.VisTypes.Element;
+import org.brunel.model.VisTypes.Using;
 
 class D3ElementBuilder {
 
@@ -128,8 +134,8 @@ class D3ElementBuilder {
         Field[] y = structure.chart.coordinates.getY(vis);
         Field[] keys = new Field[vis.fKeys.size()];
         for (int i = 0; i < keys.length; i++) keys[i] = structure.data.field(vis.fKeys.get(i).asField());
-        ModelUtil.Size sizeWidth = ModelUtil.getElementSize(vis, "width");
-        ModelUtil.Size sizeHeight = ModelUtil.getElementSize(vis, "height");
+        Size sizeWidth = ModelUtil.getElementSize(vis, "width");
+        Size sizeHeight = ModelUtil.getElementSize(vis, "height");
 
         if (structure.chart.geo != null) {
             if (structure.dependent) {
@@ -141,7 +147,7 @@ class D3ElementBuilder {
             }
 
             // Maps with feature data do not need the geo coordinates set
-            if (vis.tDiagram != VisTypes.Diagram.map)
+            if (vis.tDiagram != Diagram.map)
                 setGeoLocations(e, x, y, keys);
             // Just use the default point size
             e.x.size = getSize(getSizeCall(0), sizeWidth, new Field[0], "geom.default_point_size", null);
@@ -171,7 +177,7 @@ class D3ElementBuilder {
         defineVerticalExtentFunctions(elementDef, false);
 
         // First deal with the case of wedges (polar intervals)
-        if (vis.tElement == VisTypes.Element.bar && vis.coords == VisTypes.Coordinates.polar) {
+        if (vis.tElement == Element.bar && vis.coords == Coordinates.polar) {
             out.add("var path = d3.svg.arc().outerRadius(geom.inner_radius).innerRadius(0)").ln();
             out.addChained("outerRadius(geom.inner_radius).innerRadius(0)").ln();
             if (vis.fRange == null && !vis.stacked)
@@ -190,7 +196,7 @@ class D3ElementBuilder {
         out.add("var x =", elementDef.x.center).endStatement();
 
         // Now actual paths
-        if (vis.tElement == VisTypes.Element.area) {
+        if (vis.tElement == Element.area) {
             if (vis.fRange == null && !vis.stacked)
                 out.add("var path = d3.svg.area().x(x).y1(y).y0(function(d) { return scale_y(0) })");
             else
@@ -206,7 +212,7 @@ class D3ElementBuilder {
                 out.add("var path = d3.svg.line().x(x).y(" + yDef + ")");
             }
         }
-        if (vis.tUsing == VisTypes.Using.interpolate) {
+        if (vis.tUsing == Using.interpolate) {
             out.add(".interpolate('basis')");
         }
         out.endStatement();
@@ -227,7 +233,7 @@ class D3ElementBuilder {
 
     private void writeCoordEnter() {
         // Added rounded styling if needed
-        ModelUtil.Size size = ModelUtil.getRoundRectangleRadius(vis);
+        Size size = ModelUtil.getRoundRectangleRadius(vis);
         if (size != null)
             out.addChained("attr('rx'," + size.valueInPixels(8) + ").attr('ry', " + size.valueInPixels(8) + ")").ln();
         out.endStatement().onNewLine().ln();
@@ -248,9 +254,9 @@ class D3ElementBuilder {
                 out.add("var w1 =", elementDef.x.clusterSize).endStatement();
             }
 
-            if (vis.tElement == VisTypes.Element.bar)
+            if (vis.tElement == Element.bar)
                 defineBar(basicDef, elementDef);
-            else if (vis.tElement == VisTypes.Element.edge)
+            else if (vis.tElement == Element.edge)
                 defineEdge(basicDef, elementDef);
             else {
                 // Handles points (as circles, rects, etc.) and text
@@ -360,7 +366,7 @@ class D3ElementBuilder {
 
     }
 
-    private String getSize(String aestheticFunctionCall, ModelUtil.Size size, Field[] fields,
+    private String getSize(String aestheticFunctionCall, Size size, Field[] fields,
                            String extent, ScalePurpose purpose) {
 
         boolean needsFunction = aestheticFunctionCall != null;
@@ -437,7 +443,7 @@ class D3ElementBuilder {
         return dim == 0 ? "width(d)" : "height(d)";            // Different for x and y dimensions
     }
 
-    private void setLocations(ElementDefinition.ElementDimensionDefinition dim, String dimName, Field[] fields, Field[] keys, boolean categorical) {
+    private void setLocations(ElementDimensionDefinition dim, String dimName, Field[] fields, Field[] keys, boolean categorical) {
 
         String scaleName = "scale_" + dimName;
 
@@ -530,7 +536,7 @@ class D3ElementBuilder {
             return " + w1 * scale_inner(" + D3Util.writeCall(cluster) + ")";
     }
 
-    private void setDependentLocations(ElementDefinition.ElementDimensionDefinition dim, String dimName, Field[] keys, String scaleName) {
+    private void setDependentLocations(ElementDimensionDefinition dim, String dimName, Field[] keys, String scaleName) {
         // Use the keys to get the X and Y locations from other items
         if (keys.length == 1) {
             // One key gives the center
@@ -544,7 +550,7 @@ class D3ElementBuilder {
     }
 
     public static String getOverallSize(VisSingle vis, ElementDefinition def) {
-        ModelUtil.Size size = ModelUtil.getElementSize(vis, "size");
+        Size size = ModelUtil.getElementSize(vis, "size");
         boolean needsFunction = vis.fSize.size() == 1;
 
         if (size != null && !size.isPercent()) {
@@ -578,7 +584,7 @@ class D3ElementBuilder {
     private void constructSplitPath() {
         // We add the x function to signal we need the paths sorted
         String params = "data, path";
-        if (vis.tElement == VisTypes.Element.line || vis.tElement == VisTypes.Element.area)
+        if (vis.tElement == Element.line || vis.tElement == Element.area)
             params += ", x";
         out.add("var splits = BrunelD3.makePathSplits(" + params + ");").ln();
     }
@@ -597,7 +603,7 @@ class D3ElementBuilder {
             out.add("var y =", elementDef.y.center).endStatement();
             defineHorizontalExtentFunctions(elementDef);
             out.add(basicDef);
-            if (vis.coords == VisTypes.Coordinates.transposed) {
+            if (vis.coords == Coordinates.transposed) {
                 out.addChained("attr('y', 0)")
                         .addChained("attr('height', function(d) { return Math.max(0,y(d)) })");
             } else {

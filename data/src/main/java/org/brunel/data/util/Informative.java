@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Informative {
-    protected Map<String, Object> info = new HashMap<String, Object>();    // Stores the info
+    protected Map<String, Object> info = new HashMap<>();    // Stores the info
 
     /**
      * Copy properties form a source.

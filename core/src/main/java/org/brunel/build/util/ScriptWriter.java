@@ -30,14 +30,14 @@ import java.util.Set;
  */
 public class ScriptWriter {
 
-    private static final Set<Character> NO_SPACE_BEFORE = new HashSet<Character>(Arrays.asList(':', ',', ';', '(', ')', ']'));
+    private static final Set<Character> NO_SPACE_BEFORE = new HashSet<>(Arrays.asList(':', ',', ';', '(', ')', ']'));
     private static final String INDENT = "  ";
     private final int lineMaxLength;
     private final PrintWriter out;
     private final StringWriter base;
     public final BuilderOptions options;
-    private int consecutiveNewLines = 0;
-    private int indentLevel = 0;
+    private int consecutiveNewLines;
+    private int indentLevel;
     private boolean changed;
 
     public ScriptWriter(BuilderOptions options) {
@@ -187,14 +187,13 @@ public class ScriptWriter {
         changed = false;
     }
 
-    public ScriptWriter titleComment(Object... items) {
+    public void titleComment(Object... items) {
         ensureBlankLine();
         if (options.readableJavascript) {
             add("// ").add(items).add(" ");
             for (int i = currentColumn(); i < lineMaxLength; i++) add("/");
             ensureBlankLine();
         }
-        return this;
     }
 
     private void ensureBlankLine() {

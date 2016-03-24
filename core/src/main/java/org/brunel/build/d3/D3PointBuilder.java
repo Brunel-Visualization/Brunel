@@ -17,6 +17,7 @@
 package org.brunel.build.d3;
 
 import org.brunel.build.element.ElementDefinition;
+import org.brunel.build.element.ElementDefinition.ElementDimensionDefinition;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.model.VisSingle;
@@ -79,7 +80,7 @@ public class D3PointBuilder {
         defineVerticalExtent(elementDef.y);
     }
 
-    void defineHorizontalExtent(ElementDefinition.ElementDimensionDefinition dimensionDef) {
+    void defineHorizontalExtent(ElementDimensionDefinition dimensionDef) {
         String left, width;
         if (dimensionDef.left != null) {
             // Use the left and right values
@@ -104,7 +105,7 @@ public class D3PointBuilder {
         out.addChained("style('width', ", width, ")");
     }
 
-    private void defineVerticalExtent(ElementDefinition.ElementDimensionDefinition dimensionDef) {
+    private void defineVerticalExtent(ElementDimensionDefinition dimensionDef) {
         String top, height;
         if (dimensionDef.left != null) {
             // Use the left and right values

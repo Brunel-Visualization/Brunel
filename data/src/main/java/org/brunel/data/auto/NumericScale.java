@@ -58,7 +58,7 @@ public class NumericScale {
         Date x = DateUnit.floor(Data.asDate(a), unit, multiple);
         if (nice) a = Data.asNumeric(x);
 
-        List<Double> d = new ArrayList<Double>();
+        List<Double> d = new ArrayList<>();
         while (true) {
             double v = Data.asNumeric(x);
             if (v >= b) {
@@ -164,7 +164,7 @@ public class NumericScale {
 
         // Make sure x >= a and then add ticks up until we hit b
         if (x < a - 1e-6) x += delta;
-        List<Double> d = new ArrayList<Double>();
+        List<Double> d = new ArrayList<>();
         while (x < b + 1e-6) {
             d.add(x);
             x += delta;
@@ -175,7 +175,7 @@ public class NumericScale {
     }
 
     private static Double[] makeGranularDivisions(double min, double max, double granularity, boolean nice) {
-        List<Double> div = new ArrayList<Double>();
+        List<Double> div = new ArrayList<>();
         if (!nice) {
             // inside the bounds only
             min += granularity;
@@ -212,7 +212,7 @@ public class NumericScale {
         boolean add5 = n < desiredTickCount * 0.666;                    //If true, add divisions at '5's
         double factor = n > desiredTickCount * 1.66 ? 100 : 10;
 
-        List<Double> d = new ArrayList<Double>();
+        List<Double> d = new ArrayList<>();
         double low = Math.pow(10, a);
         double high = Math.pow(10, b);
         if (add5 && high / 2 > f.max()) high /= 2;

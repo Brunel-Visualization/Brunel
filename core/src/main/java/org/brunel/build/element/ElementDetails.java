@@ -19,6 +19,8 @@ package org.brunel.build.element;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Coordinates;
+import org.brunel.model.VisTypes.Element;
 
 /**
  * Encapsulate information on how we want to represent different types of element
@@ -40,12 +42,12 @@ public class ElementDetails {
     public boolean needsStrokeSize;                     // If we must define stroke-size using the "size" aesthetic
 
     private ElementDetails(VisSingle vis, String symbol) {
-        VisTypes.Element element = vis.tElement;
+        Element element = vis.tElement;
         String classList = "element " + element.name();
 
         // Work out if the element is filled
         boolean filled = element.filled;
-        if (!vis.fSize.isEmpty() && (element == VisTypes.Element.line || element == VisTypes.Element.path)) {
+        if (!vis.fSize.isEmpty() && (element == Element.line || element == Element.path)) {
             filled = true;
             classList += " filled";
         }
@@ -55,14 +57,14 @@ public class ElementDetails {
         this.colorAttribute = filled ? "fill" : "stroke";
         this.dataSource = element.producesSingleShape ? "splits" : "data._rows";
         this.producesPath = element.producesSingleShape ||
-                (element == VisTypes.Element.bar && vis.coords == VisTypes.Coordinates.polar);
+                (element == Element.bar && vis.coords == Coordinates.polar);
         if (producesPath)
             this.elementType = "path";
-        else if (element == VisTypes.Element.edge)
+        else if (element == Element.edge)
             this.elementType = "line";
-        else if (element == VisTypes.Element.text)
+        else if (element == Element.text)
             this.elementType = "text";
-        else if (element == VisTypes.Element.bar)
+        else if (element == Element.bar)
             this.elementType = "rect";
         else
             this.elementType = "rect".equals(symbol) ? "rect" : "circle";
@@ -71,8 +73,8 @@ public class ElementDetails {
         if (textLocation != null) {
             this.textMethod = textLocation;
         } else if (producesPath) {
-            if (element == VisTypes.Element.bar) this.textMethod = "wedge";
-            else if (element == VisTypes.Element.area) this.textMethod = "area";
+            if (element == Element.bar) this.textMethod = "wedge";
+            else if (element == Element.area) this.textMethod = "area";
             else if (filled) this.textMethod = "poly";
             else this.textMethod = "path";
         } else if (elementType.equals("circle")) {
@@ -82,11 +84,11 @@ public class ElementDetails {
         }
 
         this.textMustFit = filled
-                && element != VisTypes.Element.point && element != VisTypes.Element.polygon
+                && element != Element.point && element != Element.polygon
                 || "box".equals(textLocation);
 
         // Only edges need the stroke width setting
-        this.needsStrokeSize = !vis.fSize.isEmpty() && vis.tElement == VisTypes.Element.edge;
+        this.needsStrokeSize = !vis.fSize.isEmpty() && vis.tElement == Element.edge;
     }
 
     private ElementDetails(String dataSource, String elementType, String elementClass, String textMethod, boolean textFits) {

@@ -37,7 +37,7 @@ public class GalleryBuilder extends DocBuilder {
      */
 
     public static final String GALLERY = "/org/brunel/app/gallery.txt";
-    private int column = 0;
+    private int column;
 
     public static void main(String[] args) throws Exception {
         BuilderOptions options = BuilderOptions.make(args);
@@ -54,7 +54,7 @@ public class GalleryBuilder extends DocBuilder {
         super.run(fileLoc, itemFormat);
         if (column != 0) out.append("</row>\n");
         out.append("</table>\n");
-        System.out.println(out.toString());
+        System.out.println(out);
         display.showInBrowser();
 
     }

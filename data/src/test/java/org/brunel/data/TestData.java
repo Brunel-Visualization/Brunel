@@ -26,13 +26,13 @@ public class TestData {
 
     @Test
     public void testCompare() {
-        Assert.assertEquals(">", compare(2.0, 1));
-        Assert.assertEquals("<", compare(2.0, 10));
-        Assert.assertEquals("=", compare(2.0, 2));
+        assertEquals(">", compare(2.0, 1));
+        assertEquals("<", compare(2.0, 10));
+        assertEquals("=", compare(2.0, 2));
 
-        Assert.assertEquals(">", compare("c", "b"));
-        Assert.assertEquals("<", compare("b", "z"));
-        Assert.assertEquals("=", compare("A", "A"));
+        assertEquals(">", compare("c", "b"));
+        assertEquals("<", compare("b", "z"));
+        assertEquals("=", compare("A", "A"));
 
     }
 
