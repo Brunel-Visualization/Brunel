@@ -26,10 +26,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This transform takes data and multiplies rows
+ * This transform takes data and converts a single row with multiple items into multiple rows each
+ * with a single item.
  */
 public class Each extends DataOperation {
-
 
     /*
      * Command is a list of fields to use to split rows
@@ -39,34 +39,34 @@ public class Each extends DataOperation {
         for (String s : strings(command, ';')) {
             Field f = base.field(s);
             if (f.isProperty("list"))
-                base = splitFieldValues(base, f);
+                base = splitListsInField(base, f);
         }
         return base;
     }
 
-    private static Dataset splitFieldValues(Dataset base, Field target) {
+    private static Dataset splitListsInField(Dataset base, Field target) {
 
-       ItemsList nulls = new ItemsList(new Object[1]);
-
-        List<Integer> index = new ArrayList<>();         // For the non-target fields
-        List<Object> splitValues = new ArrayList<>();     // For the target field
+        List<Integer> rows = new ArrayList<>();             // A list of the rows from the base
+        List<Object> fieldValues = new ArrayList<>();       // A parallel list of the values of the field
         for (int i = 0; i < target.rowCount(); i++) {
             ItemsList list = (ItemsList) target.value(i);
-            if (list == null) list = nulls;                     // Treat a null as a list with a single null item
-            for (int j=0; j<list.size(); j++) {
-                splitValues.add(list.get(i));                   // Add the actual value
-                index.add(i);                                   // Repeat the index for each list case
+            if (list == null) {
+                fieldValues.add(null);                      // Add a single null value for this row
+                rows.add(i);                                // Add a single index for this row
+            } else for (int j=0; j<list.size(); j++) {
+                fieldValues.add(list.get(j));               // For the j-th item,in the list, add the value
+                rows.add(i);                                // Add the same index for each list case
             }
         }
 
         // Convert List<Integer> to int[]
-        int[] idx = Data.toPrimitive(index.toArray(new Integer[index.size()]));
+        int[] idx = Data.toPrimitive(rows.toArray(new Integer[rows.size()]));
 
         Field[] results = new Field[base.fields.length];
         for (int i = 0; i < results.length; i++) {
             Field f = base.fields[i];
             if (f == target) {
-                Object[] data = splitValues.toArray(new Object[splitValues.size()]);
+                Object[] data = fieldValues.toArray(new Object[fieldValues.size()]);
                 results[i] = Fields.makeColumnField(f.name, f.label, data);
             } else {
                 results[i] = Fields.permute(f, idx, false);
