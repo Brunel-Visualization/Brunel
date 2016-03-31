@@ -15,7 +15,7 @@
  */
 
 dependencies {
-    compile name: 'translator-0.0.3'
+    compile name: 'translator-0.4'
     runtime group: 'rhino', name: 'js', version: '1.7+'
     runtime group: 'org.eclipse.jdt', name: 'org.eclipse.jdt.core', version: '3.10.0'
 }
@@ -47,7 +47,6 @@ task deploy(type: Copy, dependsOn: doTranslate) {
     from 'build/translated/BrunelData.js'
     into '../core/src/main/resources/javascript'
 }
-
 
 defaultTasks 'doTranslate'
 

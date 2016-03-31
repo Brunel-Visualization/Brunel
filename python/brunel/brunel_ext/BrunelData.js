@@ -1491,9 +1491,9 @@ V.diagram_Node = function(row, value, innerNodeName, children) {
 V.Field = function(name, label, provider, base) {
     $.superconstruct(this);
     this.provider = null;
-    this.calculatedNominal = null;
-    this.calculatedNumeric = null;
-    this.calculatedDate = null;
+    this.calculatedNominal = false;
+    this.calculatedNumeric = false;
+    this.calculatedDate = false;
     this.categoryOrder = null;this.name = name;
     this.label = label == null ? name : label;
     this.provider = provider;
@@ -1737,7 +1737,7 @@ $.copy(V.Fields, {
 
 
 V.io_ByteInput = function(data) {
-    this.p = null;this.data = data;
+    this.p = 0;this.data = data;
     this.p = 0;
 }
 
@@ -3909,8 +3909,8 @@ $.copy(V.util_ItemsList.prototype, {
 
 V.util_MapInt = function() {
     this.map = new $.Map();
-    this.totalCount = null;
-    this.maxCount = null;
+    this.totalCount = 0;
+    this.maxCount = 0;
 };
 
 $.copy(V.util_MapInt.prototype, {
@@ -3958,7 +3958,7 @@ $.copy(V.util_MapInt.prototype, {
             if (this.map.get(s) == this.maxCount) list.add(s);
         array = list.toArray();
         V.Data.sort(array);
-        return array[(array.length - 1) / 2];
+        return array[Math.floor((array.length - 1) / 2)];
     },
 
     index: function(keys) {

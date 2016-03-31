@@ -76,7 +76,7 @@ public class MapInt {
         // Set the mode to be the middle of the sorted list of modes
         Object[] array = list.toArray(new Object[list.size()]);
         Data.sort(array);
-        return array[(array.length - 1) / 2];
+        return array[(int) Math.floor((array.length - 1) / 2)];
     }
 
     /**
