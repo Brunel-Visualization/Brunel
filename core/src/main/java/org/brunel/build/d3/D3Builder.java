@@ -28,7 +28,6 @@ import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Element;
 
@@ -475,7 +474,7 @@ public class D3Builder extends AbstractBuilder {
                     .addChained(axesTransform).endStatement();
         if (scalesBuilder.needsLegends())
             out.add("var legends = chart.append('g').attr('class', 'legend')")
-                    .addChained(makeTranslateTransform("(geom.outer_width - geom.chart_right - 3)", "0")).endStatement();
+                    .addChained(makeTranslateTransform("(geom.chart_right-geom.chart_left - 3)", "0")).endStatement();
 
         if (!structure.nested()) {
             // Make the clip path for this: we expand by a pixel to avoid ugly cut-offs right at the edge
