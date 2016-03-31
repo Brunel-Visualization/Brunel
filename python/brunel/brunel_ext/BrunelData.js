@@ -1245,8 +1245,9 @@ $.copy(V.Dataset.prototype, {
         var on = V.Field.VAL_SELECTED;
         var sel = this.field("#selection");
         var n = this.rowCount();
-        for (i = 0; i < n; i++)
-            sel.setValue(off, i);
+        if (method == "sel")
+            for (i = 0; i < n; i++)
+                sel.setValue(off, i);
         expanded = source.expandedOriginalRows(row);
         for(_i=$.iter(expanded), i=_i.current; _i.hasNext(); i=_i.next()) {
             if ((method == "sel") || (method == "add"))
@@ -1263,7 +1264,7 @@ $.copy(V.Dataset.prototype, {
         var n = this.rowCount();
         var important = new $.Set();
         for(_i=$.iter(this.fields), f=_i.current; _i.hasNext(); f=_i.next())
-            if (!f.isSynthetic() && f.property("summary") == null) important.add(f);
+            if (!f.isSynthetic() && f.property("derived") == null) important.add(f);
         targetFields = important.toArray();
         compare = new V.summary_FieldRowComparison(targetFields, null, false);
         rowField = this.field("#row");
@@ -3037,6 +3038,7 @@ $.copy(V.modify_Summarize.prototype, {
             result = V.Fields.makeColumnField(m.rename, m.label(), measureData[i]);
             this.setProperties(m.method, result, m.field);
             result.set("summary", m.method);
+            result.set("calculated", true);
             if (m.field != null)
                 result.set("originalLabel", m.field.label);
             fields[dimData.length + i] = result;

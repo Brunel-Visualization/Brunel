@@ -163,7 +163,6 @@ public class Dataset extends Informative implements Serializable {
         return ff;
     }
 
-
     /**
      * Create a new data set based on this one, with some rows filtered out
      *
@@ -319,7 +318,8 @@ public class Dataset extends Informative implements Serializable {
         int n = rowCount();
 
         // For simple selection (no modifiers) everything is initially cleared
-        for (int i = 0; i < n; i++) sel.setValue(off, i);
+        if (method.equals("sel"))
+            for (int i = 0; i < n; i++) sel.setValue(off, i);
 
         Set<Integer> expanded = source.expandedOriginalRows(row);
         for (int i : expanded) {
@@ -343,7 +343,7 @@ public class Dataset extends Informative implements Serializable {
         // No synthetic or summary fields are desired
         Set<Field> important = new HashSet<>();
         for (Field f : fields)
-            if (!f.isSynthetic() && f.property("summary") == null)
+            if (!f.isSynthetic() && f.property("derived") == null)
                 important.add(f);
 
         Field[] targetFields = important.toArray(new Field[important.size()]);
@@ -358,7 +358,7 @@ public class Dataset extends Informative implements Serializable {
                 Object o = rowField.value(i);
                 if (o instanceof ItemsList) {
                     ItemsList list = (ItemsList) o;
-                    for (int j=0; j<list.size(); j++) expanded.add((Integer) list.get(j) - 1);
+                    for (int j = 0; j < list.size(); j++) expanded.add((Integer) list.get(j) - 1);
                 } else if (o != null)
                     expanded.add((Integer) o - 1);
             }
