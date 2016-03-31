@@ -102,6 +102,7 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - simple    / x(#row) y('reds') color(#row:reds) axes(y) legends(none) + x(#row) y('red') color(#row:red) legends(none) + x(#row) y('blues-reds') color(#row:[blues, reds]) legends(none) + x(#row) y('blue-red') color(#row:[blue, red]) legends(none)  + x(#row) y('blue-black-red') color(#row:[blue, black, red]) legends(none) + x(#row) y('nominal') color(#row:nominal) legends(none) + x(#row) y('w-w-w-c-m') color(#row:[#ffffff, #ffffff, #ffffff, cyan, magenta]) legends(none) :: pass
 - simple    / data('raw:A,B;a,b;a,c;a,d;b,c;a,e;e,f;g,h;m,n;n,o') edge key(A, B) + network y(A, B) color(#values) label(#values) legends(none) style('fill-opacity:1;size:20px') :: pass
 
+- simple    / data('raw:x;"a,b";"a";"a,c,b";"a,b";"a,b";"a,b,c"') bar x(x) y(#count) color(x) | bar x(x) y(#count) color(x) each(x) | bubble color(x) size(#count) label(x) | bubble color(x) size(#count) label(x) each(x) :: pass
 #### Note
 
 baseball:   Age Weight Height BattingAvg OnBasePct HomeRunRate SlugRate RBIRate WalkRate

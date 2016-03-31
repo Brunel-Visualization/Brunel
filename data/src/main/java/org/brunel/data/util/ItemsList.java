@@ -32,6 +32,13 @@ public class ItemsList implements Comparable<ItemsList> {
         return this == obj || obj instanceof ItemsList && compareTo((ItemsList) obj) == 0;
     }
 
+    public int hashCode() {
+        int result = 1;
+        for (Object element : items)
+            result = 31 * result + (element == null ? 0 : element.hashCode());
+        return result;
+    }
+
     public int compareTo(ItemsList o) {
         int n = Math.min(size(), o.size());
         for (int i = 0; i < n; i++) {
