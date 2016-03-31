@@ -35,5 +35,13 @@ public class ElementDefinition {
         public String right;                           // Where the right is to be (left will also be defined)
         public String size;                            // What the size is to be
         public String clusterSize;                     // The size of a cluster
+
+        public boolean defineUsingCenter() {
+            return center!= null;
+        }
+
+        public boolean defineUsingExtent() {
+            return left != null && !size.startsWith("function");
+        }
     }
 }

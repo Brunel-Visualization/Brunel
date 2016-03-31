@@ -82,11 +82,11 @@ public class D3PointBuilder {
 
     void defineHorizontalExtent(ElementDimensionDefinition dimensionDef) {
         String left, width;
-        if (dimensionDef.left != null) {
+        if (dimensionDef.defineUsingExtent()) {
             // Use the left and right values
             left = "function(d) { return Math.min(x0(d), x1(d)) }";
             width = "function(d) { return Math.abs(x1(d) - x0(d)) }";
-        } else if (dimensionDef.center != null) {
+        } else if (dimensionDef.defineUsingCenter()) {
             // The width can either be a function or a numeric value
             if (dimensionDef.size.startsWith("function"))
                 left = "function(d) { return x(d) - w(d)/2 }";
@@ -107,11 +107,11 @@ public class D3PointBuilder {
 
     private void defineVerticalExtent(ElementDimensionDefinition dimensionDef) {
         String top, height;
-        if (dimensionDef.left != null) {
+        if (dimensionDef.defineUsingExtent()) {
             // Use the left and right values
             top = "function(d) { return Math.min(y0(d), y1(d)) }";
             height = "function(d) { return Math.max(0.0001, Math.abs(y1(d) - y0(d))) }";
-        } else if (dimensionDef.center != null) {
+        } else if (dimensionDef.defineUsingCenter()) {
             // The height can either be a function or a numeric value
             if (dimensionDef.size.startsWith("function"))
                 top = "function(d) { return y(d) - h(d)/2 }";

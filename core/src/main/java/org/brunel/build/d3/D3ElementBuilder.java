@@ -26,7 +26,6 @@ import org.brunel.build.util.ModelUtil.Size;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
@@ -150,8 +149,8 @@ class D3ElementBuilder {
             if (vis.tDiagram != Diagram.map)
                 setGeoLocations(e, x, y, keys);
             // Just use the default point size
-            e.x.size = getSize(getSizeCall(0), sizeWidth, new Field[0], "geom.default_point_size", null);
-            e.y.size = getSize(getSizeCall(1), sizeHeight, new Field[0], "geom.default_point_size", null);
+            e.x.size = getSize(getSizeCall(0), sizeWidth, new Field[0], "geom.default_point_size", null, e.x);
+            e.y.size = getSize(getSizeCall(1), sizeHeight, new Field[0], "geom.default_point_size", null, e.x);
         } else {
             if (structure.dependent && !structure.isGraphEdge()) {
                 if (keys.length == 1) {
@@ -162,10 +161,10 @@ class D3ElementBuilder {
             }
             setLocations(e.x, "x", x, keys, structure.chart.coordinates.xCategorical);
             setLocations(e.y, "y", y, keys, structure.chart.coordinates.yCategorical);
-            e.x.size = getSize(getSizeCall(0), sizeWidth, x, "geom.inner_width", ScalePurpose.x);
-            e.y.size = getSize(getSizeCall(1), sizeHeight, y, "geom.inner_height", ScalePurpose.y);
+            e.x.size = getSize(getSizeCall(0), sizeWidth, x, "geom.inner_width", ScalePurpose.x, e.x);
+            e.y.size = getSize(getSizeCall(1), sizeHeight, y, "geom.inner_height", ScalePurpose.y, e.y);
             if (x.length > 1)
-                e.x.clusterSize = getSize(null, sizeWidth, x, "geom.inner_width", ScalePurpose.inner);
+                e.x.clusterSize = getSize(null, sizeWidth, x, "geom.inner_width", ScalePurpose.inner, e.x);
         }
         e.overallSize = getOverallSize(vis, e);
         return e;
@@ -174,7 +173,7 @@ class D3ElementBuilder {
     private void definePathsAndSplits(ElementDefinition elementDef) {
 
         // Define y or (y0, y1)
-        defineVerticalExtentFunctions(elementDef, false);
+        defineVerticalExtentFunctions(false, elementDef.y);
 
         // First deal with the case of wedges (polar intervals)
         if (vis.tElement == Element.bar && vis.coords == Coordinates.polar) {
@@ -262,8 +261,8 @@ class D3ElementBuilder {
                 // Handles points (as circles, rects, etc.) and text
                 D3PointBuilder pointBuilder = new D3PointBuilder(out);
                 if (pointBuilder.needsExtentFunctions(details)) {
-                    defineVerticalExtentFunctions(elementDef, true);
-                    defineHorizontalExtentFunctions(elementDef);
+                    defineVerticalExtentFunctions(true, elementDef.y);
+                    defineHorizontalExtentFunctions(elementDef.x);
                 }
 
                 out.add(basicDef);
@@ -272,25 +271,27 @@ class D3ElementBuilder {
         }
     }
 
-    private void defineHorizontalExtentFunctions(ElementDefinition elementDef) {
-        if (elementDef.x.left != null) {
+    private void defineHorizontalExtentFunctions(ElementDimensionDefinition x) {
+        // We only use the [left,right] version if we have no size to worry about
+        if (x.defineUsingExtent()) {
             // Use the left and right values
-            out.add("var x0 =", elementDef.x.left).endStatement();
-            out.add("var x1 =", elementDef.x.right).endStatement();
+            out.add("var x0 =", x.left).endStatement();
+            out.add("var x1 =", x.right).endStatement();
         } else {
-            out.add("var x =", elementDef.x.center).endStatement();
-            out.add("var w =", elementDef.x.size).endStatement();
+            out.add("var x =", x.center).endStatement();
+            out.add("var w =", x.size).endStatement();
         }
     }
 
-    private void defineVerticalExtentFunctions(ElementDefinition elementDef, boolean withHeight) {
-        if (elementDef.y.left != null) {
+    private void defineVerticalExtentFunctions(boolean withHeight, ElementDimensionDefinition y) {
+        // We only use the [left,right] version if we have no size to worry about
+        if (y.defineUsingExtent()) {
             // Use the left and right values
-            out.add("var y0 =", elementDef.y.left).endStatement();
-            out.add("var y1 =", elementDef.y.right).endStatement();
+            out.add("var y0 =", y.left).endStatement();
+            out.add("var y1 =", y.right).endStatement();
         } else {
-            out.add("var y =", elementDef.y.center).endStatement();
-            if (withHeight) out.add("var h =", elementDef.y.size).endStatement();
+            out.add("var y =", y.center).endStatement();
+            if (withHeight) out.add("var h =", y.size).endStatement();
         }
     }
 
@@ -367,7 +368,7 @@ class D3ElementBuilder {
     }
 
     private String getSize(String aestheticFunctionCall, Size size, Field[] fields,
-                           String extent, ScalePurpose purpose) {
+                           String extent, ScalePurpose purpose, ElementDimensionDefinition dim) {
 
         boolean needsFunction = aestheticFunctionCall != null;
         String baseAmount;
@@ -382,6 +383,11 @@ class D3ElementBuilder {
                 // If there are no fields, then fill the extent completely
                 baseAmount = extent;
             }
+        } else if (dim.left != null) {
+                // Use the left and right functions to get the size
+            String a = D3Util.stripFunction(dim.left);
+            String b = D3Util.stripFunction(dim.right);
+            baseAmount = "Math.abs(" + a + "-" + b + ")";
         } else {
             // Use size of categories
             Field[] baseFields = fields;
@@ -594,14 +600,14 @@ class D3ElementBuilder {
             // Stacked or range element goes from higher of the pair of values to the lower
             out.add("var y0 =", elementDef.y.left).endStatement();
             out.add("var y1 =", elementDef.y.right).endStatement();
-            defineHorizontalExtentFunctions(elementDef);
+            defineHorizontalExtentFunctions(elementDef.x);
             out.add(basicDef);
             out.addChained("attr('y', function(d) { return Math.min(y0(d), y1(d)) } )");
             out.addChained("attr('height', function(d) {return Math.max(0.001, Math.abs(y0(d) - y1(d))) })");
         } else {
             // Simple element; drop from the upper value to the baseline
             out.add("var y =", elementDef.y.center).endStatement();
-            defineHorizontalExtentFunctions(elementDef);
+            defineHorizontalExtentFunctions(elementDef.x);
             out.add(basicDef);
             if (vis.coords == Coordinates.transposed) {
                 out.addChained("attr('y', 0)")
