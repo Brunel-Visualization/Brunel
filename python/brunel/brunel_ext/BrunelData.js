@@ -2413,7 +2413,8 @@ $.copy(V.modify_ConvertSeries, {
 
 ////////////////////// Each ////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   This transform takes data and multiplies rows
+//   This transform takes data and converts a single row with multiple items into multiple rows each
+//   with a single item.
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2429,30 +2430,32 @@ $.copy(V.modify_Each, {
         for(_i=$.iter(V.modify_DataOperation.strings(command, ';')), s=_i.current; _i.hasNext(); s=_i.next()) {
             f = base.field(s);
             if (f.isProperty("list"))
-                base = V.modify_Each.splitFieldValues(base, f);
+                base = V.modify_Each.splitListsInField(base, f);
         }
         return base;
     },
 
-    splitFieldValues: function(base, target) {
+    splitListsInField: function(base, target) {
         var data, f, i, idx, j, list, results;
-        var nulls = new V.util_ItemsList($.Array(1, null));
-        var index = new $.List();
-        var splitValues = new $.List();
+        var rows = new $.List();
+        var fieldValues = new $.List();
         for (i = 0; i < target.rowCount(); i++){
             list = target.value(i);
-            if (list == null) list = nulls;
-            for (j = 0; j < list.size(); j++){
-                splitValues.add(list.get(i));
-                index.add(i);
-            }
+            if (list == null) {
+                fieldValues.add();
+                rows.add(i);
+            } else
+                for (j = 0; j < list.size(); j++){
+                    fieldValues.add(list.get(j));
+                    rows.add(i);
+                }
         }
-        idx = V.Data.toPrimitive(index.toArray());
+        idx = V.Data.toPrimitive(rows.toArray());
         results = $.Array(base.fields.length, null);
         for (i = 0; i < results.length; i++){
             f = base.fields[i];
             if (f == target) {
-                data = splitValues.toArray();
+                data = fieldValues.toArray();
                 results[i] = V.Fields.makeColumnField(f.name, f.label, data);
             } else {
                 results[i] = V.Fields.permute(f, idx, false);
@@ -3849,6 +3852,14 @@ $.copy(V.util_ItemsList.prototype, {
 
     equals: function(obj) {
         return this == obj || obj instanceof V.util_ItemsList && this.compareTo(obj) == 0;
+    },
+
+    hashCode: function() {
+        var _i, element;
+        var result = 1;
+        for(_i=$.iter(this.items), element=_i.current; _i.hasNext(); element=_i.next())
+            result = 31 * result + (element == null ? 0 : $.hash(element));
+        return result;
     },
 
     compareTo: function(o) {

@@ -30,7 +30,7 @@ public class BuilderOptions {
     public boolean readableJavascript = true;                   // Readable or shorter
     public String locJavaScript = "http://www.brunelvis.org/js";// The location of the javascript libraries
     public String locMaps = "http://www.brunelvis.org/geo";     // The location of the mapping resources
-    public String version = "1.0";                              // Which online version to use
+    public String version = "1.1";                              // Which online version to use
 
     public static BuilderOptions make(String[] args) {
         BuilderOptions options = new BuilderOptions();
