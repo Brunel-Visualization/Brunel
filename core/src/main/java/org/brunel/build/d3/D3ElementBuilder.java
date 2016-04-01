@@ -409,7 +409,7 @@ class D3ElementBuilder {
                 granularity = null;
                 categories = 0;
             }
-            // Use the categories to define the size to fill if thre are any categories
+            // Use the categories to define the size to fill if there are any categories
             if (categories > 0) {
                 // divide up the space by the number of categories
                 baseAmount = (categories == 1) ? extent : extent + "/" + categories;

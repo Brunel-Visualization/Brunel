@@ -79,7 +79,7 @@ public class Fields {
         if (field.provider instanceof ConstantProvider) {
             // No ned for hard work here -- a permuted constant is still a constant
             if (onlyOrderChanged) return field;
-            else return makeConstantField(field.name, field.label, field.value(0), field.rowCount());
+            else return makeConstantField(field.name, field.label, field.value(0), order.length);
         }
         if (onlyOrderChanged)
             return new Field(field.name, field.label, new ReorderedProvider(field.provider, order), field);

@@ -1712,7 +1712,7 @@ $.copy(V.Fields, {
             if (onlyOrderChanged)
                 return field;
             else
-                return V.Fields.makeConstantField(field.name, field.label, field.value(0), field.rowCount());
+                return V.Fields.makeConstantField(field.name, field.label, field.value(0), order.length);
         }
         if (onlyOrderChanged)
             return new V.Field(field.name, field.label, new V.values_ReorderedProvider(field.provider, order), field);
