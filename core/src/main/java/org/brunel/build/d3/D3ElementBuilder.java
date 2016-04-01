@@ -388,6 +388,7 @@ class D3ElementBuilder {
             String a = D3Util.stripFunction(dim.left);
             String b = D3Util.stripFunction(dim.right);
             baseAmount = "Math.abs(" + a + "-" + b + ")";
+            needsFunction = true;
         } else {
             // Use size of categories
             Field[] baseFields = fields;
@@ -425,6 +426,7 @@ class D3ElementBuilder {
             } else if (granularity != null) {
                 String scaleName = "scale_" + purpose.name();
                 baseAmount = "Math.abs( " + scaleName + "(" + granularity + ") - " + scaleName + "(0) )";
+                needsFunction = true;
             } else {
                 baseAmount = "geom.default_point_size";
             }
@@ -434,9 +436,11 @@ class D3ElementBuilder {
         if (size != null && size.isPercent())
             baseAmount = size.value() + " * " + baseAmount;
 
+        if (aestheticFunctionCall != null) baseAmount = aestheticFunctionCall + " * " + baseAmount;
+
         // If we need a function, wrap it up as required
         if (needsFunction) {
-            return "function(d) { return " + aestheticFunctionCall + " * " + baseAmount + "}";
+            return "function(d) { return " + baseAmount + "}";
         } else {
             return baseAmount;
         }

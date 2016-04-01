@@ -41,7 +41,7 @@ public class ElementDefinition {
         }
 
         public boolean defineUsingExtent() {
-            return left != null && !size.startsWith("function");
+            return left != null;
         }
     }
 }

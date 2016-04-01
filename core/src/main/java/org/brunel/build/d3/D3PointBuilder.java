@@ -72,7 +72,7 @@ public class D3PointBuilder {
         if (body.equals(sizeText))
             return body + " / 2";
         else
-            return "function(d) { return d.row ? " + body + " / 2 : 0 }";
+            return "function(d) { return " + body + " / 2 }";
     }
 
     private void defineRect(ElementDefinition elementDef) {
