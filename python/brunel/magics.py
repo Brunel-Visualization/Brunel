@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import absolute_import
 from __future__ import print_function
-
+from IPython.core.magic import Magics, magics_class, line_magic, cell_magic, line_cell_magic
 import pandas as pd
-from IPython.core.magic import Magics, magics_class, line_cell_magic
-
 import brunel.brunel as brunel
 
 ipy = get_ipython()
@@ -31,7 +30,7 @@ class BrunelMagics(Magics):
         # print("Found dataframes", list(datas.keys()))
 
         if cell is not None:
-            line = line + ' ' + cell.replace('\n', ' ')
+            line = line + ' ' + cell.replace('\n',' ')
         # print ("Command =", line)
 
 
@@ -43,7 +42,7 @@ class BrunelMagics(Magics):
         parts = line.split('::')
         action = parts[0].strip()
         datasets_in_brunel = brunel.get_dataset_names(action)
-        self.cache_data(datasets_in_brunel, datas)
+        self.cache_data(datasets_in_brunel,datas)
         if len(parts) > 2:
             raise ValueError("Only one ':' allowed in brunel magic. Format is 'ACTION : key=value, ...'")
         if len(parts) > 1:
@@ -104,13 +103,13 @@ class BrunelMagics(Magics):
         all.sort(key=lambda x: x[0])
         return all[0][1]
 
+
     def match(self, names1, names2):
         n = 0
         for i in names1:
             for j in names2:
                 if str(i).lower() == str(j).lower(): n += 1
         return -n
-
 
 # Register with IPython
 ipy.register_magics(BrunelMagics)

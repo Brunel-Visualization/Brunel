@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
-# If the JVM cannot be located automatically, use this variable to force the location.  It should be the fully qualified
+# If the JVM cannot be located automatically, use this variable to get it from an environment variable.  It should be the fully qualified
 # path to the JVM.  Typically jvm.dll on Windows or libjvm.so on Unix
-JVM_PATH = ""
+import os
+JVM_PATH = os.getenv("BRUNEL_JVM_PATH", "")

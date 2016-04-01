@@ -1,5 +1,8 @@
+from __future__ import absolute_import
+
 __author__ = 'graham'
 
-import brunel.brunel_util
-import brunel.magics
 from brunel import *
+
+import brunel.magics
+import brunel.brunel_util

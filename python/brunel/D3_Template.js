@@ -18,9 +18,9 @@ require.config({
     waitSeconds: 60,
     paths: {
         'd3': '//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min',
-        'BrunelD3': '/nbextensions/brunel_ext/BrunelD3',
-        'BrunelData': '/nbextensions/brunel_ext/BrunelData',
-        'BrunelEventHandlers': '/nbextensions/brunel_ext/BrunelEventHandlers'
+        'BrunelD3': '../nbextensions/brunel_ext/BrunelD3',
+        'BrunelData': '../nbextensions/brunel_ext/BrunelData',
+        'BrunelEventHandlers': '../nbextensions/brunel_ext/BrunelEventHandlers'
     },
     shim: {
         'BrunelD3': {
@@ -31,14 +31,14 @@ require.config({
         },
         'BrunelEventHandlers': {
             exports: 'BrunelEventHandlers'
-        }
+        },
     }
 
 });
 
-require(["d3"], function (d3) {
-    require(["BrunelD3", "BrunelData", "BrunelEventHandlers"], function (BrunelD3, BrunelData, BrunelEventHandlers) {
-        {{d3js}}
-        {{controls}}
-    });
+require(["d3"], function(d3) {
+require(["BrunelD3", "BrunelData", "BrunelEventHandlers"], function(BrunelD3, BrunelData, BrunelEventHandlers) {
+    {{d3js}}
+    {{controls}}
+});
 });
