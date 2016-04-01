@@ -28,7 +28,7 @@ if (brunelServer == null) brunelServer = "http://locahost:8080/brunel-service"
 ext.webFiles = files(project(':core').file('src/main/resources/javascript'), project(':data').file('build/translated'))
 def distName = 'brunel-all'
 
-version = 1.1
+
 
 
 configure([project(":data"), project(":core"), project(":etc"), project(":service")]) {
@@ -38,6 +38,8 @@ configure([project(":data"), project(":core"), project(":etc"), project(":servic
 
     compileJava.options.encoding = 'UTF-8'
     compileTestJava.options.encoding = 'UTF-8'
+    
+    version = '1.1'
 
     repositories {
         mavenCentral()
