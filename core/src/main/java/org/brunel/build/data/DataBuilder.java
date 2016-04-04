@@ -25,21 +25,36 @@ import org.brunel.model.VisSingle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * Created by graham on 12/16/15.
+ * A class for manipulating and building data structures
  */
 public class DataBuilder {
 
     private final DataModifier modifier;
     private final VisSingle vis;
 
+    /**
+     * Constructor
+     *
+     * @param vis the vis to build the data for
+     */
+    public DataBuilder(VisSingle vis) {
+        this(vis, null);
+    }
+
+    /**
+     * Constructor
+     *
+     * @param vis      the vis to build the data for
+     * @param modifier a class that modifies the data parameters after they have been created (may be null)
+     */
     public DataBuilder(VisSingle vis, DataModifier modifier) {
         this.vis = vis;
         this.modifier = modifier;
@@ -89,10 +104,10 @@ public class DataBuilder {
      * @return transformed data set
      */
     public static Dataset getTransformedData(VisSingle vis) {
-        return new DataBuilder(vis.makeCanonical(), null).build();
+        return new DataBuilder(vis.makeCanonical()).build();
     }
 
-    protected int getParameterIntValue(Param param, int defaultValue) {
+    private int getParameterIntValue(Param param, int defaultValue) {
         if (param == null) return defaultValue;
         if (param.isField()) {
             // The parameter is a field, so we examine the modifier for the int value
@@ -103,11 +118,11 @@ public class DataBuilder {
         }
     }
 
-    private String buildSummaryCommands() {
-        Map<String, String> spec = new HashMap<>();
+    String buildSummaryCommands() {
+        Map<String, String> spec = new LinkedHashMap<>();
 
         // We must account for all of these except for the special fields series and values
-        // As they will be handled later
+        // These are handled later in the pipeline and need no changes right now
         HashSet<String> fields = new HashSet<>(Arrays.asList(vis.usedFields(false)));
         fields.remove("#series");
         fields.remove("#values");
@@ -123,27 +138,32 @@ public class DataBuilder {
             fields.remove(name);
         }
 
-        // Add all color used fields in as dimensions (factors)
-        for (String s : fields) {
-            // Count is an implicit summary
-            if (s.equals("#count"))
-                spec.put(s, s + ":sum");
-            else
-                spec.put(s, s);
+        // If #count is used (and not summarized) add it in as a sum
+        if (fields.contains("#count")) {
+            spec.put("#count", "#count:sum");
+            fields.remove("#count");
         }
 
-        // X fields are used for the percentage bases
-        for (Param s : vis.fX) spec.put(s.asField(), s.asField() + ":base");
+        // If we have nothing to summarize, we are done -- no responses mean no summarization needed
+        if (spec.isEmpty()) return "";
 
-        // Return null if summary is not called for
-        if (spec.containsKey("#count") || vis.fSummarize.size() > 0) {
-            String[] result = new String[spec.size()];
-            int n = 0;
-            for (Entry<String, String> e : spec.entrySet())
-                result[n++] = e.getKey() + "=" + e.getValue();
-            return Data.join(result, "; ");
-        } else
-            return "";
+        // X fields are used for the percentage bases unless they have been declared as summaries
+        for (Param s : vis.fX) {
+            String field = s.asField();
+            if (fields.contains(field)) {
+                spec.put(field, field + ":base");
+                fields.remove(field);
+            }
+        }
+
+        // Anything remaining is used as a simple factor
+        for (String s : fields) spec.put(s, s);
+
+        // Assemble into a string
+        List<String> result = new ArrayList<>();
+        for (Entry<String, String> e : spec.entrySet())
+            result.add(e.getKey() + "=" + e.getValue());
+        return Data.join(result, "; ");
     }
 
     private String getParameterFieldValue(Param param) {
@@ -246,7 +266,6 @@ public class DataBuilder {
         }
         return Data.join(commands, "; ");
     }
-
 
     private String makeSeriesCommand() {
         // Only have a series for 2+ y fields

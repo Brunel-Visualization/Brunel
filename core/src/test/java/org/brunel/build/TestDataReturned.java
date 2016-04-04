@@ -33,8 +33,7 @@ public class TestDataReturned {
     public void testGetSimpleData() {
         String command = "data('sample:US States.csv') x(region) y(population)";
         VisSingle vis = Action.parse(command).apply().getSingle().makeCanonical();
-
-        DataBuilder builder = new DataBuilder(vis, null);
+        DataBuilder builder = new DataBuilder(vis);
         Dataset d = builder.build();
         assertEquals(50, d.rowCount());
         assertEquals(1.0, d.field("#count").value(0));
