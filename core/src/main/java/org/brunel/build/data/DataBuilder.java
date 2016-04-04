@@ -25,12 +25,13 @@ import org.brunel.model.VisSingle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * A class for manipulating and building data structures
@@ -123,7 +124,7 @@ public class DataBuilder {
 
         // We must account for all of these except for the special fields series and values
         // These are handled later in the pipeline and need no changes right now
-        HashSet<String> fields = new HashSet<>(Arrays.asList(vis.usedFields(false)));
+        Set<String> fields = new TreeSet<>(Arrays.asList(vis.usedFields(false)));
         fields.remove("#series");
         fields.remove("#values");
         fields.remove("#all");
