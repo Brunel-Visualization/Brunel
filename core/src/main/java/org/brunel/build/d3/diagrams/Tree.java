@@ -19,10 +19,10 @@ package org.brunel.build.d3.diagrams;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
+import org.brunel.build.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Coordinates;
 
 class Tree extends D3Diagram {
@@ -50,7 +50,7 @@ class Tree extends D3Diagram {
         // Do not override the polar coordinates!
         if (vis.coords != Coordinates.polar)
             out.add("elementGroup.attr('transform', 'translate(" + pad + ", " + pad + ")')").endStatement();
-        return ElementDetails.makeForDiagram(vis, "treeLayout(tree.root)", "circle", "point", "box", false);
+        return ElementDetails.makeForDiagram(vis, "treeLayout(tree.root)", ElementRepresentation.circle, "point", "box", false);
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {

@@ -19,6 +19,7 @@ package org.brunel.build.d3;
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDefinition.ElementDimensionDefinition;
 import org.brunel.build.element.ElementDetails;
+import org.brunel.build.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.model.VisSingle;
 
@@ -35,18 +36,16 @@ public class D3PointBuilder {
         this.out = out;
     }
 
-    public boolean needsExtentFunctions(ElementDetails details) {
-        return details.elementType.equals("rect");
-    }
-
     public void defineShapeGeometry(VisSingle vis, ElementDefinition elementDef, ElementDetails details) {
         // Must be a point
-        if (details.elementType.equals("rect"))
+        if (details.representation == ElementRepresentation.rect)
             defineRect(elementDef);
-        else if (details.elementType.equals("text"))
+        else if (details.representation == ElementRepresentation.text)
             defineText(elementDef, vis);
-        else
+        else if (details.representation == ElementRepresentation.circle)
             defineCircle(elementDef);
+        else
+            throw new IllegalArgumentException("Cannot define as a point: " + details.representation);
 
     }
 

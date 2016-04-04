@@ -19,6 +19,7 @@ package org.brunel.build.d3.diagrams;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
+import org.brunel.build.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
@@ -34,7 +35,7 @@ class Cloud extends D3Diagram {
         out.add("var cloud = BrunelD3.cloudLayout(processed, [geom.inner_width, geom.inner_height])").endStatement();
         out.add("function keyFunction(d) { return d.key }").endStatement();
         // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
-        return ElementDetails.makeForDiagram(vis, "data._rows", "text", "text", "box", true);
+        return ElementDetails.makeForDiagram(vis, "data._rows", ElementRepresentation.text, "text", "box", true);
 
     }
 

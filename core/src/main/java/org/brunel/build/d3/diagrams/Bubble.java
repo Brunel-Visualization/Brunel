@@ -18,6 +18,7 @@ package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
+import org.brunel.build.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
@@ -35,7 +36,7 @@ class Bubble extends D3Diagram {
         out.add("var pack = d3.layout.pack().size([geom.inner_width, geom.inner_height])")
                 .addChained("value(function(d) { return d.value == null || d.value < 0 ? 0 : d.value })")
                 .addChained("sort(BrunelData.diagram_Hierarchical.compare)").endStatement();
-        return ElementDetails.makeForDiagram(vis, "pack(tree.root)", "circle", "point", "box", true);
+        return ElementDetails.makeForDiagram(vis, "pack(tree.root)", ElementRepresentation.circle, "point", "box", true);
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {

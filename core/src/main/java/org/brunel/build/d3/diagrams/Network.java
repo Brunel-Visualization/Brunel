@@ -18,6 +18,7 @@ package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
+import org.brunel.build.element.ElementRepresentation;
 import org.brunel.build.element.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
@@ -78,7 +79,7 @@ class Network extends D3Diagram {
         out.ln();
         makeLayout();
         out.ln();
-        return ElementDetails.makeForDiagram(vis, "graph.nodes", "circle", "point", "box", false);
+        return ElementDetails.makeForDiagram(vis, "graph.nodes", ElementRepresentation.circle, "point", "box", false);
     }
 
     private void makeLayout() {

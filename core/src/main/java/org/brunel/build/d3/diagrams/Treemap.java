@@ -18,6 +18,7 @@ package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
+import org.brunel.build.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
@@ -38,7 +39,7 @@ class Treemap extends D3Diagram {
                 .addChained("sort(BrunelData.diagram_Hierarchical.compare)")
                 .addChained("value(function(d) { return d.value == null || d.value < 0 ? 0 : d.value })")
                 .addChained("padding(function(d) { if (d.depth < 2) return [14,2,2,2]; if (d.depth < 3) return [11,2,2,2];})").endStatement();
-        return ElementDetails.makeForDiagram(vis, "treemap(tree.root)", "rect", "polygon", "box", true);
+        return ElementDetails.makeForDiagram(vis, "treemap(tree.root)", ElementRepresentation.rect, "polygon", "box", true);
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {

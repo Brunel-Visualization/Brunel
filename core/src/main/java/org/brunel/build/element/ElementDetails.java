@@ -18,7 +18,6 @@ package org.brunel.build.element;
 
 import org.brunel.build.util.ModelUtil;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Element;
 
@@ -34,8 +33,7 @@ public class ElementDetails {
     public final boolean splitIntoShapes;               // Will produce one shape per split
     public final String colorAttribute;                 // 'fill' or 'stroke' as appropriate
     public final String dataSource;                     // Where the data for d3 lives
-    public final boolean producesPath;                  // If true, this produces a path eventually
-    public final String elementType;                    // The type of element produced
+    public final ElementRepresentation representation;  // The type of element produced
     public final String classes;                        // Class names for this item
     public final String textMethod;                     // How to fit text to the shape
     public final boolean textMustFit;                   // If true, text must fit inside
@@ -56,28 +54,28 @@ public class ElementDetails {
         this.splitIntoShapes = element.producesSingleShape;
         this.colorAttribute = filled ? "fill" : "stroke";
         this.dataSource = element.producesSingleShape ? "splits" : "data._rows";
-        this.producesPath = element.producesSingleShape ||
-                (element == Element.bar && vis.coords == Coordinates.polar);
-        if (producesPath)
-            this.elementType = "path";
+        if (element.producesSingleShape || element == Element.bar && vis.coords == Coordinates.polar)
+            this.representation = ElementRepresentation.path;
         else if (element == Element.edge)
-            this.elementType = "line";
+            this.representation = ElementRepresentation.segment;
         else if (element == Element.text)
-            this.elementType = "text";
+            this.representation = ElementRepresentation.text;
         else if (element == Element.bar)
-            this.elementType = "rect";
+            this.representation = ElementRepresentation.rect;
+        else if ("rect".equals(symbol))
+            this.representation = ElementRepresentation.rect;
         else
-            this.elementType = "rect".equals(symbol) ? "rect" : "circle";
+            this.representation = ElementRepresentation.circle;
 
         String textLocation = ModelUtil.getLabelPosition(vis);
         if (textLocation != null) {
             this.textMethod = textLocation;
-        } else if (producesPath) {
+        } else if (representation == ElementRepresentation.path) {
             if (element == Element.bar) this.textMethod = "wedge";
             else if (element == Element.area) this.textMethod = "area";
             else if (filled) this.textMethod = "poly";
             else this.textMethod = "path";
-        } else if (elementType.equals("circle")) {
+        } else if (representation == ElementRepresentation.circle) {
             this.textMethod = "right";
         } else {
             this.textMethod = "box";
@@ -91,12 +89,11 @@ public class ElementDetails {
         this.needsStrokeSize = !vis.fSize.isEmpty() && vis.tElement == Element.edge;
     }
 
-    private ElementDetails(String dataSource, String elementType, String elementClass, String textMethod, boolean textFits) {
+    private ElementDetails(String dataSource, ElementRepresentation elementType, String elementClass, String textMethod, boolean textFits) {
         this.splitIntoShapes = false;
-        this.colorAttribute = elementType.equals("line") ? "stroke" : "fill";
+        this.colorAttribute = elementType == ElementRepresentation.segment ? "stroke" : "fill";
         this.dataSource = dataSource;
-        this.producesPath = false;
-        this.elementType = elementType;
+        this.representation = elementType;
         this.classes = "'element " + elementClass + "'";
         this.textMethod = textMethod;
         this.textMustFit = textMethod.equals("inside") || textFits;             // inside REQUIRES a fit
@@ -106,7 +103,7 @@ public class ElementDetails {
     public ElementDetails modifyForTooltip() {
         String method = textMethod.equals("box") ? "top" : textMethod;
         if (method.equals("left") || method.equals("right") || method.equals("bottom")) method = "top";
-        return makeForDiagram(null, dataSource, elementType, "point", method, false);
+        return makeForDiagram(null, dataSource, representation, "point", method, false);
     }
 
     /**
@@ -123,7 +120,7 @@ public class ElementDetails {
      * @param textMethod   wedge, poly, area, path, box, left, right, top, bottom
      * @param textFits     true if text must fit within the shape
      */
-    public static ElementDetails makeForDiagram(VisSingle vis, String dataSource, String elementType, String elementClass, String textMethod, boolean textFits) {
+    public static ElementDetails makeForDiagram(VisSingle vis, String dataSource, ElementRepresentation elementType, String elementClass, String textMethod, boolean textFits) {
         String textLocation = ModelUtil.getLabelPosition(vis);
         if (textLocation == null) textLocation = textMethod;
         return new ElementDetails(dataSource, elementType, elementClass, textLocation, textFits);

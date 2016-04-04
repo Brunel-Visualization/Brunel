@@ -19,6 +19,7 @@ package org.brunel.build.d3.diagrams;
 import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
+import org.brunel.build.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
@@ -82,7 +83,7 @@ public class GeoMapLabels extends D3Diagram {
     }
 
     public ElementDetails initializeDiagram() {
-        return ElementDetails.makeForDiagram(vis, "geo_labels", "path", "point", "box", false);
+        return ElementDetails.makeForDiagram(vis, "geo_labels", ElementRepresentation.path, "point", "box", false);
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {

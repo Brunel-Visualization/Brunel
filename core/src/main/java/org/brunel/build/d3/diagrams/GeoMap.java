@@ -19,6 +19,7 @@ package org.brunel.build.d3.diagrams;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDetails;
+import org.brunel.build.element.ElementRepresentation;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
@@ -106,7 +107,7 @@ public class GeoMap extends D3Diagram {
             out.add("var path = d3.geo.path().projection(projection)").endStatement();
 
             // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
-            return ElementDetails.makeForDiagram(vis, "data._rows", "path", "polygon", "geo", false);
+            return ElementDetails.makeForDiagram(vis, "data._rows", ElementRepresentation.path, "polygon", "geo", false);
         }
     }
 

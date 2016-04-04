@@ -20,6 +20,7 @@ import org.brunel.build.d3.diagrams.D3Diagram;
 import org.brunel.build.element.ElementDefinition;
 import org.brunel.build.element.ElementDefinition.ElementDimensionDefinition;
 import org.brunel.build.element.ElementDetails;
+import org.brunel.build.element.ElementRepresentation;
 import org.brunel.build.element.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ModelUtil.Size;
@@ -62,7 +63,8 @@ class D3ElementBuilder {
         ElementDefinition elementDef = buildElementDefinition();    // And the coordinate definitions
 
         // Define paths needed in the element, and make data splits
-        if (details.producesPath) definePathsAndSplits(elementDef);
+        if (diagram == null && details.representation.drawnAsPath)
+            definePathsAndSplits(elementDef);
 
         labelBuilder.defineLabeling(details, vis.itemsLabel, false);   // Labels
 
@@ -73,7 +75,7 @@ class D3ElementBuilder {
         out.add("selection = main.selectAll('*').data(d3Data,", getKeyFunction(), ")").endStatement();
 
         // Define what happens when data is added ('enter')
-        out.add("selection.enter().append('" + details.elementType + "')");
+        out.add("selection.enter().append('" + details.representation.mark + "')");
         out.add(".attr('class', ", details.classes, ")");
 
         if (diagram != null) diagram.writeDiagramEnter();
@@ -120,7 +122,7 @@ class D3ElementBuilder {
     private ElementDetails makeDetails() {
         // When we create diagrams this has the side effect of writing the data calls needed
         if (structure.isGraphEdge()) {
-            return ElementDetails.makeForDiagram(vis, "graph.links", "line", "edge", "box", false);
+            return ElementDetails.makeForDiagram(vis, "graph.links", ElementRepresentation.segment, "edge", "box", false);
         } else if (diagram == null)
             return ElementDetails.makeForCoordinates(vis, getSymbol());
         else
@@ -245,7 +247,7 @@ class D3ElementBuilder {
 
         if (details.splitIntoShapes)
             out.add(basicDef).addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
-        else if (details.producesPath)
+        else if (details.representation.drawnAsPath)
             out.add(basicDef).addChained("attr('d', path)");                              // Simple path -- just util it
         else {
             // Add definition for the internal width of a cluster category
@@ -260,7 +262,7 @@ class D3ElementBuilder {
             else {
                 // Handles points (as circles, rects, etc.) and text
                 D3PointBuilder pointBuilder = new D3PointBuilder(out);
-                if (pointBuilder.needsExtentFunctions(details)) {
+                if (details.representation == ElementRepresentation.rect) {
                     defineVerticalExtentFunctions(true, elementDef.y);
                     defineHorizontalExtentFunctions(elementDef.x);
                 }
