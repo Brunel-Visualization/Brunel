@@ -25,14 +25,17 @@ import org.brunel.model.VisTypes;
 public enum ElementRepresentation {
     area("path", "area"),
     polygon("path", "poly"),
+    geoFeature("path", "geo"),
     generalPath("path", "path"),
     wedge("path", "wedge"),
+    symbol("path", "right"),
     segment("line", "box"),
     text("text", "box"),
     rect("rect", "box"),
-    circle("circle", "right");
+    smallCircle("circle", "right"),
+    bigCircle("circle", "box");
 
-    static ElementRepresentation make(VisTypes.Element element, String symbol, VisSingle vis) {
+    static ElementRepresentation makeForCoordinateElement(VisTypes.Element element, String symbol, VisSingle vis) {
         VisTypes.Coordinates coords = vis.coords;
         if (element == VisTypes.Element.bar && coords == VisTypes.Coordinates.polar)
             return wedge;
@@ -53,7 +56,7 @@ public enum ElementRepresentation {
         else if ("rect".equals(symbol))
             return rect;
         else
-            return circle;
+            return smallCircle;
     }
 
     private final String mark;                   // The graphic element this represents

@@ -50,7 +50,7 @@ class Tree extends D3Diagram {
         // Do not override the polar coordinates!
         if (vis.coords != Coordinates.polar)
             out.add("elementGroup.attr('transform', 'translate(" + pad + ", " + pad + ")')").endStatement();
-        return ElementDetails.makeForDiagram(vis, "treeLayout(tree.root)", ElementRepresentation.circle, "point", "box", false);
+        return ElementDetails.makeForDiagram(vis, ElementRepresentation.bigCircle, "treeLayout(tree.root)", "point", false);
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {

@@ -42,7 +42,8 @@ public class D3PointBuilder {
             defineRect(elementDef);
         else if (details.representation == ElementRepresentation.text)
             defineText(elementDef, vis);
-        else if (details.representation == ElementRepresentation.circle)
+        else if (details.representation == ElementRepresentation.smallCircle
+                || details.representation == ElementRepresentation.bigCircle)
             defineCircle(elementDef);
         else
             throw new IllegalArgumentException("Cannot define as a point: " + details.representation);
@@ -56,7 +57,6 @@ public class D3PointBuilder {
         out.addChained("attr('dy', '0.35em').text(labeling.content)");
         D3LabelBuilder.addFontSizeAttribute(vis, out);
     }
-
 
     private void defineCircle(ElementDefinition elementDef) {
         // If the center is not defined, this has been placed using a translation transform

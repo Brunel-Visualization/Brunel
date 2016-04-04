@@ -35,7 +35,7 @@ class Cloud extends D3Diagram {
         out.add("var cloud = BrunelD3.cloudLayout(processed, [geom.inner_width, geom.inner_height])").endStatement();
         out.add("function keyFunction(d) { return d.key }").endStatement();
         // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
-        return ElementDetails.makeForDiagram(vis, "data._rows", ElementRepresentation.text, "text", "box", true);
+        return ElementDetails.makeForDiagram(vis, ElementRepresentation.text, "data._rows", "text", true);
 
     }
 

@@ -25,7 +25,6 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 
@@ -84,7 +83,7 @@ public class D3LabelBuilder {
         if (vis.tElement != Element.text && items.isEmpty()) return;
         String name = forTooltip ? "tooltipLabeling" : "labeling";
         out.add("var", name, "= {").ln().indentMore();
-        String textMethod = details.textMethod;
+        String textMethod = details.getTextMethod();
         if (textMethod.equals("geo")) {
             // We define a function to extract the coordinates from the geo, and project them
             String func = "function(box,text,d) {var p = projection([d.geo_properties.c, d.geo_properties.d]); return {box:box, x:p[0], y:p[1]}}";
