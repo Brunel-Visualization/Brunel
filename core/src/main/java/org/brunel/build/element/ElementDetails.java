@@ -31,17 +31,14 @@ public class ElementDetails {
 
     public static ElementDetails makeForCoordinates(VisSingle vis, String symbol) {
         Element element = vis.tElement;
-        String classList = element.name();
+        String dataSource = element.producesSingleShape ? "splits" : "data._rows";
+        ElementRepresentation representation = makeForCoordinateElement(element, symbol, vis);
 
         // Work out if the element is filled
         boolean filled = element.filled || (!vis.fSize.isEmpty() && (element == Element.line || element == Element.path));
 
-        return new ElementDetails(
-                !filled,
-                element.producesSingleShape ? "splits" : "data._rows",
-                makeForCoordinateElement(element, symbol, vis),
-                classList,
-                ModelUtil.getLabelPosition(vis));
+        return new ElementDetails(representation, element.name(), dataSource,
+                !filled, ModelUtil.getLabelPosition(vis));
     }
 
     /**
@@ -56,9 +53,8 @@ public class ElementDetails {
      * @param elementClass the name of the element class for CSS purposes (polygon, path, point, etc.)
      */
     public static ElementDetails makeForDiagram(VisSingle vis, ElementRepresentation representation, String dataSource, String elementClass) {
-        return new ElementDetails(representation != segment,
-                dataSource, representation,
-                elementClass, ModelUtil.getLabelPosition(vis)
+        return new ElementDetails(representation, elementClass, dataSource, representation != segment,
+                ModelUtil.getLabelPosition(vis)
         );
     }
 
@@ -68,9 +64,8 @@ public class ElementDetails {
     private final String userDefinedLabelPosition;      // Custom override for the label position
     private final boolean strokedShape;                 // If true, the shape is to be stroked, not filled
 
-    public ElementDetails(boolean stroked,
-                          String dataSource, ElementRepresentation representation,
-                          String classes, String userDefinedLabelPosition) {
+    public ElementDetails(ElementRepresentation representation, String classes, String dataSource, boolean stroked,
+                          String userDefinedLabelPosition) {
         if (!stroked) classes += " filled";
         this.strokedShape = stroked;
         this.dataSource = dataSource;
@@ -92,11 +87,10 @@ public class ElementDetails {
     }
 
     /* Modify the method to give better text location for tooltips */
-    public ElementDetails modifyForTooltip() {
+    public ElementDetails deriveTooltipDetails() {
         String method = getTextMethod().equals("box") ? "top" : getTextMethod();
         if (method.equals("left") || method.equals("right") || method.equals("bottom")) method = "top";
-
-        return new ElementDetails(false, dataSource, rect, "point", method);
+        return new ElementDetails(rect, "point", dataSource, false, method);
     }
 
     public boolean textFitsShape() {

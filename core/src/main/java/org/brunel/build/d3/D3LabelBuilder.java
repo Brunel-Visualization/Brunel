@@ -74,7 +74,7 @@ public class D3LabelBuilder {
     public void addTooltips(ElementDetails details) {
         if (vis.itemsTooltip.isEmpty()) return;
         out.onNewLine().ln();
-        defineLabeling(details.modifyForTooltip(),
+        defineLabeling(details.deriveTooltipDetails(),
                 prettify(vis.itemsTooltip, true), true);
         out.add("BrunelD3.addTooltip(selection, tooltipLabeling, geom)").endStatement();
     }
