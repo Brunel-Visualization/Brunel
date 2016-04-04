@@ -721,9 +721,13 @@ $.copy(V.auto_NumericScale, {
             if (b0 <= 1 + 1e-4 && b > 1) b = 1;
             if (b0 < 100 + 1e-3 && b > 100) b = 100;
         }
-        if (a + 1e-6 > b) {
+        if (a + 1e-9 > b) {
             b = Math.max(0, 2 * a);
             a = Math.min(0, 2 * a);
+            if (a == 0 && b == 0) {
+                a = 0;
+                b = 1;
+            }
         }
         desiredDivCount = Math.max(desiredTickCount - 1, 1);
         transform = f.strProperty("transform");

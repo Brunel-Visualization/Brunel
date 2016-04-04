@@ -166,7 +166,7 @@ class D3ElementBuilder {
             e.x.size = getSize(getSizeCall(0), sizeWidth, x, "geom.inner_width", ScalePurpose.x, e.x);
             e.y.size = getSize(getSizeCall(1), sizeHeight, y, "geom.inner_height", ScalePurpose.y, e.y);
             if (x.length > 1)
-                e.x.clusterSize = getSize(null, sizeWidth, x, "geom.inner_width", ScalePurpose.inner, e.x);
+                e.clusterSize = getSize(null, sizeWidth, x, "geom.inner_width", ScalePurpose.inner, e.x);
         }
         e.overallSize = getOverallSize(vis, e);
         return e;
@@ -193,8 +193,8 @@ class D3ElementBuilder {
         }
 
         // Add definition for the internal width of a cluster category
-        if (elementDef.x.clusterSize != null)
-            out.add("var w1 =", elementDef.x.clusterSize).endStatement();
+        if (elementDef.clusterSize != null)
+            out.add("var w1 =", elementDef.clusterSize).endStatement();
 
         // Define the x function
         out.add("var x =", elementDef.x.center).endStatement();
@@ -254,8 +254,8 @@ class D3ElementBuilder {
             out.add(basicDef).addChained("attr('d', path)");                              // Simple path -- just util it
         else {
             // Add definition for the internal width of a cluster category
-            if (elementDef.x.clusterSize != null) {
-                out.add("var w1 =", elementDef.x.clusterSize).endStatement();
+            if (elementDef.clusterSize != null) {
+                out.add("var w1 =", elementDef.clusterSize).endStatement();
             }
 
             if (vis.tElement == Element.bar)

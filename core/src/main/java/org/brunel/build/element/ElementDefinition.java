@@ -23,21 +23,24 @@ package org.brunel.build.element;
  */
 public class ElementDefinition {
 
-    /* Definitions for x and y fields */
-    public final ElementDimensionDefinition x = new ElementDimensionDefinition();
-    public final ElementDimensionDefinition y = new ElementDimensionDefinition();
-    public String overallSize;                         // A general size for the whole item
-    public String refLocation;                         // Defines the location using a reference to another element
+    public final ElementDimensionDefinition x, y;       // Definitions for x and y fields
+    public String overallSize;                          // A general size for the whole item
+    public String refLocation;                          // Defines the location using a reference to another element
+    public String clusterSize;                          // The size of a cluster
+
+    public ElementDefinition() {
+        x = new ElementDimensionDefinition();
+        y = new ElementDimensionDefinition();
+    }
 
     public static class ElementDimensionDefinition {
-        public String center;                          // Where the center is to be (always defined)
+        public String center;                          // Where the center is to be
         public String left;                            // Where the left is to be (right will also be defined)
         public String right;                           // Where the right is to be (left will also be defined)
         public String size;                            // What the size is to be
-        public String clusterSize;                     // The size of a cluster
 
         public boolean defineUsingCenter() {
-            return center!= null;
+            return center != null;
         }
 
         public boolean defineUsingExtent() {

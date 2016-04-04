@@ -26,7 +26,6 @@ import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 
