@@ -45,6 +45,21 @@ public class BuilderOptions {
         }
         return options;
     }
+    
+    public static BuilderOptions makeFromENV() {
+        BuilderOptions options = new BuilderOptions();
+
+    	String config = System.getenv("BRUNEL_CONFIG");
+    	if (config == null) return options;
+    	String[] configs = config.split(";");
+    	for (String c:configs) {
+    		String[] keyVal = c.trim().split("=");
+    		if (keyVal[0].trim().equalsIgnoreCase("locJavaScript")) options.locJavaScript = keyVal[1].trim();
+    		else if (keyVal[0].trim().equalsIgnoreCase("locMaps")) options.locMaps = keyVal[1].trim();
+    	}
+    	
+    	return options;
+    }
 
     /**
      * none -  no data described
