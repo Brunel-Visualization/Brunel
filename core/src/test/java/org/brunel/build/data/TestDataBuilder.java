@@ -48,7 +48,7 @@ public class TestDataBuilder {
                 getSummarizeCommands("x(income) color(region) y(population) mean(population,income)"));
     }
 
-    protected String getSummarizeCommands(String brunel) {
+    private String getSummarizeCommands(String brunel) {
         String command = "data('sample:US States.csv') " + brunel;
         VisSingle vis = Action.parse(command).apply().getSingle().makeCanonical();
         return new DataBuilder(vis).buildSummaryCommands();
