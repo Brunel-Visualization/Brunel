@@ -38,7 +38,6 @@ public enum ElementRepresentation {
     symbol("path", "right", false),                     // A symbol drawn as path, but behaves like a small circle
     wedge("path", "wedge", false);                      // A pie chart wedge gets a special labeling location
 
-
     static ElementRepresentation makeForCoordinateElement(VisTypes.Element element, String symbol, VisSingle vis) {
         VisTypes.Coordinates coords = vis.coords;
         if (element == VisTypes.Element.bar && coords == VisTypes.Coordinates.polar)
@@ -79,6 +78,12 @@ public enum ElementRepresentation {
 
     public String getMark() {
         return mark;
+    }
+
+    public String getTooltipTextMethod() {
+        if (this == area) return "poly";
+        if (isDrawnAsPath() && this != symbol) return getDefaultTextMethod();
+        return "top";
     }
 
     public boolean isDrawnAsPath() {

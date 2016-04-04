@@ -88,10 +88,9 @@ public class ElementDetails {
 
     /* Modify the method to give better text location for tooltips */
     public ElementDetails deriveTooltipDetails() {
-        String method = getTextMethod().equals("box") ? "top" : getTextMethod();
-        if (method.equals("left") || method.equals("right") || method.equals("bottom")) method = "top";
-        return new ElementDetails(rect, "point", dataSource, false, method);
+        return new ElementDetails(rect, "point", null, false, representation.getTooltipTextMethod());
     }
+
 
     public boolean textFitsShape() {
         return "inside".equals(userDefinedLabelPosition) || representation.textFitsShape();
