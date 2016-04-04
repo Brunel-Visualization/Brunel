@@ -107,7 +107,7 @@ public class GeoMap extends D3Diagram {
             out.add("var path = d3.geo.path().projection(projection)").endStatement();
 
             // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
-            return ElementDetails.makeForDiagram(vis, ElementRepresentation.geoFeature, "data._rows", "polygon", false);
+            return ElementDetails.makeForDiagram(vis, ElementRepresentation.geoFeature, "data._rows", "polygon");
         }
     }
 

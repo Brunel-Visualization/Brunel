@@ -83,7 +83,7 @@ public class GeoMapLabels extends D3Diagram {
     }
 
     public ElementDetails initializeDiagram() {
-        return  ElementDetails.makeForDiagram(vis, ElementRepresentation.symbol, "geo_labels", "point", false);
+        return  ElementDetails.makeForDiagram(vis, ElementRepresentation.symbol, "geo_labels", "point");
     }
 
     public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {

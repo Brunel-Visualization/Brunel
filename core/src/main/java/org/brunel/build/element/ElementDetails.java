@@ -35,7 +35,6 @@ public class ElementDetails {
     public final ElementRepresentation representation;  // The type of element produced
     public final String classes;                        // Class names for this item
     private String textMethod;                     // How to fit text to the shape
-    public final boolean textMustFit;                   // If true, text must fit inside
     public boolean needsStrokeSize;                     // If we must define stroke-size using the "size" aesthetic
 
     private ElementDetails(VisSingle vis, String symbol) {
@@ -61,31 +60,30 @@ public class ElementDetails {
         else
             this.textMethod = representation.getDefaultTextMethod();
 
-        this.textMustFit = filled
-                && element != Element.point && element != Element.polygon
-                || "box".equals(textLocation);
-
         // Only edges need the stroke width setting
         this.needsStrokeSize = !vis.fSize.isEmpty() && vis.tElement == Element.edge;
     }
 
-    private ElementDetails(String dataSource, ElementRepresentation elementType, String elementClass, String textMethod, boolean textFits) {
+    private ElementDetails(String dataSource, ElementRepresentation elementType, String elementClass, String textMethod) {
         this.splitIntoShapes = false;
         this.colorAttribute = elementType == ElementRepresentation.segment ? "stroke" : "fill";
         this.dataSource = dataSource;
         this.representation = elementType;
         this.classes = "'element " + elementClass + "'";
         this.textMethod = textMethod == null ? elementType.getDefaultTextMethod() : textMethod;
-        this.textMustFit = this.textMethod.equals("inside") || textFits;             // inside REQUIRES a fit
     }
 
     public String getTextMethod() {
         return textMethod;
     }
 
+    public boolean textFitsShape() {
+        return textMethod.equals("inside") || representation.textFitsShape();
+    }
+
     /* Modify the method to give better text location for tooltips */
     public ElementDetails modifyForTooltip() {
-        ElementDetails details = makeForDiagram(null, representation, dataSource, "point", false);
+        ElementDetails details = makeForDiagram(null, ElementRepresentation.rect, dataSource, "point");
         String method = textMethod.equals("box") ? "top" : textMethod;
         if (method.equals("left") || method.equals("right") || method.equals("bottom")) method = "top";
         details.textMethod = method;
@@ -102,10 +100,9 @@ public class ElementDetails {
      *
      * @param dataSource   the javascript name of the element's data
      * @param elementClass the name of the element class for CSS purposes (polygon, path, point, etc.)
-     * @param textFits     true if text must fit within the shape
      */
-    public static ElementDetails makeForDiagram(VisSingle vis, ElementRepresentation representation, String dataSource, String elementClass, boolean textFits) {
-        return new ElementDetails(dataSource, representation, elementClass, ModelUtil.getLabelPosition(vis), textFits);
+    public static ElementDetails makeForDiagram(VisSingle vis, ElementRepresentation representation, String dataSource, String elementClass) {
+        return new ElementDetails(dataSource, representation, elementClass, ModelUtil.getLabelPosition(vis));
 
     }
 }

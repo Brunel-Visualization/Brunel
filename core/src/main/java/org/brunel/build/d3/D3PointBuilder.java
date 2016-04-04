@@ -42,8 +42,9 @@ public class D3PointBuilder {
             defineRect(elementDef);
         else if (details.representation == ElementRepresentation.text)
             defineText(elementDef, vis);
-        else if (details.representation == ElementRepresentation.smallCircle
-                || details.representation == ElementRepresentation.bigCircle)
+        else if (details.representation == ElementRepresentation.pointLikeCircle
+                || details.representation == ElementRepresentation.spaceFillingCircle
+        || details.representation == ElementRepresentation.largeCircle)
             defineCircle(elementDef);
         else
             throw new IllegalArgumentException("Cannot define as a point: " + details.representation);

@@ -23,17 +23,21 @@ import org.brunel.model.VisTypes;
  * Defines how we will represent a graphic element geometrically
  */
 public enum ElementRepresentation {
-    area("path", "area"),
-    polygon("path", "poly"),
-    geoFeature("path", "geo"),
-    generalPath("path", "path"),
-    wedge("path", "wedge"),
-    symbol("path", "right"),
-    segment("line", "box"),
-    text("text", "box"),
-    rect("rect", "box"),
-    smallCircle("circle", "right"),
-    bigCircle("circle", "box");
+    pointLikeCircle("circle", "right", false),          // A circle with text drawn to the right
+    spaceFillingCircle("circle", "box", true),          // A circle with text clipped to a box
+    largeCircle("circle", "center", false),             // A circle with text centered, but not clipped
+
+    segment("line", "box", false),                      // A line segment. Text is drawn centrally, but not clipped
+    text("text", "box", true),                          // Text -- should not be labelled usually
+    rect("rect", "box", true),                          // A rectangle with  text clipped to a box
+
+    generalPath("path", "path", false),                 // A usually unfilled path, text drawn on that path
+    polygon("path", "poly", false),                     // A usually filled polygon, text drawn at central point
+    area("path", "area", true),                         // A usually filled path with text drawn in the middle
+    geoFeature("path", "geo", false),                   // A usually filled polygon, with predefined label location
+    symbol("path", "right", false),                     // A symbol drawn as path, but behaves like a small circle
+    wedge("path", "wedge", false);                      // A pie chart wedge gets a special labeling location
+
 
     static ElementRepresentation makeForCoordinateElement(VisTypes.Element element, String symbol, VisSingle vis) {
         VisTypes.Coordinates coords = vis.coords;
@@ -56,15 +60,17 @@ public enum ElementRepresentation {
         else if ("rect".equals(symbol))
             return rect;
         else
-            return smallCircle;
+            return pointLikeCircle;
     }
 
     private final String mark;                   // The graphic element this represents
     private final String defaultTextMethod;
+    private final boolean textFitsShape;
 
-    ElementRepresentation(String mark, String textMethod) {
+    ElementRepresentation(String mark, String textMethod, boolean textFitsShape) {
         this.mark = mark;
         defaultTextMethod = textMethod;
+        this.textFitsShape = textFitsShape;
     }
 
     public String getDefaultTextMethod() {
@@ -77,6 +83,10 @@ public enum ElementRepresentation {
 
     public boolean isDrawnAsPath() {
         return mark.equals("path");
+    }
+
+    public boolean textFitsShape() {
+        return textFitsShape;
     }
 }
 

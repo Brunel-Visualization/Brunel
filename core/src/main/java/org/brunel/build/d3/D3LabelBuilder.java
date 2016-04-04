@@ -91,7 +91,7 @@ public class D3LabelBuilder {
         } else {
             out.onNewLine().add("method:", out.quote(textMethod), ", ");
         }
-        out.onNewLine().add("fit:", details.textMustFit, ",");
+        out.onNewLine().add("fit:", details.textFitsShape(), ",");
         if (textMethod.equals("path") || textMethod.equals("wedge"))
             out.onNewLine().add("path: path,");
 
