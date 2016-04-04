@@ -135,6 +135,8 @@ public class D3ElementBuilder {
 
         e.x.sizeFunction = getSizeCall(0);
         e.y.sizeFunction = getSizeCall(1);
+        e.x.sizeStyle = ModelUtil.getElementSize(vis, "width");
+        e.y.sizeStyle = ModelUtil.getElementSize(vis, "height");
 
         Field[] x = structure.chart.coordinates.getX(vis);
         Field[] y = structure.chart.coordinates.getY(vis);
@@ -156,8 +158,8 @@ public class D3ElementBuilder {
             if (vis.tDiagram != Diagram.map)
                 setGeoLocations(e, x, y, keys);
             // Just use the default point size
-            e.x.size = getSize(sizeWidth, new Field[0], "geom.default_point_size", null, e.x);
-            e.y.size = getSize(sizeHeight, new Field[0], "geom.default_point_size", null, e.x);
+            e.x.size = getSize(new Field[0], "geom.default_point_size", null, e.x);
+            e.y.size = getSize(new Field[0], "geom.default_point_size", null, e.x);
         } else {
             if (structure.dependent && !structure.isGraphEdge()) {
                 if (keys.length == 1) {
@@ -168,10 +170,10 @@ public class D3ElementBuilder {
             }
             DefineLocations.setLocations(structure, e.x, "x", x, keys, structure.chart.coordinates.xCategorical);
             DefineLocations.setLocations(structure, e.y, "y", y, keys, structure.chart.coordinates.yCategorical);
-            e.x.size = getSize(sizeWidth, x, "geom.inner_width", ScalePurpose.x, e.x);
-            e.y.size = getSize(sizeHeight, y, "geom.inner_height", ScalePurpose.y, e.y);
+            e.x.size = getSize(x, "geom.inner_width", ScalePurpose.x, e.x);
+            e.y.size = getSize(y, "geom.inner_height", ScalePurpose.y, e.y);
             if (x.length > 1)
-                e.clusterSize = getSize(sizeWidth, x, "geom.inner_width", ScalePurpose.inner, e.x);
+                e.clusterSize = getSize(x, "geom.inner_width", ScalePurpose.inner, e.x);
         }
         e.overallSize = getOverallSize(vis, e);
         return e;
@@ -380,14 +382,13 @@ public class D3ElementBuilder {
 
     }
 
-    private String getSize(Size size, Field[] fields,
-                           String extent, ScalePurpose purpose, ElementDimensionDefinition dim) {
+    private String getSize(Field[] fields, String extent, ScalePurpose purpose, ElementDimensionDefinition dim) {
 
         boolean needsFunction = dim.sizeFunction != null;
         String baseAmount;
-        if (size != null && !size.isPercent()) {
+        if (dim.sizeStyle != null && !dim.sizeStyle.isPercent()) {
             // Absolute size overrides everything
-            baseAmount = "" + size.value();
+            baseAmount = "" + dim.sizeStyle.value();
         } else if (fields.length == 0) {
             if (vis.tDiagram != null) {
                 // Default point size for diagrams
@@ -433,7 +434,7 @@ public class D3ElementBuilder {
 
                 if (purpose == ScalePurpose.inner || purpose == ScalePurpose.x && fields.length > 1)
                     baseAmount = DefineLocations.CLUSTER_SPACING + " * " + baseAmount;
-                else if ((size == null || !size.isPercent()) && !scales.allNumeric(baseFields))
+                else if ((dim.sizeStyle == null || !dim.sizeStyle.isPercent()) && !scales.allNumeric(baseFields))
                     baseAmount = BAR_SPACING + " * " + baseAmount;
 
             } else if (granularity != null) {
@@ -446,8 +447,8 @@ public class D3ElementBuilder {
         }
 
         // If the size definition is a percent, use that to scale by
-        if (size != null && size.isPercent())
-            baseAmount = size.value() + " * " + baseAmount;
+        if (dim.sizeStyle != null && dim.sizeStyle.isPercent())
+            baseAmount = dim.sizeStyle.value() + " * " + baseAmount;
 
         if (dim.sizeFunction != null) baseAmount = dim.sizeFunction + " * " + baseAmount;
 

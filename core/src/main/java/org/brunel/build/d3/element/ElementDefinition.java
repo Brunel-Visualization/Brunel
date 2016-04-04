@@ -16,6 +16,8 @@
 
 package org.brunel.build.d3.element;
 
+import org.brunel.build.util.ModelUtil;
+
 /**
  * Stores the functionality needed to build an element.
  * This is a struct-like object that is constructed using the scales and then used to write out
@@ -35,6 +37,7 @@ public class ElementDefinition {
 
     public static class ElementDimensionDefinition {
         public String sizeFunction;                    // The function that defines size (0-1). E.g. 'size(d)'
+        public ModelUtil.Size sizeStyle;                // The size as defined by a style
 
         public String center;                          // Where the center is to be
         public String left;                            // Where the left is to be (right will also be defined)
