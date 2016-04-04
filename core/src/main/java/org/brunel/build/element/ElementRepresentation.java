@@ -20,7 +20,10 @@ package org.brunel.build.element;
  * Defines how we will represent a graphic element geometrically
  */
 public enum ElementRepresentation {
-    path("path", true),
+    area("path", true),
+    polygon("path", true),
+    generalPath("path", true),
+    wedge("path", true),
     segment("line", false),
     text("text", false),
     rect("rect", false),
@@ -35,3 +38,4 @@ public enum ElementRepresentation {
     }
 
 }
+

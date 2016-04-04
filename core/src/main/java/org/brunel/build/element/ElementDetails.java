@@ -54,8 +54,16 @@ public class ElementDetails {
         this.splitIntoShapes = element.producesSingleShape;
         this.colorAttribute = filled ? "fill" : "stroke";
         this.dataSource = element.producesSingleShape ? "splits" : "data._rows";
-        if (element.producesSingleShape || element == Element.bar && vis.coords == Coordinates.polar)
-            this.representation = ElementRepresentation.path;
+        if (element == Element.bar && vis.coords == Coordinates.polar)
+            this.representation = ElementRepresentation.wedge;
+        else if (element == Element.area)
+            this.representation = ElementRepresentation.area;
+        else if (element == Element.line)
+            this.representation = ElementRepresentation.generalPath;
+        else if (element == Element.path)
+            this.representation = ElementRepresentation.generalPath;
+        else if (element == Element.polygon)
+            this.representation = ElementRepresentation.polygon;
         else if (element == Element.edge)
             this.representation = ElementRepresentation.segment;
         else if (element == Element.text)
@@ -70,11 +78,16 @@ public class ElementDetails {
         String textLocation = ModelUtil.getLabelPosition(vis);
         if (textLocation != null) {
             this.textMethod = textLocation;
-        } else if (representation == ElementRepresentation.path) {
-            if (element == Element.bar) this.textMethod = "wedge";
-            else if (element == Element.area) this.textMethod = "area";
-            else if (filled) this.textMethod = "poly";
-            else this.textMethod = "path";
+        } else if (representation == ElementRepresentation.generalPath) {
+            this.textMethod = "path";
+        } else if (representation == ElementRepresentation.segment) {
+            this.textMethod = "box";
+        } else if (representation == ElementRepresentation.area) {
+            this.textMethod = "area";
+        } else if (representation == ElementRepresentation.polygon) {
+            this.textMethod = "poly";
+        } else if (representation == ElementRepresentation.wedge) {
+            this.textMethod = "wedge";
         } else if (representation == ElementRepresentation.circle) {
             this.textMethod = "right";
         } else {
