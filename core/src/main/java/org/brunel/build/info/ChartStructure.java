@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package org.brunel.build.chart;
+package org.brunel.build.info;
 
-import org.brunel.build.element.ElementStructure;
 import org.brunel.data.Dataset;
 import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 

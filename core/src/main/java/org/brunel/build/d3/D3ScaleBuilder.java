@@ -18,8 +18,8 @@ package org.brunel.build.d3;
 
 import org.brunel.action.Param;
 import org.brunel.action.Param.Type;
-import org.brunel.build.chart.ChartCoordinates;
-import org.brunel.build.chart.ChartStructure;
+import org.brunel.build.info.ChartCoordinates;
+import org.brunel.build.info.ChartStructure;
 import org.brunel.build.d3.D3Util.DateBuilder;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
@@ -33,7 +33,6 @@ import org.brunel.data.auto.NumericScale;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Axes;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Diagram;
@@ -45,7 +44,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 

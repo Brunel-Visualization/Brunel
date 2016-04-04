@@ -16,12 +16,12 @@
 
 package org.brunel.build;
 
-import org.brunel.build.chart.ChartLayout;
-import org.brunel.build.chart.ChartStructure;
+import org.brunel.build.info.ChartLayout;
+import org.brunel.build.info.ChartStructure;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.data.DataBuilder;
 import org.brunel.build.data.DataModifier;
-import org.brunel.build.element.ElementStructure;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisComposition;

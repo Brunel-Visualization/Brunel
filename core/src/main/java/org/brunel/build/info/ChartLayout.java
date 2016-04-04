@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.brunel.build.chart;
+package org.brunel.build.info;
 
 import org.brunel.action.Param;
 import org.brunel.model.VisItem;

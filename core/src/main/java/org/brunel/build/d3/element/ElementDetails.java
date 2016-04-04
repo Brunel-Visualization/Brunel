@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 IBM Corporation and others.
+ * Copyright (c) 2016 IBM Corporation and others.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * You may not use this file except in compliance with the License.
@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package org.brunel.build.element;
+package org.brunel.build.d3.element;
 
 import org.brunel.build.util.ModelUtil;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Element;
 
-import static org.brunel.build.element.ElementRepresentation.makeForCoordinateElement;
-import static org.brunel.build.element.ElementRepresentation.rect;
-import static org.brunel.build.element.ElementRepresentation.segment;
+import static org.brunel.build.d3.element.ElementRepresentation.makeForCoordinateElement;
+import static org.brunel.build.d3.element.ElementRepresentation.rect;
+import static org.brunel.build.d3.element.ElementRepresentation.segment;
 
 /**
  * Encapsulate information on how we want to represent different types of element

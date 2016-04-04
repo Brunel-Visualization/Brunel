@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.brunel.build.element;
+package org.brunel.build.d3.element;
 
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
@@ -22,7 +22,7 @@ import org.brunel.model.VisTypes;
 /**
  * Defines how we will represent a graphic element geometrically
  */
-public enum ElementRepresentation {
+ public enum ElementRepresentation {
     pointLikeCircle("circle", "right", false),          // A circle with text drawn to the right
     spaceFillingCircle("circle", "box", true),          // A circle with text clipped to a box
     largeCircle("circle", "center", false),             // A circle with text centered, but not clipped

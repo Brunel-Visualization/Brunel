@@ -17,7 +17,7 @@
 package org.brunel.maps;
 
 import org.brunel.action.Param;
-import org.brunel.build.chart.ChartCoordinates;
+import org.brunel.build.info.ChartCoordinates;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
@@ -28,7 +28,6 @@ import org.brunel.geom.Rect;
 import org.brunel.maps.projection.Projection;
 import org.brunel.maps.projection.ProjectionBuilder;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Diagram;
 
 import java.util.ArrayList;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 IBM Corporation and others.
+ * Copyright (c) 2016 IBM Corporation and others.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * You may not use this file except in compliance with the License.
@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package org.brunel.build.element;
+package org.brunel.build.info;
 
-import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.d3.D3Util;
+import org.brunel.build.d3.element.ElementDefinition;
+import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.maps.GeoMapping;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 

@@ -17,9 +17,9 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.d3.D3LabelBuilder;
-import org.brunel.build.element.ElementDefinition;
-import org.brunel.build.element.ElementDetails;
-import org.brunel.build.element.ElementRepresentation;
+import org.brunel.build.d3.element.ElementDefinition;
+import org.brunel.build.d3.element.ElementDetails;
+import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;

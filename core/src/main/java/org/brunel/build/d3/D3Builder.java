@@ -18,11 +18,12 @@ package org.brunel.build.d3;
 
 import org.brunel.action.Param;
 import org.brunel.build.AbstractBuilder;
-import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.d3.diagrams.GeoMap;
+import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.data.DataTransformParameters;
-import org.brunel.build.element.ElementStructure;
+import org.brunel.build.info.ChartStructure;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;

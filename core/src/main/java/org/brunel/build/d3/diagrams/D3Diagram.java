@@ -18,10 +18,10 @@ package org.brunel.build.d3.diagrams;
 
 import org.brunel.action.Param;
 import org.brunel.build.d3.D3LabelBuilder;
-import org.brunel.build.d3.D3PointBuilder;
-import org.brunel.build.element.ElementDefinition;
-import org.brunel.build.element.ElementDetails;
-import org.brunel.build.element.ElementStructure;
+import org.brunel.build.d3.element.PointBuilder;
+import org.brunel.build.d3.element.ElementDefinition;
+import org.brunel.build.d3.element.ElementDetails;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
@@ -135,7 +135,7 @@ public abstract class D3Diagram {
     }
 
     protected void definePoint(ElementDefinition elementDef, ElementDetails details) {
-        new D3PointBuilder(out).defineShapeGeometry(vis, elementDef, details);
+        new PointBuilder(out).defineShapeGeometry(vis, elementDef, details);
     }
 
 

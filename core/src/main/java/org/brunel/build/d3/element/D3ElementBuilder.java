@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 IBM Corporation and others.
+ * Copyright (c) 2016 IBM Corporation and others.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * You may not use this file except in compliance with the License.
@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package org.brunel.build.d3;
+package org.brunel.build.d3.element;
 
+import org.brunel.build.d3.D3LabelBuilder;
+import org.brunel.build.d3.D3ScaleBuilder;
+import org.brunel.build.d3.D3Util;
+import org.brunel.build.d3.ScalePurpose;
 import org.brunel.build.d3.diagrams.D3Diagram;
-import org.brunel.build.element.ElementDefinition;
-import org.brunel.build.element.ElementDefinition.ElementDimensionDefinition;
-import org.brunel.build.element.ElementDetails;
-import org.brunel.build.element.ElementRepresentation;
-import org.brunel.build.element.ElementStructure;
+import org.brunel.build.d3.element.ElementDefinition.ElementDimensionDefinition;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ModelUtil.Size;
 import org.brunel.build.util.ScriptWriter;
@@ -32,10 +33,9 @@ import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 import org.brunel.model.VisTypes.Using;
 
-class D3ElementBuilder {
+public class D3ElementBuilder {
 
     private static final String BAR_SPACING = "0.9";            // Spacing between categorical bars
-    private static final String CLUSTER_SPACING = "0.75";       // Spacing between clusters
 
     private final ScriptWriter out;                             // To write code out to
     private final VisSingle vis;                                // Element definition
@@ -161,8 +161,8 @@ class D3ElementBuilder {
                     e.refLocation = "[" + structure.referredLocation(keys[0]) + ", " + structure.referredLocation(keys[1]) + "]";
                 }
             }
-            setLocations(e.x, "x", x, keys, structure.chart.coordinates.xCategorical);
-            setLocations(e.y, "y", y, keys, structure.chart.coordinates.yCategorical);
+            DefineLocations.setLocations(structure, e.x, "x", x, keys, structure.chart.coordinates.xCategorical);
+            DefineLocations.setLocations(structure, e.y, "y", y, keys, structure.chart.coordinates.yCategorical);
             e.x.size = getSize(getSizeCall(0), sizeWidth, x, "geom.inner_width", ScalePurpose.x, e.x);
             e.y.size = getSize(getSizeCall(1), sizeHeight, y, "geom.inner_height", ScalePurpose.y, e.y);
             if (x.length > 1)
@@ -264,7 +264,7 @@ class D3ElementBuilder {
                 defineEdge(basicDef, elementDef);
             else {
                 // Handles points (as circles, rects, etc.) and text
-                D3PointBuilder pointBuilder = new D3PointBuilder(out);
+                PointBuilder pointBuilder = new PointBuilder(out);
                 if (details.representation == ElementRepresentation.rect) {
                     defineVerticalExtentFunctions(true, elementDef.y);
                     defineHorizontalExtentFunctions(elementDef.x);
@@ -342,8 +342,8 @@ class D3ElementBuilder {
         }
 
         if (structure.dependent) {
-            setDependentLocations(def.x, "x", keys, "");
-            setDependentLocations(def.y, "y", keys, "");
+            DefineLocations.setDependentLocations(structure, def.x, "x", keys, "");
+            DefineLocations.setDependentLocations(structure, def.y, "y", keys, "");
         } else if (n == 0) {
             def.x.center = "null";
             def.y.center = "null";
@@ -357,15 +357,15 @@ class D3ElementBuilder {
             String xHigh = D3Util.writeCall(x[1]);         // A call to the high field using the datum 'd'
 
             // When one of the fields is a range, use the outermost value of that
-            if (isRange(x[0])) xLow += ".low";
-            if (isRange(x[1])) xHigh += ".high";
+            if (DefineLocations.isRange(x[0])) xLow += ".low";
+            if (DefineLocations.isRange(x[1])) xHigh += ".high";
 
             String yLow = D3Util.writeCall(y[0]);          // A call to the low field using the datum 'd'
             String yHigh = D3Util.writeCall(y[1]);         // A call to the high field using the datum 'd'
 
             // When one of the fields is a range, use the outermost value of that
-            if (isRange(y[0])) yLow += ".low";
-            if (isRange(y[1])) yHigh += ".high";
+            if (DefineLocations.isRange(y[0])) yLow += ".low";
+            if (DefineLocations.isRange(y[1])) yHigh += ".high";
 
             def.x.left = "function(d) { return proj([" + xLow + "," + yLow + "])[0] }";
             def.x.right = "function(d) { return proj([" + xHigh + "," + yHigh + "])[0] }";
@@ -427,7 +427,7 @@ class D3ElementBuilder {
                 // or if we are clustering (in which case a larger gap is better)
 
                 if (purpose == ScalePurpose.inner || purpose == ScalePurpose.x && fields.length > 1)
-                    baseAmount = CLUSTER_SPACING + " * " + baseAmount;
+                    baseAmount = DefineLocations.CLUSTER_SPACING + " * " + baseAmount;
                 else if ((size == null || !size.isPercent()) && !scales.allNumeric(baseFields))
                     baseAmount = BAR_SPACING + " * " + baseAmount;
 
@@ -459,112 +459,6 @@ class D3ElementBuilder {
         if (vis.fSize.isEmpty()) return null;                   // No sizing
         if (vis.fSize.size() == 1) return "size(d)";            // Use this for both
         return dim == 0 ? "width(d)" : "height(d)";            // Different for x and y dimensions
-    }
-
-    private void setLocations(ElementDimensionDefinition dim, String dimName, Field[] fields, Field[] keys, boolean categorical) {
-
-        String scaleName = "scale_" + dimName;
-
-        if (structure.isGraphEdge()) {
-            // These are edges in a network layout
-            dim.left = "function(d) { return d.source." + dimName + " }";
-            dim.right = "function(d) { return d.target." + dimName + " }";
-            return;
-        }
-
-        if (structure.dependent) {
-            // Positions are dependent on other elements
-            setDependentLocations(dim, dimName, keys, scaleName);
-            return;
-        }
-
-        if (fields.length == 0) {
-            // There are no fields -- we have a notional [0,1] extent, so use the center of that
-            dim.center = "function() { return " + scaleName + "(0.5) }";
-            dim.left = "function() { return " + scaleName + "(0) }";
-            dim.right = "function() { return " + scaleName + "(1) }";
-            return;
-        }
-
-        Field main = fields[0];
-        boolean numericBins = main.isBinned() && !categorical;
-
-        // X axis only ever has one main field at most -- rest are clustered
-        boolean oneMainField = fields.length == 1 || dimName.equals("x");
-
-        if (oneMainField) {
-
-            // If defined, this is the cluster field on the X dimension
-            Field cluster = fields.length > 1 ? fields[1] : null;
-
-            String dataFunction = D3Util.writeCall(main);          // A call to that field using the datum 'd'
-
-            if (numericBins) {
-                // A Binned value on a non-categorical axes
-                if (cluster == null) {
-                    dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".mid) }";
-                    dim.left = "function(d) { return " + scaleName + "(" + dataFunction + ".low) }";
-                    dim.right = "function(d) { return " + scaleName + "(" + dataFunction + ".high) }";
-                } else {
-                    // Left of the cluster bar, right of the cluster bar, and distance along it
-                    String L = scaleName + "(" + dataFunction + ".low)";
-                    String R = scaleName + "(" + dataFunction + ".high)";
-                    String D;
-                    if (isRange(cluster))
-                        D = "scale_inner(" + D3Util.writeCall(cluster) + ".mid)";
-                    else
-                        D = "scale_inner(" + D3Util.writeCall(cluster) + ")";
-
-                    dim.center = "function(d) { var L=" + L + ", R=" + R + "; return (L+R)/2 + (L-R) * "
-                            + CLUSTER_SPACING + " * " + D + " }";
-                }
-            } else if (isRange(main)) {
-                // This is a range field, but we have not been asked to show both ends,
-                // so we use the midpoint
-                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".mid)";
-                if (cluster != null) dim.center += addClusterMultiplier(cluster);
-                dim.center += " }";
-            } else {
-                // Nothing unusual -- just define the center
-                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ")";
-                if (cluster != null) dim.center += addClusterMultiplier(cluster);
-                dim.center += " }";
-            }
-
-        } else {
-            // The dimension contains two fields: a range
-            String lowDataFunc = D3Util.writeCall(main);          // A call to the low field using the datum 'd'
-            String highDataFunc = D3Util.writeCall(fields[1]);         // A call to the high field using the datum 'd'
-
-            // When one of the fields is a range, use the outermost value of that
-            if (isRange(main)) lowDataFunc += ".low";
-            if (isRange(fields[1])) highDataFunc += ".high";
-
-            dim.left = "function(d) { return " + scaleName + "(" + lowDataFunc + ") }";
-            dim.right = "function(d) { return " + scaleName + "(" + highDataFunc + ") }";
-            dim.center = "function(d) { return " + scaleName + "( (" + highDataFunc + " + " + lowDataFunc + " )/2) }";
-        }
-
-    }
-
-    private String addClusterMultiplier(Field cluster) {
-        if (isRange(cluster))
-            return " + w1 * scale_inner(" + D3Util.writeCall(cluster) + ".mid)";
-        else
-            return " + w1 * scale_inner(" + D3Util.writeCall(cluster) + ")";
-    }
-
-    private void setDependentLocations(ElementDimensionDefinition dim, String dimName, Field[] keys, String scaleName) {
-        // Use the keys to get the X and Y locations from other items
-        if (keys.length == 1) {
-            // One key gives the center
-            dim.center = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[0]) + ") }";
-        } else {
-            // Two keys give ends
-            dim.left = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[0]) + ") }";
-            dim.right = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[1]) + ") }";
-            dim.center = "function() { return " + scaleName + "(0.5) }";        // Not sure what is best here -- should not get used
-        }
     }
 
     public static String getOverallSize(VisSingle vis, ElementDefinition def) {
@@ -629,7 +523,7 @@ class D3ElementBuilder {
                         .addChained("attr('height', function(d) {return Math.max(0,geom.inner_height - y(d)) }) ");
             }
         }
-        new D3PointBuilder(out).defineHorizontalExtent(elementDef.x);
+        new PointBuilder(out).defineHorizontalExtent(elementDef.x);
     }
 
     private void defineEdge(String basicDef, ElementDefinition elementDef) {
@@ -663,12 +557,6 @@ class D3ElementBuilder {
             if (field.isNumeric() && !field.isBinned()) return false;
         }
         return true;
-    }
-
-    private boolean isRange(Field field) {
-        if (field.isBinned() && field.isNumeric()) return true;
-        String s = field.strProperty("summary");
-        return s != null && (s.equals("iqr") || s.equals("range"));
     }
 
     public void preBuildDefinitions() {

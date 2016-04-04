@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package org.brunel.build.d3;
+package org.brunel.build.d3.element;
 
-import org.brunel.build.element.ElementDefinition;
-import org.brunel.build.element.ElementDefinition.ElementDimensionDefinition;
-import org.brunel.build.element.ElementDetails;
-import org.brunel.build.element.ElementRepresentation;
+import org.brunel.build.d3.D3LabelBuilder;
+import org.brunel.build.d3.D3Util;
+import org.brunel.build.d3.element.ElementDefinition.ElementDimensionDefinition;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.model.VisSingle;
 
@@ -28,11 +27,11 @@ import org.brunel.model.VisSingle;
  * The shapes are defined by a center point -- point elements
  * This class is used by Element and Diagram builders to create the raw shapes needed.
  */
-public class D3PointBuilder {
+public class PointBuilder {
 
     private final ScriptWriter out;
 
-    public D3PointBuilder(ScriptWriter out) {
+    public PointBuilder(ScriptWriter out) {
         this.out = out;
     }
 

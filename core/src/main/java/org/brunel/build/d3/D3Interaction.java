@@ -17,12 +17,11 @@
 package org.brunel.build.d3;
 
 import org.brunel.action.Param;
-import org.brunel.build.chart.ChartStructure;
-import org.brunel.build.element.ElementStructure;
+import org.brunel.build.info.ChartStructure;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Interaction;
 
