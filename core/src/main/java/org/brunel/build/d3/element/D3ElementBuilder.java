@@ -133,21 +133,14 @@ public class D3ElementBuilder {
     private ElementDefinition buildElementDefinition(ElementRepresentation representation) {
         ElementDefinition e = new ElementDefinition(vis);
 
-
         Field[] x = structure.chart.coordinates.getX(vis);
         Field[] y = structure.chart.coordinates.getY(vis);
         Field[] keys = new Field[vis.fKeys.size()];
         for (int i = 0; i < keys.length; i++) keys[i] = structure.data.field(vis.fKeys.get(i).asField());
 
-        if (structure.chart.geo != null) {
-            if (structure.dependent) {
-                if (keys.length == 1) {
-                    e.refLocation = "proj(" + structure.referredLocation(keys[0]) + ")";
-                } else {
-                    e.refLocation = "[ proj(" + structure.referredLocation(keys[0]) + "), proj(" + structure.referredLocation(keys[1]) + ") ]";
-                }
-            }
+        if (structure.dependent)  defineReferenceFunctions(e, keys);
 
+        if (structure.chart.geo != null) {
             // Maps with feature data do not need the geo coordinates set
             if (vis.tDiagram != Diagram.map)
                 setGeoLocations(e, x, y, keys);
@@ -155,13 +148,6 @@ public class D3ElementBuilder {
             e.x.size = getSize(new Field[0], "geom.default_point_size", null, e.x);
             e.y.size = getSize(new Field[0], "geom.default_point_size", null, e.x);
         } else {
-            if (structure.dependent && !structure.isGraphEdge()) {
-                if (keys.length == 1) {
-                    e.refLocation = structure.referredLocation(keys[0]);
-                } else {
-                    e.refLocation = "[" + structure.referredLocation(keys[0]) + ", " + structure.referredLocation(keys[1]) + "]";
-                }
-            }
             DefineLocations.setLocations(structure, e.x, "x", x, keys, structure.chart.coordinates.xCategorical);
             DefineLocations.setLocations(structure, e.y, "y", y, keys, structure.chart.coordinates.yCategorical);
             e.x.size = getSize(x, "geom.inner_width", ScalePurpose.x, e.x);
@@ -171,6 +157,20 @@ public class D3ElementBuilder {
         }
         e.overallSize = getOverallSize(vis, e);
         return e;
+    }
+
+    private void defineReferenceFunctions(ElementDefinition e, Field[] keys) {
+        // This element's locations depends on another element
+        String[] references = structure.makeReferences(keys);
+        if (structure.chart.geo != null) {
+            // Wrap the locations in the projection
+            for (int i = 0; i < references.length; i++)
+                references[i] = "proj(" + references[i] + ")";
+            e.setReferences(references);
+        } else if (!structure.isGraphEdge()) {
+            // Just as they are
+            e.setReferences(references);
+        }
     }
 
     private void definePathsAndSplits(ElementDefinition elementDef) {
@@ -455,7 +455,6 @@ public class D3ElementBuilder {
 
     }
 
-
     public static String getOverallSize(VisSingle vis, ElementDefinition def) {
         Size size = ModelUtil.getElementSize(vis, "size");
         boolean needsFunction = vis.fSize.size() == 1;
@@ -523,8 +522,8 @@ public class D3ElementBuilder {
 
     private void defineEdge(String basicDef, ElementDefinition elementDef) {
         out.add(basicDef);
-        if (elementDef.refLocation != null) {
-            out.addChained("each(function(d) { this.__edge = " + elementDef.refLocation + "})");
+        if (elementDef.getRefLocation() != null) {
+            out.addChained("each(function(d) { this.__edge = " + elementDef.getRefLocation() + "})");
             if (structure.chart.geo != null) {
                 // geo does not need scales
                 out.addChained("attr('x1', function() { return this.__edge[0][0]})");

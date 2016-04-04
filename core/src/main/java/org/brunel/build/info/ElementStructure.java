@@ -56,14 +56,14 @@ public class ElementStructure {
     }
 
     public String elementID() {
-        return "" + (index+1);
+        return "" + (index + 1);
     }
 
     public boolean isGraphEdge() {
         return
                 (chart.diagram == Diagram.network || chart.diagram == Diagram.tree)
-                && vis.tElement == Element.edge
-                && (vis.fKeys.size() == 2 || vis.positionFields().length == 2);
+                        && vis.tElement == Element.edge
+                        && (vis.fKeys.size() == 2 || vis.positionFields().length == 2);
     }
 
     /**
@@ -78,16 +78,12 @@ public class ElementStructure {
         return idToPointName + D3Util.writeCall(key) + ")." + dimName;
     }
 
-    /**
-     * Create the Javascript that gives us the required location in data units
-     *
-=     * @param key     field to use for a key
-     * @return javascript fragment
-     */
-    public String referredLocation(Field key) {
+    public String[] makeReferences(Field[] keys) {
         String idToPointName = "elements[" + chart.sourceIndex + "].internal()._idToPoint(";
-        return idToPointName + D3Util.writeCall(key) + ")";
+        String[] references = new String[keys.length];
+        for (int i = 0; i < references.length; i++)
+            references[i] = idToPointName + D3Util.writeCall(keys[i]) + ")";
+        return references;
     }
-
 
 }

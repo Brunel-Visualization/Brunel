@@ -17,6 +17,7 @@
 package org.brunel.build.d3.element;
 
 import org.brunel.build.util.ModelUtil;
+import org.brunel.data.Data;
 import org.brunel.model.VisSingle;
 
 /**
@@ -28,12 +29,24 @@ public class ElementDefinition {
 
     public final ElementDimensionDefinition x, y;       // Definitions for x and y fields
     public String overallSize;                          // A general size for the whole item
-    public String refLocation;                          // Defines the location using a reference to another element
+    private String refLocation;                          // Defines the location using a reference to another element
     public String clusterSize;                          // The size of a cluster
 
     public ElementDefinition(VisSingle vis) {
         x = new ElementDimensionDefinition(vis, "width");
         y = new ElementDimensionDefinition(vis, "height");
+    }
+
+    public String getRefLocation() {
+        return refLocation;
+    }
+
+    public void setRefLocation(String refLocation) {
+        this.refLocation = refLocation;
+    }
+
+    public void setReferences(String[] references) {
+        this.refLocation = "[" + Data.join(references) + "]";
     }
 
     public static class ElementDimensionDefinition {
