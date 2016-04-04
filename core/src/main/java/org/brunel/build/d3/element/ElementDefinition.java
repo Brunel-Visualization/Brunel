@@ -34,6 +34,8 @@ public class ElementDefinition {
     }
 
     public static class ElementDimensionDefinition {
+        public String sizeFunction;                    // The function that defines size (0-1). E.g. 'size(d)'
+
         public String center;                          // Where the center is to be
         public String left;                            // Where the left is to be (right will also be defined)
         public String right;                           // Where the right is to be (left will also be defined)

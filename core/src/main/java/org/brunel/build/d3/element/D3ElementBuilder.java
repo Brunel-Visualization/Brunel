@@ -57,10 +57,8 @@ public class D3ElementBuilder {
     public void generate(int elementIndex) {
         out.add("element = elements[" + elementIndex + "]").endStatement();
 
-        if (diagram != null) out.onNewLine().comment("Data structures for a", vis.tDiagram, "diagram");
-
         ElementDetails details = makeDetails();                     // Create the details of what the element should be
-        ElementDefinition elementDef = buildElementDefinition();    // And the coordinate definitions
+        ElementDefinition elementDef = buildElementDefinition(details.representation);    // And the coordinate definitions
 
         // Define paths needed in the element, and make data splits
         if (diagram == null && details.representation.isDrawnAsPath())
@@ -122,15 +120,22 @@ public class D3ElementBuilder {
     private ElementDetails makeDetails() {
         // When we create diagrams this has the side effect of writing the data calls needed
         if (structure.isGraphEdge()) {
+            out.onNewLine().comment("Data structures for a", vis.tDiagram, "diagram");
             return ElementDetails.makeForDiagram(vis, ElementRepresentation.segment, "graph.links", "edge");
-        } else if (diagram == null)
+        } else if (diagram == null) {
             return ElementDetails.makeForCoordinates(vis, getSymbol());
-        else
+        } else {
+            out.onNewLine().comment("Data structures for a", vis.tDiagram, "diagram");
             return diagram.initializeDiagram();
+        }
     }
 
-    private ElementDefinition buildElementDefinition() {
+    private ElementDefinition buildElementDefinition(ElementRepresentation representation) {
         ElementDefinition e = new ElementDefinition();
+
+        e.x.sizeFunction = getSizeCall(0);
+        e.y.sizeFunction = getSizeCall(1);
+
         Field[] x = structure.chart.coordinates.getX(vis);
         Field[] y = structure.chart.coordinates.getY(vis);
         Field[] keys = new Field[vis.fKeys.size()];
@@ -151,8 +156,8 @@ public class D3ElementBuilder {
             if (vis.tDiagram != Diagram.map)
                 setGeoLocations(e, x, y, keys);
             // Just use the default point size
-            e.x.size = getSize(getSizeCall(0), sizeWidth, new Field[0], "geom.default_point_size", null, e.x);
-            e.y.size = getSize(getSizeCall(1), sizeHeight, new Field[0], "geom.default_point_size", null, e.x);
+            e.x.size = getSize(sizeWidth, new Field[0], "geom.default_point_size", null, e.x);
+            e.y.size = getSize(sizeHeight, new Field[0], "geom.default_point_size", null, e.x);
         } else {
             if (structure.dependent && !structure.isGraphEdge()) {
                 if (keys.length == 1) {
@@ -163,10 +168,10 @@ public class D3ElementBuilder {
             }
             DefineLocations.setLocations(structure, e.x, "x", x, keys, structure.chart.coordinates.xCategorical);
             DefineLocations.setLocations(structure, e.y, "y", y, keys, structure.chart.coordinates.yCategorical);
-            e.x.size = getSize(getSizeCall(0), sizeWidth, x, "geom.inner_width", ScalePurpose.x, e.x);
-            e.y.size = getSize(getSizeCall(1), sizeHeight, y, "geom.inner_height", ScalePurpose.y, e.y);
+            e.x.size = getSize(sizeWidth, x, "geom.inner_width", ScalePurpose.x, e.x);
+            e.y.size = getSize(sizeHeight, y, "geom.inner_height", ScalePurpose.y, e.y);
             if (x.length > 1)
-                e.clusterSize = getSize(null, sizeWidth, x, "geom.inner_width", ScalePurpose.inner, e.x);
+                e.clusterSize = getSize(sizeWidth, x, "geom.inner_width", ScalePurpose.inner, e.x);
         }
         e.overallSize = getOverallSize(vis, e);
         return e;
@@ -181,7 +186,7 @@ public class D3ElementBuilder {
         if (vis.tElement == Element.bar && vis.coords == Coordinates.polar) {
             out.add("var path = d3.svg.arc().innerRadius(0)");
             if (vis.fSize.isEmpty())
-            out.addChained("outerRadius(geom.inner_radius)");
+                out.addChained("outerRadius(geom.inner_radius)");
             else
                 out.addChained("outerRadius(function(d) {return size(d)*geom.inner_radius})");
             if (vis.fRange == null && !vis.stacked)
@@ -375,10 +380,10 @@ public class D3ElementBuilder {
 
     }
 
-    private String getSize(String aestheticFunctionCall, Size size, Field[] fields,
+    private String getSize(Size size, Field[] fields,
                            String extent, ScalePurpose purpose, ElementDimensionDefinition dim) {
 
-        boolean needsFunction = aestheticFunctionCall != null;
+        boolean needsFunction = dim.sizeFunction != null;
         String baseAmount;
         if (size != null && !size.isPercent()) {
             // Absolute size overrides everything
@@ -444,7 +449,7 @@ public class D3ElementBuilder {
         if (size != null && size.isPercent())
             baseAmount = size.value() + " * " + baseAmount;
 
-        if (aestheticFunctionCall != null) baseAmount = aestheticFunctionCall + " * " + baseAmount;
+        if (dim.sizeFunction != null) baseAmount = dim.sizeFunction + " * " + baseAmount;
 
         // If we need a function, wrap it up as required
         if (needsFunction) {
