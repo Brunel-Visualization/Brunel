@@ -270,6 +270,12 @@ public class TestAuto {
         assertEquals("linear : -23 -22 : |-23|-22.5|-22",
                 asString(Auto.makeNumericScale(a, true, pad, 0.95, 4, false), a));
         assertEquals("linear : -30 0 : |-30|-20|-10|0", asString(NumericScale.makeLinearScale(a, true, 0.99, pad, 4, false), a));
+
+
+        a = Fields.makeColumnField("a", "label", new Object[]{0.0});
+        a = Data.toNumeric(a);
+        Auto.setTransform(a);
+        assertEquals("linear : 0 1 : |0|0.5|1", asString(NumericScale.makeLinearScale(a, true, 0.99, pad, 4, false), a));
     }
 
     @Test

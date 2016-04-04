@@ -118,9 +118,13 @@ public class NumericScale {
         }
 
         // For degenerate data expand out
-        if (a + 1e-6 > b) {
+        if (a + 1e-9 > b) {
             b = Math.max(0, 2 * a);
             a = Math.min(0, 2 * a);
+            if (a==0 && b ==0) {
+                a = 0;
+                b = 1;
+            }
         }
 
         double desiredDivCount = Math.max(desiredTickCount - 1, 1);
