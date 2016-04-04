@@ -11,19 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import absolute_import
 
-import sys
-
-# Package migration starting in Python 3.5
-if sys.version_info >= (3, 5):
+try:
     from ipywidgets import widgets
     from traitlets import Unicode
     from traitlets import CFloat, List
-else:
+except ImportError:
     from IPython.html import widgets
     from IPython.utils.traitlets import Unicode
     from IPython.utils.traitlets import CFloat, List
-
 
 # Uses Brunel 'controls' to create IPython Widgets.
 # Widgets are the same regardless of visualization rendering technique.
@@ -31,12 +28,12 @@ else:
 
 def build_widgets(controls, visid):
     try:
-        results = {'widgets': [], 'wire_code': "\n\n"}
+        results ={'widgets':[], 'wire_code':"\n\n"}
         # add filters
         add_filter_widgets(controls, visid, results)
         # soon..  add others..
 
-        if len(results['widgets']) == 0:
+        if len(results['widgets'])==0:
             # No widgets
             return
 
@@ -51,23 +48,25 @@ def build_widgets(controls, visid):
 
 
 def add_filter_widgets(controls, visid, results):
+
     try:
         filters = controls['filters']
-        results['widgets'] = results['widgets'] + [build_filter_widget(filter, visid) for filter in filters]
+        results['widgets'] =  results['widgets'] + [build_filter_widget(filter, visid) for filter in filters]
         results['wire_code'] = results['wire_code'] + "BrunelEventHandlers.make_filter_handler(v);\n"
     except KeyError:
         return
 
 
 def build_filter_widget(filter, visid):
+
     try:
         categories = filter['categories']
         #  Category select widget if we have categories
-        return CategoryFilter(field_label=filter['label'], field_id=filter['id'], visid=visid, categories=categories)
+        return CategoryFilter(field_label = filter['label'], field_id=filter['id'], visid = visid, categories=categories)
     except KeyError:
         # not categories, use range slider
-        return RangeSlider(field_label=filter['label'], field_id=filter['id'], visid=visid, data_min=filter['min'],
-                           data_max=filter['max'])
+        return RangeSlider(field_label = filter['label'], field_id=filter['id'], visid = visid, data_min = filter['min'],
+                           data_max = filter['max'])
 
 
 class RangeSlider(widgets.DOMWidget):
@@ -78,7 +77,6 @@ class RangeSlider(widgets.DOMWidget):
     field_id = Unicode('field_id', sync=True)
     data_min = CFloat(0, sync=True)
     data_max = CFloat(10, sync=True)
-
 
 class CategoryFilter(widgets.DOMWidget):
     _view_name = Unicode('CategoryFilterView', sync=True)
