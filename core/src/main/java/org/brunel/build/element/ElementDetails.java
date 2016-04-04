@@ -91,7 +91,6 @@ public class ElementDetails {
         return new ElementDetails(rect, "point", null, false, representation.getTooltipTextMethod());
     }
 
-
     public boolean textFitsShape() {
         return "inside".equals(userDefinedLabelPosition) || representation.textFitsShape();
     }

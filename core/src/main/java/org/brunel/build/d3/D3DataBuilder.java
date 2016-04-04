@@ -25,13 +25,12 @@ import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 import org.brunel.data.summary.FieldRowComparison;
 import org.brunel.data.util.DateFormat;
-import org.brunel.data.Fields;
 import org.brunel.data.util.Range;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 import org.brunel.model.VisTypes.Interaction;
@@ -405,6 +404,7 @@ public class D3DataBuilder {
     }
 
     private boolean suitableForKey(List<String> result) {
+        if (result.isEmpty()) return false;
         Field[] fields = new Field[result.size()];
         for (int i = 0; i < fields.length; i++) fields[i] = data.field(result.get(i));
         // Sort and see if any adjacent 'keys' are the same
