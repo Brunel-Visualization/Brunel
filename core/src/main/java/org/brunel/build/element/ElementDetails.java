@@ -18,7 +18,6 @@ package org.brunel.build.element;
 
 import org.brunel.build.util.ModelUtil;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Element;
 
 /**
@@ -54,45 +53,13 @@ public class ElementDetails {
         this.splitIntoShapes = element.producesSingleShape;
         this.colorAttribute = filled ? "fill" : "stroke";
         this.dataSource = element.producesSingleShape ? "splits" : "data._rows";
-        if (element == Element.bar && vis.coords == Coordinates.polar)
-            this.representation = ElementRepresentation.wedge;
-        else if (element == Element.area)
-            this.representation = ElementRepresentation.area;
-        else if (element == Element.line)
-            this.representation = ElementRepresentation.generalPath;
-        else if (element == Element.path)
-            this.representation = ElementRepresentation.generalPath;
-        else if (element == Element.polygon)
-            this.representation = ElementRepresentation.polygon;
-        else if (element == Element.edge)
-            this.representation = ElementRepresentation.segment;
-        else if (element == Element.text)
-            this.representation = ElementRepresentation.text;
-        else if (element == Element.bar)
-            this.representation = ElementRepresentation.rect;
-        else if ("rect".equals(symbol))
-            this.representation = ElementRepresentation.rect;
-        else
-            this.representation = ElementRepresentation.circle;
+        this.representation = ElementRepresentation.make(element, symbol, vis);
 
         String textLocation = ModelUtil.getLabelPosition(vis);
-        if (textLocation != null) {
+        if (textLocation != null)
             this.textMethod = textLocation;
-        } else if (representation == ElementRepresentation.generalPath) {
-            this.textMethod = "path";
-        } else if (representation == ElementRepresentation.segment) {
-            this.textMethod = "box";
-        } else if (representation == ElementRepresentation.area) {
-            this.textMethod = "area";
-        } else if (representation == ElementRepresentation.polygon) {
-            this.textMethod = "poly";
-        } else if (representation == ElementRepresentation.wedge) {
-            this.textMethod = "wedge";
-        } else if (representation == ElementRepresentation.circle) {
-            this.textMethod = "right";
-        } else {
-            this.textMethod = "box";
-        }
+        else
+            this.textMethod = representation.getDefaultTextMethod();
 
         this.textMustFit = filled
                 && element != Element.point && element != Element.polygon

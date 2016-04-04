@@ -16,26 +16,64 @@
 
 package org.brunel.build.element;
 
+import org.brunel.model.VisSingle;
+import org.brunel.model.VisTypes;
+
 /**
  * Defines how we will represent a graphic element geometrically
  */
 public enum ElementRepresentation {
-    area("path", true),
-    polygon("path", true),
-    generalPath("path", true),
-    wedge("path", true),
-    segment("line", false),
-    text("text", false),
-    rect("rect", false),
-    circle("circle", false);
+    area("path", "area"),
+    polygon("path", "poly"),
+    generalPath("path", "path"),
+    wedge("path", "wedge"),
+    segment("line", "box"),
+    text("text", "box"),
+    rect("rect", "box"),
+    circle("circle", "right");
 
-    public final String mark;                   // The graphic element this represents
-    public final boolean drawnAsPath;           // If true, represented as a path
-
-    ElementRepresentation(String mark, boolean drawnAsPath) {
-        this.mark = mark;
-        this.drawnAsPath = drawnAsPath;
+    static ElementRepresentation make(VisTypes.Element element, String symbol, VisSingle vis) {
+        VisTypes.Coordinates coords = vis.coords;
+        if (element == VisTypes.Element.bar && coords == VisTypes.Coordinates.polar)
+            return wedge;
+        else if (element == VisTypes.Element.area)
+            return area;
+        else if (element == VisTypes.Element.line)
+            return generalPath;
+        else if (element == VisTypes.Element.path)
+            return generalPath;
+        else if (element == VisTypes.Element.polygon)
+            return polygon;
+        else if (element == VisTypes.Element.edge)
+            return segment;
+        else if (element == VisTypes.Element.text)
+            return text;
+        else if (element == VisTypes.Element.bar)
+            return rect;
+        else if ("rect".equals(symbol))
+            return rect;
+        else
+            return circle;
     }
 
+    private final String mark;                   // The graphic element this represents
+    private final String defaultTextMethod;
+
+    ElementRepresentation(String mark, String textMethod) {
+        this.mark = mark;
+        defaultTextMethod = textMethod;
+    }
+
+    public String getDefaultTextMethod() {
+        return defaultTextMethod;
+    }
+
+    public String getMark() {
+        return mark;
+    }
+
+    public boolean isDrawnAsPath() {
+        return mark.equals("path");
+    }
 }
 

@@ -63,7 +63,7 @@ class D3ElementBuilder {
         ElementDefinition elementDef = buildElementDefinition();    // And the coordinate definitions
 
         // Define paths needed in the element, and make data splits
-        if (diagram == null && details.representation.drawnAsPath)
+        if (diagram == null && details.representation.isDrawnAsPath())
             definePathsAndSplits(elementDef);
 
         labelBuilder.defineLabeling(details, vis.itemsLabel, false);   // Labels
@@ -75,7 +75,7 @@ class D3ElementBuilder {
         out.add("selection = main.selectAll('*').data(d3Data,", getKeyFunction(), ")").endStatement();
 
         // Define what happens when data is added ('enter')
-        out.add("selection.enter().append('" + details.representation.mark + "')");
+        out.add("selection.enter().append('" + details.representation.getMark() + "')");
         out.add(".attr('class', ", details.classes, ")");
 
         if (diagram != null) diagram.writeDiagramEnter();
@@ -247,7 +247,7 @@ class D3ElementBuilder {
 
         if (details.splitIntoShapes)
             out.add(basicDef).addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
-        else if (details.representation.drawnAsPath)
+        else if (details.representation.isDrawnAsPath())
             out.add(basicDef).addChained("attr('d', path)");                              // Simple path -- just util it
         else {
             // Add definition for the internal width of a cluster category
