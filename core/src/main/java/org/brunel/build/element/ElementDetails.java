@@ -34,8 +34,8 @@ public class ElementDetails {
     public final String dataSource;                     // Where the data for d3 lives
     public final ElementRepresentation representation;  // The type of element produced
     public final String classes;                        // Class names for this item
-    private String textMethod;                     // How to fit text to the shape
     public boolean needsStrokeSize;                     // If we must define stroke-size using the "size" aesthetic
+    private String userDefinedLabelPosition;
 
     private ElementDetails(VisSingle vis, String symbol) {
         Element element = vis.tElement;
@@ -54,39 +54,35 @@ public class ElementDetails {
         this.dataSource = element.producesSingleShape ? "splits" : "data._rows";
         this.representation = ElementRepresentation.makeForCoordinateElement(element, symbol, vis);
 
-        String textLocation = ModelUtil.getLabelPosition(vis);
-        if (textLocation != null)
-            this.textMethod = textLocation;
-        else
-            this.textMethod = representation.getDefaultTextMethod();
+        userDefinedLabelPosition = ModelUtil.getLabelPosition(vis);
 
         // Only edges need the stroke width setting
         this.needsStrokeSize = !vis.fSize.isEmpty() && vis.tElement == Element.edge;
     }
 
-    private ElementDetails(String dataSource, ElementRepresentation elementType, String elementClass, String textMethod) {
+    private ElementDetails(VisSingle vis, String dataSource, ElementRepresentation elementType, String elementClass) {
         this.splitIntoShapes = false;
         this.colorAttribute = elementType == ElementRepresentation.segment ? "stroke" : "fill";
         this.dataSource = dataSource;
         this.representation = elementType;
         this.classes = "'element " + elementClass + "'";
-        this.textMethod = textMethod == null ? elementType.getDefaultTextMethod() : textMethod;
+        this.userDefinedLabelPosition =   ModelUtil.getLabelPosition(vis);
     }
 
     public String getTextMethod() {
-        return textMethod;
+        return userDefinedLabelPosition != null ? userDefinedLabelPosition : representation.getDefaultTextMethod();
     }
 
     public boolean textFitsShape() {
-        return textMethod.equals("inside") || representation.textFitsShape();
+        return "inside".equals(userDefinedLabelPosition) || representation.textFitsShape();
     }
 
     /* Modify the method to give better text location for tooltips */
     public ElementDetails modifyForTooltip() {
         ElementDetails details = makeForDiagram(null, ElementRepresentation.rect, dataSource, "point");
-        String method = textMethod.equals("box") ? "top" : textMethod;
+        String method = getTextMethod().equals("box") ? "top" : getTextMethod();
         if (method.equals("left") || method.equals("right") || method.equals("bottom")) method = "top";
-        details.textMethod = method;
+        details.userDefinedLabelPosition = method;
         return details;
     }
 
@@ -102,7 +98,6 @@ public class ElementDetails {
      * @param elementClass the name of the element class for CSS purposes (polygon, path, point, etc.)
      */
     public static ElementDetails makeForDiagram(VisSingle vis, ElementRepresentation representation, String dataSource, String elementClass) {
-        return new ElementDetails(dataSource, representation, elementClass, ModelUtil.getLabelPosition(vis));
-
+        return new ElementDetails(vis, dataSource, representation, elementClass);
     }
 }
