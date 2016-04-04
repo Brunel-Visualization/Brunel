@@ -245,7 +245,7 @@ class D3ElementBuilder {
         // This starts the transition or update going
         String basicDef = "BrunelD3.trans(selection,transitionMillis)";
 
-        if (details.splitIntoShapes)
+        if (details.requiresSplitting())
             out.add(basicDef).addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
         else if (details.representation.isDrawnAsPath())
             out.add(basicDef).addChained("attr('d', path)");                              // Simple path -- just util it
@@ -299,10 +299,13 @@ class D3ElementBuilder {
 
     private void writeCoordinateLabelingAndAesthetics(ElementDetails details) {
         // Define colors using the color function
-        if (!vis.fColor.isEmpty()) out.addChained("style('" + details.colorAttribute + "', color)");
+        if (!vis.fColor.isEmpty()) {
+            String colorType = details.isStroked() ? "stroke" : "fill";
+            out.addChained("style('" + colorType + "', color)");
+        }
 
         // Define line width if needed
-        if (details.needsStrokeSize)
+        if (details.isStroked() && !vis.fSize.isEmpty())
             out.addChained("style('stroke-width', size)");
 
         // Define opacity
@@ -386,7 +389,7 @@ class D3ElementBuilder {
                 baseAmount = extent;
             }
         } else if (dim.left != null) {
-                // Use the left and right functions to get the size
+            // Use the left and right functions to get the size
             String a = D3Util.stripFunction(dim.left);
             String b = D3Util.stripFunction(dim.right);
             baseAmount = "Math.abs(" + a + "-" + b + ")";
