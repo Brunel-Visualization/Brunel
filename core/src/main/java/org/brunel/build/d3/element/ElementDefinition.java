@@ -17,6 +17,7 @@
 package org.brunel.build.d3.element;
 
 import org.brunel.build.util.ModelUtil;
+import org.brunel.model.VisSingle;
 
 /**
  * Stores the functionality needed to build an element.
@@ -30,19 +31,27 @@ public class ElementDefinition {
     public String refLocation;                          // Defines the location using a reference to another element
     public String clusterSize;                          // The size of a cluster
 
-    public ElementDefinition() {
-        x = new ElementDimensionDefinition();
-        y = new ElementDimensionDefinition();
+    public ElementDefinition(VisSingle vis) {
+        x = new ElementDimensionDefinition(vis, "width");
+        y = new ElementDimensionDefinition(vis, "height");
     }
 
     public static class ElementDimensionDefinition {
-        public String sizeFunction;                    // The function that defines size (0-1). E.g. 'size(d)'
-        public ModelUtil.Size sizeStyle;                // The size as defined by a style
+        public final ModelUtil.Size sizeStyle;          // The size as defined by a style
+        public final String sizeFunction;               // The size as modified by aesthetic function
 
         public String center;                          // Where the center is to be
         public String left;                            // Where the left is to be (right will also be defined)
         public String right;                           // Where the right is to be (left will also be defined)
         public String size;                            // What the size is to be
+
+        public ElementDimensionDefinition(VisSingle vis, String sizeName) {
+            sizeStyle = ModelUtil.getElementSize(vis, sizeName);
+            if (vis.fSize.isEmpty()) sizeFunction = null;                   // No sizing
+            else if (vis.fSize.size() == 1) sizeFunction = "size(d)";       // Multiply by overall size
+            else sizeFunction = sizeName + "(d)";                           // use width(d) or height(d)
+
+        }
 
         public boolean defineUsingCenter() {
             return center != null;

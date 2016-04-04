@@ -131,19 +131,13 @@ public class D3ElementBuilder {
     }
 
     private ElementDefinition buildElementDefinition(ElementRepresentation representation) {
-        ElementDefinition e = new ElementDefinition();
+        ElementDefinition e = new ElementDefinition(vis);
 
-        e.x.sizeFunction = getSizeCall(0);
-        e.y.sizeFunction = getSizeCall(1);
-        e.x.sizeStyle = ModelUtil.getElementSize(vis, "width");
-        e.y.sizeStyle = ModelUtil.getElementSize(vis, "height");
 
         Field[] x = structure.chart.coordinates.getX(vis);
         Field[] y = structure.chart.coordinates.getY(vis);
         Field[] keys = new Field[vis.fKeys.size()];
         for (int i = 0; i < keys.length; i++) keys[i] = structure.data.field(vis.fKeys.get(i).asField());
-        Size sizeWidth = ModelUtil.getElementSize(vis, "width");
-        Size sizeHeight = ModelUtil.getElementSize(vis, "height");
 
         if (structure.chart.geo != null) {
             if (structure.dependent) {
@@ -461,11 +455,6 @@ public class D3ElementBuilder {
 
     }
 
-    private String getSizeCall(int dim) {
-        if (vis.fSize.isEmpty()) return null;                   // No sizing
-        if (vis.fSize.size() == 1) return "size(d)";            // Use this for both
-        return dim == 0 ? "width(d)" : "height(d)";            // Different for x and y dimensions
-    }
 
     public static String getOverallSize(VisSingle vis, ElementDefinition def) {
         Size size = ModelUtil.getElementSize(vis, "size");
