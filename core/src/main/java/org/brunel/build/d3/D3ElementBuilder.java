@@ -179,8 +179,11 @@ class D3ElementBuilder {
 
         // First deal with the case of wedges (polar intervals)
         if (vis.tElement == Element.bar && vis.coords == Coordinates.polar) {
-            out.add("var path = d3.svg.arc().outerRadius(geom.inner_radius).innerRadius(0)").ln();
-            out.addChained("outerRadius(geom.inner_radius).innerRadius(0)").ln();
+            out.add("var path = d3.svg.arc().innerRadius(0)");
+            if (vis.fSize.isEmpty())
+            out.addChained("outerRadius(geom.inner_radius)");
+            else
+                out.addChained("outerRadius(function(d) {return size(d)*geom.inner_radius})");
             if (vis.fRange == null && !vis.stacked)
                 out.addChained("startAngle(0).endAngle(y)");
             else

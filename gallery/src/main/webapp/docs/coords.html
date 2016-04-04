@@ -75,8 +75,8 @@ they generate two values (a high and a low), exactly like two fields would.
     <li> Stack takes all items with the same X value and stacks them on top of each other
 </ul>
 
-Currently, polar is poorly supported; stacked polar bars (pie charts) work, but not much else. This
-will be improved very shortly.
+Currently, polar is poorly supported; stacked polar bars (pie charts) work, and you can set the size on them to
+do a Rose Diagram (a pie chart with different radii for each wedge). Little else works.
 
 <p>
     Examples:
@@ -87,6 +87,8 @@ will be improved very shortly.
 <p class="examples"><a onClick="showAction(this.text)">stack transpose bar x(summer) bin(summer) y(#count)
     color(region)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">stack polar y(#count) color(region) label(region)</a>
+<p class="examples"><a onClick="showAction(this.text)">y(population) stack polar color(region) size(income)
+    label(region) tooltip(#all) sum(population) mean(income)</a></p>
 </p>
 
 
