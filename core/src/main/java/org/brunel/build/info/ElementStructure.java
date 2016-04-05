@@ -17,7 +17,6 @@
 package org.brunel.build.info;
 
 import org.brunel.build.d3.D3Util;
-import org.brunel.build.d3.element.ElementDefinition;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
@@ -38,7 +37,6 @@ public class ElementStructure {
     public final GeoMapping geo;
     public final boolean dependent;
 
-    public ElementDefinition definition;
     public ElementDetails details;
 
     public ElementStructure(ChartStructure chartStructure, int elementIndex, VisSingle vis, Dataset data, GeoMapping geo, boolean dependent) {
