@@ -78,7 +78,7 @@ public class PointBuilder {
         defineVerticalExtent(elementDef.y);
     }
 
-    void defineHorizontalExtent(ElementDimensionDefinition dimensionDef) {
+    void defineHorizontalExtent(ElementDimension dimensionDef) {
         String left, width;
         if (dimensionDef.defineUsingExtent()) {
             // Use the left and right values
@@ -103,7 +103,7 @@ public class PointBuilder {
         out.addChained("style('width', ", width, ")");
     }
 
-    private void defineVerticalExtent(ElementDimensionDefinition dimensionDef) {
+    private void defineVerticalExtent(ElementDimension dimensionDef) {
         String top, height;
         if (dimensionDef.defineUsingExtent()) {
             // Use the left and right values

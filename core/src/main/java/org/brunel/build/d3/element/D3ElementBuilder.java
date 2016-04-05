@@ -120,7 +120,7 @@ public class D3ElementBuilder {
         // When we create diagrams this has the side effect of writing the data calls needed
         if (structure.isGraphEdge()) {
             out.onNewLine().comment("Data structures for a", vis.tDiagram, "diagram");
-            return ElementDetails.makeForDiagram(vis, ElementRepresentation.segment, "graph.links", "edge");
+            return ElementDetails.makeForDiagram(vis, ElementRepresentation.segment, "edge", "graph.links");
         } else if (diagram == null) {
             return ElementDetails.makeForCoordinates(vis, getSymbol());
         } else {
@@ -274,7 +274,7 @@ public class D3ElementBuilder {
         }
     }
 
-    private void defineHorizontalExtentFunctions(ElementDimensionDefinition x) {
+    private void defineHorizontalExtentFunctions(ElementDimension x) {
         // We only use the [left,right] version if we have no size to worry about
         if (x.defineUsingExtent()) {
             // Use the left and right values
@@ -286,7 +286,7 @@ public class D3ElementBuilder {
         }
     }
 
-    private void defineVerticalExtentFunctions(boolean withHeight, ElementDimensionDefinition y) {
+    private void defineVerticalExtentFunctions(boolean withHeight, ElementDimension y) {
         // We only use the [left,right] version if we have no size to worry about
         if (y.defineUsingExtent()) {
             // Use the left and right values
@@ -373,7 +373,7 @@ public class D3ElementBuilder {
 
     }
 
-    private String getSize(Field[] fields, String extent, ScalePurpose purpose, ElementDimensionDefinition dim) {
+    private String getSize(Field[] fields, String extent, ScalePurpose purpose, ElementDimension dim) {
 
         boolean needsFunction = dim.sizeFunction != null;
         String baseAmount;

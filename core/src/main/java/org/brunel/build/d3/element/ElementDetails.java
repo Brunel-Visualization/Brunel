@@ -21,9 +21,6 @@ import org.brunel.data.Data;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Element;
 
-import static org.brunel.build.d3.element.ElementRepresentation.makeForCoordinateElement;
-import static org.brunel.build.d3.element.ElementRepresentation.segment;
-
 /**
  * Encapsulate information on how we want to represent different types of element
  */
@@ -31,14 +28,10 @@ public class ElementDetails {
 
     public static ElementDetails makeForCoordinates(VisSingle vis, String symbol) {
         Element element = vis.tElement;
+        ElementRepresentation representation = ElementRepresentation.makeForCoordinateElement(element, symbol, vis);
         String dataSource = element.producesSingleShape ? "splits" : "data._rows";
-        ElementRepresentation representation = makeForCoordinateElement(element, symbol, vis);
-
-        // Work out if the element is filled
         boolean filled = element.filled || (!vis.fSize.isEmpty() && (element == Element.line || element == Element.path));
-
-        return new ElementDetails(vis, representation, element.name(), dataSource,
-                !filled, ModelUtil.getLabelPosition(vis));
+        return new ElementDetails(vis, representation, element.name(), dataSource, filled);
     }
 
     /**
@@ -49,13 +42,11 @@ public class ElementDetails {
      * and will also remove the label if it does not fit.
      * a box around the shape (and so will work bets for convex shapes like rectangles and circles)
      *
-     * @param dataSource   the javascript name of the element's data
      * @param elementClass the name of the element class for CSS purposes (polygon, path, point, etc.)
+     * @param dataSource   the javascript name of the element's data
      */
-    public static ElementDetails makeForDiagram(VisSingle vis, ElementRepresentation representation, String dataSource, String elementClass) {
-        return new ElementDetails(vis, representation, elementClass, dataSource, representation != segment,
-                ModelUtil.getLabelPosition(vis)
-        );
+    public static ElementDetails makeForDiagram(VisSingle vis, ElementRepresentation representation, String elementClass, String dataSource) {
+        return new ElementDetails(vis, representation, elementClass, dataSource, representation != ElementRepresentation.segment);
     }
 
     public final String dataSource;                     // Where the data for d3 lives
@@ -63,10 +54,8 @@ public class ElementDetails {
     public final String classes;                        // Class names for this item
     private final String userDefinedLabelPosition;      // Custom override for the label position
     private final boolean strokedShape;                 // If true, the shape is to be stroked, not filled
-    private final ElementDefinition e;
 
-
-    public final ElementDimensionDefinition x, y;       // Definitions for x and y fields
+    public final ElementDimension x, y;       // Definitions for x and y fields
     public String overallSize;                          // A general size for the whole item
     private String refLocation;                          // Defines the location using a reference to another element
     public String clusterSize;                          // The size of a cluster
@@ -79,18 +68,15 @@ public class ElementDetails {
         this.refLocation = "[" + Data.join(references) + "]";
     }
 
-    public ElementDetails(VisSingle vis, ElementRepresentation representation, String classes, String dataSource, boolean stroked,
-                          String userDefinedLabelPosition) {
-        x = new ElementDimensionDefinition(vis, "width");
-        y = new ElementDimensionDefinition(vis, "height");
-
-        e = vis == null ? null : new ElementDefinition(vis);
-        if (!stroked) classes += " filled";
-        this.strokedShape = stroked;
+    public ElementDetails(VisSingle vis, ElementRepresentation representation, String classes, String dataSource, boolean filled) {
+        x = new ElementDimension(vis, "width");
+        y = new ElementDimension(vis, "height");
+        if (filled) classes += " filled";
+        this.strokedShape = !filled;
         this.dataSource = dataSource;
         this.representation = representation;
         this.classes = "'element " + classes + "'";
-        this.userDefinedLabelPosition = userDefinedLabelPosition;
+        this.userDefinedLabelPosition = ModelUtil.getLabelPosition(vis);
     }
 
     public String getTextMethod() {

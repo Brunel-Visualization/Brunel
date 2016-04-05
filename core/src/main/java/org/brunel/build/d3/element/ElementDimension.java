@@ -22,7 +22,7 @@ import org.brunel.model.VisSingle;
 /**
  * Created by graham on 4/5/16.
  */
-public class ElementDimensionDefinition {
+public class ElementDimension {
     public final ModelUtil.Size sizeStyle;          // The size as defined by a style
     public final String sizeFunction;               // The size as modified by aesthetic function
 
@@ -31,7 +31,7 @@ public class ElementDimensionDefinition {
     public String right;                           // Where the right is to be (left will also be defined)
     public String size;                            // What the size is to be
 
-    public ElementDimensionDefinition(VisSingle vis, String sizeName) {
+    public ElementDimension(VisSingle vis, String sizeName) {
         sizeStyle = ModelUtil.getElementSize(vis, sizeName);
         if (vis.fSize.isEmpty()) sizeFunction = null;                   // No sizing
         else if (vis.fSize.size() == 1) sizeFunction = "size(d)";       // Multiply by overall size

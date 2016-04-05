@@ -38,7 +38,7 @@ class Treemap extends D3Diagram {
                 .addChained("sort(BrunelData.diagram_Hierarchical.compare)")
                 .addChained("value(function(d) { return d.value == null || d.value < 0 ? 0 : d.value })")
                 .addChained("padding(function(d) { if (d.depth < 2) return [14,2,2,2]; if (d.depth < 3) return [11,2,2,2];})").endStatement();
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.rect, "treemap(tree.root)", "polygon");
+        return ElementDetails.makeForDiagram(vis, ElementRepresentation.rect, "polygon", "treemap(tree.root)");
     }
 
     public void writeDefinition(ElementDetails details) {
