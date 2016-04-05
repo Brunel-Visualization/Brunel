@@ -56,9 +56,9 @@ public class ElementDetails {
     private final boolean strokedShape;                 // If true, the shape is to be stroked, not filled
 
     public final ElementDimension x, y;                 // Definitions for x and y fields
-    public GeomAttribute overallSize;                          // A general size for the whole item
-    private GeomAttribute refLocation;                         // Defines the location using a reference to another element
-    public GeomAttribute clusterSize;                          // The size of a cluster
+    public GeomAttribute overallSize;                   // A general size for the whole item
+    private GeomAttribute refLocation;                  // Defines the location using a reference to another element
+    public GeomAttribute clusterSize;                   // The size of a cluster
 
     public GeomAttribute getRefLocation() {
         return refLocation;

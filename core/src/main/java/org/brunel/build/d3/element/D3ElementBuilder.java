@@ -60,20 +60,20 @@ public class D3ElementBuilder {
         setGeometry(details);                           // And the coordinate definitions
 
         if (diagram == null) {
+            writeCoordinateFunctions(details);
+
             if (details.representation == ElementRepresentation.wedge) {
                 // Deal with the case of wedges (polar intervals)
-                defineVerticalExtentFunctions(false, details.y);             // Define y or (y0, y1)
                 defineWedgePath();
             } else if (details.isDrawnAsPath()) {
                 // Define paths needed in the element, and make data splits
-                defineVerticalExtentFunctions(false, details.y);             // Define y or (y0, y1)
                 definePathsAndSplits(details);
             }
+
         } else {
             // Set the diagram group class for CSS
             out.add("main.attr('class',", diagram.getStyleClasses(), ")").endStatement();
         }
-
 
         labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape());   // Labels
 
@@ -108,6 +108,33 @@ public class D3ElementBuilder {
                 .add("this.remove(); if (this.__label__) this.__label__.remove()")
                 .indentLess().indentLess()
                 .add("})").endStatement();
+    }
+
+    private void writeCoordinateFunctions(ElementDetails details) {
+        // Add definition for the internal width of a cluster category
+        if (details.clusterSize != null)
+            out.add("var clusterWidth =", details.clusterSize).endStatement();
+
+        if (details.representation != ElementRepresentation.segment) {
+            // We only use the [left,right] version if we have no size to worry about
+            if (details.x.defineUsingExtent()) {
+                // Use the left and right values
+                out.add("var x0 =", details.x.left).endStatement();
+                out.add("var x1 =", details.x.right).endStatement();
+            } else {
+                out.add("var x =", details.x.center).endStatement();
+                out.add("var w =", details.x.size).endStatement();
+            }
+            // We only use the [left,right] version if we have no size to worry about
+            if (details.y.defineUsingExtent()) {
+                // Use the left and right values
+                out.add("var y0 =", details.y.left).endStatement();
+                out.add("var y1 =", details.y.right).endStatement();
+            } else {
+                out.add("var y =", details.y.center).endStatement();
+                out.add("var h =", details.y.size).endStatement();
+            }
+        }
     }
 
     public boolean needsDiagramExtras() {
@@ -158,6 +185,12 @@ public class D3ElementBuilder {
         } else {
             DefineLocations.setLocations(structure, e.x, "x", x, keys, structure.chart.coordinates.xCategorical);
             DefineLocations.setLocations(structure, e.y, "y", y, keys, structure.chart.coordinates.yCategorical);
+            if (e.representation == ElementRepresentation.area && e.y.right == null) {
+                // Area needs to have two functions even when not defined as such -- make the second the base
+                e.y.right = e.y.center;
+                e.y.left = GeomAttribute.makeConstant("scale_y(0)");
+                e.y.center = null;
+            }
             e.x.size = getSize(x, "geom.inner_width", ScalePurpose.x, e.x);
             e.y.size = getSize(y, "geom.inner_height", ScalePurpose.y, e.y);
             if (x.length > 1)
@@ -182,28 +215,16 @@ public class D3ElementBuilder {
 
     private void definePathsAndSplits(ElementDetails elementDef) {
 
-
-
-        // Add definition for the internal width of a cluster category
-        if (elementDef.clusterSize != null)
-            out.add("var w1 =", elementDef.clusterSize).endStatement();
-
-        // Define the x function
-        out.add("var x =", elementDef.x.center).endStatement();
-
         // Now actual paths
         if (vis.tElement == Element.area) {
-            if (vis.fRange == null && !vis.stacked)
-                out.add("var path = d3.svg.area().x(x).y1(y).y0(function(d) { return scale_y(0) })");
-            else
-                out.add("var path = d3.svg.area().x(x).y1(y1).y0(y0)");
+            out.add("var path = d3.svg.area().x(x).y1(y1).y0(y0)");
         } else if (vis.tElement.producesSingleShape) {
             // Choose the top line if there is a range (say for stacking)
             String yDef = elementDef.y.right == null ? "y" : "y1";
             if (vis.fSize.size() == 1) {
                 out.add("var path = BrunelD3.sizedPath().x(x).y(" + yDef + ")");
                 GeomAttribute size = elementDef.y.size != null ? elementDef.y.size : elementDef.overallSize;
-                out.addChained("r( function(d) { return " +  size.definition() + "})");
+                out.addChained("r( function(d) { return " + size.definition() + "})");
             } else {
                 out.add("var path = d3.svg.line().x(x).y(" + yDef + ")");
             }
@@ -245,57 +266,22 @@ public class D3ElementBuilder {
     private void writeCoordinateDefinition(ElementDetails details) {
 
         // This starts the transition or update going
-        String basicDef = "BrunelD3.trans(selection,transitionMillis)";
+        out.add("BrunelD3.trans(selection,transitionMillis)");
 
         if (details.requiresSplitting())
-            out.add(basicDef).addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
+            out.addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
         else if (details.isDrawnAsPath())
-            out.add(basicDef).addChained("attr('d', path)");                              // Simple path -- just util it
+            out.addChained("attr('d', path)");                              // Simple path -- just util it
         else {
-            // Add definition for the internal width of a cluster category
-            if (details.clusterSize != null) {
-                out.add("var w1 =", details.clusterSize).endStatement();
-            }
-
             if (vis.tElement == Element.bar)
-                defineBar(basicDef, details);
+                defineBar(details);
             else if (vis.tElement == Element.edge)
-                defineEdge(basicDef, details);
+                defineEdge(details);
             else {
                 // Handles points (as circles, rects, etc.) and text
                 PointBuilder pointBuilder = new PointBuilder(out);
-                if (details.representation == ElementRepresentation.rect) {
-                    defineVerticalExtentFunctions(true, details.y);
-                    defineHorizontalExtentFunctions(details.x);
-                }
-
-                out.add(basicDef);
                 pointBuilder.defineShapeGeometry(vis, details);
             }
-        }
-    }
-
-    private void defineHorizontalExtentFunctions(ElementDimension x) {
-        // We only use the [left,right] version if we have no size to worry about
-        if (x.defineUsingExtent()) {
-            // Use the left and right values
-            out.add("var x0 =", x.left).endStatement();
-            out.add("var x1 =", x.right).endStatement();
-        } else {
-            out.add("var x =", x.center).endStatement();
-            out.add("var w =", x.size).endStatement();
-        }
-    }
-
-    private void defineVerticalExtentFunctions(boolean withHeight, ElementDimension y) {
-        // We only use the [left,right] version if we have no size to worry about
-        if (y.defineUsingExtent()) {
-            // Use the left and right values
-            out.add("var y0 =", y.left).endStatement();
-            out.add("var y1 =", y.right).endStatement();
-        } else {
-            out.add("var y =", y.center).endStatement();
-            if (withHeight) out.add("var h =", y.size).endStatement();
         }
     }
 
@@ -451,7 +437,7 @@ public class D3ElementBuilder {
 
     }
 
-    public static GeomAttribute getOverallSize(VisSingle vis, ElementDetails def) {
+    private static GeomAttribute getOverallSize(VisSingle vis, ElementDetails def) {
         Size size = ModelUtil.getElementSize(vis, "size");
         boolean needsFunction = vis.fSize.size() == 1;
 
@@ -488,20 +474,11 @@ public class D3ElementBuilder {
         out.add("var splits = BrunelD3.makePathSplits(" + params + ");").ln();
     }
 
-    private void defineBar(String basicDef, ElementDetails elementDef) {
+    private void defineBar(ElementDetails details) {
         if (vis.fRange != null || vis.stacked) {
-            // Stacked or range element goes from higher of the pair of values to the lower
-            out.add("var y0 =", elementDef.y.left).endStatement();
-            out.add("var y1 =", elementDef.y.right).endStatement();
-            defineHorizontalExtentFunctions(elementDef.x);
-            out.add(basicDef);
             out.addChained("attr('y', function(d) { return Math.min(y0(d), y1(d)) } )");
             out.addChained("attr('height', function(d) {return Math.max(0.001, Math.abs(y0(d) - y1(d))) })");
         } else {
-            // Simple element; drop from the upper value to the baseline
-            out.add("var y =", elementDef.y.center).endStatement();
-            defineHorizontalExtentFunctions(elementDef.x);
-            out.add(basicDef);
             if (vis.coords == Coordinates.transposed) {
                 out.addChained("attr('y', 0)")
                         .addChained("attr('height', function(d) { return Math.max(0,y(d)) })");
@@ -510,13 +487,12 @@ public class D3ElementBuilder {
                         .addChained("attr('height', function(d) {return Math.max(0,geom.inner_height - y(d)) }) ");
             }
         }
-        new PointBuilder(out).defineHorizontalExtent(elementDef.x);
+        new PointBuilder(out).defineHorizontalExtent(details.x);
     }
 
-    private void defineEdge(String basicDef, ElementDetails elementDef) {
-        out.add(basicDef);
-        if (elementDef.getRefLocation() != null) {
-            out.addChained("each(function(d) { this.__edge = " + elementDef.getRefLocation().definition() + "})");
+    private void defineEdge(ElementDetails details) {
+        if (details.getRefLocation() != null) {
+            out.addChained("each(function(d) { this.__edge = " + details.getRefLocation().definition() + "})");
             if (structure.chart.geo != null) {
                 // geo does not need scales
                 out.addChained("attr('x1', function() { return this.__edge[0][0]})");
@@ -531,10 +507,10 @@ public class D3ElementBuilder {
             }
             out.addChained("each(function() { if (!this.__edge[0][0] || !this.__edge[1][0]) this.style.visibility = 'hidden'})");
         } else {
-            out.addChained("attr('x1'," + elementDef.x.left + ")");
-            out.addChained("attr('y1'," + elementDef.y.left + ")");
-            out.addChained("attr('x2'," + elementDef.x.right + ")");
-            out.addChained("attr('y2'," + elementDef.y.right + ")");
+            out.addChained("attr('x1'," + details.x.left + ")");
+            out.addChained("attr('y1'," + details.y.left + ")");
+            out.addChained("attr('x2'," + details.x.right + ")");
+            out.addChained("attr('y2'," + details.y.right + ")");
         }
     }
 

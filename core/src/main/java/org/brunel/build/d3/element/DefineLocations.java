@@ -28,9 +28,9 @@ class DefineLocations {
 
     private static String addClusterMultiplier(Field cluster) {
         if (isRange(cluster))
-            return " + w1 * scale_inner(" + D3Util.writeCall(cluster) + ".mid)";
+            return " + clusterWidth * scale_inner(" + D3Util.writeCall(cluster) + ".mid)";
         else
-            return " + w1 * scale_inner(" + D3Util.writeCall(cluster) + ")";
+            return " + clusterWidth * scale_inner(" + D3Util.writeCall(cluster) + ")";
     }
 
     static boolean isRange(Field field) {
@@ -53,11 +53,10 @@ class DefineLocations {
     }
 
     static void setLocations(ElementStructure structure, ElementDimension dim, String dimName, Field[] fields, Field[] keys, boolean categorical) {
-
         String scaleName = "scale_" + dimName;
 
         if (structure.isGraphEdge()) {
-            // These are edges in a network layout
+            // These are edges in a network layout; we just need left and right
             dim.left = GeomAttribute.makeFunction("d.source." + dimName);
             dim.right = GeomAttribute.makeFunction("d.target." + dimName);
             return;
@@ -116,7 +115,7 @@ class DefineLocations {
                 String def = scaleName + "(" + dataFunction + ".mid)";
                 if (cluster != null) def += addClusterMultiplier(cluster);
                 dim.center = GeomAttribute.makeFunction(def);
-            } else {
+            }  else {
                 // Nothing unusual -- just define the center
                 String def = scaleName + "(" + dataFunction + ")";
                 if (cluster != null) def += addClusterMultiplier(cluster);
