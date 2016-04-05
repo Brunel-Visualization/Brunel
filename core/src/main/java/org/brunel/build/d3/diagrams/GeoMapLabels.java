@@ -93,7 +93,7 @@ public class GeoMapLabels extends D3Diagram {
 
         // Labels
         out.add("diagramLabels.classed('map', true)").endStatement();
-        out.add("var labelSel = diagramLabels.selectAll('*').data(d3Data, function(d) { return d[2]})").endStatement();
+        out.add("var labelSel = diagramLabels.selectAll('*').data("+ details.dataSource +", function(d) { return d[2]})").endStatement();
         out.add("labelSel.enter().append('text')")
                 .addChained("attr('dy', '0.3em')")
                 .addChained("attr('dx', function(d) { return (2 + d[3]*geom.default_point_size/10) + 'px'})")

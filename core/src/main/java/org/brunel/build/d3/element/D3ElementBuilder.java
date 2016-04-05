@@ -78,8 +78,7 @@ public class D3ElementBuilder {
         labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape());   // Labels
 
         // Set the values of things known to this element
-        out.add("d3Data =", details.dataSource).endStatement();
-        out.add("selection = main.selectAll('*').data(d3Data,", getKeyFunction(), ")").endStatement();
+        out.add("selection = main.selectAll('*').data(" + details.dataSource + ",", getKeyFunction(), ")").endStatement();
 
         // Define what happens when data is added ('enter')
         out.add("selection.enter().append('" + details.representation.getMark() + "')");
@@ -100,6 +99,11 @@ public class D3ElementBuilder {
             writeCoordinateLabelingAndAesthetics(details);
         }
 
+        writeLabelRemoval();
+
+    }
+
+    private void writeLabelRemoval() {
         // This fires when items leave the system
         // It removes the item and any associated labels
         out.onNewLine().ln().add("BrunelD3.trans(selection.exit(),transitionMillis/3)");
@@ -115,25 +119,19 @@ public class D3ElementBuilder {
         if (details.clusterSize != null)
             out.add("var clusterWidth =", details.clusterSize).endStatement();
 
-        if (details.representation != ElementRepresentation.segment) {
-            // We only use the [left,right] version if we have no size to worry about
-            if (details.x.defineUsingExtent()) {
-                // Use the left and right values
-                out.add("var x0 =", details.x.left).endStatement();
-                out.add("var x1 =", details.x.right).endStatement();
-            } else {
-                out.add("var x =", details.x.center).endStatement();
-                out.add("var w =", details.x.size).endStatement();
-            }
-            // We only use the [left,right] version if we have no size to worry about
-            if (details.y.defineUsingExtent()) {
-                // Use the left and right values
-                out.add("var y0 =", details.y.left).endStatement();
-                out.add("var y1 =", details.y.right).endStatement();
-            } else {
-                out.add("var y =", details.y.center).endStatement();
-                out.add("var h =", details.y.size).endStatement();
-            }
+        writeDimLocations(details.x, "x", "w");
+        writeDimLocations(details.y, "y", "h");
+    }
+
+    private void writeDimLocations(ElementDimension dim, String mainName, String sizeName) {
+        if (dim.defineUsingExtent()) {
+            // Use the left and right values to define x1,x2 (or y1, y2)
+            out.add("var", mainName + "1 =", dim.left).endStatement();
+            out.add("var", mainName + "2 =", dim.right).endStatement();
+        } else {
+            // Define the center and size
+            out.add("var", mainName, "=", dim.center).endStatement();
+            if (dim.size != null) out.add("var", sizeName, "=", dim.size).endStatement();
         }
     }
 
@@ -183,8 +181,8 @@ public class D3ElementBuilder {
             e.x.size = getSize(new Field[0], "geom.default_point_size", null, e.x);
             e.y.size = getSize(new Field[0], "geom.default_point_size", null, e.x);
         } else {
-            DefineLocations.setLocations(structure, e.x, "x", x, keys, structure.chart.coordinates.xCategorical);
-            DefineLocations.setLocations(structure, e.y, "y", y, keys, structure.chart.coordinates.yCategorical);
+            DefineLocations.setLocations(e.representation, structure, e.x, "x", x, keys, structure.chart.coordinates.xCategorical);
+            DefineLocations.setLocations(e.representation, structure, e.y, "y", y, keys, structure.chart.coordinates.yCategorical);
             if (e.representation == ElementRepresentation.area && e.y.right == null) {
                 // Area needs to have two functions even when not defined as such -- make the second the base
                 e.y.right = e.y.center;
@@ -217,7 +215,7 @@ public class D3ElementBuilder {
 
         // Now actual paths
         if (vis.tElement == Element.area) {
-            out.add("var path = d3.svg.area().x(x).y1(y1).y0(y0)");
+            out.add("var path = d3.svg.area().x(x).y1(y2).y0(y1)");
         } else if (vis.tElement.producesSingleShape) {
             // Choose the top line if there is a range (say for stacking)
             String yDef = elementDef.y.right == null ? "y" : "y1";
@@ -245,7 +243,7 @@ public class D3ElementBuilder {
         if (vis.fRange == null && !vis.stacked)
             out.addChained("startAngle(0).endAngle(y)");
         else
-            out.addChained("startAngle(y0).endAngle(y1)");
+            out.addChained("startAngle(y1).endAngle(y2)");
         out.endStatement();
     }
 
@@ -476,8 +474,8 @@ public class D3ElementBuilder {
 
     private void defineBar(ElementDetails details) {
         if (vis.fRange != null || vis.stacked) {
-            out.addChained("attr('y', function(d) { return Math.min(y0(d), y1(d)) } )");
-            out.addChained("attr('height', function(d) {return Math.max(0.001, Math.abs(y0(d) - y1(d))) })");
+            out.addChained("attr('y', function(d) { return Math.min(y1(d), y2(d)) } )");
+            out.addChained("attr('height', function(d) {return Math.max(0.001, Math.abs(y1(d) - y2(d))) })");
         } else {
             if (vis.coords == Coordinates.transposed) {
                 out.addChained("attr('y', 0)")
@@ -487,7 +485,7 @@ public class D3ElementBuilder {
                         .addChained("attr('height', function(d) {return Math.max(0,geom.inner_height - y(d)) }) ");
             }
         }
-        new PointBuilder(out).defineHorizontalExtent(details.x);
+        new PointBuilder(out).defineExtent(details.x, "x", "w", "width");
     }
 
     private void defineEdge(ElementDetails details) {
@@ -507,10 +505,7 @@ public class D3ElementBuilder {
             }
             out.addChained("each(function() { if (!this.__edge[0][0] || !this.__edge[1][0]) this.style.visibility = 'hidden'})");
         } else {
-            out.addChained("attr('x1'," + details.x.left + ")");
-            out.addChained("attr('y1'," + details.y.left + ")");
-            out.addChained("attr('x2'," + details.x.right + ")");
-            out.addChained("attr('y2'," + details.y.right + ")");
+            out.addChained("attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)");
         }
     }
 

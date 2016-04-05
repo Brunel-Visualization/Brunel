@@ -41,7 +41,7 @@ public class PointBuilder {
             defineText(details, vis);
         else if (details.representation == ElementRepresentation.pointLikeCircle
                 || details.representation == ElementRepresentation.spaceFillingCircle
-        || details.representation == ElementRepresentation.largeCircle)
+                || details.representation == ElementRepresentation.largeCircle)
             defineCircle(details);
         else
             throw new IllegalArgumentException("Cannot define as a point: " + details.representation);
@@ -63,56 +63,35 @@ public class PointBuilder {
         out.addChained("attr('r'," + elementDef.overallSize.halved() + ")");
     }
 
-
     private void defineRect(ElementDetails elementDef) {
-        defineHorizontalExtent(elementDef.x);
-        defineVerticalExtent(elementDef.y);
+        defineExtent(elementDef.x, "x", "w", "width");
+        defineExtent(elementDef.y, "y", "h", "height");
     }
 
-    void defineHorizontalExtent(ElementDimension dimensionDef) {
-        GeomAttribute left, width;
-        if (dimensionDef.defineUsingExtent()) {
+    void defineExtent(ElementDimension dim, String dimName, String sizeName, String attrSizeName) {
+        String start, extent;
+        if (dim.defineUsingExtent()) {
             // Use the left and right values
-            left = GeomAttribute.makeFunction("Math.min(x0(d), x1(d))");
-            width = GeomAttribute.makeFunction("Math.abs(x1(d) - x0(d))");
-        } else if (dimensionDef.defineUsingCenter()) {
+            String a = dimName + "1" + (dim.left.isFunc() ? "(d)" : "");
+            String b = dimName + "2" + (dim.left.isFunc() ? "(d)" : "");
+            start = GeomAttribute.makeFunction("Math.min(" + a + ", " + b + ")").toString();
+            extent = GeomAttribute.makeFunction("Math.max(1e-6, Math.abs(" + b + " - " + a + "))").toString();
+        } else if (dim.defineUsingCenter()) {
             // The width can either be a function or a numeric value
-            if (dimensionDef.size.isFunc())
-                left = GeomAttribute.makeFunction("x(d) - w(d)/2 ");
-            else
-                left = GeomAttribute.makeFunction("x(d) - w/2");
-            width = GeomAttribute.makeConstant("w");
+            String c = dimName + (dim.center.isFunc() ? "(d)" : "");
+            String w = sizeName + (dim.size.isFunc() ? "(d)" : "");
+            start = GeomAttribute.makeFunction(c + " - " + w + "/2").toString();
+            extent = sizeName;
         } else {
-            left = null;
-            width = dimensionDef.size;
+            start = null;
+            extent = sizeName;
         }
-        if (left != null) out.addChained("attr('x', ", left, ")");
+        if (start != null) out.addChained("attr('" + dimName + "', ", start, ")");
 
         // Sadly, browsers are inconsistent in how they handle width. It can be considered either a style or a
         // positional attribute, so we need to specify as both to make all browsers happy
-        out.addChained("attr('width', ", width, ")");
-        out.addChained("style('width', ", width, ")");
-    }
-
-    private void defineVerticalExtent(ElementDimension dimensionDef) {
-        GeomAttribute top, height;
-        if (dimensionDef.defineUsingExtent()) {
-            // Use the left and right values
-            top = GeomAttribute.makeFunction("Math.min(y0(d), y1(d))");
-            height = GeomAttribute.makeFunction("Math.max(0.0001, Math.abs(y1(d) - y0(d)))");
-        } else if (dimensionDef.defineUsingCenter()) {
-            // The height can either be a function or a numeric value
-            if (dimensionDef.size.isFunc())
-                top = GeomAttribute.makeFunction("y(d) - h(d)/2");
-            else
-                top = GeomAttribute.makeFunction("y(d) - h/2");
-            height = GeomAttribute.makeConstant("h");
-        } else {
-            top = null;
-            height = dimensionDef.size;
-        }
-        out.addChained("attr('y', ", top, ")");
-        out.addChained("attr('height', ", height, ")");
+        out.addChained("attr('" + attrSizeName + "', ", extent, ")");
+        out.addChained("style('" + attrSizeName + "', ", extent, ")");
     }
 
 }

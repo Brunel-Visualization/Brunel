@@ -52,7 +52,7 @@ class DefineLocations {
         }
     }
 
-    static void setLocations(ElementStructure structure, ElementDimension dim, String dimName, Field[] fields, Field[] keys, boolean categorical) {
+    static void setLocations(ElementRepresentation rep, ElementStructure structure, ElementDimension dim, String dimName, Field[] fields, Field[] keys, boolean categorical) {
         String scaleName = "scale_" + dimName;
 
         if (structure.isGraphEdge()) {
@@ -70,9 +70,12 @@ class DefineLocations {
 
         if (fields.length == 0) {
             // There are no fields -- we have a notional [0,1] extent, so use the center of that
-            dim.center = GeomAttribute.makeConstant(scaleName + "(0.5)");
-            dim.left = GeomAttribute.makeConstant(scaleName + "(0)");
-            dim.right = GeomAttribute.makeConstant(scaleName + "(1)");
+            if (rep == ElementRepresentation.rect) {
+                dim.left = GeomAttribute.makeConstant(scaleName + "(0)");
+                dim.right = GeomAttribute.makeConstant(scaleName + "(1)");
+            } else {
+                dim.center = GeomAttribute.makeConstant(scaleName + "(0.5)");
+            }
             return;
         }
 
@@ -105,9 +108,7 @@ class DefineLocations {
                     else
                         D = "scale_inner(" + D3Util.writeCall(cluster) + ")";
 
-                    // TODO: It's not really a constant -- this needs fixing up to account for it not beign a simple function
-                    dim.center = GeomAttribute.makeConstant("function(d) { var L=" + L + ", R=" + R + "; return (L+R)/2 + (L-R) * "
-                            + CLUSTER_SPACING + " * " + D + " }");
+                    dim.center = GeomAttribute.makeFunction("BrunelD3.interpolate(" + L + ", " + R + ", " + CLUSTER_SPACING + " * " + D + ")");
                 }
             } else if (isRange(main)) {
                 // This is a range field, but we have not been asked to show both ends,
@@ -115,7 +116,7 @@ class DefineLocations {
                 String def = scaleName + "(" + dataFunction + ".mid)";
                 if (cluster != null) def += addClusterMultiplier(cluster);
                 dim.center = GeomAttribute.makeFunction(def);
-            }  else {
+            } else {
                 // Nothing unusual -- just define the center
                 String def = scaleName + "(" + dataFunction + ")";
                 if (cluster != null) def += addClusterMultiplier(cluster);
