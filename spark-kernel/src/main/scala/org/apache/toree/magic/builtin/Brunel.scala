@@ -70,6 +70,7 @@ class Brunel extends CellMagic with IncludeInterpreter {
     val brunelOutput = org.brunel.scala.Brunel.create(data.orNull, action, width, height, visId, controlsId)
     val version = org.brunel.scala.Brunel.options.version
     val jsloc = org.brunel.scala.Brunel.options.locJavaScript
+    val d3loc = org.brunel.scala.Brunel.options.locD3
 
     val d3js =  brunelOutput.js
     val d3dynamicCss = brunelOutput.css
@@ -87,7 +88,7 @@ class Brunel extends CellMagic with IncludeInterpreter {
          |require.config({
             waitSeconds: 60,
             paths: {
-                'd3': '//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min',
+                'd3': '$d3loc',
                 'brunel' : '$jsloc/brunel.$version.min',
                 'brunelControls' : '$jsloc/brunel.controls.$version.min'
             },
