@@ -39,16 +39,29 @@ class DefineLocations {
         return s != null && (s.equals("iqr") || s.equals("range"));
     }
 
-    static void setDependentLocations(ElementStructure structure, ElementDimension dim, String dimName, Field[] keys, String scaleName) {
-        // Use the keys to get the X and Y locations from other items
-        if (keys.length == 1) {
-            // One key gives the center
-            dim.center = GeomAttribute.makeFunction(scaleName + "(" + structure.keyedLocation(dimName, keys[0]) + ")");
+    static void setDependentLocations(ElementStructure structure, ElementDetails details) {
+        // The referenced locations will be added as a parameters to the object, so we need only access them
+
+        // Geo elements do not need scaling -- the projection takes care of it
+        boolean geo = structure.chart.geo != null;
+
+        /* Example Dependent Geo:
+
+                map('usa')
+                + data('edges.csv') edge color(flights:blues) key(origin, dest) top(flights:500)
+                + data('nodes.csv') x(long) y(lat) size(flights:400%) key(iata) tooltip(airport)
+
+         */
+
+        if (details.representation == ElementRepresentation.segment) {
+            // Need four coordinates
+            details.x.left = GeomAttribute.makeFunction(geo ? "this.e[0][0]" : "scale_x(this.e[0][0])");
+            details.x.right = GeomAttribute.makeFunction(geo ? "this.e[1][0]" : "scale_x(this.e[1][0])");
+            details.y.left = GeomAttribute.makeFunction(geo ? "this.e[0][1]" : "scale_y(this.e[0][1])");
+            details.y.right = GeomAttribute.makeFunction(geo ? "this.e[1][1]" : "scale_y(this.e[1][1])");
         } else {
-            // Two keys give ends
-            dim.left = GeomAttribute.makeFunction(scaleName + "(" + structure.keyedLocation(dimName, keys[0]) + ")");
-            dim.right = GeomAttribute.makeFunction(scaleName + "(" + structure.keyedLocation(dimName, keys[1]) + ")");
-            dim.center = GeomAttribute.makeFunction(scaleName + "(0.5)");        // Not sure what is best here -- should not get used
+            details.x.center = GeomAttribute.makeFunction(geo ? "this.e[0][0]" : "scale_x(this.e[0][0])");
+            details.y.center = GeomAttribute.makeFunction(geo ? "this.e[0][1]" : "scale_y(this.e[0][1])");
         }
     }
 
@@ -62,11 +75,8 @@ class DefineLocations {
             return;
         }
 
-        if (structure.dependent) {
-            // Positions are dependent on other elements
-            setDependentLocations(structure, dim, dimName, keys, scaleName);
-            return;
-        }
+        // No need -- they have been defined already
+        if (structure.dependent) return;
 
         if (fields.length == 0) {
             // There are no fields -- we have a notional [0,1] extent, so use the center of that

@@ -3494,7 +3494,21 @@ V.summary_Fit = function(fy, fx, rows) {
         this.x[i] = xList.get(order[i]);
         this.y[i] = yList.get(order[i]);
     }
+    this.my = V.summary_Fit.mean(this.y);
+    this.mx = V.summary_Fit.mean(this.x);
 }
+
+$.copy(V.summary_Fit, {
+
+    mean: function(values) {
+        var _i, value;
+        var s = 0;
+        for(_i=$.iter(values), value=_i.current; _i.hasNext(); value=_i.next())
+            s += value;
+        return s / values.length;
+    }
+
+});
 
 $.copy(V.summary_Fit.prototype, {
 
@@ -3578,33 +3592,19 @@ $.copy(V.summary_MeasureField.prototype, {
 
 
 V.summary_Regression = function(fy, fx, rows) {
-    var i, mx, my, n, sxx, sxy;
+    var i, n, sxx, sxy;
     $.superconstruct(this, fy, fx, rows);
     n = this.x.length;
-    my = V.summary_Regression.mean(this.y);
-    mx = V.summary_Regression.mean(this.x);
     sxy = 0;
     sxx = 0;
     for (i = 0; i < n; i++){
-        sxy += (this.x[i] - mx) * (this.y[i] - my);
-        sxx += (this.x[i] - mx) * (this.x[i] - mx);
+        sxy += (this.x[i] - this.mx) * (this.y[i] - this.my);
+        sxx += (this.x[i] - this.mx) * (this.x[i] - this.mx);
     }
     this.m = sxx == 0 ? 0 : sxy / sxx;
-    this.b = my - this.m * mx;
+    this.b = this.my - this.m * this.mx;
 }
 $.extend(V.summary_Regression, V.summary_Fit);
-
-$.copy(V.summary_Regression, {
-
-    mean: function(values) {
-        var _i, value;
-        var s = 0;
-        for(_i=$.iter(values), value=_i.current; _i.hasNext(); value=_i.next())
-            s += value;
-        return s / values.length;
-    }
-
-});
 
 $.copy(V.summary_Regression.prototype, {
 
@@ -3627,7 +3627,6 @@ $.copy(V.summary_Regression.prototype, {
 V.summary_Smooth = function(y, x, windowPercent, rows) {
     $.superconstruct(this, y, x, rows);
     this.window = this.getWindowWidth(x, windowPercent);
-    this.mean = y.numProperty("mean");
 }
 $.extend(V.summary_Smooth, V.summary_Fit);
 
@@ -3673,7 +3672,7 @@ $.copy(V.summary_Smooth.prototype, {
             }
         }
         if (sw < 1e-4)
-            return h < this.window * 10 ? this.eval(at, h * 2) : this.mean;
+            return h < this.window * 10 ? this.eval(at, h * 2) : this.my;
         return sy / sw;
     },
 

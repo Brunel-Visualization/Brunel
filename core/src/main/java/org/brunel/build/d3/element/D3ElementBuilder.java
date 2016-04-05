@@ -121,6 +121,16 @@ public class D3ElementBuilder {
 
         writeDimLocations(details.x, "x", "w");
         writeDimLocations(details.y, "y", "h");
+
+        if (details.getRefLocation() != null) {
+            out.add("function validReference(r) {");
+            if (details.representation == ElementRepresentation.segment)
+                out.add("return r[0][0] != null && r[0][1] != null && r[1][0] != null && r[1][1] != null");
+            else
+                out.add("return r[0][0] != null && r[0][1] != null");
+            out.add("}").endStatement();
+
+        }
     }
 
     private void writeDimLocations(ElementDimension dim, String mainName, String sizeName) {
@@ -171,7 +181,10 @@ public class D3ElementBuilder {
         Field[] keys = new Field[vis.fKeys.size()];
         for (int i = 0; i < keys.length; i++) keys[i] = structure.data.field(vis.fKeys.get(i).asField());
 
-        if (structure.dependent) defineReferenceFunctions(e, keys);
+        if (structure.dependent) {
+            defineReferenceFunctions(e, keys);
+            DefineLocations.setDependentLocations(structure, e);
+        }
 
         if (structure.chart.geo != null) {
             // Maps with feature data do not need the geo coordinates set
@@ -266,6 +279,12 @@ public class D3ElementBuilder {
         // This starts the transition or update going
         out.add("BrunelD3.trans(selection,transitionMillis)");
 
+        // If we need reference locations, write them in first
+        if (details.getRefLocation() != null) {
+            out.addChained("each(function(d) { this.e = " + details.getRefLocation().definition() + "})");
+            out.addChained("style('visibility', function() { return validReference(this.e) ? 'visible' : 'hidden'})");
+        }
+
         if (details.requiresSplitting())
             out.addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
         else if (details.isDrawnAsPath())
@@ -274,11 +293,10 @@ public class D3ElementBuilder {
             if (vis.tElement == Element.bar)
                 defineBar(details);
             else if (vis.tElement == Element.edge)
-                defineEdge(details);
+                defineEdge();
             else {
                 // Handles points (as circles, rects, etc.) and text
-                PointBuilder pointBuilder = new PointBuilder(out);
-                pointBuilder.defineShapeGeometry(vis, details);
+                new PointBuilder(out).defineShapeGeometry(vis, details);
             }
         }
     }
@@ -324,10 +342,10 @@ public class D3ElementBuilder {
             throw new IllegalStateException("Cannot handle edged dependencies in geographic maps");
         }
 
-        if (structure.dependent) {
-            DefineLocations.setDependentLocations(structure, def.x, "x", keys, "");
-            DefineLocations.setDependentLocations(structure, def.y, "y", keys, "");
-        } else if (n == 0) {
+        // Already defined
+        if (structure.dependent) return;
+
+        if (n == 0) {
             def.x.center = GeomAttribute.makeConstant("null");
             def.y.center = GeomAttribute.makeConstant("null");
         } else if (n == 1) {
@@ -488,25 +506,8 @@ public class D3ElementBuilder {
         new PointBuilder(out).defineExtent(details.x, "x", "w", "width");
     }
 
-    private void defineEdge(ElementDetails details) {
-        if (details.getRefLocation() != null) {
-            out.addChained("each(function(d) { this.e = " + details.getRefLocation().definition() + "})");
-            if (structure.chart.geo != null) {
-                // geo does not need scales
-                out.addChained("attr('x1', function() { return this.e[0][0]})");
-                out.addChained("attr('y1', function() { return this.e[0][1]})");
-                out.addChained("attr('x2', function() { return this.e[1][0]})");
-                out.addChained("attr('y2', function() { return this.e[1][1]})");
-            } else {
-                out.addChained("attr('x1', function() { return scale_x(this.e[0][0]) })");
-                out.addChained("attr('y1', function() { return scale_y(this.e[0][1]) })");
-                out.addChained("attr('x2', function() { return scale_x(this.e[1][0]) })");
-                out.addChained("attr('y2', function() { return scale_y(this.e[1][1]) })");
-            }
-            out.addChained("style('visibility', function() { return this.e[0][0] == null || this.e[1][0] == null ? 'hidden' : 'visible'})");
-        } else {
-            out.addChained("attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)");
-        }
+    private void defineEdge() {
+        out.addChained("attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)");
     }
 
     private boolean allShowExtent(Field[] fields) {
