@@ -25,12 +25,12 @@ import org.brunel.model.VisSingle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
@@ -120,7 +120,7 @@ public class DataBuilder {
     }
 
     String buildSummaryCommands() {
-        Map<String, String> spec = new LinkedHashMap<>();
+        Map<String, String> spec = new TreeMap<>();
 
         // We must account for all of these except for the special fields series and values
         // These are handled later in the pipeline and need no changes right now

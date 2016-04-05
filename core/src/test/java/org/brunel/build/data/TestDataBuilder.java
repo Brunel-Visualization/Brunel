@@ -41,7 +41,7 @@ public class TestDataBuilder {
         assertEquals("Population=Population:mean; Region=Region:base",
                 getSummarizeCommands("x(region) y(population) mean(population)"));
 
-        assertEquals("Population=Population:mean; Income=Income:base; Region=Region",
+        assertEquals("Income=Income:base; Population=Population:mean; Region=Region",
                 getSummarizeCommands("x(income) color(region) y(population) mean(population)"));
 
         assertEquals("Income=Income:mean; Population=Population:mean; Region=Region",
