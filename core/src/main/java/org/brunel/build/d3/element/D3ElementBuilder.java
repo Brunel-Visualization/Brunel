@@ -490,20 +490,20 @@ public class D3ElementBuilder {
 
     private void defineEdge(ElementDetails details) {
         if (details.getRefLocation() != null) {
-            out.addChained("each(function(d) { this.__edge = " + details.getRefLocation().definition() + "})");
+            out.addChained("each(function(d) { this.e = " + details.getRefLocation().definition() + "})");
             if (structure.chart.geo != null) {
                 // geo does not need scales
-                out.addChained("attr('x1', function() { return this.__edge[0][0]})");
-                out.addChained("attr('y1', function() { return this.__edge[0][1]})");
-                out.addChained("attr('x2', function() { return this.__edge[1][0]})");
-                out.addChained("attr('y2', function() { return this.__edge[1][1]})");
+                out.addChained("attr('x1', function() { return this.e[0][0]})");
+                out.addChained("attr('y1', function() { return this.e[0][1]})");
+                out.addChained("attr('x2', function() { return this.e[1][0]})");
+                out.addChained("attr('y2', function() { return this.e[1][1]})");
             } else {
-                out.addChained("attr('x1', function() { return this.__edge[0] ? scale_x(this.__edge[0][0]) : null })");
-                out.addChained("attr('y1', function() { return this.__edge[0] ? scale_y(this.__edge[0][1]) : null })");
-                out.addChained("attr('x2', function() { return this.__edge[1] ? scale_x(this.__edge[1][0]) : null })");
-                out.addChained("attr('y2', function() { return this.__edge[1] ? scale_y(this.__edge[1][1]) : null })");
+                out.addChained("attr('x1', function() { return scale_x(this.e[0][0]) })");
+                out.addChained("attr('y1', function() { return scale_y(this.e[0][1]) })");
+                out.addChained("attr('x2', function() { return scale_x(this.e[1][0]) })");
+                out.addChained("attr('y2', function() { return scale_y(this.e[1][1]) })");
             }
-            out.addChained("each(function() { if (!this.__edge[0][0] || !this.__edge[1][0]) this.style.visibility = 'hidden'})");
+            out.addChained("style('visibility', function() { return this.e[0][0] == null || this.e[1][0] == null ? 'hidden' : 'visible'})");
         } else {
             out.addChained("attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)");
         }
