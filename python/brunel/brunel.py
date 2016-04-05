@@ -99,10 +99,10 @@ def d3_output(response, visid, width, height):
     widgets = brunelWidgets.build_widgets(controls, visid)
     if (widgets is not None):
         # Push widgets & D3 JS
-        js = D3_TEMPLATE.render({'d3js': d3js, 'controls': widgets['wire_code']})
+        js = D3_TEMPLATE.render({'d3loc': brunel_util.D3_LOC, 'd3js': d3js, 'controls': widgets['wire_code']})
         return ipydisplay(widgets['widget_box'], Javascript(js))
     else:
-        js = D3_TEMPLATE.render({'d3js': d3js, 'controls': ""})
+        js = D3_TEMPLATE.render({'d3loc': brunel_util.D3_LOC, 'd3js': d3js, 'controls': ""})
         return Javascript(js)
 
 #File search given a path.  Used to find the JVM if needed

@@ -16,4 +16,16 @@
 # If the JVM cannot be located automatically, use this variable to get it from an environment variable.  It should be the fully qualified
 # path to the JVM.  Typically jvm.dll on Windows or libjvm.so on Unix
 import os
-JVM_PATH = os.getenv("BRUNEL_JVM_PATH", "")
+JVM_PATH = ""
+D3_LOC = "//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min"
+
+BRUNEL_CONFIG = os.getenv("BRUNEL_CONFIG", "")
+opts = BRUNEL_CONFIG.strip().split(";")
+
+for opt in opts:
+    keyval = opt.strip().split("=");
+    print(keyval[0].strip().lower())
+    if keyval[0].strip().lower() == "jvm":
+        JVM_PATH = keyval[1]
+    if keyval[0].strip().lower() == "locd3":
+        D3_LOC = keyval[1]
