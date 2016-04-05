@@ -82,10 +82,19 @@ class DefineLocations {
         Field main = fields[0];
         boolean numericBins = main.isBinned() && !categorical;
 
-        // X axis only ever has one main field at most -- rest are clustered
-        boolean oneMainField = fields.length == 1 || dimName.equals("x");
+        if (defineForTwoFields(rep, dimName, fields)) {
+            // The dimension contains two fields: a range
+            String lowDataFunc = D3Util.writeCall(main);          // A call to the low field using the datum 'd'
+            String highDataFunc = D3Util.writeCall(fields[1]);         // A call to the high field using the datum 'd'
 
-        if (oneMainField) {
+            // When one of the fields is a range, use the outermost value of that
+            if (isRange(main)) lowDataFunc += ".low";
+            if (isRange(fields[1])) highDataFunc += ".high";
+
+            dim.left = GeomAttribute.makeFunction(scaleName + "(" + lowDataFunc + ")");
+            dim.right = GeomAttribute.makeFunction(scaleName + "(" + highDataFunc + ")");
+            dim.center = GeomAttribute.makeFunction(scaleName + "( (" + highDataFunc + " + " + lowDataFunc + " )/2)");
+        } else {
 
             // If defined, this is the cluster field on the X dimension
             Field cluster = fields.length > 1 ? fields[1] : null;
@@ -123,19 +132,12 @@ class DefineLocations {
                 dim.center = GeomAttribute.makeFunction(def);
             }
 
-        } else {
-            // The dimension contains two fields: a range
-            String lowDataFunc = D3Util.writeCall(main);          // A call to the low field using the datum 'd'
-            String highDataFunc = D3Util.writeCall(fields[1]);         // A call to the high field using the datum 'd'
-
-            // When one of the fields is a range, use the outermost value of that
-            if (isRange(main)) lowDataFunc += ".low";
-            if (isRange(fields[1])) highDataFunc += ".high";
-
-            dim.left = GeomAttribute.makeFunction(scaleName + "(" + lowDataFunc + ")");
-            dim.right = GeomAttribute.makeFunction(scaleName + "(" + highDataFunc + ")");
-            dim.center = GeomAttribute.makeFunction(scaleName + "( (" + highDataFunc + " + " + lowDataFunc + " )/2)");
         }
 
+    }
+
+    private static boolean defineForTwoFields(ElementRepresentation rep, String dimName, Field[] fields) {
+        if (fields.length < 2) return false;                                        // Need two fields
+        return dimName.equals("y") || rep == ElementRepresentation.segment;         // Edges or y dimensions need two
     }
 }
