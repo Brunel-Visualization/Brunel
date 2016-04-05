@@ -16,7 +16,6 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.element.ElementDefinition;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ModelUtil;
@@ -58,7 +57,7 @@ class Chord extends D3Diagram {
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.polygon, "chord.chords()", "edge");
     }
 
-    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
+    public void writeDefinition(ElementDetails details) {
 
         // The Chords themselves are simple to create
         out.addChained("attr('d', d3.svg.chord().radius(geom.inner_radius-arc_width))")

@@ -18,7 +18,6 @@ package org.brunel.build.d3.element;
 
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.D3Util;
-import org.brunel.build.d3.element.ElementDefinition.ElementDimensionDefinition;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.model.VisSingle;
 
@@ -35,22 +34,22 @@ public class PointBuilder {
         this.out = out;
     }
 
-    public void defineShapeGeometry(VisSingle vis, ElementDefinition elementDef, ElementDetails details) {
+    public void defineShapeGeometry(VisSingle vis, ElementDetails details) {
         // Must be a point
         if (details.representation == ElementRepresentation.rect)
-            defineRect(elementDef);
+            defineRect(details);
         else if (details.representation == ElementRepresentation.text)
-            defineText(elementDef, vis);
+            defineText(details, vis);
         else if (details.representation == ElementRepresentation.pointLikeCircle
                 || details.representation == ElementRepresentation.spaceFillingCircle
         || details.representation == ElementRepresentation.largeCircle)
-            defineCircle(elementDef);
+            defineCircle(details);
         else
             throw new IllegalArgumentException("Cannot define as a point: " + details.representation);
 
     }
 
-    private void defineText(ElementDefinition elementDef, VisSingle vis) {
+    private void defineText(ElementDetails elementDef, VisSingle vis) {
         // If the center is not defined, this has been placed using a translation transform
         if (elementDef.x.center != null) out.addChained("attr('x'," + elementDef.x.center + ")");
         if (elementDef.y.center != null) out.addChained("attr('y'," + elementDef.y.center + ")");
@@ -58,7 +57,7 @@ public class PointBuilder {
         D3LabelBuilder.addFontSizeAttribute(vis, out);
     }
 
-    private void defineCircle(ElementDefinition elementDef) {
+    private void defineCircle(ElementDetails elementDef) {
         // If the center is not defined, this has been placed using a translation transform
         if (elementDef.x.center != null) out.addChained("attr('cx'," + elementDef.x.center + ")");
         if (elementDef.y.center != null) out.addChained("attr('cy'," + elementDef.y.center + ")");
@@ -74,7 +73,7 @@ public class PointBuilder {
             return "function(d) { return " + body + " / 2 }";
     }
 
-    private void defineRect(ElementDefinition elementDef) {
+    private void defineRect(ElementDetails elementDef) {
         defineHorizontalExtent(elementDef.x);
         defineVerticalExtent(elementDef.y);
     }

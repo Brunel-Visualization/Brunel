@@ -17,7 +17,6 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.d3.D3Util;
-import org.brunel.build.d3.element.ElementDefinition;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
@@ -53,7 +52,7 @@ class Tree extends D3Diagram {
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "treeLayout(tree.root)", "point");
     }
 
-    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
+    public void writeDefinition(ElementDetails details) {
         out.addChained("attr('class', function(d) { return (d.children ? 'L' + d.depth : 'leaf element " + element.name() + "') })");
 
         if (vis.coords == Coordinates.polar) {
@@ -62,7 +61,7 @@ class Tree extends D3Diagram {
             out.addChained("attr('cx', function(d) { return d.x })")
                     .addChained("attr('cy', function(d) { return d.y })");
         }
-        out.addChained("attr('r', " + D3Util.defineSafeRadius(elementDef.overallSize) + ")").endStatement();
+        out.addChained("attr('r', " + D3Util.defineSafeRadius(details.overallSize) + ")").endStatement();
 
 //        addLabels(details, elementDef);
 

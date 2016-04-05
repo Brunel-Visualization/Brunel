@@ -21,7 +21,6 @@ import org.brunel.build.d3.D3ScaleBuilder;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.ScalePurpose;
 import org.brunel.build.d3.diagrams.D3Diagram;
-import org.brunel.build.d3.element.ElementDefinition.ElementDimensionDefinition;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ModelUtil.Size;
@@ -58,11 +57,11 @@ public class D3ElementBuilder {
         out.add("element = elements[" + elementIndex + "]").endStatement();
 
         ElementDetails details = makeDetails();                     // Create the details of what the element should be
-        buildElementDefinition(details.e);                          // And the coordinate definitions
+        buildElementDefinition(details);                            // And the coordinate definitions
 
         // Define paths needed in the element, and make data splits
         if (diagram == null && details.representation.isDrawnAsPath())
-            definePathsAndSplits(details.e);
+            definePathsAndSplits(details);
 
         labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape());   // Labels
 
@@ -83,11 +82,11 @@ public class D3ElementBuilder {
         // These fire for both 'enter' and 'update' data
 
         if (diagram != null) {
-            diagram.writePreDefinition(details, details.e);
+            diagram.writePreDefinition(details);
             out.add("BrunelD3.trans(selection,transitionMillis)");
-            diagram.writeDefinition(details, details.e);
+            diagram.writeDefinition(details);
         } else {
-            writeCoordinateDefinition(details, details.e);
+            writeCoordinateDefinition(details);
             writeCoordinateLabelingAndAesthetics(details);
         }
 
@@ -130,7 +129,7 @@ public class D3ElementBuilder {
         }
     }
 
-    private void buildElementDefinition(ElementDefinition e) {
+    private void buildElementDefinition(ElementDetails e) {
 
         Field[] x = structure.chart.coordinates.getX(vis);
         Field[] y = structure.chart.coordinates.getY(vis);
@@ -157,7 +156,7 @@ public class D3ElementBuilder {
         e.overallSize = getOverallSize(vis, e);
     }
 
-    private void defineReferenceFunctions(ElementDefinition e, Field[] keys) {
+    private void defineReferenceFunctions(ElementDetails e, Field[] keys) {
         // This element's locations depends on another element
         String[] references = structure.makeReferences(keys);
         if (structure.chart.geo != null) {
@@ -171,7 +170,7 @@ public class D3ElementBuilder {
         }
     }
 
-    private void definePathsAndSplits(ElementDefinition elementDef) {
+    private void definePathsAndSplits(ElementDetails elementDef) {
 
         // Define y or (y0, y1)
         defineVerticalExtentFunctions(false, elementDef.y);
@@ -242,7 +241,7 @@ public class D3ElementBuilder {
         out.endStatement().onNewLine().ln();
     }
 
-    private void writeCoordinateDefinition(ElementDetails details, ElementDefinition elementDef) {
+    private void writeCoordinateDefinition(ElementDetails details) {
 
         // This starts the transition or update going
         String basicDef = "BrunelD3.trans(selection,transitionMillis)";
@@ -253,24 +252,24 @@ public class D3ElementBuilder {
             out.add(basicDef).addChained("attr('d', path)");                              // Simple path -- just util it
         else {
             // Add definition for the internal width of a cluster category
-            if (elementDef.clusterSize != null) {
-                out.add("var w1 =", elementDef.clusterSize).endStatement();
+            if (details.clusterSize != null) {
+                out.add("var w1 =", details.clusterSize).endStatement();
             }
 
             if (vis.tElement == Element.bar)
-                defineBar(basicDef, elementDef);
+                defineBar(basicDef, details);
             else if (vis.tElement == Element.edge)
-                defineEdge(basicDef, elementDef);
+                defineEdge(basicDef, details);
             else {
                 // Handles points (as circles, rects, etc.) and text
                 PointBuilder pointBuilder = new PointBuilder(out);
                 if (details.representation == ElementRepresentation.rect) {
-                    defineVerticalExtentFunctions(true, elementDef.y);
-                    defineHorizontalExtentFunctions(elementDef.x);
+                    defineVerticalExtentFunctions(true, details.y);
+                    defineHorizontalExtentFunctions(details.x);
                 }
 
                 out.add(basicDef);
-                pointBuilder.defineShapeGeometry(vis, elementDef, details);
+                pointBuilder.defineShapeGeometry(vis, details);
             }
         }
     }
@@ -331,7 +330,7 @@ public class D3ElementBuilder {
         return cat ? "rect" : "point";
     }
 
-    private void setGeoLocations(ElementDefinition def, Field[] x, Field[] y, Field[] keys) {
+    private void setGeoLocations(ElementDetails def, Field[] x, Field[] y, Field[] keys) {
 
         int n = x.length;
         if (y.length != n)
@@ -453,7 +452,7 @@ public class D3ElementBuilder {
 
     }
 
-    public static String getOverallSize(VisSingle vis, ElementDefinition def) {
+    public static String getOverallSize(VisSingle vis, ElementDetails def) {
         Size size = ModelUtil.getElementSize(vis, "size");
         boolean needsFunction = vis.fSize.size() == 1;
 
@@ -493,7 +492,7 @@ public class D3ElementBuilder {
         out.add("var splits = BrunelD3.makePathSplits(" + params + ");").ln();
     }
 
-    private void defineBar(String basicDef, ElementDefinition elementDef) {
+    private void defineBar(String basicDef, ElementDetails elementDef) {
         if (vis.fRange != null || vis.stacked) {
             // Stacked or range element goes from higher of the pair of values to the lower
             out.add("var y0 =", elementDef.y.left).endStatement();
@@ -518,7 +517,7 @@ public class D3ElementBuilder {
         new PointBuilder(out).defineHorizontalExtent(elementDef.x);
     }
 
-    private void defineEdge(String basicDef, ElementDefinition elementDef) {
+    private void defineEdge(String basicDef, ElementDetails elementDef) {
         out.add(basicDef);
         if (elementDef.getRefLocation() != null) {
             out.addChained("each(function(d) { this.__edge = " + elementDef.getRefLocation() + "})");

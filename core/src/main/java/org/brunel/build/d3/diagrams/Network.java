@@ -16,7 +16,6 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.element.ElementDefinition;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
@@ -89,8 +88,8 @@ class Network extends D3Diagram {
                 .ln();
     }
 
-    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
-        out.addChained("attr('r',", elementDef.overallSize, ")").endStatement();
+    public void writeDefinition(ElementDetails details) {
+        out.addChained("attr('r',", details.overallSize, ")").endStatement();
         addAestheticsAndTooltips(details, true);
     }
 

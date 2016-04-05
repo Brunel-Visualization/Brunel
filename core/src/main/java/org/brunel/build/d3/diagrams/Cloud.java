@@ -17,7 +17,6 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.d3.D3LabelBuilder;
-import org.brunel.build.d3.element.ElementDefinition;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
@@ -39,7 +38,7 @@ class Cloud extends D3Diagram {
 
     }
 
-    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
+    public void writeDefinition(ElementDetails details) {
         out.addChained("each(cloud.prepare).call(cloud.build)").endStatement();
         addAestheticsAndTooltips(details, false);
     }

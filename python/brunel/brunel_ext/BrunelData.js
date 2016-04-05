@@ -548,9 +548,12 @@ $.copy(V.auto_Auto, {
     },
 
     optimalBinCount: function(f) {
-        var h1 = 2 * (f.numProperty("q3") - f.numProperty("q1")) / Math.pow(f.valid(), 0.33333);
-        var h2 = 3.5 * f.numProperty("stddev") / Math.pow(f.valid(), 0.33333);
-        var h = Math.max(h1, h2);
+        var h, h1, h2;
+        if (!f.isNumeric())
+            return Math.min(7, f.categories().length);
+        h1 = 2 * (f.numProperty("q3") - f.numProperty("q1")) / Math.pow(f.valid(), 0.33333);
+        h2 = 3.5 * f.numProperty("stddev") / Math.pow(f.valid(), 0.33333);
+        h = Math.max(h1, h2);
         if (h == 0)
             return 1;
         else
@@ -3460,6 +3463,70 @@ $.copy(V.summary_FieldRowComparison.prototype, {
 
 });
 
+////////////////////// Fit /////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   Returns a fitted value
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+V.summary_Fit = function(fy, fx, rows) {
+    var _i, i, n, order, xList, xv, yList, yv;
+    this.fx = fx;
+    this.fy = fy;
+    this.xCatMap = this.makeCatMap(fx);
+    this.yCatMap = this.makeCatMap(fy);
+    xList = new $.List();
+    yList = new $.List();
+    for(_i=$.iter(rows), i=_i.current; _i.hasNext(); i=_i.next()) {
+        xv = this.vx(fx.value(i));
+        yv = this.vy(fy.value(i));
+        if (xv != null && yv != null) {
+            xList.add(xv);
+            yList.add(yv);
+        }
+    }
+    n = xList.size();
+    order = V.Data.order(xList.toArray(), true);
+    this.x = $.Array(n, 0);
+    this.y = $.Array(n, 0);
+    for (i = 0; i < n; i++){
+        this.x[i] = xList.get(order[i]);
+        this.y[i] = yList.get(order[i]);
+    }
+}
+
+$.copy(V.summary_Fit.prototype, {
+
+    makeCatMap: function(f) {
+        var categories, i, map;
+        if (f.isNumeric()) return null;
+        map = new $.Map();
+        categories = f.categories();
+        for (i = 0; i < categories.length; i++)
+            map.put(categories[i], i);
+        return map;
+    },
+
+    vx: function(o) {
+        return this.xCatMap == null ? V.Data.asNumeric(o) : this.xCatMap.get(o);
+    },
+
+    vy: function(o) {
+        return this.yCatMap == null ? V.Data.asNumeric(o) : this.yCatMap.get(o);
+    },
+
+    reverseY: function(v) {
+        var categories, n;
+        if (this.yCatMap == null) return v;
+        n = Math.round(v);
+        categories = this.fy.categories();
+        if (n < 0 || n >= categories.length) return null;
+        return categories[n];
+    }
+
+});
+
 ////////////////////// MeasureField ////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -3510,28 +3577,22 @@ $.copy(V.summary_MeasureField.prototype, {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-V.summary_Regression = function(y, x, rows) {
-    var i, mx, my, sxx, sxy, xv, yv;
-    this.m = null;
-    this.b = null;
-    var data = V.summary_Regression.asPairs(y, x, rows);
-    var n = data[0].length;
-    if (n == 0) return;
-    my = V.summary_Regression.mean(data[0]);
-    mx = V.summary_Regression.mean(data[1]);
+V.summary_Regression = function(fy, fx, rows) {
+    var i, mx, my, n, sxx, sxy;
+    $.superconstruct(this, fy, fx, rows);
+    n = this.x.length;
+    my = V.summary_Regression.mean(this.y);
+    mx = V.summary_Regression.mean(this.x);
     sxy = 0;
     sxx = 0;
     for (i = 0; i < n; i++){
-        yv = data[0][i];
-        xv = data[1][i];
-        sxy += (xv - mx) * (yv - my);
-        sxx += (xv - mx) * (xv - mx);
+        sxy += (this.x[i] - mx) * (this.y[i] - my);
+        sxx += (this.x[i] - mx) * (this.x[i] - mx);
     }
-    if (sxx > 0) {
-        this.m = sxy / sxx;
-        this.b = my - this.m * mx;
-    }
+    this.m = sxx == 0 ? 0 : sxy / sxx;
+    this.b = my - this.m * mx;
 }
+$.extend(V.summary_Regression, V.summary_Fit);
 
 $.copy(V.summary_Regression, {
 
@@ -3541,29 +3602,6 @@ $.copy(V.summary_Regression, {
         for(_i=$.iter(values), value=_i.current; _i.hasNext(); value=_i.next())
             s += value;
         return s / values.length;
-    },
-
-    asPairs: function(y, x, rows) {
-        var _i, i, n, order, xv, xx, yv, yy;
-        var xList = new $.List();
-        var yList = new $.List();
-        for(_i=$.iter(rows), i=_i.current; _i.hasNext(); i=_i.next()) {
-            xv = V.Data.asNumeric(x.value(i));
-            yv = V.Data.asNumeric(y.value(i));
-            if (xv != null && yv != null) {
-                xList.add(xv);
-                yList.add(yv);
-            }
-        }
-        n = xList.size();
-        order = V.Data.order(xList.toArray(), true);
-        xx = $.Array(n, 0);
-        yy = $.Array(n, 0);
-        for (i = 0; i < n; i++){
-            xx[i] = xList.get(order[i]);
-            yy[i] = yList.get(order[i]);
-        }
-        return [yy, xx];
     }
 
 });
@@ -3571,7 +3609,10 @@ $.copy(V.summary_Regression, {
 $.copy(V.summary_Regression.prototype, {
 
     get: function(value) {
-        return this.m == null || value == null ? null : this.m * V.Data.asNumeric(value) + this.b;
+        if (this.m == null || value == null)
+            return null;
+        else
+            return this.reverseY(this.m * this.vx(value) + this.b);
     }
 
 });
@@ -3584,25 +3625,37 @@ $.copy(V.summary_Regression.prototype, {
 
 
 V.summary_Smooth = function(y, x, windowPercent, rows) {
-    var n, pairs;
-    if (windowPercent == null) {
-        n = V.auto_Auto.optimalBinCount(x);
-        this.window = (x.max() - x.min()) / n;
-    } else {
-        this.window = (x.max() - x.min()) * windowPercent / 200;
-    }
-    pairs = V.summary_Regression.asPairs(y, x, rows);
-    this.x = pairs[1];
-    this.y = pairs[0];
+    $.superconstruct(this, y, x, rows);
+    this.window = this.getWindowWidth(x, windowPercent);
     this.mean = y.numProperty("mean");
 }
+$.extend(V.summary_Smooth, V.summary_Fit);
 
 $.copy(V.summary_Smooth.prototype, {
 
+    getWindowWidth: function(x, windowPercent) {
+        var n;
+        var low;
+        var high;
+        if (x.isNumeric()) {
+            low = x.min();
+            high = x.max();
+        } else {
+            low = 0;
+            high = x.categories().length - 1;
+        }
+        if (windowPercent != null) {
+            return (high - low) * windowPercent / 200;
+        } else {
+            n = V.auto_Auto.optimalBinCount(x);
+            return (high - low) / n;
+        }
+    },
+
     get: function(value) {
-        var at = V.Data.asNumeric(value);
+        var at = this.vx(value);
         if (at == null) return null;
-        return this.eval(at, this.window);
+        return this.reverseY(this.eval(at, this.window));
     },
 
     eval: function(at, h) {

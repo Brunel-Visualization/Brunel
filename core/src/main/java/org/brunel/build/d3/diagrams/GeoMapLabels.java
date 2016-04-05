@@ -17,7 +17,6 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.info.ChartStructure;
-import org.brunel.build.d3.element.ElementDefinition;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
@@ -86,7 +85,7 @@ public class GeoMapLabels extends D3Diagram {
         return  ElementDetails.makeForDiagram(vis, ElementRepresentation.symbol, "geo_labels", "point");
     }
 
-    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
+    public void writeDefinition(ElementDetails details) {
         out.addChained("attr('d', function(d) { return BrunelD3.symbol(['star','star','square','circle'][d[4]-1], d[3]*geom.default_point_size/14)})")
                 .addChained("attr('class', function(d) { return 'mark L' + d[4] })");
         out.addChained("attr('transform', projectTransform)");

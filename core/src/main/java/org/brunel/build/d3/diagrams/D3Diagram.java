@@ -19,7 +19,6 @@ package org.brunel.build.d3.diagrams;
 import org.brunel.action.Param;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.PointBuilder;
-import org.brunel.build.d3.element.ElementDefinition;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
@@ -101,7 +100,7 @@ public abstract class D3Diagram {
 
     public abstract ElementDetails initializeDiagram();
 
-    public abstract void writeDefinition(ElementDetails details, ElementDefinition elementDef);
+    public abstract void writeDefinition(ElementDetails details);
 
     public void writeDiagramEnter() {
         // By default, nothing is needed
@@ -112,7 +111,7 @@ public abstract class D3Diagram {
         // By Default, do nothing
     }
 
-    public void writePreDefinition(ElementDetails details, ElementDefinition elementDef) {
+    public void writePreDefinition(ElementDetails details) {
         // By Default, do nothing
     }
 
@@ -134,8 +133,8 @@ public abstract class D3Diagram {
 
     }
 
-    protected void definePoint(ElementDefinition elementDef, ElementDetails details) {
-        new PointBuilder(out).defineShapeGeometry(vis, elementDef, details);
+    protected void definePoint(ElementDetails details) {
+        new PointBuilder(out).defineShapeGeometry(vis, details);
     }
 
 

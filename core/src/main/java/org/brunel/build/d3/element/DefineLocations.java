@@ -39,7 +39,7 @@ import org.brunel.data.Field;
         return s != null && (s.equals("iqr") || s.equals("range"));
     }
 
-    static void setDependentLocations(ElementStructure structure, ElementDefinition.ElementDimensionDefinition dim, String dimName, Field[] keys, String scaleName) {
+    static void setDependentLocations(ElementStructure structure, ElementDimensionDefinition dim, String dimName, Field[] keys, String scaleName) {
         // Use the keys to get the X and Y locations from other items
         if (keys.length == 1) {
             // One key gives the center
@@ -52,7 +52,7 @@ import org.brunel.data.Field;
         }
     }
 
-    static void setLocations(ElementStructure structure, ElementDefinition.ElementDimensionDefinition dim, String dimName, Field[] fields, Field[] keys, boolean categorical) {
+    static void setLocations(ElementStructure structure, ElementDimensionDefinition dim, String dimName, Field[] fields, Field[] keys, boolean categorical) {
 
         String scaleName = "scale_" + dimName;
 

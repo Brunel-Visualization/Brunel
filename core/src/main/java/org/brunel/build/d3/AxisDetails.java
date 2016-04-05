@@ -48,7 +48,7 @@ class AxisDetails {
     /* Constructs the axis for the given fields */
     public AxisDetails(String dimension, Field[] definedFields, boolean categorical, String userTitle, int tickCount) {
         this.scale = "scale_" + dimension;
-        this.fields = definedFields; // suitable(definedFields);
+        this.fields = definedFields;
         this.categorical = categorical;
         this.tickCount = tickCount < 100 ? tickCount : null;
 
@@ -63,7 +63,7 @@ class AxisDetails {
 
     private boolean isInMillions(Field[] definedFields) {
         for (Field f : definedFields) {
-            if (!f.isDate() && f.max() - f.min() > 2e6) return true;
+            if (!f.isDate() && f.max() != null && f.max() - f.min() > 2e6) return true;
         }
         return false;
     }
@@ -232,7 +232,7 @@ class AxisDetails {
     }
 
     /* Estimate the space needed to show all text categories */
-    public int maxTickWidth() {
+    private int maxTickWidth() {
         int maxCharCount = 1;
         for (Object s : tickValues) {
             int length = s.toString().length();

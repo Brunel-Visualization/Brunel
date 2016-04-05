@@ -83,6 +83,9 @@ public class Auto {
     }
 
     public static int optimalBinCount(Field f) {
+        // For non-numeric data
+        if (!f.isNumeric()) return Math.min(7, f.categories().length);
+
         // Using Freedman-Diaconis for the optimal bin width OR Scott's normal reference rule
         // Whichever has a large bin size
         double h1 = 2 * (f.numProperty("q3") - f.numProperty("q1")) / Math.pow(f.valid(), 0.33333);

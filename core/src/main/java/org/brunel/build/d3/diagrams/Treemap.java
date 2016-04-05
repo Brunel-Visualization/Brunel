@@ -16,7 +16,6 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.element.ElementDefinition;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
@@ -42,7 +41,7 @@ class Treemap extends D3Diagram {
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.rect, "treemap(tree.root)", "polygon");
     }
 
-    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
+    public void writeDefinition(ElementDetails details) {
         out.addChained("attr('class', function(d) { return (d.children ? 'L' + d.depth : 'leaf element " + element.name() + "') })")
                 .addChained("attr('x', function(d) { return d.x; })")
                 .addChained("attr('y', function(d) { return d.y; })")

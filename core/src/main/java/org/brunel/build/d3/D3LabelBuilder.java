@@ -32,8 +32,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.brunel.build.d3.element.ElementRepresentation.rect;
-
 /**
  * Creates and defines labels for a chart element
  */
@@ -58,7 +56,7 @@ public class D3LabelBuilder {
         }
 
         // Text elements define labeling as the main item; they do not need labels attached, which is what this does
-        if (vis.tElement != Element.text )
+        if (vis.tElement != Element.text)
             out.add("BrunelD3.label(selection, labels, labeling, transitionMillis)").endStatement();
     }
 
@@ -76,8 +74,7 @@ public class D3LabelBuilder {
     public void addTooltips(ElementDetails details) {
         if (vis.itemsTooltip.isEmpty()) return;
         out.onNewLine().ln();
-        ElementDetails point = new ElementDetails(null, rect, "point", null, false, details.representation.getTooltipTextMethod());
-        defineLabeling(prettify(vis.itemsTooltip, true), point.getTextMethod(), true, point.textFitsShape());
+        defineLabeling(prettify(vis.itemsTooltip, true), details.representation.getTooltipTextMethod(), true, true);
         out.add("BrunelD3.addTooltip(selection, tooltipLabeling, geom)").endStatement();
     }
 

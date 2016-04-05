@@ -17,7 +17,6 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.d3.D3Util;
-import org.brunel.build.d3.element.ElementDefinition;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ModelUtil;
@@ -163,10 +162,10 @@ public class GeoMap extends D3Diagram {
         out.indentLess().onNewLine().add("}");
     }
 
-    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
+    public void writeDefinition(ElementDetails details) {
         if (vis.tElement == Element.point || vis.tElement == Element.text) {
             out.addChained("attr('transform', function(d) { return projectTransform(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999]) } )");
-            definePoint(elementDef, details);
+            definePoint(details);
             out.endStatement();
             addAestheticsAndTooltips(details, true);
         } else {
@@ -176,7 +175,7 @@ public class GeoMap extends D3Diagram {
         addAestheticsAndTooltips(details, true);
     }
 
-    public void writePreDefinition(ElementDetails details, ElementDefinition elementDef) {
+    public void writePreDefinition(ElementDetails details) {
         out.add("selection.classed('nondata', function(d) {return !d || d.row == null})").endStatement();
     }
 

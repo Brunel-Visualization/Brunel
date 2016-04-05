@@ -16,74 +16,32 @@
 
 package org.brunel.data.summary;
 
-import org.brunel.data.Data;
 import org.brunel.data.Field;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Calculates a regression function
  */
-public class Regression implements Fit {
-    private Double m, b;                                            // Slope and intercept
+public class Regression extends Fit {
+    private final Double m, b;                             // Slope and intercept
 
-    public Regression(Field y, Field x, List<Integer> rows) {
-        double[][] data = asPairs(y, x, rows);
-        int n = data[0].length;
-        if (n == 0) return;                                      // No data
-        double my = mean(data[0]);
-        double mx = mean(data[1]);
-        double sxy = 0, sxx = 0;                                 // sum of XY and XX values
+    public Regression(Field fy, Field fx, List<Integer> rows) {
+        super(fy, fx, rows);
+        int n = x.length;
+        double sxy = 0, sxx = 0;                           // sum of XY and XX values
         for (int i = 0; i < n; i++) {
-            Double yv = data[0][i];
-            Double xv = data[1][i];
-            sxy += (xv - mx) * (yv - my);
-            sxx += (xv - mx) * (xv - mx);
+            sxy += (x[i] - mx) * (y[i] - my);
+            sxx += (x[i] - mx) * (x[i] - mx);
         }
-        if (sxx > 0) {
-            m = sxy / sxx;                                     // We have a slope
-            b = my - m * mx;                                   // and intercept
-        }
+        m = sxx == 0 ? 0 : sxy / sxx;                      // We have a slope
+        b = my - m * mx;                                   // and intercept
     }
 
-    static double mean(double[] values) {
-        double s = 0;
-        for (double value : values) s += value;
-        return s / values.length;
+
+    public Object get(Object value) {
+        if (m == null || value == null) return null;
+        else return reverseY(m * vx(value) + b);
     }
 
-    /**
-     * Creates two arrays [x, y] where all the values are valid and the x's are sorted
-     *
-     * @param y    y field
-     * @param x    x field
-     * @param rows the rows to include in this data array
-     * @return array of length two, each of which is a field of data
-     */
-    static double[][] asPairs(Field y, Field x, List<Integer> rows) {
-        List<Double> xList = new ArrayList<>();
-        List<Double> yList = new ArrayList<>();
-        for (int i : rows) {
-            Double xv = Data.asNumeric(x.value(i));
-            Double yv = Data.asNumeric(y.value(i));
-            if (xv != null && yv != null) {
-                xList.add(xv);
-                yList.add(yv);
-            }
-        }
-
-        int n = xList.size();
-        Integer[] order = Data.order(xList.toArray(new Double[n]), true);
-        double[] xx = new double[n], yy = new double[n];
-        for (int i = 0; i < n; i++) {
-            xx[i] = xList.get(order[i]);
-            yy[i] = yList.get(order[i]);
-        }
-        return new double[][]{yy, xx};
-    }
-
-    public Double get(Object value) {
-        return m == null || value == null ? null : m * Data.asNumeric(value) + b;
-    }
 }
