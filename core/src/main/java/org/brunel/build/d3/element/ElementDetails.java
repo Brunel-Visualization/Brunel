@@ -37,7 +37,7 @@ public class ElementDetails {
         // Work out if the element is filled
         boolean filled = element.filled || (!vis.fSize.isEmpty() && (element == Element.line || element == Element.path));
 
-        return new ElementDetails(representation, element.name(), dataSource,
+        return new ElementDetails(vis, representation, element.name(), dataSource,
                 !filled, ModelUtil.getLabelPosition(vis));
     }
 
@@ -53,7 +53,7 @@ public class ElementDetails {
      * @param elementClass the name of the element class for CSS purposes (polygon, path, point, etc.)
      */
     public static ElementDetails makeForDiagram(VisSingle vis, ElementRepresentation representation, String dataSource, String elementClass) {
-        return new ElementDetails(representation, elementClass, dataSource, representation != segment,
+        return new ElementDetails(vis, representation, elementClass, dataSource, representation != segment,
                 ModelUtil.getLabelPosition(vis)
         );
     }
@@ -63,9 +63,12 @@ public class ElementDetails {
     public final String classes;                        // Class names for this item
     private final String userDefinedLabelPosition;      // Custom override for the label position
     private final boolean strokedShape;                 // If true, the shape is to be stroked, not filled
+    public final ElementDefinition e;
 
-    public ElementDetails(ElementRepresentation representation, String classes, String dataSource, boolean stroked,
+
+    public ElementDetails(VisSingle vis, ElementRepresentation representation, String classes, String dataSource, boolean stroked,
                           String userDefinedLabelPosition) {
+        e = vis == null ? null : new ElementDefinition(vis);
         if (!stroked) classes += " filled";
         this.strokedShape = stroked;
         this.dataSource = dataSource;
@@ -88,7 +91,7 @@ public class ElementDetails {
 
     /* Modify the method to give better text location for tooltips */
     public ElementDetails deriveTooltipDetails() {
-        return new ElementDetails(rect, "point", null, false, representation.getTooltipTextMethod());
+        return new ElementDetails(null, rect, "point", null, false, representation.getTooltipTextMethod());
     }
 
     public boolean textFitsShape() {

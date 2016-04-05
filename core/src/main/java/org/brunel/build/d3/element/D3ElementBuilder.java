@@ -58,11 +58,11 @@ public class D3ElementBuilder {
         out.add("element = elements[" + elementIndex + "]").endStatement();
 
         ElementDetails details = makeDetails();                     // Create the details of what the element should be
-        ElementDefinition elementDef = buildElementDefinition(details.representation);    // And the coordinate definitions
+        buildElementDefinition(details.e);                          // And the coordinate definitions
 
         // Define paths needed in the element, and make data splits
         if (diagram == null && details.representation.isDrawnAsPath())
-            definePathsAndSplits(elementDef);
+            definePathsAndSplits(details.e);
 
         labelBuilder.defineLabeling(details, vis.itemsLabel, false);   // Labels
 
@@ -83,11 +83,11 @@ public class D3ElementBuilder {
         // These fire for both 'enter' and 'update' data
 
         if (diagram != null) {
-            diagram.writePreDefinition(details, elementDef);
+            diagram.writePreDefinition(details, details.e);
             out.add("BrunelD3.trans(selection,transitionMillis)");
-            diagram.writeDefinition(details, elementDef);
+            diagram.writeDefinition(details, details.e);
         } else {
-            writeCoordinateDefinition(details, elementDef);
+            writeCoordinateDefinition(details, details.e);
             writeCoordinateLabelingAndAesthetics(details);
         }
 
@@ -130,8 +130,7 @@ public class D3ElementBuilder {
         }
     }
 
-    private ElementDefinition buildElementDefinition(ElementRepresentation representation) {
-        ElementDefinition e = new ElementDefinition(vis);
+    private void buildElementDefinition(ElementDefinition e) {
 
         Field[] x = structure.chart.coordinates.getX(vis);
         Field[] y = structure.chart.coordinates.getY(vis);
@@ -156,7 +155,6 @@ public class D3ElementBuilder {
                 e.clusterSize = getSize(x, "geom.inner_width", ScalePurpose.inner, e.x);
         }
         e.overallSize = getOverallSize(vis, e);
-        return e;
     }
 
     private void defineReferenceFunctions(ElementDefinition e, Field[] keys) {

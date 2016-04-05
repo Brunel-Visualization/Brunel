@@ -41,10 +41,6 @@ public class ElementDefinition {
         return refLocation;
     }
 
-    public void setRefLocation(String refLocation) {
-        this.refLocation = refLocation;
-    }
-
     public void setReferences(String[] references) {
         this.refLocation = "[" + Data.join(references) + "]";
     }
