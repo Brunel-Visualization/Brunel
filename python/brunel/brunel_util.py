@@ -24,7 +24,6 @@ opts = BRUNEL_CONFIG.strip().split(";")
 
 for opt in opts:
     keyval = opt.strip().split("=");
-    print(keyval[0].strip().lower())
     if keyval[0].strip().lower() == "jvm":
         JVM_PATH = keyval[1]
     if keyval[0].strip().lower() == "locd3":
