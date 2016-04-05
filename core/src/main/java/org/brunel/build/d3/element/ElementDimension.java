@@ -26,17 +26,16 @@ public class ElementDimension {
     public final ModelUtil.Size sizeStyle;          // The size as defined by a style
     public final String sizeFunction;               // The size as modified by aesthetic function
 
-    public String center;                          // Where the center is to be
-    public String left;                            // Where the left is to be (right will also be defined)
-    public String right;                           // Where the right is to be (left will also be defined)
-    public String size;                            // What the size is to be
+    public GeomAttribute center;                    // Where the center is to be
+    public GeomAttribute left;                      // Where the left is to be (right will also be defined)
+    public GeomAttribute right;                     // Where the right is to be (left will also be defined)
+    public GeomAttribute size;                      // What the size is to be
 
     public ElementDimension(VisSingle vis, String sizeName) {
         sizeStyle = ModelUtil.getElementSize(vis, sizeName);
         if (vis.fSize.isEmpty()) sizeFunction = null;                   // No sizing
         else if (vis.fSize.size() == 1) sizeFunction = "size(d)";       // Multiply by overall size
         else sizeFunction = sizeName + "(d)";                           // use width(d) or height(d)
-
     }
 
     public boolean defineUsingCenter() {

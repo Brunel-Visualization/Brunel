@@ -16,7 +16,6 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
@@ -61,7 +60,8 @@ class Tree extends D3Diagram {
             out.addChained("attr('cx', function(d) { return d.x })")
                     .addChained("attr('cy', function(d) { return d.y })");
         }
-        out.addChained("attr('r', " + D3Util.defineSafeRadius(details.overallSize) + ")").endStatement();
+
+        out.addChained("attr('r', " + details.overallSize.halved() + ")").endStatement();
 
 //        addLabels(details, elementDef);
 

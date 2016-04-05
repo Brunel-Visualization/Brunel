@@ -23,7 +23,7 @@ import org.brunel.data.Field;
 /**
  * This class builds the information needed to build locations for the shapes
  */
- class DefineLocations {
+class DefineLocations {
     static final String CLUSTER_SPACING = "0.75";       // Spacing between clusters
 
     private static String addClusterMultiplier(Field cluster) {
@@ -43,12 +43,12 @@ import org.brunel.data.Field;
         // Use the keys to get the X and Y locations from other items
         if (keys.length == 1) {
             // One key gives the center
-            dim.center = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[0]) + ") }";
+            dim.center = GeomAttribute.makeFunction(scaleName + "(" + structure.keyedLocation(dimName, keys[0]) + ")");
         } else {
             // Two keys give ends
-            dim.left = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[0]) + ") }";
-            dim.right = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[1]) + ") }";
-            dim.center = "function() { return " + scaleName + "(0.5) }";        // Not sure what is best here -- should not get used
+            dim.left = GeomAttribute.makeFunction(scaleName + "(" + structure.keyedLocation(dimName, keys[0]) + ")");
+            dim.right = GeomAttribute.makeFunction(scaleName + "(" + structure.keyedLocation(dimName, keys[1]) + ")");
+            dim.center = GeomAttribute.makeFunction(scaleName + "(0.5)");        // Not sure what is best here -- should not get used
         }
     }
 
@@ -58,8 +58,8 @@ import org.brunel.data.Field;
 
         if (structure.isGraphEdge()) {
             // These are edges in a network layout
-            dim.left = "function(d) { return d.source." + dimName + " }";
-            dim.right = "function(d) { return d.target." + dimName + " }";
+            dim.left = GeomAttribute.makeFunction("d.source." + dimName);
+            dim.right = GeomAttribute.makeFunction("d.target." + dimName);
             return;
         }
 
@@ -71,9 +71,9 @@ import org.brunel.data.Field;
 
         if (fields.length == 0) {
             // There are no fields -- we have a notional [0,1] extent, so use the center of that
-            dim.center = "function() { return " + scaleName + "(0.5) }";
-            dim.left = "function() { return " + scaleName + "(0) }";
-            dim.right = "function() { return " + scaleName + "(1) }";
+            dim.center = GeomAttribute.makeConstant(scaleName + "(0.5)");
+            dim.left = GeomAttribute.makeConstant(scaleName + "(0)");
+            dim.right = GeomAttribute.makeConstant(scaleName + "(1)");
             return;
         }
 
@@ -93,9 +93,9 @@ import org.brunel.data.Field;
             if (numericBins) {
                 // A Binned value on a non-categorical axes
                 if (cluster == null) {
-                    dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".mid) }";
-                    dim.left = "function(d) { return " + scaleName + "(" + dataFunction + ".low) }";
-                    dim.right = "function(d) { return " + scaleName + "(" + dataFunction + ".high) }";
+                    dim.center = GeomAttribute.makeFunction(scaleName + "(" + dataFunction + ".mid)");
+                    dim.left = GeomAttribute.makeFunction(scaleName + "(" + dataFunction + ".low)");
+                    dim.right = GeomAttribute.makeFunction(scaleName + "(" + dataFunction + ".high)");
                 } else {
                     // Left of the cluster bar, right of the cluster bar, and distance along it
                     String L = scaleName + "(" + dataFunction + ".low)";
@@ -106,20 +106,21 @@ import org.brunel.data.Field;
                     else
                         D = "scale_inner(" + D3Util.writeCall(cluster) + ")";
 
-                    dim.center = "function(d) { var L=" + L + ", R=" + R + "; return (L+R)/2 + (L-R) * "
-                            + CLUSTER_SPACING + " * " + D + " }";
+                    // TODO: It's not really a constant -- this needs fixing up to account for it not beign a simple function
+                    dim.center = GeomAttribute.makeConstant("function(d) { var L=" + L + ", R=" + R + "; return (L+R)/2 + (L-R) * "
+                            + CLUSTER_SPACING + " * " + D + " }");
                 }
             } else if (isRange(main)) {
                 // This is a range field, but we have not been asked to show both ends,
                 // so we use the midpoint
-                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".mid)";
-                if (cluster != null) dim.center += addClusterMultiplier(cluster);
-                dim.center += " }";
+                String def = scaleName + "(" + dataFunction + ".mid)";
+                if (cluster != null) def += addClusterMultiplier(cluster);
+                dim.center = GeomAttribute.makeFunction(def);
             } else {
                 // Nothing unusual -- just define the center
-                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ")";
-                if (cluster != null) dim.center += addClusterMultiplier(cluster);
-                dim.center += " }";
+                String def = scaleName + "(" + dataFunction + ")";
+                if (cluster != null) def += addClusterMultiplier(cluster);
+                dim.center = GeomAttribute.makeFunction(def);
             }
 
         } else {
@@ -131,9 +132,9 @@ import org.brunel.data.Field;
             if (isRange(main)) lowDataFunc += ".low";
             if (isRange(fields[1])) highDataFunc += ".high";
 
-            dim.left = "function(d) { return " + scaleName + "(" + lowDataFunc + ") }";
-            dim.right = "function(d) { return " + scaleName + "(" + highDataFunc + ") }";
-            dim.center = "function(d) { return " + scaleName + "( (" + highDataFunc + " + " + lowDataFunc + " )/2) }";
+            dim.left = GeomAttribute.makeFunction(scaleName + "(" + lowDataFunc + ")");
+            dim.right = GeomAttribute.makeFunction(scaleName + "(" + highDataFunc + ")");
+            dim.center = GeomAttribute.makeFunction(scaleName + "( (" + highDataFunc + " + " + lowDataFunc + " )/2)");
         }
 
     }

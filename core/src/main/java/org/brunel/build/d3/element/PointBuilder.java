@@ -17,7 +17,6 @@
 package org.brunel.build.d3.element;
 
 import org.brunel.build.d3.D3LabelBuilder;
-import org.brunel.build.d3.D3Util;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.model.VisSingle;
 
@@ -61,17 +60,9 @@ public class PointBuilder {
         // If the center is not defined, this has been placed using a translation transform
         if (elementDef.x.center != null) out.addChained("attr('cx'," + elementDef.x.center + ")");
         if (elementDef.y.center != null) out.addChained("attr('cy'," + elementDef.y.center + ")");
-        out.addChained("attr('r'," + halve(elementDef.overallSize) + ")");
+        out.addChained("attr('r'," + elementDef.overallSize.halved() + ")");
     }
 
-    private String halve(String sizeText) {
-        // Put the "/2" factor inside the function if needed
-        String body = D3Util.stripFunction(sizeText);
-        if (body.equals(sizeText))
-            return body + " / 2";
-        else
-            return "function(d) { return " + body + " / 2 }";
-    }
 
     private void defineRect(ElementDetails elementDef) {
         defineHorizontalExtent(elementDef.x);
@@ -79,18 +70,18 @@ public class PointBuilder {
     }
 
     void defineHorizontalExtent(ElementDimension dimensionDef) {
-        String left, width;
+        GeomAttribute left, width;
         if (dimensionDef.defineUsingExtent()) {
             // Use the left and right values
-            left = "function(d) { return Math.min(x0(d), x1(d)) }";
-            width = "function(d) { return Math.abs(x1(d) - x0(d)) }";
+            left = GeomAttribute.makeFunction("Math.min(x0(d), x1(d))");
+            width = GeomAttribute.makeFunction("Math.abs(x1(d) - x0(d))");
         } else if (dimensionDef.defineUsingCenter()) {
             // The width can either be a function or a numeric value
-            if (dimensionDef.size.startsWith("function"))
-                left = "function(d) { return x(d) - w(d)/2 }";
+            if (dimensionDef.size.isFunc())
+                left = GeomAttribute.makeFunction("x(d) - w(d)/2 ");
             else
-                left = "function(d) { return x(d) - w/2 }";
-            width = "w";
+                left = GeomAttribute.makeFunction("x(d) - w/2");
+            width = GeomAttribute.makeConstant("w");
         } else {
             left = null;
             width = dimensionDef.size;
@@ -104,18 +95,18 @@ public class PointBuilder {
     }
 
     private void defineVerticalExtent(ElementDimension dimensionDef) {
-        String top, height;
+        GeomAttribute top, height;
         if (dimensionDef.defineUsingExtent()) {
             // Use the left and right values
-            top = "function(d) { return Math.min(y0(d), y1(d)) }";
-            height = "function(d) { return Math.max(0.0001, Math.abs(y1(d) - y0(d))) }";
+            top = GeomAttribute.makeFunction("Math.min(y0(d), y1(d))");
+            height = GeomAttribute.makeFunction("Math.max(0.0001, Math.abs(y1(d) - y0(d)))");
         } else if (dimensionDef.defineUsingCenter()) {
             // The height can either be a function or a numeric value
-            if (dimensionDef.size.startsWith("function"))
-                top = "function(d) { return y(d) - h(d)/2 }";
+            if (dimensionDef.size.isFunc())
+                top = GeomAttribute.makeFunction("y(d) - h(d)/2");
             else
-                top = "function(d) { return y(d) - h/2 }";
-            height = "h";
+                top = GeomAttribute.makeFunction("y(d) - h/2");
+            height = GeomAttribute.makeConstant("h");
         } else {
             top = null;
             height = dimensionDef.size;

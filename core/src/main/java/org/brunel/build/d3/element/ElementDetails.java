@@ -55,17 +55,21 @@ public class ElementDetails {
     private final String userDefinedLabelPosition;      // Custom override for the label position
     private final boolean strokedShape;                 // If true, the shape is to be stroked, not filled
 
-    public final ElementDimension x, y;       // Definitions for x and y fields
-    public String overallSize;                          // A general size for the whole item
-    private String refLocation;                          // Defines the location using a reference to another element
-    public String clusterSize;                          // The size of a cluster
+    public final ElementDimension x, y;                 // Definitions for x and y fields
+    public GeomAttribute overallSize;                          // A general size for the whole item
+    private GeomAttribute refLocation;                         // Defines the location using a reference to another element
+    public GeomAttribute clusterSize;                          // The size of a cluster
 
-    public String getRefLocation() {
+    public GeomAttribute getRefLocation() {
         return refLocation;
     }
 
+    public boolean isDrawnAsPath() {
+        return representation.isDrawnAsPath();
+    }
+
     public void setReferences(String[] references) {
-        this.refLocation = "[" + Data.join(references) + "]";
+        this.refLocation = GeomAttribute.makeFunction("[" + Data.join(references) + "]");
     }
 
     public ElementDetails(VisSingle vis, ElementRepresentation representation, String classes, String dataSource, boolean filled) {

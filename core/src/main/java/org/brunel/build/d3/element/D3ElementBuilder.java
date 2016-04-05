@@ -56,16 +56,26 @@ public class D3ElementBuilder {
     public void generate(int elementIndex) {
         out.add("element = elements[" + elementIndex + "]").endStatement();
 
-        ElementDetails details = makeDetails();                     // Create the details of what the element should be
-        buildElementDefinition(details);                            // And the coordinate definitions
+        ElementDetails details = makeDetails();         // Create the details of what the element should be
+        setGeometry(details);                           // And the coordinate definitions
 
-        // Define paths needed in the element, and make data splits
-        if (diagram == null && details.representation.isDrawnAsPath())
-            definePathsAndSplits(details);
+        if (diagram == null) {
+            if (details.representation == ElementRepresentation.wedge) {
+                // Deal with the case of wedges (polar intervals)
+                defineVerticalExtentFunctions(false, details.y);             // Define y or (y0, y1)
+                defineWedgePath();
+            } else if (details.isDrawnAsPath()) {
+                // Define paths needed in the element, and make data splits
+                defineVerticalExtentFunctions(false, details.y);             // Define y or (y0, y1)
+                definePathsAndSplits(details);
+            }
+        } else {
+            // Set the diagram group class for CSS
+            out.add("main.attr('class',", diagram.getStyleClasses(), ")").endStatement();
+        }
+
 
         labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape());   // Labels
-
-        modifyGroupStyleName();             // Diagrams change the name so CSS style sheets will work well
 
         // Set the values of things known to this element
         out.add("d3Data =", details.dataSource).endStatement();
@@ -119,7 +129,7 @@ public class D3ElementBuilder {
     private ElementDetails makeDetails() {
         // When we create diagrams this has the side effect of writing the data calls needed
         if (structure.isGraphEdge()) {
-            out.onNewLine().comment("Data structures for a", vis.tDiagram, "diagram");
+            out.onNewLine().comment("Defining graph edge element");
             return ElementDetails.makeForDiagram(vis, ElementRepresentation.segment, "edge", "graph.links");
         } else if (diagram == null) {
             return ElementDetails.makeForCoordinates(vis, getSymbol());
@@ -129,14 +139,14 @@ public class D3ElementBuilder {
         }
     }
 
-    private void buildElementDefinition(ElementDetails e) {
+    private void setGeometry(ElementDetails e) {
 
         Field[] x = structure.chart.coordinates.getX(vis);
         Field[] y = structure.chart.coordinates.getY(vis);
         Field[] keys = new Field[vis.fKeys.size()];
         for (int i = 0; i < keys.length; i++) keys[i] = structure.data.field(vis.fKeys.get(i).asField());
 
-        if (structure.dependent)  defineReferenceFunctions(e, keys);
+        if (structure.dependent) defineReferenceFunctions(e, keys);
 
         if (structure.chart.geo != null) {
             // Maps with feature data do not need the geo coordinates set
@@ -172,23 +182,7 @@ public class D3ElementBuilder {
 
     private void definePathsAndSplits(ElementDetails elementDef) {
 
-        // Define y or (y0, y1)
-        defineVerticalExtentFunctions(false, elementDef.y);
 
-        // First deal with the case of wedges (polar intervals)
-        if (vis.tElement == Element.bar && vis.coords == Coordinates.polar) {
-            out.add("var path = d3.svg.arc().innerRadius(0)");
-            if (vis.fSize.isEmpty())
-                out.addChained("outerRadius(geom.inner_radius)");
-            else
-                out.addChained("outerRadius(function(d) {return size(d)*geom.inner_radius})");
-            if (vis.fRange == null && !vis.stacked)
-                out.addChained("startAngle(0).endAngle(y)");
-            else
-                out.addChained("startAngle(y0).endAngle(y1)");
-            out.endStatement();
-            return;
-        }
 
         // Add definition for the internal width of a cluster category
         if (elementDef.clusterSize != null)
@@ -208,8 +202,8 @@ public class D3ElementBuilder {
             String yDef = elementDef.y.right == null ? "y" : "y1";
             if (vis.fSize.size() == 1) {
                 out.add("var path = BrunelD3.sizedPath().x(x).y(" + yDef + ")");
-                String size = elementDef.y.size != null ? elementDef.y.size : elementDef.overallSize;
-                out.addChained("r(" + size + ")");
+                GeomAttribute size = elementDef.y.size != null ? elementDef.y.size : elementDef.overallSize;
+                out.addChained("r( function(d) { return " +  size.definition() + "})");
             } else {
                 out.add("var path = d3.svg.line().x(x).y(" + yDef + ")");
             }
@@ -221,10 +215,17 @@ public class D3ElementBuilder {
         constructSplitPath();
     }
 
-    private void modifyGroupStyleName() {
-        // Define the main element class
-        if (diagram != null)
-            out.add("main.attr('class',", diagram.getStyleClasses(), ")").endStatement();
+    private void defineWedgePath() {
+        out.add("var path = d3.svg.arc().innerRadius(0)");
+        if (vis.fSize.isEmpty())
+            out.addChained("outerRadius(geom.inner_radius)");
+        else
+            out.addChained("outerRadius(function(d) {return size(d)*geom.inner_radius})");
+        if (vis.fRange == null && !vis.stacked)
+            out.addChained("startAngle(0).endAngle(y)");
+        else
+            out.addChained("startAngle(y0).endAngle(y1)");
+        out.endStatement();
     }
 
     /* The key function ensure we have object constancy when animating */
@@ -248,7 +249,7 @@ public class D3ElementBuilder {
 
         if (details.requiresSplitting())
             out.add(basicDef).addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
-        else if (details.representation.isDrawnAsPath())
+        else if (details.isDrawnAsPath())
             out.add(basicDef).addChained("attr('d', path)");                              // Simple path -- just util it
         else {
             // Add definition for the internal width of a cluster category
@@ -343,13 +344,13 @@ public class D3ElementBuilder {
             DefineLocations.setDependentLocations(structure, def.x, "x", keys, "");
             DefineLocations.setDependentLocations(structure, def.y, "y", keys, "");
         } else if (n == 0) {
-            def.x.center = "null";
-            def.y.center = "null";
+            def.x.center = GeomAttribute.makeConstant("null");
+            def.y.center = GeomAttribute.makeConstant("null");
         } else if (n == 1) {
             String xFunction = D3Util.writeCall(x[0]);
             String yFunction = D3Util.writeCall(y[0]);
-            def.x.center = "function(d) { return proj([" + xFunction + "," + yFunction + "])[0] }";
-            def.y.center = "function(d) { return proj([" + xFunction + "," + yFunction + "])[1] }";
+            def.x.center = GeomAttribute.makeFunction("proj([" + xFunction + "," + yFunction + "])[0]");
+            def.y.center = GeomAttribute.makeFunction("proj([" + xFunction + "," + yFunction + "])[1]");
         } else if (n == 2) {
             String xLow = D3Util.writeCall(x[0]);          // A call to the low field using the datum 'd'
             String xHigh = D3Util.writeCall(x[1]);         // A call to the high field using the datum 'd'
@@ -365,15 +366,15 @@ public class D3ElementBuilder {
             if (DefineLocations.isRange(y[0])) yLow += ".low";
             if (DefineLocations.isRange(y[1])) yHigh += ".high";
 
-            def.x.left = "function(d) { return proj([" + xLow + "," + yLow + "])[0] }";
-            def.x.right = "function(d) { return proj([" + xHigh + "," + yHigh + "])[0] }";
-            def.y.left = "function(d) { return proj([" + xLow + "," + yLow + "])[1] }";
-            def.y.right = "function(d) { return proj([" + xHigh + "," + yHigh + "])[1] }";
+            def.x.left = GeomAttribute.makeFunction("proj([" + xLow + "," + yLow + "])[0]");
+            def.x.right = GeomAttribute.makeFunction("proj([" + xHigh + "," + yHigh + "])[0]");
+            def.y.left = GeomAttribute.makeFunction("proj([" + xLow + "," + yLow + "])[1]");
+            def.y.right = GeomAttribute.makeFunction("proj([" + xHigh + "," + yHigh + "])[1]");
         }
 
     }
 
-    private String getSize(Field[] fields, String extent, ScalePurpose purpose, ElementDimension dim) {
+    private GeomAttribute getSize(Field[] fields, String extent, ScalePurpose purpose, ElementDimension dim) {
 
         boolean needsFunction = dim.sizeFunction != null;
         String baseAmount;
@@ -390,9 +391,7 @@ public class D3ElementBuilder {
             }
         } else if (dim.left != null) {
             // Use the left and right functions to get the size
-            String a = D3Util.stripFunction(dim.left);
-            String b = D3Util.stripFunction(dim.right);
-            baseAmount = "Math.abs(" + a + "-" + b + ")";
+            baseAmount = "Math.abs(" + dim.left.definition() + "-" + dim.right.definition() + ")";
             needsFunction = true;
         } else {
             // Use size of categories
@@ -445,42 +444,39 @@ public class D3ElementBuilder {
 
         // If we need a function, wrap it up as required
         if (needsFunction) {
-            return "function(d) { return " + baseAmount + "}";
+            return GeomAttribute.makeFunction(baseAmount);
         } else {
-            return baseAmount;
+            return GeomAttribute.makeConstant(baseAmount);
         }
 
     }
 
-    public static String getOverallSize(VisSingle vis, ElementDetails def) {
+    public static GeomAttribute getOverallSize(VisSingle vis, ElementDetails def) {
         Size size = ModelUtil.getElementSize(vis, "size");
         boolean needsFunction = vis.fSize.size() == 1;
 
         if (size != null && !size.isPercent()) {
             // Just multiply by the aesthetic if needed
             if (needsFunction)
-                return "function(d) { return size(d) * " + size.value() + " }";
+                return GeomAttribute.makeFunction("size(d) * " + size.value());
             else
-                return "" + size.value();
+                return GeomAttribute.makeConstant(Double.toString(size.value()));
         }
 
         // Use the X and Y extents to define the overall one
 
-        String x = def.x.size;
-        String y = def.y.size;
+        GeomAttribute x = def.x.size;
+        GeomAttribute y = def.y.size;
         if (x.equals(y)) return x;          // If they are both the same, use that
 
-        String xBody = D3Util.stripFunction(x);
-        String yBody = D3Util.stripFunction(y);
-
         // This will already have the size function factored in if defined
-        String content = "Math.min(" + xBody + ", " + yBody + ")";
+        String content = "Math.min(" + x.definition() + ", " + y.definition() + ")";
 
         // if the body is different from the whole item for x or y, then we have a function and must return a function
-        if (!xBody.equals(x) || !yBody.equals(y)) {
-            return "function(d) { return " + content + " }";
+        if (x.isFunc() || y.isFunc()) {
+            return GeomAttribute.makeFunction(content);
         } else {
-            return content;
+            return GeomAttribute.makeConstant(content);
         }
     }
 
@@ -520,7 +516,7 @@ public class D3ElementBuilder {
     private void defineEdge(String basicDef, ElementDetails elementDef) {
         out.add(basicDef);
         if (elementDef.getRefLocation() != null) {
-            out.addChained("each(function(d) { this.__edge = " + elementDef.getRefLocation() + "})");
+            out.addChained("each(function(d) { this.__edge = " + elementDef.getRefLocation().definition() + "})");
             if (structure.chart.geo != null) {
                 // geo does not need scales
                 out.addChained("attr('x1', function() { return this.__edge[0][0]})");
