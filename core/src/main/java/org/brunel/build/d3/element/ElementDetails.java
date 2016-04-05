@@ -89,11 +89,6 @@ public class ElementDetails {
         return strokedShape;
     }
 
-    /* Modify the method to give better text location for tooltips */
-    public ElementDetails deriveTooltipDetails() {
-        return new ElementDetails(null, rect, "point", null, false, representation.getTooltipTextMethod());
-    }
-
     public boolean textFitsShape() {
         return "inside".equals(userDefinedLabelPosition) || representation.textFitsShape();
     }

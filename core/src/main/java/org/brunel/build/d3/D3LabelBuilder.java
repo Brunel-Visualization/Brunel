@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.brunel.build.d3.element.ElementRepresentation.rect;
+
 /**
  * Creates and defines labels for a chart element
  */
@@ -74,16 +76,15 @@ public class D3LabelBuilder {
     public void addTooltips(ElementDetails details) {
         if (vis.itemsTooltip.isEmpty()) return;
         out.onNewLine().ln();
-        defineLabeling(details.deriveTooltipDetails(),
-                prettify(vis.itemsTooltip, true), true);
+        ElementDetails point = new ElementDetails(null, rect, "point", null, false, details.representation.getTooltipTextMethod());
+        defineLabeling(prettify(vis.itemsTooltip, true), point.getTextMethod(), true, point.textFitsShape());
         out.add("BrunelD3.addTooltip(selection, tooltipLabeling, geom)").endStatement();
     }
 
-    public void defineLabeling(ElementDetails details, List<Param> items, boolean forTooltip) {
+    public void defineLabeling(List<Param> items, String textMethod, boolean forTooltip, boolean fitsShape) {
         if (vis.tElement != Element.text && items.isEmpty()) return;
         String name = forTooltip ? "tooltipLabeling" : "labeling";
         out.add("var", name, "= {").ln().indentMore();
-        String textMethod = details.getTextMethod();
         if (textMethod.equals("geo")) {
             // We define a function to extract the coordinates from the geo, and project them
             String func = "function(box,text,d) {var p = projection([d.geo_properties.c, d.geo_properties.d]); return {box:box, x:p[0], y:p[1]}}";
@@ -91,7 +92,7 @@ public class D3LabelBuilder {
         } else {
             out.onNewLine().add("method:", out.quote(textMethod), ", ");
         }
-        out.onNewLine().add("fit:", details.textFitsShape(), ",");
+        out.onNewLine().add("fit:", fitsShape, ",");
         if (textMethod.equals("path") || textMethod.equals("wedge"))
             out.onNewLine().add("path: path,");
 

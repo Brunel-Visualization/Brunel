@@ -64,7 +64,7 @@ public class D3ElementBuilder {
         if (diagram == null && details.representation.isDrawnAsPath())
             definePathsAndSplits(details.e);
 
-        labelBuilder.defineLabeling(details, vis.itemsLabel, false);   // Labels
+        labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape());   // Labels
 
         modifyGroupStyleName();             // Diagrams change the name so CSS style sheets will work well
 
