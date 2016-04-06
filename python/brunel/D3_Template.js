@@ -18,9 +18,9 @@ require.config({
     waitSeconds: 60,
     paths: {
         'd3': '{{d3loc}}',
-        'BrunelD3': '../nbextensions/brunel_ext/BrunelD3',
-        'BrunelData': '../nbextensions/brunel_ext/BrunelData',
-        'BrunelEventHandlers': '../nbextensions/brunel_ext/BrunelEventHandlers'
+        'BrunelD3': '{{jsloc}}/BrunelD3',
+        'BrunelData': '{{jsloc}}/BrunelData',
+        'BrunelEventHandlers': '{{jsloc}}/BrunelEventHandlers'
     },
     shim: {
         'BrunelD3': {
