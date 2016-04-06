@@ -23,14 +23,14 @@ import org.brunel.data.Field;
 /**
  * This class builds the information needed to build locations for the shapes
  */
- class DefineLocations {
+class DefineLocations {
     static final String CLUSTER_SPACING = "0.75";       // Spacing between clusters
 
     private static String addClusterMultiplier(Field cluster) {
         if (isRange(cluster))
-            return " + w1 * scale_inner(" + D3Util.writeCall(cluster) + ".mid)";
+            return " + clusterWidth * scale_inner(" + D3Util.writeCall(cluster) + ".mid)";
         else
-            return " + w1 * scale_inner(" + D3Util.writeCall(cluster) + ")";
+            return " + clusterWidth * scale_inner(" + D3Util.writeCall(cluster) + ")";
     }
 
     static boolean isRange(Field field) {
@@ -39,51 +39,72 @@ import org.brunel.data.Field;
         return s != null && (s.equals("iqr") || s.equals("range"));
     }
 
-    static void setDependentLocations(ElementStructure structure, ElementDimension dim, String dimName, Field[] keys, String scaleName) {
-        // Use the keys to get the X and Y locations from other items
-        if (keys.length == 1) {
-            // One key gives the center
-            dim.center = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[0]) + ") }";
+    static void setDependentLocations(ElementStructure structure, ElementDetails details) {
+        // The referenced locations will be added as a parameters to the object, so we need only access them
+
+        // Geo elements do not need scaling -- the projection takes care of it
+        boolean geo = structure.chart.geo != null;
+
+        /* Example Dependent Geo:
+
+                map('usa')
+                + data('edges.csv') edge color(flights:blues) key(origin, dest) top(flights:500)
+                + data('nodes.csv') x(long) y(lat) size(flights:400%) key(iata) tooltip(airport)
+
+         */
+
+        if (details.representation == ElementRepresentation.segment) {
+            // Need four coordinates
+            details.x.left = GeomAttribute.makeFunction(geo ? "this.e[0][0]" : "scale_x(this.e[0][0])");
+            details.x.right = GeomAttribute.makeFunction(geo ? "this.e[1][0]" : "scale_x(this.e[1][0])");
+            details.y.left = GeomAttribute.makeFunction(geo ? "this.e[0][1]" : "scale_y(this.e[0][1])");
+            details.y.right = GeomAttribute.makeFunction(geo ? "this.e[1][1]" : "scale_y(this.e[1][1])");
         } else {
-            // Two keys give ends
-            dim.left = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[0]) + ") }";
-            dim.right = "function(d) { return " + scaleName + "(" + structure.keyedLocation(dimName, keys[1]) + ") }";
-            dim.center = "function() { return " + scaleName + "(0.5) }";        // Not sure what is best here -- should not get used
+            details.x.center = GeomAttribute.makeFunction(geo ? "this.e[0][0]" : "scale_x(this.e[0][0])");
+            details.y.center = GeomAttribute.makeFunction(geo ? "this.e[0][1]" : "scale_y(this.e[0][1])");
         }
     }
 
-    static void setLocations(ElementStructure structure, ElementDimension dim, String dimName, Field[] fields, Field[] keys, boolean categorical) {
-
+    static void setLocations(ElementRepresentation rep, ElementStructure structure, ElementDimension dim, String dimName, Field[] fields, Field[] keys, boolean categorical) {
         String scaleName = "scale_" + dimName;
 
         if (structure.isGraphEdge()) {
-            // These are edges in a network layout
-            dim.left = "function(d) { return d.source." + dimName + " }";
-            dim.right = "function(d) { return d.target." + dimName + " }";
+            // These are edges in a network layout; we just need left and right
+            dim.left = GeomAttribute.makeFunction("d.source." + dimName);
+            dim.right = GeomAttribute.makeFunction("d.target." + dimName);
             return;
         }
 
-        if (structure.dependent) {
-            // Positions are dependent on other elements
-            setDependentLocations(structure, dim, dimName, keys, scaleName);
-            return;
-        }
+        // No need -- they have been defined already
+        if (structure.dependent) return;
 
         if (fields.length == 0) {
             // There are no fields -- we have a notional [0,1] extent, so use the center of that
-            dim.center = "function() { return " + scaleName + "(0.5) }";
-            dim.left = "function() { return " + scaleName + "(0) }";
-            dim.right = "function() { return " + scaleName + "(1) }";
+            if (rep == ElementRepresentation.rect) {
+                dim.left = GeomAttribute.makeConstant(scaleName + "(0)");
+                dim.right = GeomAttribute.makeConstant(scaleName + "(1)");
+            } else {
+                dim.center = GeomAttribute.makeConstant(scaleName + "(0.5)");
+            }
             return;
         }
 
         Field main = fields[0];
         boolean numericBins = main.isBinned() && !categorical;
 
-        // X axis only ever has one main field at most -- rest are clustered
-        boolean oneMainField = fields.length == 1 || dimName.equals("x");
+        if (defineForTwoFields(rep, dimName, fields)) {
+            // The dimension contains two fields: a range
+            String lowDataFunc = D3Util.writeCall(main);          // A call to the low field using the datum 'd'
+            String highDataFunc = D3Util.writeCall(fields[1]);         // A call to the high field using the datum 'd'
 
-        if (oneMainField) {
+            // When one of the fields is a range, use the outermost value of that
+            if (isRange(main)) lowDataFunc += ".low";
+            if (isRange(fields[1])) highDataFunc += ".high";
+
+            dim.left = GeomAttribute.makeFunction(scaleName + "(" + lowDataFunc + ")");
+            dim.right = GeomAttribute.makeFunction(scaleName + "(" + highDataFunc + ")");
+            dim.center = GeomAttribute.makeFunction(scaleName + "( (" + highDataFunc + " + " + lowDataFunc + " )/2)");
+        } else {
 
             // If defined, this is the cluster field on the X dimension
             Field cluster = fields.length > 1 ? fields[1] : null;
@@ -93,9 +114,9 @@ import org.brunel.data.Field;
             if (numericBins) {
                 // A Binned value on a non-categorical axes
                 if (cluster == null) {
-                    dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".mid) }";
-                    dim.left = "function(d) { return " + scaleName + "(" + dataFunction + ".low) }";
-                    dim.right = "function(d) { return " + scaleName + "(" + dataFunction + ".high) }";
+                    dim.center = GeomAttribute.makeFunction(scaleName + "(" + dataFunction + ".mid)");
+                    dim.left = GeomAttribute.makeFunction(scaleName + "(" + dataFunction + ".low)");
+                    dim.right = GeomAttribute.makeFunction(scaleName + "(" + dataFunction + ".high)");
                 } else {
                     // Left of the cluster bar, right of the cluster bar, and distance along it
                     String L = scaleName + "(" + dataFunction + ".low)";
@@ -106,35 +127,27 @@ import org.brunel.data.Field;
                     else
                         D = "scale_inner(" + D3Util.writeCall(cluster) + ")";
 
-                    dim.center = "function(d) { var L=" + L + ", R=" + R + "; return (L+R)/2 + (L-R) * "
-                            + CLUSTER_SPACING + " * " + D + " }";
+                    dim.center = GeomAttribute.makeFunction("BrunelD3.interpolate(" + L + ", " + R + ", " + CLUSTER_SPACING + " * " + D + ")");
                 }
             } else if (isRange(main)) {
                 // This is a range field, but we have not been asked to show both ends,
                 // so we use the midpoint
-                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ".mid)";
-                if (cluster != null) dim.center += addClusterMultiplier(cluster);
-                dim.center += " }";
+                String def = scaleName + "(" + dataFunction + ".mid)";
+                if (cluster != null) def += addClusterMultiplier(cluster);
+                dim.center = GeomAttribute.makeFunction(def);
             } else {
                 // Nothing unusual -- just define the center
-                dim.center = "function(d) { return " + scaleName + "(" + dataFunction + ")";
-                if (cluster != null) dim.center += addClusterMultiplier(cluster);
-                dim.center += " }";
+                String def = scaleName + "(" + dataFunction + ")";
+                if (cluster != null) def += addClusterMultiplier(cluster);
+                dim.center = GeomAttribute.makeFunction(def);
             }
 
-        } else {
-            // The dimension contains two fields: a range
-            String lowDataFunc = D3Util.writeCall(main);          // A call to the low field using the datum 'd'
-            String highDataFunc = D3Util.writeCall(fields[1]);         // A call to the high field using the datum 'd'
-
-            // When one of the fields is a range, use the outermost value of that
-            if (isRange(main)) lowDataFunc += ".low";
-            if (isRange(fields[1])) highDataFunc += ".high";
-
-            dim.left = "function(d) { return " + scaleName + "(" + lowDataFunc + ") }";
-            dim.right = "function(d) { return " + scaleName + "(" + highDataFunc + ") }";
-            dim.center = "function(d) { return " + scaleName + "( (" + highDataFunc + " + " + lowDataFunc + " )/2) }";
         }
 
+    }
+
+    private static boolean defineForTwoFields(ElementRepresentation rep, String dimName, Field[] fields) {
+        if (fields.length < 2) return false;                                        // Need two fields
+        return dimName.equals("y") || rep == ElementRepresentation.segment;         // Edges or y dimensions need two
     }
 }

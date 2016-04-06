@@ -179,7 +179,7 @@ public class D3Builder extends AbstractBuilder {
         out.onNewLine().add("var original, processed,").at(40).comment("data sets passed in and then transformed")
                 .indentMore()
                 .onNewLine().add("element, data,").at(40).comment("Brunel element information and brunel data")
-                .onNewLine().add("d3Data, selection;").at(40).comment("D3 version of data and D3 selection")
+                .onNewLine().add("selection;").at(40).comment("D3 selection")
                 .indentLess();
 
         // Add data variables used throughout

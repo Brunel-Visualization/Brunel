@@ -832,17 +832,15 @@ var BrunelD3 = (function () {
     // Define a mapping from IDs of a data source to X, Y locations
     var idToPoint = function (idField, xField, yField, n) {
         // Build the map
-        var map = {};
-        var i, id, x, y;
+        var i, id, map = {};
         for (i = 0; i < n; i++) {
             id = idField.value(i);
-            x = xField.value(i);
-            y = yField.value(i);
-            if (id != null) map[id] = [x, y]
+            if (id != null) map[id] = [xField.value(i), yField.value(i)]
         }
-        // Return mapping function
+        // Return mapping function (pair of nulls if no entry)
         return function (x) {
-            return map[x];
+            var v = map[x];
+            return v || [null, null];
         }
     };
 
@@ -1024,12 +1022,17 @@ var BrunelD3 = (function () {
         parentElement.selection().each(function (d, i) {
             if (d.row == null) return;
             var value = parentElement.data().field("#row").value(d.row);
-            var items = value.items ? value.items : [ value ];          // If just a single row, make it into an array
+            var items = value.items ? value.items : [value];          // If just a single row, make it into an array
             var c = chart(this, items.map(function (v) {
                 return v - 1
             }));          // Convert 1-based items to 0-based rows
             c.build(time);
         });
+    }
+
+    // v is in the range -1/2 to 1/2
+    function interpolate(a, b, v) {
+        return (a + b) / 2 + v * (a - b);
     }
 
     // Expose these methods
@@ -1054,7 +1057,8 @@ var BrunelD3 = (function () {
         'symbol': makeSymbol,
         'network': makeNetworkLayout,
         'facet': facet,
-        'time': time
+        'time': time,
+        'interpolate': interpolate
     }
 
 })

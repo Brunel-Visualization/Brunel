@@ -17,7 +17,6 @@
 package org.brunel.build.d3.element;
 
 import org.brunel.build.d3.D3LabelBuilder;
-import org.brunel.build.d3.D3Util;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.model.VisSingle;
 
@@ -42,7 +41,7 @@ public class PointBuilder {
             defineText(details, vis);
         else if (details.representation == ElementRepresentation.pointLikeCircle
                 || details.representation == ElementRepresentation.spaceFillingCircle
-        || details.representation == ElementRepresentation.largeCircle)
+                || details.representation == ElementRepresentation.largeCircle)
             defineCircle(details);
         else
             throw new IllegalArgumentException("Cannot define as a point: " + details.representation);
@@ -61,67 +60,38 @@ public class PointBuilder {
         // If the center is not defined, this has been placed using a translation transform
         if (elementDef.x.center != null) out.addChained("attr('cx'," + elementDef.x.center + ")");
         if (elementDef.y.center != null) out.addChained("attr('cy'," + elementDef.y.center + ")");
-        out.addChained("attr('r'," + halve(elementDef.overallSize) + ")");
-    }
-
-    private String halve(String sizeText) {
-        // Put the "/2" factor inside the function if needed
-        String body = D3Util.stripFunction(sizeText);
-        if (body.equals(sizeText))
-            return body + " / 2";
-        else
-            return "function(d) { return " + body + " / 2 }";
+        out.addChained("attr('r'," + elementDef.overallSize.halved() + ")");
     }
 
     private void defineRect(ElementDetails elementDef) {
-        defineHorizontalExtent(elementDef.x);
-        defineVerticalExtent(elementDef.y);
+        defineExtent(elementDef.x, "x", "w", "width");
+        defineExtent(elementDef.y, "y", "h", "height");
     }
 
-    void defineHorizontalExtent(ElementDimension dimensionDef) {
-        String left, width;
-        if (dimensionDef.defineUsingExtent()) {
+    void defineExtent(ElementDimension dim, String dimName, String sizeName, String attrSizeName) {
+        String start, extent;
+        if (dim.defineUsingExtent()) {
             // Use the left and right values
-            left = "function(d) { return Math.min(x0(d), x1(d)) }";
-            width = "function(d) { return Math.abs(x1(d) - x0(d)) }";
-        } else if (dimensionDef.defineUsingCenter()) {
+            String a = dimName + "1" + (dim.left.isFunc() ? "(d)" : "");
+            String b = dimName + "2" + (dim.left.isFunc() ? "(d)" : "");
+            start = GeomAttribute.makeFunction("Math.min(" + a + ", " + b + ")").toString();
+            extent = GeomAttribute.makeFunction("Math.max(1e-6, Math.abs(" + b + " - " + a + "))").toString();
+        } else if (dim.defineUsingCenter()) {
             // The width can either be a function or a numeric value
-            if (dimensionDef.size.startsWith("function"))
-                left = "function(d) { return x(d) - w(d)/2 }";
-            else
-                left = "function(d) { return x(d) - w/2 }";
-            width = "w";
+            String c = dimName + (dim.center.isFunc() ? "(d)" : "");
+            String w = sizeName + (dim.size.isFunc() ? "(d)" : "");
+            start = GeomAttribute.makeFunction(c + " - " + w + "/2").toString();
+            extent = sizeName;
         } else {
-            left = null;
-            width = dimensionDef.size;
+            start = null;
+            extent = sizeName;
         }
-        if (left != null) out.addChained("attr('x', ", left, ")");
+        if (start != null) out.addChained("attr('" + dimName + "', ", start, ")");
 
         // Sadly, browsers are inconsistent in how they handle width. It can be considered either a style or a
         // positional attribute, so we need to specify as both to make all browsers happy
-        out.addChained("attr('width', ", width, ")");
-        out.addChained("style('width', ", width, ")");
-    }
-
-    private void defineVerticalExtent(ElementDimension dimensionDef) {
-        String top, height;
-        if (dimensionDef.defineUsingExtent()) {
-            // Use the left and right values
-            top = "function(d) { return Math.min(y0(d), y1(d)) }";
-            height = "function(d) { return Math.max(0.0001, Math.abs(y1(d) - y0(d))) }";
-        } else if (dimensionDef.defineUsingCenter()) {
-            // The height can either be a function or a numeric value
-            if (dimensionDef.size.startsWith("function"))
-                top = "function(d) { return y(d) - h(d)/2 }";
-            else
-                top = "function(d) { return y(d) - h/2 }";
-            height = "h";
-        } else {
-            top = null;
-            height = dimensionDef.size;
-        }
-        out.addChained("attr('y', ", top, ")");
-        out.addChained("attr('height', ", height, ")");
+        out.addChained("attr('" + attrSizeName + "', ", extent, ")");
+        out.addChained("style('" + attrSizeName + "', ", extent, ")");
     }
 
 }

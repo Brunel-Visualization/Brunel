@@ -50,6 +50,10 @@ public class GeomAttribute {
 
     }
 
+    public String halved() {
+        return new GeomAttribute(def + " / 2", func).toString();
+    }
+
     public int hashCode() {
         int result = def.hashCode();
         result = 31 * result + (func ? 1 : 0);

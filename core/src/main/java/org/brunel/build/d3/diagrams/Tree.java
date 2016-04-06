@@ -16,7 +16,6 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
@@ -61,9 +60,8 @@ class Tree extends D3Diagram {
             out.addChained("attr('cx', function(d) { return d.x })")
                     .addChained("attr('cy', function(d) { return d.y })");
         }
-        out.addChained("attr('r', " + D3Util.defineSafeRadius(details.overallSize) + ")").endStatement();
 
-//        addLabels(details, elementDef);
+        out.addChained("attr('r', " + details.overallSize.halved() + ")").endStatement();
 
         addAestheticsAndTooltips(details, true);
 
@@ -73,7 +71,7 @@ class Tree extends D3Diagram {
         out.add("diagramExtras.attr('class', 'diagram tree edge')").endStatement();
 
         // The edges
-        out.add("var edgeGroup = diagramExtras.selectAll('path').data(treeLayout.links(d3Data))").endStatement();
+        out.add("var edgeGroup = diagramExtras.selectAll('path').data(treeLayout.links(" + details.dataSource + "))").endStatement();
         out.add("edgeGroup.enter().append('path').attr('class', 'edge')").endStatement();
         out.add("BrunelD3.trans(edgeGroup,transitionMillis)")
                 .addChained("attr('d', d3.svg.diagonal");
@@ -88,24 +86,6 @@ class Tree extends D3Diagram {
 
         addAestheticsAndTooltips(details, true);
     }
-
-//    private void addLabels(ElementDetails details, ElementDefinition elementDef) {
-//
-//        out.add("diagramLabels.attr('class', 'axis diagram tree hierarchy')").endStatement();
-//        out.add("var treeLabels = diagramLabels.selectAll('text').data(d3Data)").endStatement();
-//
-//        out.add("treeLabels.enter().append('text')")
-//                .addChained("attr('class', function(d) { return 'axis label L' + d.depth })")
-//                .addChained("style('text-anchor', 'middle')")
-//                .addChained("attr('dy', '0.85em')").endStatement();
-//
-//        out.add("var treeLabeling = {method:'bottom', fit:false, content:function(d){return d.innerNodeName} }").endStatement();
-//        out.add("BrunelD3.tween(treeLabels,transitionMillis, function(d, i) { return BrunelD3.makeLabeling(this, selection[0][i], treeLabeling, false)})");
-//        out.endStatement();
-//
-//        out.add("treeLabels.exit().remove()").endStatement();
-//
-//    }
 
     public boolean needsDiagramExtras() {
         return true;
