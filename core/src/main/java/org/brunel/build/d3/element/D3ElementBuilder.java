@@ -202,7 +202,7 @@ public class D3ElementBuilder {
             if (e.representation == ElementRepresentation.area && e.y.right == null) {
                 // Area needs to have two functions even when not defined as such -- make the second the base
                 e.y.right = e.y.center;
-                e.y.left = GeomAttribute.makeConstant("scale_y(0)");
+                e.y.left = GeomAttribute.makeConstant("scale_y.range()[0]");
                 e.y.center = null;
             }
             e.x.size = getSize(x, "geom.inner_width", ScalePurpose.x, e.x);

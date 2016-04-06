@@ -82,8 +82,8 @@ class DefineLocations {
         if (fields.length == 0) {
             // There are no fields -- we have a notional [0,1] extent, so use the center of that
             if (rep == ElementRepresentation.rect) {
-                dim.left = GeomAttribute.makeConstant(scaleName + "(0)");
-                dim.right = GeomAttribute.makeConstant(scaleName + "(1)");
+                dim.left = GeomAttribute.makeConstant(scaleName + ".range()[0]");
+                dim.right = GeomAttribute.makeConstant(scaleName + ".range()[1]");
             } else {
                 dim.center = GeomAttribute.makeConstant(scaleName + "(0.5)");
             }
@@ -142,7 +142,7 @@ class DefineLocations {
             } else if (structure.vis.tElement == VisTypes.Element.bar && dimName.equals("y")) {
                 // // Bars implicitly drop from top to zero point
                 dim.right = GeomAttribute.makeFunction(scaleName + "(" + dataFunction + ")");
-                dim.left = GeomAttribute.makeConstant(scaleName + "(0)");
+                dim.left = GeomAttribute.makeConstant(scaleName + ".range()[0]");
             } else {
                 // Nothing unusual -- just define the center
                 String def = scaleName + "(" + dataFunction + ")";
