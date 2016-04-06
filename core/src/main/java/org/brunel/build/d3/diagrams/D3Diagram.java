@@ -18,7 +18,6 @@ package org.brunel.build.d3.diagrams;
 
 import org.brunel.action.Param;
 import org.brunel.build.d3.D3LabelBuilder;
-import org.brunel.build.d3.element.PointBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
@@ -131,10 +130,6 @@ public abstract class D3Diagram {
 
         if (addLabels) labelBuilder.addElementLabeling();
 
-    }
-
-    protected void definePoint(ElementDetails details) {
-        new PointBuilder(out).defineShapeGeometry(vis, details);
     }
 
 

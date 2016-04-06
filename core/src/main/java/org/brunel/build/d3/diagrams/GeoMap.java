@@ -89,9 +89,9 @@ public class GeoMap extends D3Diagram {
 
     private final GeoMapping mapping;           // Mapping of identifiers to features
 
-    public GeoMap(VisSingle vis, Dataset data, GeoMapping mapping, ScriptWriter out) {
+    public GeoMap(VisSingle vis, Dataset data, GeoMapping geo, ScriptWriter out) {
         super(vis, data, out);
-        this.mapping = mapping;
+        this.mapping = geo;
         if (mapping == null)
             throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
     }
@@ -163,16 +163,18 @@ public class GeoMap extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details) {
-        if (vis.tElement == Element.point || vis.tElement == Element.text) {
-            out.addChained("attr('transform', function(d) { return projectTransform(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999]) } )");
-            definePoint(details);
-            out.endStatement();
-            addAestheticsAndTooltips(details, true);
-        } else {
-            // Set the given location using the transform
-            out.addChained("attr('d', path )").endStatement();
-        }
-        addAestheticsAndTooltips(details, true);
+//
+//        elementBuilder.writeCoordinateDefinition(details);
+////        if (vis.tElement == Element.point || vis.tElement == Element.text) {
+////            out.addChained("attr('transform', function(d) { return projectTransform(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999]) } )");
+////            definePoint(details);
+////            out.endStatement();
+////            addAestheticsAndTooltips(details, true);
+////        } else {
+////            // Set the given location using the transform
+////            out.addChained("attr('d', path )").endStatement();
+////        }
+//        addAestheticsAndTooltips(details, true);
     }
 
     public void writePreDefinition(ElementDetails details) {

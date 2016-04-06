@@ -21,13 +21,13 @@ import org.brunel.build.d3.D3ScaleBuilder;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.ScalePurpose;
 import org.brunel.build.d3.diagrams.D3Diagram;
+import org.brunel.build.d3.diagrams.GeoMap;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ModelUtil.Size;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 import org.brunel.model.VisTypes.Using;
@@ -84,19 +84,20 @@ public class D3ElementBuilder {
         out.add("selection.enter().append('" + details.representation.getMark() + "')");
         out.add(".attr('class', ", details.classes, ")");
 
-        if (diagram != null) diagram.writeDiagramEnter();
-        else writeCoordEnter();
-
-        // When data changes (including being added) update the items
-        // These fire for both 'enter' and 'update' data
-
-        if (diagram != null) {
-            diagram.writePreDefinition(details);
-            out.add("BrunelD3.trans(selection,transitionMillis)");
-            diagram.writeDefinition(details);
+        if (diagram == null) {
+            writeCoordEnter();
         } else {
+            diagram.writeDiagramEnter();
+            diagram.writePreDefinition(details);
+        }
+
+        out.add("BrunelD3.trans(selection,transitionMillis)");
+
+        if (diagram == null || diagram instanceof GeoMap) {
             writeCoordinateDefinition(details);
             writeCoordinateLabelingAndAesthetics(details);
+        } else {
+            diagram.writeDefinition(details);
         }
 
         writeLabelRemoval();
@@ -123,13 +124,13 @@ public class D3ElementBuilder {
         writeDimLocations(details.y, "y", "h");
 
         if (details.getRefLocation() != null) {
+            // This will be used to ensure missing references are not dispalyed with junk locations
             out.add("function validReference(r) {");
             if (details.representation == ElementRepresentation.segment)
                 out.add("return r[0][0] != null && r[0][1] != null && r[1][0] != null && r[1][1] != null");
             else
                 out.add("return r[0][0] != null && r[0][1] != null");
             out.add("}").endStatement();
-
         }
     }
 
@@ -189,13 +190,15 @@ public class D3ElementBuilder {
         if (structure.chart.geo != null) {
             // Maps with feature data do not need the geo coordinates set
             if (vis.tDiagram != Diagram.map)
-                setGeoLocations(e, x, y, keys);
+                setLocationsByProjection(e, x, y);
+            else if (e.representation != ElementRepresentation.geoFeature)
+                setLocationsByGeoPropertiesCenter(e);
             // Just use the default point size
             e.x.size = getSize(new Field[0], "geom.default_point_size", null, e.x);
             e.y.size = getSize(new Field[0], "geom.default_point_size", null, e.x);
         } else {
-            DefineLocations.setLocations(e.representation, structure, e.x, "x", x, keys, structure.chart.coordinates.xCategorical);
-            DefineLocations.setLocations(e.representation, structure, e.y, "y", y, keys, structure.chart.coordinates.yCategorical);
+            DefineLocations.setLocations(e.representation, structure, e.x, "x", x, structure.chart.coordinates.xCategorical);
+            DefineLocations.setLocations(e.representation, structure, e.y, "y", y, structure.chart.coordinates.yCategorical);
             if (e.representation == ElementRepresentation.area && e.y.right == null) {
                 // Area needs to have two functions even when not defined as such -- make the second the base
                 e.y.right = e.y.center;
@@ -276,12 +279,9 @@ public class D3ElementBuilder {
 
     private void writeCoordinateDefinition(ElementDetails details) {
 
-        // This starts the transition or update going
-        out.add("BrunelD3.trans(selection,transitionMillis)");
-
         // If we need reference locations, write them in first
         if (details.getRefLocation() != null) {
-            out.addChained("each(function(d) { this.e = " + details.getRefLocation().definition() + "})");
+            out.addChained("each(function(d) { this.r = " + details.getRefLocation().definition() + "})");
             out.addChained("style('visibility', function() { return validReference(this.e) ? 'visible' : 'hidden'})");
         }
 
@@ -289,16 +289,16 @@ public class D3ElementBuilder {
             out.addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
         else if (details.isDrawnAsPath())
             out.addChained("attr('d', path)");                              // Simple path -- just util it
-        else {
-            if (vis.tElement == Element.bar)
-                defineBar(details);
-            else if (vis.tElement == Element.edge)
-                defineEdge();
-            else {
-                // Handles points (as circles, rects, etc.) and text
-                new PointBuilder(out).defineShapeGeometry(vis, details);
-            }
-        }
+        else if (details.representation == ElementRepresentation.rect)
+            defineBar(details);
+        else if (details.representation == ElementRepresentation.segment) {
+            out.addChained("attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)");
+        } else if (details.representation == ElementRepresentation.text)
+            defineText(details, vis);
+        else if (details.representation == ElementRepresentation.pointLikeCircle
+                || details.representation == ElementRepresentation.spaceFillingCircle
+                || details.representation == ElementRepresentation.largeCircle)
+            defineCircle(details);
     }
 
     private void writeCoordinateLabelingAndAesthetics(ElementDetails details) {
@@ -325,6 +325,21 @@ public class D3ElementBuilder {
 
     }
 
+    private void defineText(ElementDetails elementDef, VisSingle vis) {
+        // If the center is not defined, this has been placed using a translation transform
+        if (elementDef.x.center != null) out.addChained("attr('x'," + elementDef.x.center + ")");
+        if (elementDef.y.center != null) out.addChained("attr('y'," + elementDef.y.center + ")");
+        out.addChained("attr('dy', '0.35em').text(labeling.content)");
+        D3LabelBuilder.addFontSizeAttribute(vis, out);
+    }
+
+    private void defineCircle(ElementDetails elementDef) {
+        // If the center is not defined, this has been placed using a translation transform
+        if (elementDef.x.center != null) out.addChained("attr('cx'," + elementDef.x.center + ")");
+        if (elementDef.y.center != null) out.addChained("attr('cy'," + elementDef.y.center + ")");
+        out.addChained("attr('r'," + elementDef.overallSize.halved() + ")");
+    }
+
     private String getSymbol() {
         String result = ModelUtil.getElementSymbol(vis);
         if (result != null) return result;
@@ -333,7 +348,7 @@ public class D3ElementBuilder {
         return cat ? "rect" : "point";
     }
 
-    private void setGeoLocations(ElementDetails def, Field[] x, Field[] y, Field[] keys) {
+    private void setLocationsByProjection(ElementDetails def, Field[] x, Field[] y) {
 
         int n = x.length;
         if (y.length != n)
@@ -373,7 +388,13 @@ public class D3ElementBuilder {
             def.y.left = GeomAttribute.makeFunction("proj([" + xLow + "," + yLow + "])[1]");
             def.y.right = GeomAttribute.makeFunction("proj([" + xHigh + "," + yHigh + "])[1]");
         }
+    }
 
+    private void setLocationsByGeoPropertiesCenter(ElementDetails e) {
+        // We use the embedded centers in the geo properties to place the items
+        // TODO: make this better ...
+        e.x.center = GeomAttribute.makeFunction("proj(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999])[0]");
+        e.y.center = GeomAttribute.makeFunction("proj(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999])[1]");
     }
 
     private GeomAttribute getSize(Field[] fields, String extent, ScalePurpose purpose, ElementDimension dim) {
@@ -491,23 +512,34 @@ public class D3ElementBuilder {
     }
 
     private void defineBar(ElementDetails details) {
-        if (vis.fRange != null || vis.stacked) {
-            out.addChained("attr('y', function(d) { return Math.min(y1(d), y2(d)) } )");
-            out.addChained("attr('height', function(d) {return Math.max(0.001, Math.abs(y1(d) - y2(d))) })");
+        // Rectangles must have extents > 0 to display, so we need to write that code in
+        out.addChained("each(function(d) {").indentMore().indentMore().onNewLine();
+        if (details.x.defineUsingExtent()) {
+            out.add("var a =", details.x.left.call("x1"), ", b =", details.x.right.call("x2"),
+                    ", left = Math.min(a,b), width = Math.max(1e-6, Math.abs(a-b)), ");
         } else {
-            if (vis.coords == Coordinates.transposed) {
-                out.addChained("attr('y', 0)")
-                        .addChained("attr('height', function(d) { return Math.max(0,y(d)) })");
-            } else {
-                out.addChained("attr('y', y)")
-                        .addChained("attr('height', function(d) {return Math.max(0,geom.inner_height - y(d)) }) ");
-            }
+            out.add("var width =", details.x.size.call("w"), ", left =",
+                    details.x.center.call("x"), "- width/2, ");
         }
-        new PointBuilder(out).defineExtent(details.x, "x", "w", "width");
-    }
+        out.onNewLine();
+        if (details.y.defineUsingExtent()) {
+            out.add("c =", details.y.left.call("y1"), ", d =", details.y.right.call("y2"),
+                    ", top = Math.min(c,d), height = Math.max(1e-6, Math.abs(c-d))").endStatement();
+        } else {
+            out.add("height =", details.y.size.call("h"), ", top =",
+                    details.y.center.call("y"), "- height/2").endStatement();
+        }
+        out.onNewLine().add("this.r = [left,top,width,height]").endStatement().indentLess()
+                .onNewLine().add("})").indentLess();
 
-    private void defineEdge() {
-        out.addChained("attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)");
+        // Sadly, browsers are inconsistent in how they handle width. It can be considered either a style or a
+        // positional attribute, so we need to specify as both to make all browsers happy
+        out.addChained("attr('x', function(d) { return this.r[0] })")
+                .addChained("attr('y', function(d) { return this.r[1] })")
+                .addChained("attr('width', function(d) { return this.r[2] })")
+                .addChained("attr('height', function(d) { return this.r[3] })")
+                .addChained("style('width', function(d) { return this.r[2] })")
+                .addChained("style('height', function(d) { return this.r[3] })");
     }
 
     private boolean allShowExtent(Field[] fields) {

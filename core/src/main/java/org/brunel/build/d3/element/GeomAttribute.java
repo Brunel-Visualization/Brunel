@@ -60,6 +60,10 @@ public class GeomAttribute {
         return result;
     }
 
+    public String call(String functionName) {
+        return isFunc() ? functionName + "(d)" : functionName;
+    }
+
     public String definition() {
         return def;
     }

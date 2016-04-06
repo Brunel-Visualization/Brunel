@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -125,14 +125,14 @@ public class VisSingle extends VisItem implements Cloneable {
     public void axes(Param... options) {
         for (Param p : options) {
             if (p == null) return;
-            if (fAxes.isEmpty()) fAxes = new HashMap<>();
+            if (fAxes.isEmpty()) fAxes = new LinkedHashMap<>();
             Axes t = Axes.valueOf(p.asString());
             fAxes.put(t, p.modifiers());
         }
     }
 
     public void transform(String type, Param[] fieldNames) {
-        if (fTransform.isEmpty()) fTransform = new HashMap<>();
+        if (fTransform.isEmpty()) fTransform = new LinkedHashMap<>();
         for (Param param : fieldNames)
             fTransform.put(param, type);
     }
@@ -199,7 +199,7 @@ public class VisSingle extends VisItem implements Cloneable {
      * @return this object, for chaining calls
      */
     public void interaction(Param... types) {
-        if (tInteraction.isEmpty()) tInteraction = new HashMap<>();
+        if (tInteraction.isEmpty()) tInteraction = new LinkedHashMap<>();
         for (Param a : types) {
             Interaction option = Interaction.valueOf(a.asString());
             if (option == Interaction.auto || option == Interaction.none) tInteraction.clear();
@@ -588,7 +588,7 @@ public class VisSingle extends VisItem implements Cloneable {
         }
 
         // Build the final list from the original list, replacing '#all' with the nonAllItems
-        Map<Param, String> result = new HashMap<>();
+        Map<Param, String> result = new LinkedHashMap<>();
         for (Entry<Param, String> o : items.entrySet()) {
             Param p = o.getKey();
             String value = o.getValue();
@@ -639,7 +639,7 @@ public class VisSingle extends VisItem implements Cloneable {
     }
 
     public void summarize(String method, Param... fieldNames) {
-        if (fSummarize.isEmpty()) fSummarize = new HashMap<>();
+        if (fSummarize.isEmpty()) fSummarize = new LinkedHashMap<>();
         for (Param fieldName : fieldNames)
             fSummarize.put(fieldName, method);
     }

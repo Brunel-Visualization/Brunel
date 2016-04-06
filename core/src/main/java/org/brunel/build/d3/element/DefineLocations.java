@@ -19,6 +19,7 @@ package org.brunel.build.d3.element;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.data.Field;
+import org.brunel.model.VisTypes;
 
 /**
  * This class builds the information needed to build locations for the shapes
@@ -55,17 +56,17 @@ class DefineLocations {
 
         if (details.representation == ElementRepresentation.segment) {
             // Need four coordinates
-            details.x.left = GeomAttribute.makeFunction(geo ? "this.e[0][0]" : "scale_x(this.e[0][0])");
-            details.x.right = GeomAttribute.makeFunction(geo ? "this.e[1][0]" : "scale_x(this.e[1][0])");
-            details.y.left = GeomAttribute.makeFunction(geo ? "this.e[0][1]" : "scale_y(this.e[0][1])");
-            details.y.right = GeomAttribute.makeFunction(geo ? "this.e[1][1]" : "scale_y(this.e[1][1])");
+            details.x.left = GeomAttribute.makeFunction(geo ? "this.r[0][0]" : "scale_x(this.r[0][0])");
+            details.x.right = GeomAttribute.makeFunction(geo ? "this.r[1][0]" : "scale_x(this.r[1][0])");
+            details.y.left = GeomAttribute.makeFunction(geo ? "this.r[0][1]" : "scale_y(this.r[0][1])");
+            details.y.right = GeomAttribute.makeFunction(geo ? "this.r[1][1]" : "scale_y(this.r[1][1])");
         } else {
-            details.x.center = GeomAttribute.makeFunction(geo ? "this.e[0][0]" : "scale_x(this.e[0][0])");
-            details.y.center = GeomAttribute.makeFunction(geo ? "this.e[0][1]" : "scale_y(this.e[0][1])");
+            details.x.center = GeomAttribute.makeFunction(geo ? "this.r[0][0]" : "scale_x(this.r[0][0])");
+            details.y.center = GeomAttribute.makeFunction(geo ? "this.r[0][1]" : "scale_y(this.r[0][1])");
         }
     }
 
-    static void setLocations(ElementRepresentation rep, ElementStructure structure, ElementDimension dim, String dimName, Field[] fields, Field[] keys, boolean categorical) {
+    static void setLocations(ElementRepresentation rep, ElementStructure structure, ElementDimension dim, String dimName, Field[] fields, boolean categorical) {
         String scaleName = "scale_" + dimName;
 
         if (structure.isGraphEdge()) {
@@ -135,6 +136,10 @@ class DefineLocations {
                 String def = scaleName + "(" + dataFunction + ".mid)";
                 if (cluster != null) def += addClusterMultiplier(cluster);
                 dim.center = GeomAttribute.makeFunction(def);
+            } else if (structure.vis.tElement == VisTypes.Element.bar && dimName.equals("y")) {
+                // // Bars implicitly drop from top to zero point
+                dim.right = GeomAttribute.makeFunction(scaleName + "(" + dataFunction + ")");
+                dim.left = GeomAttribute.makeConstant(scaleName + "(0)");
             } else {
                 // Nothing unusual -- just define the center
                 String def = scaleName + "(" + dataFunction + ")";
