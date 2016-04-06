@@ -106,8 +106,13 @@ task brunelSyntaxDoc(type: Copy) {
 }
 
 
+task brunelGeoFiles(type: Copy) {
+    from project(':core').file('etc/geo files 1.1.zip')
+    into 'out'
+}
+
 task build(dependsOn: [project(':core').brunelJar, project(':etc').brunelJar, project(':data').brunelJar,
-                       project(':service').brunelJar, 'spark-kernel:uploadArchives', brunelJS, brunelJavadoc, brunelSyntaxDoc]) {
+                       project(':service').brunelJar, 'spark-kernel:uploadArchives', brunelJS, brunelJavadoc, brunelSyntaxDoc, brunelGeoFiles ]) {
 }
 
 task makeMinified(type: JavaExec, dependsOn: build) {
