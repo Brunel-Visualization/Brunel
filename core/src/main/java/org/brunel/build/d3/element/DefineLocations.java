@@ -91,7 +91,10 @@ class DefineLocations {
         }
 
         Field main = fields[0];
-        boolean numericBins = main.isBinned() && !categorical;
+        boolean useRangesFromBins = main.isBinned() && !categorical;
+
+        // For the x axis, only rectangles use the ranges
+        if (dimName.equals("x") && rep != ElementRepresentation.rect) useRangesFromBins = false;
 
         if (defineForTwoFields(rep, dimName, fields)) {
             // The dimension contains two fields: a range
@@ -112,7 +115,7 @@ class DefineLocations {
 
             String dataFunction = D3Util.writeCall(main);          // A call to that field using the datum 'd'
 
-            if (numericBins) {
+            if (useRangesFromBins) {
                 // A Binned value on a non-categorical axes
                 if (cluster == null) {
                     dim.center = GeomAttribute.makeFunction(scaleName + "(" + dataFunction + ".mid)");
