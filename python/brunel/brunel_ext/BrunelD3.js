@@ -543,7 +543,10 @@ var BrunelD3 = (function () {
 
     // Parameters are: a D3 selection target, labeling info struct
     function makeTooltip(d3Target, labeling) {
-        var svg = d3Target.node().ownerSVGElement,                          // Owning SVG
+        var node = d3Target.node();
+        if (!node) return;
+
+        var svg = node.ownerSVGElement,                          // Owning SVG
             w = +svg.attributes.width.value, h = +svg.attributes.height.value,  // width and height
             pt = svg.createSVGPoint();                                      // For matrix calculations
 
