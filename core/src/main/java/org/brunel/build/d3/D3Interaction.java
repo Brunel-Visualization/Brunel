@@ -17,12 +17,13 @@
 package org.brunel.build.d3;
 
 import org.brunel.action.Param;
-import org.brunel.build.chart.ChartStructure;
-import org.brunel.build.element.ElementStructure;
+import org.brunel.build.info.ChartStructure;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Coordinates;
+import org.brunel.model.VisTypes.Interaction;
 
 /**
  * sc
@@ -51,15 +52,15 @@ public class D3Interaction {
         // Check for things that just will not work currently
         if (structure.coordinates.xCategorical && structure.coordinates.yCategorical)
             return false;  // Only zoom numerical
-        if (structure.diagram != null || scales.coords == VisTypes.Coordinates.polar) return false;  // Doesn't work
+        if (structure.diagram != null || scales.coords == Coordinates.polar) return false;  // Doesn't work
 
         // If anything says we want it, we get it
         // Otherwise, if anything says we do not, we do not
         // Otherwise, we get it
         boolean defaultResult = true;
         for (ElementStructure e : elements) {
-            if (e.vis.tInteraction.containsKey(VisTypes.Interaction.panzoom)) return true;
-            if (e.vis.tInteraction.containsKey(VisTypes.Interaction.none)) defaultResult = false;
+            if (e.vis.tInteraction.containsKey(Interaction.panzoom)) return true;
+            if (e.vis.tInteraction.containsKey(Interaction.none)) defaultResult = false;
         }
         return defaultResult;
     }
@@ -69,17 +70,17 @@ public class D3Interaction {
      */
     public void addElementHandlers(VisSingle vis) {
         if (isSelectable(vis)) {
-            Param p = vis.tInteraction.get(VisTypes.Interaction.select);
+            Param p = vis.tInteraction.get(Interaction.select);
             String type = "click";
             if (p.hasModifiers()) type = p.firstModifier().asString();
-            out.add("selection.on('" + type + "', function(d) { BrunelD3.select(data.$row(d), original, this, updateAll) } )").endStatement();
+            out.add("selection.on('" + type + "', function(d) { BrunelD3.select(d.row, processed, original, this, updateAll) } )").endStatement();
 
         }
     }
 
     private static boolean isSelectable(VisSingle vis) {
         // Only if explicitly requested
-        return vis.tInteraction.containsKey(VisTypes.Interaction.select);
+        return vis.tInteraction.containsKey(Interaction.select);
     }
 
     /**
@@ -106,7 +107,7 @@ public class D3Interaction {
     public void addScaleInteractivity() {
         if (!zoomable) return;
         out.add("zoom");
-        if (scales.coords == VisTypes.Coordinates.transposed) {
+        if (scales.coords == Coordinates.transposed) {
             // Attach x to y and y to x
             if (!structure.coordinates.xCategorical) out.add(".y(scale_x)");
             if (!structure.coordinates.yCategorical) out.add(".x(scale_y)");

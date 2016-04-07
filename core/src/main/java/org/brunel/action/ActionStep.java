@@ -21,6 +21,8 @@ import org.brunel.data.Data;
 import org.brunel.model.VisException;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Diagram;
+import org.brunel.model.VisTypes.Element;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -147,12 +149,12 @@ public class ActionStep {
                 return item;
             }
 
-            for (VisTypes.Element t : VisTypes.Element.values())
+            for (Element t : Element.values())
                 if (t.name().equals(name)) {
                     item.element(t);
                     return item;
                 }
-            for (VisTypes.Diagram t : VisTypes.Diagram.values())
+            for (Diagram t : Diagram.values())
                 if (t.name().equals(name)) {
                     item.diagram(t, parameters);
                     return item;

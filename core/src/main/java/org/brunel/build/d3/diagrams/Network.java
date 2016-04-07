@@ -16,9 +16,9 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.element.ElementDefinition;
-import org.brunel.build.element.ElementDetails;
-import org.brunel.build.element.ElementStructure;
+import org.brunel.build.d3.element.ElementDetails;
+import org.brunel.build.d3.element.ElementRepresentation;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
@@ -78,7 +78,7 @@ class Network extends D3Diagram {
         out.ln();
         makeLayout();
         out.ln();
-        return ElementDetails.makeForDiagram(vis, "graph.nodes", "circle", "point", "box", false);
+        return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "graph.nodes");
     }
 
     private void makeLayout() {
@@ -88,8 +88,8 @@ class Network extends D3Diagram {
                 .ln();
     }
 
-    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
-        out.addChained("attr('r',", elementDef.overallSize, ")").endStatement();
+    public void writeDefinition(ElementDetails details) {
+        out.addChained("attr('r',", details.overallSize, ")").endStatement();
         addAestheticsAndTooltips(details, true);
     }
 

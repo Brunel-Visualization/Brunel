@@ -18,12 +18,9 @@ package org.brunel.data.diagram;
 
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
-import org.brunel.data.modify.Filter;
 import org.brunel.data.io.CSV;
 import org.junit.Assert;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class TestHierarchical {
 
@@ -38,29 +35,29 @@ public class TestHierarchical {
 
     private static final Dataset simple = Dataset.make(CSV.read(csv));
 
-    @Test
-    public void testPreservesKeys() {
-        Dataset trimmed = Filter.transform(simple, "A !is a");
-        Node data = Hierarchical.makeByNestingFields(trimmed, null, "A").root;
-        Assert.assertEquals("((0-1) (1-1 2-1 3-1))", dumpTree(data));
-
-        assertEquals("", data.key);                 // top level has unknown key
-
-        Node[] children = (Node[]) data.children;           // the top level children (b and c groups)
-        assertEquals(2, children.length);
-        assertEquals("-b", children[0].key);
-        assertEquals("-c", children[1].key);
-
-        Node[] group_b = (Node[]) children[0].children;     // 'b' group
-        assertEquals(1, group_b.length);
-        assertEquals(2, group_b[0].key);                  // 'b' item has index 2 in the original data
-
-        Node[] group_c = (Node[]) children[1].children;     // 'c' group
-        assertEquals(3, group_c.length);
-        assertEquals(3, group_c[0].key);
-        assertEquals(4, group_c[1].key);
-        assertEquals(5, group_c[2].key);
-    }
+//    @Test
+//    public void testPreservesKeys() {
+//        Dataset trimmed = Filter.transform(simple, "A !is a");
+//        Node data = Hierarchical.makeByNestingFields(trimmed, null, "A").root;
+//        Assert.assertEquals("((0-1) (1-1 2-1 3-1))", dumpTree(data));
+//
+//        assertEquals("", data.key);                 // top level has unknown key
+//
+//        Node[] children = (Node[]) data.children;           // the top level children (b and c groups)
+//        assertEquals(2, children.length);
+//        assertEquals("-b", children[0].key);
+//        assertEquals("-c", children[1].key);
+//
+//        Node[] group_b = (Node[]) children[0].children;     // 'b' group
+//        assertEquals(1, group_b.length);
+//        assertEquals(2, group_b[0].key);                  // 'b' item has index 2 in the original data
+//
+//        Node[] group_c = (Node[]) children[1].children;     // 'c' group
+//        assertEquals(3, group_c.length);
+//        assertEquals(3, group_c[0].key);
+//        assertEquals(4, group_c[1].key);
+//        assertEquals(5, group_c[2].key);
+//    }
 
 
     @Test
@@ -76,15 +73,6 @@ public class TestHierarchical {
     public void testTwoLevels() {
         Node data = Hierarchical.makeByNestingFields(simple, "D", "A", "B").root;
         Assert.assertEquals("(((0-4)) ((1-3)) ((2-2 4-1) (3-1)))", dumpTree(data));
-
-        Node level1Inner = ((Node[]) data.children)[0];
-        Node level2Inner = ((Node[]) level1Inner.children)[0];
-        Node leaf = ((Node[]) level2Inner.children)[0];
-
-        assertEquals("", data.key);
-        assertEquals("-a", level1Inner.key);
-        assertEquals("-a-x", level2Inner.key);
-        assertEquals(1, leaf.key);
     }
 
     @Test

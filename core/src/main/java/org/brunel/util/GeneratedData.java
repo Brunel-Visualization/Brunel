@@ -16,9 +16,9 @@
 
 package org.brunel.util;
 
-import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 
 /**
  * Simple class so we can generate data sets simply
@@ -40,7 +40,7 @@ public class GeneratedData {
                 else if (what.equals("random")) data[r] = Math.random();
                 else data[i] = what;
             }
-            fields[i] = Data.makeColumnField("" + (char) ('a' + i), "" + (char) ('A' + i), data);
+            fields[i] = Fields.makeColumnField("" + (char) ('a' + i), "" + (char) ('A' + i), data);
         }
         return Dataset.make(fields);
     }

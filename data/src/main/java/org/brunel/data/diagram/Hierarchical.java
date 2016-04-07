@@ -35,11 +35,6 @@ public class Hierarchical {
         return new Hierarchical(data, sizeField, fields);
     }
 
-    public static int compare(Node a, Node b) {
-        int d = a.row - b.row;
-        return d != 0 ? d : Data.compare(a.key, b.key);
-    }
-
     public final Node root;
 
     private Hierarchical(Dataset data, String sizeFieldName, String[] fieldNames) {
@@ -47,7 +42,7 @@ public class Hierarchical {
         Field[] fields = toFields(data, fieldNames);
         root = makeInternalNode("");
         makeNodesUsingCollections(data, size, fields);
-        replaceCollections(data.field("#row"), root, null);
+        replaceCollections(root, null);
     }
 
     private Node makeInternalNode(String label) {
@@ -80,17 +75,14 @@ public class Hierarchical {
     }
 
     @SuppressWarnings("unchecked")
-    private void replaceCollections(Field dataRowField, Node current, Object parentKey) {
+    private void replaceCollections(Node current, Object parentKey) {
         List<Node> array = ((List<Node>) current.children);
-        if (array == null) {
-            // Leaf node
-            current.key = dataRowField.value(current.row);
-        } else {
+        if (array != null) {
             // Internal node
             current.children = array.toArray(new Node[array.size()]);
             current.temp = null;
             current.key = parentKey == null ? current.innerNodeName : parentKey + "-" + current.innerNodeName;
-            for (Node child : array) replaceCollections(dataRowField, child, current.key);
+            for (Node child : array) replaceCollections(child, current.key);
         }
     }
 

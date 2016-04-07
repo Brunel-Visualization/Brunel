@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import absolute_import
 from __future__ import print_function
 from IPython.core.magic import Magics, magics_class, line_magic, cell_magic, line_cell_magic
 import pandas as pd

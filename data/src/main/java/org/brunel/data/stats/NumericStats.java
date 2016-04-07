@@ -26,11 +26,11 @@ import java.util.List;
 
 public class NumericStats {
 
-    public static boolean populate(Field f) {
+    public static void populate(Field f) {
         int n = f.rowCount();
 
         // Extract valid numeric data
-        List<Double> valid = new ArrayList<Double>();
+        List<Double> valid = new ArrayList<>();
         for (int i = 0; i < n; i++) {
             Object item = f.value(i);
             if (item != null) {
@@ -51,7 +51,7 @@ public class NumericStats {
         f.set("validNumeric", n);
 
         // No numeric data -- give up and go home
-        if (n == 0) return false;
+        if (n == 0) return;
 
         // Calculate the moments, used for standard statistics
         double m1 = moment(data, 0, 1, n);
@@ -89,7 +89,6 @@ public class NumericStats {
             if (d > 0) minD = Math.min(minD, d);
         }
         f.set("granularity", minD);
-        return true;
     }
 
     /*

@@ -79,7 +79,7 @@ public class Dates {
                 new SimpleDateFormat("yyyy")                // years
         };
 
-        dateFormats = new LinkedList<SimpleDateFormat>();
+        dateFormats = new LinkedList<>();
         dateFormats.add(new SimpleDateFormat("y-M-d'T'H:m:s.SSS", Locale.US));
         dateFormats.add(new SimpleDateFormat("y-M-d'T'H:m:s", Locale.US));
         dateFormats.add(new SimpleDateFormat("y-M-d'T'H:m", Locale.US));

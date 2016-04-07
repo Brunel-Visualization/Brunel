@@ -20,6 +20,13 @@ import org.brunel.action.Param;
 import org.brunel.build.util.DataCache;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.model.VisTypes.Axes;
+import org.brunel.model.VisTypes.Coordinates;
+import org.brunel.model.VisTypes.Diagram;
+import org.brunel.model.VisTypes.Element;
+import org.brunel.model.VisTypes.Interaction;
+import org.brunel.model.VisTypes.Legends;
+import org.brunel.model.VisTypes.Using;
 import org.brunel.model.style.StyleFactory;
 import org.brunel.model.style.StyleSheet;
 
@@ -27,10 +34,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 /* A single item -- an "element" in grammar terms */
@@ -38,7 +46,7 @@ public class VisSingle extends VisItem implements Cloneable {
 
     public StyleSheet styles;              // Specific styles for this vis (null is the default)
     public Param[] bounds;                 // If defined, bounds
-    public VisTypes.Coordinates coords;    // Coordinate util
+    public Coordinates coords;    // Coordinate util
     public List<Param> fColor, fSize, fOpacity;  // Aesthetics
     public List<Param> fFilter;            // Fields for filtering
     public List<Param> fSort;              // Fields used to sort the data
@@ -51,18 +59,18 @@ public class VisSingle extends VisItem implements Cloneable {
     public List<Param> itemsLabel;         // Items to concatenate as the labels
     public List<Param> itemsTooltip;       // Items to use as tooltips
     public boolean stacked;                // If true, stack the shapes
-    public VisTypes.Using tUsing;          // Any element modifications?
-    public VisTypes.Diagram tDiagram;      // If defined, the layout to use instead of dimensions and axes
+    public Using tUsing;          // Any element modifications?
+    public Diagram tDiagram;      // If defined, the layout to use instead of dimensions and axes
     public Param[] tDiagramParameters;     // If defined diagram parameters
-    public VisTypes.Element tElement;      // Element util (bar, line, point, ...)
-    public VisTypes.Legends tLegends;      // Which legends to display (when aesthetic present)
+    public Element tElement;      // Element util (bar, line, point, ...)
+    public Legends tLegends;      // Which legends to display (when aesthetic present)
     public boolean flipX;
     public boolean flipY;                  // reverse the X or y scale
     public List<Param> fKeys;              // Fields used as fKeys
     public Param fData;                    // Data sets used
 
-    public Map<VisTypes.Axes, Param[]> fAxes;               // Axes mapped to their parameters
-    public Map<VisTypes.Interaction, Param> tInteraction;   // Which interactive features to support (with maps to options)
+    public Map<Axes, Param[]> fAxes;               // Axes mapped to their parameters
+    public Map<Interaction, Param> tInteraction;   // Which interactive features to support (with maps to options)
 
     private Dataset dataset;                // Dataset in which dataset fields are to be found (may be null)
     private String[] used;                  // Data that is used in the vis (does not include filters)
@@ -82,10 +90,10 @@ public class VisSingle extends VisItem implements Cloneable {
     @SuppressWarnings("unchecked")
     public VisSingle(Dataset base) {
         this.dataset = base;
-        coords = VisTypes.Coordinates.regular;
-        coords = VisTypes.Coordinates.regular;
-        tUsing = VisTypes.Using.none;
-        tLegends = VisTypes.Legends.auto;
+        coords = Coordinates.regular;
+        coords = Coordinates.regular;
+        tUsing = Using.none;
+        tLegends = Legends.auto;
         tInteraction = Collections.EMPTY_MAP;
         fAxes = Collections.EMPTY_MAP;
 
@@ -110,26 +118,23 @@ public class VisSingle extends VisItem implements Cloneable {
         return aesthetics;
     }
 
-    public VisSingle at(Param... locations) {
+    public void at(Param... locations) {
         bounds = locations;
-        return this;
     }
 
-    public VisSingle axes(Param... options) {
+    public void axes(Param... options) {
         for (Param p : options) {
-            if (p == null) return this;
-            if (fAxes.isEmpty()) fAxes = new HashMap<VisTypes.Axes, Param[]>();
-            VisTypes.Axes t = VisTypes.Axes.valueOf(p.asString());
+            if (p == null) return;
+            if (fAxes.isEmpty()) fAxes = new LinkedHashMap<>();
+            Axes t = Axes.valueOf(p.asString());
             fAxes.put(t, p.modifiers());
         }
-        return this;
     }
 
-    public VisSingle transform(String type, Param[] fieldNames) {
-        if (fTransform.isEmpty()) fTransform = new HashMap<Param, String>();
+    public void transform(String type, Param[] fieldNames) {
+        if (fTransform.isEmpty()) fTransform = new LinkedHashMap<>();
         for (Param param : fieldNames)
             fTransform.put(param, type);
-        return this;
     }
 
     public Dataset getDataset() {
@@ -146,21 +151,18 @@ public class VisSingle extends VisItem implements Cloneable {
         return dataset;
     }
 
-    public VisSingle color(Param... fieldNames) {
-        if (fColor.isEmpty()) fColor = new ArrayList<Param>(fieldNames.length);
+    public void color(Param... fieldNames) {
+        if (fColor.isEmpty()) fColor = new ArrayList<>(fieldNames.length);
         Collections.addAll(fColor, fieldNames);
-        return this;
     }
 
-    public VisSingle diagram(VisTypes.Diagram type, Param[] parameters) {
+    public void diagram(Diagram type, Param[] parameters) {
         tDiagram = type;
         tDiagramParameters = parameters;
-        return this;
     }
 
-    public VisSingle element(VisTypes.Element e) {
+    public void element(Element e) {
         tElement = e;
-        return this;
     }
 
     /**
@@ -169,27 +171,23 @@ public class VisSingle extends VisItem implements Cloneable {
      * @param dataReference defines the data to read
      * @return this
      */
-    public VisSingle data(Param dataReference) {
+    public void data(Param dataReference) {
         // Replaces all previous data statements
         dataset = null;
         fData = dataReference;
-        return this;
     }
 
-    public VisSingle filter(Param... fieldNames) {
-        if (fFilter.isEmpty()) fFilter = new ArrayList<Param>(fieldNames.length);
+    public void filter(Param... fieldNames) {
+        if (fFilter.isEmpty()) fFilter = new ArrayList<>(fieldNames.length);
         Collections.addAll(fFilter, fieldNames);
-        return this;
     }
 
-    public VisSingle flip() {
+    public void flip() {
         this.flipY = !flipY;
-        return this;
     }
 
-    public VisSingle flipx() {
+    public void flipx() {
         this.flipX = !flipX;
-        return this;
     }
 
     /**
@@ -200,32 +198,28 @@ public class VisSingle extends VisItem implements Cloneable {
      * @param types options to set
      * @return this object, for chaining calls
      */
-    public VisSingle interaction(Param... types) {
-        if (tInteraction.isEmpty()) tInteraction = new HashMap<VisTypes.Interaction, Param>();
+    public void interaction(Param... types) {
+        if (tInteraction.isEmpty()) tInteraction = new LinkedHashMap<>();
         for (Param a : types) {
-            VisTypes.Interaction option = VisTypes.Interaction.valueOf(a.asString());
-            if (option == VisTypes.Interaction.auto || option == VisTypes.Interaction.none) tInteraction.clear();
+            Interaction option = Interaction.valueOf(a.asString());
+            if (option == Interaction.auto || option == Interaction.none) tInteraction.clear();
             tInteraction.put(option, a);
         }
 
-        return this;
     }
 
-    public VisSingle key(Param... fieldNames) {
-        if (fKeys.isEmpty()) fKeys = new ArrayList<Param>(fieldNames.length);
+    public void key(Param... fieldNames) {
+        if (fKeys.isEmpty()) fKeys = new ArrayList<>(fieldNames.length);
         Collections.addAll(fKeys, fieldNames);
-        return this;
     }
 
-    public VisSingle label(Param... items) {
-        if (itemsLabel.isEmpty()) itemsLabel = new ArrayList<Param>();
+    public void label(Param... items) {
+        if (itemsLabel.isEmpty()) itemsLabel = new ArrayList<>();
         Collections.addAll(itemsLabel, items);
-        return this;
     }
 
-    public VisSingle legends(Param type) {
-        if (type != null) tLegends = VisTypes.Legends.valueOf(type.asString());
-        return this;
+    public void legends(Param type) {
+        if (type != null) tLegends = Legends.valueOf(type.asString());
     }
 
     public VisSingle getSingle() {
@@ -237,9 +231,9 @@ public class VisSingle extends VisItem implements Cloneable {
     }
 
     public String validate() {
-        final boolean elementNeeds2Fields = tElement == VisTypes.Element.area || tElement == VisTypes.Element.line;
-        final boolean diagramNeeds2Fields = tDiagram == VisTypes.Diagram.chord;
-        final int fields = fX.size() + fY.size() + (fRange == null ? 0 : 1);
+        boolean elementNeeds2Fields = tElement == Element.area || tElement == Element.line;
+        boolean diagramNeeds2Fields = tDiagram == Diagram.chord;
+        int fields = fX.size() + fY.size() + (fRange == null ? 0 : 1);
         String error = null;
         if (elementNeeds2Fields && fields < 2)
             error = addError(null, "Element used requires two fields");
@@ -254,25 +248,25 @@ public class VisSingle extends VisItem implements Cloneable {
         if (tDiagram != null && stacked) error = addError(error, "diagrams cannot be stacked");
 
         Dataset dataset = getDataset();
-        if (fX.size() > 1 && tElement != VisTypes.Element.edge) {
+        if (fX.size() > 1 && tElement != Element.edge) {
             Field x = dataset.field(fX.get(0).asField(dataset));
             if (!x.preferCategorical()) {
                 boolean isBinned = false;
-                for (Map.Entry<Param, String> e : fTransform.entrySet())
+                for (Entry<Param, String> e : fTransform.entrySet())
                     if (e.getValue().equals("bin") && e.getKey().asField(dataset).equals(x.name)) isBinned = true;
                 if (!isBinned)
                     error = addError(error, "when using multiple x fields, the first must be categorical or binned");
             }
         }
 
-        if (fY.size() < 2 && tDiagram != VisTypes.Diagram.network && containsSeriesField(usedFields(false)))
+        if (fY.size() < 2 && tDiagram != Diagram.network && containsSeriesField(usedFields(false)))
             error = addError(error, "#series and #values can only be used when there are multiple Y fields");
 
         // Handle cases where the range is defined
         if (fRange != null) {
             Field fY1 = dataset.field(fRange[0].asField(dataset));
             Field fY2 = dataset.field(fRange[1].asField(dataset));
-            if (tElement == VisTypes.Element.path || tElement == VisTypes.Element.point || tElement == VisTypes.Element.polygon || tElement == VisTypes.Element.text)
+            if (tElement == Element.path || tElement == Element.point || tElement == Element.polygon || tElement == Element.text)
                 error = addError(error, "Element '" + tElement + "' should not be used with a y range");
             if (fY1 != null && fY2 != null) {
                 if (fY1.preferCategorical() != fY2.preferCategorical())
@@ -314,7 +308,7 @@ public class VisSingle extends VisItem implements Cloneable {
     private void makeUsedFields() {
 
         // Position Fields -- Note that these are a LIST -- we may have repeated values
-        List<String> posFields = new ArrayList<String>();
+        List<String> posFields = new ArrayList<>();
         addFieldNames(posFields, true, fX, fY);
         if (fRange != null) {
             Dataset dataset = getDataset();
@@ -324,7 +318,7 @@ public class VisSingle extends VisItem implements Cloneable {
         pos = posFields.toArray(new String[posFields.size()]);
 
         // Aesthetic Fields
-        Set<String> nonPosFields = new LinkedHashSet<String>();
+        Set<String> nonPosFields = new LinkedHashSet<>();
         addFieldNames(nonPosFields, true, fColor, fSize, fOpacity, fSplits);
 
         // Move the selection to the end -- it is always the least important
@@ -339,10 +333,10 @@ public class VisSingle extends VisItem implements Cloneable {
         nonPos = nonPosFields.toArray(new String[nonPosFields.size()]);
 
         // All used fields are: position and non-position fields, also #selection and any transform field
-        LinkedHashSet<String> all = new LinkedHashSet<String>();
+        LinkedHashSet<String> all = new LinkedHashSet<>();
         Collections.addAll(all, pos);
         Collections.addAll(all, nonPos);
-        if (tInteraction.containsKey(VisTypes.Interaction.filter)) all.add("#selection");
+        if (tInteraction.containsKey(Interaction.filter)) all.add("#selection");
 
         addFields(all, fTransform.keySet());
         addFields(all, fSummarize.keySet());
@@ -367,9 +361,8 @@ public class VisSingle extends VisItem implements Cloneable {
                 }
     }
 
-    public VisSingle polar() {
-        coords = VisTypes.Coordinates.polar;
-        return this;
+    public void polar() {
+        coords = Coordinates.polar;
     }
 
     public String[] positionFields() {
@@ -382,35 +375,42 @@ public class VisSingle extends VisItem implements Cloneable {
         return nonPos;
     }
 
-    public VisSingle resolve() {
+    /**
+     * Create a new vis based on the old one that has correct field names and resolves the "#all" field
+     * This method must be called before any building can be done on a vis item and the
+     * building performed on the returned vis
+     *
+     * @return
+     */
+    public VisSingle makeCanonical() {
 
-        ensureCanonical(fColor);
-        ensureCanonical(fSize);
-        ensureCanonical(fOpacity);
-        ensureCanonical(fFilter);
-        ensureCanonical(fSort);
-        ensureCanonical(fKeys);
-        ensureCanonical(fSplits);
-        ensureCanonical(fX);
-        ensureCanonical(fY);
-        ensureCanonical(itemsLabel);
-        ensureCanonical(itemsTooltip);
-        ensureCanonical(fSummarize);
-        ensureCanonical(fTransform);
+        ensureCanonical(fColor, "color");
+        ensureCanonical(fSize, "size");
+        ensureCanonical(fOpacity, "opacity");
+        ensureCanonical(fFilter, "filter");
+        ensureCanonical(fSort, "sort");
+        ensureCanonical(fKeys, "key");
+        ensureCanonical(fSplits, "split");
+        ensureCanonical(fX, "x");
+        ensureCanonical(fY, "y");
+        ensureCanonical(itemsLabel, "label");
+        ensureCanonical(itemsTooltip, "tooltip");
+        ensureCanonical(fSummarize, "summarization");
+        ensureCanonical(fTransform, "transform");
 
         makeUsedFields();
 
         // Collect a replacement for the "#all" field, if needed
-        LinkedHashSet<String> replacement = new LinkedHashSet<String>();
+        LinkedHashSet<String> replacement = new LinkedHashSet<>();
         for (String f : used) if (!f.equals("#all")) replacement.add(f);
         boolean containsAll = replacement.size() != used.length;
 
         boolean addSeriesSplit = false;
         boolean convertYsToRange = false;
         if (fY.size() > 1) {
-            if (tElement == VisTypes.Element.edge)
+            if (tElement == Element.edge)
                 convertYsToRange = true;
-            else if (tDiagram != VisTypes.Diagram.network) {
+            else if (tDiagram != Diagram.network) {
                 // Networks with 2 Y's are using them for IDs, so do not split
                 addSeriesSplit = true;
                 for (String s : aestheticFields()) if (s.equals("#series")) addSeriesSplit = false;
@@ -443,10 +443,10 @@ public class VisSingle extends VisItem implements Cloneable {
                 result.tElement = tDiagram.defaultElement;
             } else if (stacked) {
                 // Bars work well for stacking usually
-                result.tElement = VisTypes.Element.bar;
+                result.tElement = Element.bar;
             } else {
                 // The default
-                result.tElement = VisTypes.Element.point;
+                result.tElement = Element.point;
             }
         }
 
@@ -473,34 +473,54 @@ public class VisSingle extends VisItem implements Cloneable {
         return result;
     }
 
-    private void ensureCanonical(List<Param> list) {
+    private void ensureCanonical(List<Param> list, String reason) {
         if (list.isEmpty()) return;
         Dataset dataset = getDataset();
         for (int i = 0; i < list.size(); i++) {
             Param p = list.get(i);
             if (p.isField()) {
                 String name = p.asField(dataset);
-                if (name == null) throw new IllegalStateException("Could not find field: " + p);
+                if (name == null) {
+                    NullPointerException cause = new NullPointerException(makeFieldErrorMessage(p, reason));
+                    throw VisException.makeBuilding(cause, this);
+                }
                 // If the name is not the canonical one, replace it with the correct one
                 if (!name.equals(p.asString())) list.set(i, Param.makeField(name).addModifiers(p.modifiers()));
             }
         }
     }
 
-    private void ensureCanonical(Map<Param, String> map) {
+    private void ensureCanonical(Map<Param, String> map, String reason) {
         if (map.isEmpty()) return;
         Dataset dataset = getDataset();
-        for (Param p : new ArrayList<Param>(map.keySet())) {
-            if (p.isField() && !p.asField(dataset).startsWith("#")) {
-                String name = p.asField(getDataset());
-                // If the name is not the canonical one, replace it with the correct one
-                if (!name.equals(p.asString())) {
-                    Param newParameter = Param.makeField(name).addModifiers(p.modifiers());
-                    map.put(newParameter, map.get(p));
-                    map.remove(p);
-                }
+        for (Param p : new ArrayList<>(map.keySet())) {
+            if (!p.isField()) continue;
+
+            String name = p.asField(dataset);         // This is either null, or the strict field name
+            if (name == null) {
+                NullPointerException cause = new NullPointerException(makeFieldErrorMessage(p, reason));
+                throw VisException.makeBuilding(cause, this);
             }
+
+            // do not rename if a synthetic fields or the Field name is the same as the parameter name
+            if (dataset.field(name).isSynthetic() || name.equals(p.asString())) continue;
+
+            // Replace the parameter with the new, canonical name
+            Param newParameter = Param.makeField(name).addModifiers(p.modifiers());
+            map.put(newParameter, map.get(p));
+            map.remove(p);
         }
+    }
+
+    /**
+     * Report a reason why the field parameter was not found
+     *
+     * @param p      parameter which caused the failure
+     * @param reason the reason we needed this field
+     * @return a user-readable message
+     */
+    private String makeFieldErrorMessage(Param p, String reason) {
+        return "Could not find the " + reason + " field '" + p.asField() + "'";
     }
 
     private List<Param> replaceAllField(List<Param> items, LinkedHashSet<String> replacementFieldNames) {
@@ -509,7 +529,7 @@ public class VisSingle extends VisItem implements Cloneable {
         Dataset dataset = getDataset();
 
         // Search for all and create a set of fields that are in items
-        LinkedHashSet<String> itemFields = new LinkedHashSet<String>();
+        LinkedHashSet<String> itemFields = new LinkedHashSet<>();
         Param allParam = null;
         for (Param p : items)
             if (p.isField()) {
@@ -522,7 +542,7 @@ public class VisSingle extends VisItem implements Cloneable {
         if (allParam == null) return items;
 
         // Build the fields that are in replacementFieldNames, bit NOT in itemFields
-        List<Param> replacement = new ArrayList<Param>();
+        List<Param> replacement = new ArrayList<>();
         for (String s : replacementFieldNames) {
             // Only fields not already in there will be added
             // We copy the modifiers over too so they are preserved
@@ -531,7 +551,7 @@ public class VisSingle extends VisItem implements Cloneable {
         }
 
         // Build the final list from the original list, replacing '#all' with the replacements
-        ArrayList<Param> result = new ArrayList<Param>();
+        ArrayList<Param> result = new ArrayList<>();
         for (Param p : items)
             if (p.asField(dataset).equals("#all"))
                 result.addAll(replacement);
@@ -546,7 +566,7 @@ public class VisSingle extends VisItem implements Cloneable {
         Dataset data = getDataset();
 
         // Search for all and create a set of fields that are in items
-        LinkedHashSet<String> itemFields = new LinkedHashSet<String>();
+        LinkedHashSet<String> itemFields = new LinkedHashSet<>();
         Param allParam = null;
         for (Param p : items.keySet())
             if (p.isField()) {
@@ -559,7 +579,7 @@ public class VisSingle extends VisItem implements Cloneable {
         if (allParam == null) return items;
 
         // Build the fields that are in replacementFieldNames, bit NOT in itemFields
-        List<Param> replacement = new ArrayList<Param>();
+        List<Param> replacement = new ArrayList<>();
         for (String s : replacementFieldNames) {
             // Only fields not already in there will be added
             // We copy the modifiers over too so they are preserved
@@ -568,8 +588,8 @@ public class VisSingle extends VisItem implements Cloneable {
         }
 
         // Build the final list from the original list, replacing '#all' with the nonAllItems
-        Map<Param, String> result = new HashMap<Param, String>();
-        for (Map.Entry<Param, String> o : items.entrySet()) {
+        Map<Param, String> result = new LinkedHashMap<>();
+        for (Entry<Param, String> o : items.entrySet()) {
             Param p = o.getKey();
             String value = o.getValue();
             if (p.asField(data).equals("#all")) {
@@ -580,36 +600,31 @@ public class VisSingle extends VisItem implements Cloneable {
         return result;
     }
 
-    public VisSingle size(Param... fieldNames) {
-        if (fSize.isEmpty()) fSize = new ArrayList<Param>(fieldNames.length);
+    public void size(Param... fieldNames) {
+        if (fSize.isEmpty()) fSize = new ArrayList<>(fieldNames.length);
         Collections.addAll(fSize, fieldNames);
-        return this;
     }
 
-    public VisSingle opacity(Param... fieldNames) {
-        if (fOpacity.isEmpty()) fOpacity = new ArrayList<Param>(fieldNames.length);
+    public void opacity(Param... fieldNames) {
+        if (fOpacity.isEmpty()) fOpacity = new ArrayList<>(fieldNames.length);
         Collections.addAll(fOpacity, fieldNames);
-        return this;
     }
 
-    public VisSingle sort(Param... fieldNames) {
-        if (fSort.isEmpty()) fSort = new ArrayList<Param>(fieldNames.length);
+    public void sort(Param... fieldNames) {
+        if (fSort.isEmpty()) fSort = new ArrayList<>(fieldNames.length);
         Collections.addAll(fSort, fieldNames);
-        return this;
     }
 
-    public VisSingle split(Param... fieldNames) {
-        if (fSplits.isEmpty()) fSplits = new ArrayList<Param>(fieldNames.length);
+    public void split(Param... fieldNames) {
+        if (fSplits.isEmpty()) fSplits = new ArrayList<>(fieldNames.length);
         Collections.addAll(fSplits, fieldNames);
-        return this;
     }
 
-    public VisSingle stack() {
+    public void stack() {
         stacked = true;
-        return this;
     }
 
-    public VisSingle style(Param style) {
+    public void style(Param style) {
         String text = style.asString();
         if (!text.contains("{")) {
             // As a short cut, we allow a simple string to be the content for an element label
@@ -621,51 +636,43 @@ public class VisSingle extends VisItem implements Cloneable {
             styles = sheet;
         else
             styles.add(sheet);
-        return this;
     }
 
-    public VisSingle summarize(String method, Param... fieldNames) {
-        if (fSummarize.isEmpty()) fSummarize = new HashMap<Param, String>();
+    public void summarize(String method, Param... fieldNames) {
+        if (fSummarize.isEmpty()) fSummarize = new LinkedHashMap<>();
         for (Param fieldName : fieldNames)
             fSummarize.put(fieldName, method);
-        return this;
     }
 
-    public VisSingle tooltip(Param... items) {
-        if (itemsTooltip.isEmpty()) itemsTooltip = new ArrayList<Param>(items.length);
+    public void tooltip(Param... items) {
+        if (itemsTooltip.isEmpty()) itemsTooltip = new ArrayList<>(items.length);
         Collections.addAll(itemsTooltip, items);
-        return this;
     }
 
-    public VisSingle transpose() {
-        coords = VisTypes.Coordinates.transposed;
-        return this;
+    public void transpose() {
+        coords = Coordinates.transposed;
     }
 
-    public VisSingle using(Param type) {
-        tUsing = VisTypes.Using.valueOf(type.asString());
-        return this;
+    public void using(Param type) {
+        tUsing = Using.valueOf(type.asString());
     }
 
-    public VisSingle x(Param... fieldNames) {
-        if (fX.isEmpty()) fX = new ArrayList<Param>(fieldNames.length);
+    public void x(Param... fieldNames) {
+        if (fX.isEmpty()) fX = new ArrayList<>(fieldNames.length);
         Collections.addAll(fX, fieldNames);
-        return this;
     }
 
-    public VisSingle y(Param... fieldNames) {
+    public void y(Param... fieldNames) {
         // This overrides an attempt to make a range called previously
         fRange = null;
-        if (fY.isEmpty()) fY = new ArrayList<Param>(fieldNames.length);
+        if (fY.isEmpty()) fY = new ArrayList<>(fieldNames.length);
         Collections.addAll(fY, fieldNames);
-        return this;
     }
 
     @SuppressWarnings("unchecked")
-    public VisSingle yrange(Param fieldA, Param fieldB) {
+    public void yrange(Param fieldA, Param fieldB) {
         fY = Collections.EMPTY_LIST;
         fRange = new Param[]{fieldA, fieldB};
-        return this;
     }
 
 }

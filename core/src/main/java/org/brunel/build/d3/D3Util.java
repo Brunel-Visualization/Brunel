@@ -59,21 +59,6 @@ public class D3Util {
         if (DEBUG) out.onNewLine().add("BrunelD3.time(" + out.quote(s) + ")").endStatement();
     }
 
-    public static String stripFunction(String item) {
-        int p = item.indexOf("return");
-        int q = item.lastIndexOf("}");
-        if (p > 0 && q > 0)
-            return item.substring(p + 7, q).trim();
-        else
-            return item;
-    }
-
-    public static String defineSafeRadius(String sizeText) {
-        // Put the "/2" factor inside the function if needed
-        String body = stripFunction(sizeText);
-        return "function(d) { return d.row == null ? geom.default_point_size : " + body + " / 2 }";
-    }
-
     public static class DateBuilder {
         private final Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 

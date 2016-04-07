@@ -20,6 +20,8 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.summary.FieldRowComparison;
+import org.brunel.data.Fields;
+import org.brunel.data.util.MapInt;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,14 +38,14 @@ import java.util.Map;
 public class Sort extends DataOperation {
 
     public static Dataset transform(Dataset base, String command, boolean sortCategories) {
-        String[] sortFields = parts(command);
-        if (sortFields == null) return base;
+        String[] sortFields = strings(command, ';');
+        if (sortFields.length == 0) return base;
         // Build the dimensional information
         Field[] dimensions = getFields(base, sortFields);
         boolean[] ascending = getAscending(dimensions, sortFields);
 
         // Sort the rows to get the new row order
-        int[] rowOrder = new FieldRowComparison(dimensions, ascending, true).makeSortedOrder(base.rowCount());
+        int[] rowOrder = new FieldRowComparison(dimensions, ascending, true).makeSortedOrder();
 
         // Ensure that any data binned to the "..." catch-all category is moved to the end
         for (int i = base.fields.length - 1; i >= 0; i--) {
@@ -54,7 +56,7 @@ public class Sort extends DataOperation {
         Field[] fields = new Field[base.fields.length];
         for (int i = 0; i < fields.length; i++) {
             Field field = base.fields[i];
-            fields[i] = Data.permute(field, rowOrder, true);
+            fields[i] = Fields.permute(field, rowOrder, true);
             if (!field.ordered() && sortCategories) {
                 Object[] newCategoryOrder = makeOrder(field, dimensions, ascending);
                 fields[i].setCategories(newCategoryOrder);
@@ -66,13 +68,13 @@ public class Sort extends DataOperation {
     private static Object[] makeOrder(Field field, Field[] dimensions, boolean[] ascending) {
 
         // Map from field categories to rows for that field
-        Map<Object, List<Integer>> categorySums = new HashMap<Object, List<Integer>>();
+        Map<Object, List<Integer>> categorySums = new HashMap<>();
         for (int i = 0; i < field.rowCount(); i++) {
             Object category = field.value(i);
             if (category == null) continue;
             List<Integer> value = categorySums.get(category);
             if (value == null) {
-                value = new ArrayList<Integer>();
+                value = new ArrayList<>();
                 categorySums.put(category, value);
             }
             value.add(i);
@@ -93,10 +95,10 @@ public class Sort extends DataOperation {
         }
         Field[] summaries = new Field[dimensions.length];
         for (int i = 0; i < dimensions.length; i++) {
-            summaries[i] = Data.makeColumnField("", null, dimensionData[i]);
-            if (dimensions[i].isNumeric()) summaries[i].set("numeric", true);
+            summaries[i] = Fields.makeColumnField("", null, dimensionData[i]);
+            if (dimensions[i].isNumeric()) summaries[i].setNumeric();
         }
-        int[] order = new FieldRowComparison(summaries, ascending, true).makeSortedOrder(n);
+        int[] order = new FieldRowComparison(summaries, ascending, true).makeSortedOrder();
         Object[] result = new Object[n];
         for (int i = 0; i < n; i++) result[i] = categories[order[i]];
         return result;
@@ -115,18 +117,9 @@ public class Sort extends DataOperation {
     private static Object mode(Field field, List<Integer> rows) {
         Object mode = null;
         int max = 0;
-        Map<Object, Integer> count = new HashMap<Object, Integer>();
-        for (int i : rows) {
-            Object v = field.value(i);
-            Integer c = count.get(v);
-            if (c == null) c = 0;
-            if (++c > max) {
-                max = c;
-                mode = v;
-            }
-            count.put(v, c);
-        }
-        return mode;
+        MapInt count = new MapInt();
+        for (int i : rows) count.increment(field.value(i));
+        return count.mode();
     }
 
     /* Convert an order (possibly with ties) into a ranking for the original rows */
@@ -150,9 +143,8 @@ public class Sort extends DataOperation {
         for (int i = 0; i < fields.length; i++) {
             String name = names[i].split(":")[0];
             fields[i] = base.field(name.trim());
-            if (fields[i] == null) {
+            if (fields[i] == null)
                 throw new IllegalArgumentException("Could not find field: " + name);
-            }
         }
         return fields;
     }
@@ -176,7 +168,7 @@ public class Sort extends DataOperation {
 
     private static int[] moveCatchAllToEnd(int[] order, Field f) {
         int[] result = new int[order.length];
-        List<Integer> atEnd = new ArrayList<Integer>();
+        List<Integer> atEnd = new ArrayList<>();
         int at = 0;
         for (int j : order) {
             if ("\u2026".equals(f.value(j))) atEnd.add(j);
@@ -195,8 +187,7 @@ public class Sort extends DataOperation {
         for (int i = 0; i < means.length; i++) means[i] = i / 100.0 / means.length; // Bias towards current order
 
         // Map categories to an index
-        Map<Object, Integer> index = new HashMap<Object, Integer>();
-        for (Object o : categories) index.put(o, index.size());
+        MapInt index = new MapInt().index(categories);
 
         // Sum ranks for this category
         for (int i = 0; i < n; i++) {

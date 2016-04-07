@@ -19,6 +19,7 @@ package org.brunel.data.modify;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,15 +39,22 @@ public class ConvertSeries extends DataOperation {
 
         // The first section consists of a list of 'y' values to be made into series and values
         // The second section is a list of fields to be preserved as-is
-        String[] sections = parts(commands);
+        String[] sections = strings(commands, ';');
+        String[] yFields = strings(sections[0], ',');
 
-        String[] yFields = list(sections[0]);
+        int nY = yFields.length;            // Number of Y fields
+        int nR = base.rowCount();           // The rows in the original data
 
         // This also handles the case when there is a range specified (empty yFields)
-        if (yFields == null || yFields.length < 2) return base;
+        if (nY < 2) return base;
 
         // If there are no other fields, there is only one section
-        String[] otherFields = addRequired(list(sections.length < 2 ? "" : sections[1]));
+        String items = sections.length < 2 ? "" : sections[1];
+        String[] otherFields = addRequired(strings(items, ','));
+
+        Field[] y = new Field[nY];
+        for (int i = 0; i < nY; i++) y[i] = base.field(yFields[i]);
+
 
         /*
             We handle four different categories of field:
@@ -60,64 +68,48 @@ public class ConvertSeries extends DataOperation {
                 these will also be stacked using indexing so they org.brunel.app.match the Y values
          */
 
-        int N = base.rowCount();            // The rows in the original data
 
-        Field series = makeSeries(yFields, N);
-        Field values = makeValues(yFields, base, N);
-        int[] indexing = makeIndexing(yFields.length, N);
+        int[] seriesIndexing = new int[nY * nR];        // EG:  0,0,0,0,   1,1,1,1,   2,2,2,2
+        int[] valuesIndexing = new int[nY * nR];        // EG:  0,1,2,3,   0,1,2,3,   0,1,2,3
+        Object[] data = new Object[nY * nR];            // Will store the Y values
+        for (int i = 0; i < nY; i++)
+            for (int j = 0; j < nR; j++) {
+                seriesIndexing[i * nR + j] = i;
+                valuesIndexing[i * nR + j] = j;
+                data[i * nR + j] = y[i].value(j);
+            }
 
-        List<Field> resultFields = new ArrayList<Field>();
+        // Make the field for values, copying properties from the first Y field (we assume they are simialr)
+        Field values = Fields.makeColumnField("#values", Data.join(yFields), data);
+        Fields.copyBaseProperties(y[0], values);
+
+        // Create the series field
+        Field temp = Fields.makeColumnField("#series", "Series", yFields);
+        Field series = Fields.permute(temp, seriesIndexing, false);
+        series.setCategories(yFields);
+
+        // All other fields use the valuesIndexing
+        List<Field> resultFields = new ArrayList<>();
         resultFields.add(series);
         resultFields.add(values);
         for (String fieldName : otherFields) {
             // The special fields have already been added
             if (fieldName.equals("#series") || fieldName.equals("#values")) continue;
             Field f = base.field(fieldName);
-            resultFields.add(Data.permute(f, indexing, false));
+            resultFields.add(Fields.permute(f, valuesIndexing, false));
         }
 
+        // Assemble result
         Field[] fields = resultFields.toArray(new Field[resultFields.size()]);
-
         return base.replaceFields(fields);
     }
 
     private static String[] addRequired(String[] list) {
         // Ensure #count and #row are present
-        List<String> result = new ArrayList<String>();
-        if (list != null) Collections.addAll(result, list);
+        List<String> result = new ArrayList<>();
+        Collections.addAll(result, list);
         if (!result.contains("#row")) result.add("#row");
         if (!result.contains("#count")) result.add("#count");
         return result.toArray(new String[result.size()]);
     }
-
-    private static Field makeSeries(String[] names, int reps) {
-        // Make a block that looks like 0,0,0,0,   1,1,1,1,   2,2,2,2   (for a dataset with four rows, three names)
-        Field temp = Data.makeColumnField("#series", "Series", names);
-        int[] blocks = new int[names.length * reps];
-        for (int i = 0; i < names.length; i++)
-            for (int j = 0; j < reps; j++) blocks[i * reps + j] = i;
-        Field field = Data.permute(temp, blocks, false);
-        field.setCategories(names);
-        return field;
-    }
-
-    private static Field makeValues(String[] yNames, Dataset base, int n) {
-        Field[] y = new Field[yNames.length];
-        for (int i = 0; i < y.length; i++) y[i] = base.field(yNames[i]);
-        Object[] data = new Object[y.length * n];
-        for (int i = 0; i < y.length; i++)
-            for (int j = 0; j < n; j++) data[i * n + j] = y[i].value(j);
-        Field field = Data.makeColumnField("#values", Data.join(yNames), data);
-        Data.copyBaseProperties(field, y[0]);  // Should use the numeric and date properties
-        return field;
-    }
-
-    private static int[] makeIndexing(int m, int reps) {
-        // Make a block that looks like 0,1,2,3   0,1,2,3,   0,1,2,3   (for a dataset with four rows, three names)
-        int[] blocks = new int[m * reps];
-        for (int i = 0; i < m; i++)
-            for (int j = 0; j < reps; j++) blocks[i * reps + j] = j;
-        return blocks;
-    }
-
 }

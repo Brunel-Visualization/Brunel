@@ -16,8 +16,8 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.element.ElementDefinition;
-import org.brunel.build.element.ElementDetails;
+import org.brunel.build.d3.element.ElementDetails;
+import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
@@ -38,11 +38,10 @@ class Treemap extends D3Diagram {
                 .addChained("sort(BrunelData.diagram_Hierarchical.compare)")
                 .addChained("value(function(d) { return d.value == null || d.value < 0 ? 0 : d.value })")
                 .addChained("padding(function(d) { if (d.depth < 2) return [14,2,2,2]; if (d.depth < 3) return [11,2,2,2];})").endStatement();
-        out.add("function keyFunction(d) { return d.key }").endStatement();
-        return ElementDetails.makeForDiagram(vis, "treemap(tree.root)", "rect", "polygon", "box", true);
+        return ElementDetails.makeForDiagram(vis, ElementRepresentation.rect, "polygon", "treemap(tree.root)");
     }
 
-    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
+    public void writeDefinition(ElementDetails details) {
         out.addChained("attr('class', function(d) { return (d.children ? 'L' + d.depth : 'leaf element " + element.name() + "') })")
                 .addChained("attr('x', function(d) { return d.x; })")
                 .addChained("attr('y', function(d) { return d.y; })")
@@ -57,4 +56,9 @@ class Treemap extends D3Diagram {
     public boolean needsDiagramLabels() {
         return true;
     }
+
+    public String getRowKey() {
+        return "d.key || data._key(d.row)";
+    }
+
 }

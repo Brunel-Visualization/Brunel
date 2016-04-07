@@ -32,7 +32,7 @@ public interface DatasetCache {
      * @param key the key
      * @return the Dataset instance for the given key
      */
-    public Dataset retrieve(String key);
+    Dataset retrieve(String key);
 
     /**
      * Store a given data set using the given key
@@ -40,6 +40,6 @@ public interface DatasetCache {
      * @param key     unique key
      * @param dataset the Dataset instance to store in the cache
      */
-    public void store(String key, Dataset dataset);
+    void store(String key, Dataset dataset);
 
 }

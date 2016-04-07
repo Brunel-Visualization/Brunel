@@ -50,7 +50,7 @@ public class DocsToMarkdown {
     }
 
     private final File outFile;
-    private final List<String> files = new ArrayList<String>();     // Constituent files
+    private final List<String> files = new ArrayList<>();     // Constituent files
     private final PrintWriter out;                                  // Write information here
     private int column;                                             // Index of the column we are on
     private boolean lastWasBlankLine;                               // true if we have added a blank line

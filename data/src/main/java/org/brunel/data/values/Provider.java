@@ -16,7 +16,7 @@
 
 package org.brunel.data.values;
 
-import java.util.HashMap;
+import org.brunel.data.util.MapInt;
 
 public interface Provider {
 
@@ -27,7 +27,7 @@ public interface Provider {
      * @param categoryOrder map for the category orders (null if it should not be used)
      * @return -ve, 0 or +ve depending on comparison based on standard comparisons
      */
-    int compareRows(int a, int b, HashMap<Object, Integer> categoryOrder);
+    int compareRows(int a, int b, MapInt categoryOrder);
 
     /**
      * The number of rows in this data provider

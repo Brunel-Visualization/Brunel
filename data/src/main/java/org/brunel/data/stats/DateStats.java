@@ -28,7 +28,7 @@ public class DateStats {
         if (days == 0) days = f.max();
         DateUnit unit = getUnit(days);
         f.set("dateUnit", unit);
-        Double granularity = f.numericProperty("granularity");
+        Double granularity = f.numProperty("granularity");
         double factor = Math.min(1.0, Math.sqrt(f.valid()) / 7);          // With little data, decrease granularity
         f.set("dateFormat", getFormat(unit, granularity * factor));
     }

@@ -16,8 +16,8 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.element.ElementDefinition;
-import org.brunel.build.element.ElementDetails;
+import org.brunel.build.d3.element.ElementDetails;
+import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
@@ -35,16 +35,19 @@ class Bubble extends D3Diagram {
         out.add("var pack = d3.layout.pack().size([geom.inner_width, geom.inner_height])")
                 .addChained("value(function(d) { return d.value == null || d.value < 0 ? 0 : d.value })")
                 .addChained("sort(BrunelData.diagram_Hierarchical.compare)").endStatement();
-        out.add("function keyFunction(d) { return d.key }").endStatement();
-        return ElementDetails.makeForDiagram(vis, "pack(tree.root)", "circle", "point", "box", true);
+        return ElementDetails.makeForDiagram(vis, ElementRepresentation.spaceFillingCircle, "point", "pack(tree.root)");
     }
 
-    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
+    public void writeDefinition(ElementDetails details) {
         // Simple circles, with classes defined for CSS
         out.addChained("attr('class', function(d) { return (d.children ? 'L' + d.depth : 'leaf element " + element.name() + "') })")
                 .addChained("attr('cx', function(d) { return d.x; })")
                 .addChained("attr('cy', function(d) { return d.y; })")
                 .addChained("attr('r', function(d) { return d.r; })").endStatement();
         addAestheticsAndTooltips(details, true);
+    }
+
+    public String getRowKey() {
+        return "d.key || data._key(d.row)";
     }
 }

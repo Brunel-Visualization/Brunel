@@ -36,7 +36,7 @@ public class ActionUtil {
     public static Param[] parameters(Action action) {
     	return parametersByName(action, null);
     }
-    
+
     /**
      * Get parameters for all data() statements
      * @param action the action
@@ -45,7 +45,7 @@ public class ActionUtil {
     public static Param[] dataParameters(Action action) {
     	return parametersByName(action, "data");
     }
-    
+
     /**
      * Add a prefix to all data() statements.  This allows a client to supply unique data set names
      * for any data placed into the cache.
@@ -58,14 +58,14 @@ public class ActionUtil {
         	if (step.name.equals("data")) {
         		step.parameters[0] = Param.makeString(prefix + step.parameters[0].asString());
         	}
-        }       
+        }
         return action.toString();
 
     }
-       
+
     //Returns the parameters for a given brunel action name.  If actionName is null, all params are returned.
     private static Param[] parametersByName(Action action, String actionName) {
-        List<Param> parameters = new ArrayList<Param>();
+        List<Param> parameters = new ArrayList<>();
         for (ActionStep step : action.steps) {
         	if (actionName == null || step.name.equals(actionName)) {
         		Collections.addAll(parameters, step.parameters);
@@ -132,7 +132,7 @@ public class ActionUtil {
     	return action;
 
     }
-    
- 
-    
+
+
+
 }

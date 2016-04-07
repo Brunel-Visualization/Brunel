@@ -51,7 +51,7 @@ public class Param implements Comparable<Param> {
     }
 
     public static List<Param> makeFields(String[] fields) {
-        List<Param> items = new ArrayList<Param>(fields.length);
+        List<Param> items = new ArrayList<>(fields.length);
         for (String f : fields) items.add(makeField(f));
         return items;
     }
@@ -166,7 +166,7 @@ public class Param implements Comparable<Param> {
         b.append(asString());
         if (type == Type.string) b.append('\'');
         for (Param p : modifiers)
-            b.append(':').append(p.toString());
+            b.append(':').append(p);
         return b.toString();
     }
 

@@ -152,10 +152,10 @@ public class Action implements Comparable<Action> {
      * @return valid string representation fo the action
      */
     public String toString() {
-        final StringBuilder b = new StringBuilder();
+        StringBuilder b = new StringBuilder();
         for (ActionStep a : steps) {
             if (b.length() > 0) b.append(" ");
-            b.append(a.toString());
+            b.append(a);
         }
         return b.toString();
     }
@@ -209,15 +209,15 @@ public class Action implements Comparable<Action> {
 
     /* Split a list of steps into sublists using the requested action name to split by */
     private List<List<ActionStep>> split(List<ActionStep> steps, String splitActionName) {
-        List<List<ActionStep>> splits = new ArrayList<List<ActionStep>>();
-        List<ActionStep> current = new ArrayList<ActionStep>();
+        List<List<ActionStep>> splits = new ArrayList<>();
+        List<ActionStep> current = new ArrayList<>();
         for (ActionStep a : steps) {
             if (a.name.equals(splitActionName)) {
                 if (current.isEmpty())
                     throw new IllegalStateException("Error processing '" + splitActionName +
                             "'. Composition must join standard actions");
                 splits.add(current);
-                current = new ArrayList<ActionStep>();
+                current = new ArrayList<>();
             } else {
                 current.add(a);
             }

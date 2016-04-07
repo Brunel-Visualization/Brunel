@@ -78,7 +78,7 @@ public class BestMatch {
 	private static ArrayList<BestActionParameterSet> buildActionParameterSets(Dataset originalData, Dataset newData, Action orignalAction) {
 
 		Param[] parms = ActionUtil.parameters(orignalAction);
-		ArrayList<BestActionParameterSet> choices = new ArrayList<BestActionParameterSet>(parms.length);
+		ArrayList<BestActionParameterSet> choices = new ArrayList<>(parms.length);
 
 		for (int i =0; i < parms.length; i++) {
 			choices.add(new BestActionParameterSet(originalData, newData, parms,i , PARAMETER_CHOICE_MAX));
@@ -91,11 +91,11 @@ public class BestMatch {
 	//Given a set of choices for each action parameter, creates a set of actions and scores for each one.
 	private static ArrayList<ActionChoice> buildActionChoices(Action originalAction, List<BestActionParameterSet> parmSets ) {
 
-		ArrayList<ActionChoice> choices = new ArrayList<ActionChoice>();
+		ArrayList<ActionChoice> choices = new ArrayList<>();
 
 		while (maxSize(parmSets) > 1) {
 			ActionParameterChoice[] parmChoice = new ActionParameterChoice[parmSets.size()];
-			ArrayList<String> usedFields = new ArrayList<String>();
+			ArrayList<String> usedFields = new ArrayList<>();
 
 			for (int i=0; i< parmChoice.length; i++) {
 				BestActionParameterSet parmSet = parmSets.get(i);

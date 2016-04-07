@@ -16,7 +16,7 @@
 
 package org.brunel.data.values;
 
-import java.util.HashMap;
+import org.brunel.data.util.MapInt;
 
 public class ReorderedProvider implements Provider {
 
@@ -24,11 +24,19 @@ public class ReorderedProvider implements Provider {
     private final int[] order;
 
     public ReorderedProvider(Provider base, int[] order) {
-        this.base = base;
-        this.order = order;
+        if (base instanceof ReorderedProvider) {
+            // Convolute the two orders and go directly to the original
+            ReorderedProvider other = (ReorderedProvider) base;
+            this.base = other.base;
+            this.order = new int[order.length];
+            for (int i=0; i<order.length; i++) this.order[i] = other.order[order[i]];
+        } else {
+            this.base = base;
+            this.order = order;
+        }
     }
 
-    public int compareRows(int a, int b, HashMap<Object, Integer> categoryOrder) {
+    public int compareRows(int a, int b, MapInt categoryOrder) {
         return base.compareRows(order[a], order[b], categoryOrder);
     }
 

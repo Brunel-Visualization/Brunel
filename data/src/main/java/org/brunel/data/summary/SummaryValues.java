@@ -16,8 +16,8 @@
 
 package org.brunel.data.summary;
 
-import org.brunel.data.Data;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 import org.brunel.data.util.ItemsList;
 import org.brunel.data.util.Range;
 
@@ -27,7 +27,7 @@ import java.util.List;
 public final class SummaryValues {
     private final Field[] fields;                                   // the fields we use
     private final Field[] xFields;                                  // the fields to use as 'X' values
-    public final List<Integer> rows = new ArrayList<Integer>();     // Which data rows have been aggregated into this
+    public final List<Integer> rows = new ArrayList<>();     // Which data rows have been aggregated into this
     private final ArrayList<Field> groupFields;                     // Fields that group results
     public double[] percentSums;
 
@@ -36,10 +36,10 @@ public final class SummaryValues {
         this.xFields = xFields;
 
         // Create an array of fields that group the results
-        this.groupFields = new ArrayList<Field>();
-        for (Field f: allDimensions) {
+        this.groupFields = new ArrayList<>();
+        for (Field f : allDimensions) {
             boolean isGroup = true;
-            for  (Field x : xFields) if (x == f) isGroup = false;
+            for (Field x : xFields) if (x == f) isGroup = false;
             if (isGroup) groupFields.add(f);
         }
     }
@@ -56,7 +56,7 @@ public final class SummaryValues {
      * @return the summary value
      */
     public Object get(int fieldIndex, MeasureField m) {
-        String summary = m.measureFunction;
+        String summary = m.method;
         if (summary.equals("count")) return rows.size();
         Field x = xFields.length == 0 ? null : xFields[xFields.length - 1];   // Innermost is the one
         int index = rows.get(0);
@@ -84,34 +84,29 @@ public final class SummaryValues {
         for (int i = 0; i < data.length; i++)
             data[i] = fields[fieldIndex].value(rows.get(i));
 
-        Field f = Data.makeColumnField("temp", null, data);
+        Field f = Fields.makeColumnField("temp", null, data);
 
-        Double mean = f.numericProperty("mean");
+        Double mean = f.numProperty("mean");
         if (summary.equals("percent")) {
             if (mean == null) return null;
-            double sum = percentSums[fieldIndex];
-            return sum > 0 ? 100 * mean * f.numericProperty("valid") / sum : null;
+            double sum;
+            if ("overall".equals(m.option))
+                sum = m.field.valid() * m.field.numProperty("mean");
+            else
+                sum = percentSums[fieldIndex];
+            return sum > 0 ? 100 * mean * f.valid() / sum : null;
         }
 
-        if (summary.equals("range")) {
-            if (mean == null) return null;
-            Double low = f.numericProperty("min");
-            Double high = f.numericProperty("max");
-            return low == null ? null : Range.make(low, high, m.getDateFormat());
-        }
-        if (summary.equals("iqr")) {
-            if (mean == null) return null;
-            Double low = f.numericProperty("q1");
-            Double high = f.numericProperty("q3");
-            return low == null ? null : Range.make(low, high, m.getDateFormat());
-        }
+        if (summary.equals("range")) return makeRange(m, f, "min", "max");
+
+        if (summary.equals("iqr")) return makeRange(m, f, "q1", "q3");
 
         if (summary.equals("sum")) {
             if (mean == null) return null;
-            return mean * f.numericProperty("valid");
+            return mean * f.numProperty("valid");
         }
         if (summary.equals("list")) {
-            ItemsList categories = new ItemsList((Object[]) f.property("categories"), m.getDateFormat());
+            ItemsList categories = new ItemsList((Object[]) f.property("categories"));
             if (m.option != null) {
                 int displayCount = Integer.parseInt(m.option);
                 categories.setDisplayCount(displayCount);
@@ -121,12 +116,16 @@ public final class SummaryValues {
         return f.property(summary);
     }
 
+    protected Object makeRange(MeasureField m, Field f, String a, String b) {
+        return Range.make(f.numProperty(a), f.numProperty(b), m.getDateFormat());
+    }
+
     private List<Integer> validForGroup(int index) {
-        ArrayList<Integer> list = new ArrayList<Integer>();
+        ArrayList<Integer> list = new ArrayList<>();
         int n = fields[0].rowCount();
-        for (int i = 0; i< n; i++) {
+        for (int i = 0; i < n; i++) {
             boolean valid = true;
-            for (Field f: groupFields) if (f.compareRows(index, i) != 0) valid = false;
+            for (Field f : groupFields) if (f.compareRows(index, i) != 0) valid = false;
             if (valid) list.add(i);
         }
         return list;

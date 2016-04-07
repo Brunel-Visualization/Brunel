@@ -44,7 +44,7 @@ class GeoFile implements Comparable<GeoFile> {
         String[] b = boundsString.split(",");
         this.bounds = new Rect(Double.parseDouble(b[0]), Double.parseDouble(b[1]), Double.parseDouble(b[2]), Double.parseDouble(b[3]));
         this.hull = new Poly(parse(hullString));
-        this.pts = new ArrayList<LabelPoint>();
+        this.pts = new ArrayList<>();
     }
 
     private Point[] parse(String hullString) {

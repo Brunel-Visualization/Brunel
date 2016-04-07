@@ -16,12 +16,13 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.chart.ChartStructure;
-import org.brunel.build.element.ElementDefinition;
-import org.brunel.build.element.ElementDetails;
+import org.brunel.build.info.ChartStructure;
+import org.brunel.build.d3.element.ElementDetails;
+import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
+import org.brunel.geom.Point;
 import org.brunel.geom.Rect;
 import org.brunel.maps.LabelPoint;
 import org.brunel.model.VisSingle;
@@ -81,10 +82,10 @@ public class GeoMapLabels extends D3Diagram {
     }
 
     public ElementDetails initializeDiagram() {
-        return ElementDetails.makeForDiagram(vis, "geo_labels", "path", "point", "box", false);
+        return  ElementDetails.makeForDiagram(vis, ElementRepresentation.symbol, "point", "geo_labels");
     }
 
-    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
+    public void writeDefinition(ElementDetails details) {
         out.addChained("attr('d', function(d) { return BrunelD3.symbol(['star','star','square','circle'][d[4]-1], d[3]*geom.default_point_size/14)})")
                 .addChained("attr('class', function(d) { return 'mark L' + d[4] })");
         out.addChained("attr('transform', projectTransform)");
@@ -92,7 +93,7 @@ public class GeoMapLabels extends D3Diagram {
 
         // Labels
         out.add("diagramLabels.classed('map', true)").endStatement();
-        out.add("var labelSel = diagramLabels.selectAll('*').data(d3Data, function(d) { return d[2]})").endStatement();
+        out.add("var labelSel = diagramLabels.selectAll('*').data("+ details.dataSource +", function(d) { return d[2]})").endStatement();
         out.add("labelSel.enter().append('text')")
                 .addChained("attr('dy', '0.3em')")
                 .addChained("attr('dx', function(d) { return (2 + d[3]*geom.default_point_size/10) + 'px'})")
@@ -119,8 +120,8 @@ public class GeoMapLabels extends D3Diagram {
         Rect bds = structure.geo.projectedBounds();
         double scale = Math.min(800 / bds.width(), 600 / bds.height());
 
-        ArrayList<LabelPoint> result = new ArrayList<LabelPoint>();
-        ArrayList<Rect> accepted = new ArrayList<Rect>();
+        ArrayList<LabelPoint> result = new ArrayList<>();
+        ArrayList<Rect> accepted = new ArrayList<>();
 
         Font font = new Font("Helvetica", Font.PLAIN, 12);
         FontRenderContext frc = new FontRenderContext(null, true, true);
@@ -128,7 +129,7 @@ public class GeoMapLabels extends D3Diagram {
         for (LabelPoint p : points) {
             boolean intersects = false;
 
-            org.brunel.geom.Point pp = structure.geo.transform(p);
+            Point pp = structure.geo.transform(p);
             double x = pp.x * scale, y = pp.y * scale;
             Rectangle2D size = font.getStringBounds(p.label, frc);
             Rect s = new Rect(x - 15, x + size.getWidth() + 15, y, y + size.getHeight());

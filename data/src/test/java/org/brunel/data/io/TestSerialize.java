@@ -20,6 +20,7 @@ import org.brunel.data.CannedData;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 import org.brunel.translator.JSTranslation;
 import org.junit.Test;
 
@@ -57,12 +58,12 @@ public class TestSerialize {
         in.close();
         fileIn.close();
 
-        assertEquals(dataset.field("Rating").numericProperty("mean"), copy.field("Rating").numericProperty("mean"));
+        assertEquals(dataset.field("Rating").numProperty("mean"), copy.field("Rating").numProperty("mean"));
     }
 
     @Test
     public void testSerializeFieldBasics() {
-        Field a = Data.makeConstantField("foo", "bar", 10, 1000);
+        Field a = Fields.makeConstantField("foo", "bar", 10, 1000);
         assertEquals(true, a.isNumeric());
         byte[] bytes = Serialize.serializeField(a);
         Field b = (Field) Serialize.deserialize(bytes);
@@ -75,7 +76,7 @@ public class TestSerialize {
 
     @Test
     public void testSerializeFieldNumericData() {
-        Field a = Data.makeColumnField("a", "b", new Object[]{1.0, 2.0, null, 9.0});
+        Field a = Fields.makeColumnField("a", "b", new Object[]{1.0, 2.0, null, 9.0});
         a = Data.toNumeric(a);
 
         byte[] bytes = Serialize.serializeField(a);
@@ -83,14 +84,14 @@ public class TestSerialize {
         assertEquals("a", b.name);
         assertEquals("b", b.label);
         assertEquals(4, b.rowCount());
-        assertEquals(4.0, b.numericProperty("mean"), 1e-6);
+        assertEquals(4.0, b.numProperty("mean"), 1e-6);
     }
 
     @Test
     public void testSerializeFieldDateData() {
         Date date1 = new Date();
         Date date2 = new Date(date1.getTime() + 86400000 * 12);
-        Field a = Data.makeColumnField("a", "b", new Object[]{date1, null, date2});
+        Field a = Fields.makeColumnField("a", "b", new Object[]{date1, null, date2});
         a = Data.toDate(a);
         assertTrue(a.isNumeric());
         assertTrue(a.isDate());
@@ -112,7 +113,7 @@ public class TestSerialize {
 
         Dataset d = (Dataset) Serialize.deserialize(bytes);
         assertEquals(dataset.rowCount(), d.rowCount());
-        assertEquals(dataset.field("rating").numericProperty("mean"), d.field("rating").numericProperty("mean"), 0.001);
+        assertEquals(dataset.field("rating").numProperty("mean"), d.field("rating").numProperty("mean"), 0.001);
         assertEquals("Count", d.field("#count").label);
     }
 
@@ -259,7 +260,7 @@ public class TestSerialize {
         byte[] bytes = Serialize.serializeDataset(dataset);
         bytes[1] = (byte) 0;
         try {
-            Object o = Serialize.deserialize(bytes);
+            Serialize.deserialize(bytes);
         } catch (IllegalStateException e) {
             assertTrue(true);
             return;

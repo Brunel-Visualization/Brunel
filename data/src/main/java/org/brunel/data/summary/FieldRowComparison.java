@@ -35,7 +35,7 @@ public class FieldRowComparison implements Comparator<Integer> {
         this.fields = fields;
         this.ascending = ascending;
         this.rowsBreakTies = rowsBreakTies;
-        this.n = fields.length;
+        this.n = ascending == null ? fields.length : ascending.length;
     }
 
     public int compare(Integer a, Integer b) {
@@ -47,9 +47,14 @@ public class FieldRowComparison implements Comparator<Integer> {
         return rowsBreakTies ? (a - b) : 0;
     }
 
-    public int[] makeSortedOrder(int len) {
-        Integer[] items = new Integer[len];
-        for (int i = 0; i < len; i++) items[i] = i;
+    public boolean isEmpty() {
+        return fields.length == 0;
+    }
+
+    public int[] makeSortedOrder() {
+        int n = fields[0].rowCount();
+        Integer[] items = new Integer[n];
+        for (int i = 0; i < n; i++) items[i] = i;
         Arrays.sort(items, this);
         return Data.toPrimitive(items);
     }

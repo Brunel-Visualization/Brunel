@@ -37,7 +37,7 @@ public class Geom {
         Arrays.sort(points);
 
         // Stack to manipulate points with
-        Stack<Point> stack = new Stack<Point>();
+        Stack<Point> stack = new Stack<>();
         if (points.length == 0) {
             return new Poly();
         }

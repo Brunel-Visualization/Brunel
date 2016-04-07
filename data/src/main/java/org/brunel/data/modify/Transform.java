@@ -23,8 +23,10 @@ import org.brunel.data.auto.Auto;
 import org.brunel.data.auto.NumericScale;
 import org.brunel.data.summary.FieldRowComparison;
 import org.brunel.data.util.DateFormat;
+import org.brunel.data.Fields;
 import org.brunel.data.util.Range;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,17 +51,24 @@ public class Transform extends DataOperation {
 
     public static Dataset transform(Dataset base, String command) {
         if (base.rowCount() == 0) return base;
-        List<String[]> operations = map(command, "=");
-        if (operations == null) return base;
+        List<String[]> operations = map(command);
+        if (operations.isEmpty()) return base;
 
         Field[] fields = new Field[base.fields.length];
         for (int i = 0; i < fields.length; i++) {
             String op = null;
             for (String[] o : operations) if (o[0].equals(base.fields[i].name)) op = o[1];
             fields[i] = modify(base.fields[i],op);
+            fields[i].set("summary", op);
         }
 
         return base.replaceFields(fields);
+    }
+
+    public static String makeKey(Collection<Field> groupFields, int index) {
+        String key = "|";
+        for (Field f: groupFields) key += f.value(index) + "|";
+        return key;
     }
 
     /*
@@ -87,20 +96,20 @@ public class Transform extends DataOperation {
 
         // Sort the rows to get the new row order
         FieldRowComparison comparison = new FieldRowComparison(new Field[]{f}, new boolean[]{ascending}, true);
-        int[] order = comparison.makeSortedOrder(N);
+        int[] order = comparison.makeSortedOrder();
 
-        Object[] ranks = new Object[N];                            // We will put the ranks in here
-        int p = 0;                                                  // Step through runs of same items
+        Object[] ranks = new Object[N];                                 // We will put the ranks in here
+        int p = 0;                                                      // Step through runs of same items
         while (p < N) {
             int rowP = order[p];
             int q = p + 1;
-            while (q < N && f.compareRows(rowP, order[q]) == 0) q++;  // Set q to be just past the end of a run
+            while (q < N && f.compareRows(rowP, order[q]) == 0) q++;    // Set q to be just past the end of a run
             for (int i = p; i < q; i++)
-                ranks[order[i]] = (p + q + 1) / 2.0;  // All tied ranks get the same averaged value
+                ranks[order[i]] = (p + q + 1) / 2.0;                    // All tied ranks get the same averaged value
             p = q;
         }
-        Field result = Data.makeColumnField(f.name, f.label, ranks);// New data
-        result.set("numeric", true);                        // Which is numeric
+        Field result = Fields.makeColumnField(f.name, f.label, ranks);  // New data
+        result.setNumeric();                                            // Which is numeric
         return result;
     }
 
@@ -126,14 +135,14 @@ public class Transform extends DataOperation {
         Integer[] order = Data.order((int[]) f.property("categoryCounts"), false);
 
         // Create map form current names to the new names
-        Map<Object, Object> newNames = new HashMap<Object, Object>();
+        Map<Object, Object> newNames = new HashMap<>();
         for (int i = 0; i < order.length; i++)
             newNames.put(categories[order[i]], i < desiredBinCount-1 ? categories[order[i]] : "\u2026");
 
         Object[] data = new Object[f.rowCount()];
         for (int i = 0; i < data.length; i++) data[i] = newNames.get(f.value(i));
 
-        return Data.makeColumnField(f.name, f.label, data);
+        return Fields.makeColumnField(f.name, f.label, data);
     }
 
     private static Field binNumeric(Field f, int desiredBinCount) {
@@ -143,10 +152,10 @@ public class Transform extends DataOperation {
         DateFormat dateFormat = isDate ? (DateFormat) f.property("dateFormat") : null;
         Range[] ranges = makeBinRanges(divisions, dateFormat, scale.granular);
         Object[] data = binData(f, divisions, ranges);
-        Field result = Data.makeColumnField(f.name, f.label, data);
+        Field result = Fields.makeColumnField(f.name, f.label, data);
         if (f.isDate())
             result.set("date", true);       // We do not simply use the date format and unit -- different now!
-        result.set("numeric", true);        // But it IS numeric!
+        result.setNumeric();                // But it IS numeric!
         result.set("categories", ranges);   // Include all bins in the categories, not just those that exist
         result.set("transform", f.property("transform"));   // Include all bins in the categories, not just those that exist
         return result;

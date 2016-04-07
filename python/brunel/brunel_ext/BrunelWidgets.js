@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2015 IBM Corporation and others.
  *
@@ -32,16 +31,16 @@ require.config({
 });
 
 
-define(function(require) {
+define(function (require) {
 
     var ipywidget = require("widgets/js/widget");
     var BrunelEventHandlers = require("BrunelEventHandlers");
     var BrunelJQueryControlFactory = require("BrunelJQueryControlFactory");
     require("SumoSelect");
 
-     //View object for our python slider.  Uses Brunel factory to create the JQuery object
-     var RangeSliderView = ipywidget.DOMWidgetView.extend({
-        render: function(){
+    //View object for our python slider.  Uses Brunel factory to create the JQuery object
+    var RangeSliderView = ipywidget.DOMWidgetView.extend({
+        render: function () {
             var fieldId = this.model.get('field_id');
             var visId = this.model.get('visid');
             var fieldLabel = this.model.get('field_label');
@@ -49,25 +48,25 @@ define(function(require) {
             var max = this.model.get('data_max');
 
             this.$el.addClass("brunel");
-            this.$el.append(BrunelJQueryControlFactory.make_range_slider( visId, fieldId, fieldLabel, min, max));
+            this.$el.append(BrunelJQueryControlFactory.make_range_slider(visId, fieldId, fieldLabel, min, max));
         }
-     });
+    });
 
-          //View object for our python slider.  Uses Brunel factory to create the JQuery object
-     var CategoryFilterView = ipywidget.DOMWidgetView.extend({
-        render: function(){
+    //View object for our python slider.  Uses Brunel factory to create the JQuery object
+    var CategoryFilterView = ipywidget.DOMWidgetView.extend({
+        render: function () {
             var fieldId = this.model.get('field_id');
             var visId = this.model.get('visid');
             var fieldLabel = this.model.get('field_label');
             var categories = this.model.get('categories');
 
             this.$el.addClass("brunel");
-            this.$el.append(BrunelJQueryControlFactory.make_category_filter( visId, fieldId, fieldLabel, categories));
+            this.$el.append(BrunelJQueryControlFactory.make_category_filter(visId, fieldId, fieldLabel, categories));
         }
-     });
+    });
 
     return {
-        RangeSliderView : RangeSliderView,
-        CategoryFilterView : CategoryFilterView
+        RangeSliderView: RangeSliderView,
+        CategoryFilterView: CategoryFilterView
     }
 });

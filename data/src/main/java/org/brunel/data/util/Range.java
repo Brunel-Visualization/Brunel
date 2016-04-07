@@ -29,6 +29,7 @@ public class Range implements Comparable<Range> {
     }
 
     public static Range make(Double low, Double high, DateFormat dateFormat) {
+        if (low == null || high == null) return null;
         return dateFormat == null ? makeNumeric(low, high, false) : makeDate(low, high, false, dateFormat);
     }
 
@@ -72,14 +73,14 @@ public class Range implements Comparable<Range> {
         return Data.asNumeric(high) - Data.asNumeric(low);
     }
 
-    @JSTranslation(js = {"return this.name;"})
+    @JSTranslation(js = "return this.name;")
     public int hashCode() {
         return low.hashCode() + 31 * high.hashCode();
     }
 
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        return obj instanceof Range && ((Range) obj).low == low && ((Range) obj).high == high;
+        return this == obj ||
+                obj instanceof Range && ((Range) obj).low == low && ((Range) obj).high == high;
     }
 
     public String toString() {

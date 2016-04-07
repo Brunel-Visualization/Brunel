@@ -58,7 +58,7 @@ public class DataSetMemoryTaken {
     }
 
     private static int addTillDeath() {
-        final int BLOCK = 1024;
+        int BLOCK = 1024;
         int max = 1;
         try {
             for (;;) {

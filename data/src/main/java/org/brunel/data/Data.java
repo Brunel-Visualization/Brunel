@@ -17,18 +17,19 @@
 package org.brunel.data;
 
 import org.brunel.data.util.Dates;
+import org.brunel.data.util.ItemsList;
 import org.brunel.data.util.Range;
-import org.brunel.data.values.ColumnProvider;
-import org.brunel.data.values.ConstantProvider;
-import org.brunel.data.values.ReorderedProvider;
-import org.brunel.data.values.RowProvider;
 import org.brunel.translator.JSTranslation;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Data {
 
@@ -155,13 +156,6 @@ public class Data {
         return join(items, null);
     }
 
-    /* Makes a field that is a constant value */
-    public static Field makeConstantField(String name, String label, Object o, int len) {
-        Field field = new Field(name, label, new ConstantProvider(o, len));
-        if (Data.asNumeric(o) != null) field.set("numeric", true);
-        return field;
-    }
-
     @JSTranslation(js = {
             "if (c == null) return null;",
             "if (c && c.asNumeric) return c.asNumeric();",
@@ -192,14 +186,7 @@ public class Data {
         return d == null || Double.isNaN(d) ? null : d;
     }
 
-    /* Makes a field that indexes the data */
-    public static Field makeIndexingField(String name, String label, int len) {
-        Field field = new Field(name, label, new RowProvider(len));
-        field.set("numeric", true);
-        return field;
-    }
-
-    @JSTranslation(js = {"$.sort(data, $$CLASS$$.compare)"})
+    @JSTranslation(js = "$.sort(data, $$CLASS$$.compare)")
     public static void sort(Object[] data) {
         Arrays.sort(data, new Comparator<Object>() {
 
@@ -246,9 +233,9 @@ public class Data {
                 data[i] = asDate(o);
             if (!changed) changed = Data.compare(o, data[i]) != 0;
         }
-        Field result = makeColumnField(f.name, f.label, data);
+        Field result = Fields.makeColumnField(f.name, f.label, data);
         result.set("date", true);
-        result.set("numeric", true);
+        result.setNumeric();
         return result;
     }
 
@@ -265,60 +252,75 @@ public class Data {
         return Dates.parse(c);
     }
 
-    /* Makes a field from a column of data */
-    public static Field makeColumnField(String name, String label, Object[] data) {
-        return new Field(name, label, new ColumnProvider(data));
-    }
-
-    public static Field makeIndexedColumnField(String name, String label, Object[] items, int[] indices) {
-        return new Field(name, label, new ReorderedProvider(new ColumnProvider(items), indices));
-    }
-
     public static Field toNumeric(Field f) {
         if (f.isNumeric()) return f;
-        boolean changed = false;
         Number[] data = new Number[f.rowCount()];
         for (int i = 0; i < data.length; i++) {
             Object o = f.value(i);
             data[i] = asNumeric(o);
-            if (!changed) changed = Data.compare(o, data[i]) != 0;
         }
-        Field result = changed ? makeColumnField(f.name, f.label, data) : f;
-        result.set("numeric", true);
+        Field result = Fields.makeColumnField(f.name, f.label, data);
+        result.setNumeric();
         return result;
     }
 
-    /**
-     * Modify the data for the field
-     *
-     * @param field            field to permute
-     * @param order            the new order
-     * @param onlyOrderChanged true if this is a true permutation only
-     * @return new field
-     */
-    public static Field permute(Field field, int[] order, boolean onlyOrderChanged) {
-        if (onlyOrderChanged)
-            return new Field(field.name, field.label, new ReorderedProvider(field.provider, order), field);
+    public static Field toList(Field base) {
+        // Find the best separator -- the one occurring in most lines
+        char sep = ',';
+        int nSep = -1;
+        for (char s : new char[]{',', ';', '|'}) {
+            int c = 0;
+            for (Object o : base.categories())
+                if (o.toString().indexOf(c) >= 0) c++;
+            if (c > nSep) {
+                sep = s;
+                nSep = c;
+            }
+        }
 
-        Field f = new Field(field.name, field.label, new ReorderedProvider(field.provider, order));
-        Data.copyBaseProperties(f, field);
+        int n = base.rowCount();
+
+        // Maps to common list items; used to get the list categories and
+        // also to pool strings
+        Map<String, String> commonParts = new HashMap<>();
+
+        // Create items lists and accumulate general info
+        ItemsList[] items = new ItemsList[n];
+        for (int i = 0; i < n; i++) {
+            Object o = base.value(i);
+            if (o == null) continue;
+
+            // These are the valid items in the list
+            List<String> valid = new ArrayList<>();
+
+            for (String s : Data.split(o.toString(), sep)) {
+                s = s.trim();
+                if (s.length() > 0) {
+                    String common = commonParts.get(s);
+                    if (common == null) {
+                        common = s;
+                        commonParts.put(common, s);
+                    }
+                    valid.add(common);
+                }
+            }
+            items[i] = new ItemsList(valid.toArray(new String[valid.size()]));
+        }
+
+        // Passed the tests so return the details!
+        Field f = Fields.makeColumnField(base.name, base.label, items);
+        Collection<String> parts = commonParts.values();
+        String[] common = parts.toArray(new String[parts.size()]);
+        Arrays.sort(common);
+        f.set("list", true);
+        f.set("listCategories", common);
         return f;
     }
 
-    public static void copyBaseProperties(Field target, Field source) {
-        target.set("numeric", source.property("numeric"));
-        target.set("binned", source.property("binned"));
-        target.set("summary", source.property("summary"));
-        target.set("transform", source.property("transform"));
-        if (source.propertyTrue("categoriesOrdered")) {
-            target.set("categoriesOrdered", true);
-            target.set("categories", source.property("categories"));
-        }
-        if (source.isDate()) {
-            target.set("date", true);
-            target.set("dateUnit", source.property("dateUnit"));
-            target.set("dateFormat", source.property("dateFormat"));
-        }
+    // Java does not use regexes for split; Java does
+    @JSTranslation(js = "return text.split(sep);")
+    public static String[] split(String text, char sep) {
+        return text.split("\\" + sep);
     }
 
     public static boolean isQuoted(String txt) {
@@ -385,7 +387,7 @@ public class Data {
         return o;
     }
 
-    @JSTranslation(js = {"return items;"})
+    @JSTranslation(js = "return items;")
     public static int[] toPrimitive(Integer[] items) {
         int[] result = new int[items.length];
         for (int i = 0; i < items.length; i++) result[i] = items[i];

@@ -16,8 +16,8 @@
 
 package org.brunel.data.io;
 
-import org.brunel.data.Data;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,9 +39,9 @@ public class CSV {
      * Reads CSV formatted data and converts to array of values
      */
     public static String[][] parse(String data) {
-        Map<String, String> common = new HashMap<String, String>();
-        List<List<String>> lines = new ArrayList<List<String>>();
-        List<String> line = new ArrayList<String>();
+        Map<String, String> common = new HashMap<>();
+        List<List<String>> lines = new ArrayList<>();
+        List<String> line = new ArrayList<>();
         char last = ' ';
         boolean inQuote = false, wasQuoted = false;
         int currentIndex = 0;
@@ -79,7 +79,7 @@ public class CSV {
                     else if (fieldCount != line.size())
                         throw new IllegalArgumentException("Line " + lines.size() + " had " + line.size() + " entries; expected "
                                 + fieldCount);
-                    line = new ArrayList<String>();
+                    line = new ArrayList<>();
                     building = null;
                     wasQuoted = false;
                 }
@@ -165,14 +165,14 @@ public class CSV {
             for (int j = 0; j < column.length; j++)
                 column[j] = data[j + 1][i];
             String name = data[0][i] == null ? "" : data[0][i].toString();
-            fields[i] = Data.makeColumnField(identifier(name), readable(name), column);
+            fields[i] = Fields.makeColumnField(identifier(name), readable(name), column);
         }
         return fields;
     }
 
     public static String identifier(String text) {
         int parenthesis = text.indexOf('(');
-        if (parenthesis >0) text = text.substring(0,parenthesis).trim();
+        if (parenthesis > 0) text = text.substring(0, parenthesis).trim();
 
         String result = "";
         String last = "X";
@@ -180,11 +180,12 @@ public class CSV {
             String c = text.substring(i, i + 1);
             String d;
             if (isDigit(c)) {
-                if (i == 0) result = "_";
+                if (i == 0) result = "_";                               // Digits need a lead underscore to be legal
                 d = c;
-            } else if (c.equals("_") || isLower(c) || isUpper(c) || isDigit(c))
+            } else if (c.equals("_") || isLower(c) || isUpper(c)) {
+                if (result.equals("_")) result = "";                    // No need for the lead underscore
                 d = c;
-            else {
+            } else {
                 d = "_";
             }
             if (d.equals("_")) {
@@ -201,8 +202,8 @@ public class CSV {
         String built = "";                                  // Assemble this string
         String last = " ";                                  // Last character processed
         boolean lastLower = false;                          // Case of last character
-        for (int i=0; i<text.length(); i++) {
-            String s = text.substring(i, i+1);
+        for (int i = 0; i < text.length(); i++) {
+            String s = text.substring(i, i + 1);
             if (s.equals("_")) s = " ";                     // underscores are spaces
             boolean lower = isLower(s);
             boolean upper = isUpper(s);
@@ -212,7 +213,7 @@ public class CSV {
                 // After a space, capitalize lowercase
                 if (last.equals(" ")) built += s.toUpperCase();
                 else built += s;
-            } else  {
+            } else {
                 // Add a space between a lower case and an uppercase or digit
                 if (lastLower && (upper || isDigit(s))) built += " " + s;
                 else built += s;

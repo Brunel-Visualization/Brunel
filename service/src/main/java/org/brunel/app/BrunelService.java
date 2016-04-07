@@ -22,7 +22,6 @@ import org.brunel.build.util.ContentReader;
 import org.brunel.build.util.DataCache;
 import org.brunel.data.Dataset;
 import org.brunel.match.BestMatch;
-import org.brunel.model.VisException;
 import org.brunel.util.BrunelD3Result;
 import org.brunel.util.D3Integration;
 import org.brunel.util.WebDisplay;
@@ -60,7 +59,7 @@ import java.net.URI;
 @ApplicationPath("brunel")
 @Path("interpret")
 public class BrunelService extends Application {
-	
+
 	private static final Gson gson = new Gson();
 
 	private static final String ERROR_TEMPLATE = "<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css'>\n" +
@@ -81,7 +80,7 @@ public class BrunelService extends Application {
      * @param visId an identifier to use for the d3 JS to reference the HTML tag containing the visualization on the web page (usually an SVG tag).
      * @param controlsId an identifier to use for HTML tag that will contain the interactive controls.
      *          If null, then resulting JS will not contain code for the vis controls and the client is responsible for creating any UIs for vis controls using the returned JSON.
-     * @param prefix (optional) The prefix used to uniquely identify data for a given user session when adding data to the cache.  
+     * @param prefix (optional) The prefix used to uniquely identify data for a given user session when adding data to the cache.
      * @return a JSON object containing the css, js, and an object describing interactive controls that require a separate UI
      */
     @POST
@@ -118,7 +117,7 @@ public class BrunelService extends Application {
      * @param dataUrl a URL pointing to the CSV to use for the visualization's data.  Note if the Brunel contains a data()
      *  function, then this will be used instead
      * @param filesLoc (optional) an alternate location for the main Brunel javascript
-     * @param prefix (optional) The prefix used to uniquely identify data for a given user session when adding data to the cache.  
+     * @param prefix (optional) The prefix used to uniquely identify data for a given user session when adding data to the cache.
      * @return a full HTML page with all JS/CSS and interactive controls for a given visualization.
      */
     @GET
@@ -196,7 +195,7 @@ public class BrunelService extends Application {
 
         }
     }
-    
+
     /**
      * Get all dataset names in a given Brunel statement.
      * @param brunel the Brunel
@@ -214,7 +213,7 @@ public class BrunelService extends Application {
   		 	 throw makeException(ex.getMessage(), ex, Status.BAD_REQUEST.getStatusCode(), false);
     	}
     }
-    
+
     /**
      * Caches CSV data which is then used by Brunel data() statements.
      * @param csv the CSV to cache
@@ -225,7 +224,7 @@ public class BrunelService extends Application {
     @Path("cache")
     @Consumes(MediaType.TEXT_PLAIN)
     public Response cacheData(String csv, @QueryParam("data_key") String dataKey, @QueryParam("prefix") String prefix ) {
-    	
+
     	String key = prefix != null ? prefix + dataKey : dataKey;
     	try {
 	    	D3Integration.cacheData(key, csv);
@@ -236,7 +235,7 @@ public class BrunelService extends Application {
   		 	 throw makeException(ex.getMessage(), ex, Status.BAD_REQUEST.getStatusCode(), false);
     	}
     }
-    
+
 
     //Get a Dataset instance given a URL.  The content will be loaded if not present in the cache.
     private Dataset readBrunelData(String url, boolean formattedError) {
@@ -252,11 +251,8 @@ public class BrunelService extends Application {
     private WebApplicationException makeException(String message, Exception thrown, int code, boolean formatted) {
 
     	String separator =  formatted ? "<P><P>": "\n";
-    	Throwable cause = thrown.getCause();
-    	while (cause != null) {
-    		message += separator + cause.getMessage();
-    		if (cause instanceof VisException) break; else cause = cause.getCause();
-    	}
+    	message += D3Integration.buildExceptionMessage(thrown, message, separator);
+
     	String t = MediaType.TEXT_PLAIN;
     	if (formatted) {
     		t = MediaType.TEXT_HTML;
@@ -264,9 +260,9 @@ public class BrunelService extends Application {
     	}
 
     	ResponseBuilder rb = Response.status(Status.fromStatusCode(code)).header("Access-Control-Allow-Origin", "*").
-                        entity(message).type(t);;
+                        entity(message).type(t);
 
-        return new WebApplicationException(rb.build());
+		return new WebApplicationException(rb.build());
 	}
 
 

@@ -16,79 +16,39 @@
 
 package org.brunel.data.stats;
 
-import org.brunel.data.Data;
 import org.brunel.data.Field;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import org.brunel.data.util.MapInt;
 
 public class NominalStats {
 
     public static void populate(Field f) {
-        // Create map of counts
-        Map<Object, Integer> count = new HashMap<Object, Integer>();
-        Set<Object> modes = new HashSet<Object>();
+        MapInt counts = new MapInt();
         int N = f.rowCount();
 
-        int maxCount = 0;
-        int valid = 0;
-        for (int i = 0; i < N; i++) {
-            Object o = f.value(i);
-            if (o == null) continue;
-            valid++;
-            Integer c = count.get(o);
-            int value = c == null ? 1 : c + 1;
-            count.put(o, value);
-
-            // Check for mode -- if this is more numerous than the rest, clear the list of modes
-            // If at least as numerous, add the item to the list of modes
-            if (value > maxCount) modes.clear();
-            if (value >= maxCount) {
-                modes.add(o);
-                maxCount = value;
-            }
-
-        }
+        // Create map of counts
+        for (int i = 0; i < N; i++)
+            counts.increment(f.value(i));
 
         f.set("n", N);
-        f.set("unique", count.size());
-        f.set("valid", valid);
-
-        if (modes.isEmpty()) {
-            f.set("mode", null);
-        } else {
-            // Set the mode to be the middle of the sorted list of modes
-            Object[] sortedModes = modes.toArray(new Object[modes.size()]);
-            Data.sort(sortedModes);
-            f.set("mode", sortedModes[(int) ((sortedModes.length - 1) / 2)]);
-        }
+        f.set("unique", counts.size());
+        f.set("valid", counts.getTotalCount());
+        f.set("mode", counts.mode());
 
         Object[] naturalOrder;
-        if (f.propertyTrue("categoriesOrdered")) {
+        if (f.isProperty("categoriesOrdered")) {
             naturalOrder = f.categories();
         } else {
             if (f.name.equals("#selection")) {
-                // For selection data, ensure we ALWAYS have the two categories added in
-                if (!count.containsKey(Field.VAL_UNSELECTED)) count.put(Field.VAL_UNSELECTED, 0);
-                if (!count.containsKey(Field.VAL_SELECTED)) count.put(Field.VAL_SELECTED, 0);
                 // The categories are as follows
                 naturalOrder = new Object[]{Field.VAL_UNSELECTED, Field.VAL_SELECTED};
             } else {
                 // Extract categories from the counts
-                Set<Object> cats = count.keySet();
-                naturalOrder = cats.toArray(new Object[cats.size()]);
-                Data.sort(naturalOrder);
+                naturalOrder = counts.sortedKeys();
             }
-
             f.set("categories", naturalOrder);
         }
 
-        int[] counts = new int[naturalOrder.length];
-        for (int i = 0; i < naturalOrder.length; i++)
-            counts[i] = count.get(naturalOrder[i]);
-        f.set("categoryCounts", counts);
+        f.set("categoryCounts", counts.getCounts(naturalOrder));
     }
 
     public static boolean creates(String key) {

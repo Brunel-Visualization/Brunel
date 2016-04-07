@@ -17,7 +17,7 @@
 // A closure for JQuery UI controls for Brunel interactivity.  Intent is other UI tookits can be used so long as they
 //adhere to the public API from this closure.  Styles should have good defaults but can be replaced by the client.
 
-//Styles listed in BrunelBaseStyles.css
+//Styles listed in Brunel.css
 
 
 var BrunelJQueryControlFactory = (function () {

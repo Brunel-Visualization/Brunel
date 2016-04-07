@@ -32,7 +32,7 @@ class AxisDetails {
 
     public final String title;                         // Title for the axis
     public final String scale;                         // Name for the scale to use for this axis
-    public boolean rotatedTicks = false;               // If true, ticks are to be rotated
+    public boolean rotatedTicks;               // If true, ticks are to be rotated
     public Object[] tickValues;                        // If non-null, ony show these ticks
     public Integer tickCount;                          // If non-null, request this many ticks for the axis
     public int size;                                   // The size for this axis (perpendicular to axis direction)
@@ -43,11 +43,12 @@ class AxisDetails {
 
     private final Field[] fields;                      // Fields used in this axis
     private final boolean categorical;                 // True if the axis is categorical
+    private final boolean inMillions;                  // True if the fields values are nicely shown in millions
 
     /* Constructs the axis for the given fields */
     public AxisDetails(String dimension, Field[] definedFields, boolean categorical, String userTitle, int tickCount) {
         this.scale = "scale_" + dimension;
-        this.fields = definedFields; // suitable(definedFields);
+        this.fields = definedFields;
         this.categorical = categorical;
         this.tickCount = tickCount < 100 ? tickCount : null;
 
@@ -56,25 +57,37 @@ class AxisDetails {
         else
             this.title = title(fields);
 
+        this.inMillions = !categorical && isInMillions(definedFields);
+
+    }
+
+    private boolean isInMillions(Field[] definedFields) {
+        for (Field f : definedFields) {
+            if (!f.isDate() && f.max() != null && f.max() - f.min() > 2e6) return true;
+        }
+        return false;
     }
 
     /* Return the title for the axis */
     private static String title(Field[] fields) {
 
-        if (fields.length == 1) {
-            // Do not title '#row', '#count', "#series", "#values" -- otherwise just use the label
-            return fields[0].isSynthetic() ? null : fields[0].label;
-        }
+        // Get all the valid fields
+        List<Field> real = new ArrayList<>();
+        for (Field f : fields) if (!f.isSynthetic() && !f.name.startsWith("'")) real.add(f);
 
-        LinkedHashSet<String> titles = new LinkedHashSet<String>();             // All the titles
-        LinkedHashSet<String> originalTitles = new LinkedHashSet<String>();     // Only using names before summary
-        for (Field f : fields) {
+        LinkedHashSet<String> titles = new LinkedHashSet<>();             // All the titles
+        LinkedHashSet<String> originalTitles = new LinkedHashSet<>();     // Only using names before summary
+        for (Field f : real) {
             titles.add(f.label);
             String originalLabel = (String) f.property("originalLabel");
             originalTitles.add(originalLabel == null ? f.label : originalLabel);
         }
         if (originalTitles.size() < titles.size()) titles = originalTitles;     // If shorter, use that
         return titles.isEmpty() ? null : Data.join(titles);
+    }
+
+    public boolean inMillions() {
+        return inMillions;
     }
 
     public boolean isLog() {
@@ -91,6 +104,7 @@ class AxisDetails {
         if (!exists()) return;
 
         int tickWidth = maxCategoryWidth() + 5;
+        if (tickWidth > availableSpace * 0.5) tickWidth = (int) (availableSpace * 0.5);
         int tickCount = countTicks(fields);
 
         if (!categorical) fillToEdge = true;        // Numeric ticks may go right to edge
@@ -174,7 +188,7 @@ class AxisDetails {
         double spacePerTick = width / count;
         int skipFrequency = (int) Math.round(20 / spacePerTick);
         if (skipFrequency < 2) return null;
-        List<Object> useThese = new ArrayList<Object>();
+        List<Object> useThese = new ArrayList<>();
         int at = 0;
         for (Field f : fields) {
             for (Object s : f.categories())
@@ -218,7 +232,7 @@ class AxisDetails {
     }
 
     /* Estimate the space needed to show all text categories */
-    public int maxTickWidth() {
+    private int maxTickWidth() {
         int maxCharCount = 1;
         for (Object s : tickValues) {
             int length = s.toString().length();

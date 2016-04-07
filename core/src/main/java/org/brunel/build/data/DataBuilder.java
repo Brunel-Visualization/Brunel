@@ -25,20 +25,36 @@ import org.brunel.model.VisSingle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
- * Created by graham on 12/16/15.
+ * A class for manipulating and building data structures
  */
 public class DataBuilder {
 
     private final DataModifier modifier;
     private final VisSingle vis;
 
+    /**
+     * Constructor
+     *
+     * @param vis the vis to build the data for
+     */
+    public DataBuilder(VisSingle vis) {
+        this(vis, null);
+    }
+
+    /**
+     * Constructor
+     *
+     * @param vis      the vis to build the data for
+     * @param modifier a class that modifies the data parameters after they have been created (may be null)
+     */
     public DataBuilder(VisSingle vis, DataModifier modifier) {
         this.vis = vis;
         this.modifier = modifier;
@@ -50,8 +66,10 @@ public class DataBuilder {
      * @return built dataset
      */
     public Dataset build() {
+
         String constantsCommand = makeConstantsCommand();
         String filterCommand = makeFilterCommands();
+        String eachCommand = makeEachCommands();
         String binCommand = makeTransformCommands();
         String summaryCommand = buildSummaryCommands();
         String sortCommand = makeFieldCommands();
@@ -59,16 +77,17 @@ public class DataBuilder {
         String usedFields = required();
 
         DataTransformParameters params = new DataTransformParameters(constantsCommand,
-                filterCommand, binCommand, summaryCommand, "", sortCommand, "", seriesYFields,
+                filterCommand, eachCommand, binCommand, summaryCommand, "", sortCommand, "", seriesYFields,
                 usedFields);
 
         // Call the engine to see if it has any special needs
-        params = modifier.modifyParameters(params, vis);
+        if (modifier != null) params = modifier.modifyParameters(params, vis);
 
         Dataset data = vis.getDataset();                                                // The data to use
         data = data.addConstants(params.constantsCommand);                              // add constant fields
+        data = data.each(params.eachCommand);                                           // divide up fields into parts
         data = data.filter(params.filterCommand);                                       // filter data
-        data = data.bin(params.transformCommand);                                       // bin data
+        data = data.transform(params.transformCommand);                                 // bin, rank, ... on data
         data = data.summarize(params.summaryCommand);                                   // summarize data
         data = data.series(params.seriesCommand);                                       // convert series
         data = data.sort(params.sortCommand);                                           // sort data
@@ -78,7 +97,17 @@ public class DataBuilder {
         return data;
     }
 
-    protected int getParameterIntValue(Param param, int defaultValue) {
+    /**
+     * Utility to get the built data from a Vis
+     *
+     * @param vis target to get the built data from
+     * @return transformed data set
+     */
+    public static Dataset getTransformedData(VisSingle vis) {
+        return new DataBuilder(vis.makeCanonical()).build();
+    }
+
+    private int getParameterIntValue(Param param, int defaultValue) {
         if (param == null) return defaultValue;
         if (param.isField()) {
             // The parameter is a field, so we examine the modifier for the int value
@@ -89,17 +118,18 @@ public class DataBuilder {
         }
     }
 
-    private String buildSummaryCommands() {
-        Map<String, String> spec = new HashMap<String, String>();
+    String buildSummaryCommands() {
+        Map<String, String> spec = new LinkedHashMap<>();
 
         // We must account for all of these except for the special fields series and values
-        // As they will be handled later
-        HashSet<String> fields = new HashSet<String>(Arrays.asList(vis.usedFields(false)));
+        // These are handled later in the pipeline and need no changes right now
+        Set<String> fields = new LinkedHashSet<>(Arrays.asList(vis.usedFields(false)));
         fields.remove("#series");
         fields.remove("#values");
+        fields.remove("#all");
 
         // Add the summary measures
-        for (Map.Entry<Param, String> e : vis.fSummarize.entrySet()) {
+        for (Entry<Param, String> e : vis.fSummarize.entrySet()) {
             Param p = e.getKey();
             String name = p.asField();
             String measure = e.getValue();
@@ -108,27 +138,32 @@ public class DataBuilder {
             fields.remove(name);
         }
 
-        // Add all color used fields in as dimensions (factors)
-        for (String s : fields) {
-            // Count is an implicit summary
-            if (s.equals("#count"))
-                spec.put(s, s + ":sum");
-            else
-                spec.put(s, s);
+        // If #count is used (and not summarized) add it in as a sum
+        if (fields.contains("#count")) {
+            spec.put("#count", "#count:sum");
+            fields.remove("#count");
         }
 
-        // X fields are used for the percentage bases
-        for (Param s : vis.fX) spec.put(s.asField(), s.asField() + ":base");
+        // If we have nothing to summarize, we are done -- no responses mean no summarization needed
+        if (spec.isEmpty()) return "";
 
-        // Return null if summary is not called for
-        if (spec.containsKey("#count") || vis.fSummarize.size() > 0) {
-            String[] result = new String[spec.size()];
-            int n = 0;
-            for (Map.Entry<String, String> e : spec.entrySet())
-                result[n++] = e.getKey() + "=" + e.getValue();
-            return Data.join(result, "; ");
-        } else
-            return "";
+        // X fields are used for the percentage bases unless they have been declared as summaries
+        for (Param s : vis.fX) {
+            String field = s.asField();
+            if (fields.contains(field)) {
+                spec.put(field, field + ":base");
+                fields.remove(field);
+            }
+        }
+
+        // Anything remaining is used as a simple factor
+        for (String s : fields) spec.put(s, s);
+
+        // Assemble into a string
+        List<String> result = new ArrayList<>();
+        for (Entry<String, String> e : spec.entrySet())
+            result.add(e.getKey() + "=" + e.getValue());
+        return Data.join(result, "; ");
     }
 
     private String getParameterFieldValue(Param param) {
@@ -148,7 +183,7 @@ public class DataBuilder {
     }
 
     private String makeConstantsCommand() {
-        List<String> toAdd = new ArrayList<String>();
+        List<String> toAdd = new ArrayList<>();
         for (String f : vis.usedFields(false)) {
             if (!f.startsWith("#") && vis.getDataset().field(f) == null) {
                 // Field does not exist -- assume it is a constant and add it
@@ -173,18 +208,18 @@ public class DataBuilder {
     }
 
     private String makeFilterCommands() {
-        List<String> commands = new ArrayList<String>();
+        List<String> commands = new ArrayList<>();
 
         // All position fields must be valid -- filter if not
         String[] pos = vis.positionFields();
         for (String s : pos) {
             Field f = vis.getDataset().field(s);
             if (f == null) continue;        // May have been added as a constant -- no need to filter
-            if (f.numericProperty("valid") < f.rowCount())
+            if (f.numProperty("valid") < f.rowCount())
                 commands.add(s + " valid");
         }
 
-        for (Map.Entry<Param, String> e : vis.fTransform.entrySet()) {
+        for (Entry<Param, String> e : vis.fTransform.entrySet()) {
             String operation = e.getValue();
             Param key = e.getKey();
             String name = getParameterFieldValue(key);
@@ -219,6 +254,19 @@ public class DataBuilder {
         return Data.join(commands, "; ");
     }
 
+    private String makeEachCommands() {
+        List<String> commands = new ArrayList<>();
+        for (Entry<Param, String> e : vis.fTransform.entrySet()) {
+            String operation = e.getValue();
+            Param key = e.getKey();
+            String name = getParameterFieldValue(key);
+            Field f = vis.getDataset().field(name);
+            if (operation.equals("each"))
+                commands.add(f.name);
+        }
+        return Data.join(commands, "; ");
+    }
+
     private String makeSeriesCommand() {
         // Only have a series for 2+ y fields
 
@@ -226,12 +274,12 @@ public class DataBuilder {
         /*
             The command is of the form:
                     y1, y2, y3; a1, a2
-            Where the fields y1 ... are the fields to makes the series
+            Where the fields y1 ... are the fields to makes the series`
             and the additional fields a1... are ones required to be kept as-is.
             #series and #values are always generated, so need to retain them additionally
         */
 
-        LinkedHashSet<String> keep = new LinkedHashSet<String>();
+        LinkedHashSet<String> keep = new LinkedHashSet<>();
         for (Param p : vis.fX) keep.add(p.asString());
         Collections.addAll(keep, vis.nonPositionFields());
         keep.remove("#series");
@@ -247,7 +295,7 @@ public class DataBuilder {
     private String makeTransformCommands() {
         if (vis.fTransform.isEmpty()) return "";
         StringBuilder b = new StringBuilder();
-        for (Map.Entry<Param, String> e : vis.fTransform.entrySet()) {
+        for (Entry<Param, String> e : vis.fTransform.entrySet()) {
             Param p = e.getKey();
             String name = p.asField();
             String measure = e.getValue();
@@ -262,7 +310,7 @@ public class DataBuilder {
 
     private String required() {
         String[] fields = vis.usedFields(true);
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         Collections.addAll(result, fields);
 
         // ensure we always have #row and #count

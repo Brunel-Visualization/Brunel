@@ -17,6 +17,7 @@
 package org.brunel.model;
 
 import org.brunel.data.Dataset;
+import org.brunel.model.VisTypes.Composition;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -26,25 +27,25 @@ import java.util.Set;
 public class VisComposition extends VisItem {
 
     public static VisComposition inside(VisItem... items) {
-        return new VisComposition(VisTypes.Composition.inside, items);
+        return new VisComposition(Composition.inside, items);
     }
 
     public static VisComposition nested(VisItem... items) {
-        return new VisComposition(VisTypes.Composition.nested, items);
+        return new VisComposition(Composition.nested, items);
     }
 
     public static VisComposition overlay(VisItem... items) {
-        return new VisComposition(VisTypes.Composition.overlay, items);
+        return new VisComposition(Composition.overlay, items);
     }
 
     public static VisComposition tile(VisItem... items) {
-        return new VisComposition(VisTypes.Composition.tile, items);
+        return new VisComposition(Composition.tile, items);
     }
 
-    public final VisTypes.Composition method;
+    public final Composition method;
     private final VisItem[] items;
 
-    private VisComposition(VisTypes.Composition method, VisItem... items) {
+    private VisComposition(Composition method, VisItem... items) {
         this.method = method;
         this.items = items;
     }
@@ -59,8 +60,8 @@ public class VisComposition extends VisItem {
 
     public String validate() {
         String error = null;
-        for (final VisItem i : items) {
-            final String e = i.validate();
+        for (VisItem i : items) {
+            String e = i.validate();
             if (e != null) if (error == null)
                 error = e;
             else
@@ -70,7 +71,7 @@ public class VisComposition extends VisItem {
     }
 
     public Dataset[] getDataSets() {
-        Set<Dataset> datas = new LinkedHashSet<Dataset>();
+        Set<Dataset> datas = new LinkedHashSet<>();
         for (VisItem v : items) {
             if (v instanceof VisSingle)
                 datas.add(((VisSingle) v).getDataset());

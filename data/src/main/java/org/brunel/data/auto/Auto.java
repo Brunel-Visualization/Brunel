@@ -18,6 +18,7 @@ package org.brunel.data.auto;
 
 import org.brunel.data.Data;
 import org.brunel.data.Field;
+import org.brunel.data.util.ItemsList;
 
 import java.util.Date;
 
@@ -47,8 +48,9 @@ public class Auto {
         // If the tick count is not set, calculate the optimal value, but no more than 20 bins
         if (desiredTickCount < 1) desiredTickCount = Math.min(optimalBinCount(f), 20) + 1;
         if (f.isDate()) return NumericScale.makeDateScale(f, nice, padFraction, desiredTickCount);
-        String p = f.stringProperty("transform");
-        if (p.equals("log")) return NumericScale.makeLogScale(f, nice, padFraction, includeZeroTolerance, desiredTickCount);
+        String p = f.strProperty("transform");
+        if (p.equals("log"))
+            return NumericScale.makeLogScale(f, nice, padFraction, includeZeroTolerance, desiredTickCount);
 
         // We need to modify the scale for a root transform, as we need a smaller pad fraction near zero
         // as that will show more space than expected
@@ -65,7 +67,7 @@ public class Auto {
 
     public static void setTransform(Field f) {
         if (f.property("transform") != null) return;
-        Double skew = f.numericProperty("skew");
+        Double skew = f.numProperty("skew");
 
         if (skew == null) {
             // Only numeric fields can have transforms
@@ -81,10 +83,13 @@ public class Auto {
     }
 
     public static int optimalBinCount(Field f) {
+        // For non-numeric data
+        if (!f.isNumeric()) return Math.min(7, f.categories().length);
+
         // Using Freedman-Diaconis for the optimal bin width OR Scott's normal reference rule
         // Whichever has a large bin size
-        double h1 = 2 * (f.numericProperty("q3") - f.numericProperty("q1")) / Math.pow(f.valid(), 0.33333);
-        double h2 = 3.5 * f.numericProperty("stddev") / Math.pow(f.valid(), 0.33333);
+        double h1 = 2 * (f.numProperty("q3") - f.numProperty("q1")) / Math.pow(f.valid(), 0.33333);
+        double h2 = 3.5 * f.numProperty("stddev") / Math.pow(f.valid(), 0.33333);
         double h = Math.max(h1, h2);
         if (h == 0)
             return 1;
@@ -93,7 +98,13 @@ public class Auto {
     }
 
     public static Field convert(Field base) {
-        if (base.isSynthetic() || base.isDate()) return base;   // Already set
+        if (base.isSynthetic() || base.isDate()) return base;           // Already set
+        if (base.isProperty("list")) return base;                     // Already a multi-set
+
+
+        // Try conversion to a lists
+        Field asList = Data.toList(base);
+        if (goodLists(asList)) return asList;
 
         int N = base.valid();
 
@@ -142,14 +153,37 @@ public class Auto {
 
         if (nDate > FRACTION_TO_CONVERT * n)
             return Data.toDate(base);
-        else
-            return base;
+
+        return base;
+    }
+
+    private static boolean goodLists(Field f) {
+        int nValid = f.valid();
+        if (nValid < 3) return false;                                   // Too few to autoconvert
+        // We need at least one different length list
+        int n = -1;
+        for (int i = 1; i < f.rowCount(); i++) {
+            ItemsList o = (ItemsList) f.value(i);
+            if (o == null) continue;
+            if (n < 0)
+                n = o.size();
+            else if (o.size() != n) {
+                // Lists of different length -- good!
+                // With small number of rows, assume OK
+                if (nValid < 20) return true;
+                // Otherwise see if the list categories strongly reduce the others
+                int nList = ((Object[]) f.property("listCategories")).length;
+                return (nList * nList < nValid * 2);
+            }
+        }
+        return false;                                                  // All lists of the same length
+
     }
 
     private static boolean isYearly(Field asNumeric) {
         if (asNumeric.min() < 1600) return false;
         if (asNumeric.max() > 2100) return false;
-        Double d = asNumeric.numericProperty("granularity");
+        Double d = asNumeric.numProperty("granularity");
         return d != null && d - Math.floor(d) < 1e-6;
     }
 }

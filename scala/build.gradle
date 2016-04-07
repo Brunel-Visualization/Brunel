@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 apply plugin: 'scala'
 apply plugin: 'eclipse'
 
- 
+
 repositories {
-	    mavenCentral()	  
-	    flatDir {
-            dirs '../lib'
-        }  
+    mavenCentral()
+    flatDir {
+        dirs '../lib'
+    }
 }
-	
- dependencies {
+
+dependencies {
     testCompile 'junit:junit:4.11'
-    testCompile 'org.scalatest:scalatest_2.10:2.2.4'  
+    testCompile 'org.scalatest:scalatest_2.10:2.2.4'
     compile 'org.scala-lang:scala-library:2.10.6'
-    compile 'org.apache.spark:spark-sql_2.10:1.5.2' 
+    compile 'org.apache.spark:spark-sql_2.10:1.5.2'
     compile project(':data')
     compile project(':core')
 }
 
 version = project(":core").version
 archivesBaseName = 'spark-1.5_scala-2.10_brunel'
- 

@@ -30,6 +30,7 @@ import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 @SuppressWarnings("serial")
  public class SourceTransfer extends TransferHandler implements DropTargetListener {
@@ -38,7 +39,7 @@ import java.io.IOException;
     private final int BORDER = 5;
     private final Border BORDER_ACTIVE = BorderFactory.createLineBorder(new Color(0.0f, 0.5f, 1.0f, 0.5f), BORDER);
     private final Droppable target;
-    private Border BORDER_INACTIVE = null;
+    private Border BORDER_INACTIVE;
     private boolean borderSet;
 
     public SourceTransfer(Droppable target) {
@@ -70,7 +71,7 @@ import java.io.IOException;
         if (dtde.isDataFlavorSupported(DataFlavor.stringFlavor) || dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
             try {
                 success = doTransfer(dtde.getTransferable(), dtde.getLocation());
-            } catch (final Exception e) {
+            } catch (Exception e) {
                 success = false;
                 e.printStackTrace();
             }
@@ -86,28 +87,28 @@ import java.io.IOException;
     private boolean doTransfer(Transferable transferable, Point p)
             throws UnsupportedFlavorException, IOException {
         if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-            final File f = (File) ((java.util.List) transferable.getTransferData(DataFlavor.javaFileListFlavor)).get(0);
+            File f = (File) ((List) transferable.getTransferData(DataFlavor.javaFileListFlavor)).get(0);
             return target.handleFile(f);
         } else if (transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-            final String value = (String) transferable.getTransferData(DataFlavor.stringFlavor);
+            String value = (String) transferable.getTransferData(DataFlavor.stringFlavor);
             return target.handleText(value);
         } else
             return false;
     }
 
     private void setState(DropTargetEvent dtde, boolean active) {
-        final JComponent c = (JComponent) dtde.getDropTargetContext().getComponent();
+        JComponent c = (JComponent) dtde.getDropTargetContext().getComponent();
         if (!borderSet) BORDER_INACTIVE = c.getBorder();
         borderSet = true;
         c.setBorder(active ? BORDER_ACTIVE : BORDER_INACTIVE);
     }
 
     public boolean importData(TransferSupport support) {
-        final Transferable t = support.getTransferable();
-        final Point point = support.getDropLocation().getDropPoint();
+        Transferable t = support.getTransferable();
+        Point point = support.getDropLocation().getDropPoint();
         try {
             return doTransfer(t, point);
-        } catch (final Exception ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return false;

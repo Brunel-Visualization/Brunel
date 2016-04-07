@@ -24,12 +24,12 @@ public class TestDatalessField {
 
     @Test
     public void testFieldStats() {
-        Field uniform = Data.makeColumnField("a", "label", new Object[]{100, 200, 300, 400, 500, 600});
-        Field uniformWithMissing = Data.makeColumnField("a", "label", new Object[]{100, 200, null, 300, "a", 400, 500, 600});
-        Field peak = Data.makeColumnField("b", "label", new Object[]{1, 2, 2, 2, 2, 2, 2, 3});
-        Field skew = Data.makeColumnField("c", "label", new Object[]{1, 1, 1, 1, 1, 2, 2, 2, 5, 10});
-        Field a = Data.makeColumnField("f", "label", new Object[]{0, 1, 1, 1, 1, 2, 2, 2, 5, 10, 100, 1000});
-        Field b = Data.makeColumnField("f", "label", new Object[]{10, 20, 30, 40, 22, 50, 60});
+        Field uniform = Fields.makeColumnField("a", "label", new Object[]{100, 200, 300, 400, 500, 600});
+        Field uniformWithMissing = Fields.makeColumnField("a", "label", new Object[]{100, 200, null, 300, "a", 400, 500, 600});
+        Field peak = Fields.makeColumnField("b", "label", new Object[]{1, 2, 2, 2, 2, 2, 2, 3});
+        Field skew = Fields.makeColumnField("c", "label", new Object[]{1, 1, 1, 1, 1, 2, 2, 2, 5, 10});
+        Field a = Fields.makeColumnField("f", "label", new Object[]{0, 1, 1, 1, 1, 2, 2, 2, 5, 10, 100, 1000});
+        Field b = Fields.makeColumnField("f", "label", new Object[]{10, 20, 30, 40, 22, 50, 60});
 
         uniform = uniform.dropData();
         uniformWithMissing = uniformWithMissing.dropData();
@@ -42,33 +42,33 @@ public class TestDatalessField {
         assertEquals(6, uniform.rowCount());
         assertEquals(8, uniformWithMissing.rowCount());
 
-        assertEquals(350, uniform.numericProperty("median"), 0.01);
-        assertEquals(350, uniformWithMissing.numericProperty("median"), 0.01);
-        assertEquals(2, peak.numericProperty("median"), 0.01);
-        assertEquals(1.5, skew.numericProperty("median"), 0.01);
-        assertEquals(2, a.numericProperty("median"), 0.01);
-        assertEquals(30, b.numericProperty("median"), 0.01);
+        assertEquals(350, uniform.numProperty("median"), 0.01);
+        assertEquals(350, uniformWithMissing.numProperty("median"), 0.01);
+        assertEquals(2, peak.numProperty("median"), 0.01);
+        assertEquals(1.5, skew.numProperty("median"), 0.01);
+        assertEquals(2, a.numProperty("median"), 0.01);
+        assertEquals(30, b.numProperty("median"), 0.01);
 
-        assertEquals(200, uniform.numericProperty("q1"), 0.01);
-        assertEquals(200, uniformWithMissing.numericProperty("q1"), 0.01);
-        assertEquals(2, peak.numericProperty("q1"), 0.01);
-        assertEquals(1, skew.numericProperty("q1"), 0.01);
-        assertEquals(1, a.numericProperty("q1"), 0.01);
-        assertEquals(21, b.numericProperty("q1"), 0.01);
+        assertEquals(200, uniform.numProperty("q1"), 0.01);
+        assertEquals(200, uniformWithMissing.numProperty("q1"), 0.01);
+        assertEquals(2, peak.numProperty("q1"), 0.01);
+        assertEquals(1, skew.numProperty("q1"), 0.01);
+        assertEquals(1, a.numProperty("q1"), 0.01);
+        assertEquals(21, b.numProperty("q1"), 0.01);
 
-        assertEquals(500, uniform.numericProperty("q3"), 0.01);
-        assertEquals(500, uniformWithMissing.numericProperty("q3"), 0.01);
-        assertEquals(2, peak.numericProperty("q3"), 0.01);
-        assertEquals(2, skew.numericProperty("q3"), 0.01);
-        assertEquals(7.5, a.numericProperty("q3"), 0.01);
-        assertEquals(45, b.numericProperty("q3"), 0.01);
+        assertEquals(500, uniform.numProperty("q3"), 0.01);
+        assertEquals(500, uniformWithMissing.numProperty("q3"), 0.01);
+        assertEquals(2, peak.numProperty("q3"), 0.01);
+        assertEquals(2, skew.numProperty("q3"), 0.01);
+        assertEquals(7.5, a.numProperty("q3"), 0.01);
+        assertEquals(45, b.numProperty("q3"), 0.01);
 
-        assertEquals(100, uniform.numericProperty("granularity"), 0.01);
-        assertEquals(100, uniformWithMissing.numericProperty("granularity"), 0.01);
-        assertEquals(1, peak.numericProperty("granularity"), 0.01);
-        assertEquals(1, skew.numericProperty("granularity"), 0.01);
-        assertEquals(1, a.numericProperty("granularity"), 0.01);
-        assertEquals(2, b.numericProperty("granularity"), 0.01);
+        assertEquals(100, uniform.numProperty("granularity"), 0.01);
+        assertEquals(100, uniformWithMissing.numProperty("granularity"), 0.01);
+        assertEquals(1, peak.numProperty("granularity"), 0.01);
+        assertEquals(1, skew.numProperty("granularity"), 0.01);
+        assertEquals(1, a.numProperty("granularity"), 0.01);
+        assertEquals(2, b.numProperty("granularity"), 0.01);
     }
 
 }
