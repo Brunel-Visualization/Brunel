@@ -49,7 +49,9 @@ setup(
     license='Apache Software License 2.0',
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
-        "Development Status :: 4 - Beta"
+        "Development Status :: 4 - Beta",
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3'
     ],
     cmdclass=cmdclass('brunel/brunel_ext')
 )
