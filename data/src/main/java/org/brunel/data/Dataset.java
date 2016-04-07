@@ -21,17 +21,21 @@ import org.brunel.data.io.Serialize;
 import org.brunel.data.modify.AddConstantFields;
 import org.brunel.data.modify.ConvertSeries;
 import org.brunel.data.modify.DataOperation;
+import org.brunel.data.modify.Each;
 import org.brunel.data.modify.Filter;
 import org.brunel.data.modify.Sort;
 import org.brunel.data.modify.Stack;
 import org.brunel.data.modify.Summarize;
 import org.brunel.data.modify.Transform;
+import org.brunel.data.summary.FieldRowComparison;
 import org.brunel.data.util.Informative;
-import org.brunel.data.values.ColumnProvider;
+import org.brunel.data.util.ItemsList;
 import org.brunel.translator.JSTranslation;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,23 +46,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class Dataset extends Informative implements Serializable {
-
-    /**
-     * Make a dataset from rows of data, the first row are field names
-     * Required for JavaScript
-     *
-     * @param rows input data
-     * @return result data set, autoconverted
-     */
-    public static Dataset makeFromRows(Object[][] rows) {
-        Field[] fields = new Field[rows[0].length];
-        for (int j = 0; j < fields.length; j++) {
-            Object[] column = new Object[rows.length - 1];
-            for (int i = 1; i < rows.length; i++) column[i - 1] = rows[i][j];
-            fields[j] = new Field(rows[0][j].toString(), null, new ColumnProvider(column));
-        }
-        return make(fields);
-    }
 
     @JSTranslation(ignore = true)
     public static Dataset make(Field[] fields) {
@@ -75,18 +62,18 @@ public class Dataset extends Informative implements Serializable {
         for (int i = 0; i < fields.length; i++)
             augmented[i] = Boolean.FALSE.equals(autoConvert) ? fields[i] : Auto.convert(fields[i]);
         int len = fields.length == 0 ? 0 : fields[0].rowCount();
-        augmented[fields.length] = Data.makeConstantField("#count", "Count", 1.0, len);
-        augmented[fields.length + 1] = Data.makeIndexingField("#row", "Row", len);
+        augmented[fields.length] = Fields.makeConstantField("#count", "Count", 1.0, len);
+        augmented[fields.length + 1] = Fields.makeIndexingField("#row", "Row", len);
 
         // The selection data
-        Field selection = Data.makeConstantField("#selection", "Selection", "\u2717", len);
+        Field selection = Fields.makeConstantField("#selection", "Selection", "\u2717", len);
 
         augmented[fields.length + 2] = selection;
         return new Dataset(augmented);
     }
 
     private static Field[] ensureUniqueNames(Field[] fields) {
-        Set<String> cannotUse = new HashSet<String>();
+        Set<String> cannotUse = new HashSet<>();
         cannotUse.add("");  // Cannot use an empty name
         Field[] result = new Field[fields.length];
         for (int i = 0; i < fields.length; i++) {
@@ -110,9 +97,16 @@ public class Dataset extends Informative implements Serializable {
 
     private Dataset(Field[] fields) {
         this.fields = ensureUniqueNames(fields);
-        this.fieldByName = new HashMap<String, Field>();
+        this.fieldByName = new HashMap<>();
         for (Field f : fields) fieldByName.put(f.name.toLowerCase(), f);
         for (Field f : fields) fieldByName.put(f.name, f);
+    }
+
+    public Dataset retainRows(int[] keep) {
+        Field[] results = new Field[fields.length];
+        for (int i = 0; i < results.length; i++)
+            results[i] = Fields.permute(fields[i], keep, false);
+        return replaceFields(results);
     }
 
     /**
@@ -121,7 +115,7 @@ public class Dataset extends Informative implements Serializable {
      * @param command the fields to bin, semi-colon separated
      * @return binned data set
      */
-    public Dataset bin(String command) {
+    public Dataset transform(String command) {
         return Transform.transform(this, command);
     }
 
@@ -129,7 +123,7 @@ public class Dataset extends Informative implements Serializable {
      * Remove the special fields form this data set -- useful when serializing
      */
     public Dataset removeSpecialFields() {
-        List<Field> removed = new ArrayList<Field>();
+        List<Field> removed = new ArrayList<>();
         for (Field f : fields) if (!f.name.startsWith("#")) removed.add(f);
         Field[] fields1 = removed.toArray(new Field[removed.size()]);
 
@@ -163,6 +157,12 @@ public class Dataset extends Informative implements Serializable {
         return (field != null || !lax) ? field : fieldByName.get(name.toLowerCase());
     }
 
+    public Field[] fieldArray(String... names) {
+        Field[] ff = new Field[names.length];
+        for (int i = 0; i < ff.length; i++) ff[i] = field(names[i], false);
+        return ff;
+    }
+
     /**
      * Create a new data set based on this one, with some rows filtered out
      *
@@ -180,9 +180,20 @@ public class Dataset extends Informative implements Serializable {
         return Filter.transform(this, command);
     }
 
+    /**
+     * Create a new data set based on this one, with multiple rows for each source row
+     * A list row will be split into the component pieces
+     *
+     * @param command the fields to 'each', separated by semi-colons
+     * @return increased data set
+     */
+    public Dataset each(String command) {
+        return Each.transform(this, command);
+    }
+
     public Dataset replaceFields(Field[] fields) {
         Dataset result = new Dataset(fields);
-        result.copyPropertiesFrom(this);
+        result.copyAllProperties(this);
         return result;
     }
 
@@ -191,7 +202,7 @@ public class Dataset extends Informative implements Serializable {
     }
 
     public String name() {
-        return stringProperty("name");
+        return strProperty("name");
     }
 
     /**
@@ -201,10 +212,10 @@ public class Dataset extends Informative implements Serializable {
      * @return reduced data set
      */
     public Dataset reduce(String command) {
-        Set<String> names = new HashSet<String>();
-        Collections.addAll(names, DataOperation.parts(command));
+        Set<String> names = new HashSet<>();
+        Collections.addAll(names, DataOperation.strings(command, ';'));
         // keep special and used fields
-        List<Field> ff = new ArrayList<Field>();
+        List<Field> ff = new ArrayList<>();
         for (Field f : this.fields) {
             if (f.name.startsWith("#") || names.contains(f.name))
                 ff.add(f);
@@ -290,28 +301,89 @@ public class Dataset extends Informative implements Serializable {
         return dataset;
     }
 
+    /**
+     * Modify the #selection field but applying the designated operation to the listed rows.
+     * It takes the current selection states and modifies them by applying the supplied method
+     * with the supplied rows. So, for example, "tog" toggles the selection status of the rows passed in
+     *
+     * Thsi method is called from JS to do selection
+     *
+     * @param method one of "add", "sub", "sel", "tog"
+     * @param row    the row from the source data to use in the operation
+     * @param source the Dataset in which we found the rows
+     */
+    public void modifySelection(String method, int row, Dataset source) {
+        String off = Field.VAL_UNSELECTED, on = Field.VAL_SELECTED;
+        Field sel = field("#selection");
+        int n = rowCount();
+
+        // For simple selection (no modifiers) everything is initially cleared
+        if (method.equals("sel"))
+            for (int i = 0; i < n; i++) sel.setValue(off, i);
+
+        Set<Integer> expanded = source.expandedOriginalRows(row);
+        for (int i : expanded) {
+            if (method.equals("sel") || method.equals("add")) sel.setValue(on, i);
+            else if (method.equals("sub")) sel.setValue(off, i);
+            else sel.setValue(sel.value(i) == on ? off : on, i);
+        }
+
+    }
+
+    /**
+     * Expands this row to find similar rows, then returns all rows for the original data for those rows
+     *
+     * @param row target
+     * @return target rows (zero based)
+     */
+    private Set<Integer> expandedOriginalRows(int row) {
+        int n = rowCount();
+
+        // Get all the fields we want to use for comparison
+        // No synthetic or summary fields are desired
+        Set<Field> important = new HashSet<>();
+        for (Field f : fields)
+            if (!f.isSynthetic() && f.property("derived") == null)
+                important.add(f);
+
+        Field[] targetFields = important.toArray(new Field[important.size()]);
+        FieldRowComparison compare = new FieldRowComparison(targetFields, null, false);
+
+        Field rowField = field("#row");
+
+        // Create a set of all rows similar to the target one
+        Set<Integer> expanded = new HashSet<>();
+        for (int i = 0; i < n; i++)
+            if (compare.compare(i, row) == 0) {
+                Object o = rowField.value(i);
+                if (o instanceof ItemsList) {
+                    ItemsList list = (ItemsList) o;
+                    for (int j = 0; j < list.size(); j++) expanded.add((Integer) list.get(j) - 1);
+                } else if (o != null)
+                    expanded.add((Integer) o - 1);
+            }
+        return expanded;
+    }
 
     @JSTranslation(ignore = true)
-    private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+    private void writeObject(ObjectOutputStream out) throws IOException {
         out.write(Serialize.serializeDataset(this));
     }
 
     @JSTranslation(ignore = true)
-    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+    private void readObject(ObjectInputStream in) throws IOException {
         ByteArrayOutputStream store = new ByteArrayOutputStream();
         byte[] block = new byte[10240];
-        for(;;) {
+        for (; ; ) {
             int len = in.read(block);
-            if (len <0) break;
+            if (len < 0) break;
             store.write(block, 0, len);
         }
         Dataset d = (Dataset) Serialize.deserialize(store.toByteArray());
         fields = d.fields;
         fieldByName = d.fieldByName;
-        info = new HashMap<String, Object>();
-        copyPropertiesFrom(d);
+        info = new HashMap<>();
+        copyAllProperties(d);
     }
-
-
 
 }

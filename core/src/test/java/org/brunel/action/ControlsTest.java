@@ -36,7 +36,7 @@ public class ControlsTest {
 
     @Test
     public void testCategoricalFilter() {
-        D3Builder builder = (D3Builder) D3Builder.make();
+        D3Builder builder = D3Builder.make();
         Controls controls = getControls(bank, "x(gender) y(salary) filter(gender)", builder);
         assertTrue(controls.filters.size() > 0);
 
@@ -59,7 +59,7 @@ public class ControlsTest {
 
     @Test
     public void testContinuousFilter() {
-        D3Builder builder = (D3Builder) D3Builder.make();
+        D3Builder builder = D3Builder.make();
         Controls controls = getControls(bank, "x(gender) y(salary) filter(salary)", builder);
         assertTrue(controls.filters.size() > 0);
 
@@ -76,7 +76,7 @@ public class ControlsTest {
     public void testNoFilter() {
 
         //Builder doesn't matter for controls
-        D3Builder builder = (D3Builder) D3Builder.make();
+        D3Builder builder = D3Builder.make();
         Controls controls = getControls(bank, "x(gender) y(salary)", builder);
         assertTrue(controls.filters.isEmpty());
     }

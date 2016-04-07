@@ -22,6 +22,7 @@ import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.io.CSV;
 import org.brunel.data.summary.FieldRowComparison;
+import org.brunel.data.Fields;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertEquals;
@@ -57,7 +58,7 @@ public class TestSort {
         FieldRowComparison comparisonWithRows = new FieldRowComparison(new Field[] { simple.field("B")}, null, true);
 
         // The order should be 0,1,3,2
-        int[] order = comparisonWithRows.makeSortedOrder(4);
+        int[] order = comparisonWithRows.makeSortedOrder();
         assertEquals(0, order[0]);
         assertEquals(1, order[1]);
         assertEquals(3, order[2]);
@@ -112,9 +113,9 @@ public class TestSort {
             c[i] = (double) Math.round(s / (i % 4 + 1));
         }
 
-        Field fa = Data.makeColumnField("a", null, a);
-        Field fb = Data.makeColumnField("b", null, b);
-        Field fc = Data.makeColumnField("c", null, c);
+        Field fa = Fields.makeColumnField("a", null, a);
+        Field fb = Fields.makeColumnField("b", null, b);
+        Field fc = Fields.makeColumnField("c", null, c);
 
         Dataset data = Dataset.make(new Field[]{fa, fb, fc});
         long t1 = System.currentTimeMillis();

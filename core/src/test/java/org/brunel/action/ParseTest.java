@@ -16,6 +16,8 @@
 
 package org.brunel.action;
 
+import org.brunel.action.Param.Type;
+import org.brunel.action.Parser.BrunelToken;
 import org.brunel.data.Data;
 import org.junit.Test;
 
@@ -156,7 +158,7 @@ public class ParseTest {
 
     @Test
     public void testTokenize() {
-        List<Parser.BrunelToken> tokens;
+        List<BrunelToken> tokens;
 
         tokens = new Parser().tokenize("this is     a\nsimple\tstring");
         assertEquals("4,2,1,6,6", lengths(tokens));
@@ -178,9 +180,9 @@ public class ParseTest {
 
     }
 
-    private String lengths(List<Parser.BrunelToken> tokens) {
+    private String lengths(List<BrunelToken> tokens) {
         String r = "";
-        for (Parser.BrunelToken s : tokens) {
+        for (BrunelToken s : tokens) {
             if (r.length() > 0) r += ",";
             r += s.content.length();
         }
@@ -234,11 +236,11 @@ public class ParseTest {
         assertEquals("color", a.name);
         assertEquals(1, a.parameters.length);
         Param p = a.parameters[0];
-        assertEquals(Param.Type.field, p.type());
+        assertEquals(Type.field, p.type());
 
         Param[] mods = p.modifiers();
         assertEquals(1, mods.length);
-        assertEquals(Param.Type.list, mods[0].type());
+        assertEquals(Type.list, mods[0].type());
         List<Param> items = mods[0].asList();
         assertEquals("red, green, blue", Data.join(items));
 

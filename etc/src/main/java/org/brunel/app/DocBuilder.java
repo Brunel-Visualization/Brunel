@@ -46,7 +46,7 @@ public abstract class DocBuilder {
         /* Read the file in */
         String[] lines = new Scanner(WebDisplay.class.getResourceAsStream(fileLoc), "UTF-8").useDelimiter("\\A").next().split("\n");
 
-        Map<String, String> tags = new HashMap<String, String>();
+        Map<String, String> tags = new HashMap<>();
         String currentTag = null;
         for (String line : lines) {
             line = line.trim();
@@ -113,7 +113,7 @@ public abstract class DocBuilder {
         return URLEncoder.encode(title, "utf-8");
     }
 
-    abstract protected String format(String itemFormat, String target, String description, String image, String title, String brunel);
+    protected abstract String format(String itemFormat, String target, String description, String image, String title, String brunel);
 
 
 }

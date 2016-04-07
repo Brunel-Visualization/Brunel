@@ -33,7 +33,7 @@ public class SimpleCache implements DatasetCache {
     private static final long MAX_ESTIMATED_MEMORY = 512 * 1024 * 1024;
 
     private final Map<String, Dataset> map = Collections.synchronizedMap(new MapCache());
-    private long estimatedMemoryUse = 0;
+    private long estimatedMemoryUse;
 
     @Override
     public synchronized Dataset retrieve(String key) {

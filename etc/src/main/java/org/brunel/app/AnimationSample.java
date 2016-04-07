@@ -92,7 +92,7 @@ public class AnimationSample {
 
         StringBuilder html = new StringBuilder();
         html.append("<html><head><meta charset=\"UTF-8\"><title>Animation Sample</title>\n");
-        html.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"../out/BrunelBaseStyles.css\">\n");
+        html.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"../out/Brunel.css\">\n");
         html.append(imports);
         html.append("\n<style>\n").append(css).append("\n</style>\n");
         html.append("</head><body>\n<h1>").append(action).append("</h1>\n");

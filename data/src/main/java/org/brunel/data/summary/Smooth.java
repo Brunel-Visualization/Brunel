@@ -16,7 +16,6 @@
 
 package org.brunel.data.summary;
 
-import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
 
@@ -25,32 +24,40 @@ import java.util.List;
 /**
  * Calculates a smooth fit function
  */
-public class Smooth implements Fit {
+public class Smooth extends Fit {
     private final double window;                              // Window width for the data
-    private final double[] x, y;                              // x and y fields of data, sorted by x
-    private final double mean;                                // mean value
 
     public Smooth(Field y, Field x, Double windowPercent, List<Integer> rows) {
-        if (windowPercent == null) {
+        super(y, x, rows);
+        this.window = getWindowWidth(x, windowPercent);
+    }
+
+    private double getWindowWidth(Field x, Double windowPercent) {
+        double low;
+        double high;
+        if (x.isNumeric()) {
+            low = x.min();
+            high = x.max();
+        } else {
+            low = 0;
+            high = x.categories().length - 1;
+        }
+        if (windowPercent != null) {
+            return (high - low) * windowPercent / 200;
+        } else {
             // use the optimal bin count to chose a window size
             int n = Auto.optimalBinCount(x);
-            window = (x.max() - x.min()) / n;
-        } else {
-            window = (x.max() - x.min()) * windowPercent / 200;
+            return (high - low) / n;
         }
-        double[][] pairs = Regression.asPairs(y, x, rows);
-        this.x = pairs[1];
-        this.y = pairs[0];
-        this.mean = y.numericProperty("mean");
     }
 
-    public Double get(Object value) {
-        Double at = Data.asNumeric(value);
+    public Object get(Object value) {
+        Double at = vx(value);
         if (at == null) return null;
-        return eval(at, this.window);
+        return reverseY(eval(at, this.window));
     }
 
-    private Double eval(double at, double h) {
+    private double eval(double at, double h) {
         int low = search(at - h, x);                   // low end of window
         int high = search(at + h, x);                  // high end of window
 
@@ -64,8 +71,8 @@ public class Smooth implements Fit {
             }
         }
         // If we have no data points, double the window size and try again
-        // But if that would casue the window to be 10x bigger than requested, give up and use the mean
-        if (sw < 1e-4) return h < window * 10 ? eval(at, h*2) : mean;
+        // But if that would cause the window to be 10x bigger than requested, give up and use the mean
+        if (sw < 1e-4) return h < window * 10 ? eval(at, h * 2) : my;
         return sy / sw;
     }
 

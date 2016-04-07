@@ -216,8 +216,8 @@ this is not the same as simply swapping X and Y as the direction of the elements
  * Polar maps the Y dimension to the polar radius, and the X direction to the polar angle
  * Stack takes all items with the same X value and stacks them on top of each other
 
-Currently, polar is poorly supported; stacked polar bars (pie charts) work, but not much else. This
-will be improved very shortly.
+Currently, polar is poorly supported; stacked polar bars (pie charts) work, and you can set the size
+on them to do a Rose Diagram (a pie chart with different radii for each wedge). Little else works.
 
 Examples:
 
@@ -231,7 +231,10 @@ Examples:
 
     stack transpose bar x(summer) bin(summer) y(#count) color(region)
 
-    stack polar bar x(summer) bin(summer) y(#count) color(region)
+    stack polar y(#count) color(region) label(region)
+
+    y(population) stack polar color(region) size(income) label(region) tooltip(#all) sum(population)
+    mean(income)
 
 
 
@@ -545,7 +548,7 @@ given an averaged rank.
 
 <!-- examples -->
 
-    x(summer) y(winter) label("#",winter) rank(summer)
+    x(summer) y(winter) label("#",winter) rank(winter)
 
     y(dem_rep) label(abbr) rank(dem_rep) axes(x) list(abbr) bin(dem_rep:30) color(dem_rep) legends(none)
 
@@ -610,7 +613,8 @@ The following summary functions produce results only for numeric data
 
  * **sum** : Sum of all values in the group
  * **percent** : The percent of the sum of this group as a percent of the sum of all groups with the same
-'x' value
+'x' value. Optionally, by adding a ":overall" parameter, the percent is the percent of the overall
+total.
  * **median** : Median value of the group
  * **min**, **max** : Lower and upper values of the group
  * **range** : Distance between min and max values
@@ -773,14 +777,20 @@ bubbles. Unlike cloud, bubble uses multiple fields to form a hiearachy, like tre
 Maps
 ----
 Brunel maps provide geographic features that can be referenced by the name of the geography. The
-geography to display is chosen automatically based on the requested content.
+geography to display is chosen automatically based on the requested content including a suitable map
+projection.
 
-`map` can match a geographic location either to the values in a field or to specific geographic
-regions. Specific geographic locations are supplied directly to the `map` action. Geographic matches
+The region and name data that back the map feature are courtesy of the public domain data sets found
+in the Natural Earth repository (Free vector and raster map data @ naturalearthdata.com).
+
+`map` can match a geographic location either to the values in a field or to named geographic
+regions. Named geographic locations are supplied directly to the `map` action. Geographic matches
 based on the contents of a field (like names of US states) are done by providing the field name
 containing the geographic names to `x`. Labels that are specific to the chosen geography can be
 requested using the `labels` parameter on `map`; whereas labels that are present in the data can use
 the `label` action with the data field containing the labels.
+
+Additional overlays ( `+`) can be provided using longitude and latitude values for `x` and `y`.
 
 <!-- examples -->
 
@@ -792,9 +802,13 @@ the `label` action with the data field containing the labels.
 
     map x(state) color(income) + map(labels:10)
 
+    map ('usa') + data("sample:airports2008na.csv") x(Long) y(Lat)
+
 
 Networks
 --------
+A graph network can be specified by overlaying ( `+`) `edge` and `network`.
+
 Networks typically (but not always) require one data source for the nodes and a separate data source
 for the connections. The nodes data should contain unique names for each node and the edges data
 should contain two fields that define which nodes are connected to each other. An overlay ( `+`)
@@ -805,11 +819,12 @@ A network can be created from a single data source by indicating the connection 
 for the `edge` and `y` for the `network`. The `#values` field is generated and contains the contents
 of the fields used to define the connections.
 
-Additional overlays ( `+`) can be provided using longitude and latitude values for `x` and `y`.
-
 <!-- examples -->
 
     edge key(state, region) + network y(state, region) label(#values) legends(none)
+
+    data('sample:sample_edges.csv') edge key(From, To) opacity(Weight) + data('sample:sample_nodes.csv')
+    network key(Node) size(Count:200%) color(Location) label(Node)
 
 
 

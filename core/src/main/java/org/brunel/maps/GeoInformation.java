@@ -17,7 +17,7 @@
 package org.brunel.maps;
 
 import org.brunel.action.Param;
-import org.brunel.build.chart.ChartCoordinates;
+import org.brunel.build.info.ChartCoordinates;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
@@ -28,7 +28,7 @@ import org.brunel.geom.Rect;
 import org.brunel.maps.projection.Projection;
 import org.brunel.maps.projection.ProjectionBuilder;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Diagram;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,18 +67,18 @@ public class GeoInformation {
             // Calculate suitability for use as a geographic name
             double count = 0;
             if (!f.isNumeric()) {
-                HashSet<Object> unmatched = new HashSet<Object>();
+                HashSet<Object> unmatched = new HashSet<>();
                 GeoData.instance().mapFeaturesToFiles(f.categories(), unmatched);
                 for (int i = 0; i < f.rowCount(); i++)
                     if (!unmatched.contains(f.value(i))) count++;
             }
             f.set(KEY_GEO_NAMES, count / f.valid());
         }
-        return f.numericProperty(KEY_GEO_NAMES);
+        return f.numProperty(KEY_GEO_NAMES);
     }
 
     public List<LabelPoint> getLabelsWithinScaleBounds() {
-        List<LabelPoint> points = new ArrayList<LabelPoint>();
+        List<LabelPoint> points = new ArrayList<>();
 
         for (GeoMapping g : geo.values()) {
             for (GeoFile f : g.files) {
@@ -132,7 +132,7 @@ public class GeoInformation {
     }
 
     private Poly combineForHull(Poly pointsHull, Map<VisSingle, GeoMapping> geo, boolean includeReferenceMaps) {
-        List<Point> combined = new ArrayList<Point>();
+        List<Point> combined = new ArrayList<>();
         Collections.addAll(combined, pointsHull.points);
 
         // Add in the hulls for each of the contained files
@@ -153,7 +153,7 @@ public class GeoInformation {
     }
 
     private Poly getPositionPoints(ChartCoordinates positionFields) {
-        Set<Point> points = new HashSet<Point>();
+        Set<Point> points = new HashSet<>();
         // Add points for all the fields for each element
         for (VisSingle e : elements) {
             Field[] xx = positionFields.getX(e);
@@ -190,10 +190,10 @@ public class GeoInformation {
 
     // The whole array returned will be null if nothing is a map
     private Map<VisSingle, GeoMapping> makeGeoMappings(Dataset[] datas, Poly positionHull) {
-        Map<VisSingle, GeoMapping> map = new LinkedHashMap<VisSingle, GeoMapping>();
+        Map<VisSingle, GeoMapping> map = new LinkedHashMap<>();
         GeoFile[] validFiles = null;
         for (int i = 0; i < elements.length; i++) {
-            if (elements[i].tDiagram == VisTypes.Diagram.map) {
+            if (elements[i].tDiagram == Diagram.map) {
                 GeoMapping mapping = makeMapping(elements[i], datas[i], positionHull);
                 if (mapping != null) {
                     map.put(elements[i], mapping);
@@ -208,7 +208,7 @@ public class GeoInformation {
             GeoMapping world = GeoData.instance().world();
             validFiles = world.files;
             for (VisSingle e : elements) {
-                if (e.tDiagram == VisTypes.Diagram.map && e.tDiagramParameters.length == 0) {
+                if (e.tDiagram == Diagram.map && e.tDiagramParameters.length == 0) {
                     map.put(e, world);
                 }
             }
@@ -216,7 +216,7 @@ public class GeoInformation {
 
         // Now run through any elements that should have a mapping, but do not
         for (VisSingle e : elements) {
-            if (e.tDiagram == VisTypes.Diagram.map && map.get(e) == null)
+            if (e.tDiagram == Diagram.map && map.get(e) == null)
                 map.put(e, GeoMapping.createGeoMapping(new Object[0], Arrays.asList(validFiles), GeoData.instance()));
         }
 

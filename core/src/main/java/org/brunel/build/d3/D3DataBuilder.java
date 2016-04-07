@@ -17,18 +17,23 @@
 package org.brunel.build.d3;
 
 import org.brunel.action.Param;
+import org.brunel.build.d3.D3Util.DateBuilder;
 import org.brunel.build.data.DataTransformParameters;
 import org.brunel.build.util.BuilderOptions;
+import org.brunel.build.util.BuilderOptions.DataMethod;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 import org.brunel.data.summary.FieldRowComparison;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Diagram;
+import org.brunel.model.VisTypes.Element;
+import org.brunel.model.VisTypes.Interaction;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -40,6 +45,7 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Write the Javascript for the data
@@ -47,8 +53,8 @@ import java.util.Map;
 public class D3DataBuilder {
 
     public static void writeTables(VisItem main, ScriptWriter out, BuilderOptions options) {
-        if (options.includeData == BuilderOptions.DataMethod.none) return;
-        if (options.includeData == BuilderOptions.DataMethod.minimal) {
+        if (options.includeData == DataMethod.none) return;
+        if (options.includeData == DataMethod.minimal) {
             throw new UnsupportedOperationException("Cannot make minimal data yet");
         }
 
@@ -64,9 +70,9 @@ public class D3DataBuilder {
             Dataset data = datasets[d];
             Field[] fields;
 
-            if (options.includeData == BuilderOptions.DataMethod.columns) {
+            if (options.includeData == DataMethod.columns) {
                 // Only the fields needed by the vis items
-                LinkedHashSet<Field> fieldsAsSet = new LinkedHashSet<Field>();
+                LinkedHashSet<Field> fieldsAsSet = new LinkedHashSet<>();
                 addUsedFields(main, data, fieldsAsSet);
                 fields = fieldsAsSet.toArray(new Field[fieldsAsSet.size()]);
             } else {
@@ -76,7 +82,7 @@ public class D3DataBuilder {
 
             if (fields.length == 0) {
                 // A Chart that doesn't actually use the data ... just meta values
-                fields = new Field[]{Data.makeConstantField("_dummy_", "Dummy", 1.0, data.rowCount())};
+                fields = new Field[]{Fields.makeConstantField("_dummy_", "Dummy", 1.0, data.rowCount())};
             }
 
             // Name the table with a numeric suffix for multiple tables
@@ -94,7 +100,15 @@ public class D3DataBuilder {
             out.onNewLine().add(" options: [");
             for (int i = 0; i < fields.length; i++) {
                 if (fields[i].isSynthetic()) continue;
-                String name = fields[i].isDate() ? "date" : (fields[i].isNumeric() ? "numeric" : "string");
+                String name;
+                if (fields[i].isDate())
+                    name = "date";
+                else if (fields[i].isProperty("list"))
+                    name = "list";
+                else if (fields[i].isNumeric())
+                    name = "numeric";
+                else
+                    name = "string";
                 if (i > 0) out.add(", ");
                 out.add("'").add(name).add("'");
             }
@@ -134,7 +148,7 @@ public class D3DataBuilder {
     // If the row contains any nulls, return null for the whole row
     private static String makeRowText(Field[] fields, int r, NumberFormat format) {
         StringBuilder row = new StringBuilder();
-        D3Util.DateBuilder dateBuilder = new D3Util.DateBuilder();
+        DateBuilder dateBuilder = new DateBuilder();
         row.append("[");
         for (int i = 0; i < fields.length; i++) {
             Field field = fields[i];
@@ -184,12 +198,13 @@ public class D3DataBuilder {
         DataTransformParameters params = (DataTransformParameters) data.property("parameters");
         D3Util.addTiming("Data Start", out);
         out.add("original = datasets[" + datasetIndex + "]").endStatement();
+        out.add("if (filterRows) original = original.retainRows(filterRows)").endStatement();
         out.add("processed = pre(original,", datasetIndex, ")");
         out.mark();
         writeTransform("addConstants", params.constantsCommand);
 
         // Check for selection filtering
-        Param param = vis.tInteraction.get(VisTypes.Interaction.filter);
+        Param param = vis.tInteraction.get(Interaction.filter);
         if (param != null) {
             if ("unselected".equals(param.asString()))
                 writeTransform("filter", "#selection is " + Field.VAL_UNSELECTED);
@@ -197,9 +212,10 @@ public class D3DataBuilder {
                 writeTransform("filter", "#selection is " + Field.VAL_SELECTED);
         }
 
-        writeTransform("filter", params.filterCommand);
-        writeTransform("bin", params.transformCommand);
+        writeTransform("each", params.eachCommand);
+        writeTransform("transform", params.transformCommand);
         writeTransform("summarize", params.summaryCommand);
+        writeTransform("filter", params.filterCommand);
 
         // Because series creates duplicates of fields, it is an expensive transformation
         // So we do not want to make it work on all fields, only the fields that are necessary.
@@ -213,7 +229,7 @@ public class D3DataBuilder {
 
         writeTransform("stack", params.stackCommand);               // Stack must come after all else
 
-        if (vis.tDiagram == VisTypes.Diagram.network && vis.fY.size() > 1) {
+        if (vis.tDiagram == Diagram.network && vis.fY.size() > 1) {
             // We are using the 'Y' values to generate a set of identifier
             // We need to ensure the values are set in the summary, as well as any aesthetics
             String command = "#values=#values";
@@ -234,7 +250,7 @@ public class D3DataBuilder {
 
         // Get the list of fields we need as an array
         String[] fields = new String[fieldsToIndex.size()];
-        for (Map.Entry<String, Integer> e : fieldsToIndex.entrySet()) {
+        for (Entry<String, Integer> e : fieldsToIndex.entrySet()) {
             fields[e.getValue()] = e.getKey();
         }
 
@@ -251,7 +267,7 @@ public class D3DataBuilder {
         out.indentLess();
 
         // Define the key function
-        out.add("var keyFunction = ");
+        out.add("var keyFunc = ");
         defineKeyFieldFunction(makeKeyFields(), false, fieldsToIndex);
         out.endStatement();
 
@@ -272,7 +288,8 @@ public class D3DataBuilder {
         out.add("_split:").at(24);
         defineKeyFieldFunction(makeSplitFields(), true, fieldsToIndex);
         out.add(",").ln();
-        out.add("_rows:").at(24).add("BrunelD3.makeRowsWithKeys(keyFunction, processed.rowCount())");
+        out.add("_key:").at(24).add("keyFunc").add(",").ln();
+        out.add("_rows:").at(24).add("BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())");
 
         if (vis.fKeys.size() == 1 && vis.fX.size() == 1 && vis.fY.size() == 1) {
             out.add(",").ln();
@@ -319,20 +336,20 @@ public class D3DataBuilder {
         // If we have defined keys, util them
         if (!vis.fKeys.isEmpty()) return asFields(vis.fKeys);
 
-        if (vis.tDiagram == VisTypes.Diagram.chord) {
-            List<String> result = new ArrayList<String>();
+        if (vis.tDiagram == Diagram.chord) {
+            List<String> result = new ArrayList<>();
             Collections.addAll(result, vis.positionFields());
             Collections.addAll(result, vis.aestheticFields());
             if (suitableForKey(result)) return result;
         }
 
-        // Positions are the keys for trees and treemaps
-        if (vis.tDiagram == VisTypes.Diagram.treemap || vis.tDiagram == VisTypes.Diagram.map) {
+        // Positions are the keys  treemaps
+        if (vis.tDiagram == Diagram.map) {
             // Otherwise just use the position fields as usual
             return Arrays.asList(vis.positionFields());
         }
 
-        if (vis.tDiagram == VisTypes.Diagram.network) {
+        if (vis.tDiagram == Diagram.network) {
             // The following handles the case when we use the edges as y values to make a key field for the nodes
             if (vis.fY.size() > 1) return Collections.singletonList("#values");
         }
@@ -348,15 +365,24 @@ public class D3DataBuilder {
         }
 
         // Default is the row values
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         result.add("#row");
-        if (vis.fY.size() > 1) result.add("#series");           // Because multiple rows have the same "#row"
+
+        // Multiple rows have the same "#row" when we do make series
+        if (vis.fY.size() > 1) result.add("#series");
+
+        // Multiple rows have the same "#row" when we split up a list field using "each"
+        for (Entry<Param, String> e : vis.fTransform.entrySet()) {
+            if (e.getValue().equals("each")) result.add(e.getKey().asField());
+        }
+
+
         return result;
     }
 
     private List<String> makeSplitFields() {
         // Start with all the aesthetics
-        ArrayList<String> splitters = new ArrayList<String>();
+        ArrayList<String> splitters = new ArrayList<>();
 
         // Always add splits and color
         for (Param p : vis.fSplits) splitters.add(p.asField());
@@ -364,7 +390,7 @@ public class D3DataBuilder {
         for (Param p : vis.fOpacity) splitters.add(p.asField());
 
         // We handle sized areas specially -- don't split using the size for them
-        if (vis.tElement != VisTypes.Element.line && vis.tElement != VisTypes.Element.path) {
+        if (vis.tElement != Element.line && vis.tElement != Element.path) {
             for (Param p : vis.fSize) splitters.add(p.asField());
         }
 
@@ -372,17 +398,18 @@ public class D3DataBuilder {
     }
 
     private List<String> asFields(List<Param> items) {
-        List<String> fields = new ArrayList<String>();
+        List<String> fields = new ArrayList<>();
         for (Param p : items) fields.add(p.asField());
         return fields;
     }
 
     private boolean suitableForKey(List<String> result) {
+        if (result.isEmpty()) return false;
         Field[] fields = new Field[result.size()];
         for (int i = 0; i < fields.length; i++) fields[i] = data.field(result.get(i));
         // Sort and see if any adjacent 'keys' are the same
         FieldRowComparison rowComparison = new FieldRowComparison(fields, null, false);
-        int[] order = rowComparison.makeSortedOrder(data.rowCount());
+        int[] order = rowComparison.makeSortedOrder();
         for (int i = 1; i < order.length; i++)
             if (rowComparison.compare(order[i], order[i - 1]) == 0) return false;
         return true;

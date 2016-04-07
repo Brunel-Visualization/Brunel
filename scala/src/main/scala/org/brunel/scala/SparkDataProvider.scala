@@ -17,6 +17,7 @@
 package org.brunel.scala
 
 import org.apache.spark.sql.Row
+import org.brunel.data.util.MapInt
 
 import org.brunel.data.values.Provider
 import org.brunel.data.values.ColumnProvider
@@ -31,7 +32,7 @@ class SparkDataProvider[+T] (colIndex:Int, rows:Array[Row]) extends Provider {
   //Note:  Missing data values are removed because of this issue in scala 2.10:  https://issues.scala-lang.org/browse/SI-6908
   lazy val column : List[T]  = List.tabulate(rows.length) (x => rows(x).getAs[T](colIndex) ).filter(p => p != null)
 
-  def compareRows(a: Int, b: Int, categoryOrder: HashMap[Object,Integer]): Int = {
+  def compareRows(a: Int, b: Int, categoryOrder: MapInt): Int = {
     val p = rows(a).getAs[T](colIndex)
     val q = rows(b).getAs[T](colIndex)
     if (p == q) return 0

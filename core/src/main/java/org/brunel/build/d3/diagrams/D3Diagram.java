@@ -18,15 +18,14 @@ package org.brunel.build.d3.diagrams;
 
 import org.brunel.action.Param;
 import org.brunel.build.d3.D3LabelBuilder;
-import org.brunel.build.d3.D3PointBuilder;
-import org.brunel.build.element.ElementDefinition;
-import org.brunel.build.element.ElementDetails;
-import org.brunel.build.element.ElementStructure;
+import org.brunel.build.d3.element.ElementDetails;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Diagram;
+import org.brunel.model.VisTypes.Element;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,14 +35,14 @@ public abstract class D3Diagram {
         VisSingle vis = structure.vis;
         Dataset data = structure.data;
         if (vis.tDiagram == null) return null;
-        if (vis.tDiagram == VisTypes.Diagram.bubble) return new Bubble(vis, data, out);
-        if (vis.tDiagram == VisTypes.Diagram.chord) return new Chord(vis, data, out);
-        if (vis.tDiagram == VisTypes.Diagram.cloud) return new Cloud(vis, data, out);
-        if (vis.tDiagram == VisTypes.Diagram.tree) return new Tree(vis, data, out);
-        if (vis.tDiagram == VisTypes.Diagram.treemap) return new Treemap(vis, data, out);
-        if (vis.tDiagram == VisTypes.Diagram.network)
+        if (vis.tDiagram == Diagram.bubble) return new Bubble(vis, data, out);
+        if (vis.tDiagram == Diagram.chord) return new Chord(vis, data, out);
+        if (vis.tDiagram == Diagram.cloud) return new Cloud(vis, data, out);
+        if (vis.tDiagram == Diagram.tree) return new Tree(vis, data, out);
+        if (vis.tDiagram == Diagram.treemap) return new Treemap(vis, data, out);
+        if (vis.tDiagram == Diagram.network)
             return new Network(vis, data, structure, structure.chart.getEdge(), out);
-        if (vis.tDiagram == VisTypes.Diagram.map) {
+        if (vis.tDiagram == Diagram.map) {
             if (vis.tDiagramParameters.length == 1 && vis.tDiagramParameters[0].asString().equals("labels"))
                 return new GeoMapLabels(vis, data, structure.chart, out);
             else
@@ -54,11 +53,11 @@ public abstract class D3Diagram {
 
     final ScriptWriter out;
     final Param size;
-    final VisTypes.Element element;
+    final Element element;
     final VisSingle vis;
     final D3LabelBuilder labelBuilder;
     final String[] position;
-    private boolean isHierarchy = false;
+    private boolean isHierarchy;
 
     D3Diagram(VisSingle vis, Dataset data, ScriptWriter out) {
         this.vis = vis;
@@ -100,7 +99,7 @@ public abstract class D3Diagram {
 
     public abstract ElementDetails initializeDiagram();
 
-    public abstract void writeDefinition(ElementDetails details, ElementDefinition elementDef);
+    public abstract void writeDefinition(ElementDetails details);
 
     public void writeDiagramEnter() {
         // By default, nothing is needed
@@ -111,7 +110,7 @@ public abstract class D3Diagram {
         // By Default, do nothing
     }
 
-    public void writePreDefinition(ElementDetails details, ElementDefinition elementDef) {
+    public void writePreDefinition(ElementDetails details) {
         // By Default, do nothing
     }
 
@@ -133,10 +132,6 @@ public abstract class D3Diagram {
 
     }
 
-    protected void definePoint(ElementDefinition elementDef, ElementDetails details) {
-        new D3PointBuilder(out).defineShapeGeometry(vis, elementDef, details);
-    }
-
 
     void makeHierarchicalTree() {
         String[] positionFields = vis.positionFields();
@@ -147,7 +142,7 @@ public abstract class D3Diagram {
     }
 
     protected String quoted(String... items) {
-        List<String> p = new ArrayList<String>();
+        List<String> p = new ArrayList<>();
         for (String s : items) p.add(Data.quote(s));
         return Data.join(p);
     }

@@ -17,8 +17,8 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.d3.D3Util;
-import org.brunel.build.element.ElementDefinition;
-import org.brunel.build.element.ElementDetails;
+import org.brunel.build.d3.element.ElementDetails;
+import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
@@ -27,10 +27,11 @@ import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
 import org.brunel.maps.projection.ProjectionBuilder;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Element;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 public class GeoMap extends D3Diagram {
@@ -88,9 +89,9 @@ public class GeoMap extends D3Diagram {
 
     private final GeoMapping mapping;           // Mapping of identifiers to features
 
-    public GeoMap(VisSingle vis, Dataset data, GeoMapping mapping, ScriptWriter out) {
+    public GeoMap(VisSingle vis, Dataset data, GeoMapping geo, ScriptWriter out) {
         super(vis, data, out);
-        this.mapping = mapping;
+        this.mapping = geo;
         if (mapping == null)
             throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
     }
@@ -99,13 +100,13 @@ public class GeoMap extends D3Diagram {
         out.indentLess().comment("Read in the feature data and call build again when done");
         writeFeatureHookup(mapping, GeoInformation.getIDField(vis));
 
-        if (vis.tElement == VisTypes.Element.point || vis.tElement == VisTypes.Element.text) {
+        if (vis.tElement == Element.point || vis.tElement == Element.text) {
             return ElementDetails.makeForCoordinates(vis, ModelUtil.getElementSymbol(vis));
         } else {
             out.add("var path = d3.geo.path().projection(projection)").endStatement();
 
             // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
-            return ElementDetails.makeForDiagram(vis, "data._rows", "path", "polygon", "geo", false);
+            return ElementDetails.makeForDiagram(vis, ElementRepresentation.geoFeature, "polygon", "data._rows");
         }
     }
 
@@ -131,10 +132,10 @@ public class GeoMap extends D3Diagram {
         String[] files = map.getFiles();
 
         // Overall combined map from file name -> (Map of data name to feature index in that file)
-        Map<String, Map<Object, Integer>> combined = new LinkedHashMap<String, Map<Object, Integer>>();
+        Map<String, Map<Object, Integer>> combined = new LinkedHashMap<>();
         for (String geo : files) combined.put(geo, new TreeMap<Object, Integer>());
 
-        for (Map.Entry<Object, int[]> e : map.getFeatureMap().entrySet()) {
+        for (Entry<Object, int[]> e : map.getFeatureMap().entrySet()) {
             Object dataName = e.getKey();
             int[] indices = e.getValue();                               // [FILE INDEX, FEATURE KEY]
             String fileName = files[indices[0]];
@@ -151,7 +152,7 @@ public class GeoMap extends D3Diagram {
             out.onNewLine().add(source, ":{").indentMore();
             int i = 0;
             Map<Object, Integer> features = combined.get(fileName);
-            for (Map.Entry<Object, Integer> s : features.entrySet()) {
+            for (Entry<Object, Integer> s : features.entrySet()) {
                 if (i++ > 0) out.add(", ");
                 out.addQuoted(s.getKey()).add(":").add(s.getValue());
             }
@@ -161,24 +162,22 @@ public class GeoMap extends D3Diagram {
         out.indentLess().onNewLine().add("}");
     }
 
-    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
-        if (vis.tElement == VisTypes.Element.point || vis.tElement == VisTypes.Element.text) {
-            out.addChained("attr('transform', function(d) { return projectTransform(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999]) } )");
-            definePoint(elementDef, details);
-            out.endStatement();
-            addAestheticsAndTooltips(details, true);
-        } else {
-            // Set the given location using the transform
-            out.addChained("attr('d', path )").endStatement();
-        }
-        addAestheticsAndTooltips(details, true);
+    public void writeDefinition(ElementDetails details) {
+//
+//        elementBuilder.writeCoordinateDefinition(details);
+////        if (vis.tElement == Element.point || vis.tElement == Element.text) {
+////            out.addChained("attr('transform', function(d) { return projectTransform(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999]) } )");
+////            definePoint(details);
+////            out.endStatement();
+////            addAestheticsAndTooltips(details, true);
+////        } else {
+////            // Set the given location using the transform
+////            out.addChained("attr('d', path )").endStatement();
+////        }
+//        addAestheticsAndTooltips(details, true);
     }
 
-    public void writeDiagramEnter() {
-        super.writeDiagramEnter();
-    }
-
-    public void writePreDefinition(ElementDetails details, ElementDefinition elementDef) {
+    public void writePreDefinition(ElementDetails details) {
         out.add("selection.classed('nondata', function(d) {return !d || d.row == null})").endStatement();
     }
 

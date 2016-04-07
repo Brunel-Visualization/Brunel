@@ -21,10 +21,10 @@ import org.brunel.data.stats.NominalStats;
 import org.brunel.data.stats.NumericStats;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Informative;
+import org.brunel.data.util.ItemsList;
+import org.brunel.data.util.MapInt;
 import org.brunel.data.util.Range;
 import org.brunel.data.values.Provider;
-
-import java.util.HashMap;
 
 public class Field extends Informative implements Comparable<Field> {
 
@@ -36,7 +36,7 @@ public class Field extends Informative implements Comparable<Field> {
     Provider provider;                          // Provides values for the field (not final as it may need conversion)
 
     private boolean calculatedNominal, calculatedNumeric, calculatedDate;   // True when we calculate these
-    private HashMap<Object, Integer> categoryOrder;                             // order of the categories
+    private MapInt categoryOrder;                                           // order of the categories
 
     public Field(String name, String label, Provider provider) {
         this(name, label, provider, null);
@@ -55,7 +55,7 @@ public class Field extends Informative implements Comparable<Field> {
                 base.makeNumericStats();
                 base.makeDateStats();
             }
-            copyPropertiesFrom(base);
+            copyAllProperties(base);
         }
     }
 
@@ -64,7 +64,8 @@ public class Field extends Informative implements Comparable<Field> {
      * This method is used by selection to set the selection results.
      * It should not be used by general programming, as fields may share data and so setting the value in one
      * field may affect other fields -- or cached data sets.
-     * @param o value to set
+     *
+     * @param o     value to set
      * @param index index at which to set the value
      */
     public void setValue(Object o, int index) {
@@ -74,11 +75,9 @@ public class Field extends Informative implements Comparable<Field> {
 
     public int compareRows(int a, int b) {
         if (categoryOrder == null) {
-            categoryOrder = new HashMap<Object, Integer>();         // Build it no matter what so next call is faster
-            if (preferCategorical()) {
-                Object[] cats = categories();
-                for (int i = 0; i < cats.length; i++) categoryOrder.put(cats[i], i);
-            }
+            // Build it no matter what so next call is faster
+            categoryOrder = new MapInt();
+            if (preferCategorical())  categoryOrder.index(categories());
         }
         return provider.compareRows(a, b, categoryOrder);
     }
@@ -100,10 +99,15 @@ public class Field extends Informative implements Comparable<Field> {
                 o = super.property(key);
             }
             if (!calculatedDate && DateStats.creates(key)) {
-                if (!calculatedNominal) makeNominalStats();
-                if (!calculatedNumeric) makeNumericStats();
-                makeDateStats();
-                o = super.property(key);
+                if (isDate()) {
+                    if (!calculatedNominal) makeNominalStats();
+                    if (!calculatedNumeric) makeNumericStats();
+                    makeDateStats();
+                    o = super.property(key);
+                } else {
+                    // No need
+                    calculatedDate = true;
+                }
             }
         }
         return o;
@@ -120,15 +124,19 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public boolean isNumeric() {
-        return propertyTrue("numeric");
+        return isProperty("numeric");
+    }
+
+    public void setNumeric() {
+        set("numeric", true);
     }
 
     public boolean isDate() {
-        return propertyTrue("date");
+        return isProperty("date");
     }
 
     public boolean isBinned() {
-        return propertyTrue("binned");
+        return isProperty("binned");
     }
 
     private void makeNumericStats() {
@@ -169,12 +177,11 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public boolean isSynthetic() {
-        //Probably should use a property to indicate this instead
         return name.startsWith("#");
     }
 
     public boolean preferCategorical() {
-        return !isNumeric() || isBinned() ;
+        return !isNumeric() || isBinned();
     }
 
     public boolean ordered() {
@@ -183,12 +190,12 @@ public class Field extends Informative implements Comparable<Field> {
 
     public Field rename(String name, String label) {
         Field field = new Field(name, label, provider);
-        field.copyPropertiesFrom(this);
+        field.copyAllProperties(this);
         return field;
     }
 
     public int rowCount() {
-        return provider != null ? provider.count() : numericProperty("n").intValue();
+        return provider != null ? provider.count() : numProperty("n").intValue();
     }
 
     public String toString() {
@@ -196,7 +203,7 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public int uniqueValuesCount() {
-        return (int) Math.round(numericProperty("unique"));
+        return (int) Math.round(numProperty("unique"));
     }
 
     public int valid() {
@@ -226,6 +233,8 @@ public class Field extends Informative implements Comparable<Field> {
             Double d = Data.asNumeric(v);
             return d == null ? "?" : Data.formatNumeric(d, true);
         }
+        if (isProperty("list"))
+            return ((ItemsList) v).toString((DateFormat) property("dateFormat"));
         return v.toString();
     }
 

@@ -11,15 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import absolute_import
 
-import sys
-#Package migration starting in Python 3.5
-if sys.version_info >= (3,5):
-    import notebook
+try:
     from ipywidgets import widgets
     from traitlets import Unicode
     from traitlets import CFloat, List
-else:
+except ImportError:
     from IPython.html import widgets
     from IPython.utils.traitlets import Unicode
     from IPython.utils.traitlets import CFloat, List

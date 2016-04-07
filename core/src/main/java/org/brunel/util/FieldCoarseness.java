@@ -36,7 +36,7 @@ import java.util.Comparator;
         if (f.preferCategorical())
             return f.categories().length;
         if (f.isNumeric()) {
-            Double g = f.numericProperty("granularity");
+            Double g = f.numProperty("granularity");
             if (g != null && g > 0) return (int) ((f.max() - f.min()) / g + 1);
             return 1000;
         }

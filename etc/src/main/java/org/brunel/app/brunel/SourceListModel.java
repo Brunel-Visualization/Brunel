@@ -32,7 +32,7 @@ public class SourceListModel extends DefaultListModel<Field> {
 
     public SourceListModel(Dataset source) {
         this.source = source;
-        this.fields = new ArrayList<Field>();
+        this.fields = new ArrayList<>();
         for (Field f : source.fields)
             if (!f.isSynthetic()) fields.add(f);
     }

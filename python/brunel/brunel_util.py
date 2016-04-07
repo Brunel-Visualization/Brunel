@@ -13,6 +13,21 @@
 # limitations under the License.
 
 
-# If the JVM cannot be located automatically, use this variable to force the location.  It should be the fully qualified
+# If the JVM cannot be located automatically, use this variable to get it from an environment variable.  It should be the fully qualified
 # path to the JVM.  Typically jvm.dll on Windows or libjvm.so on Unix
-JVM_PATH=""
+import os
+JVM_PATH = ""
+D3_LOC = "//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min"
+JS_LOC = "/nbextensions/brunel_ext"
+
+BRUNEL_CONFIG = os.getenv("BRUNEL_CONFIG", "")
+opts = BRUNEL_CONFIG.strip().split(";")
+
+for opt in opts:
+    keyval = opt.strip().split("=");
+    if keyval[0].strip().lower() == "jvm":
+        JVM_PATH = keyval[1]
+    elif keyval[0].strip().lower() == "locd3":
+        D3_LOC = keyval[1]
+    elif keyval[0].strip().lower() == "locjavascript":
+        JS_LOC = keyval[1]

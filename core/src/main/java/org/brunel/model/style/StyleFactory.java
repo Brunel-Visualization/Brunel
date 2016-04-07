@@ -50,7 +50,7 @@ import java.util.Map;
  */
 public class StyleFactory {
 
-    private final static StyleFactory INSTANCE = new StyleFactory(400);
+    private static final StyleFactory INSTANCE = new StyleFactory(400);
 
     public static StyleFactory instance() {
         return INSTANCE;
@@ -104,7 +104,7 @@ public class StyleFactory {
 
     private Map<String, String> makeOptions(String text) {
         // text looks like this "a:b; c:d" ...
-        HashMap<String, String> map = new HashMap<String, String>();
+        HashMap<String, String> map = new HashMap<>();
         for (String item : text.split(";")) {
             String[] keyValue = item.split(":");
             // Ignore bad syntax items

@@ -17,6 +17,8 @@
 package org.brunel.data.summary;
 
 import org.brunel.data.Field;
+import org.brunel.data.modify.Transform;
+import org.brunel.translator.JSTranslation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,62 +26,62 @@ import java.util.Map;
 
 public class MeasureField extends DimensionField {
 
-    public final String measureFunction;                                // Defines the function
+    public final String method;                                // Defines the function
     public String option;                                               // Option for it
-    public Map<String,Fit> fits = new HashMap<String, Fit>();            // Per-group fits
+    public final Map<String, Fit> fits = new HashMap<>();    // Per-group fits
 
     public MeasureField(Field field, String rename, String measureFunction) {
         super(field, rename == null && field == null ? measureFunction : rename);
 
         // If we are asked for the mean of a field that cannot be numeric, we return the mode instead
         if (field != null && measureFunction.equals("mean") && !field.isNumeric())
-            this.measureFunction = "mode";
+            this.method = "mode";
         else
-            this.measureFunction = measureFunction;
+            this.method = measureFunction;
     }
 
     /**
      * Find the fit function for the given group
+     *
      * @param groupFields fields used to define g
-     * @param index the row to find the group fit for
+     * @param index       the row to find the group fit for
      * @return defined fit (or null if none yet created)
      */
     public Fit getFit(ArrayList<Field> groupFields, int index) {
-        return this.fits.get(makeKey(groupFields, index));
+        return this.fits.get(Transform.makeKey(groupFields, index));
     }
 
     /**
      * Define the fit function for the given group
+     *
      * @param groupFields fields used to define g
-     * @param index the row to find the group fit for
-     * @param fit the fit to use for this group
+     * @param index       the row to find the group fit for
+     * @param fit         the fit to use for this group
      */
     public void setFit(ArrayList<Field> groupFields, int index, Fit fit) {
-        this.fits.put(makeKey(groupFields, index), fit);
-    }
-
-    private String makeKey(ArrayList<Field> groupFields, int index) {
-        String key = "|";
-        for (Field f: groupFields) key += f.value(index) + "|";
-        return key;
+        this.fits.put(Transform.makeKey(groupFields, index), fit);
     }
 
     public boolean isPercent() {
-        return measureFunction.equals("percent");
+        return method.equals("percent");
     }
 
-
+    @JSTranslation(ignore = true)
     public String toString() {
         if (field != null && field.name.equals(rename)) return label();
         return label() + "[->" + rename + "]";
     }
 
     public String label() {
-        if (measureFunction.equals("sum") && field.name.equals("#count")) return field.label;
-        if (measureFunction.equals("percent") && field.name.equals("#count")) return "Percent";
-        String a = measureFunction.substring(0, 1).toUpperCase();
-        String b = measureFunction.substring(1);
-        return a + b + "(" + (field == null ? "" : field.label) + ")";
+        if (method.equals("list")) return field.label;
+        if (method.equals("count")) return "Count";
+        if (field == null|| field.name.equals("#count")) {
+            if (method.equals("sum")) return field.label;
+            if (method.equals("percent")) return "Percent";
+        }
+        String a = method.substring(0, 1).toUpperCase();
+        String b = method.substring(1);
+        return a + b + "(" + field.label + ")";
     }
 
 }

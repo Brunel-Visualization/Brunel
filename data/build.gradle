@@ -15,7 +15,7 @@
  */
 
 dependencies {
-    compile name: 'translator-0.0.3'
+    compile name: 'translator-0.4'
     runtime group: 'rhino', name: 'js', version: '1.7+'
     runtime group: 'org.eclipse.jdt', name: 'org.eclipse.jdt.core', version: '3.10.0'
 }
@@ -25,20 +25,20 @@ archivesBaseName = 'brunel-data'
 task(testTranslate, dependsOn: 'classes', type: JavaExec) {
     main = 'org.brunel.translator.DoTranslate'
     classpath = configurations.runtime
-    args  '-log', 'warning'
-    args  '-name', 'BrunelData'
-    args  '-out', 'build/translated/BrunelDataTest.js'
-    args  '-html', 'build/translated/BrunelDataTest.html'
-    args  'src/main/java', 'src/test/java'
+    args '-log', 'warning'
+    args '-name', 'BrunelData'
+    args '-out', 'build/translated/BrunelDataTest.js'
+    args '-html', 'build/translated/BrunelDataTest.html'
+    args 'src/main/java', 'src/test/java'
 }
 
 task(doTranslate, dependsOn: ['classes', testTranslate], type: JavaExec) {
-	main = 'org.brunel.translator.DoTranslate'
-	classpath = configurations.runtime
-    args  '-log', 'warning'
-	args  '-name', 'BrunelData'
-	args  '-out', 'build/translated/BrunelData.js'
-	args  'src/main/java'
+    main = 'org.brunel.translator.DoTranslate'
+    classpath = configurations.runtime
+    args '-log', 'warning'
+    args '-name', 'BrunelData'
+    args '-out', 'build/translated/BrunelData.js'
+    args 'src/main/java'
 }
 
 //For development only
@@ -47,7 +47,6 @@ task deploy(type: Copy, dependsOn: doTranslate) {
     from 'build/translated/BrunelData.js'
     into '../core/src/main/resources/javascript'
 }
-
 
 defaultTasks 'doTranslate'
 

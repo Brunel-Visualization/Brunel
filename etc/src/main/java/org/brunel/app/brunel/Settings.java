@@ -32,9 +32,9 @@ import java.util.prefs.Preferences;
     public Settings(String name) {
         preferences = Preferences.userNodeForPackage(Settings.class);
         this.name = name;
-        final String home = System.getProperty("user.home");
-        final File cognitiveTop = new File(home, ".org.brunel");
-        final File localTop = new File(cognitiveTop, name);
+        String home = System.getProperty("user.home");
+        File cognitiveTop = new File(home, ".org.brunel");
+        File localTop = new File(cognitiveTop, name);
         File store = new File(localTop, "store");
         store.mkdirs();
     }
@@ -45,23 +45,23 @@ import java.util.prefs.Preferences;
         return preferences.get(name + "-" + key, null);
     }
 
-    public void persistWindowLocation(final Frame frame, final String keyValue,
+    public void persistWindowLocation(final Frame frame, String keyValue,
                                       int defaultX, int defaultY, int defaultWidth, int defaultHeight) {
         final String key = name + "-" + keyValue;
-        final int x = getInt(key + "-x", defaultX);
-        final int y = getInt(key + "-y", defaultY);
-        final int width = getInt(key + "-width", defaultWidth);
-        final int height = getInt(key + "-height", defaultHeight);
-        final GraphicsDevice[] screenDevices = GraphicsEnvironment
+        int x = getInt(key + "-x", defaultX);
+        int y = getInt(key + "-y", defaultY);
+        int width = getInt(key + "-width", defaultWidth);
+        int height = getInt(key + "-height", defaultHeight);
+        GraphicsDevice[] screenDevices = GraphicsEnvironment
                 .getLocalGraphicsEnvironment().getScreenDevices();
-        for (final GraphicsDevice screenDevice : screenDevices) {
-            final Rectangle b = screenDevice.getDefaultConfiguration().getBounds();
-            final Rectangle maxBounds = new Rectangle(b.x + 20, b.y + 20,
+        for (GraphicsDevice screenDevice : screenDevices) {
+            Rectangle b = screenDevice.getDefaultConfiguration().getBounds();
+            Rectangle maxBounds = new Rectangle(b.x + 20, b.y + 20,
                     b.width - 40, b.height - 40);
             if (maxBounds.intersects(new Rectangle(x, y, width, height))) frame.setLocation(x, y);
         }
         if (width > 0 && height > 0) {
-            final Dimension d = new Dimension(width, height);
+            Dimension d = new Dimension(width, height);
             frame.setPreferredSize(d);
             frame.setSize(d);
         }

@@ -77,7 +77,7 @@
     Ties are given an averaged rank.
 </p>
 
-<p class="examples"><a onClick="showAction(this.text)">x(summer) y(winter) label("#",winter) rank(summer)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(summer) y(winter) label("#",winter) rank(winter)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">y(dem_rep) label(abbr) rank(dem_rep) axes(x) list(abbr)
     bin(dem_rep:30) color(dem_rep) legends(none)</a></p>
 
@@ -162,7 +162,7 @@
 <ul>
     <li><b>sum</b>: Sum of all values in the group</li>
     <li><b>percent</b>: The percent of the sum of this group as a percent of the sum of all groups with the same 'x'
-        value
+        value. Optionally, by adding a ":overall" parameter, the percent is the percent of the overall total.
     </li>
     <li><b>median</b>: Median value of the group</li>
     <li><b>min</b>, <b>max</b>: Lower and upper values of the group</li>

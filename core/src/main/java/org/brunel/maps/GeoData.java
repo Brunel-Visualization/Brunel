@@ -55,7 +55,7 @@ class GeoData {
     }
 
     MappedLists<GeoFile, Object> mapFeaturesToFiles(Object[] names, Collection<Object> unmatched) {
-        MappedLists<GeoFile, Object> contained = new MappedLists<GeoFile, Object>();
+        MappedLists<GeoFile, Object> contained = new MappedLists<>();
         for (Object s : names) {
             String key = s.toString();
             int[][] item = featureByName(key);
@@ -105,7 +105,7 @@ class GeoData {
     }
 
     private HashMap<String, LabelPoint> makeLabelsMap() {
-        HashMap<String, LabelPoint> map = new HashMap<String, LabelPoint>();
+        HashMap<String, LabelPoint> map = new HashMap<>();
         for (LabelPoint s : labels) {
             String name = GeoNaming.canonical(s.label);
             LabelPoint previous = map.put(name, s);
@@ -134,7 +134,7 @@ class GeoData {
     }
 
     private Map<String, GeoFile> makeFileNameMap(GeoFile[] geoFiles) {
-        Map<String, GeoFile> map = new HashMap<String, GeoFile>();
+        Map<String, GeoFile> map = new HashMap<>();
         for (GeoFile s : geoFiles) {
             map.put(GeoNaming.canonical(s.name), s);
             map.put(GeoNaming.canonical(CSV.readable(s.name)), s);
@@ -144,7 +144,7 @@ class GeoData {
 
     // Add variants of names by normalizing removing accent marks and periods
     private void addVariantFeatureNames() {
-        List<String> keys = new ArrayList<String>(featureMap.keySet());
+        List<String> keys = new ArrayList<>(featureMap.keySet());
         for (String s : keys) {
             for (String t : GeoNaming.variants(s))
                 if (!featureMap.containsKey(t))
@@ -170,7 +170,7 @@ class GeoData {
     }
 
     private LabelPoint[] readLabels(LineNumberReader rdr) throws IOException {
-        List<LabelPoint> list = new ArrayList<LabelPoint>();
+        List<LabelPoint> list = new ArrayList<>();
         while (true) {
             String line = rdr.readLine();
             if (line == null) break;
@@ -187,7 +187,7 @@ class GeoData {
     }
 
     private HashMap<String, int[][]> readFeatureDescriptions(LineNumberReader rdr) throws IOException {
-        HashMap<String, int[][]> map = new HashMap<String, int[][]>();
+        HashMap<String, int[][]> map = new HashMap<>();
         // Read the features
         while (true) {
             String line = rdr.readLine();
@@ -209,7 +209,7 @@ class GeoData {
 
     private GeoFile[] readFileDescriptions(LineNumberReader rdr) throws IOException {
         // Read the names of the files and their sizes (in K)
-        List<GeoFile> list = new ArrayList<GeoFile>();
+        List<GeoFile> list = new ArrayList<>();
         while (true) {
             String[] fileLine = rdr.readLine().split("\\|");
             if (fileLine.length != 4) break;                            // End of the file definitions
@@ -235,8 +235,8 @@ class GeoData {
 
     private List<GeoFile> makeRequiredFiles(Param[] params) {
         if (params.length == 0) return null;
-        Set<GeoFile> byFeature = new HashSet<GeoFile>();
-        List<GeoFile> result = new ArrayList<GeoFile>();
+        Set<GeoFile> byFeature = new HashSet<>();
+        List<GeoFile> result = new ArrayList<>();
         for (Param p : params) {
             String key = GeoNaming.canonical(p.asString());
             GeoFile f = filesByName.get(key);

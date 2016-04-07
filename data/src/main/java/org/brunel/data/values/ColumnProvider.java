@@ -17,6 +17,7 @@
 package org.brunel.data.values;
 
 import org.brunel.data.Data;
+import org.brunel.data.util.MapInt;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,7 +36,7 @@ public class ColumnProvider implements Provider {
 
     public ColumnProvider(Object[] column) {
         // Use a common store so common copies are not duplicated
-        Map<Object, Object> common = new HashMap<Object, Object>();
+        Map<Object, Object> common = new HashMap<>();
         this.column = new Object[column.length];
         for (int i = 0; i < column.length; i++) {
             Object value = column[i];
@@ -54,7 +55,7 @@ public class ColumnProvider implements Provider {
     }
 
     public int expectedSize() {
-        Set<Object> seen = new HashSet<Object>();
+        Set<Object> seen = new HashSet<>();
         int total = 24 + 4 * column.length;
         for (Object c : column) {
             if (c == null) continue;
@@ -73,7 +74,7 @@ public class ColumnProvider implements Provider {
         return this;
     }
 
-    public int compareRows(int a, int b, HashMap<Object, Integer> categoryOrder) {
+    public int compareRows(int a, int b, MapInt categoryOrder) {
         // Use the defined order if given
         Object p = column[a];
         Object q = column[b];

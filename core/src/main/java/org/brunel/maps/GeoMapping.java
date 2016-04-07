@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -45,7 +46,7 @@ public class GeoMapping {
      * @return a mappig structure, or null if no files could be found that matched up
      */
     public static GeoMapping createGeoMapping(Poly polygon, List<GeoFile> required, GeoData geoAnalysis) {
-        HashSet<Object> unmatched = new HashSet<Object>();
+        HashSet<Object> unmatched = new HashSet<>();
         MappedLists<GeoFile, Object> map = mapBoundsToFiles(polygon, geoAnalysis.getGeoFiles());
         GeoMapping mapping = new GeoMapping(required, unmatched, map);
         return mapping.fileCount() > 0 ? mapping : null;
@@ -53,7 +54,7 @@ public class GeoMapping {
 
     // Create a map from GeoFile index to the points that file contains.
     private static MappedLists<GeoFile, Object> mapBoundsToFiles(Poly poly, GeoFile[] geoFiles) {
-        MappedLists<GeoFile, Object> map = new MappedLists<GeoFile, Object>();
+        MappedLists<GeoFile, Object> map = new MappedLists<>();
         if (poly.count() == 0) return map;
         Rect bounds = poly.bounds;
         for (GeoFile f : geoFiles) {
@@ -72,7 +73,7 @@ public class GeoMapping {
      * @return suitable mapping, or null if no usable files were identified
      */
     static GeoMapping createGeoMapping(Object[] names, List<GeoFile> required, GeoData geoAnalysis) {
-        HashSet<Object> unmatched = new HashSet<Object>();
+        HashSet<Object> unmatched = new HashSet<>();
         MappedLists<GeoFile, Object> map = geoAnalysis.mapFeaturesToFiles(names, unmatched);
         GeoMapping mapping = new GeoMapping(required, unmatched, map);
         mapping.buildFeatureMap();
@@ -98,7 +99,7 @@ public class GeoMapping {
         }
     }
 
-    private final Map<Object, int[]> featureMap = new TreeMap<Object, int[]>();     // Feature -> [file, featureKey]
+    private final Map<Object, int[]> featureMap = new TreeMap<>();     // Feature -> [file, featureKey]
     private final Set<Object> unmatched;                                            // Features we did not map
     final GeoFile[] files;                                                 // The files to use
     private final MappedLists<GeoFile, Object> potential;                           // Files that contain wanted items
@@ -146,8 +147,8 @@ public class GeoMapping {
     private MappedLists<GeoFile, Object> filter(MappedLists<GeoFile, Object> desired, List<GeoFile> required) {
         if (required == null || required.isEmpty()) return desired;
 
-        MappedLists<GeoFile, Object> filtered = new MappedLists<GeoFile, Object>();
-        for (Map.Entry<GeoFile, List<Object>> e : desired.entrySet())
+        MappedLists<GeoFile, Object> filtered = new MappedLists<>();
+        for (Entry<GeoFile, List<Object>> e : desired.entrySet())
             if (required.contains(e.getKey())) filtered.addAll(e.getKey(), e.getValue());
         return filtered;
     }
@@ -164,7 +165,7 @@ public class GeoMapping {
         if (current.cannotImprove(best, maxImprovement)) return;            // If we cannot get better, stop searching
 
         // recurse to search for best combination
-        LinkedList<GeoFile> working = new LinkedList<GeoFile>(possibles);
+        LinkedList<GeoFile> working = new LinkedList<>(possibles);
         while (!working.isEmpty()) {
             GeoFile k = working.removeFirst();
             GeoFileGroup trial = current.add(k);                            // Will be null if known to be useless
@@ -176,7 +177,7 @@ public class GeoMapping {
         best = GeoFileGroup.makeEmpty(potential);
 
         // Create list of possible ones to use, sorted with the most features first
-        List<GeoFile> possibles = new ArrayList<GeoFile>(potential.keySet());
+        List<GeoFile> possibles = new ArrayList<>(potential.keySet());
         Collections.sort(possibles, new Comparator<GeoFile>() {
             public int compare(GeoFile a, GeoFile b) {
                 return potential.get(b).size() - potential.get(a).size();

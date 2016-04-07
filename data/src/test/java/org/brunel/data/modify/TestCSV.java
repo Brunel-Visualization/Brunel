@@ -38,9 +38,27 @@ public class TestCSV {
                     ",\"\",";
 
     @Test
+    public void testListsInCells() {
+        Field[] fields = CSV.read("A,B\n three,\"1,2, 3\"\n five,2;3;5;6;100\n one,3\n zero,\n two,6;1");
+        assertEquals(2, fields.length);
+        assertEquals(5, fields[0].rowCount());
+        assertEquals("three", fields[0].value(0));
+        assertEquals("1,2, 3", fields[1].value(0));
+
+        assertEquals("five", fields[0].value(1));
+        assertEquals("2;3;5;6;100", fields[1].value(1));
+
+        assertEquals("one", fields[0].value(2));
+
+        assertEquals("zero", fields[0].value(3));
+
+        assertEquals("two", fields[0].value(4));
+    }
+
+    @Test
     public void testBank() {
         Field[] fields = CSV.read(CannedData.bank);
-        Assert.assertEquals(8, fields.length);
+        assertEquals(8, fields.length);
         Field gender = fields[0];
         Field jobtime = fields[6];
         assertEquals("gender", gender.name);
@@ -73,7 +91,7 @@ public class TestCSV {
         assertEquals(2, data.fields[6].categories().length);
         assertEquals(2, data.fields[7].categories().length);
 
-        Assert.assertEquals("Female, Male", Data.join(data.fields[0].categories()));
+        assertEquals("Female, Male", Data.join(data.fields[0].categories()));
         assertEquals("8, 12, 15, 16", Data.join(data.fields[2].categories()));
         assertEquals("Clerical, Manager", Data.join(data.fields[3].categories()));
         assertEquals("97, 98", Data.join(data.fields[6].categories()));
@@ -137,7 +155,7 @@ public class TestCSV {
     @Test
     public void testSimpleFields() {
         Field[] fields = CSV.read(SIMPLE);
-        Assert.assertEquals(3, fields.length);
+        assertEquals(3, fields.length);
         assertEquals("a", fields[0].name);
         assertEquals("b", fields[1].name);
         assertEquals("c", fields[2].name);
@@ -152,7 +170,7 @@ public class TestCSV {
     @Test
     public void testSimpleFieldsFromTabs() {
         Field[] fields = CSV.read(SIMPLE_TABS);
-        Assert.assertEquals(3, fields.length);
+        assertEquals(3, fields.length);
         assertEquals("a", fields[0].name);
         assertEquals("b", fields[1].name);
         assertEquals("c", fields[2].name);
@@ -167,19 +185,19 @@ public class TestCSV {
     @Test
     public void testSimpleReading() {
         Object[][] data = CSV.parse(SIMPLE);
-        Assert.assertEquals(3, data.length);
-        Assert.assertEquals(3, data[0].length);
-        Assert.assertEquals("a", data[0][0]);
-        Assert.assertEquals("b", data[0][1]);
-        Assert.assertEquals("c", data[0][2]);
-        Assert.assertEquals(3, data[1].length);
-        Assert.assertEquals("1", data[1][0]);
-        Assert.assertEquals("a", data[1][1]);
-        Assert.assertEquals("b", data[1][2]);
-        Assert.assertEquals(3, data[2].length);
-        Assert.assertEquals("2", data[2][0]);
-        Assert.assertEquals("c", data[2][1]);
-        Assert.assertEquals("d", data[2][2]);
+        assertEquals(3, data.length);
+        assertEquals(3, data[0].length);
+        assertEquals("a", data[0][0]);
+        assertEquals("b", data[0][1]);
+        assertEquals("c", data[0][2]);
+        assertEquals(3, data[1].length);
+        assertEquals("1", data[1][0]);
+        assertEquals("a", data[1][1]);
+        assertEquals("b", data[1][2]);
+        assertEquals(3, data[2].length);
+        assertEquals("2", data[2][0]);
+        assertEquals("c", data[2][1]);
+        assertEquals("d", data[2][2]);
     }
 
 }

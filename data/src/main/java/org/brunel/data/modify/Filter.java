@@ -45,9 +45,9 @@ public class Filter extends DataOperation {
      *      Each can be negated with a "!" in front of it, which also negates the type value
      */
     public static Dataset transform(Dataset base, String command) {
-        String[] commands = parts(command);
-        if (commands == null) return base;
+        String[] commands = strings(command, ';');
         int N = commands.length;
+        if (N == 0) return base;
 
         // Parse and assemble info for the commands
 
@@ -74,20 +74,14 @@ public class Filter extends DataOperation {
 
         // Returns null when indexing is the same as the whole data
         int[] keep = makeRowsToKeep(field, type, params);
-        if (keep == null) return base;
 
-        // Make the reduced fields and return them
-        Field[] results = new Field[base.fields.length];
-        for (int i = 0; i < results.length; i++)
-            results[i] = Data.permute(base.fields[i], keep, false);
-
-        return base.replaceFields(results);
+        return keep == null ? base : base.retainRows(keep);
 
     }
 
     /* Get the object that are at the indicated positions for the field, by rank */
     private static Object[] getRankedObjects(Field field, double p1, double p2) {
-        ArrayList<Object> data = new ArrayList<Object>();
+        ArrayList<Object> data = new ArrayList<>();
         int n = field.rowCount();
         for (int i = 0; i < n; i++) {
             Object o = field.value(i);
@@ -126,7 +120,7 @@ public class Filter extends DataOperation {
     }
 
     private static int[] makeRowsToKeep(Field[] field, int[] type, Object[][] params) {
-        List<Integer> rows = new ArrayList<Integer>();
+        List<Integer> rows = new ArrayList<>();
         int n = field[0].rowCount();
         for (int row = 0; row < n; row++) {
             boolean bad = false;

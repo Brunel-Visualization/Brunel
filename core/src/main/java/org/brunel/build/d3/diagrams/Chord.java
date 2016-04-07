@@ -16,9 +16,10 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.element.ElementDefinition;
-import org.brunel.build.element.ElementDetails;
+import org.brunel.build.d3.element.ElementDetails;
+import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ModelUtil;
+import org.brunel.build.util.ModelUtil.Size;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
@@ -48,15 +49,15 @@ class Chord extends D3Diagram {
         out.add("var chord = d3.layout.chord().padding(.025).sortSubgroups(d3.descending).matrix(chordData.matrix())").endStatement();
 
         // take arc path font size into account, adding a bit of padding, to define the arc width
-        ModelUtil.Size labelSize = ModelUtil.getAxisLabelFontSize(vis);
+        Size labelSize = ModelUtil.getAxisLabelFontSize(vis);
         double arcWidth = labelSize.valueInPixels(8);
         out.add("var arc_width =", Data.formatNumeric(arcWidth, false), ";").comment("Width of exterior arc");
         out.add("function keyFunction(d) { return d.source.index + '|' + d.target.index };").comment(" special key function for the edges");
 
-        return ElementDetails.makeForDiagram(vis, "chord.chords()", "path", "edge", "poly", false);
+        return ElementDetails.makeForDiagram(vis, ElementRepresentation.polygon, "edge", "chord.chords()");
     }
 
-    public void writeDefinition(ElementDetails details, ElementDefinition elementDef) {
+    public void writeDefinition(ElementDetails details) {
 
         // The Chords themselves are simple to create
         out.addChained("attr('d', d3.svg.chord().radius(geom.inner_radius-arc_width))")

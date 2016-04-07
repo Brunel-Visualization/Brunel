@@ -40,12 +40,12 @@ public class ParseGrammar {
     }
 
     private final LinkedHashMap<String, GrammarItem> grammar;
-    private final Set<String> summaryMethods = new LinkedHashSet<String>();
-    private final Set<String> transformMethods = new LinkedHashSet<String>();
+    private final Set<String> summaryMethods = new LinkedHashSet<>();
+    private final Set<String> transformMethods = new LinkedHashSet<>();
 
     private ParseGrammar() {
         // Read the definitions into the map
-        grammar = new LinkedHashMap<String, GrammarItem>();
+        grammar = new LinkedHashMap<>();
         Scanner scanner = new Scanner(Parser.class.getResourceAsStream("brunel-tokens.txt"));
         while (scanner.hasNext()) {
             String line = scanner.nextLine().trim();

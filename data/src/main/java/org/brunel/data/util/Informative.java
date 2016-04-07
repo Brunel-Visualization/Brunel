@@ -22,13 +22,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Informative {
-    protected  Map<String, Object> info = new HashMap<String, Object>();                    // Store the info
+    protected Map<String, Object> info = new HashMap<>();    // Stores the info
 
-    public void copyPropertiesFrom(Informative other) {
+    /**
+     * Copy properties form a source.
+     * Note that missing values in the source are made missing in this also
+     *
+     * @param source where to get the values
+     * @param items  the keys to copy over
+     */
+    public void copyProperties(Informative source, String... items) {
+        for (String s : items) set(s, source.property(s));
+    }
+
+    public void copyAllProperties(Informative other) {
         info.putAll(other.info);
     }
 
-    public Double numericProperty(String key) {
+    public Double numProperty(String key) {
         return Data.asNumeric(property(key));
     }
 
@@ -36,16 +47,15 @@ public class Informative {
         return info.get(key);
     }
 
-    public String stringProperty(String key) {
+    public String strProperty(String key) {
         Object v = property(key);
         return v == null ? null : v.toString();
     }
 
-    public boolean propertyTrue(String key) {
+    public boolean isProperty(String key) {
         Boolean v = (Boolean) property(key);
         return v != null && v;
     }
-
 
     public void set(String key, Object value) {
         if (value == null)

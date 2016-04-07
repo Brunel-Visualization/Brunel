@@ -21,6 +21,7 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.io.CSV;
+import org.brunel.data.Fields;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -55,7 +56,7 @@ public class TestStack {
         */
 
         assertEquals(6, a.rowCount());
-        assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- a|x|1|4|0|4|1|1 -- a|y|?|?|4|4|?|? -- b|x|2|3|0|3|1|2 -- b|y|?|?|3|3|?|? -- c|x|2|1|0|1|1|4 -- c|y|1|2|1|3|1|3",
+        assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- a|y|?|?|0|0|?|? -- a|x|1|4|0|4|1|1 -- b|y|?|?|0|0|?|? -- b|x|2|3|0|3|1|2 -- c|y|1|2|0|2|1|3 -- c|x|2|1|2|3|1|4",
                 CannedData.dump(a));
 
     }
@@ -72,7 +73,7 @@ public class TestStack {
             c   x   2   1   0   1
             c   y   1   2   1   3
         */
-        assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- c|x|2|1|0|1|1|4 -- c|y|1|2|1|3|1|3 -- b|x|2|3|3|6|1|2 -- a|x|1|4|6|10|1|1",
+        assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- a|x|1|4|0|4|1|1 -- b|x|2|3|4|7|1|2 -- c|y|1|2|7|9|1|3 -- c|x|2|1|9|10|1|4",
                 CannedData.dump(a));
     }
 
@@ -89,7 +90,7 @@ public class TestStack {
             c   x   2   1   0   1
             c   y   1   2   1   3
         */
-        assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- c|y|1|2|0|2|1|3 -- c|x|2|1|2|3|1|4 -- b|x|2|3|3|6|1|2 -- a|x|1|4|6|10|1|1",
+        assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- a|x|1|4|0|4|1|1 -- b|x|2|3|4|7|1|2 -- c|x|2|1|7|8|1|4 -- c|y|1|2|8|10|1|3",
                 CannedData.dump(a));
     }
 
@@ -119,7 +120,22 @@ public class TestStack {
         */
 
         assertEquals(12, a.rowCount());
+        assertEquals("a a a a b b b b c c c c", fieldValues(a.field("A")));
+        assertEquals("y y x x y y x x y y x x", fieldValues(a.field("B")));
+        assertEquals("2 1 2 1 2 1 2 1 2 1 2 1", fieldValues(a.field("C")));
+        assertEquals("? ? ? 4 ? ? 3 ? ? 2 1 ?", fieldValues(a.field("D")));
+        assertEquals("0 0 0 0 0 0 0 3 0 0 2 3", fieldValues(a.field("D$lower")));
+        assertEquals("0 0 0 4 0 0 3 3 0 2 3 3", fieldValues(a.field("D$upper")));
 
+    }
+
+    private String fieldValues(Field a) {
+        String b = "";
+        for (int i=0; i<a.rowCount(); i++) {
+            if (i>0)b += " ";
+            b += Data.format(a.value(i), false);
+        }
+        return b;
     }
 
     @Test
@@ -137,7 +153,7 @@ public class TestStack {
             c   y   1   2   1   3
         */
 
-        assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- a|x|1|4|0|4|1|1 -- b|x|2|3|0|3|1|2 -- c|x|2|1|0|1|1|4 -- c|y|1|2|1|3|1|3",
+        assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- a|x|1|4|0|4|1|1 -- b|x|2|3|0|3|1|2 -- c|y|1|2|0|2|1|3 -- c|x|2|1|2|3|1|4",
                 CannedData.dump(a));
     }
 
@@ -158,9 +174,9 @@ public class TestStack {
             c[i] = (double) Math.round(s / (i%4+1));
         }
 
-        Field fa = Data.makeColumnField("a", null, a);
-        Field fb = Data.makeColumnField("b", null, b);
-        Field fc = Data.makeColumnField("c", null, c);
+        Field fa = Fields.makeColumnField("a", null, a);
+        Field fb = Fields.makeColumnField("b", null, b);
+        Field fc = Fields.makeColumnField("c", null, c);
 
         Dataset data = Dataset.make(new Field[] {fa, fb, fc});
         long t1 = System.currentTimeMillis();

@@ -21,7 +21,7 @@ def (protocol, server, con) = brunelServer.tokenize('/')
 archivesBaseName = con
 
 if (tomcatHome == null) {
-	println('WARNING:  TOMCAT_HOME is null.  Possibly not set?')
+    println('WARNING:  TOMCAT_HOME is null.  Possibly not set?')
 }
 
 buildscript {
@@ -35,7 +35,7 @@ buildscript {
 }
 
 dependencies {
-	providedCompile group: 'org.apache.openejb', name: 'tomee-jaxrs-webapp', version: '1.7.2'
+    providedCompile group: 'org.apache.openejb', name: 'tomee-jaxrs-webapp', version: '1.7.2'
     compile project(':data')
     compile project(':core')
     compile group: 'com.google.code.gson', name: 'gson', version: '2.3.1'
@@ -44,14 +44,14 @@ dependencies {
 }
 
 configurations {
-	all*.exclude group: 'rhino'
-	all*.exclude group: 'org.eclipse.jdt'
-	all*.exclude module: 'translator-0.0.3'
+    all*.exclude group: 'rhino'
+    all*.exclude group: 'org.eclipse.jdt'
+    all*.exclude module: 'translator-0.0.3'
 }
 
 //For development only
 task copyWebFiles(type: Copy) {
- 	description 'Copy Required Web Support Files To Development WebApp Folder'
+    description 'Copy Required Web Support Files To Development WebApp Folder'
     from webFiles
     exclude '*Test*'
     into 'src/main/webapp/brunelsupport'
@@ -59,22 +59,21 @@ task copyWebFiles(type: Copy) {
 
 //Remove copied web files (done in prep for making .war)
 task cleanWebFiles(type: Delete) {
-  delete 'src/main/webapp/brunelsupport'
+    delete 'src/main/webapp/brunelsupport'
 }
 
-
 // The war file will include the needed JS support
-war  {
-	archiveName con +'.war'
-	from (webFiles) {
-		into ('/brunelsupport')
-		exclude '*Test*'
-	}
+war {
+    archiveName con + '.war'
+    from(webFiles) {
+        into('/brunelsupport')
+        exclude '*Test*'
+    }
 }
 
 cargo {
-	def (s,p) = server.tokenize(":")
-	println 'For Tomcat deployment.  Port:  ' + p + ", Context: " + con
+    def (s, p) = server.tokenize(":")
+    println 'For Tomcat deployment.  Port:  ' + p + ", Context: " + con
 
     containerId = 'tomcat7x'
     port = p.toInteger()

@@ -13,49 +13,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 apply plugin: 'scala'
 apply plugin: 'eclipse'
 
- 
+
 repositories {
-	    mavenCentral()	  
-	    flatDir {
-            dirs '../lib'
-        }  
+    mavenCentral()
+    flatDir {
+        dirs '../lib'
+    }
 }
 
 uploadArchives {
     repositories {
-       flatDir {
-           dirs '../out/java'
-       }
+        flatDir {
+            dirs '../out/java'
+        }
     }
 }
 
 configurations {
     releaseJars
 }
-	
- dependencies {
+
+dependencies {
     compile name: 'kernel-assembly-0.1.5-SNAPSHOT'
     compile name: 'toree-kernel-assembly-0.1.0.dev4-SNAPSHOT'
-    compile 'org.apache.spark:spark-repl_2.10:1.5.2' 
+    compile 'org.apache.spark:spark-repl_2.10:1.5.2'
     compile project(':data')
     compile project(':core')
     compile project(':scala')
-    releaseJars  group: 'com.google.code.gson', name: 'gson', version: '2.3.1'
+    releaseJars group: 'com.google.code.gson', name: 'gson', version: '2.3.1'
 }
 
 
 version = project(":core").version
 archivesBaseName = 'spark-kernel-brunel-all'
 
-def mainProjects = [':data',':core',':scala', ":spark-kernel"]
+def mainProjects = [':data', ':core', ':scala', ":spark-kernel"]
 jar {
 
-    from files(mainProjects.collect{ project(it).sourceSets.main.output })
-    from {configurations.releaseJars.collect { it.isDirectory() ? it : zipTree(it) } }  
+    from files(mainProjects.collect { project(it).sourceSets.main.output })
+    from { configurations.releaseJars.collect { it.isDirectory() ? it : zipTree(it) } }
 }
 
- 

@@ -34,6 +34,7 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -48,7 +49,7 @@ public class WebDisplay {
     private static final String NAV_BASE = new Scanner(WebDisplay.class.getResourceAsStream(NAV_LOCATION), "UTF-8").useDelimiter("\\A").next();
     private static final String BASE = new Scanner(WebDisplay.class.getResourceAsStream(SINGLE_LOCATION), "UTF-8").useDelimiter("\\A").next();
 
-    public static String writeHtml(D3Builder builder, int width, int height, java.util.List<String> moreHeaders, String brunel, String... titles) {
+    public static String writeHtml(D3Builder builder, int width, int height, List<String> moreHeaders, String brunel, String... titles) {
         String css = builder.getStyleOverrides();
         String js = (String) builder.getVisualization();
         String imports = builder.makeImports();
@@ -116,9 +117,9 @@ public class WebDisplay {
     private static File out;             // Main code location
     private final BuilderOptions options;
 
-    private int count = 0;
+    private int count;
     private String menuString = "<html><head><title>Charts</title></head><body>\n";
-    private final ArrayList<String> headers = new ArrayList<String>();
+    private final ArrayList<String> headers = new ArrayList<>();
 
     public WebDisplay(BuilderOptions options, String dirName) {
         this.options = options;
@@ -128,7 +129,7 @@ public class WebDisplay {
         // Copy source files and resources over
         ensureResourceExists("BrunelD3.js");
         ensureResourceExists("BrunelData.js");
-        ensureResourceExists("BrunelBaseStyles.css");
+        ensureResourceExists("Brunel.css");
         ensureResourceExists("BrunelEventHandlers.js");
         ensureResourceExists("BrunelJQueryControlFactory.js");
         ensureResourceExists("sumoselect/jquery.sumoselect.min.js");

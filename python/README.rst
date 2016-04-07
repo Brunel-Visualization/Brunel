@@ -7,12 +7,12 @@ Brunel defines a highly succinct and novel language that produces interactive da
 * Articles and notes on Brunel can be found in the `brunelvis.org <http://www.brunelvis.org>`_ blog.  Videos are available on `YouTube <https://www.youtube.com/channel/UClXE1IhLQs6NpdMd0X8jALA>`_.
 * Details about the language can be found in the `Brunel Language Tutorial <http://brunel.mybluemix.net/docs>`_
 * Examples can be found in the `Brunel Visualization Gallery  <https://github.com/Brunel-Visualization/Brunel/wiki>`_ and the `Brunel Visualization Cookbook <https://github.com/Brunel-Visualization/Brunel/wiki/Brunel-Visualization-Cookbook>`_.
-* See the `1.0 Release Notes <https://github.com/Brunel-Visualization/Brunel/blob/master/1.0%20Release%20Notes.md>`_ for new features and changes.
+* See the `1.1 Release Notes <https://github.com/Brunel-Visualization/Brunel/blob/master/1.1%20Release%20Notes.md>`_ for new features and changes.
 
-The 1.0.1 release fixes the `dependency problems <https://github.com/Brunel-Visualization/Brunel/issues/53>`_ when running under python 3.5.  
+New in 1.1:  Support for Python 2
 
 Please report any issues on our `Github  <https://github.com/Brunel-Visualization/Brunel>`_
-site.
+site.  Q&A now available on `Gitter  <https://gitter.im/Brunel-Visualization/Brunel>`_
 
 Dependencies
 ------------

@@ -17,14 +17,16 @@
 package org.brunel.build.d3;
 
 import org.brunel.action.Param;
-import org.brunel.build.element.ElementDetails;
+import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.util.ModelUtil;
+import org.brunel.build.util.ModelUtil.Size;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Diagram;
+import org.brunel.model.VisTypes.Element;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,19 +50,19 @@ public class D3LabelBuilder {
     public void addElementLabeling() {
         if (vis.itemsLabel.isEmpty()) return;
         // Networks are updated on ticks., so just attach once -- no transitions
-        if (vis.tDiagram == VisTypes.Diagram.network) {
+        if (vis.tDiagram == Diagram.network) {
             out.add("BrunelD3.label(selection, labels, labeling, 0)").endStatement();
             return;
         }
 
         // Text elements define labeling as the main item; they do not need labels attached, which is what this does
-        if (vis.tElement != VisTypes.Element.text )
+        if (vis.tElement != Element.text)
             out.add("BrunelD3.label(selection, labels, labeling, transitionMillis)").endStatement();
     }
 
     public static void addFontSizeAttribute(VisSingle vis, ScriptWriter out) {
         if (!vis.fSize.isEmpty()) {
-            ModelUtil.Size parts = ModelUtil.getFontSize(vis);
+            Size parts = ModelUtil.getFontSize(vis);
             if (parts == null) {
                 out.addChained("style('font-size', function(d) { return (100*size(d)) + '%' })");
             } else {
@@ -72,16 +74,14 @@ public class D3LabelBuilder {
     public void addTooltips(ElementDetails details) {
         if (vis.itemsTooltip.isEmpty()) return;
         out.onNewLine().ln();
-        defineLabeling(details.modifyForTooltip(),
-                prettify(vis.itemsTooltip, true), true);
+        defineLabeling(prettify(vis.itemsTooltip, true), details.representation.getTooltipTextMethod(), true, true);
         out.add("BrunelD3.addTooltip(selection, tooltipLabeling, geom)").endStatement();
     }
 
-    public void defineLabeling(ElementDetails details, List<Param> items, boolean forTooltip) {
-        if (vis.tElement != VisTypes.Element.text && items.isEmpty()) return;
+    public void defineLabeling(List<Param> items, String textMethod, boolean forTooltip, boolean fitsShape) {
+        if (vis.tElement != Element.text && items.isEmpty()) return;
         String name = forTooltip ? "tooltipLabeling" : "labeling";
         out.add("var", name, "= {").ln().indentMore();
-        String textMethod = details.textMethod;
         if (textMethod.equals("geo")) {
             // We define a function to extract the coordinates from the geo, and project them
             String func = "function(box,text,d) {var p = projection([d.geo_properties.c, d.geo_properties.d]); return {box:box, x:p[0], y:p[1]}}";
@@ -89,7 +89,7 @@ public class D3LabelBuilder {
         } else {
             out.onNewLine().add("method:", out.quote(textMethod), ", ");
         }
-        out.onNewLine().add("fit:", details.textMustFit, ",");
+        out.onNewLine().add("fit:", fitsShape, ",");
         if (textMethod.equals("path") || textMethod.equals("wedge"))
             out.onNewLine().add("path: path,");
 
@@ -109,7 +109,7 @@ public class D3LabelBuilder {
         // If we have nothing but field names, and at least two, we add separators
         if (items.size() < 2) return items;    // One item does not get prettified
 
-        ArrayList<Param> result = new ArrayList<Param>();
+        ArrayList<Param> result = new ArrayList<>();
         for (int i = 0; i < items.size(); i++) {
             Param p = items.get(i);
             if (!p.isField()) return items;            // Any non-field and we do not prettify

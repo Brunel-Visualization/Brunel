@@ -38,7 +38,7 @@ class LibraryItem {
     public Action apply(Field... fields) {
 
         String text = action;
-        List<Field> toBin = new ArrayList<Field>();
+        List<Field> toBin = new ArrayList<>();
 
         // Step through the parameters
         for (int i = 0; i < parameters.length; i++) {

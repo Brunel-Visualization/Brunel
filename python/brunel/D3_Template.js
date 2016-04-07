@@ -17,10 +17,10 @@
 require.config({
     waitSeconds: 60,
     paths: {
-        'd3': '//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min',
-        'BrunelD3': '/nbextensions/brunel_ext/BrunelD3',
-        'BrunelData': '/nbextensions/brunel_ext/BrunelData',
-        'BrunelEventHandlers': '/nbextensions/brunel_ext/BrunelEventHandlers'
+        'd3': '{{d3loc}}',
+        'BrunelD3': '{{jsloc}}/BrunelD3',
+        'BrunelData': '{{jsloc}}/BrunelData',
+        'BrunelEventHandlers': '{{jsloc}}/BrunelEventHandlers'
     },
     shim: {
         'BrunelD3': {

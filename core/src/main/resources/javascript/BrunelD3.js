@@ -21,22 +21,25 @@ var BrunelD3 = (function () {
     // Return geometries for the given target given the desired margins
     function geometries(target, chart_top, chart_left, chart_bottom, chart_right,
                         inner_top, inner_left, inner_bottom, inner_right) {
-        var attrs = target.attributes;
+
+        var b = target.getBoundingClientRect(),
+            x = b.left, y = b.top, w = b.width, h = b.height;
+        var owner = target.ownerSVGElement;
+        if (owner) {
+            var c = owner.getBoundingClientRect();
+            x -= c.left;
+            y -= c.top;
+        } else {
+            x = 0;
+            y = 0;
+        }
+
         var g = {
-            'outer_width': attrs.width.value,
-            'outer_height': attrs.height.value,
-            'margin_top': chart_top + inner_top,
-            'margin_left': chart_left + inner_left,
-            'margin_bottom': chart_bottom + inner_bottom,
-            'margin_right': chart_right + inner_right,
-            'chart_top': chart_top,
-            'chart_left': chart_left,
-            'chart_bottom': chart_bottom,
-            'chart_right': chart_right,
-            'inner_top': inner_top,
-            'inner_left': inner_left,
-            'inner_bottom': inner_bottom,
-            'inner_right': inner_right,
+            chart_top: y + h * chart_top, chart_bottom: y + h * chart_bottom,
+            chart_left: x + w * chart_left, chart_right: x + w * chart_right,
+            outer_width: w, outer_height: h,
+            inner_top: inner_top, inner_bottom: inner_bottom,
+            inner_left: inner_left, inner_right: inner_right,
 
             // Allow the inner coords to be transposed
             'transpose': function () {
@@ -45,10 +48,14 @@ var BrunelD3 = (function () {
                 this['inner_height'] = t;
             }
         };
-        g['inner_width'] = g['outer_width'] - g['margin_left'] - g['margin_right'];
-        g['inner_height'] = g['outer_height'] - g['margin_top'] - g['margin_bottom'];
-        g['inner_radius'] = Math.min(g['inner_width'], g['inner_height']) / 2;
-        g['default_point_size'] = Math.max(6, g['inner_radius'] * 0.035);
+        g.margin_top = g.chart_top + g.inner_top;
+        g.margin_left = g.chart_left + g.inner_left;
+        g.margin_bottom = h - g.chart_bottom + g.inner_bottom;
+        g.margin_right = w - g.chart_right + g.inner_right;
+        g.inner_width = g.outer_width - g.margin_left - g.margin_right;
+        g.inner_height = g.outer_height - g.margin_top - g.margin_bottom;
+        g.inner_radius = Math.min(g.inner_width, g.inner_height) / 2;
+        g.default_point_size = Math.max(6, g.inner_radius * 0.035);
         return g;
     }
 
@@ -65,6 +72,7 @@ var BrunelD3 = (function () {
             opt = data.options ? data.options[i] : "string";                                // Apply type options
             if (opt == 'numeric') field = BrunelData.Data.toNumeric(field);
             if (opt == 'date') field = BrunelData.Data.toDate(field);
+            if (opt == 'list') field = BrunelData.Data.toList(field);
             fields.push(field);
         }
         return BrunelData.Dataset.make(fields, false);
@@ -374,30 +382,15 @@ var BrunelD3 = (function () {
             func.call();
     }
 
-    // Select the indicated rows of the data. This will wait until any transition is completed, and
-    // will then call the desired rebuild function
-    function select(row, data, target, func) {
-
-        var i, j,
-            rows = row ? (row.items ? row.items : [row]) : [],// 'row' can be null, a single integer, or a collection of
-            sel = data.field("#selection"),                     // Selection field
-            method = "sel";                                     // how to select the data (add, subtract, toggle, select)
-
-        if (d3.event.altKey) method = d3.event.altKey ? "tog" : "sub";
-        else if (d3.event.shiftKey) method = "add";
-
-        // For simple selection (no modifiers) everything is initially cleared
-        if (method == "sel") for (i = 0; i < sel.rowCount(); i++) sel.setValue('\u2717', i);
-
-        for (i in rows) {
-            // rows are 1-based, so need to subtract off one when setting selection using them
-            j = rows[i] - 1;
-            if (method == "sel" || method == "add") sel.setValue('\u2713', j);
-            else if (method == "sub") sel.setValue('\u2717', j);
-            else sel.setValue(sel.value(j) == '\u2717' ? '\u2713' : '\u2717', j);
-        }
-
-        callWhenReady(func, target);
+    // Select the indicated rows of the data.
+    // This will wait until any transition is completed, and will then call the desired rebuild function
+    // The row selected refers into the rowData dataset, but the selection to be modified is in the data dataset
+    function select(row, rowData, data, target, func) {
+        var sel = data.field("#selection"),                     // Selection field
+            method = d3.event.altKey ? "tog" : "sel";           // how to select the data (add, subtract, toggle, select)
+        if (d3.event.shiftKey) method = d3.event.altKey ? "sub" : "add";
+        data.modifySelection(method, row, rowData);             // Modify the selection
+        callWhenReady(func, target);                            // Request a redraw after current transition done
     }
 
 
@@ -409,11 +402,13 @@ var BrunelD3 = (function () {
         // When we start searching out from the center in the spiral, we look for anything larger than us
         // and start outside that. 'precision' reduces the concept of 'larger' so we search less space
 
-        var delta = Math.max(0.2, Math.pow(data.rowCount() / 300, 2));
-        var precision = Math.pow(0.9, data.rowCount() / 100);
+        var delta = 1;
+        var precision = Math.pow(0.8, Math.sqrt(data.rowCount() / 200));
         var dx = delta * ext[0] / Math.max(ext[0], ext[1]),
             dy = delta * ext[1] / Math.max(ext[0], ext[1]);
-        var placed = [];           // Placed items
+
+        var items = [];             // Items we will build up
+        var totalArea = 0;          // Area covered by the text
 
 
         function intersects(a, b) {
@@ -436,87 +431,124 @@ var BrunelD3 = (function () {
             return type;
         }
 
-        function place(svg, index) {
-            if (placed.length > index) return placed[index];                // Placed already, just return
-            var r = svg.getBBox();
-            var dd = -r.y / 5, ht = r.height - 1, oy = 0;
-            var ascDesc = ascender(svg.textContent);
-            if (ascDesc == 1) {
-                // Ascender only
-                ht -= dd;
-                oy += dd / 2;
-            } else if (ascDesc == 2) {
-                // Descender only
-                ht -= dd;
-            }
+        function prepare(d, index) {
+            d3.select(this).style('alignment-baseline', 'auto');
+            var r = this.getBBox(), asc = r.height + r.y, desc = asc * 0.9,
+                ht = r.height, wd = r.width + 2, oy = 0,
+                ascDesc = ascender(this.textContent);
+
             if (ascDesc == 0) {
-                // Neither
-                ht -= 2 * dd;
+                // Neither ascenders nor descenders
+                ht -= (asc + desc);
+            } else if (ascDesc == 1) {
+                // Only ascenders
+                ht -= desc;
+                oy += desc / 2;
+            } else if (ascDesc == 2) {
+                // Only descenders
+                ht -= asc;
+                oy -= asc / 2;
             }
-            var item = {width: r.width + 2, height: ht, ox: 0, oy: oy};                // Our trial item (with slight x padding)
+
+            var item = {width: wd, height: ht, ox: 0, oy: oy};                // Our trial item (with slight x padding)
             var rotated = (index % 5) % 2 == 1;
-            if (rotated) item = {height: item.width, width: item.height, oy: 0, ox: oy};
-            var i, hit = true, theta = 0;                                      // Start at center and ensure we loop
-
-            item.title = svg.textContent;
-            // Find any items at least this large and where we put them (only consider items with same orientation)
-            for (i = placed.length - 1; i >= 0; i--) {
-                if (item.width >= precision * placed[i].width && item.height > precision * placed[i].height) {
-                    theta = Math.max(theta, placed[i].theta);
-                }
-            }
-
-
-            while (hit) {
-                // Set trial center location
-                item.x = Math.cos(theta) * theta * dx;
-                item.y = Math.sin(theta) * theta * dy;
-                item.theta = theta;
-                hit = false;
-                for (i = placed.length - 1; i >= 0; i--)
-                    if (intersects(item, placed[i])) {
-                        hit = true;
-                        break;
-                    }
-
-                // Outward on the spiral -- this is approximately the same as the arc sine and faster
-                theta += delta / Math.max(delta, Math.sqrt(item.x * item.x + item.y * item.y));
-            }
-            placed.push(item);       // Keep track of the placed items
-
-            if (index == data.rowCount() - 1) transformToFill(svg);
-
-
-            var s = "translate(" + (item.x - item.ox) + "," + (item.y + item.oy) + ")";
-            if (rotated) s += "rotate(90, 0, 0) ";
-            return s;
+            if (rotated) item = {height: item.width, width: item.height, oy: 0, ox: oy, _rotated: true};
+            item._txt = this;
+            items[index] = item;
+            totalArea += item.height * item.width;
         }
+
+        function build() {
+
+            var k, item, scaling = Math.sqrt(ext[0] * ext[1] / totalArea / 2);
+
+            // Resize everything
+            for (k = 0; k < items.length; k++) {
+                item = items[k];
+                var sel = d3.select(item._txt);
+                var size = sel.style('font-size');
+                var num = size.substring(0, size.length - 2);
+                var post = size.substring(size.length - 2);
+                var value = Math.round(num * scaling) + post;
+                sel.style('font-size', value);
+                prepare.call(item._txt, null, k);
+            }
+
+            for (k = 0; k < items.length; k++) {
+                item = items[k];
+                var i, hit = true, theta = 0;                                      // Start at center and ensure we loop
+
+                item.title = this.textContent;
+                // Find any items at least this large and where we put them (only consider items with same orientation)
+                for (i = k - 1; i >= 0; i--) {
+                    if (item.width >= precision * items[i].width && item.height > precision * items[i].height) {
+                        theta = Math.max(theta, items[i].theta);
+                    }
+                }
+
+
+                while (hit) {
+                    // Set trial center location
+                    item.x = Math.cos(theta) * theta * dx;
+                    item.y = Math.sin(theta) * theta * dy;
+                    item.theta = theta;
+                    hit = false;
+                    for (i = k - 1; i >= 0; i--)
+                        if (intersects(item, items[i])) {
+                            hit = true;
+                            break;
+                        }
+
+                    // Outward on the spiral -- this is approximately the same as the arc sine and faster
+                    theta += delta / Math.max(delta, Math.sqrt(item.x * item.x + item.y * item.y));
+                }
+
+                //// Debugging text box surrounding the text
+                //d3.select(item._txt.parentNode).append('rect')
+                //    .attr('x', item.x - item.width / 2).attr('y', item.y - item.height / 2).attr('width', item.width).attr('height', item.height)
+                //    .style('fill', 'red').style('fill-opacity', '0.2').style('stroke', 'red').style('stroke-width', '0.5px');
+
+
+                var s = "translate(" + (item.x - item.ox) + "," + (item.y + item.oy) + ")";
+                if (item._rotated) s += "rotate(90, 0, 0) ";
+                item._txt.setAttribute('transform', s);
+                d3.select(item._txt).style('alignment-baseline', 'middle');
+
+            }
+
+            transformToFill(items[0]._txt.parentNode);
+
+        }
+
 
         function transformToFill(svg) {
             // Add transform to the item's parent to make it fit
-            var sx = placed.reduce(function (v, item) {
+            var sx = items.reduce(function (v, item) {
                 return Math.max(v, Math.abs(item.x) + item.width / 2)
             }, 0);
-            var sy = placed.reduce(function (v, item) {
+            var sy = items.reduce(function (v, item) {
                 return Math.max(v, Math.abs(item.y) + item.height / 2)
             }, 0);
             var s = Math.min(ext[0] / sx, ext[1] / sy) / 2;
 
-            svg.parentNode.setAttribute('transform', 'scale(' + s + ')');
+            svg.setAttribute('transform', 'scale(' + s + ')');
         }
 
         // Return the functions that make X and Y locations
         return {
-            'transform': function (d, i) {
-                return place(this, i)
-            }
+            'prepare': prepare,
+            'build': build
         }
     }
 
-    // Parameters are: a D3 selection target, labeling info struct and the brunel geom object
-    function makeTooltip(d3Target, labeling, geom) {
-        var svg = d3Target.node().ownerSVGElement;                          // Owning SVG
-        var pt = svg.createSVGPoint();                                      // For matrix calculations
+    // Parameters are: a D3 selection target, labeling info struct
+    function makeTooltip(d3Target, labeling) {
+        var node = d3Target.node();
+        if (!node) return;
+
+        var svg = node.ownerSVGElement,                          // Owning SVG
+            w = +svg.attributes.width.value, h = +svg.attributes.height.value,  // width and height
+            pt = svg.createSVGPoint();                                      // For matrix calculations
 
         d3Target.on('mouseover', function (d) {
             var content = labeling.content(d);                              // To set html content
@@ -531,13 +563,13 @@ var BrunelD3 = (function () {
             tooltip.style.width = null;   								    // Allow free width (for now)
             tooltip.innerHTML = content;                                    // set html content
 
-            var max_width = geom['inner_width'] / 3;                        // One third width at most
+            var max_width = w / 3;                                          // One third width at most
             if (tooltip.offsetWidth > max_width)                            // If too wide, set a width for the div
                 tooltip.style.width = max_width + "px";
 
             var p = getScreenTipPosition(this, d);                          // get absolute location of the target
             var top = p.y - 10 - tooltip.offsetHeight;                      // top location
-            if (top < 2 && p.y < geom['inner_height'] / 2) {                // We are in top half up AND overflow top
+            if (top < 2 && p.y < h / 2) {                                   // We are in top half up AND overflow top
                 var old = labeling.method;                                  // save the original method
                 labeling.method = "bottom";                                 // switch to finding lower position
                 p = getScreenTipPosition(this, d);                          // get modified location of the target
@@ -803,17 +835,15 @@ var BrunelD3 = (function () {
     // Define a mapping from IDs of a data source to X, Y locations
     var idToPoint = function (idField, xField, yField, n) {
         // Build the map
-        var map = {};
-        var i, id, x, y;
+        var i, id, map = {};
         for (i = 0; i < n; i++) {
             id = idField.value(i);
-            x = xField.value(i);
-            y = yField.value(i);
-            if (id != null) map[id] = [x, y]
+            if (id != null) map[id] = [xField.value(i), yField.value(i)]
         }
-        // Return mapping function
+        // Return mapping function (pair of nulls if no entry)
         return function (x) {
-            return map[x];
+            var v = map[x];
+            return v || [null, null];
         }
     };
 
@@ -942,10 +972,10 @@ var BrunelD3 = (function () {
                     if (r < 0.95) r = 0.95;
                 })
                 .attr('cx', function (d) {
-                    return d.x = (d.x - cx) * r + geom.inner_width/2;
+                    return d.x = (d.x - cx) * r + geom.inner_width / 2;
                 })
                 .attr('cy', function (d) {
-                    return d.y = (d.y - cy) * r + geom.inner_height/2;
+                    return d.y = (d.y - cy) * r + geom.inner_height / 2;
                 })
                 .each(function (d) {
                         var txt = this.__label__;
@@ -991,6 +1021,23 @@ var BrunelD3 = (function () {
         return labels;
     }
 
+    function facet(chart, parentElement, time) {
+        parentElement.selection().each(function (d, i) {
+            if (d.row == null) return;
+            var value = parentElement.data().field("#row").value(d.row);
+            var items = value.items ? value.items : [value];          // If just a single row, make it into an array
+            var c = chart(this, items.map(function (v) {
+                return v - 1
+            }));          // Convert 1-based items to 0-based rows
+            c.build(time);
+        });
+    }
+
+    // v is in the range -1/2 to 1/2
+    function interpolate(a, b, v) {
+        return (a + b) / 2 + v * (a - b);
+    }
+
     // Expose these methods
     return {
         'makeData': makeDataset,
@@ -1012,7 +1059,9 @@ var BrunelD3 = (function () {
         'addFeatures': makeMap,
         'symbol': makeSymbol,
         'network': makeNetworkLayout,
-        'time': time
+        'facet': facet,
+        'time': time,
+        'interpolate': interpolate
     }
 
 })

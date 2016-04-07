@@ -19,9 +19,7 @@ package org.brunel.data.diagram;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.brunel.data.util.MapInt;
 
 /**
  * A chord diagram shows sized links between two categorical fields.
@@ -43,17 +41,14 @@ public class Chord {
         Field s = data.field(fieldSize);
 
         // Map to indices
-        Map<Object, Integer> indices = new HashMap<Object, Integer>();
-        for (Object o : a.categories())
-            if (indices.get(o) == null) indices.put(o, indices.size());
-        for (Object o : b.categories())
-            if (indices.get(o) == null) indices.put(o, indices.size());
+        MapInt indices = new MapInt()
+                .index(a.categories())
+                .index(b.categories());
 
         int N = indices.size();
 
         // Build names list
-        names = new Object[N];
-        for (Object o : indices.keySet()) names[indices.get(o)] = o;
+        names = indices.getIndexedKeys();
 
         // Build matrix and index reference
         mtx = new double[N][N];

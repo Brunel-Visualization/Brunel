@@ -56,7 +56,7 @@ public class TestDates {
     @Test
     public void testDateFormats() {
         Date d = Data.asDate("January 19, 2011 3:04:05");
-        Assert.assertEquals("03:04:05", DateFormat.HourMinSec.format(d));
+        assertEquals("03:04:05", DateFormat.HourMinSec.format(d));
         assertEquals("03:04", DateFormat.HourMin.format(d));
         assertEquals("Jan 19 03:04", DateFormat.DayHour.format(d));
         assertEquals("Jan 19, 2011", DateFormat.YearMonthDay.format(d));

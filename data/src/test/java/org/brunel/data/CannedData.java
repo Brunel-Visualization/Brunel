@@ -119,7 +119,7 @@ public class CannedData {
         // We ignore the selection field ... the very last one.
         boolean strip = d.fields[d.fields.length - 1].name.equals("#selection");
 
-        List<String> rows = new ArrayList<String>();
+        List<String> rows = new ArrayList<>();
         rows.add(stripLast(Data.join(d.fields, "|"), strip));
         for (int r = 0; r < d.rowCount(); r++) {
             String[] row = new String[d.fields.length];

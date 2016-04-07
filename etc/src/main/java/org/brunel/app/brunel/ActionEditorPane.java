@@ -18,6 +18,7 @@
 package org.brunel.app.brunel;
 
 import org.brunel.action.Parser;
+import org.brunel.action.Parser.BrunelToken;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -28,6 +29,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.List;
 
 public class ActionEditorPane extends JTextPane implements DocumentListener, Runnable {
 
@@ -103,7 +105,8 @@ public class ActionEditorPane extends JTextPane implements DocumentListener, Run
         if (text.length() < 1) return;
 
         // Tokenize the text, then parse to assign actions and types
-        java.util.List<Parser.BrunelToken> tokens = parser.tokenize(text);
+        //noinspection UnnecessaryFullyQualifiedName
+        List<BrunelToken> tokens = parser.tokenize(text);
         try {
             setToolTipText(null);
             parser.makeActionFromTokens(tokens, text);
@@ -114,7 +117,7 @@ public class ActionEditorPane extends JTextPane implements DocumentListener, Run
         // Colorize
         DefaultStyledDocument d = (DefaultStyledDocument) getDocument();
         d.setCharacterAttributes(0, text.length(), defaultStyle, true);
-        for (Parser.BrunelToken token : tokens) {
+        for (BrunelToken token : tokens) {
             d.setCharacterAttributes(token.start, token.end - token.start, getStyle(token.parsedType), false);
         }
 

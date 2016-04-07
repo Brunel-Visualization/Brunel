@@ -18,17 +18,19 @@ package org.brunel.build.d3;
 
 import org.brunel.action.Param;
 import org.brunel.build.AbstractBuilder;
-import org.brunel.build.chart.ChartStructure;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.d3.diagrams.GeoMap;
+import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.data.DataTransformParameters;
-import org.brunel.build.element.ElementStructure;
+import org.brunel.build.info.ChartStructure;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
+import org.brunel.model.VisTypes.Coordinates;
+import org.brunel.model.VisTypes.Element;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -108,8 +110,7 @@ public class D3Builder extends AbstractBuilder {
 
         // Calculate the margins for this chart within the overall size
         double[] chartMargins = new double[]{
-                (visHeight * location[0] / 100), (visWidth * location[1] / 100),
-                (visHeight * (1 - location[2] / 100)), (visWidth * (1 - location[3] / 100))
+                location[0] / 100, location[1] / 100, location[2] / 100, location[3] / 100
         };
 
         // Create the scales and element builders
@@ -117,17 +118,18 @@ public class D3Builder extends AbstractBuilder {
 
         // Write the class definition function
         out.titleComment("Define chart #" + structure.chartID(), "in the visualization");
-        out.add("charts[" + structure.chartIndex + "] = function() {").ln();
+        out.add("charts[" + structure.chartIndex + "] = function(parentNode, filterRows) {").ln();
         out.indentMore();
 
         double[] margins = scalesBuilder.marginsTLBR();
-        out.add("var geom = BrunelD3.geometry(vis.node(),", chartMargins, ",", margins, "),")
+
+        out.add("var geom = BrunelD3.geometry(parentNode || vis.node(),", chartMargins, ",", margins, "),")
                 .indentMore()
                 .onNewLine().add("elements = [];").at(50).comment("Array of elements in this chart")
                 .indentLess();
 
         // Transpose if needed
-        if (scalesBuilder.coords == VisTypes.Coordinates.transposed) out.add("geom.transpose()").endStatement();
+        if (scalesBuilder.coords == Coordinates.transposed) out.add("geom.transpose()").endStatement();
 
         for (D3ElementBuilder builder : elementBuilders) builder.writePerChartDefinitions();
 
@@ -177,7 +179,7 @@ public class D3Builder extends AbstractBuilder {
         out.onNewLine().add("var original, processed,").at(40).comment("data sets passed in and then transformed")
                 .indentMore()
                 .onNewLine().add("element, data,").at(40).comment("Brunel element information and brunel data")
-                .onNewLine().add("d3Data, selection;").at(40).comment("D3 version of data and D3 selection")
+                .onNewLine().add("selection;").at(40).comment("D3 selection")
                 .indentLess();
 
         // Add data variables used throughout
@@ -200,6 +202,17 @@ public class D3Builder extends AbstractBuilder {
         out.add("function build(transitionMillis) {").ln().indentMore();
         elementBuilder.generate(structure.index);
         interaction.addElementHandlers(structure.vis);
+
+        // If a chart is nested within us, build its facets
+        Integer index = structure.chart.innerChartIndex;
+        if (index != null) {
+            String id = ChartStructure.makeChartID(index);
+            out.onNewLine().comment("Build the faceted charts within this chart's selection");
+            out.add("vis.select('g.chart" + id + "').selectAll('*').remove()").endStatement()
+                    .add("BrunelD3.facet(charts[" + index + "], element, transitionMillis)").endStatement();
+
+        }
+
         out.indentLess().onNewLine().add("}").ln().ln();
 
         // Expose the methods and variables we want the user to have access to
@@ -255,14 +268,37 @@ public class D3Builder extends AbstractBuilder {
         out.add("return { build : build, elements : elements }").endStatement();
 
         // Finish the chart method
-        out.indentLess().add("}()").endStatement().ln();
+        if (nesting.containsKey(structure.chartIndex)) {
+            // For a nested chart we need to build the chart completely each time, so store the FUNCTION
+            out.add("}");
+        } else {
+            // Non-nested charts just get built once, so execute and store the chart as a built OBJECT
+            out.add("}()");
+        }
+
+        out.indentLess().endStatement().ln();
+
     }
 
     protected void endVisSystem(VisItem main) {
 
-        // Define visualization functions
+        // Define how we set the data into the system
         out.add("function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }").ln();
-        out.add("function updateAll(time)     { charts.forEach(function(x) {x.build(time || 20)}) }").ln();
+
+        // Define the update functions
+        if (nesting.isEmpty()) {
+            // For no nesting, it's easy
+            out.add("function updateAll(time) { charts.forEach(function(x) {x.build(time || 20)}) }").ln();
+        } else {
+            // For nesting, need a custom update method
+            // TODO make work for more than two charts1
+            out.add("function updateAll(time) {").indentMore().ln()
+                    .add("var t = time || 20").endStatement()
+                    .add("charts[0].build(0)").endStatement()
+                    .indentLess().add("}").ln();
+        }
+
+        // Define visualization functions
         out.add("function buildAll() {").ln().indentMore()
                 .add("for (var i=0;i<arguments.length;i++) setData(arguments[i], i)").endStatement()
                 .add("updateAll(transitionTime)").endStatement();
@@ -322,7 +358,7 @@ public class D3Builder extends AbstractBuilder {
         Builds a mapping from the fields we will use in the built data object to an indexing 0,1,2,3, ...
      */
     private Map<String, Integer> createResultFields(VisSingle vis) {
-        LinkedHashSet<String> needed = new LinkedHashSet<String>();
+        LinkedHashSet<String> needed = new LinkedHashSet<>();
         if (vis.fY.size() > 1) {
             // A series needs special handling -- Y's are different in output than input
             if (vis.stacked) {
@@ -353,7 +389,7 @@ public class D3Builder extends AbstractBuilder {
         needed.add("#row");
 
         // Convert to map for easy lookup
-        Map<String, Integer> result = new HashMap<String, Integer>();
+        Map<String, Integer> result = new HashMap<>();
         for (String s : needed) result.put(s, result.size());
         return result;
     }
@@ -376,10 +412,10 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}").endStatement();
     }
 
-    private String makeElementTransform(VisTypes.Coordinates coords) {
-        if (coords == VisTypes.Coordinates.transposed)
+    private String makeElementTransform(Coordinates coords) {
+        if (coords == Coordinates.transposed)
             return "attr('transform','matrix(0,1,1,0,0,0)')";
-        else if (coords == VisTypes.Coordinates.polar)
+        else if (coords == Coordinates.polar)
             return makeTranslateTransform("geom.inner_width/2", "geom.inner_height/2");
         else
             return null;
@@ -388,19 +424,48 @@ public class D3Builder extends AbstractBuilder {
     private void writeFieldName(String name, List<Param> fieldNames) {
         if (fieldNames.isEmpty()) return;
         if (out.changedSinceMark()) out.add(",");
-        List<String> names = new ArrayList<String>();
+        List<String> names = new ArrayList<>();
         for (Param p : fieldNames) names.add(p.asField());
         out.onNewLine().add(name, ":").at(24).add("[").addQuotedCollection(names).add("]");
     }
 
     private void writeMainGroups(ChartStructure structure) {
-        String axesTransform = makeTranslateTransform("geom.inner_left", "geom.inner_top");
-        out.add("var chart = vis.append('g').attr('class', '" + "chart" + structure.chartID() + "')")
-                .addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
+        String chartClassID = "chart" + structure.chartID();                    // The class for our group
+
+        if (structure.nested()) {
+            out.onNewLine().comment("Nesting -- create an outer chart and place groups inside for each facet");
+
+            // We only want one outer group, but this function gets called for each facet, so check to see if it is
+            // present and only create the chart group if it has not already been created.
+            out.add("var outer = vis.select('g." + chartClassID + "')").endStatement();
+            out.add("if (outer.empty()) outer = vis.append('g').attr('class', '" + chartClassID + "')").endStatement();
+
+            // Now create the facet group that will contain the chart with data for the indicated facet
+            out.add("var chart = outer.append('g').attr('class', 'facet')");
+
+        } else {
+            // For non-faceted charts, we only need the simple chart group to hold all the other parts
+            out.add("var chart = vis.append('g').attr('class', '" + chartClassID + "')");
+        }
+
+        out.addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
                 .endStatement();
+
+        out.add("chart.append('rect').attr('class', 'background')")
+                .add(".attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top)")
+                .endStatement();
+
+        String axesTransform = makeTranslateTransform("geom.inner_left", "geom.inner_top");
+
         out.add("var interior = chart.append('g').attr('class', 'interior')")
-                .addChained(axesTransform)
-                .addChained("attr('clip-path', 'url(#" + clipID(structure) + ")')")
+                .addChained(axesTransform);
+
+        // Nested charts do not need additional clipping
+        if (!structure.nested()) out.addChained("attr('clip-path', 'url(#" + clipID(structure) + ")')");
+
+        out.endStatement();
+        out.add("interior.append('rect').attr('class', 'inner')")
+                .add(".attr('width', geom.inner_width).attr('height', geom.inner_height)")
                 .endStatement();
 
         interaction.addPrerequisites();
@@ -410,16 +475,17 @@ public class D3Builder extends AbstractBuilder {
                     .addChained(axesTransform).endStatement();
         if (scalesBuilder.needsLegends())
             out.add("var legends = chart.append('g').attr('class', 'legend')")
-                    .addChained(makeTranslateTransform("(geom.outer_width - geom.chart_right - 3)", "0")).endStatement();
+                    .addChained(makeTranslateTransform("(geom.chart_right-geom.chart_left - 3)", "0")).endStatement();
 
-        // Make the clip path for this: we expand by a pixel to avoid ugly cut-offs right at the edge
-        out.add("vis.append('clipPath').attr('id', '" + clipID(structure) + "').append('rect')");
-        out.addChained("attr('x', -1).attr('y', -1)");
-        if (scalesBuilder.coords == VisTypes.Coordinates.transposed)
-            out.addChained("attr('width', geom.inner_height+2).attr('height', geom.inner_width+2)").endStatement();
-        else
-            out.addChained("attr('width', geom.inner_width+2).attr('height', geom.inner_height+2)").endStatement();
-
+        if (!structure.nested()) {
+            // Make the clip path for this: we expand by a pixel to avoid ugly cut-offs right at the edge
+            out.add("vis.append('clipPath').attr('id', '" + clipID(structure) + "').append('rect')");
+            out.addChained("attr('x', -1).attr('y', -1)");
+            if (scalesBuilder.coords == Coordinates.transposed)
+                out.addChained("attr('width', geom.inner_height+2).attr('height', geom.inner_width+2)").endStatement();
+            else
+                out.addChained("attr('width', geom.inner_width+2).attr('height', geom.inner_height+2)").endStatement();
+        }
     }
 
     private String makeTranslateTransform(String dx, String dy) {
@@ -440,7 +506,7 @@ public class D3Builder extends AbstractBuilder {
 
         String base;
         if (options.locJavaScript.startsWith("file")) {
-            base = String.format(pattern, options.locJavaScript + "/BrunelBaseStyles.css");
+            base = String.format(pattern, options.locJavaScript + "/Brunel.css");
         } else {
             base = String.format(pattern, options.locJavaScript + "/brunel." + options.version + ".css");
         }
@@ -467,7 +533,7 @@ public class D3Builder extends AbstractBuilder {
             }
             // Apply stacking to the data
             stackCommand += "; " + Data.join(vis.fX) + "; " + Data.join(vis.aestheticFields()) + "; " + vis.tElement.producesSingleShape;
-        } else if (vis.tElement == VisTypes.Element.line || vis.tElement == VisTypes.Element.area) {
+        } else if (vis.tElement == Element.line || vis.tElement == Element.area) {
             // If we have stacked, we do not need to do anything as it sorts the data. Otherwise ...
             // d3 needs the data sorted by 'x' order for lines and paths
             // If we have defined 'x' order, that takes precedence
@@ -479,7 +545,7 @@ public class D3Builder extends AbstractBuilder {
         }
 
         // Replace the stack and sort commands with updated versions
-        return new DataTransformParameters(params.constantsCommand, params.filterCommand, params.transformCommand, params.summaryCommand,
+        return new DataTransformParameters(params.constantsCommand, params.filterCommand, params.eachCommand, params.transformCommand, params.summaryCommand,
                 stackCommand, params.sortCommand, sortRows, params.seriesCommand, params.usedCommand);
     }
 

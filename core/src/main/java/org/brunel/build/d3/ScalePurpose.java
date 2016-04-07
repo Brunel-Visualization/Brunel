@@ -17,7 +17,7 @@
 package org.brunel.build.d3;
 
 /* The purpose of a scale (inner is the inner coordinate of a clustered chart) */
-enum ScalePurpose {
+public enum ScalePurpose {
     x(true), y(true), inner(true), size(false), color(false);
     public final boolean isCoord;
 

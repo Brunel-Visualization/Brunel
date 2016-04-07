@@ -15,6 +15,7 @@
 from setuptools import setup
 from os import path
 from codecs import open
+import sys
 
 here = path.abspath(path.dirname(__file__))
 
@@ -28,11 +29,16 @@ except:
     import pip, importlib
     pip.main(['install', 'jupyter-pip']); cmdclass = importlib.import_module('jupyterpip').cmdclass
 
+#Use different JPype depending on python 2 or 3
+jpype_name = 'JPype1-py3'
+if sys.version_info < (3,0):
+    jpype_name = 'JPype1'
+
 setup(
     name='brunel',
-    version='1.0.1',
+    version='1.1',
     packages=['brunel'],
-    install_requires= ['pandas', 'jinja2', 'ipython', 'jupyter-pip', 'JPype1-py3', 'ipywidgets', 'traitlets'],
+    install_requires= ['pandas', 'jinja2', 'ipython', 'jupyter-pip', jpype_name, 'ipywidgets', 'traitlets'],
     package_data= {
         'brunel': ['*.js', '*.html', 'lib/*.jar', 'brunel_ext/*.*']
     },
@@ -43,7 +49,9 @@ setup(
     license='Apache Software License 2.0',
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
-        "Development Status :: 4 - Beta"
+        "Development Status :: 4 - Beta",
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3'
     ],
     cmdclass=cmdclass('brunel/brunel_ext')
 )

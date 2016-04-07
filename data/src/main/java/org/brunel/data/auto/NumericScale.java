@@ -35,6 +35,8 @@ import java.util.List;
  */
 public class NumericScale {
 
+    private static final double HALF_LOG = 3;
+
     public static NumericScale makeDateScale(Field f, boolean nice, double[] padFraction, int desiredTickCount) {
         double a = f.min();
         double b = f.max();
@@ -56,7 +58,7 @@ public class NumericScale {
         Date x = DateUnit.floor(Data.asDate(a), unit, multiple);
         if (nice) a = Data.asNumeric(x);
 
-        List<Double> d = new ArrayList<Double>();
+        List<Double> d = new ArrayList<>();
         while (true) {
             double v = Data.asNumeric(x);
             if (v >= b) {
@@ -116,15 +118,19 @@ public class NumericScale {
         }
 
         // For degenerate data expand out
-        if (a + 1e-6 > b) {
+        if (a + 1e-9 > b) {
             b = Math.max(0, 2 * a);
             a = Math.min(0, 2 * a);
+            if (a==0 && b ==0) {
+                a = 0;
+                b = 1;
+            }
         }
 
         double desiredDivCount = Math.max(desiredTickCount - 1, 1);
 
-        String transform = f.stringProperty("transform");
-        double granularity = f.numericProperty("granularity");
+        String transform = f.strProperty("transform");
+        double granularity = f.numProperty("granularity");
         double granularDivs = (b - a) / granularity;
         if ((forBinning || f.preferCategorical()) && granularDivs > desiredDivCount / 2 && granularDivs < desiredDivCount * 2) {
             Double[] data = makeGranularDivisions(a, b, granularity, nice);
@@ -162,7 +168,7 @@ public class NumericScale {
 
         // Make sure x >= a and then add ticks up until we hit b
         if (x < a - 1e-6) x += delta;
-        List<Double> d = new ArrayList<Double>();
+        List<Double> d = new ArrayList<>();
         while (x < b + 1e-6) {
             d.add(x);
             x += delta;
@@ -173,7 +179,7 @@ public class NumericScale {
     }
 
     private static Double[] makeGranularDivisions(double min, double max, double granularity, boolean nice) {
-        List<Double> div = new ArrayList<Double>();
+        List<Double> div = new ArrayList<>();
         if (!nice) {
             // inside the bounds only
             min += granularity;
@@ -191,8 +197,12 @@ public class NumericScale {
         double a = Math.log(f.min()) / Math.log(10);
         double b = Math.log(f.max()) / Math.log(10);
 
-        a -= padFraction[0] * (b - a);
-        b += padFraction[1] * (b - a);
+        double pad = Math.max(padFraction[0], padFraction[1]);
+        a -= pad * (b - a);
+        b += pad * (b - a);
+
+        if (includeZeroTolerance > 0.5 && a == 0) a = -0.5;
+
 
         // Include zero (actually one in untransformed space) if it doesn't expand too much
         if (a > 0 && a / b <= includeZeroTolerance) a = 0;
@@ -203,10 +213,10 @@ public class NumericScale {
         }
 
         double n = b - a + 1;
-        boolean add5 = n < desiredTickCount * 0.666;
+        boolean add5 = n < desiredTickCount * 0.666;                    //If true, add divisions at '5's
         double factor = n > desiredTickCount * 1.66 ? 100 : 10;
 
-        List<Double> d = new ArrayList<Double>();
+        List<Double> d = new ArrayList<>();
         double low = Math.pow(10, a);
         double high = Math.pow(10, b);
         if (add5 && high / 2 > f.max()) high /= 2;
@@ -214,7 +224,7 @@ public class NumericScale {
         double tolerantHigh = high * 1.001;
         while (x < tolerantHigh) {
             d.add(x);
-            if (add5 && x * 5 < tolerantHigh) d.add(x * 5);
+            if (add5 && x * HALF_LOG < tolerantHigh) d.add(x * HALF_LOG);
             x *= factor;
         }
 

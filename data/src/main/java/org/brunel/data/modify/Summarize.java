@@ -19,6 +19,7 @@ package org.brunel.data.modify;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 import org.brunel.data.summary.DimensionField;
 import org.brunel.data.summary.FieldRowComparison;
 import org.brunel.data.summary.MeasureField;
@@ -53,13 +54,13 @@ public class Summarize extends DataOperation {
      */
     public static Dataset transform(Dataset base, String command) {
         if (base.rowCount() == 0) return base;
-        List<String[]> operations = map(command, "=");
-        if (operations == null) return base;
+        List<String[]> operations = map(command);
+        if (operations.isEmpty()) return base;
 
         // Decode the operations into these collections
-        List<MeasureField> measures = new ArrayList<MeasureField>();
-        List<DimensionField> dimensions = new ArrayList<DimensionField>();
-        List<Field> percentBase = new ArrayList<Field>();
+        List<MeasureField> measures = new ArrayList<>();
+        List<DimensionField> dimensions = new ArrayList<>();
+        List<Field> percentBase = new ArrayList<>();
 
         boolean containsCount = false;
         boolean containsRow = false;
@@ -127,13 +128,13 @@ public class Summarize extends DataOperation {
 
         // group[row] gives the index of the summary group for row 'row'; 'groupCount' is the number of groups
         int[] group = new int[rowCount];
-        int groupCount = makeGroups(group, dimComparison);
+        int groupCount = buildGroups(group, dimComparison);
 
         // These are just like the summary groups, but only for the percent bases
         // The percent groups nest within each base group: rows with the same group have the same summary group also
         // we do not create these if they are not needed, for efficiency
         int[] percentGroup = percentNeeded ? new int[rowCount] : null;
-        int percentGroupCount = percentNeeded ? makeGroups(percentGroup, percentBaseComparison) : 0;
+        int percentGroupCount = percentNeeded ? buildGroups(percentGroup, percentBaseComparison) : 0;
 
         // Create the summary values for each group, and percentage sums
         SummaryValues[] summaries = new SummaryValues[groupCount];
@@ -179,18 +180,33 @@ public class Summarize extends DataOperation {
         Field[] fields = new Field[dimData.length + measureData.length];
         for (int i = 0; i < dimData.length; i++) {
             DimensionField f = dimensions.get(i);
-            fields[i] = Data.makeColumnField(f.rename, f.label(), dimData[i]);
-            setProperties(fields[i], f.field, null);
+            fields[i] = Fields.makeColumnField(f.rename, f.label(), dimData[i]);
+            Fields.copyBaseProperties(f.field, fields[i]);
         }
         for (int i = 0; i < measureData.length; i++) {
             MeasureField m = measures.get(i);
-            Field result = Data.makeColumnField(m.rename, m.label(), measureData[i]);
-            setProperties(result, m.field, m.measureFunction);
-            result.set("summary", m.measureFunction);
+            Field result = Fields.makeColumnField(m.rename, m.label(), measureData[i]);
+            setProperties(m.method, result, m.field);
+            result.set("summary", m.method);
+            result.set("calculated", true);
             if (m.field != null) result.set("originalLabel", m.field.label);
             fields[dimData.length + i] = result;
         }
         return fields;
+    }
+
+    private void setProperties(String f, Field to, Field src) {
+        // Nothing to set for a list
+        if (f.equals("list")) {
+            // Need to keep the date format
+            to.copyProperties(src, "dateFormat");
+            to.set("list", true);
+        } else if (f.equals("count") || f.equals("percent") || f.equals("valid") || f.equals("unique"))
+            // These are numeric, but do not preserve properties
+            to.setNumeric();
+        else
+            // All properties copy over
+            Fields.copyBaseProperties(src, to);
     }
 
     private Field[] getFields(List<? extends DimensionField> list) {
@@ -199,8 +215,9 @@ public class Summarize extends DataOperation {
         return result;
     }
 
-    private int makeGroups(int[] group, FieldRowComparison dimComparison) {
-        int[] order = dimComparison.makeSortedOrder(rowCount);
+    private int buildGroups(int[] group, FieldRowComparison dimComparison) {
+        if (dimComparison.isEmpty()) return 1;
+        int[] order = dimComparison.makeSortedOrder();
         int currentGroup = 0;
         for (int i = 0; i < group.length; i++) {
             // If the comparison indicates the dimensions are different, move to a new group
@@ -211,15 +228,4 @@ public class Summarize extends DataOperation {
         return currentGroup + 1;
     }
 
-    /* Copy the relevant detail over and set properties */
-    private void setProperties(Field to, Field from, String summary) {
-        if (summary == null || summary.equals("mode"))
-            // Copied directly from the 'from' field
-            Data.copyBaseProperties(to, from);
-        else {
-            if (!summary.equals("count") && !summary.equals("valid") && !summary.equals("unique"))
-                Data.copyBaseProperties(to, from);
-            to.set("numeric", !summary.equals("list") && !summary.equals("shorten"));
-        }
-    }
 }

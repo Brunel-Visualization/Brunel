@@ -19,6 +19,7 @@ package org.brunel.data.modify;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
 
 /**
  * This transform takes data and adds constant fields.
@@ -28,8 +29,8 @@ import org.brunel.data.Field;
 public class AddConstantFields extends DataOperation {
 
     public static Dataset transform(Dataset base, String command) {
-        String[] additional = parts(command);
-        if (additional == null) return base;
+        String[] additional = strings(command, ';');
+        if (additional.length == 0) return base;
 
         // This is the new set of fields
         Field[] fields = new Field[base.fields.length + additional.length];
@@ -38,9 +39,9 @@ public class AddConstantFields extends DataOperation {
             // Quoted constants are text, unquoted are numeric
             String name = additional[i];
             if (Data.isQuoted(name))
-                fields[i] = Data.makeConstantField(name, Data.deQuote(name), Data.deQuote(name), base.rowCount());
+                fields[i] = Fields.makeConstantField(name, Data.deQuote(name), Data.deQuote(name), base.rowCount());
             else
-                fields[i] = Data.makeConstantField(name, name, Data.asNumeric(name), base.rowCount());
+                fields[i] = Fields.makeConstantField(name, name, Data.asNumeric(name), base.rowCount());
         }
 
         // Add the old fields

@@ -50,7 +50,7 @@ public class CookBookBuilder extends DocBuilder {
 		out.append("***\n");
 		out.append("### Maps and Networks\n");
 		run(SPECIAL, ITEM_FORMAT);
-    	System.out.println(out.toString());
+    	System.out.println(out);
         display.showInBrowser();
 
 

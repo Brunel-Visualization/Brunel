@@ -17,6 +17,7 @@
 
 package org.brunel.app.brunel;
 
+import org.brunel.app.brunel.SourceTransfer.Droppable;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.io.CSV;
@@ -31,9 +32,9 @@ import java.util.List;
 import java.util.TooManyListenersException;
 
 @SuppressWarnings("serial")
- public class SourcePanel extends JPanel implements SourceTransfer.Droppable {
+ public class SourcePanel extends JPanel implements Droppable {
 
-    public final JList<Field> list = new JList<Field>();
+    public final JList<Field> list = new JList<>();
     private final AppEventListener listener;
 
     public SourcePanel(final AppEventListener listener) {
@@ -44,7 +45,7 @@ import java.util.TooManyListenersException;
         // Annoying issue with mouse release outside component needs this kludge to avoid triggering fake select events
         list.addListSelectionListener(new ListSelectionListener() {
             public int[] selected = new int[0];
-            boolean ignoreEvent = false;
+            boolean ignoreEvent;
 
             public void valueChanged(ListSelectionEvent e) {
                 if (ignoreEvent) return;

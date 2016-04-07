@@ -23,6 +23,7 @@ import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.io.CSV;
 import org.brunel.data.io.Serialize;
+import org.brunel.data.Fields;
 import org.brunel.util.Library;
 import org.brunel.util.WebDisplay;
 
@@ -41,10 +42,8 @@ class VisualTests {
     private final Dataset baseball, cpi, whiskey, simple;             // Data sets to use
     private final Library library;                          // Library we build
     private final WebDisplay display;
-    private final BuilderOptions options;
 
     private VisualTests(BuilderOptions options) {
-        this.options = options;
         baseball = serializeCheck(Dataset.make(readResourceAsCSV("baseball2004.csv")));
         cpi = serializeCheck(Dataset.make(readResourceAsCSV("UK_CPI.csv")));
         whiskey = serializeCheck(Dataset.make(readResourceAsCSV("whiskey.csv")));
@@ -169,11 +168,11 @@ class VisualTests {
             if (f == null) {
                 char c = name.charAt(0);
                 if (Data.isQuoted(name))
-                    f = Data.makeConstantField(name, Data.deQuote(name), Data.deQuote(name), base.rowCount());
+                    f = Fields.makeConstantField(name, Data.deQuote(name), Data.deQuote(name), base.rowCount());
                 else if (Character.isJavaIdentifierStart(c))
                     throw new IllegalStateException("field name: " + name + " not found in " + command[1]);
                 else
-                    f = Data.makeConstantField(name, name, Data.asNumeric(name), base.rowCount());
+                    f = Fields.makeConstantField(name, name, Data.asNumeric(name), base.rowCount());
             }
             fields[i] = f;
         }
