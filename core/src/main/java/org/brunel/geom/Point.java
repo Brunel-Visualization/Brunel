@@ -54,6 +54,14 @@ public class Point implements Comparable<Point> {
         return d == 0 ? Double.compare(x, p.x) : d;
     }
 
+    public final double dist2(Point q) {
+        return (x - q.x) * (x - q.x) + (y - q.y) * (y - q.y);
+    }
+
+    public final double dist(Point q) {
+        return Math.sqrt(dist2(q));
+    }
+
     public int hashCode() {
         long temp = Double.doubleToLongBits(x);
         int result = (int) (temp ^ (temp >>> 32));

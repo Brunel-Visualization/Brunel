@@ -37,12 +37,13 @@ public class ProjectionBuilder {
             "}"
     };
 
-    private static final Projection MERCATOR = new Mercator();           // Mercator projection
-    private static final Projection WINKEL3 = new WinkelTripel();        // Winkel Tripel
-    private static final Projection ALBERS_USA = new AlbersUSA();        // Albers for the U.S.A.
+    public static final Projection MERCATOR = new Mercator();           // Mercator projection
+    public static final Projection WINKEL3 = new WinkelTripel();        // Winkel Tripel
+    public static final Projection ALBERS_USA = new AlbersUSA();        // Albers for the U.S.A.
 
     /**
      * Choose a suitable projection for the given lat/long bounds
+     *
      * @param bounds lat/long bounds
      * @return a Projection
      */
@@ -80,7 +81,7 @@ public class ProjectionBuilder {
     }
 
     // The Albers projection needs standard parallels and a rotation angle
-    private static Albers makeAlbers(Rect b) {
+    public static Albers makeAlbers(Rect b) {
         // Parallels at 1/6 and 5/6 of the latitude
         double parallelA = (b.top + b.bottom * 5) / 6;           // Parallels at 1/6 and 5/6
         double parallelB = (b.top * 5 + b.bottom) / 6;           // Parallels at 1/6 and 5/6
