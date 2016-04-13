@@ -28,6 +28,7 @@ public class Geom {
 
     /**
      * Create the convex hull of a set of points
+     *
      * @param pts a collection of points
      * @return a Polygon for the hull. This may be a degenerate polygon (with as few as zero points) but will not be null
      */
@@ -74,6 +75,7 @@ public class Geom {
 
     /**
      * Create the bounds for a set of point
+     *
      * @param points array of points
      * @return bounding rectangle (null if there are no points)
      */
@@ -86,6 +88,7 @@ public class Geom {
 
     /**
      * Inter-point distance
+     *
      * @param x1 First Point, x coordinate
      * @param y1 First Point, y coordinate
      * @param x2 Second Point, x coordinate
@@ -96,7 +99,30 @@ public class Geom {
         return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
     }
 
-    /** Comparator used in convex hull to sort points by angle from a fix point */
+    /**
+     * This calculates the perpendicular distance from a point to a line segment.
+     * If there is no such distance (the perpendicular line does not intersect the segment)
+     * then MAX_VALUE is returned.
+     */
+
+    public static double segmentPerpendicularDistanceSquared(Point p, Point a, Point b) {
+        double d2 = a.dist2(b);
+        if (d2 < 1e-10) return Double.POSITIVE_INFINITY;                            // Zero sized line segment
+
+        double u = ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)) / d2;
+        if (u < 0 || u > 1) return Double.POSITIVE_INFINITY;                        // Outside the range of the the line
+
+        // Calculate point of intersection
+        double xx = a.x + u * (b.x - a.x);
+        double yy = a.y + u * (b.y - a.y);
+
+        // Return distance squared
+        return (xx - p.x) * (xx - p.x) + (yy - p.y) * (yy - p.y);
+    }
+
+    /**
+     * Comparator used in convex hull to sort points by angle from a fix point
+     */
     private static class PolarComparator implements Comparator<Point> {
         private final Point p;
 

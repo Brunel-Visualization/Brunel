@@ -46,6 +46,38 @@ public class Poly {
     }
 
     /**
+     * Returns the number of points in the polygon
+     *
+     * @return size
+     */
+    public final int count() {
+        return points.length;
+    }
+
+    public double distanceToBoundary(Point p) {
+        int n = points.length;
+
+        // calcuate distance to the ends of the line
+        double dSq = Double.POSITIVE_INFINITY;
+        for (Point q : points) dSq = Math.min(dSq, p.dist2(q));
+
+        if (dSq < 1e-10) return 0;                  // We hit it -- no need to do anything else
+
+        int j = n - 1;
+
+        // Now need to handle each line segment
+        for (int i = 0; i < n; i++) {
+            double t = Geom.segmentPerpendicularDistanceSquared(p, points[i], points[j]);
+            if (t < dSq) {
+                dSq = t;                                        // This is closer than the best so far
+                if (dSq < 1e-10) return 0;      // We hit it -- no need to do anything else
+            }
+            j = i;
+        }
+        return Math.sqrt(dSq);
+    }
+
+    /**
      * See if the polygon contains the point.
      * This uses the winding number technique
      *
@@ -53,51 +85,56 @@ public class Poly {
      * @return true if it does
      */
     public boolean contains(Point p) {
-        if (!bounds.contains(p)) return false;          // Quick check for speed
+
+        // This check avoids the need for the complex call when outside the bounds
+
+        // This check avoids the need for the complex call when outside the bounds
+        if (!bounds.contains(p)) return false;
 
         // This method uses the ray casting algorithm described at
         // http://en.wikipedia.org/wiki/Point_in_polygon
 
         // It checks intersections of horizontal ray through y with the sides of the polygon
         // If there is an odd number of intersections to one side, the point is inside
+
         int intersectCountLeft = 0;
+        int n = points.length;
 
         // Go through each combination of coordinates
         // j will always point to the position before i
-        int N = points.length;
+        int j = n - 1;
 
         // horizontal line: y = y
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < n; i++) {
+            Point qi = points[i], qj = points[j];
             // Determine line formula for current segment: y = mx + b
-            int j = (i + 1) % N;
-            double yj = points[j].y;
-            double yi = points[i].y;
-            double xj = points[j].x;
-            double xi = points[i].x;
-            double m = (yj - yi) / (xj - xi);
+            double m = (qj.y - qi.y) / (qj.x - qi.x);
 
-            if (Double.isNaN(m) || Math.abs(m) < 1e-6) {
-                // Both points are identical, or the line is horizontal. Ignore this segment
-                continue;
-            }
-            if (Math.abs(m) > 1e6) {
-                // Vertical line.`
-                double iy = p.y;
+            if (Double.isNaN(m)) {
+                // Both points are identical. Ignore this segment
+            } else if (Math.abs(m) == 0) {
+                // two horizontal lines won't intersect (and if they do we don't want to increment anyway)
+            } else if (Math.abs(m) > 1e20) {
+                // Vertical line.
+                double intersectX = qi.x;
+                double intersectY = p.y;
 
-                if ((iy > yi && iy < yj)
-                        || (iy > yj - 0.0 && iy < yi)) {
+                // Does it hit in the middle somewhere?
+                if ((intersectY >= qi.y && intersectY <= qj.y) || (intersectY >= qj.y && intersectY <= qi.y)) {
                     // Is the intersection to the left or right?
-                    if (xi < p.x) {
+                    if (intersectX < p.x) {
                         // If the horizontal ray hits a vertex, we have a
                         // special case.
-                        if (Math.abs(iy - yi) == 0.0) {
-                            // Only count if the other vertex on this segment is below the position.
-                            if (yj > p.y) {
+                        if (intersectY == qi.y) {
+                            // Only count if the other vertex on this segment is
+                            // below the position.
+                            if (qj.y > p.y) {
                                 intersectCountLeft++;
                             }
-                        } else if (Math.abs(iy - yj) == 0.0) {
-                            // Only count if the other vertex on this segment is below the position.
-                            if (yi > p.y) {
+                        } else if (intersectY == qj.y) {
+                            // Only count if the other vertex on this segment is
+                            // below the position.
+                            if (qi.y > p.y) {
                                 intersectCountLeft++;
                             }
                         } else {
@@ -107,31 +144,30 @@ public class Poly {
                 }
             } else {
                 // Solve for b: y - mx, using first point
-                double b = yi - m * xi;
+                double b = qi.y - m * qi.x;
 
                 // Find the x position of the intersection point of the segment
                 // with the horizontal ray.
                 // x = (y - b)/m
-                double ix = (p.y - b) / m;
+                double intersectX = (p.y - b) / m;
 
-                if ((ix > xi && ix < xj)
-                        || (ix > xj && ix < xi)) {
+                if ((intersectX >= qi.x && intersectX <= qj.x) || (intersectX >= qj.x && intersectX <= qi.x)) {
 
                     // Is the intersection to the left or right?
-                    if (ix < p.x) {
+                    if (intersectX < p.x) {
                         // If the horizontal ray hits a vertex, we have a
                         // special case.
-                        if (Math.abs(p.y - yi) == 0.0) {
+                        if (p.y == qi.y) {
                             // Only count if the other vertex on this segment is
                             // below the position.
                             // Screen coordinates - below is greater than.
-                            if (yj > p.y) {
+                            if (qj.y > p.y) {
                                 intersectCountLeft++;
                             }
-                        } else if (Math.abs(p.y - yj) == 0) {
+                        } else if (p.y == qj.y) {
                             // Only count if the other vertex on this segment is
                             // below the position.
-                            if (yi > p.y) {
+                            if (qi.y > p.y) {
                                 intersectCountLeft++;
                             }
                         } else {
@@ -140,18 +176,11 @@ public class Poly {
                     }
                 }
             }
+            j = i;
         }
 
         return intersectCountLeft % 2 != 0;
 
-    }
 
-    /**
-     * Returns the number of points in the polygon
-     *
-     * @return size
-     */
-    public final int count() {
-        return points.length;
     }
 }
