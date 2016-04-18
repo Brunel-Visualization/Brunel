@@ -54,24 +54,32 @@ class GeoData {
         return INSTANCE;
     }
 
+    public static String getQuality(Param[] diagramParameters) {
+        for (Param p : diagramParameters)
+            if (p.type() == Param.Type.option) {
+                if (p.asString().equals("medium")) return "med";
+                if (p.asString().equals("high")) return "high";
+                if (p.asString().equals("low")) return "low";
+            }
+        return "med";
+    }
+
     MappedLists<GeoFile, Object> mapFeaturesToFiles(Object[] names, Collection<Object> unmatched) {
         MappedLists<GeoFile, Object> contained = new MappedLists<>();
         for (Object s : names) {
             String key = s.toString();
-            int[][] item = featureByName(key);
+            List<Feature> item = featureByName(key);
             if (item == null) {
                 unmatched.add(s);
             } else {
-                for (int[] i : item) {
-                    GeoFile file = geoFiles[i[0]];
-                    contained.add(file, new IndexedFeature(key, i[1]));
-                }
+                for (Feature i : item)
+                    contained.add(i.file, new IndexedFeature(key, i.id));
             }
         }
         return contained;
     }
 
-    private final Map<String, int[][]> featureMap;        // For each feature, a pair of [fileIndex,featureIndex]
+    private final Map<String, List<Feature>> featureMap;  // A map from names to where to find them
     private final Map<String, GeoFile> filesByName;       // A map of canonical name to file
     private final Map<String, LabelPoint> labelsByName;   // A map of canonical name to labels
     private final GeoFile[] geoFiles;                     // Feature files we can use
@@ -80,16 +88,18 @@ class GeoData {
     private GeoData() {
         try {
             // Read in the feature information file
-            InputStream is = GeoData.class.getResourceAsStream("/org/brunel/maps/geoindex.txt");
+            InputStream is = GeoData.class.getResourceAsStream("/org/brunel/maps/geoinfo/featureFiles.txt");
             LineNumberReader rdr = new LineNumberReader(new InputStreamReader(is, "utf-8"));
             geoFiles = readFileDescriptions(rdr);                       // The files
-            featureMap = readFeatureDescriptions(rdr);                  // Map from features to files & ids
-            rdr.close();
-
             filesByName = makeFileNameMap(geoFiles);                    // So we can identify them by name
 
+            is = GeoData.class.getResourceAsStream("/org/brunel/maps/geoinfo/featureDetails.txt");
+            rdr = new LineNumberReader(new InputStreamReader(is, "utf-8"));
+            featureMap = readFeatureDescriptions(rdr, filesByName);     // Map from features to files & ids
+            rdr.close();
+
             // Read label file information
-            is = GeoData.class.getResourceAsStream("/org/brunel/maps/locations.txt");
+            is = GeoData.class.getResourceAsStream("/org/brunel/maps/geoinfo/locations.txt");
             rdr = new LineNumberReader(new InputStreamReader(is, "utf-8"));
             labels = readLabels(rdr);
             rdr.close();
@@ -118,9 +128,9 @@ class GeoData {
         return map;
     }
 
-    public int[][] featureByName(String s) {
+    public List<Feature> featureByName(String s) {
         s = GeoNaming.canonical(s);
-        int[][] result = featureMap.get(s);
+        List<Feature> result = featureMap.get(s);
         if (result != null) return result;
         for (String t : GeoNaming.variants(s)) {
             result = featureMap.get(t);
@@ -154,16 +164,16 @@ class GeoData {
 
     private void placeLabelsInFiles() {
         for (LabelPoint p : labels) {
-            int[][] where = featureMap.get(GeoNaming.canonical(p.parent0));
+            List<Feature> where = featureMap.get(GeoNaming.canonical(p.parent0));
             if (where != null) {
-                for (int[] item : where) {
-                    geoFiles[item[0]].pts.add(p);
+                for (Feature item : where) {
+                    item.file.pts.add(p);
                 }
             }
             where = featureMap.get(GeoNaming.canonical(p.parent1));
             if (where != null) {
-                for (int[] item : where) {
-                    geoFiles[item[0]].pts.add(p);
+                for (Feature item : where) {
+                    item.file.pts.add(p);
                 }
             }
         }
@@ -186,23 +196,26 @@ class GeoData {
         return list.toArray(new LabelPoint[list.size()]);
     }
 
-    private HashMap<String, int[][]> readFeatureDescriptions(LineNumberReader rdr) throws IOException {
-        HashMap<String, int[][]> map = new HashMap<>();
+    private Map<String, List<Feature>> readFeatureDescriptions(LineNumberReader rdr, Map<String, GeoFile> filesByName) throws IOException {
+        HashMap<String, List<Feature>> map = new HashMap<>();
         // Read the features
         while (true) {
             String line = rdr.readLine();
-            if (line == null) break;                                    // End of file
-            if (line.trim().length() == 0) continue;                    // Skip blank lines (should be at top)
-            String[] featureLine = line.split("\\|");
-            String name = featureLine[0];
-            int m = featureLine.length - 1;
-            int[][] data = new int[m][2];
-            for (int i = 0; i < m; i++) {
-                String[] s = featureLine[i + 1].split(":");
-                data[i][0] = Integer.parseInt(s[0]);
-                data[i][1] = Integer.parseInt(s[1]);
+            if (line == null) break;
+            String[] parts = line.split(",");
+            GeoFile geoFile = filesByName.get(GeoNaming.canonical(parts[0]));
+            int id = Integer.parseInt(parts[1]);
+            if (geoFile == null) throw new IllegalStateException("Unknown file name: " + parts[0]);
+            Feature data = new Feature(geoFile, id);
+            for (int i = 2; i < parts.length; i++) {
+                String name = parts[i];
+                List<Feature> list = map.get(name);
+                if (list == null) {
+                    list = new ArrayList<>();
+                    map.put(name, list);
+                }
+                list.add(data);
             }
-            map.put(GeoNaming.canonical(name), data);
         }
         return map;
     }
@@ -226,7 +239,7 @@ class GeoData {
      * @return resulting mapping
      */
     GeoMapping make(Object[] names, Param[] geoParameters) {
-        return GeoMapping.createGeoMapping(names, makeRequiredFiles(geoParameters), this);
+        return GeoMapping.createGeoMapping(names, makeRequiredFiles(geoParameters), this, GeoData.getQuality(geoParameters));
     }
 
     GeoMapping world() {
@@ -234,18 +247,18 @@ class GeoData {
     }
 
     private List<GeoFile> makeRequiredFiles(Param[] params) {
-        if (params.length == 0) return null;
         Set<GeoFile> byFeature = new HashSet<>();
         List<GeoFile> result = new ArrayList<>();
         for (Param p : params) {
+            if (p.type() == Param.Type.option) continue;
             String key = GeoNaming.canonical(p.asString());
             GeoFile f = filesByName.get(key);
             if (f != null) {
                 result.add(f);
             } else {
-                int[][] feature = featureMap.get(key);
-                if (feature != null) {
-                    byFeature.add(geoFiles[feature[0][0]]);
+                List<Feature> features = featureMap.get(key);
+                if (features != null) {
+                    byFeature.add(features.get(0).file);
                 } else {
                     LabelPoint location = labelsByName.get(key);
                     if (location != null)
@@ -256,7 +269,7 @@ class GeoData {
 
         }
         result.addAll(byFeature);
-        return result;
+        return result.isEmpty() ? null : result;
     }
 
     private GeoFile smallestFileContaining(Point point) {
@@ -271,6 +284,17 @@ class GeoData {
     }
 
     GeoMapping makeForPoints(Poly hull, Param[] geoParameters) {
-        return GeoMapping.createGeoMapping(hull, makeRequiredFiles(geoParameters), this);
+        return GeoMapping.createGeoMapping(hull, makeRequiredFiles(geoParameters), this, GeoData.getQuality(geoParameters));
+    }
+
+    /* where a feature can be found */
+    private static class Feature {
+        final GeoFile file;
+        final int id;
+
+        private Feature(GeoFile file, int id) {
+            this.file = file;
+            this.id = id;
+        }
     }
 }

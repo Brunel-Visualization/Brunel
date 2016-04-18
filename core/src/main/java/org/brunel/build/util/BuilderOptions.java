@@ -46,7 +46,7 @@ public class BuilderOptions {
         }
         return options;
     }
-    
+
     public static BuilderOptions makeFromENV() {
         BuilderOptions options = new BuilderOptions();
 
@@ -59,7 +59,7 @@ public class BuilderOptions {
     		else if (keyVal[0].trim().equalsIgnoreCase("locMaps")) options.locMaps = keyVal[1].trim();
     		else if (keyVal[0].trim().equalsIgnoreCase("locD3")) options.locD3 = keyVal[1].trim();
     	}
-    	
+
     	return options;
     }
 

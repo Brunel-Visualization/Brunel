@@ -148,7 +148,7 @@ public class GeoMap extends D3Diagram {
         for (int k = 0; k < files.length; k++) {
             if (k > 0) out.add(",").onNewLine();
             String fileName = files[k];
-            String source = Data.quote(out.options.locMaps + "/" + out.options.version + "/" + fileName + ".json");
+            String source = Data.quote(out.options.locMaps + "/" + out.options.version + "/topo/" + map.getQuality() + "/" + fileName + ".json");
             out.onNewLine().add(source, ":{").indentMore();
             int i = 0;
             Map<Object, Integer> features = combined.get(fileName);
@@ -163,18 +163,6 @@ public class GeoMap extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details) {
-//
-//        elementBuilder.writeCoordinateDefinition(details);
-////        if (vis.tElement == Element.point || vis.tElement == Element.text) {
-////            out.addChained("attr('transform', function(d) { return projectTransform(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999]) } )");
-////            definePoint(details);
-////            out.endStatement();
-////            addAestheticsAndTooltips(details, true);
-////        } else {
-////            // Set the given location using the transform
-////            out.addChained("attr('d', path )").endStatement();
-////        }
-//        addAestheticsAndTooltips(details, true);
     }
 
     public void writePreDefinition(ElementDetails details) {

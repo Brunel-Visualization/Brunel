@@ -216,8 +216,10 @@ public class GeoInformation {
 
         // Now run through any elements that should have a mapping, but do not
         for (VisSingle e : elements) {
-            if (e.tDiagram == Diagram.map && map.get(e) == null)
-                map.put(e, GeoMapping.createGeoMapping(new Object[0], Arrays.asList(validFiles), GeoData.instance()));
+            if (e.tDiagram == Diagram.map && map.get(e) == null) {
+                String quality = GeoData.getQuality(e.tDiagramParameters);
+                map.put(e, GeoMapping.createGeoMapping(new Object[0], Arrays.asList(validFiles), GeoData.instance(), quality));
+            }
         }
 
         return map;

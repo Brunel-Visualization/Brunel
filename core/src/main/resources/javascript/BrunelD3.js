@@ -870,10 +870,21 @@ var BrunelD3 = (function () {
             // Read in the features and attach to the data, defining each in a closure
             for (src in locations) {
                 new function (url, mapping, idx) {
+
+                    /*
+
+                     x.objects.all.geometries;
+                     for (i = 0; i < all.length; i++) {
+                     d3Data.push({row: i, geo: topojson.feature(x, all[i])});
+
+                     */
+
                     d3.json(url, function (error, x) {
                         var i, id, rev = {};                        // reverse mapping
+                        var d, all= x.objects.all.geometries;       // All features in the topojson
                         for (i in mapping) rev[mapping[i]] = i;     // 'rev' maps from feature ID to data name
-                        x.features.forEach(function (d, i) {
+                        all.forEach(function (v, i) {
+                            d = topojson.feature(x, v);             // convert using topojson call
                             id = rev[d.properties.a];               // The data name for this
                             if (id)
                                 element._features[id] = d;          // Remember it by data name

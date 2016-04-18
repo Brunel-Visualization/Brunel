@@ -64,7 +64,7 @@ public class TestAnalyze {
     public void testExamples3() {
         GeoMapping a = GeoData.instance().make("FRA,GER,NY,TX,IA,AL,IN,IL,Nowhere".split(","), new Param[0]);
         assertEquals(2, a.getFiles().length);
-        assertEquals("USAMain", a.getFiles()[0]);
+        assertEquals("USA48", a.getFiles()[0]);
         assertEquals("WesternEurope", a.getFiles()[1]);
         assertEquals(1, a.getUnmatched().size());
         assertEquals("Nowhere", a.getUnmatched().iterator().next());

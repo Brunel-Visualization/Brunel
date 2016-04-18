@@ -83,7 +83,8 @@ public class D3Builder extends AbstractBuilder {
         String pattern = "\t<script src=\"%s\" charset=\"utf-8\"></script>\n";
 
         String base = COPYRIGHT_COMMENTS +
-                String.format(pattern, "http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js");
+                String.format(pattern, "http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js")
+                + String.format(pattern, "http://d3js.org/topojson.v1.min.js");
 
         if (getControls().isNeeded()) {
             base = base + String.format(pattern, "http://code.jquery.com/jquery-1.10.2.js")
