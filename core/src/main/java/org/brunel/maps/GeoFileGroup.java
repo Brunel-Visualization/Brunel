@@ -89,10 +89,13 @@ class GeoFileGroup {
         if (d < 0) return false;
         if (d > 0) return true;
 
-        double myScore = area() * (1 + files.size());
-        double otherScore = o.area() * (1 + o.files.size());
+        // Fewer files is better
+        d = files.size() - o.files.size();
+        if (d < 0) return true;
+        if (d > 0) return false;
 
-        return myScore < otherScore;
+        // Smaller area is better
+        return area() < o.area();
     }
 
     private double area() {

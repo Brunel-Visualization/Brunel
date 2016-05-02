@@ -47,10 +47,18 @@ class GeoNaming {
     }
 
     public static String canonical(String s) {
-        s = expandAbbreviations(s.toLowerCase());
-        s = s.replaceAll("[ \t]+", " ");
+
+        s = removeAccents(s.toLowerCase())                  // lower case and strip diacretics
+                .replaceAll("\u2019", "'")                  // simple apostrophes
+                .replaceAll("`", "'")                       // simple apostrophes
+                .replaceAll(" +and +", " & ")               // no ampersands
+                .replaceAll("  +", " ");                    // single spaces only
+
         String common = commonNames.get(s);
         if (common != null) s = common;
+        s = s.replaceAll("[ \t]+", " ");
+        s = expandAbbreviations(s.toLowerCase());
+
         // Lots of variations of this start
         if (s.startsWith("united kingdom of")) return "united kingdom";
         if (s.startsWith("holy see")) return "vatican";
@@ -62,8 +70,6 @@ class GeoNaming {
                 .replaceAll("dem\\.[ ]*", "democratic ")
                 .replaceAll("rep\\.[ ]*", "republic ")
                 .replaceAll("is\\.[ ]*", "islands ")
-                .replaceAll("\u2019", "'")
-                .replaceAll("&", " and ")
                 .replaceAll(" [ ]+", " ").trim();
     }
 
@@ -84,6 +90,10 @@ class GeoNaming {
         if (name.equals("east germany") || name.equals("west germany")) {
             variants.add("germany");
             return variants;
+        }
+
+        if (name.startsWith("us ")) {
+            variants.add("united states" + name.substring(2));
         }
 
         String t = removeAccents(name);
@@ -107,14 +117,14 @@ class GeoNaming {
         }
 
         p = name.indexOf(" and ");
-        if (p>0) {
+        if (p > 0) {
             // "A and B" -- try just A and just B";
             variants.add(name.substring(0, p).trim());
-            variants.add(name.substring(p+5).trim());
+            variants.add(name.substring(p + 5).trim());
         }
 
         p = name.indexOf(" excl");
-        if (p>0) {
+        if (p > 0) {
             // "A excluding B" -- try just A;
             variants.add(name.substring(0, p).trim());
         }

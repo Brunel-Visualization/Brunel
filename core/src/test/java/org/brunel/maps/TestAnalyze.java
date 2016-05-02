@@ -36,7 +36,7 @@ public class TestAnalyze {
         assertEquals(1, a.getFiles().length);
         assertEquals("WesternEurope", a.getFiles()[0]);
         assertEquals(a.getUnmatched().toString(), 0, a.getUnmatched().size());
-        assertEquals("France:[0, 73] Germany:[0, 58] Lux.:[0, 131]", dump(a.getFeatureMap()));
+        assertEquals("France:[0, 77] Germany:[0, 61] Lux.:[0, 137]", dump(a.getFeatureMap()));
     }
 
     private String dump(Map<Object, int[]> mapping) {
@@ -53,22 +53,22 @@ public class TestAnalyze {
 
     @Test
     public void testExamples2() {
-        GeoMapping a = GeoData.instance().make("france,germany,UK,IRE".split(","), new Param[0]);
+        GeoMapping a = GeoData.instance().make("france,germany,UK,ireland".split(","), new Param[0]);
         assertEquals(1, a.getFiles().length);
         assertEquals("Europe", a.getFiles()[0]);
         assertEquals(a.getUnmatched().toString(), 0, a.getUnmatched().size());
-        assertEquals("IRE:[0, 102] UK:[0, 77] france:[0, 73] germany:[0, 58]", dump(a.getFeatureMap()));
+        assertEquals("UK:[0, 81] france:[0, 77] germany:[0, 61] ireland:[0, 107]", dump(a.getFeatureMap()));
     }
 
     @Test
     public void testExamples3() {
-        GeoMapping a = GeoData.instance().make("FRA,GER,NY,TX,IA,AL,IN,IL,Nowhere".split(","), new Param[0]);
+        GeoMapping a = GeoData.instance().make("FRA,DEU,NY,TX,IA,AL,IN,IL,Nowhere".split(","), new Param[0]);
         assertEquals(2, a.getFiles().length);
         assertEquals("USA48", a.getFiles()[0]);
         assertEquals("WesternEurope", a.getFiles()[1]);
-        assertEquals(1, a.getUnmatched().size());
+        assertEquals(a.getUnmatched().toString(), 1, a.getUnmatched().size());
         assertEquals("Nowhere", a.getUnmatched().iterator().next());
-        assertEquals("AL:[0, 3482] FRA:[1, 73] GER:[1, 58] IA:[0, 3470] IL:[0, 3487] IN:[0, 3488] NY:[0, 3500] TX:[0, 3477]", dump(a.getFeatureMap()));
+        assertEquals("AL:[0, 3482] DEU:[1, 61] FRA:[1, 77] IA:[0, 3470] IL:[0, 3487] IN:[0, 3488] NY:[0, 3500] TX:[0, 3477]", dump(a.getFeatureMap()));
     }
 
     @Test
@@ -85,7 +85,7 @@ public class TestAnalyze {
 
         GeoMapping a = GeoData.instance().make(names, new Param[0]);
 
-        assertEquals(a.getUnmatched().toString(), 16, a.getUnmatched().size());  // Lots of oddities here
+        assertEquals(a.getUnmatched().toString(), 12, a.getUnmatched().size());  // Lots of oddities here
 
 
     }
@@ -115,13 +115,13 @@ public class TestAnalyze {
                 "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Anguilla", "Antigua and Barbuda", "Argentina", "Armenia", "Aruba", "Australia",
                 "Austria", "Azerbaijan", "Bahamas, The", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bermuda", "Bhutan", "Bolivia",
                 "Botswana", "Bougainville", "Brazil", "British Virgin Islands", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cambodia", "Cameroon",
-                "Canada", "Cape Verde Islands", "Cayman Islands", "Central African Republic", "Chad", "Chile", "China, Hong Kong", "China, Macau", "China, People?s Republic",
+                "Canada", "Cape Verde Islands", "Cayman Islands", "Central African Republic", "Chad", "Chile", "China, Hong Kong", "China, Macau", "China, People's Republic",
                 "China, Taiwan", "Colombia", "Comoros", "Congo, Democratic Republic of", "Congo, Republic of", "Costa Rica", "Cote d\u2019Ivoire", "Croatia", "Cuba",
                 "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia",
                 "Ethiopia", "Faeroe Islands", "Falkland Islands", "Fiji", "Finland", "France", "French Guiana", "Gabon",
                 "Gambia, The", "Georgia", "Germany", "Ghana", "Greece", "Greenland", "Grenada", "Guadeloupe", "Guam", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana",
                 "Haiti", "Holy See (Vatican City State)", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan",
-                "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Korea, Democratic People?s Rep", "Korea, Republic of", "Kosovo", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon",
+                "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Korea, Democratic People's Rep", "Korea, Republic of", "Kosovo", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon",
                 "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Macedonia", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta",
                 "Martinique", "Mauritania", "Mauritius", "Mayotte", "Mexico", "Moldova", "Monaco", "Mongolia", "Montenegro", "Montserrat", "Morocco", "Mozambique", "Myanmar",
                 "Namibia", "Nauru", "Nepal", "Netherlands", "New Caledonia", "New Zealand", "Nicaragua", "Niger", "Nigeria", "Norway", "Oman",
@@ -135,7 +135,7 @@ public class TestAnalyze {
         };
 
         GeoMapping a = GeoData.instance().make(names, new Param[0]);
-        assertEquals(a.getUnmatched().toString(), 4, a.getUnmatched().size());          // We get all except 4 small islands
+        assertEquals(a.getUnmatched().toString(), 3, a.getUnmatched().size());          // We get all except 4 small islands
 
     }
 

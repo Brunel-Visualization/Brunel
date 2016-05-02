@@ -156,9 +156,9 @@ public class GeoMapping {
 
     // Recursively search for the best files to add
     private void searchForBestAdditions(GeoFileGroup current, List<GeoFile> possibles) {
-        // System.out.println("Searching w/ current=" + current + ", base=" +  best+ ", possibles=" + possibles);
+//         System.out.println("Searching w/ current=" + current + ", base=" +  best+ ", possibles=" + possibles);
         if (current.isBetter(best)) {
-            // System.out.println(" *** improved");
+//             System.out.println(" *** improved");
             best = current;                     // If we are the best, update
         }
         if (possibles.isEmpty()) return;                                    // No more we can do
