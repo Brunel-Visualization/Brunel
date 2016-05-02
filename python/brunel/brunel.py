@@ -59,17 +59,23 @@ def display(brunel, data, width=800, height=600, output='d3'):
         raise ValueError("Valid Output Choices Are:   d3")
 
 def to_csv(df):
+
+        #If user has done something to cause a named Index, preserve it
+        use_index = False
+        if  df.index.name is not None:
+            use_index=True
+
         # CSV to pass to service
         # Code is different in python 2 vs. 3
         if sys.version_info < (3,0):
             import StringIO
             csvIO = StringIO.StringIO()
-            df.to_csv(csvIO, index=False)
+            df.to_csv(csvIO, index=use_index)
             csv = csvIO.getvalue()
             return csv
         else:
             csvIO = io.StringIO()
-            df.to_csv(csvIO, index=False)
+            df.to_csv(csvIO, index=use_index)
             csv = csvIO.getvalue()
             return csv
 
