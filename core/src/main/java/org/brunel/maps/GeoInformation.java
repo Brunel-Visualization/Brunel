@@ -85,7 +85,8 @@ public class GeoInformation {
                 for (LabelPoint p : f.pts) if (hull.bounds.contains(p)) points.add(p);
             }
         }
-        Collections.sort(points, LabelPoint.COMPARATOR);
+
+        Collections.sort(points);
         return points;
     }
 

@@ -29,7 +29,7 @@ import java.util.List;
 class GeoFile implements Comparable<GeoFile> {
     public final String name;           // File name
     public final Rect bounds;           // longitude min, max; latitude min,max
-    public final List<LabelPoint> pts;  // contained label points
+    public final List<LabelPoint> pts;   // contained label points
     public final Poly hull;             // Convex points in lat/long
 
     /**

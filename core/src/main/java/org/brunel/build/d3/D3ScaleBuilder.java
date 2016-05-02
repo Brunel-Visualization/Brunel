@@ -546,7 +546,7 @@ public class D3ScaleBuilder {
     private double getIncludeZeroFraction(Field[] fields, ScalePurpose purpose) {
 
         if (purpose == ScalePurpose.x) return 0.1;               // Really do not want much empty space on color axes
-        if (purpose == ScalePurpose.size) return 0.9;            // Almost always want to go to zero
+        if (purpose == ScalePurpose.size) return 0.98;           // Almost always want to go to zero
         if (purpose == ScalePurpose.color) return 0.2;           // Color
 
         // For 'Y'
@@ -555,13 +555,14 @@ public class D3ScaleBuilder {
         for (Field f : fields)
             if (f.name.equals("#count") || "sum".equals(f.strProperty("summary"))) return 1.0;
 
-        // Really want it for bar/area charts that are not ranges
+        int nBarArea = 0;       // Count elements that are bars or areas
         for (VisSingle e : elements)
             if ((e.tElement == Element.bar || e.tElement == Element.area)
-                    && e.fRange == null) return 0.8;
+                    && e.fRange == null) nBarArea ++;
 
-        // By default, only if we have 20% extra space
-        return 0.2;
+        if (nBarArea == elements.length) return 1.0;        // All bars?  Always go to zero
+        if (nBarArea > 0) return 0.8;                       // Some bars?  Strongly want to go to zero
+        return 0.2;                                         // By default, only if we have 20% extra space
     }
 
     private Field combineNumericFields(Field[] ff) {

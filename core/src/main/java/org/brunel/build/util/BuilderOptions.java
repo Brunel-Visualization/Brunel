@@ -28,8 +28,8 @@ public class BuilderOptions {
     public DataMethod includeData = DataMethod.columns;         // What level of data to include
     public boolean generateBuildCode = true;                    // if true, Add javascript to build the chart initially
     public boolean readableJavascript = true;                   // Readable or shorter
-    public String locJavaScript = "http://www.brunelvis.org/js";// The location of the javascript libraries
-    public String locMaps = "http://www.brunelvis.org/geo";     // The location of the mapping resources
+    public String locJavaScript = "https://www.brunelvis.org/js";// The location of the javascript libraries
+    public String locMaps = "https://www.brunelvis.org/geo";     // The location of the mapping resources
     public String locD3 = "//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min";  //Location of D3
     public String version = "1.1";                              // Which online version to use
 

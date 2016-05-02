@@ -18,52 +18,48 @@ package org.brunel.maps;
 
 import org.brunel.geom.Point;
 
-import java.util.Comparator;
-
 /**
  * A label point is a point that has labeling information
  */
 public class LabelPoint extends Point {
     public final String label;                      // text for the location
-    public final String parent0, parent1;           // parent country and region
-    public final int rank;                          // 0 is most important, 8 is least
-    public final int size;                          // 1 is smallest, 14 the largest
-    public final int type;                          // 1-capital, 2-region capital, 3-local capital, 4-other
+    public final int pop;                           // 1 is smallest, 14 the largest
+    public final int importance;                    // 5-capital, 4-region capital, 3-local capital, 2-important, 1-other
 
-    public static LabelPoint parse(String line) {
-        String[] p = line.split("\\|");
+    public static LabelPoint makeFromArray(String[] p) {
         return new LabelPoint(
-                Double.parseDouble(p[1]),           // longitude is second
-                Double.parseDouble(p[0]),           // latitude is first
-                p[7],                               // name last
-                Integer.parseInt(p[2]),             // rank
+                Double.parseDouble(p[2]),           // longitude
+                Double.parseDouble(p[1]),           // latitude
+                p[0],                               // label
                 Integer.parseInt(p[3]),             // size
-                Integer.parseInt(p[4]),             // class
-                p[5],                               // country
-                p[6]                                // region
+                Integer.parseInt(p[4])              // class
         );
     }
 
-    private LabelPoint(double x, double y, String label, int rank, int size, int type, String parent0, String parent1) {
+    private LabelPoint(double x, double y, String label, int pop, int importance) {
         super(x, y);
         this.label = label;
-        this.rank = rank;
-        this.size = size;
-        this.type = type;
-        this.parent0 = parent0;
-        this.parent1 = parent1;
+        this.pop = pop;
+        this.importance = importance;
     }
 
     public String toString() {
-        return label + "[" + rank + "," + size + "]";
+        return label + "[" + importance + "," + pop + "]";
     }
 
-    public static final Comparator<LabelPoint> COMPARATOR = new Comparator<LabelPoint>() {
-        public int compare(LabelPoint a, LabelPoint b) {
-            if (a.rank != b.rank) return a.rank - b.rank;               // lower rank is more important
-            if (a.type != b.type) return a.type - b.type;               // lower type is more important
-            if (a.size != b.size) return b.size - a.size;               // higher size is more important
-            return a.label.compareTo(b.label);                          // just to distinguish
+    public int compareTo(Point p) {
+        if (p instanceof LabelPoint) {
+            LabelPoint o = (LabelPoint) p;
+            int diff = o.rank() - rank();
+            return diff != 0 ? diff : label.compareTo(o.label);
+        } else {
+            return super.compareTo(p);
         }
-    };
+
+    }
+
+    private int rank() {
+        return 50 * pop + 11 * importance;
+    }
+
 }

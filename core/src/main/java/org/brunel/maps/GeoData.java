@@ -29,7 +29,6 @@ import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -83,7 +82,6 @@ class GeoData {
     private final Map<String, GeoFile> filesByName;       // A map of canonical name to file
     private final Map<String, LabelPoint> labelsByName;   // A map of canonical name to labels
     private final GeoFile[] geoFiles;                     // Feature files we can use
-    private final LabelPoint[] labels;                    // Labels for the world
 
     private GeoData() {
         try {
@@ -101,31 +99,14 @@ class GeoData {
             // Read label file information
             is = GeoData.class.getResourceAsStream("/org/brunel/maps/geoinfo/locations.txt");
             rdr = new LineNumberReader(new InputStreamReader(is, "utf-8"));
-            labels = readLabels(rdr);
+            labelsByName = readLabels(rdr, filesByName);
             rdr.close();
-
-            labelsByName = makeLabelsMap();                             // Create a map form names to labels
-            placeLabelsInFiles();                                       // Add labels to geo files
 
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         addVariantFeatureNames();
 
-    }
-
-    private HashMap<String, LabelPoint> makeLabelsMap() {
-        HashMap<String, LabelPoint> map = new HashMap<>();
-        for (LabelPoint s : labels) {
-            String name = GeoNaming.canonical(s.label);
-            LabelPoint previous = map.put(name, s);
-            // There are multiple places with the same name (e.g. Paris, Texas vs Paris, France)
-            // So if the one that was in there is more important than this one, restore the original version
-            if (previous != null && previous.compareTo(s) > 0) {
-                map.put(name, previous);
-            }
-        }
-        return map;
     }
 
     public List<Feature> featureByName(String s) {
@@ -162,38 +143,33 @@ class GeoData {
         }
     }
 
-    private void placeLabelsInFiles() {
-        for (LabelPoint p : labels) {
-            List<Feature> where = featureMap.get(GeoNaming.canonical(p.parent0));
-            if (where != null) {
-                for (Feature item : where) {
-                    item.file.pts.add(p);
-                }
-            }
-            where = featureMap.get(GeoNaming.canonical(p.parent1));
-            if (where != null) {
-                for (Feature item : where) {
-                    item.file.pts.add(p);
-                }
-            }
-        }
-    }
-
-    private LabelPoint[] readLabels(LineNumberReader rdr) throws IOException {
-        List<LabelPoint> list = new ArrayList<>();
+    /* Read the labels and add them to the appropriate geo files */
+    private static Map<String, LabelPoint> readLabels(LineNumberReader rdr, Map<String, GeoFile> filesByName) throws IOException {
+        Map<String, LabelPoint> result = new HashMap<>();
         while (true) {
             String line = rdr.readLine();
             if (line == null) break;
-            list.add(LabelPoint.parse(line));
-        }
-        Collections.sort(list, new Comparator<LabelPoint>() {
-            public int compare(LabelPoint a, LabelPoint b) {
-                if (a.rank != b.rank) return a.rank - b.rank;       // lower rank goes first
-                if (a.size != b.size) return b.size - a.size;       // then sort by higher size (population)
-                return a.label.compareTo(b.label);                  // Just make them different ...
+            String[] parts = line.split("\\|");
+
+            // Make the point using the first 5 fields (name, lat, lon, population, importance)
+            LabelPoint point = LabelPoint.makeFromArray(parts);
+            // Add to the global list. If duplicated, ignore duplicates
+            if (!result.containsKey(point.label)) result.put(point.label, point);
+            // The remaining fields are the files to which the points belong
+            for (int i=5; i<parts.length; i++) {
+                String fileName = GeoNaming.canonical(parts[i]);
+                GeoFile geoFile = filesByName.get(fileName);
+                if (geoFile == null)
+                    throw new NullPointerException("Cannot find geo file named: " + fileName);
+                geoFile.pts.add(point);
             }
-        });
-        return list.toArray(new LabelPoint[list.size()]);
+        }
+
+
+        // Sort geofile labels by importance
+        for (GeoFile f : filesByName.values()) Collections.sort(f.pts);
+
+        return result;
     }
 
     private Map<String, List<Feature>> readFeatureDescriptions(LineNumberReader rdr, Map<String, GeoFile> filesByName) throws IOException {
