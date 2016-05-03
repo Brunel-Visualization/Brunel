@@ -148,7 +148,7 @@ public class GeoMap extends D3Diagram {
         for (int k = 0; k < files.length; k++) {
             if (k > 0) out.add(",").onNewLine();
             String fileName = files[k];
-            String source = Data.quote(out.options.locMaps + "/" + out.options.version + "/topo/" + map.getQuality() + "/" + fileName + ".json");
+            String source = Data.quote(out.options.locMaps + "/" + out.options.version + "/" + map.getQuality() + "/" + fileName + ".json");
             out.onNewLine().add(source, ":{").indentMore();
             int i = 0;
             Map<Object, Integer> features = combined.get(fileName);
