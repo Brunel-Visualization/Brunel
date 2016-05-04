@@ -39,6 +39,5 @@ require.config({
 require(["d3"], function(d3) {
 require(["BrunelD3", "BrunelData", "BrunelEventHandlers"], function(BrunelD3, BrunelData, BrunelEventHandlers) {
     {{d3js}}
-    {{controls}}
 });
 });

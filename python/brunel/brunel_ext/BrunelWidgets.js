@@ -46,9 +46,11 @@ define(function (require) {
             var fieldLabel = this.model.get('field_label');
             var min = this.model.get('data_min');
             var max = this.model.get('data_max');
+            var low = this.model.get('low_value');
+            var high = this.model.get('high_value');
 
             this.$el.addClass("brunel");
-            this.$el.append(BrunelJQueryControlFactory.make_range_slider(visId, fieldId, fieldLabel, min, max));
+            this.$el.append(BrunelJQueryControlFactory.make_range_slider(visId, fieldId, fieldLabel, min, max, low, high));
         }
     });
 
@@ -59,9 +61,10 @@ define(function (require) {
             var visId = this.model.get('visid');
             var fieldLabel = this.model.get('field_label');
             var categories = this.model.get('categories');
+            var selected_categories = this.model.get('selected_categories');
 
             this.$el.addClass("brunel");
-            this.$el.append(BrunelJQueryControlFactory.make_category_filter(visId, fieldId, fieldLabel, categories));
+            this.$el.append(BrunelJQueryControlFactory.make_category_filter(visId, fieldId, fieldLabel, categories, selected_categories));
         }
     });
 
