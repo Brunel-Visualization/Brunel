@@ -23,7 +23,7 @@ import org.brunel.geom.Point;
  */
 public class LabelPoint extends Point {
     public final String label;                      // text for the location
-    public final int pop;                           // 1 is smallest, 14 the largest
+    public final int pop;                           // 0 is smallest, 120ish the largest
     public final int importance;                    // 5-capital, 4-region capital, 3-local capital, 2-important, 1-other
 
     public static LabelPoint makeFromArray(String[] p) {
@@ -59,7 +59,7 @@ public class LabelPoint extends Point {
     }
 
     private int rank() {
-        return 50 * pop + 11 * importance;
+        return pop + 7 * importance;
     }
 
 }

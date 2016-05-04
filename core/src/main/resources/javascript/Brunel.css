@@ -44,16 +44,19 @@
     stroke: #888888
 }
 
-.brunel .tick line {
+.brunel .tick .line {
+    fill : none;
     stroke: #888888
 }
 
-.brunel .tick mark {
+.brunel .tick .mark {
     font-size: 12px;
 }
 
 .brunel .grid {
-    visibility: hidden;
+    fill : none;
+    stroke: #aaaaaa;
+    opacity:0.5
 }
 
 .brunel .legend.title {

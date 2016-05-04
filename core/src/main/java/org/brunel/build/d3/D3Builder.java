@@ -245,7 +245,13 @@ public class D3Builder extends AbstractBuilder {
         out.onNewLine().add("var first = elements[0].data() == null").endStatement();
         out.add("if (first) time = 0;").comment("No transition for first call");
 
-        if (scalesBuilder.needsAxes()) out.onNewLine().add("buildAxes(); ");
+        // For coordinate system charts, see if axes are needed
+        if (scalesBuilder.needsAxes())
+            out.onNewLine().add("buildAxes()").endStatement();
+
+        // For maps, see if the graticule is needed
+        if (structure.geo != null && structure.geo.withGraticule)
+            out.onNewLine().add("buildAxes()").endStatement();
 
         Integer[] order = structure.elementBuildOrder();
 
@@ -289,7 +295,7 @@ public class D3Builder extends AbstractBuilder {
         // Define the update functions
         if (nesting.isEmpty()) {
             // For no nesting, it's easy
-            out.add("function updateAll(time) { charts.forEach(function(x) {x.build(time || 20)}) }").ln();
+            out.add("function updateAll(time) { charts.forEach(function(x) {x.build(time || 0)}) }").ln();
         } else {
             // For nesting, need a custom update method
             // TODO make work for more than two charts1

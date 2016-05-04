@@ -91,7 +91,7 @@ public class GeoMapLabels extends D3Diagram {
         out.indentLess().add("]").endStatement();
     }
 
-    protected List<LabelPoint> searchForBestScale(List<LabelPoint> all, int maxPoints) {
+    private List<LabelPoint> searchForBestScale(List<LabelPoint> all, int maxPoints) {
         // Search in this range
         double scaleMin = 0.5, scaleMax = 100.0;
 

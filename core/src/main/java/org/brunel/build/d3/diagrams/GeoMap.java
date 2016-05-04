@@ -84,6 +84,22 @@ public class GeoMap extends D3Diagram {
                 .onNewLine().add("return 'translate(' + q[0] + ',' + q[1] + ')'")
                 .indentLess().onNewLine().add("}");
         out.onNewLine().add("function proj(p) { var q = p ? projection(p) : null; return q || [null,null] }").ln();
+        out.add("var path = d3.geo.path().projection(projection)").endStatement();
+
+        // Define axes if desired
+        if (geo.withGraticule) {
+            // define the steps for each line of latitude or longitude
+            double step = Math.min(geo.bounds().width(), geo.bounds().height()) / 5;
+
+            if (step < 0.1) step = Math.round(step * 200) / 200.0;
+            if (step < 1) step = Math.round(step * 20) / 20.0;
+            else if (step < 10) step = Math.round(step * 2) / 2.0;
+            else step = 10;
+
+            out.onNewLine().add("var graticule = interior.append('path').datum(d3.geo.graticule().minorStep([", step, ",", step, "]))")
+                    .addChained("attr('class', 'grid')").endStatement()
+                    .onNewLine().add("function buildAxes() { graticule.attr('d', d3.geo.path().projection(projection)) }");
+        }
 
     }
 
@@ -103,8 +119,6 @@ public class GeoMap extends D3Diagram {
         if (vis.tElement == Element.point || vis.tElement == Element.text) {
             return ElementDetails.makeForCoordinates(vis, ModelUtil.getElementSymbol(vis));
         } else {
-            out.add("var path = d3.geo.path().projection(projection)").endStatement();
-
             // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
             return ElementDetails.makeForDiagram(vis, ElementRepresentation.geoFeature, "polygon", "data._rows");
         }
@@ -148,7 +162,7 @@ public class GeoMap extends D3Diagram {
         for (int k = 0; k < files.length; k++) {
             if (k > 0) out.add(",").onNewLine();
             String fileName = files[k];
-            String source = Data.quote(out.options.locMaps + "/" + out.options.version + "/topo/" + map.getQuality() + "/" + fileName + ".json");
+            String source = Data.quote(out.options.locMaps + "/" + out.options.version + "/" + map.getQuality() + "/" + fileName + ".json");
             out.onNewLine().add(source, ":{").indentMore();
             int i = 0;
             Map<Object, Integer> features = combined.get(fileName);

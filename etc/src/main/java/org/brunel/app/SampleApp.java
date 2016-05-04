@@ -56,7 +56,7 @@ public class SampleApp {
 
         // Define a builder using online library version 0.7
         BuilderOptions options = new BuilderOptions();
-        options.version = "1.1";
+        options.version = "1.2";
         D3Builder builder = D3Builder.make(options);
 
         // Build the visualization into a 600x600 area
