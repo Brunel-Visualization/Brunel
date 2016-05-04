@@ -295,7 +295,7 @@ public class D3Builder extends AbstractBuilder {
         // Define the update functions
         if (nesting.isEmpty()) {
             // For no nesting, it's easy
-            out.add("function updateAll(time) { charts.forEach(function(x) {x.build(time || 20)}) }").ln();
+            out.add("function updateAll(time) { charts.forEach(function(x) {x.build(time || 0)}) }").ln();
         } else {
             // For nesting, need a custom update method
             // TODO make work for more than two charts1
