@@ -136,9 +136,14 @@ public class FilterControl {
         this.categories = categories;
         this.min = min;
         this.max = max;
-        this.lowValue = lowValue;
-        this.highValue = highValue;
+        this.lowValue = lowValue == null ? null : Math.max(min,lowValue);
+        this.highValue = highValue == null ? null : Math.min(max, highValue);
         this.selectedCategories = selectedCategories;
+        
+        if (lowValue != null && highValue != null && lowValue > highValue) {
+        	throw new IllegalArgumentException("Low filter value (" + lowValue +") cannot be greater than high filter value ("+highValue+") for: " + label);
+        }
+        
         substituteExactCase();
     }
     

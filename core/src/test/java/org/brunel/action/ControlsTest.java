@@ -76,7 +76,7 @@ public class ControlsTest {
     @Test
     public void testContinuousFilterDefaults() {
         D3Builder builder = D3Builder.make();
-        Controls controls = getControls(bank, "x(gender) y(salary) filter(salary:3-5)", builder);
+        Controls controls = getControls(bank, "x(gender) y(salary) filter(salary:18000-20000)", builder);
         assertTrue(controls.filters.size() > 0);
 
         List<FilterControl> filters = controls.filters;
@@ -86,11 +86,16 @@ public class ControlsTest {
 
         assertTrue(salaryFilter.categories == null);
         assertEquals(salaryFilter.label, "Salary");
-        assertEquals(salaryFilter.lowValue, new Double(3.0));
-        assertEquals(salaryFilter.highValue, new Double(5.0));
+        assertEquals(salaryFilter.lowValue, new Double(18000.0));
+        assertEquals(salaryFilter.highValue, new Double(20000.0));
         
-        controls = getControls(bank, "x(gender) y(salary) filter(salary:3)", builder);
-        assertEquals(controls.filters.get(0).lowValue, new Double(3.0));
+        controls = getControls(bank, "x(gender) y(salary) filter(salary:18000)", builder);
+        assertEquals(controls.filters.get(0).lowValue, new Double(18000));
+        
+        //Clip low at datamin
+        controls = getControls(bank, "x(gender) y(salary) filter(salary:5)", builder);
+        assertEquals(controls.filters.get(0).lowValue, new Double(16950));
+
 
     }
 
