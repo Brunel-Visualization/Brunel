@@ -29,7 +29,7 @@ var BrunelJQueryControlFactory = (function () {
 	 * min:   The data minimum of the field
 	 * max:  The data maximum of the field
 	 */
-	function makeRangeSlider(visid, fieldid, fieldLabel, min, max ) {
+	function makeRangeSlider(visid, fieldid, fieldLabel, min, max, low, high ) {
 
 		var valueStyle = "legend control-label";
 		var valueLeftStyle = valueStyle + " control-left-label";
@@ -46,12 +46,16 @@ var BrunelJQueryControlFactory = (function () {
 		var highValue = $('<div />')
         	.addClass(valueStyle);
 		highValue.html(max);
+		
+		if (!low) low = min;
+		if (!high) high = max;
+		
 	    var slider = $('<div />')
 	        .slider({
 	            range: true,
 	            min: min,
 	            max: max,
-	            values:[min,max],
+	            values:[low, high],
 	            slide: function( event, ui ) {
 	                lowValue.html(ui.values[0]);
 	                highValue.html(ui.values[1]);
@@ -81,7 +85,7 @@ var BrunelJQueryControlFactory = (function () {
 	 * fieldLabel:  The display value for the field
 	 * categories:  The set of unique categories for the field
 	 */
-	function makeCategoryFilter(visid, fieldid, fieldLabel, categories) {
+	function makeCategoryFilter(visid, fieldid, fieldLabel, categories, selectedCategories) {
 
 		var select = $('<select />', { multiple:"multiple"}).addClass("select-filter");
 		var id = select.uniqueId().attr('id');
@@ -90,7 +94,11 @@ var BrunelJQueryControlFactory = (function () {
         	.appendTo(categoryFilter);
 
 		for (var x in categories) {
-			$("<option />", {value: x, text: categories[x], selected: "selected"}).appendTo(select);
+							
+			var sel = (selectedCategories && selectedCategories.indexOf(categories[x]) >= 0) ? true : false;
+			if (!selectedCategories) sel = "selected";
+			
+			$("<option />", {value: x, text: categories[x], selected: sel}).appendTo(select);
 		}
 
 		select.appendTo(categoryFilter);

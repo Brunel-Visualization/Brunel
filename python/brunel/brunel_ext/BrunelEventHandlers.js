@@ -52,20 +52,17 @@ var BrunelEventHandlers = (function(){
 
 	 *
 	 */
-	function FilterHandler(brunel)   {
+	
+	var brunel;						//The Brunel to operate on 
+	var filterHandler;				//Handles filter requests
+	
+	
+	function FilterHandler(defaultFilter)   {
 
 
 		//All filter values for the given visualization are by field id and whether the field's type.
-        var filterState = {};
-
-        function filter() {
-        	var statement = makeFilterStatement();
-			brunel.dataPreProcess(function (data) {
-				return data.filter(statement)
-			});
-        	brunel.build();
-
-        }
+        var filterState = defaultFilter;
+        addDataProcess(makeFilterStatement());
 
         function makeFilterStatement () {
 
@@ -99,23 +96,45 @@ var BrunelEventHandlers = (function(){
 		return function (filterField, filterValue) {
              if (filterField != null && filterValue != null) {
 				 filterState[filterField] = filterValue;
-               filter();
+				 buildVisualization(makeFilterStatement());
              }
         }
 	}
 
-	function createFilterHandlerAndSubscribe(v) {
-    	var handler = new FilterHandler(v);
-		$.subscribe('filter.' + v.visId, function (_, a, b) {
-			handler(a, b);
+	function createFilterHandlerAndSubscribe(defaultFilter) {
+		
+		if (!defaultFilter) defaultFilter = {};
+    	filterHandler = new FilterHandler(defaultFilter);
+		$.subscribe('filter.' + brunel.visId, function (_, a, b) {
+			filterHandler(a, b);
 		});
+		filterHandler.filterState = defaultFilter;
      }
+	
+	//All data pre & post processing needed should be coordinated here.
+	function addDataProcess(filterStatement) {
+		brunel.dataPreProcess(function (data) {
+			return data.filter(filterStatement)
+		});
+	}
+	
+	//Rebuild a visualization and include data processing.
+	function buildVisualization(filterStatement) {		
+		addDataProcess(filterStatement);
+    	brunel.build();
+	}
 
 
 	return {
-    	 //v is a BrunelVis instance
-		make_filter_handler: function (v) {
-			createFilterHandlerAndSubscribe(v);
+		
+		//The Brunel to operate on must be set first
+		set_brunel: function(b) {
+			brunel = b;
+		},
+		
+		//Create a filter handler with a default (can be null or empty).
+		make_filter_handler: function (defaultFilter) {
+			createFilterHandlerAndSubscribe(defaultFilter);
 		}
      }
 

@@ -33,8 +33,10 @@ import java.util.List;
  */
 public class Controls {
 
-    public final List<FilterControl> filters;
-    private final BuilderOptions options;
+    public final List<FilterControl> filters;		//Filter state
+    private final transient BuilderOptions options; //Options not serialized to JSON
+    private final transient Gson gson = new Gson();
+
 
     public Controls(BuilderOptions options) {
         this.options = options;
@@ -43,7 +45,7 @@ public class Controls {
 
     public void buildControls(VisSingle vis, Dataset data) {
         for (Param f : vis.fFilter) {
-            filters.add(FilterControl.makeForField(data, f.asField(data)));
+            filters.add(FilterControl.makeForField(data, f.asField(data), f.firstModifier()));
         }
     }
 
@@ -51,13 +53,13 @@ public class Controls {
         return !filters.isEmpty();
     }
 
-    public void write(ScriptWriter out) {
+    public void writeControls(ScriptWriter out) {
     	if (options.controlsIdentifier != null)
-    		write(options.controlsIdentifier, "BrunelJQueryControlFactory", out);
+    		writeControls(options.controlsIdentifier, "BrunelJQueryControlFactory", out);
     }
 
-    public void write(String controlId, String uiFactoryClass, ScriptWriter out) {
-        if (filters.isEmpty()) return;
+    public void writeControls(String controlId, String uiFactoryClass, ScriptWriter out) {
+        if (!needsControls()) return;
         out.titleComment("Create and wire controls");
         out.add("$(function() {").ln().indentMore();
         createFilters(controlId, uiFactoryClass, out);
@@ -65,11 +67,22 @@ public class Controls {
         out.indentLess().ln();
         out.add("})").endStatement();
 
-        out.add("BrunelEventHandlers.make_filter_handler(v)").endStatement();
+
+    }
+    
+    public void writeEventHandler(ScriptWriter out, String visInstance) {
+        if (!needsControls()) return;
+        String filterDefaults =  gson.toJson(FilterControl.buildFilterDefaults(filters));
+        
+        out.add("BrunelEventHandlers.set_brunel(",visInstance,")").endStatement();
+        out.add("BrunelEventHandlers.make_filter_handler(",filterDefaults,")").endStatement();
+    }
+    
+    private boolean needsControls() {
+    	return !filters.isEmpty(); 
     }
 
     private void createFilters(String controlId, String uiFactoryClass, ScriptWriter out) {
-        Gson gson = new Gson();
 
         for (FilterControl filter : filters) {
             String fieldId = filter.id;
@@ -77,17 +90,20 @@ public class Controls {
             Object[] categories = filter.categories;
             Double min = filter.min;
             Double max = filter.max;
+            Double low = filter.lowValue;
+            Double high = filter.highValue;
+            Object[] selectedCategories = filter.selectedCategories;
 
             //Range filter
             if (categories == null) {
                 out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_range_slider(", out.quote(options.visIdentifier), ",",
-                        out.quote(fieldId), ",", out.quote(label), ",", min, ",", max, "))").endStatement();
+                        out.quote(fieldId), ",", out.quote(label), ",", min, ",", max, ",", low, ",", high, "))").endStatement();
             }
 
             //Category filter
             else {
                 out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_category_filter(", out.quote(options.visIdentifier), ",",
-                        out.quote(fieldId), ",", out.quote(label), ",", gson.toJson(categories), "))").endStatement();
+                        out.quote(fieldId), ",", out.quote(label), ",", gson.toJson(categories), ",", gson.toJson(selectedCategories), "))").endStatement();
             }
 
         }

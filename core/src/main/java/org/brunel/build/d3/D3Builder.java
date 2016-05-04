@@ -322,10 +322,17 @@ public class D3Builder extends AbstractBuilder {
         // Create the initial raw data table
         D3DataBuilder.writeTables(main, out, options);
 
+
+        
         // Call the function on the data
         if (options.generateBuildCode) {
             out.titleComment("Call Code to Build the system");
             out.add("var v = new", options.className, "(" + out.quote(options.visIdentifier) + ")").endStatement();
+            
+            //Initialize and wire any events that may be needed for controls.
+            //This must be done prior to building the visualization so defaults can be set.
+            controls.writeEventHandler(out, "v");
+            
             int length = main.getDataSets().length;
             out.add("v.build(");
             for (int i = 0; i < length; i++) {
@@ -336,7 +343,7 @@ public class D3Builder extends AbstractBuilder {
         }
 
         // Add controls code
-        controls.write(out);
+        controls.writeControls(out);
 
     }
 
