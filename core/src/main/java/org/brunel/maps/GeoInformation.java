@@ -28,6 +28,7 @@ import org.brunel.geom.Rect;
 import org.brunel.maps.projection.Projection;
 import org.brunel.maps.projection.ProjectionBuilder;
 import org.brunel.model.VisSingle;
+import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Diagram;
 
 import java.util.ArrayList;
@@ -77,6 +78,7 @@ public class GeoInformation {
         return f.numProperty(KEY_GEO_NAMES);
     }
 
+
     public List<LabelPoint> getLabelsWithinScaleBounds() {
         List<LabelPoint> points = new ArrayList<>();
 
@@ -95,11 +97,13 @@ public class GeoInformation {
     private final Poly hull;                                        // Convex hull for the points
     private final boolean needsExpansion;
     private final Projection projection;
+    public final boolean withGraticule;
 
     public GeoInformation(VisSingle[] elements, Dataset[] datas, ChartCoordinates positionFields) {
         this.elements = elements;
         Poly positionHull = getPositionPoints(positionFields);
         this.geo = makeGeoMappings(datas, positionHull);
+        this.withGraticule = includesAxes(elements);
         Poly withoutReferenceMaps = combineForHull(positionHull, geo, false);
         if (withoutReferenceMaps.count() == 0) {
             this.hull = combineForHull(positionHull, geo, true);
@@ -109,6 +113,19 @@ public class GeoInformation {
             this.needsExpansion = true;
         }
         this.projection = ProjectionBuilder.makeProjection(adjustForUS());
+    }
+
+    private boolean includesAxes(VisSingle[] elements) {
+        // Run through all the axes defs for all the elements, if anything says none, no axes.
+        // Otherwise anything else means "yes"
+        boolean required = false;
+        for (VisSingle vis : elements)
+            for (VisTypes.Axes e: vis.fAxes.keySet()) {
+                if (e == VisTypes.Axes.none) return false;
+                required = true;
+            }
+
+        return required;
     }
 
     private Rect adjustForUS() {
@@ -183,6 +200,10 @@ public class GeoInformation {
 
     public Rect projectedBounds() {
         return projection.projectedBounds(hull.points);
+    }
+
+    public Rect bounds() {
+        return hull.bounds;
     }
 
     public Point transform(Point p) {

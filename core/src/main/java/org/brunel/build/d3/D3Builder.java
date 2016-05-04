@@ -245,7 +245,13 @@ public class D3Builder extends AbstractBuilder {
         out.onNewLine().add("var first = elements[0].data() == null").endStatement();
         out.add("if (first) time = 0;").comment("No transition for first call");
 
-        if (scalesBuilder.needsAxes()) out.onNewLine().add("buildAxes(); ");
+        // For coordinate system charts, see if axes are needed
+        if (scalesBuilder.needsAxes())
+            out.onNewLine().add("buildAxes()").endStatement();
+
+        // For maps, see if the graticule is needed
+        if (structure.geo != null && structure.geo.withGraticule)
+            out.onNewLine().add("buildAxes()").endStatement();
 
         Integer[] order = structure.elementBuildOrder();
 
