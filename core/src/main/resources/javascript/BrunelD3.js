@@ -618,7 +618,7 @@ var BrunelD3 = (function () {
     };
 
     // Check if it hits an existing space
-    function hitsExisting(box, hits, content) {
+    function hitsExisting(box, hits) {
         if (hits.x == null) {
             // Define the offset. We use this to ensure that when we pan, there are no changes to the logic
             // Otherwise we get flickering due to different rounding of the panned coordinates
@@ -626,19 +626,17 @@ var BrunelD3 = (function () {
             hits.y = box.y;
         }
 
-        var i, j, D = 5, x = box.x - hits.x, y = box.y - hits.y,
-            xmin = Math.ceil(x / D), xmax = Math.floor((x+ box.width) / D),
-            ymin = Math.ceil(y / D), ymax = Math.floor((y+ box.height) / D);
-
-        if (content == "Oregon") console.log(content + " - " + box.x + "," + box.y);
+        var i, j, D = 8, x = box.x - hits.x, y = box.y - hits.y,
+            xmin = Math.round(x / D), xmax = Math.round((x+ box.width) / D),
+            ymin = Math.round(y / D), ymax = Math.round((y+ box.height) / D);
 
         // Does it hit an existing location
         for (i=xmin; i<=xmax; i++) for (j=ymin; j<=ymax; j++)
-            if (hits[i + "|" + j]) return true;
+            if (hits[i *10000 + j]) return true;
 
         // No! so we must update those locations before returning the fact it misses
         for (i=xmin; i<=xmax; i++) for (j=ymin; j<=ymax; j++)
-            hits[i + "|" + j] = true;
+            hits[i *10000+ j] = true;
 
         return false;
     }
@@ -678,7 +676,7 @@ var BrunelD3 = (function () {
                 kill = (b.height > loc.box.height ||
                 b.width > loc.box.width && !addEllipses(textNode, content, loc.box.width));
             } else {
-                kill = hitsExisting(b, hits, content);
+                kill = hitsExisting(b, hits);
             }
 
             if (kill) {
