@@ -687,7 +687,7 @@ var BrunelD3 = (function () {
 
         if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
         else txt.classed('label', true);
-
+        
         var attrs = LABEL_DEF[labeling.method] || LABEL_DEF['center'];          // Default to center
         txt.style('text-anchor', attrs[0]).attr('dy', attrs[1]);
     }
