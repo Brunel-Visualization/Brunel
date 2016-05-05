@@ -617,8 +617,36 @@ var BrunelD3 = (function () {
         'bottom': ['middle', '0.7em']
     };
 
+    // Check if it hits an existing space
+    function hitsExisting(box, hits, content) {
+        if (hits.x == null) {
+            // Define the offset. We use this to ensure that when we pan, there are no changes to the logic
+            // Otherwise we get flickering due to different rounding of the panned coordinates
+            hits.x = box.x;
+            hits.y = box.y;
+        }
+
+        var i, j, D = 5, x = box.x - hits.x, y = box.y - hits.y,
+            xmin = Math.ceil(x / D), xmax = Math.floor((x+ box.width) / D),
+            ymin = Math.ceil(y / D), ymax = Math.floor((y+ box.height) / D);
+
+        if (content == "Oregon") console.log(content + " - " + box.x + "," + box.y);
+
+        // Does it hit an existing location
+        for (i=xmin; i<=xmax; i++) for (j=ymin; j<=ymax; j++)
+            if (hits[i + "|" + j]) return true;
+
+        // No! so we must update those locations before returning the fact it misses
+        for (i=xmin; i<=xmax; i++) for (j=ymin; j<=ymax; j++)
+            hits[i + "|" + j] = true;
+
+        return false;
+    }
+
+
     // Add a label for the selection 'item' to the group 'labelGroup', using the information in 'labeling'
-    function labelItem(item, labelGroup, labeling) {
+    // 'hits' keeps track of text hit boxes to prevent heavy overlapping
+    function labelItem(item, labelGroup, labeling, hits) {
         var content = labeling.content(item.__data__);
         if (!content) return;                               // If there is no content, we are done
 
@@ -640,17 +668,22 @@ var BrunelD3 = (function () {
             wrapInBox(textNode, content, loc);
         } else {
             // Place at the required location
-            txt.attr('x', loc.x).attr('y', loc.y).text(content);
+            txt.attr('x', loc.x).attr('y', loc.y).attr('dy',0).text(content);
+
+            var b = textNode.getBBox(), kill;
 
             // If it doesn't fit, kill the text
             if (labeling.fit) {
-                var b = textNode.getBBox();
                 // Too tall to fit a single line, or too wide and could not add ellipses
-                if (b.height > loc.box.height ||
-                    b.width > loc.box.width && !addEllipses(textNode, content, loc.box.width)) {
-                    textNode.parentNode.removeChild(textNode);          // remove from parent
-                    item.__label__ = null;                              // dissociate from item
-                }
+                kill = (b.height > loc.box.height ||
+                b.width > loc.box.width && !addEllipses(textNode, content, loc.box.width));
+            } else {
+                kill = hitsExisting(b, hits, content);
+            }
+
+            if (kill) {
+                textNode.parentNode.removeChild(textNode);          // remove from parent
+                item.__label__ = null;                              // dissociate from item
             }
         }
 
@@ -664,17 +697,16 @@ var BrunelD3 = (function () {
 
     // Apply labeling
     function applyLabeling(element, group, labeling, time) {
+        var hits = {};                                                          // Keep track of hit items
         if (time)
             return element.transition("labels").duration(time).tween('func', function () {
                 var item = this;
-                return function () {
-                    labelItem(item, group, labeling);
-                }
+                return function () { labelItem(item, group, labeling, hits); }
             });
         else
-            return element.each(function () {
-                labelItem(this, group, labeling);
-            });
+            return element.each(
+                function () { labelItem(this, group, labeling, hits)}
+            );
     }
 
     // If we have a positive timing, start tweening using the defined function
@@ -962,7 +994,7 @@ var BrunelD3 = (function () {
 
         layout.on("tick", function () {
             var minx, maxx, miny, maxy;
-            var r, cx, cy;
+            var r, cx, cy, hits = {};
             nodes.selection()
                 .each(function (d, i) {
                     if (i) {
@@ -997,7 +1029,7 @@ var BrunelD3 = (function () {
                             txt.attr('y', txt.__off__.dy + d.py);
                         } else {
                             // First time placement, and then record the offset relative to the node
-                            labelItem(this, null, txt.__labeling__);
+                            labelItem(this, null, txt.__labeling__, hits);
                             txt.__off__ = {
                                 dx: +txt.attr('x') - d.x,
                                 dy: +txt.attr('y') - d.y
