@@ -705,7 +705,7 @@ var BrunelD3 = (function () {
     // Apply labeling
     function applyLabeling(element, group, labeling, time) {
         var hits = {};                                                          // Keep track of hit items
-        if (time)
+        if (time > 0)
             return element.transition("labels").duration(time).tween('func', function () {
                 var item = this;
                 return function () {

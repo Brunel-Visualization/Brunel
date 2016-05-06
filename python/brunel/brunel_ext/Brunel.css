@@ -45,7 +45,7 @@
 }
 
 .brunel .tick .line {
-    fill : none;
+    fill: none;
     stroke: #888888
 }
 
@@ -54,9 +54,9 @@
 }
 
 .brunel .grid {
-    fill : none;
+    fill: none;
     stroke: #aaaaaa;
-    opacity:0.5
+    opacity: 0.5
 }
 
 .brunel .legend.title {
@@ -86,7 +86,7 @@
     fill: #f9ecb7;
 }
 
-.brunel .hierarchy .L2, .brunel .hierarchy .L2 tspan{
+.brunel .hierarchy .L2, .brunel .hierarchy .L2 tspan {
     fill: #d3870d;
 }
 
@@ -114,7 +114,7 @@
 }
 
 .brunel .diagram .element.point {
-    fill-opacity:1;
+    fill-opacity: 1;
 }
 
 .brunel .label {
@@ -180,7 +180,7 @@
 }
 
 .brunel .diagram.map path.element.polygon {
-    stroke:white; stroke-width:2px
+    stroke: white;
 }
 
 .brunel .element.polygon.nondata {
@@ -201,31 +201,32 @@
 }
 
 .brunel .mark.L4 {
-    fill: #a0a0a0;
+    stroke: #a0a0a0;
+    fill:white;
 }
 
 .brunel .label.L1 {
     fill: #707070;
-    font-weight:bold;
-    font-size:10pt;
+    font-weight: bold;
+    font-size: 10pt;
 }
 
 .brunel .label.L2 {
     fill: #a0a0a0;
-    font-style:italic;
-    font-size:9pt;
+    font-style: italic;
+    font-size: 9pt;
 }
 
 .brunel .label.L3 {
     fill: #a0a0a0;
     text-shadow: none;
-    font-size:8pt;
+    font-size: 8pt;
 }
 
 .brunel .label.L4 {
     fill: #a0a0a0;
     text-shadow: none;
-    font-size:7pt;
+    font-size: 7pt;
 }
 
 .brunel .horizontal-box {
