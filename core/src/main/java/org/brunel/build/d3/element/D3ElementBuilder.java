@@ -234,7 +234,7 @@ public class D3ElementBuilder {
             out.add("var path = d3.svg.area().x(x).y1(y2).y0(y1)");
         } else if (vis.tElement.producesSingleShape) {
             // Choose the top line if there is a range (say for stacking)
-            String yDef = elementDef.y.right == null ? "y" : "y1";
+            String yDef = elementDef.y.right == null ? "y" : "y2";
             if (vis.fSize.size() == 1) {
                 out.add("var path = BrunelD3.sizedPath().x(x).y(" + yDef + ")");
                 GeomAttribute size = elementDef.y.size != null ? elementDef.y.size : elementDef.overallSize;
