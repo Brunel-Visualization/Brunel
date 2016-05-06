@@ -93,7 +93,7 @@ public class D3Interaction {
                     .addChained("attr('class', 'overlay').style('cursor','move').style('fill','none').style('pointer-events','all')")
                     .endStatement();
             // Add an overlay rectangle for zooming that will trap all mouse events and use them for pan/zoom
-            out.add("var zoom = d3.behavior.zoom().on('zoom', function() {build(-1)} )").endStatement();
+            out.add("var zoom = d3.behavior.zoom().on('zoom', function() {build(0)} )").endStatement();
             out.add("overlay.append('rect').attr('class', 'overlay')")
                     .addChained("attr('width', geom.inner_width)")
                     .addChained("attr('height', geom.inner_height)")
