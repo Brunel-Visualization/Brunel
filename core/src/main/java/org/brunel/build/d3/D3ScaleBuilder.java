@@ -141,6 +141,7 @@ public class D3ScaleBuilder {
     // Return array for X and Y dimensions
     private AxisSpec[] makeCombinedAxes() {
 
+
         AxisSpec x = null;
         AxisSpec y = null;
 
@@ -153,7 +154,7 @@ public class D3ScaleBuilder {
 
         // The rule here is that we add axes as much as possible, so presence overrides lack of presence
         for (VisSingle e : elements) {
-            if (e.fAxes.containsKey(Axes.none)) {
+            if (e.tDiagram != null || e.fAxes.containsKey(Axes.none)) {
                 // return two null specs -- we do not want axes
                 return new AxisSpec[2];
             }

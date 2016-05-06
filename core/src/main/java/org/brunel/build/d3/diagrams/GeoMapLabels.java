@@ -72,7 +72,7 @@ public class GeoMapLabels extends D3Diagram {
             if (!first) out.add(", ");
             String s = "[" + F.format(p.x) + "," + F.format(p.y) + ","
                     + Data.quote(p.label) + "," + radiusFor(p, popHigh, popLow)
-                    + "," + toThreeCategories(p.importance) + "]";
+                    + "," + (5-p.importance) + "]";
             if (out.currentColumn() + s.length() > 120)
                 out.onNewLine();
             out.add(s);
@@ -85,18 +85,13 @@ public class GeoMapLabels extends D3Diagram {
         return maxPoints < all.size() ? all.subList(0, maxPoints) : all;
     }
 
-    private int toThreeCategories(int importance) {
-        if (importance == 5) return 0;                          // high
-        if (importance == 4) return 1;                          // medium
-        return 2;                                               // low
-    }
 
     public ElementDetails initializeDiagram() {
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.symbol, "point", "geo_labels");
     }
 
     public void writeDefinition(ElementDetails details) {
-        out.addChained("attr('d', function(d) { return BrunelD3.symbol(['star','square','circle'][d[4]], d[3]*geom.default_point_size/14)})")
+        out.addChained("attr('d', function(d) { return BrunelD3.symbol(['star','square','circle','circle','circle'][d[4]], d[3]*geom.default_point_size/14)})")
                 .addChained("attr('class', function(d) { return 'mark L' + d[4] })");
         out.addChained("attr('transform', projectTransform)");
         out.endStatement();

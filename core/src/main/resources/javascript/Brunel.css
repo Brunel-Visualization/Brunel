@@ -201,7 +201,8 @@
 }
 
 .brunel .mark.L4 {
-    fill: #a0a0a0;
+    stroke: #a0a0a0;
+    fill:white;
 }
 
 .brunel .label.L1 {

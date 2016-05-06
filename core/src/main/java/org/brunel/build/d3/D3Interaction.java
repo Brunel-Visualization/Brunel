@@ -20,7 +20,6 @@ import org.brunel.action.Param;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Interaction;
@@ -41,11 +40,6 @@ public class D3Interaction {
         this.scales = scales;
         this.out = out;
         this.zoomable = isZoomable(structure.elementStructure);
-    }
-
-    private boolean anyCategorical(Field[] fields) {
-        for (Field f : fields) if (f.preferCategorical()) return true;
-        return false;
     }
 
     private boolean isZoomable(ElementStructure[] elements) {
@@ -93,7 +87,7 @@ public class D3Interaction {
                     .addChained("attr('class', 'overlay').style('cursor','move').style('fill','none').style('pointer-events','all')")
                     .endStatement();
             // Add an overlay rectangle for zooming that will trap all mouse events and use them for pan/zoom
-            out.add("var zoom = d3.behavior.zoom().on('zoom', function() {build(0)} )").endStatement();
+            out.add("var zoom = d3.behavior.zoom().on('zoom', function() {build(-1)} )").endStatement();
             out.add("overlay.append('rect').attr('class', 'overlay')")
                     .addChained("attr('width', geom.inner_width)")
                     .addChained("attr('height', geom.inner_height)")
