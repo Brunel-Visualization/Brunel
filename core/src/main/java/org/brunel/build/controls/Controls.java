@@ -74,8 +74,8 @@ public class Controls {
         if (!needsControls()) return;
         String filterDefaults =  gson.toJson(FilterControl.buildFilterDefaults(filters));
         
-        out.add("BrunelEventHandlers.set_brunel(",visInstance,")").endStatement();
-        out.add("BrunelEventHandlers.make_filter_handler(",filterDefaults,")").endStatement();
+        out.add("var eventHandler = BrunelEventHandlers(",visInstance,")").endStatement();
+        out.add("eventHandler.make_filter_handler(",filterDefaults,")").endStatement();
     }
     
     private boolean needsControls() {
