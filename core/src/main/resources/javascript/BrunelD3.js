@@ -618,7 +618,7 @@ var BrunelD3 = (function () {
     };
 
     // Check if it hits an existing space
-    function hitsExisting(box, hits) {
+    function hitsExisting(box, hits, update) {
         if (hits.x == null) {
             // Define the offset. We use this to ensure that when we pan, there are no changes to the logic
             // Otherwise we get flickering due to different rounding of the panned coordinates
@@ -627,16 +627,16 @@ var BrunelD3 = (function () {
         }
 
         var i, j, D = 8, x = box.x - hits.x, y = box.y - hits.y,
-            xmin = Math.round(x / D), xmax = Math.round((x+ box.width) / D),
-            ymin = Math.round(y / D), ymax = Math.round((y+ box.height) / D);
+            xmin = Math.round(x / D), xmax = Math.round((x + box.width) / D),
+            ymin = Math.round(y / D), ymax = Math.round((y + box.height) / D);
 
         // Does it hit an existing location
-        for (i=xmin; i<=xmax; i++) for (j=ymin; j<=ymax; j++)
-            if (hits[i *10000 + j]) return true;
+        for (i = xmin; i <= xmax; i++) for (j = ymin; j <= ymax; j++)
+            if (hits[i * 10000 + j]) return true;
 
         // No! so we must update those locations before returning the fact it misses
-        for (i=xmin; i<=xmax; i++) for (j=ymin; j<=ymax; j++)
-            hits[i *10000+ j] = true;
+        if (update) for (i = xmin; i <= xmax; i++) for (j = ymin; j <= ymax; j++)
+            hits[i * 10000 + j] = true;
 
         return false;
     }
@@ -661,22 +661,37 @@ var BrunelD3 = (function () {
 
         var textNode = txt.node();
 
+        if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
+        else txt.classed('label', true);
+
+        var attrs = LABEL_DEF[labeling.method] || LABEL_DEF['center'];          // Default to center
+        txt.style('text-anchor', attrs[0]).attr('dy', attrs[1]);
+
+
         if (labeling.fit && !labeling.where) {
             // Do not wrap if the text has been explicitly placed
             wrapInBox(textNode, content, loc);
         } else {
+
             // Place at the required location
-            txt.attr('x', loc.x).attr('y', loc.y).attr('dy',0).text(content);
+            txt.attr('x', loc.x).attr('y', loc.y).text(content);
 
-            var b = textNode.getBBox(), kill;
+            //
 
-            // If it doesn't fit, kill the text
-            if (labeling.fit) {
-                // Too tall to fit a single line, or too wide and could not add ellipses
-                kill = (b.height > loc.box.height ||
-                b.width > loc.box.width && !addEllipses(textNode, content, loc.box.width));
+
+            var kill, b;
+            if (hitsExisting(loc.box, hits, false)) {
+                kill = true;
             } else {
-                kill = hitsExisting(b, hits);
+                b = textNode.getBBox();
+                // If it doesn't fit, kill the text
+                if (labeling.fit) {
+                    // Too tall to fit a single line, or too wide and could not add ellipses
+                    kill = (b.height > loc.box.height ||
+                    b.width > loc.box.width && !addEllipses(textNode, content, loc.box.width));
+                } else {
+                    kill = hitsExisting(b, hits, true);
+                }
             }
 
             if (kill) {
@@ -684,12 +699,6 @@ var BrunelD3 = (function () {
                 item.__label__ = null;                              // dissociate from item
             }
         }
-
-        if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
-        else txt.classed('label', true);
-        
-        var attrs = LABEL_DEF[labeling.method] || LABEL_DEF['center'];          // Default to center
-        txt.style('text-anchor', attrs[0]).attr('dy', attrs[1]);
     }
 
 
@@ -699,11 +708,15 @@ var BrunelD3 = (function () {
         if (time)
             return element.transition("labels").duration(time).tween('func', function () {
                 var item = this;
-                return function () { labelItem(item, group, labeling, hits); }
+                return function () {
+                    labelItem(item, group, labeling, hits);
+                }
             });
         else
             return element.each(
-                function () { labelItem(this, group, labeling, hits)}
+                function () {
+                    labelItem(this, group, labeling, hits)
+                }
             );
     }
 
@@ -911,7 +924,7 @@ var BrunelD3 = (function () {
 
                     d3.json(url, function (error, x) {
                         var i, id, rev = {};                        // reverse mapping
-                        var d, all= x.objects.all.geometries;       // All features in the topojson
+                        var d, all = x.objects.all.geometries;       // All features in the topojson
                         for (i in mapping) rev[mapping[i]] = i;     // 'rev' maps from feature ID to data name
                         all.forEach(function (v, i) {
                             d = topojson.feature(x, v);             // convert using topojson call

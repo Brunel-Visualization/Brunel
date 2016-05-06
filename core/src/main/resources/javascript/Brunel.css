@@ -179,8 +179,12 @@
     stroke: #67b51b
 }
 
+.brunel .diagram.map path.element.polygon {
+    stroke:white; stroke-width:2px
+}
+
 .brunel .element.polygon.nondata {
-    fill: #f2f2f2;
+    fill: #e0e0e0;
     stroke: #c0c0c0
 }
 

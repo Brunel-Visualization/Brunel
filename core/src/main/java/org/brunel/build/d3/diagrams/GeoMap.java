@@ -96,7 +96,7 @@ public class GeoMap extends D3Diagram {
             else if (step < 10) step = Math.round(step * 2) / 2.0;
             else step = 10;
 
-            out.onNewLine().add("var graticule = interior.append('path').datum(d3.geo.graticule().minorStep([", step, ",", step, "]))")
+            out.onNewLine().add("var graticule = interior.append('path').datum(d3.geo.graticule().step([", step, ",", step, "]))")
                     .addChained("attr('class', 'grid')").endStatement()
                     .onNewLine().add("function buildAxes() { graticule.attr('d', d3.geo.path().projection(projection)) }");
         }

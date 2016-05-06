@@ -78,9 +78,10 @@ public class GeoInformation {
         return f.numProperty(KEY_GEO_NAMES);
     }
 
-
     public List<LabelPoint> getLabelsWithinScaleBounds() {
-        List<LabelPoint> points = new ArrayList<>();
+
+        // USe a set to ensure points are not duplicated
+        Set<LabelPoint> points = new HashSet<>();
 
         for (GeoMapping g : geo.values()) {
             for (GeoFile f : g.files) {
@@ -88,8 +89,9 @@ public class GeoInformation {
             }
         }
 
-        Collections.sort(points);
-        return points;
+        List<LabelPoint> results = new ArrayList<>(points);
+        Collections.sort(results);
+        return results;
     }
 
     private final Map<VisSingle, GeoMapping> geo;            // Geographic mappings, one per geo element
@@ -120,7 +122,7 @@ public class GeoInformation {
         // Otherwise anything else means "yes"
         boolean required = false;
         for (VisSingle vis : elements)
-            for (VisTypes.Axes e: vis.fAxes.keySet()) {
+            for (VisTypes.Axes e : vis.fAxes.keySet()) {
                 if (e == VisTypes.Axes.none) return false;
                 required = true;
             }

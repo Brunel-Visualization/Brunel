@@ -22,18 +22,11 @@ import org.brunel.build.info.ChartStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
-import org.brunel.geom.Point;
-import org.brunel.geom.Rect;
 import org.brunel.maps.LabelPoint;
 import org.brunel.model.VisSingle;
 
-import java.awt.*;
-import java.awt.font.FontRenderContext;
-import java.awt.geom.Rectangle2D;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class GeoMapLabels extends D3Diagram {
@@ -59,7 +52,7 @@ public class GeoMapLabels extends D3Diagram {
             maxPoints = (int) vis.tDiagramParameters[0].modifiers()[0].asDouble();
         }
 
-        List<LabelPoint> pointsMax = searchForBestScale(all, maxPoints);
+        List<LabelPoint> pointsMax = subset(all, maxPoints);
 
         // Get the exact right number we want
         List<LabelPoint> points = pointsMax.size() <= maxPoints
@@ -75,9 +68,6 @@ public class GeoMapLabels extends D3Diagram {
         out.add("var geo_labels = [").indentMore();
         boolean first = true;
 
-        // reverse the points so most important are drawn on top
-
-        Collections.reverse(points);
         for (LabelPoint p : points) {
             if (!first) out.add(", ");
             String s = "[" + F.format(p.x) + "," + F.format(p.y) + ","
@@ -91,30 +81,8 @@ public class GeoMapLabels extends D3Diagram {
         out.indentLess().add("]").endStatement();
     }
 
-    private List<LabelPoint> searchForBestScale(List<LabelPoint> all, int maxPoints) {
-        // Search in this range
-        double scaleMin = 0.5, scaleMax = 100.0;
-
-        // If the lowest scale has too many points, just use that
-        List<LabelPoint> pointsMin = thin(all, maxPoints, scaleMin);
-        if (pointsMin.size() >= maxPoints) return pointsMin;
-
-        // If the highest scale doesn't have enough points, just use that
-        List<LabelPoint> pointsMax = thin(all, maxPoints, scaleMax);
-        if (pointsMax.size() <= maxPoints) return pointsMax;
-
-        // Search in between
-        while (scaleMax / scaleMin > 1.1) {
-            double scaleMid = Math.sqrt(scaleMin * scaleMax);
-            List<LabelPoint> pointsMid = thin(all, maxPoints, scaleMid);
-            if (pointsMid.size() >= maxPoints) {
-                scaleMax = scaleMid;
-                pointsMax = pointsMid;
-            } else {
-                scaleMin = scaleMid;
-            }
-        }
-        return pointsMax;
+    private List<LabelPoint> subset(List<LabelPoint> all, int maxPoints) {
+        return maxPoints < all.size() ? all.subList(0, maxPoints) : all;
     }
 
     private int toThreeCategories(int importance) {
@@ -134,62 +102,26 @@ public class GeoMapLabels extends D3Diagram {
         out.endStatement();
 
         // Labels
-        out.add("diagramLabels.classed('map', true)").endStatement();
-        out.add("var labelSel = diagramLabels.selectAll('*').data(" + details.dataSource + ", function(d) { return d[2]})").endStatement();
-        out.add("labelSel.enter().append('text')")
-                .addChained("attr('dy', '0.3em')")
-                .addChained("attr('dx', function(d) { return (2 + d[3]*geom.default_point_size/10) + 'px'})")
-                .addChained("attr('class', function(d) { return 'label L' + d[4] })")
-                .addChained("text(function(d) {return d[2]})").endStatement();
+        out.add("labels.classed('map', true)").endStatement();
 
-        out.add("labelSel");
-        out.addChained("attr('transform', projectTransform)");
-        out.endStatement();
+        out.add("var labeling = {").indentMore()
+                .onNewLine().add("method:'right',")
+                .onNewLine().add("content: function(d) {return d[2]}")
+                .indentLess().onNewLine().add("}").endStatement();
+
+        out.add("BrunelD3.time('start labeling')").endStatement();
+        out.add("BrunelD3.label(selection, labels, labeling, 0)").endStatement();
+        out.add("BrunelD3.time('end labeling')").endStatement();
+
     }
 
     public boolean needsDiagramLabels() {
-        return true;
+        return false;
     }
 
     public void writeDiagramEnter() {
         out.addChained("classed('map', true)");
         out.endStatement();
-    }
-
-    // we will remove points which seem likely to overlap
-    private List<LabelPoint> thin(List<LabelPoint> points, int maxPoints, double scaleFactor) {
-        if (points.size() < maxPoints) return points;                                       // Not enough points
-        if (points.size() > maxPoints * 5) points = points.subList(0, maxPoints * 5);       // Too many -- start with 5x amount
-
-        Rect bds = structure.geo.projectedBounds();
-        double scale = Math.min(scaleFactor * 800 / bds.width(), scaleFactor * 600 / bds.height());
-
-        ArrayList<LabelPoint> result = new ArrayList<>();
-        ArrayList<Rect> accepted = new ArrayList<>();
-
-        Font font = new Font("Helvetica", Font.PLAIN, 12);
-        FontRenderContext frc = new FontRenderContext(null, true, true);
-
-        for (LabelPoint p : points) {
-            boolean intersects = false;
-
-            Point pp = structure.geo.transform(p);
-            double x = pp.x * scale, y = pp.y * scale;
-            Rectangle2D size = font.getStringBounds(p.label, frc);
-            Rect s = new Rect(x - 15, x + size.getWidth() + 15, y, y + size.getHeight());
-
-            for (Rect r : accepted) {
-                if (r.intersects(s)) {
-                    intersects = true;
-                    break;
-                }
-            }
-            if (!intersects) {
-                accepted.add(s);
-                result.add(p);
-            }
-        }
-        return result;
     }
 
     private int radiusFor(LabelPoint p, int high, int low) {
