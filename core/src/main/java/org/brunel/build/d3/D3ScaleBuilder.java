@@ -18,9 +18,9 @@ package org.brunel.build.d3;
 
 import org.brunel.action.Param;
 import org.brunel.action.Param.Type;
+import org.brunel.build.d3.D3Util.DateBuilder;
 import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
-import org.brunel.build.d3.D3Util.DateBuilder;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.color.ColorMapping;
@@ -59,13 +59,14 @@ import java.util.Set;
  */
 public class D3ScaleBuilder {
 
-    final Coordinates coords;                      // Combined coordinate system derived from all elements
-    private final Field colorLegendField;                   // Field to use for the color legend
-    private final AxisDetails hAxis, vAxis;                 // Details for each axis
-    private final double[] marginTLBR;                      // Margins between the coordinate area and the chart space
-    private final ChartStructure structure;                 // Overall detail on the chart composition
-    private final VisSingle[] elements;                     // The elements that define the scales used
-    private final ScriptWriter out;                         // Write definitions to here
+    final Coordinates coords;                       // Combined coordinate system derived from all elements
+    private final Field colorLegendField;           // Field to use for the color legend
+    private final AxisDetails hAxis, vAxis;         // Details for each axis
+    private final double[] marginTLBR;              // Margins between the coordinate area and the chart space
+    private final ChartStructure structure;         // Overall detail on the chart composition
+    private final VisSingle[] elements;             // The elements that define the scales used
+    private final ScriptWriter out;                 // Write definitions to here
+    private double additionalHOffset;               // Extra space needed to allow for footnotes
 
     public D3ScaleBuilder(ChartStructure structure, double chartWidth, double chartHeight, ScriptWriter out) {
         this.structure = structure;
@@ -124,6 +125,10 @@ public class D3ScaleBuilder {
         return colorLegendField != null;
     }
 
+    public void setAdditionalHAxisOffset(double v) {
+        additionalHOffset = v;
+    }
+
     private Coordinates makeCombinedCoords() {
         // For diagrams, we set the coords to polar for the chord chart and clouds, and centered for networks
         if (structure.diagram == Diagram.chord || structure.diagram == Diagram.cloud)
@@ -140,7 +145,6 @@ public class D3ScaleBuilder {
 
     // Return array for X and Y dimensions
     private AxisSpec[] makeCombinedAxes() {
-
 
         AxisSpec x = null;
         AxisSpec y = null;
@@ -316,7 +320,7 @@ public class D3ScaleBuilder {
                 out.add("axes.select('g.axis.x').append('text').attr('class', 'title')")
                         .addChained("attr('text-anchor', 'middle')")
                         .addChained("attr('x', " + width + "/2)")
-                        .addChained("attr('y', geom.inner_bottom - 6)")
+                        .addChained("attr('y', geom.inner_bottom - " + (additionalHOffset + 6) + ")")
                         .addChained("text(" + Data.quote(hAxis.title) + ")")
                         .endStatement();
             }
@@ -353,9 +357,9 @@ public class D3ScaleBuilder {
             if (axis.isLog()) out.addChained("ticks(7, ',.g3')");
             else if (axis.tickCount != null)
                 out.addChained("ticks(").add(axis.tickCount).add(")");
-            else if (axis == hAxis){
+            else if (axis == hAxis) {
                 // 10 ticks, unless the space is too small to allow that many
-                out.addChained("ticks(Math.min(10, Math.round(geom.inner_width / " + (1.5*axis.maxCategoryWidth()) +")))");
+                out.addChained("ticks(Math.min(10, Math.round(geom.inner_width / " + (1.5 * axis.maxCategoryWidth()) + ")))");
             }
 
             if (axis.inMillions())
@@ -394,7 +398,7 @@ public class D3ScaleBuilder {
 
     public void writeCoordinateScales(D3Interaction interaction) {
         writePositionScale(ScalePurpose.x, structure.coordinates.allXFields, getXRange(), elementsFillHorizontal(ScalePurpose.x));
-        writePositionScale(ScalePurpose.inner, structure.coordinates.allXClusterFields,"[-0.5, 0.5]", elementsFillHorizontal(ScalePurpose.inner));
+        writePositionScale(ScalePurpose.inner, structure.coordinates.allXClusterFields, "[-0.5, 0.5]", elementsFillHorizontal(ScalePurpose.inner));
         writePositionScale(ScalePurpose.y, structure.coordinates.allYFields, getYRange(), false);
         interaction.addScaleInteractivity();
     }
@@ -436,10 +440,11 @@ public class D3ScaleBuilder {
     }
 
     private boolean reverseRange(Field[] fields) {
-        if (fields.length == 0)return false;
+        if (fields.length == 0) return false;
         // Ranking causes us to reverse the order
-        for (Field f : fields) if (!"rank".equals(f.strProperty("summary")))
-            return false;
+        for (Field f : fields)
+            if (!"rank".equals(f.strProperty("summary")))
+                return false;
         return true;
     }
 
@@ -559,7 +564,7 @@ public class D3ScaleBuilder {
         int nBarArea = 0;       // Count elements that are bars or areas
         for (VisSingle e : elements)
             if ((e.tElement == Element.bar || e.tElement == Element.area)
-                    && e.fRange == null) nBarArea ++;
+                    && e.fRange == null) nBarArea++;
 
         if (nBarArea == elements.length) return 1.0;        // All bars?  Always go to zero
         if (nBarArea > 0) return 0.8;                       // Some bars?  Strongly want to go to zero
@@ -584,7 +589,8 @@ public class D3ScaleBuilder {
 
     private double[] getNumericPaddingFraction(ScalePurpose purpose, Coordinates coords) {
         double[] padding = new double[]{0, 0};
-        if (purpose == ScalePurpose.color || purpose == ScalePurpose.size) return padding;                // None for aesthetics
+        if (purpose == ScalePurpose.color || purpose == ScalePurpose.size)
+            return padding;                // None for aesthetics
         if (coords == Coordinates.polar) return padding;                               // None for polar angle
         for (VisSingle e : elements) {
             boolean noBottomYPadding = e.tElement == Element.bar || e.tElement == Element.area || e.tElement == Element.line;
@@ -757,7 +763,8 @@ public class D3ScaleBuilder {
         public AxisSpec merge(Param[] params) {
             AxisSpec result = this;
             for (Param p : params) {
-                if (p.type() == Type.number) result = new AxisSpec(Math.min((int) p.asDouble(), result.ticks), result.name);
+                if (p.type() == Type.number)
+                    result = new AxisSpec(Math.min((int) p.asDouble(), result.ticks), result.name);
                 if (p.type() == Type.string) result = new AxisSpec(result.ticks, p.asString());
             }
             return result;

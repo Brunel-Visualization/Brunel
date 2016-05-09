@@ -19,7 +19,7 @@ colorScatter cpi Date Date ALL                      :: pass
 
 colorScatter whiskey Country Brand Rating           :: pass
 colorScatter whiskey Category Country #count        :: pass
-colorScatter whiskey Category 5 #count              :: pass     :: circles drawn because 'y' is numeric
+colorScatter whiskey Category 5 #count  / title("Title", "Footnote":footer)             :: pass     :: circles drawn because 'y' is numeric -- should have title and footnote
 colorScatter whiskey Category 'a' #count  / transpose label(Category)          :: pass     :: rectangles because both dimensions are categorical
 
 line baseball Age HomeRunRate Salary                :: pass

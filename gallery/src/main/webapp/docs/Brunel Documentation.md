@@ -709,11 +709,15 @@ going into the chart, by specifying `interaction(filter)`.
 The `filter` command is an interaction command which will create one or more interactive controls
 (sliders, check boxes,...) beside the visualization and allow dynamic filtering using those items.
 As is true for all interactivity, the filtering happens client-side and sorting and summarization
-happen afterwards and so will respect the filtered data.
+happen afterwards and so will respect the filtered data. Default filter values may be provided as
+attributes to the fields used for filtering.
 
 <!-- examples -->
 
     x(population) y(violent_crimes) color(dem_rep) size(water:600%) filter(presidential_choice, water)
+
+    x(population) y(violent_crimes) color(dem_rep) size(water:600%) filter(Region:[Pacific, South],
+    water:6-65)
 
 
 

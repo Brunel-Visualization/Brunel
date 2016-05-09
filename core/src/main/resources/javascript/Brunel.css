@@ -127,6 +127,16 @@
 .brunel .header {
     fill: #0b9bdb;
     font-size: 18px;
+    font-weight:bold;
+    stroke: none;
+    pointer-events: none;
+}
+
+.brunel .footer {
+    fill: #888888;
+    font-size: 12px;
+    font-weight:normal;
+    label-location:right;
     stroke: none;
     pointer-events: none;
 }

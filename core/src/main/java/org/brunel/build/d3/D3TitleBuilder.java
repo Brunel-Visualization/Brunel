@@ -63,19 +63,24 @@ public class D3TitleBuilder {
             anchor = "end";
         }
         out.add("chart.append('text').attr('class', 'title " + location + "')")
-                .add(".style('text-anchor', '" + anchor + "')")
-                .addChained("attr('x','" + xLoc + "').attr('y', ", verticalSpace() / 2, ")")
-                .addChained("attr('dy', '0.35em').text(" + content + ")").endStatement();
+                .add(".text(" + content + ").style('text-anchor', '" + anchor + "').attr('dy','0.8em')")
+                .addChained("attr('x','" + xLoc + "')");
+
+        if (location.equals("footer")) {
+            out.addChained("attr('y','100%').attr('dy', '-0.4em')");
+        } else {
+            out.addChained("attr('y',0)");
+        }
+
+        out.endStatement();
     }
 
     // Search for the first title is the system and return it as text
     private void build(ChartStructure structure) {
-        for (int i = 0; i < structure.elements.length; i++) {
-            VisSingle vis = structure.elements[i];
-            Dataset data = structure.baseDataSets[i];
+        for (VisSingle vis : structure.elements) {
             if (vis.itemsTitle.isEmpty()) continue;
-            String result = makeText(vis, data);
-            content = Data.quote(result.isEmpty() ? null : result);
+            String result = makeText(vis, vis.getDataset());
+            content = result.isEmpty() ? null : Data.quote(result);
             alignment = ModelUtil.getTitlePosition(vis, location);
             ModelUtil.Size size = ModelUtil.getTitleSize(vis, location);
             if (size == null) fontSize = 16;
@@ -86,8 +91,8 @@ public class D3TitleBuilder {
     private String makeText(VisSingle vis, Dataset data) {
         StringBuilder s = new StringBuilder();
         for (Param p : vis.itemsTitle) {
-            String pType = "header";                        // The default
-            if (p.hasModifiers()) pType = p.asString();     // Unless modified by a :footer or similar
+            String pType = "header";                                        // The default
+            if (p.hasModifiers()) pType = p.modifiers()[0].asString();      // Unless modified by a :footer or similar
             if (pType.equals(location)) {
                 if (p.isField()) {
                     Field f = data.field(p.asField(data));

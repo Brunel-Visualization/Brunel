@@ -124,7 +124,10 @@ public class D3Builder extends AbstractBuilder {
 
         double[] margins = scalesBuilder.marginsTLBR();
         D3TitleBuilder title = new D3TitleBuilder(structure, "header");
+        D3TitleBuilder sub = new D3TitleBuilder(structure, "footer");
         margins[0] += title.verticalSpace();
+        margins[2] += sub.verticalSpace();
+        scalesBuilder.setAdditionalHAxisOffset(sub.verticalSpace());
 
         out.add("var geom = BrunelD3.geometry(parentNode || vis.node(),", chartMargins, ",", margins, "),")
                 .indentMore()
@@ -142,6 +145,7 @@ public class D3Builder extends AbstractBuilder {
         writeMainGroups(structure);
 
         title.writeContent(out);
+        sub.writeContent(out);
 
         // Define geo projection when needed
         if (structure.geo != null) {
