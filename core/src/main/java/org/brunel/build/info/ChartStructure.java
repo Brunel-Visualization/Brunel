@@ -42,7 +42,7 @@ public class ChartStructure {
     public final ChartStructure outer;                      // If non-null, the enclosing element for a nested chart
     public final Integer innerChartIndex;                  // If non-null, the index of the chart we enclose
 
-    private final Dataset[] baseDataSets;
+    public final Dataset[] baseDataSets;
 
     public ChartStructure(int chartIndex, VisSingle[] elements, Dataset[] data, Dataset[] dataSets, ChartStructure outer, Integer innerChartIndex) {
         this.baseDataSets = dataSets;

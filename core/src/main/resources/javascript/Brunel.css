@@ -124,6 +124,14 @@
     pointer-events: none;
 }
 
+.brunel .header {
+    fill: #0b9bdb;
+    font-size: 18px;
+    stroke: none;
+    pointer-events: none;
+}
+
+
 .brunel .labels text {
     text-shadow: 1px 1px 5px white, -1px -1px 5px white, -1px 1px 5px white, 1px -1px 5px white
 }

@@ -20,7 +20,6 @@ import org.brunel.action.parse.ParseGrammar;
 import org.brunel.data.Data;
 import org.brunel.model.VisException;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 
@@ -87,6 +86,9 @@ public class ActionStep {
                 return item;
             } else if (name.equals("label")) {
                 item.label(parameters);
+                return item;
+            } else if (name.equals("title")) {
+                item.title(parameters);
                 return item;
             } else if (name.equals("tooltip")) {
                 item.tooltip(parameters);

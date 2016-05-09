@@ -40,7 +40,7 @@ class BasicSelector extends StyleSelector {
     public boolean match(StyleTarget target) {
         // If this has an element, it must org.brunel.app.match
         if (element != null && !element.equals(target.element)) return false;
-        for (String s : classes) if (unmatched(s, target.classes)) return false;
+        for (String s : target.classes) if (unmatched(s, classes)) return false;
         return true;
     }
 

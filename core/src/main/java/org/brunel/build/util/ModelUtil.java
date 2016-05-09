@@ -130,6 +130,27 @@ public class ModelUtil {
     }
 
     /**
+     * Returns the title position (defaults to center)
+     *
+     * @param vis the visualization to look for definitions in
+     */
+    public static String getTitlePosition(VisSingle vis, String location) {
+        String s = getStyle(vis, new StyleTarget(null, STYLE_TOP, location), "label-location");
+        return s == null ? "center" : s;
+    }
+
+    /**
+     * Returns the font size of the element as defined by the style
+     *
+     * @param vis the visualization to look for definitions in
+     * @return a Size describing it
+     */
+    public static Size getTitleSize(VisSingle vis, String location) {
+        String s = getStyle(vis, new StyleTarget("text", STYLE_TOP, location), "font-size");
+        return decompose(s);
+    }
+
+    /**
      * Returns the font size of the label for the axis as defined by the style
      *
      * @param vis the visualization to look for definitions in

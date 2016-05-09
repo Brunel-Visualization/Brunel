@@ -123,6 +123,8 @@ public class D3Builder extends AbstractBuilder {
         out.indentMore();
 
         double[] margins = scalesBuilder.marginsTLBR();
+        D3TitleBuilder title = new D3TitleBuilder(structure, "header");
+        margins[0] += title.verticalSpace();
 
         out.add("var geom = BrunelD3.geometry(parentNode || vis.node(),", chartMargins, ",", margins, "),")
                 .indentMore()
@@ -138,6 +140,8 @@ public class D3Builder extends AbstractBuilder {
         out.titleComment("Define groups for the chart parts");
         interaction = new D3Interaction(structure, scalesBuilder, out);
         writeMainGroups(structure);
+
+        title.writeContent(out);
 
         // Define geo projection when needed
         if (structure.geo != null) {
@@ -327,8 +331,6 @@ public class D3Builder extends AbstractBuilder {
 
         // Create the initial raw data table
         D3DataBuilder.writeTables(main, out, options);
-
-
 
         // Call the function on the data
         if (options.generateBuildCode) {

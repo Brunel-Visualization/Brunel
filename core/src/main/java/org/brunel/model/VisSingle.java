@@ -46,7 +46,7 @@ public class VisSingle extends VisItem implements Cloneable {
 
     public StyleSheet styles;              // Specific styles for this vis (null is the default)
     public Param[] bounds;                 // If defined, bounds
-    public Coordinates coords;    // Coordinate util
+    public Coordinates coords;              // Coordinate util
     public List<Param> fColor, fSize, fOpacity;  // Aesthetics
     public List<Param> fFilter;            // Fields for filtering
     public List<Param> fSort;              // Fields used to sort the data
@@ -56,14 +56,15 @@ public class VisSingle extends VisItem implements Cloneable {
     public Map<Param, String> fTransform;  // Fields to transform(bin, rank, jitter, etc.) with method
     public Map<Param, String> fSummarize;  // Fields to summarize, with method
     public Param[] fRange;                 // If the element is a range, this is it
+    public List<Param> itemsTitle;         // Items to concatenate as a title
     public List<Param> itemsLabel;         // Items to concatenate as the labels
     public List<Param> itemsTooltip;       // Items to use as tooltips
     public boolean stacked;                // If true, stack the shapes
-    public Using tUsing;          // Any element modifications?
-    public Diagram tDiagram;      // If defined, the layout to use instead of dimensions and axes
+    public Using tUsing;                   // Any element modifications?
+    public Diagram tDiagram;               // If defined, the layout to use instead of dimensions and axes
     public Param[] tDiagramParameters;     // If defined diagram parameters
-    public Element tElement;      // Element util (bar, line, point, ...)
-    public Legends tLegends;      // Which legends to display (when aesthetic present)
+    public Element tElement;               // Element util (bar, line, point, ...)
+    public Legends tLegends;               // Which legends to display (when aesthetic present)
     public boolean flipX;
     public boolean flipY;                  // reverse the X or y scale
     public List<Param> fKeys;              // Fields used as fKeys
@@ -108,6 +109,7 @@ public class VisSingle extends VisItem implements Cloneable {
         fFilter = Collections.EMPTY_LIST;
         fSplits = Collections.EMPTY_LIST;
         itemsLabel = Collections.EMPTY_LIST;
+        itemsTitle = Collections.EMPTY_LIST;
         itemsTooltip = Collections.EMPTY_LIST;
         fTransform = Collections.EMPTY_MAP;
         fSummarize = Collections.EMPTY_MAP;
@@ -216,6 +218,11 @@ public class VisSingle extends VisItem implements Cloneable {
     public void label(Param... items) {
         if (itemsLabel.isEmpty()) itemsLabel = new ArrayList<>();
         Collections.addAll(itemsLabel, items);
+    }
+
+    public void title(Param... items) {
+        if (itemsTitle.isEmpty()) itemsTitle = new ArrayList<>();
+        Collections.addAll(itemsTitle, items);
     }
 
     public void legends(Param type) {
@@ -461,6 +468,7 @@ public class VisSingle extends VisItem implements Cloneable {
             result.fX = replaceAllField(result.fX, replacement);
             result.fY = replaceAllField(result.fY, replacement);
             result.itemsLabel = replaceAllField(result.itemsLabel, replacement);
+            result.itemsTitle = replaceAllField(result.itemsTitle, replacement);
             result.itemsTooltip = replaceAllField(result.itemsTooltip, replacement);
             result.fSummarize = replaceAllField(result.fSummarize, replacement);
             result.fTransform = replaceAllField(result.fTransform, replacement);

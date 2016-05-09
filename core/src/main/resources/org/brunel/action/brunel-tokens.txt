@@ -90,6 +90,7 @@ at other NUMBER+
 style other STRING
 interaction other select panzoom filter auto none
 annotation other - + fit frequency neighbor cluster split
+title other STRING+ FIELD+ NUMBER+
 
 ## Combination actions
 + combination
