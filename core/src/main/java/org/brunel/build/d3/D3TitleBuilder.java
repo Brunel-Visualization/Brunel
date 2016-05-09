@@ -31,14 +31,6 @@ import org.brunel.model.VisSingle;
 public class D3TitleBuilder {
     private final String location;
 
-    public String getContent() {
-        return content;
-    }
-
-    public String getAlignment() {
-        return alignment;
-    }
-
     private String content;
     private String alignment;
     private int fontSize;
@@ -59,6 +51,8 @@ public class D3TitleBuilder {
     }
 
     public void writeContent(ScriptWriter out) {
+        if (content == null) return;
+
         String xLoc = "50%", anchor = "middle";
         if (alignment.equals("left")) {
             xLoc = "0%";
