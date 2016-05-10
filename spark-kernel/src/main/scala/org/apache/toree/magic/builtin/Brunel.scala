@@ -98,6 +98,7 @@ class Brunel extends CellMagic with IncludeInterpreter {
             shim: {
                'brunel' : {
                     exports: 'BrunelD3',
+                    deps: ['d3', 'topojson'],
                     init: function() {
                        return {
                          BrunelD3 : BrunelD3,

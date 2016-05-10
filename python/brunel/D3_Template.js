@@ -25,7 +25,8 @@ require.config({
     },
     shim: {
         'BrunelD3': {
-            exports: 'BrunelD3'
+            exports: 'BrunelD3',
+            deps: ['d3', 'topojson']
         },
         'BrunelData': {
             exports: 'BrunelData'
