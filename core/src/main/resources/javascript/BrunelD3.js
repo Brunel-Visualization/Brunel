@@ -16,7 +16,7 @@
 
 // A closure for the utilities needed to build Brunel items for D3
 var BrunelD3 = (function () {
-	
+
 	//Ensure topojson is loaded under AMD.  Unclear why this is needed for topojson, but not d3.
 	if (typeof topojson === 'undefined' && typeof require === 'function' ) topojson = require('topojson');
 
@@ -622,6 +622,7 @@ var BrunelD3 = (function () {
 
     // Check if it hits an existing space
     function hitsExisting(box, hits, update) {
+        if (hits === null) return false;                // Not needed
         if (hits.x == null) {
             // Define the offset. We use this to ensure that when we pan, there are no changes to the logic
             // Otherwise we get flickering due to different rounding of the panned coordinates
@@ -629,7 +630,9 @@ var BrunelD3 = (function () {
             hits.y = box.y;
         }
 
-        var i, j, D = 8, x = box.x - hits.x, y = box.y - hits.y,
+        var D = 1;
+
+        var i, j, x = box.x - hits.x, y = box.y - hits.y,
             xmin = Math.round(x / D), xmax = Math.round((x + box.width) / D),
             ymin = Math.round(y / D), ymax = Math.round((y + box.height) / D);
 
@@ -670,6 +673,7 @@ var BrunelD3 = (function () {
         var attrs = LABEL_DEF[labeling.method] || LABEL_DEF['center'];          // Default to center
         txt.style('text-anchor', attrs[0]).attr('dy', attrs[1]);
 
+        if (labeling.allowOverlap) hits = null;                                // No hits needed
 
         if (labeling.fit && !labeling.where) {
             // Do not wrap if the text has been explicitly placed
@@ -678,9 +682,6 @@ var BrunelD3 = (function () {
 
             // Place at the required location
             txt.attr('x', loc.x).attr('y', loc.y).text(content);
-
-            //
-
 
             var kill, b;
             if (hitsExisting(loc.box, hits, false)) {

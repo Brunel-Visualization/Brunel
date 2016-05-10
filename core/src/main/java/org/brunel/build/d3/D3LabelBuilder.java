@@ -74,11 +74,11 @@ public class D3LabelBuilder {
     public void addTooltips(ElementDetails details) {
         if (vis.itemsTooltip.isEmpty()) return;
         out.onNewLine().ln();
-        defineLabeling(prettify(vis.itemsTooltip, true), details.representation.getTooltipTextMethod(), true, true);
+        defineLabeling(prettify(vis.itemsTooltip, true), details.representation.getTooltipTextMethod(), true, true, true);
         out.add("BrunelD3.addTooltip(selection, tooltipLabeling, geom)").endStatement();
     }
 
-    public void defineLabeling(List<Param> items, String textMethod, boolean forTooltip, boolean fitsShape) {
+    public void defineLabeling(List<Param> items, String textMethod, boolean forTooltip, boolean fitsShape, boolean allowOverlap) {
         if (vis.tElement != Element.text && items.isEmpty()) return;
         String name = forTooltip ? "tooltipLabeling" : "labeling";
         out.add("var", name, "= {").ln().indentMore();
@@ -89,7 +89,7 @@ public class D3LabelBuilder {
         } else {
             out.onNewLine().add("method:", out.quote(textMethod), ", ");
         }
-        out.onNewLine().add("fit:", fitsShape, ",");
+        out.onNewLine().add("fit:", fitsShape, ", allowOverlap:", allowOverlap, ",");
         if (textMethod.equals("path") || textMethod.equals("wedge"))
             out.onNewLine().add("path: path,");
 

@@ -54,6 +54,7 @@ public class ElementDetails {
     public final String classes;                        // Class names for this item
     private final String userDefinedLabelPosition;      // Custom override for the label position
     private final boolean strokedShape;                 // If true, the shape is to be stroked, not filled
+    private final boolean allowTextOverlap;             // If true, allow text labels to overlap
 
     public final ElementDimension x, y;                 // Definitions for x and y fields
     public GeomAttribute overallSize;                   // A general size for the whole item
@@ -81,6 +82,7 @@ public class ElementDetails {
         this.representation = representation;
         this.classes = "'element " + classes + "'";
         this.userDefinedLabelPosition = ModelUtil.getLabelPosition(vis);
+        this.allowTextOverlap = vis.tDiagram != null;                       // Diagrams can overlap text
     }
 
     public String getTextMethod() {
@@ -93,6 +95,10 @@ public class ElementDetails {
 
     public boolean isStroked() {
         return strokedShape;
+    }
+
+    public boolean textCanOverlap() {
+        return allowTextOverlap;
     }
 
     public boolean textFitsShape() {

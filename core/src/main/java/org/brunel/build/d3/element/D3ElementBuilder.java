@@ -75,7 +75,7 @@ public class D3ElementBuilder {
             out.add("main.attr('class',", diagram.getStyleClasses(), ")").endStatement();
         }
 
-        labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape());   // Labels
+        labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape(), details.textCanOverlap());   // Labels
 
         // Set the values of things known to this element
         out.add("selection = main.selectAll('*').data(" + details.dataSource + ",", getKeyFunction(), ")").endStatement();
