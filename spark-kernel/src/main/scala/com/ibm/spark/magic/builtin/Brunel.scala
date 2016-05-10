@@ -71,6 +71,7 @@ class Brunel extends CellMagic with IncludeInterpreter {
     val version = org.brunel.scala.Brunel.options.version
     val jsloc = org.brunel.scala.Brunel.options.locJavaScript
     val d3loc = org.brunel.scala.Brunel.options.locD3
+    val topoJsonLoc = org.brunel.scala.Brunel.options.locTopoJson
 
     val d3js =  brunelOutput.js
     val d3dynamicCss = brunelOutput.css
@@ -89,6 +90,7 @@ class Brunel extends CellMagic with IncludeInterpreter {
             waitSeconds: 60,
             paths: {
                 'd3': '$d3loc',
+                'topojson' : '$topoJsonLoc',
                 'brunel' : '$jsloc/brunel.$version.min',
                 'brunelControls' : '$jsloc/brunel.controls.$version.min'
             },

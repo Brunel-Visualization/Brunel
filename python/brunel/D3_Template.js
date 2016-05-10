@@ -18,6 +18,7 @@ require.config({
     waitSeconds: 60,
     paths: {
         'd3': '{{d3loc}}',
+        'topojson': '{{topojsonloc}}',
         'BrunelD3': '{{jsloc}}/BrunelD3',
         'BrunelData': '{{jsloc}}/BrunelData',
         'BrunelEventHandlers': '{{jsloc}}/BrunelEventHandlers'
@@ -31,13 +32,12 @@ require.config({
         },
         'BrunelEventHandlers': {
             exports: 'BrunelEventHandlers'
-        },
+        }
+
     }
 
 });
 
-require(["d3"], function(d3) {
-require(["BrunelD3", "BrunelData", "BrunelEventHandlers"], function(BrunelD3, BrunelData, BrunelEventHandlers) {
+require(["d3", "BrunelD3", "BrunelData", "BrunelEventHandlers"], function(d3, BrunelD3, BrunelData, BrunelEventHandlers ) {
     {{d3js}}
-});
 });

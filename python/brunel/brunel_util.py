@@ -18,6 +18,7 @@
 import os
 JVM_PATH = ""
 D3_LOC = "//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min"
+TOPO_JSON_LOC = "//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min"
 JS_LOC = "/nbextensions/brunel_ext"
 
 BRUNEL_CONFIG = os.getenv("BRUNEL_CONFIG", "")
@@ -31,3 +32,5 @@ for opt in opts:
         D3_LOC = keyval[1]
     elif keyval[0].strip().lower() == "locjavascript":
         JS_LOC = keyval[1]
+    elif keyval[0].strip().lower() == "loctopojson":
+        TOPO_JSON_LOC = keyval[1]
