@@ -290,7 +290,7 @@ public class D3ElementBuilder {
         else if (details.isDrawnAsPath())
             out.addChained("attr('d', path)");                              // Simple path -- just util it
         else if (details.representation == ElementRepresentation.rect)
-            defineBar(details);
+            defineRect(details);
         else if (details.representation == ElementRepresentation.segment) {
             out.addChained("attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)");
         } else if (details.representation == ElementRepresentation.text)
@@ -511,8 +511,9 @@ public class D3ElementBuilder {
         out.add("var splits = BrunelD3.makePathSplits(" + params + ");").ln();
     }
 
-    private void defineBar(ElementDetails details) {
+    private void defineRect(ElementDetails details) {
         // Rectangles must have extents > 0 to display, so we need to write that code in
+
         out.addChained("each(function(d) {").indentMore().indentMore().onNewLine();
         if (details.x.defineUsingExtent()) {
             out.add("var a =", details.x.left.call("x1"), ", b =", details.x.right.call("x2"),
@@ -529,17 +530,17 @@ public class D3ElementBuilder {
             out.add("height =", details.y.size.call("h"), ", top =",
                     details.y.center.call("y"), "- height/2").endStatement();
         }
-        out.onNewLine().add("this.r = [left,top,width,height]").endStatement().indentLess()
+        out.onNewLine().add("this.r = {x:left, y:top, w:width, h:height}").endStatement().indentLess()
                 .onNewLine().add("})").indentLess();
 
         // Sadly, browsers are inconsistent in how they handle width. It can be considered either a style or a
         // positional attribute, so we need to specify as both to make all browsers happy
-        out.addChained("attr('x', function(d) { return this.r[0] })")
-                .addChained("attr('y', function(d) { return this.r[1] })")
-                .addChained("attr('width', function(d) { return this.r[2] })")
-                .addChained("attr('height', function(d) { return this.r[3] })")
-                .addChained("style('width', function(d) { return this.r[2] })")
-                .addChained("style('height', function(d) { return this.r[3] })");
+        out.addChained("attr('x', function(d) { return this.r.x })")
+                .addChained("attr('y', function(d) { return this.r.y })")
+                .addChained("attr('width', function(d) { return this.r.w })")
+                .addChained("attr('height', function(d) { return this.r.h })")
+                .addChained("style('width', function(d) { return this.r.w })")
+                .addChained("style('height', function(d) { return this.r.h })");
     }
 
     private boolean allShowExtent(Field[] fields) {

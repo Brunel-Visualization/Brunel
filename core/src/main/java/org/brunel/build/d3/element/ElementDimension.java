@@ -20,7 +20,7 @@ import org.brunel.build.util.ModelUtil;
 import org.brunel.model.VisSingle;
 
 /**
- * Created by graham on 4/5/16.
+ * Describes how we will define an element geometry dimension (usually by center + size, or left-right)
  */
 public class ElementDimension {
     public final ModelUtil.Size sizeStyle;          // The size as defined by a style
@@ -38,11 +38,9 @@ public class ElementDimension {
         else sizeFunction = sizeName + "(d)";                           // use width(d) or height(d)
     }
 
-    public boolean defineUsingCenter() {
-        return center != null;
-    }
-
     public boolean defineUsingExtent() {
-        return left != null;
+        if (center == null) return true;                                // This requires extent and ignores size
+        if (left == null || right == null) return false;                // We need left and right
+        return sizeStyle == null && sizeFunction == null;               // and no size definitions
     }
 }
