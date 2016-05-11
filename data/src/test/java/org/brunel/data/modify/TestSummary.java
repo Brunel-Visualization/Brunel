@@ -24,6 +24,7 @@ import org.brunel.data.io.CSV;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
 
 public class TestSummary {
 
@@ -142,7 +143,7 @@ public class TestSummary {
     public void testListedDatesPreserveFormat() {
         Field f1 = Fields.makeColumnField("a", "A", new Object[]{"1932-1-1", "2033-2-2"});      // Years format
         Field f2 = Fields.makeColumnField("b", "B", new Object[]{"1932-1-1", "1932-2-2"});      // Days format
-        Dataset a = Dataset.make(new Field[] {f1, f2});
+        Dataset a = Dataset.make(new Field[]{f1, f2});
         assertEquals("1932", a.fields[0].valueFormatted(0));
         assertEquals("Jan 1, 1932", a.fields[1].valueFormatted(0));
 
@@ -150,6 +151,30 @@ public class TestSummary {
         Dataset b = Summarize.transform(a, spec);
         assertEquals("1932, 2033", b.fields[0].valueFormatted(0));
         assertEquals("Jan 1 1932, Feb 2 1932", b.fields[1].valueFormatted(0));
+    }
+
+    @Test
+    public void testSummarySpeed() {
+        int N = 100000;
+        Object[] aData = new Object[N], bData = new Object[N], cData = new Object[N];
+        for (int i = 0; i < N; i++) {
+            aData[i] = "A" + (i % 7);
+            bData[i] = "B" + (i % 1000);
+            cData[i] = (i % 53) * (i + i % 17);
+        }
+        Field a = Fields.makeColumnField("a", "A", aData);
+        Field b = Fields.makeColumnField("b", "B", bData);
+        Field c = Fields.makeColumnField("c", "C", cData);
+
+        Dataset data = Dataset.make(new Field[]{a, b, c});
+        String spec = "c= c:mean; a=a;b=b";
+
+        long t = System.currentTimeMillis();
+        Dataset result = Summarize.transform(data, spec);
+        assertEquals(7000, result.rowCount());
+        t = System.currentTimeMillis() - t;
+        assertTrue("Summarize took " + t + " ms", t < 200);
+
     }
 
 }
