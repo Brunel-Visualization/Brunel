@@ -155,7 +155,7 @@ public class TestSummary {
 
     @Test
     public void testSummarySpeed() {
-        int N = 100000;
+        int N = 10000;
         Object[] aData = new Object[N], bData = new Object[N], cData = new Object[N];
         for (int i = 0; i < N; i++) {
             aData[i] = "A" + (i % 7);
