@@ -91,7 +91,7 @@ public class D3ElementBuilder {
         out.add("selection = main.selectAll('*').data(" + details.dataSource + ",", getKeyFunction(), ")").endStatement();
 
         // Define what happens when data is added ('enter')
-        out.add("selection.enter().append('" + details.representation.getMark() + "')")1;
+        out.add("selection.enter().append('" + details.representation.getMark() + "')");
         out.add(".attr('class', ", details.classes, ")");
 
         if (diagram == null) {

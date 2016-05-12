@@ -621,31 +621,25 @@ var BrunelD3 = (function () {
     };
 
     // Check if it hits an existing space
-    function hitsExisting(box, hits, update) {
-        if (hits === null) return false;                // Not needed
+    function hitsExisting(box, hits) {
+        if (!hits || !hits.D) return false;                // Not needed if no hits or no granularity requested
         if (hits.x == null) {
             // Define the offset. We use this to ensure that when we pan, there are no changes to the logic
             // Otherwise we get flickering due to different rounding of the panned coordinates
             hits.x = box.x;
             hits.y = box.y;
-            hits.n = 0;
         }
 
-
-        // Set the grid size as a power of 2 depending how mch data we have seen
-        var n = Math.log(((++hits.n) / 10)) / Math.log(4), D = Math.pow(2, Math.floor(n));
-        D = Math.min(16, Math.max(1, D));
-
-        var i, j, x = box.x - hits.x, y = box.y - hits.y,
-            xmin = D * Math.ceil(x / D), xmax = x + box.width,
-            ymin = D * Math.ceil(y / D), ymax = y + box.height;
+        var i, j, D = hits.D, x = box.x - hits.x, y = box.y - hits.y,
+            xmin = D * Math.round(x / D), xmax = x + box.width,
+            ymin = D * Math.round(y / D), ymax = y + box.height;
 
         // Does it hit an existing location
-        for (i = xmin; i <= xmax; i += D) for (j = ymin; j <= ymax; j += D)
+        for (i = xmin; i <= xmax; i++) for (j = ymin; j <= ymax; j++)
             if (hits[i * 10000 + j]) return true;
 
         // No! so we must update those locations before returning the fact it misses
-        if (update) for (i = xmin; i <= xmax; i += D) for (j = ymin; j <= ymax; j += D)
+        for (i = xmin; i <= xmax; i++) for (j = ymin; j <= ymax; j++)
             hits[i * 10000 + j] = true;
 
         return false;
@@ -677,8 +671,6 @@ var BrunelD3 = (function () {
         var attrs = LABEL_DEF[labeling.method] || LABEL_DEF['center'];          // Default to center
         txt.style('text-anchor', attrs[0]).attr('dy', attrs[1]);
 
-        if (labeling.allowOverlap) hits = null;                                // No hits needed
-
         if (labeling.fit && !labeling.where) {
             // Do not wrap if the text has been explicitly placed
             wrapInBox(textNode, content, loc);
@@ -687,19 +679,14 @@ var BrunelD3 = (function () {
             // Place at the required location
             txt.attr('x', loc.x).attr('y', loc.y).text(content);
 
-            var kill, b;
-            if (hitsExisting(loc.box, hits, false)) {
-                kill = true;
+            var kill, b = textNode.getBBox();
+            // If it doesn't fit, kill the text
+            if (labeling.fit) {
+                // Too tall to fit a single line, or too wide and could not add ellipses
+                kill = (b.height > loc.box.height ||
+                b.width > loc.box.width && !addEllipses(textNode, content, loc.box.width));
             } else {
-                b = textNode.getBBox();
-                // If it doesn't fit, kill the text
-                if (labeling.fit) {
-                    // Too tall to fit a single line, or too wide and could not add ellipses
-                    kill = (b.height > loc.box.height ||
-                    b.width > loc.box.width && !addEllipses(textNode, content, loc.box.width));
-                } else {
-                    kill = hitsExisting(b, hits, true);
-                }
+                kill = hitsExisting(b, hits);
             }
 
             if (kill) {
@@ -712,7 +699,7 @@ var BrunelD3 = (function () {
 
     // Apply labeling
     function applyLabeling(element, group, labeling, time) {
-        var hits = {};                                                          // Keep track of hit items
+        var hits = {D: labeling.granularity};                      // Keep track of hit items; not the pixel granularity
         if (time > 0)
             return element.transition("labels").duration(time).tween('func', function () {
                 var item = this;
@@ -1047,8 +1034,8 @@ var BrunelD3 = (function () {
                             txt.attr('x', txt.__off__.dx + d.px);
                             txt.attr('y', txt.__off__.dy + d.py);
                         } else {
-                            // First time placement, and then record the offset relative to the node
-                            labelItem(this, null, txt.__labeling__, hits);
+                            // First time placement, and then record the offset relative to the node (note no hit collision handling)
+                            labelItem(this, null, txt.__labeling__, null);
                             txt.__off__ = {
                                 dx: +txt.attr('x') - d.x,
                                 dy: +txt.attr('y') - d.y
