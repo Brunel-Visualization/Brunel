@@ -44,9 +44,8 @@
     stroke: #888888
 }
 
-.brunel .tick .line {
-    fill: none;
-    stroke: #888888
+.brunel .tick line {
+    stroke: #888888;
 }
 
 .brunel .tick .mark {
