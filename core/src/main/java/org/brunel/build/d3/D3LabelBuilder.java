@@ -74,11 +74,19 @@ public class D3LabelBuilder {
     public void addTooltips(ElementDetails details) {
         if (vis.itemsTooltip.isEmpty()) return;
         out.onNewLine().ln();
-        defineLabeling(prettify(vis.itemsTooltip, true), details.representation.getTooltipTextMethod(), true, true, true);
+        defineLabeling(prettify(vis.itemsTooltip, true), details.representation.getTooltipTextMethod(), true, true, 0);
         out.add("BrunelD3.addTooltip(selection, tooltipLabeling, geom)").endStatement();
     }
 
-    public void defineLabeling(List<Param> items, String textMethod, boolean forTooltip, boolean fitsShape, boolean allowOverlap) {
+    /**
+     * Define a structure to be used to label
+     * @param items the items to form the content
+     * @param textMethod method for placing text relative to the object it is attached to
+     * @param forTooltip true if this is for a tooltip
+     * @param fitsShape true if the text is to fit inside the shape
+     * @param hitDetectGranularity if >0, the pixel level granularity to use for hit detection. If zero, none will be done
+     */
+    public void defineLabeling(List<Param> items, String textMethod, boolean forTooltip, boolean fitsShape, int hitDetectGranularity) {
         if (vis.tElement != Element.text && items.isEmpty()) return;
         String name = forTooltip ? "tooltipLabeling" : "labeling";
         out.add("var", name, "= {").ln().indentMore();
@@ -89,7 +97,7 @@ public class D3LabelBuilder {
         } else {
             out.onNewLine().add("method:", out.quote(textMethod), ", ");
         }
-        out.onNewLine().add("fit:", fitsShape, ", allowOverlap:", allowOverlap, ",");
+        out.onNewLine().add("fit:", fitsShape, ", granularity:", hitDetectGranularity, ",");
         if (textMethod.equals("path") || textMethod.equals("wedge"))
             out.onNewLine().add("path: path,");
 

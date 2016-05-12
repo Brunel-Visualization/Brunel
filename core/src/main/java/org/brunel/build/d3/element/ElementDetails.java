@@ -19,6 +19,7 @@ package org.brunel.build.d3.element;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.data.Data;
 import org.brunel.model.VisSingle;
+import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Element;
 
 /**
@@ -82,7 +83,7 @@ public class ElementDetails {
         this.representation = representation;
         this.classes = "'element " + classes + "'";
         this.userDefinedLabelPosition = ModelUtil.getLabelPosition(vis);
-        this.allowTextOverlap = vis.tDiagram != null;                       // Diagrams can overlap text
+        this.allowTextOverlap = vis.tDiagram == VisTypes.Diagram.network;                       // Diagrams can overlap text
     }
 
     public String getTextMethod() {

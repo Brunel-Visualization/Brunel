@@ -16,9 +16,9 @@
 
 // A closure for the utilities needed to build Brunel items for D3
 var BrunelD3 = (function () {
-	
-	//Ensure topojson is loaded under AMD.  Unclear why this is needed for topojson, but not d3.
-	if (typeof topojson === 'undefined' && typeof require === 'function' ) topojson = require('topojson');
+
+    //Ensure topojson is loaded under AMD.  Unclear why this is needed for topojson, but not d3.
+    if (typeof topojson === 'undefined' && typeof require === 'function') topojson = require('topojson');
 
     var tooltip, lastTime, lastTimeDescr;
     // Return geometries for the given target given the desired margins
@@ -622,23 +622,30 @@ var BrunelD3 = (function () {
 
     // Check if it hits an existing space
     function hitsExisting(box, hits, update) {
+        if (hits === null) return false;                // Not needed
         if (hits.x == null) {
             // Define the offset. We use this to ensure that when we pan, there are no changes to the logic
             // Otherwise we get flickering due to different rounding of the panned coordinates
             hits.x = box.x;
             hits.y = box.y;
+            hits.n = 0;
         }
 
-        var i, j, D = 8, x = box.x - hits.x, y = box.y - hits.y,
-            xmin = Math.round(x / D), xmax = Math.round((x + box.width) / D),
-            ymin = Math.round(y / D), ymax = Math.round((y + box.height) / D);
+
+        // Set the grid size as a power of 2 depending how mch data we have seen
+        var n = Math.log(((++hits.n) / 10)) / Math.log(4), D = Math.pow(2, Math.floor(n));
+        D = Math.min(16, Math.max(1, D));
+
+        var i, j, x = box.x - hits.x, y = box.y - hits.y,
+            xmin = D * Math.ceil(x / D), xmax = x + box.width,
+            ymin = D * Math.ceil(y / D), ymax = y + box.height;
 
         // Does it hit an existing location
-        for (i = xmin; i <= xmax; i++) for (j = ymin; j <= ymax; j++)
+        for (i = xmin; i <= xmax; i += D) for (j = ymin; j <= ymax; j += D)
             if (hits[i * 10000 + j]) return true;
 
         // No! so we must update those locations before returning the fact it misses
-        if (update) for (i = xmin; i <= xmax; i++) for (j = ymin; j <= ymax; j++)
+        if (update) for (i = xmin; i <= xmax; i += D) for (j = ymin; j <= ymax; j += D)
             hits[i * 10000 + j] = true;
 
         return false;
@@ -670,6 +677,7 @@ var BrunelD3 = (function () {
         var attrs = LABEL_DEF[labeling.method] || LABEL_DEF['center'];          // Default to center
         txt.style('text-anchor', attrs[0]).attr('dy', attrs[1]);
 
+        if (labeling.allowOverlap) hits = null;                                // No hits needed
 
         if (labeling.fit && !labeling.where) {
             // Do not wrap if the text has been explicitly placed
@@ -678,9 +686,6 @@ var BrunelD3 = (function () {
 
             // Place at the required location
             txt.attr('x', loc.x).attr('y', loc.y).text(content);
-
-            //
-
 
             var kill, b;
             if (hitsExisting(loc.box, hits, false)) {

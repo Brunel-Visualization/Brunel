@@ -75,13 +75,23 @@ public class D3ElementBuilder {
             out.add("main.attr('class',", diagram.getStyleClasses(), ")").endStatement();
         }
 
-        labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape(), details.textCanOverlap());   // Labels
+        int collisionDetectionGranularity;
+        if (details.textCanOverlap()) {
+            collisionDetectionGranularity = 0;
+        } else {
+            // Set the grid size as a power of 2 depending how much data we have seen
+            int n = structure.data.rowCount();
+            double pow = Math.log((n / 10)) / Math.log(4);
+            collisionDetectionGranularity = (int) Math.pow(2, Math.floor(pow));
+            collisionDetectionGranularity = Math.min(16, Math.max(1, collisionDetectionGranularity));
+        }
+        labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape(), collisionDetectionGranularity);   // Labels
 
         // Set the values of things known to this element
         out.add("selection = main.selectAll('*').data(" + details.dataSource + ",", getKeyFunction(), ")").endStatement();
 
         // Define what happens when data is added ('enter')
-        out.add("selection.enter().append('" + details.representation.getMark() + "')");
+        out.add("selection.enter().append('" + details.representation.getMark() + "')")1;
         out.add(".attr('class', ", details.classes, ")");
 
         if (diagram == null) {
@@ -124,7 +134,7 @@ public class D3ElementBuilder {
         writeDimLocations(details.y, "y", "h");
 
         if (details.getRefLocation() != null) {
-            // This will be used to ensure missing references are not dispalyed with junk locations
+            // This will be used to ensure missing references are not displayed with junk locations
             out.add("function validReference(r) {");
             if (details.representation == ElementRepresentation.segment)
                 out.add("return r[0][0] != null && r[0][1] != null && r[1][0] != null && r[1][1] != null");
@@ -134,16 +144,23 @@ public class D3ElementBuilder {
         }
     }
 
+    /**
+     * This writes the coordinate functions out. They will be used in the element definition
+     *
+     * @param dim      the necessary functional components are dound in this object
+     * @param mainName the name of the dimension ('x' or 'y')
+     * @param sizeName the name of the sie function ('width' or 'height')
+     */
     private void writeDimLocations(ElementDimension dim, String mainName, String sizeName) {
-        if (dim.defineUsingExtent()) {
+        if (dim.left != null && dim.right != null) {
             // Use the left and right values to define x1,x2 (or y1, y2)
             out.add("var", mainName + "1 =", dim.left).endStatement();
             out.add("var", mainName + "2 =", dim.right).endStatement();
-        } else {
-            // Define the center and size
-            out.add("var", mainName, "=", dim.center).endStatement();
-            if (dim.size != null) out.add("var", sizeName, "=", dim.size).endStatement();
         }
+
+        // Define the center and size
+        if (dim.center != null) out.add("var", mainName, "=", dim.center).endStatement();
+        if (dim.size != null) out.add("var", sizeName, "=", dim.size).endStatement();
     }
 
     public boolean needsDiagramExtras() {
