@@ -16,6 +16,7 @@
 
 package org.brunel.build.d3.diagrams;
 
+import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
@@ -25,8 +26,8 @@ import org.brunel.model.VisSingle;
 
 class Cloud extends D3Diagram {
 
-    public Cloud(VisSingle vis, Dataset data, ScriptWriter out) {
-        super(vis, data, out);
+    public Cloud(VisSingle vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
+        super(vis, data, interaction, out);
     }
 
     public ElementDetails initializeDiagram() {

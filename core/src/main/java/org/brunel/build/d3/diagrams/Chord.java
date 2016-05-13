@@ -16,6 +16,7 @@
 
 package org.brunel.build.d3.diagrams;
 
+import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ModelUtil;
@@ -27,8 +28,8 @@ import org.brunel.model.VisSingle;
 
 class Chord extends D3Diagram {
 
-    public Chord(VisSingle vis, Dataset data, ScriptWriter out) {
-        super(vis, data, out);
+    public Chord(VisSingle vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
+        super(vis, data, interaction, out);
     }
 
     public String getRowKey() {

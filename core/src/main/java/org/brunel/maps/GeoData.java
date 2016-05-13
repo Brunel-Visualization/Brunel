@@ -208,21 +208,8 @@ class GeoData {
         return list.toArray(new GeoFile[list.size()]);
     }
 
-    /**
-     * For a set of features, returns the mapping to use for them
-     *
-     * @param names feature names
-     * @return resulting mapping
-     */
-    GeoMapping make(Object[] names, Param[] geoParameters) {
-        return GeoMapping.createGeoMapping(names, makeRequiredFiles(geoParameters), this, GeoData.getQuality(geoParameters));
-    }
 
-    GeoMapping world() {
-        return make(new Object[0], new Param[]{Param.makeString("world")});
-    }
-
-    private List<GeoFile> makeRequiredFiles(Param[] params) {
+    public List<GeoFile> makeRequiredFiles(Param[] params) {
         Set<GeoFile> byFeature = new HashSet<>();
         List<GeoFile> result = new ArrayList<>();
         for (Param p : params) {
@@ -258,10 +245,12 @@ class GeoData {
         }
         return result;
     }
-
-    GeoMapping makeForPoints(Poly hull, Param[] geoParameters) {
-        return GeoMapping.createGeoMapping(hull, makeRequiredFiles(geoParameters), this, GeoData.getQuality(geoParameters));
+    
+    //Method is for testing only
+    GeoMapping make(Object[] names, Param[] geoParameters) {
+        return GeoMapping.createGeoMapping(names, GeoData.instance().makeRequiredFiles(geoParameters), this, GeoData.getQuality(geoParameters), null);
     }
+
 
     /* where a feature can be found */
     private static class Feature {

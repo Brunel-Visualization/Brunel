@@ -45,10 +45,10 @@ public class GeoMapping {
      * @param geoAnalysis gloabl information on features
      * @return a mappig structure, or null if no files could be found that matched up
      */
-    public static GeoMapping createGeoMapping(Poly polygon, List<GeoFile> required, GeoData geoAnalysis, String quality) {
+    public static GeoMapping createGeoMapping(Poly polygon, List<GeoFile> required, GeoData geoAnalysis, String quality, GeoInformation geoInfo) {
         HashSet<Object> unmatched = new HashSet<>();
         MappedLists<GeoFile, Object> map = mapBoundsToFiles(polygon, geoAnalysis.getGeoFiles());
-        GeoMapping mapping = new GeoMapping(required, unmatched, map, quality);
+        GeoMapping mapping = new GeoMapping(required, unmatched, map, quality, geoInfo);
         return mapping.fileCount() > 0 ? mapping : null;
     }
 
@@ -72,10 +72,10 @@ public class GeoMapping {
      * @param geoAnalysis global geographic information
      * @return suitable mapping, or null if no usable files were identified
      */
-    static GeoMapping createGeoMapping(Object[] names, List<GeoFile> required, GeoData geoAnalysis, String quality) {
+    static GeoMapping createGeoMapping(Object[] names, List<GeoFile> required, GeoData geoAnalysis, String quality, GeoInformation geoInfo) {
         HashSet<Object> unmatched = new HashSet<>();
         MappedLists<GeoFile, Object> map = geoAnalysis.mapFeaturesToFiles(names, unmatched);
-        GeoMapping mapping = new GeoMapping(required, unmatched, map, quality);
+        GeoMapping mapping = new GeoMapping(required, unmatched, map, quality, geoInfo);
         mapping.buildFeatureMap();
         return mapping.fileCount() > 0 ? mapping : null;
     }
@@ -107,12 +107,14 @@ public class GeoMapping {
 
     private final Map<Object, int[]> featureMap = new TreeMap<>();     // Feature -> [file, featureKey]
     private final Set<Object> unmatched;                                            // Features we did not map
+    private final GeoInformation geoInformation;						   //The Geo info
     final GeoFile[] files;                                                 // The files to use
     private final MappedLists<GeoFile, Object> potential;                           // Files that contain wanted items
     private GeoFileGroup best;                                                      // We search to determine this
 
-    private GeoMapping(List<GeoFile> required, Set<Object> unmatched, MappedLists<GeoFile, Object> potential, String quality) {
+    private GeoMapping(List<GeoFile> required, Set<Object> unmatched, MappedLists<GeoFile, Object> potential, String quality, GeoInformation geoInformation) {
         this.quality = quality;
+        this.geoInformation = geoInformation;
         this.potential = filter(potential, required);   // If required is defined, filter to only show those files
         this.unmatched = unmatched;                     // Unmatched items
         searchForBestSubset();                          // Calculate the best collection of files for those features.
@@ -133,6 +135,11 @@ public class GeoMapping {
     public Map<Object, int[]> getFeatureMap() {
         return featureMap;
     }
+    
+    public GeoInformation getGeoInformation() {
+    	return geoInformation;
+    }
+    
 
     public String[] getFiles() {
         String[] strings = new String[files.length];
