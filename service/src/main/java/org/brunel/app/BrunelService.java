@@ -146,7 +146,7 @@ public class BrunelService extends Application {
     		String[] titles = new String[] {title, description};
 	    	String src = brunelSrc != null ? brunelSrc : ContentReader.readContentFromUrl(URI.create(brunelUrl));
 	        D3Builder builder = D3Integration.makeD3(readBrunelData(dataUrl, true), src, width, height, "visualization", "controls");
-	        String response = WebDisplay.writeHtml(builder, width, height, null, brunelStr, titles);
+	        String response = WebDisplay.writeHtml(builder, width, height, brunelStr, titles);
     		return Response.ok(response).header("Access-Control-Allow-Origin", "*").build();
     	}
     	catch (IOException ex) {
