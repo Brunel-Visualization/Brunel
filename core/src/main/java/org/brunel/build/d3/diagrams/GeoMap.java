@@ -44,7 +44,6 @@ public class GeoMap extends D3Diagram {
 
         // Calculate a suitable projection
         String[] projectionDescription = geo.d3Definition().split("\n");
-        out.indentMore();
         out.add("var ");
         out.indentMore();
 
