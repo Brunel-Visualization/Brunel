@@ -16,6 +16,7 @@
 
 package org.brunel.build.d3.diagrams;
 
+import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
@@ -24,8 +25,8 @@ import org.brunel.model.VisSingle;
 
 class Bubble extends D3Diagram {
 
-    public Bubble(VisSingle vis, Dataset data, ScriptWriter out) {
-        super(vis, data, out);
+    public Bubble(VisSingle vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
+        super(vis, data, interaction, out);
     }
 
     public ElementDetails initializeDiagram() {

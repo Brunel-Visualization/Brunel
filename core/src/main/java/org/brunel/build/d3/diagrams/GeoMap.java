@@ -16,6 +16,7 @@
 
 package org.brunel.build.d3.diagrams;
 
+import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
@@ -35,9 +36,11 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 public class GeoMap extends D3Diagram {
+	
+    private final GeoMapping mapping;           // Mapping of identifiers to features
 
-    public static void writeProjection(ScriptWriter out, GeoInformation geo) {
-        out.comment("Define the projection");
+
+    private static void writeProjection(ScriptWriter out, GeoInformation geo, D3Interaction interaction) {
 
         // Calculate a suitable projection
         String[] projectionDescription = geo.d3Definition().split("\n");
@@ -62,20 +65,27 @@ public class GeoMap extends D3Diagram {
         out.indentMore();
         for (int i = 1; i < projectionDescription.length; i++)
             out.onNewLine().add(projectionDescription[i].trim());
-        out.add(",").onNewLine();
-        out.indentLess();
+
 
         // Always add pan/zoom for now -- should check to see if turned off
-        out.add("zoom = d3.behavior.zoom()")
-                .addChained("scale(projection.scale()).translate(projection.translate())")
-                .addChained("on('zoom', function() {").onNewLine();
-        out.indentMore();
-        out.add("projection.translate(zoom.translate()).scale(zoom.scale())").endStatement();
-        out.add("updateAll(0)").endStatement();
-        out.indentLess().add("})");
-        out.endStatement();
-        out.indentLess();
-        out.add("vis.call(zoom)").endStatement();
+        if (interaction.getZoomType() == D3Interaction.ZoomType.MapZoom) {
+            out.add(",").onNewLine();
+            out.indentLess();
+	        out.add("zoom = d3.behavior.zoom()")
+	                .addChained("scale(projection.scale()).translate(projection.translate())")
+	                .addChained("on('zoom', function() {").onNewLine();
+	        out.indentMore();
+	        out.add("projection.translate(zoom.translate()).scale(zoom.scale())").endStatement();
+	        out.add("updateAll(0)").endStatement();
+	        out.indentLess().add("})");
+	        out.endStatement();
+	        out.indentLess();
+	        out.add("vis.call(zoom)").endStatement();
+        }
+        else {
+        	out.endStatement();
+        	out.indentLess().indentLess();
+        }
         // Define a 'safe' version of projection which sends failed projection points off the screen
         // This occurs for the albersUSA projection ...
         out.add("function projectTransform(p) {").indentMore()
@@ -103,10 +113,9 @@ public class GeoMap extends D3Diagram {
 
     }
 
-    private final GeoMapping mapping;           // Mapping of identifiers to features
 
-    public GeoMap(VisSingle vis, Dataset data, GeoMapping geo, ScriptWriter out) {
-        super(vis, data, out);
+    public GeoMap(VisSingle vis, Dataset data, GeoMapping geo, D3Interaction interaction, ScriptWriter out) {
+        super(vis, data, interaction, out);
         this.mapping = geo;
         if (mapping == null)
             throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
@@ -123,6 +132,13 @@ public class GeoMap extends D3Diagram {
             return ElementDetails.makeForDiagram(vis, ElementRepresentation.geoFeature, "polygon", "data._rows");
         }
     }
+    
+    public void writePerChartDefinitions() {
+    	out.titleComment("Projection");
+    	writeProjection(out, mapping.getGeoInformation(), interaction);
+
+    }
+
 
     private void writeFeatureHookup(GeoMapping mapping, String idField) {
         if (mapping.fileCount() == 0) throw new IllegalStateException("No suitable map found");
@@ -176,8 +192,10 @@ public class GeoMap extends D3Diagram {
         out.indentLess().onNewLine().add("}");
     }
 
+    
     public void writeDefinition(ElementDetails details) {
     }
+
 
     public void writePreDefinition(ElementDetails details) {
         out.add("selection.classed('nondata', function(d) {return !d || d.row == null})").endStatement();

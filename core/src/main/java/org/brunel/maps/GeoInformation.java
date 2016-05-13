@@ -104,7 +104,7 @@ public class GeoInformation {
     public GeoInformation(VisSingle[] elements, Dataset[] datas, ChartCoordinates positionFields) {
         this.elements = elements;
         Poly positionHull = getPositionPoints(positionFields);
-        this.geo = makeGeoMappings(datas, positionHull);
+        this.geo = makeGeoMappings(datas, positionHull, this);
         this.withGraticule = includesAxes(elements);
         Poly withoutReferenceMaps = combineForHull(positionHull, geo, false);
         if (withoutReferenceMaps.count() == 0) {
@@ -213,12 +213,12 @@ public class GeoInformation {
     }
 
     // The whole array returned will be null if nothing is a map
-    private Map<VisSingle, GeoMapping> makeGeoMappings(Dataset[] datas, Poly positionHull) {
+    private Map<VisSingle, GeoMapping> makeGeoMappings(Dataset[] datas, Poly positionHull, GeoInformation geoInfo) {
         Map<VisSingle, GeoMapping> map = new LinkedHashMap<>();
         GeoFile[] validFiles = null;
         for (int i = 0; i < elements.length; i++) {
             if (elements[i].tDiagram == Diagram.map) {
-                GeoMapping mapping = makeMapping(elements[i], datas[i], positionHull);
+                GeoMapping mapping = makeMapping(elements[i], datas[i], positionHull, geoInfo);
                 if (mapping != null) {
                     map.put(elements[i], mapping);
                     if (validFiles == null) validFiles = mapping.files;
@@ -229,7 +229,7 @@ public class GeoInformation {
         if (validFiles == null) {
             // We were unable to create a valid map -- nothing provided location information.
             // We will build a world map. This is an edge case, but supports the simple Brunel 'map'
-            GeoMapping world = GeoData.instance().world();
+            GeoMapping world = world();
             validFiles = world.files;
             for (VisSingle e : elements) {
                 if (e.tDiagram == Diagram.map && e.tDiagramParameters.length == 0) {
@@ -242,21 +242,40 @@ public class GeoInformation {
         for (VisSingle e : elements) {
             if (e.tDiagram == Diagram.map && map.get(e) == null) {
                 String quality = GeoData.getQuality(e.tDiagramParameters);
-                map.put(e, GeoMapping.createGeoMapping(new Object[0], Arrays.asList(validFiles), GeoData.instance(), quality));
+                map.put(e, GeoMapping.createGeoMapping(new Object[0], Arrays.asList(validFiles), GeoData.instance(), quality, geoInfo));
             }
         }
 
         return map;
     }
 
-    private static GeoMapping makeMapping(VisSingle e, Dataset data, Poly positionHull) {
+    private  GeoMapping makeMapping(VisSingle e, Dataset data, Poly positionHull, GeoInformation geoInfo) {
         String idField = getIDField(e);
         Param[] diagramParameters = e.tDiagramParameters;
         if (idField != null)
-            return GeoData.instance().make(data.field(idField).categories(), diagramParameters);
+            return make(data.field(idField).categories(), diagramParameters);
         if (positionHull.count() > 0 || diagramParameters != null)
-            return GeoData.instance().makeForPoints(positionHull, diagramParameters);
+            return makeForPoints(positionHull, diagramParameters);
         return null;
     }
+    
+    /**
+     * For a set of features, returns the mapping to use for them
+     *
+     * @param names feature names
+     * @return resulting mapping
+     */
+    GeoMapping make(Object[] names, Param[] geoParameters) {
+        return GeoMapping.createGeoMapping(names, GeoData.instance().makeRequiredFiles(geoParameters), GeoData.instance(), GeoData.getQuality(geoParameters), this);
+    }
+
+    GeoMapping world() {
+        return make(new Object[0], new Param[]{Param.makeString("world")});
+    }
+
+    GeoMapping makeForPoints(Poly hull, Param[] geoParameters) {
+        return GeoMapping.createGeoMapping(hull, GeoData.instance().makeRequiredFiles(geoParameters), GeoData.instance(), GeoData.getQuality(geoParameters), this);
+    }
+
 
 }

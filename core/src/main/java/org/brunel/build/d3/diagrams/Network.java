@@ -16,6 +16,7 @@
 
 package org.brunel.build.d3.diagrams;
 
+import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
@@ -29,8 +30,8 @@ class Network extends D3Diagram {
     private final ElementStructure edges;
     private final String nodeID, fromFieldID, toFieldID;
 
-    public Network(VisSingle vis, Dataset data, ElementStructure nodes, ElementStructure edges, ScriptWriter out) {
-        super(vis, data, out);
+    public Network(VisSingle vis, Dataset data, ElementStructure nodes, ElementStructure edges, D3Interaction interaction,  ScriptWriter out) {
+        super(vis, data, interaction, out);
         this.nodes = nodes;
         this.edges = edges;
 

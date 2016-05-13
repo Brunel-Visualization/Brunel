@@ -114,7 +114,7 @@ public class D3Builder extends AbstractBuilder {
                 location[0] / 100, location[1] / 100, location[2] / 100, location[3] / 100
         };
 
-        // Create the scales and element builders
+        // Create the scales and element builders.   This also creates the interaction instance.
         createBuilders(structure, chartMargins);
 
         // Write the class definition function
@@ -137,22 +137,13 @@ public class D3Builder extends AbstractBuilder {
         // Transpose if needed
         if (scalesBuilder.coords == Coordinates.transposed) out.add("geom.transpose()").endStatement();
 
-        for (D3ElementBuilder builder : elementBuilders) builder.writePerChartDefinitions();
-
         // Now build the main groups
         out.titleComment("Define groups for the chart parts");
-        interaction = new D3Interaction(structure, scalesBuilder, out);
         writeMainGroups(structure);
+        for (D3ElementBuilder builder : elementBuilders) builder.writePerChartDefinitions();
 
         title.writeContent(out);
         sub.writeContent(out);
-
-        // Define geo projection when needed
-        if (structure.geo != null) {
-            // Write the projection
-            out.titleComment("Projection");
-            GeoMap.writeProjection(out, structure.geo);
-        }
 
         // Diagrams do not need scales; everything else does
         if (structure.diagram == null) {
@@ -167,6 +158,7 @@ public class D3Builder extends AbstractBuilder {
         }
 
     }
+    
 
     private void createBuilders(ChartStructure structure, double[] chartMargins) {
         // Define scales
@@ -174,10 +166,12 @@ public class D3Builder extends AbstractBuilder {
         double chartHeight = visHeight - chartMargins[0] - chartMargins[2];
         this.scalesBuilder = new D3ScaleBuilder(structure, chartWidth, chartHeight, out);
 
+        interaction = new D3Interaction(structure, scalesBuilder, out);
+
         ElementStructure[] structures = structure.elementStructure;
         elementBuilders = new D3ElementBuilder[structures.length];
         for (int i = 0; i < structures.length; i++)
-            elementBuilders[i] = new D3ElementBuilder(structures[i], out, scalesBuilder);
+            elementBuilders[i] = new D3ElementBuilder(structures[i], out, scalesBuilder, interaction);
     }
 
     protected void defineElement(ElementStructure structure) {

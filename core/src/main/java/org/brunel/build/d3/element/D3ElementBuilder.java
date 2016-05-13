@@ -16,6 +16,7 @@
 
 package org.brunel.build.d3.element;
 
+import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.D3ScaleBuilder;
 import org.brunel.build.d3.D3Util;
@@ -44,13 +45,13 @@ public class D3ElementBuilder {
     private final D3Diagram diagram;                            // Helper to build diagrams
     private final ElementStructure structure;
 
-    public D3ElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales) {
+    public D3ElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales, D3Interaction interaction) {
         this.structure = structure;
         this.vis = structure.vis;
         this.out = out;
         this.scales = scales;
         this.labelBuilder = new D3LabelBuilder(vis, out, structure.data);
-        this.diagram = D3Diagram.make(structure, out);
+        this.diagram = D3Diagram.make(structure, interaction, out);
     }
 
     public void generate(int elementIndex) {
@@ -106,6 +107,8 @@ public class D3ElementBuilder {
         if (diagram == null || diagram instanceof GeoMap) {
             writeCoordinateDefinition(details);
             writeCoordinateLabelingAndAesthetics(details);
+            if (diagram != null) diagram.writeDefinition(details);
+
         } else {
             diagram.writeDefinition(details);
         }

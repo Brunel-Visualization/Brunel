@@ -17,6 +17,7 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.action.Param;
+import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.info.ElementStructure;
@@ -31,22 +32,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class D3Diagram {
-    public static D3Diagram make(ElementStructure structure, ScriptWriter out) {
+    public static D3Diagram make(ElementStructure structure, D3Interaction interaction, ScriptWriter out) {
         VisSingle vis = structure.vis;
         Dataset data = structure.data;
         if (vis.tDiagram == null) return null;
-        if (vis.tDiagram == Diagram.bubble) return new Bubble(vis, data, out);
-        if (vis.tDiagram == Diagram.chord) return new Chord(vis, data, out);
-        if (vis.tDiagram == Diagram.cloud) return new Cloud(vis, data, out);
-        if (vis.tDiagram == Diagram.tree) return new Tree(vis, data, out);
-        if (vis.tDiagram == Diagram.treemap) return new Treemap(vis, data, out);
+        if (vis.tDiagram == Diagram.bubble) return new Bubble(vis, data, interaction, out);
+        if (vis.tDiagram == Diagram.chord) return new Chord(vis, data, interaction,out);
+        if (vis.tDiagram == Diagram.cloud) return new Cloud(vis, data, interaction,out);
+        if (vis.tDiagram == Diagram.tree) return new Tree(vis, data, interaction,out);
+        if (vis.tDiagram == Diagram.treemap) return new Treemap(vis, data, interaction,out);
         if (vis.tDiagram == Diagram.network)
-            return new Network(vis, data, structure, structure.chart.getEdge(), out);
+            return new Network(vis, data, structure, structure.chart.getEdge(), interaction, out);
         if (vis.tDiagram == Diagram.map) {
             if (vis.tDiagramParameters.length == 1 && vis.tDiagramParameters[0].asString().equals("labels"))
-                return new GeoMapLabels(vis, data, structure.chart, out);
+                return new GeoMapLabels(vis, data, structure.chart, interaction, out);
             else
-                return new GeoMap(vis, data, structure.geo, out);
+                return new GeoMap(vis, data, structure.geo, interaction, out);
         }
         throw new IllegalStateException("Unknown diagram: " + vis.tDiagram);
     }
@@ -56,15 +57,17 @@ public abstract class D3Diagram {
     final Element element;
     final VisSingle vis;
     final D3LabelBuilder labelBuilder;
+    final D3Interaction interaction;
     final String[] position;
     private boolean isHierarchy;
 
-    D3Diagram(VisSingle vis, Dataset data, ScriptWriter out) {
+    D3Diagram(VisSingle vis, Dataset data,  D3Interaction interaction, ScriptWriter out) {
         this.vis = vis;
         this.out = out;
         this.size = vis.fSize.isEmpty() ? null : vis.fSize.get(0);
         this.position = vis.positionFields();
         this.element = vis.tElement;
+        this.interaction = interaction;
         this.labelBuilder = new D3LabelBuilder(vis, out, data);
 
     }
@@ -87,6 +90,10 @@ public abstract class D3Diagram {
     public boolean needsDiagramLabels() {
         // By default, no labels needed
         return false;
+    }
+    
+    public D3Interaction.ZoomType getZoomType() {
+    	return interaction.getZoomType();
     }
 
     public void preBuildDefinitions() {

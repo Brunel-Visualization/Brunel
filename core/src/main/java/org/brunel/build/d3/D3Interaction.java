@@ -29,24 +29,35 @@ import org.brunel.model.VisTypes.Interaction;
  * Handles adding interactivity to charts
  */
 public class D3Interaction {
+	
+    public enum ZoomType {
+        MapZoom,                             
+        CoordinateZoom,                           
+        None                              
+    }
 
     private final ChartStructure structure;     // Chart Structure
     private final D3ScaleBuilder scales;        // Scales for the chart
     private final ScriptWriter out;             // Write definitions here
-    private final boolean zoomable;             // Same for all elements
+    private final ZoomType zoomable;             // Same for all elements
 
     public D3Interaction(ChartStructure structure, D3ScaleBuilder scales, ScriptWriter out) {
         this.structure = structure;
         this.scales = scales;
         this.out = out;
-        this.zoomable = isZoomable(structure.elementStructure);
+        if (isZoomable(structure.elementStructure)) this.zoomable = structure.geo == null ? ZoomType.CoordinateZoom : ZoomType.MapZoom; 
+        else this.zoomable = ZoomType.None; 
+    }
+    
+    public ZoomType getZoomType() {
+    	return zoomable;
     }
 
     private boolean isZoomable(ElementStructure[] elements) {
         // Check for things that just will not work currently
         if (structure.coordinates.xCategorical && structure.coordinates.yCategorical)
             return false;  // Only zoom numerical
-        if (structure.diagram != null || scales.coords == Coordinates.polar) return false;  // Doesn't work
+        if ( (structure.diagram != null && structure.geo == null ) || scales.coords == Coordinates.polar) return false;  // Doesn't work
 
         // If anything says we want it, we get it
         // Otherwise, if anything says we do not, we do not
@@ -81,7 +92,7 @@ public class D3Interaction {
      * Set up the overlay group and shapes for trapping events for zooming.
      */
     public void addPrerequisites() {
-        if (zoomable) {
+        if (zoomable == ZoomType.CoordinateZoom) {
             // The group for the overlay
             out.add("var overlay = interior.append('g').attr('class', 'element')")
                     .addChained("attr('class', 'overlay').style('cursor','move').style('fill','none').style('pointer-events','all')")
@@ -99,7 +110,7 @@ public class D3Interaction {
      * Zooming modifies the scales, and this code makes that happen
      */
     public void addScaleInteractivity() {
-        if (!zoomable) return;
+        if (zoomable == ZoomType.None) return;
         out.add("zoom");
         if (scales.coords == Coordinates.transposed) {
             // Attach x to y and y to x

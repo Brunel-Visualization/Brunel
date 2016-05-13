@@ -16,6 +16,7 @@
 
 package org.brunel.build.d3.diagrams;
 
+import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ChartStructure;
@@ -35,8 +36,8 @@ public class GeoMapLabels extends D3Diagram {
 
     private final ChartStructure structure;
 
-    public GeoMapLabels(VisSingle vis, Dataset data, ChartStructure structure, ScriptWriter out) {
-        super(vis, data, out);
+    public GeoMapLabels(VisSingle vis, Dataset data, ChartStructure structure, D3Interaction interaction,  ScriptWriter out) {
+        super(vis, data, interaction, out);
         this.structure = structure;
     }
 
