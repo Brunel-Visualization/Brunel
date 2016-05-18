@@ -18,7 +18,9 @@
 package org.brunel.app.brunel;
 
 import org.brunel.action.Action;
+import org.brunel.action.ActionStep;
 import org.brunel.app.brunel.SourceTransfer.Droppable;
+import org.brunel.build.d3.D3Builder;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
@@ -26,6 +28,8 @@ import org.brunel.match.BestMatch;
 import org.brunel.model.VisException;
 import org.brunel.model.VisItem;
 import org.brunel.util.Library;
+import org.brunel.util.LocalOutputFiles;
+import org.brunel.util.PageOutput;
 import org.brunel.util.WebDisplay;
 
 import javax.swing.*;
@@ -35,14 +39,21 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
 import java.net.URI;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
 
 @SuppressWarnings("serial")
 public class BrunelPad extends JFrame implements AppEventListener, Droppable {
+
+    private static final String JS_FILE = "/org/brunel/util/animation.js";
+    private static final String JS = new Scanner(WebDisplay.class.getResourceAsStream(JS_FILE), "UTF-8").useDelimiter("\\A").next();
+
 
     /* use '-v version' to use a minified online library version */
     public static void main(String[] args) {
@@ -263,19 +274,49 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
                 throw VisException.makeApplying(new IllegalStateException(error), action.toString());
             }
 
-            String descr = a.simplify().toString();
-            actionEditor.setText(descr);
-            int width = getWidth() - 30;
-            Dimension size = new Dimension(width, (int) (width / 1.618));
+            Action action = a.simplify();
+            actionEditor.setText(action.toString());
 
-            WebDisplay display = new WebDisplay(options, "BrunelPad");
-            display.buildSingle(item, size.width, size.height, "index.html", "<h2 style='text-align:center'>" + a + "</h2>");
-            display.showInBrowser();
+            showVis(item, a);
 
-            if (transitory == null) addToHistory(descr);
+            if (transitory == null) addToHistory(action.toString());
         } catch (Throwable e) {
             error(e);
         }
+    }
+
+    private void showVis(VisItem item, Action a) {
+        LocalOutputFiles.install();
+
+        int width = getWidth() - 30;
+
+        D3Builder builder = D3Builder.make(options);
+        builder.build(item, width, (int) (width / 1.618));
+
+        Writer writer = LocalOutputFiles.makeFileWriter("BrunelPad/index.html");
+        PageOutput output = new ModifiedPageOutput(builder, writer);
+        output
+                .pageTitle("Brunel: " + shortForm(a))
+                .addTitles("<h2 style='text-align:center'>" + a + "</h2>")
+                .write();
+        try {
+            writer.close();
+        } catch (IOException ignored) {
+        }
+
+        LocalOutputFiles.showInBrowser("BrunelPad/index.html");
+    }
+
+    private String shortForm(Action a) {
+        String all = a.toString();
+        if (all.length() < 46) return all;
+        StringBuilder b = new StringBuilder();
+        for (ActionStep step : a.steps) {
+            b.append(step.toString()).append(" ");
+            if (b.length() > 40) break;
+        }
+        b.append("...");
+        return b.toString();
     }
 
     private void useSource(Dataset source) {
@@ -289,4 +330,19 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
         updateVis();
     }
 
+    private class ModifiedPageOutput extends PageOutput {
+        public ModifiedPageOutput(D3Builder builder, Writer writer) {
+            super(builder, writer);
+        }
+
+        protected void writeSection(Section section, String... lines) {
+            if (section == Section.brunel) {
+                if (lines.length != 1) throw new IllegalStateException("Expected a single long vis definition");
+                String line = lines[0].replace("v.build(table1);", "animateBuild(v, table1, 1000);");
+                super.writeSection(section, JS, line);
+            } else {
+                super.writeSection(section, lines);
+            }
+        }
+    }
 }

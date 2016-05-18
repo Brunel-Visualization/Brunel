@@ -17,22 +17,16 @@
 
 package org.brunel.util;
 
-import org.brunel.build.Builder;
 import org.brunel.build.d3.D3Builder;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.model.VisItem;
 
 import java.awt.*;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.Scanner;
 
 /**
@@ -40,9 +34,8 @@ import java.util.Scanner;
  */
 public class WebDisplay {
 
-    private static final String NAV_LOCATION = "/org/brunel/util/webdisplay-navigation.html";
-
     // Read the static HTML resources to add in
+    private static final String NAV_LOCATION = "/org/brunel/util/webdisplay-navigation.html";
     private static final String NAV_BASE = new Scanner(WebDisplay.class.getResourceAsStream(NAV_LOCATION), "UTF-8").useDelimiter("\\A").next();
 
     public static String writeHtml(D3Builder builder, int width, int height, String brunel, String... titles) {
@@ -55,8 +48,6 @@ public class WebDisplay {
     }
 
     private final File displayBaseDir;
-    private static File home;            // Base directory
-    private static File out;             // Main code location
     private final BuilderOptions options;
 
     private int count;
@@ -64,45 +55,14 @@ public class WebDisplay {
 
     public WebDisplay(BuilderOptions options, String dirName) {
         this.options = options;
-        // Set 'home' and 'out' directories
-        ensureBaseDirectoriesBuilt();
-
-        // Copy source files and resources over
-        ensureResourceExists("BrunelD3.js");
-        ensureResourceExists("BrunelData.js");
-        ensureResourceExists("Brunel.css");
-        ensureResourceExists("BrunelEventHandlers.js");
-        ensureResourceExists("BrunelJQueryControlFactory.js");
-        ensureResourceExists("sumoselect/jquery.sumoselect.min.js");
-        ensureResourceExists("sumoselect/sumoselect.css");
-
-        displayBaseDir = makeDir(dirName);
+        LocalOutputFiles.install();
+        displayBaseDir = LocalOutputFiles.makeDirectory(dirName);
     }
 
     public File makeFile(String s) {
         return new File(displayBaseDir, s);
     }
 
-    private void ensureBaseDirectoriesBuilt() {
-        if (home != null) return;
-
-        // Try special directory location, but if that is not defined, add to user's home directory
-        String brunelDir = System.getProperty("brunel.home");
-        if (brunelDir != null)
-            home = new File(brunelDir);
-        else
-            home = new File(System.getProperty("user.home"), "brunel");
-        home.mkdirs();
-        if (!home.canWrite())
-            throw new IllegalArgumentException("Cannot write to the Locations directory: " + home.getAbsolutePath());
-        out = new File(home, "out");
-        out.mkdir();
-        if (!out.canWrite())
-            throw new IllegalArgumentException("Cannot write to the Locations directory: " + out.getAbsolutePath());
-
-        // 3rd party JS folders
-        new File(out, "/sumoselect").mkdirs();
-    }
 
     public void buildOneOfMultiple(VisItem target, String groupName, String name, Dimension size) {
         if (count == 0) writeToFile("index.html", NAV_BASE.replace("$TITLE$", displayBaseDir.getName()));
@@ -127,13 +87,6 @@ public class WebDisplay {
         writeToFile(file, html);
     }
 
-    private File makeDir(String name) {
-        File f = new File(home, name);
-        f.mkdirs();
-        if (!f.canWrite())
-            throw new IllegalArgumentException("Cannot write to the Locations directory: " + f.getAbsolutePath());
-        return f;
-    }
 
     public void showInBrowser() {
         try {
@@ -156,26 +109,6 @@ public class WebDisplay {
             writeToFile(file, b.toString());
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    private void ensureResourceExists(String resourceName) {
-        // Copy required static JS from Brunel project
-        try {
-            InputStream is = Builder.class.getResourceAsStream("/javascript/" + resourceName);
-            // If the file is a translated file, we look for it in either a jar location or in the file system
-            if (is == null)
-                is = Builder.class.getResourceAsStream("/translated/" + resourceName);
-            if (is == null) {
-                File file = new File("data/build/translated/");
-                if (!file.exists()) file = new File("../data/build/translated/");
-                is = new FileInputStream(new File(file, resourceName));
-            }
-
-            File brunelD3 = new File(out, resourceName);
-            Files.copy(is, brunelD3.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not copy required " + resourceName + " to output folder: " + out, e);
         }
     }
 

@@ -45,7 +45,7 @@ import static org.brunel.util.PageOutput.Section.titles;
 public class PageOutput {
 
     /**
-     * The various parts we define
+     * The various parts we define in the HTML
      */
     public enum Section {
         documentStart,

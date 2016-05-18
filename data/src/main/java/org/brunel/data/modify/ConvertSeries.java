@@ -53,7 +53,10 @@ public class ConvertSeries extends DataOperation {
         String[] otherFields = addRequired(strings(items, ','));
 
         Field[] y = new Field[nY];
-        for (int i = 0; i < nY; i++) y[i] = base.field(yFields[i]);
+        for (int i = 0; i < nY; i++) {
+            y[i] = base.field(yFields[i]);
+            if (y[i] == null) throw new NullPointerException("ConvertSeries Could not find field for name: " + yFields[i]);
+        }
 
 
         /*

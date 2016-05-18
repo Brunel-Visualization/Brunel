@@ -280,11 +280,17 @@ public class DataBuilder {
         */
 
         LinkedHashSet<String> keep = new LinkedHashSet<>();
-        for (Param p : vis.fX) keep.add(p.asString());
+        for (Param p : vis.fX) keep.add(p.asField());
         Collections.addAll(keep, vis.nonPositionFields());
         keep.remove("#series");
         keep.remove("#values");
-        return Data.join(vis.fY) + ";" + Data.join(keep);
+        StringBuilder b = new StringBuilder();
+        for (Param p : vis.fY) {
+            if (b.length() > 0) b.append(",");
+            b.append(p.asField());
+        }
+        b.append(";").append(Data.join(keep));
+        return b.toString();
     }
 
     /*
