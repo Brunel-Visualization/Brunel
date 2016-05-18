@@ -19,7 +19,6 @@ package org.brunel.build.d3;
 import org.brunel.action.Param;
 import org.brunel.build.AbstractBuilder;
 import org.brunel.build.controls.Controls;
-import org.brunel.build.d3.diagrams.GeoMap;
 import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.data.DataTransformParameters;
 import org.brunel.build.info.ChartStructure;
@@ -65,7 +64,7 @@ public class D3Builder extends AbstractBuilder {
     }
 
     private ScriptWriter out;                   // Where to write code
-    private int visWidth, visHeight;            // Overall vis size
+    public int visWidth, visHeight;              // Overall vis size
     private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
     private D3Interaction interaction;          // Builder for interactions
     private D3ElementBuilder[] elementBuilders; // Builder for each element
@@ -74,7 +73,7 @@ public class D3Builder extends AbstractBuilder {
         super(options);
     }
 
-    public Object getVisualization() {
+    public String getVisualization() {
         return out.content();
     }
 
@@ -158,7 +157,6 @@ public class D3Builder extends AbstractBuilder {
         }
 
     }
-    
 
     private void createBuilders(ChartStructure structure, double[] chartMargins) {
         // Define scales
@@ -274,7 +272,9 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}").ln();
 
         out.ln().comment("Expose the following components of the chart");
-        out.add("return { build : build, elements : elements }").endStatement();
+        out.add("return {build : build, elements : elements");
+        if (structure.diagram == null) out.add(", scales: {x:scale_x, y:scale_y}");
+        out.add("}").endStatement();
 
         // Finish the chart method
         if (nesting.containsKey(structure.chartIndex)) {
