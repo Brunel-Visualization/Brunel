@@ -18,7 +18,9 @@ Issue the following magic
 %AddJar -magic http://www.brunelvis.org/jar/spark-kernel-brunel-all-1.2.jar 
 ```
 
-Note, if you are upgrading to a new version of Brunel and the graphs do not appear, try executing the cell, then save the notebook, then reload the page in the browser.
+Notes:
+* Brunel version 1.2 requires Toree "dev8" or higher.  Version 1.1 is still available for earlier Toree versions.
+* If you are upgrading to a new version of Brunel and the graphs do not appear, try executing the cell, then save the notebook, then reload the page in the browser.
 
 
 ## Samples
