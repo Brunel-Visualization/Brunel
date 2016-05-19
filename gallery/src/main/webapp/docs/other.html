@@ -14,7 +14,20 @@
   ~ limitations under the License.
   -->
 
-<H1>Axes and Style</H1>
+<H1>Titles, Guides and Style</H1>
+
+<H3>Titles and Footnotes</H3>
+<p>
+	The <code>title</code> command allows both titles and footnotes to be added to a graph.  Options 
+	are used to denote a title (<code>header</code>)vs. a footnote (<code>footer</code>). Style settings
+	can be used to control the appearance and placement. References to field names are also supported.  
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per Region")</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per ", region)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per Region", "US Regions":footer)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per Region", "US Regions":footer) style('.footer {label-location:left} .header {label-location:left}')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per Region", "US Regions":footer) style('.header {fill:orange}')</a></p>
 
 <H3>Axes</H3>
 <p>
