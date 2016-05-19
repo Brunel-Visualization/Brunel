@@ -239,7 +239,6 @@ public class D3DataBuilder {
 
         writeTransform("sortRows", params.sortRowsCommand);
 
-
         out.endStatement();
         out.add("processed = post(processed,", datasetIndex, ")").endStatement();
 
@@ -357,10 +356,20 @@ public class D3DataBuilder {
         // If we split by aesthetics, they are the keys
         if (vis.tElement.producesSingleShape) return makeSplitFields();
 
-        // For non-diagrams, try the aesthetics AND x values
+        // For non-diagrams,
         if (vis.tDiagram == null) {
+            // Always want the X fields
             List<String> result = asFields(vis.fX);
-            Collections.addAll(result, vis.aestheticFields());
+
+            // Y fields only if categorical
+            for (Param p : vis.fY) {
+                Field field = data.field(p.asField());
+                if (field != null && field.preferCategorical()) result.add(p.asField());
+            }
+
+            // We only want to include the aesthetics when we they are stacked
+            if (vis.stacked)
+                Collections.addAll(result, vis.aestheticFields());
             if (suitableForKey(result)) return result;
         }
 
@@ -375,7 +384,6 @@ public class D3DataBuilder {
         for (Entry<Param, String> e : vis.fTransform.entrySet()) {
             if (e.getValue().equals("each")) result.add(e.getKey().asField());
         }
-
 
         return result;
     }

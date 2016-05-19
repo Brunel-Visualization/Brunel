@@ -59,6 +59,7 @@ import java.util.Set;
  */
 public class D3ScaleBuilder {
 
+    public static final double MIN_SIZE_FACTOR = 0.001;
     final Coordinates coords;                       // Combined coordinate system derived from all elements
     private final Field colorLegendField;           // Field to use for the color legend
     private final AxisDetails hAxis, vAxis;         // Details for each axis
@@ -705,7 +706,7 @@ public class D3ScaleBuilder {
         if (p.modifiers().length > 0) {
             sizes = getSizes(p.modifiers()[0].asList());
         } else {
-            sizes = new Object[]{0.05, 1.0};
+            sizes = new Object[]{MIN_SIZE_FACTOR, 1.0};
         }
 
         Field f = fieldById(p, vis);
@@ -739,8 +740,8 @@ public class D3ScaleBuilder {
             Double d = Data.asNumeric(s);
             if (d != null) result.add(d / 100);
         }
-        if (result.isEmpty()) return new Object[]{0.05, 1.0};
-        if (result.size() == 1) result.add(0, 0.05);
+        if (result.isEmpty()) return new Object[]{MIN_SIZE_FACTOR, 1.0};
+        if (result.size() == 1) result.add(0, MIN_SIZE_FACTOR);
         return result.toArray(new Object[result.size()]);
     }
 
