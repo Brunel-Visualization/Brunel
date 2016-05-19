@@ -2380,8 +2380,11 @@ $.copy(V.modify_ConvertSeries, {
         items = sections.length < 2 ? "" : sections[1];
         otherFields = V.modify_ConvertSeries.addRequired(V.modify_DataOperation.strings(items, ','));
         y = $.Array(nY, null);
-        for (i = 0; i < nY; i++)
+        for (i = 0; i < nY; i++){
             y[i] = base.field(yFields[i]);
+            if (y[i] == null)
+                throw new $.Exception("ConvertSeries Could not find field for name: " + yFields[i]);
+        }
         seriesIndexing = $.Array(nY * nR, 0);
         valuesIndexing = $.Array(nY * nR, 0);
         data = $.Array(nY * nR, null);

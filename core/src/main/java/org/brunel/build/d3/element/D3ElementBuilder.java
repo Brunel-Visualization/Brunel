@@ -363,6 +363,7 @@ public class D3ElementBuilder {
     private String getSymbol() {
         String result = ModelUtil.getElementSymbol(vis);
         if (result != null) return result;
+        if (structure.chart.geo != null) return "point";             // Geo charts default to circles
         // We default to a rectangle if all the scales are categorical or binned, otherwise we return a point
         boolean cat = allShowExtent(structure.chart.coordinates.allXFields) && allShowExtent(structure.chart.coordinates.allYFields);
         return cat ? "rect" : "point";
@@ -386,6 +387,9 @@ public class D3ElementBuilder {
         } else if (n == 1) {
             String xFunction = D3Util.writeCall(x[0]);
             String yFunction = D3Util.writeCall(y[0]);
+            if (DefineLocations.isRange(x[0])) xFunction += ".mid";
+            if (DefineLocations.isRange(y[0])) yFunction += ".mid";
+
             def.x.center = GeomAttribute.makeFunction("proj([" + xFunction + "," + yFunction + "])[0]");
             def.y.center = GeomAttribute.makeFunction("proj([" + xFunction + "," + yFunction + "])[1]");
         } else if (n == 2) {
