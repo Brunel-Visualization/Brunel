@@ -54,7 +54,6 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
     private static final String JS_FILE = "/org/brunel/util/animation.js";
     private static final String JS = new Scanner(WebDisplay.class.getResourceAsStream(JS_FILE), "UTF-8").useDelimiter("\\A").next();
 
-
     /* use '-v version' to use a minified online library version */
     public static void main(String[] args) {
         BuilderOptions options = BuilderOptions.make(args);
@@ -294,8 +293,7 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
         builder.build(item, width, (int) (width / 1.618));
 
         Writer writer = LocalOutputFiles.makeFileWriter("BrunelPad/index.html");
-        PageOutput output = new ModifiedPageOutput(builder, writer);
-        output
+        new PageOutput(builder, writer)
                 .pageTitle("Brunel: " + shortForm(a))
                 .addTitles("<h2 style='text-align:center'>" + a + "</h2>")
                 .write();
@@ -303,7 +301,6 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
             writer.close();
         } catch (IOException ignored) {
         }
-
         LocalOutputFiles.showInBrowser("BrunelPad/index.html");
     }
 
@@ -330,19 +327,4 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
         updateVis();
     }
 
-    private class ModifiedPageOutput extends PageOutput {
-        public ModifiedPageOutput(D3Builder builder, Writer writer) {
-            super(builder, writer);
-        }
-
-        protected void writeSection(Section section, String... lines) {
-            if (section == Section.brunel) {
-                if (lines.length != 1) throw new IllegalStateException("Expected a single long vis definition");
-                String line = lines[0].replace("v.build(table1);", "animateBuild(v, table1, 1000);");
-                super.writeSection(section, JS, line);
-            } else {
-                super.writeSection(section, lines);
-            }
-        }
-    }
 }

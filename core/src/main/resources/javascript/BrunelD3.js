@@ -1087,6 +1087,88 @@ var BrunelD3 = (function () {
         return (a + b) / 2 + v * (a - b);
     }
 
+    // An animated start to a visualization
+    // vis is the base Brunel object
+    // data is the raw data table (CSV-like)
+    // time is the time we take to do the effect
+    function animateBuild(vis, data, time) {
+
+        if (vis.charts.length != 1) return vis.build(data); // Only animate when one chart
+
+        var i,
+            targets = ["size", "y", "color"],               // We prefer to animate over size first, then y, then color
+            chart = vis.charts[0],                          // The target chart
+            scales = chart.scales,                          // Target chart scales
+            originalPost = vis.dataPostProcess(),           // The currently defined data post-processing item
+            names = [], fields,                             // The fields we will animate (names and as Brunel fields)
+            role;                                           // The role we will choose to animate over
+
+
+        // Use the data structure options to check it a field is numeric (don't animate a category field)
+        function isNumeric(name) {
+            if (name.charAt(0) == '#' || !data.options) return true;
+            for (var i = 0; i < data.names.length; i++)
+                if (data.names[i] == name)
+                    return data.options[i] != "string";
+            return true;
+        }
+
+        // Find suitable fields (by name) that have the given role (size, y, color)
+        function suitableFields(type) {
+            var i, y, result = [];   // collect all element's y fields
+            chart.elements.forEach(function (e) {
+                y = e.fields[type];
+                if (y) for (i = 0; i < y.length; i++)
+                    if (isNumeric(y[i]))    // If numeric add values (add upper / lower ranges for stacking)
+                        result.push(y[i], y[i] + "$lower", y[i] + "$upper");
+            });
+            return result;
+        }
+
+        // Get a suitable starting point for the animation of a given type on a given field
+        function start(field) {
+            if (role == 'size') return 1e-6;         // Should always be good
+            if (scales && scales[role]) {
+                // If the domain starts at zero, use that, otherwise use the scale midpoint
+                var domain = scales[role].domain();
+                return domain[0] == 0 ? 0 : (domain[0] + domain[domain.length - 1]) / 2;
+            } else
+                return field.min();
+        }
+
+        // Replace the data on a field (and return that field)
+        // "this" is the data set being evaluated
+        function replaceData(name) {
+            var field = this.field(name);
+            if (!field) return null;
+            field.oProvider = field.provider;                   // swap provider with a constant value
+            field.provider = new BrunelData.values_ConstantProvider(
+                start(field, role), field.rowCount());
+            return field;
+        }
+
+
+        // Look through the roles and pick the first that has usable fields
+        for (i = 0; i < targets.length && !names.length; i++)
+            names = suitableFields(role = targets[i]);
+
+
+        if (!names.length) return vis.build(data);          // If no fields, stop trying
+
+        vis.dataPostProcess(function (d) {                  // replace the post-processing definition with:
+            fields = names.map(replaceData, d);             // Modify the data (side effect -- setting fields)
+            return originalPost(d);                         // call original function on modified data
+        });
+
+        vis.build(data);                                    // build using the new data
+        vis.dataPostProcess(originalPost);                  // restore the original post-processing definition
+        if (fields) fields.forEach(function (f) {           // restore all fields
+            if (f) f.provider = f.oProvider;
+        });
+        vis.rebuild(time);                                  // rebuild with the correct data, animated
+    }
+
+
     // Expose these methods
     return {
         'makeData': makeDataset,
@@ -1110,7 +1192,8 @@ var BrunelD3 = (function () {
         'network': makeNetworkLayout,
         'facet': facet,
         'time': time,
-        'interpolate': interpolate
+        'interpolate': interpolate,
+        'animateBuild': animateBuild
     }
 
 })

@@ -68,6 +68,7 @@ public class VisSingle extends VisItem implements Cloneable {
     public boolean flipX;
     public boolean flipY;                  // reverse the X or y scale
     public List<Param> fKeys;              // Fields used as fKeys
+    public List<Param> fEffects;           // Effects (usually animated)
     public Param fData;                    // Data sets used
 
     public Map<Axes, Param[]> fAxes;               // Axes mapped to their parameters
@@ -108,6 +109,7 @@ public class VisSingle extends VisItem implements Cloneable {
         fSort = Collections.EMPTY_LIST;
         fFilter = Collections.EMPTY_LIST;
         fSplits = Collections.EMPTY_LIST;
+        fEffects = Collections.EMPTY_LIST;
         itemsLabel = Collections.EMPTY_LIST;
         itemsTitle = Collections.EMPTY_LIST;
         itemsTooltip = Collections.EMPTY_LIST;
@@ -621,6 +623,11 @@ public class VisSingle extends VisItem implements Cloneable {
     public void sort(Param... fieldNames) {
         if (fSort.isEmpty()) fSort = new ArrayList<>(fieldNames.length);
         Collections.addAll(fSort, fieldNames);
+    }
+
+    public void effects(Param... effectNames) {
+        if (fEffects.isEmpty()) fEffects = new ArrayList<>(effectNames.length);
+        Collections.addAll(fEffects, effectNames);
     }
 
     public void split(Param... fieldNames) {

@@ -80,6 +80,21 @@
 </p>
 
 <p class="examples"><a onClick="showAction(this.text)">x(population) y(violent_crimes) color(dem_rep) size(water:600%)
-    filter(presidential_choice, water)</a></p>    
-<p class="examples"><a onClick="showAction(this.text)">x(population) y(violent_crimes) color(dem_rep) size(water:600%) 
+    filter(presidential_choice, water)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(population) y(violent_crimes) color(dem_rep) size(water:600%)
     filter(Region:[Pacific, South], water:6-65)</a></p>
+
+<h3>Effects</h3>
+<p>
+    Although technically not interactivity, an effect is a usually animated feature of a visualization.
+    In Brunel, we have define one simple effect so far, which animates the first appearance of a chart. It
+    will only operate for single chart visualizations, and animates the size, y value or color if it finds a
+    numeric field defined for that role. Otherwise this effect is ignored.
+</p>
+<p>
+    Use the command <code>effect(enter)</code> to request an entrance animation. An optional time parameter
+    in milliseconds allows the speed of the animation to be controlled, like this: <code>effect(enter:1200)</code>
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(violent_crimes) size(population:1000%) effect(enter)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(violent_crimes) sum(violent_crimes) effect(enter:5000)</a></p>

@@ -88,8 +88,8 @@ axes other + none x y
 legends other auto none all color size
 at other NUMBER+
 style other STRING
+effect other enter
 interaction other select panzoom filter auto none
-annotation other - + fit frequency neighbor cluster split
 title other STRING+ FIELD+ NUMBER+
 
 ## Combination actions

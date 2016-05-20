@@ -340,17 +340,44 @@ public class D3Builder extends AbstractBuilder {
             controls.writeEventHandler(out, "v");
 
             int length = main.getDataSets().length;
-            out.add("v.build(");
-            for (int i = 0; i < length; i++) {
-                if (i > 0) out.add(", ");
-                out.add(String.format(options.dataName, i + 1));
+
+            int enterAnimateTime = enterAnimate(main, length);
+            if (enterAnimateTime > 0) {
+                out.add("BrunelD3.animateBuild(v,", String.format(options.dataName, 1),
+                        ",", enterAnimateTime, ")").endStatement();
+            } else {
+                out.add("v.build(");
+                for (int i = 0; i < length; i++) {
+                    if (i > 0) out.add(", ");
+                    out.add(String.format(options.dataName, i + 1));
+                }
+                out.add(")").endStatement();
             }
-            out.add(")").endStatement();
         }
 
         // Add controls code
         controls.writeControls(out);
 
+    }
+
+    private int enterAnimate(VisItem main, int dataSetCount) {
+        if (dataSetCount != 1) return -1;                           // Need a single data set to animate over
+        if (main.getSingle() == null) return -1;                    // Need a single top level vis
+
+        List<Param> effects =main.getSingle().getSingle().fEffects;
+        for (Param p : effects) {
+            if (p.type() == Param.Type.option && p.asString().equals("enter")) {
+                if (p.hasModifiers()) {
+                    try {
+                        return (int) p.modifiers()[0].asDouble();
+                    } catch (Exception ignored) {
+                        // fall through to default case
+                    }
+                }
+                return 700;
+            }
+        }
+        return -1;
     }
 
     private void addElementGroups(D3ElementBuilder builder, String elementID) {

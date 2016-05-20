@@ -120,6 +120,9 @@ public class ActionStep {
             } else if (name.equals("legends")) {
                 item.legends(oneParam());
                 return item;
+            } else if (name.equals("effect")) {
+                item.effects(parameters);
+                return item;
             } else if (name.equals("interaction")) {
                 item.interaction(parameters);
                 return item;
