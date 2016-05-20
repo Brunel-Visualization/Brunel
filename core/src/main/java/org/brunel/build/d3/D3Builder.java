@@ -32,6 +32,7 @@ import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Element;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -364,7 +365,7 @@ public class D3Builder extends AbstractBuilder {
         if (dataSetCount != 1) return -1;                           // Need a single data set to animate over
         if (main.getSingle() == null) return -1;                    // Need a single top level vis
 
-        List<Param> effects =main.getSingle().getSingle().fEffects;
+        List<Param> effects = main.getSingle().getSingle().fEffects;
         for (Param p : effects) {
             if (p.type() == Param.Type.option && p.asString().equals("enter")) {
                 if (p.hasModifiers()) {
@@ -445,7 +446,10 @@ public class D3Builder extends AbstractBuilder {
         out.onNewLine().add("fields: {").indentMore();
         out.mark();
         writeFieldName("x", vis.fX);
-        writeFieldName("y", vis.fY);
+        if (vis.fRange != null)
+            writeFieldName("y", Arrays.asList(vis.fRange));
+        else
+            writeFieldName("y", vis.fY);
         writeFieldName("color", vis.fColor);
         writeFieldName("size", vis.fSize);
         writeFieldName("opacity", vis.fOpacity);

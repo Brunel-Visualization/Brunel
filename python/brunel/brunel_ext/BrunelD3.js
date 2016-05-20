@@ -1100,13 +1100,13 @@ var BrunelD3 = (function () {
             chart = vis.charts[0],                          // The target chart
             scales = chart.scales,                          // Target chart scales
             originalPost = vis.dataPostProcess(),           // The currently defined data post-processing item
-            names, fields,                                  // The fields we will animate (names and as Brunel fields)
+            names = [], fields,                             // The fields we will animate (names and as Brunel fields)
             role;                                           // The role we will choose to animate over
 
 
         // Use the data structure options to check it a field is numeric (don't animate a category field)
         function isNumeric(name) {
-            if (!data.options) return true;
+            if (name.charAt(0) == '#' || !data.options) return true;
             for (var i = 0; i < data.names.length; i++)
                 if (data.names[i] == name)
                     return data.options[i] != "string";
@@ -1119,24 +1119,27 @@ var BrunelD3 = (function () {
             chart.elements.forEach(function (e) {
                 y = e.fields[type];
                 if (y) for (i = 0; i < y.length; i++)
-                    if (isNumeric(y[i])) result.push(y[i]); // only add numeric values
+                    if (isNumeric(y[i]))    // If numeric add values (add upper / lower ranges for stacking)
+                        result.push(y[i], y[i] + "$lower", y[i] + "$upper");
             });
             return result;
         }
-        
+
         // Get a suitable starting point for the animation of a given type on a given field
         function start(field) {
+            if (role == 'size') return 1e-6;         // Should always be good
             if (scales && scales[role]) {
                 // If the domain starts at zero, use that, otherwise use the scale midpoint
                 var domain = scales[role].domain();
                 return domain[0] == 0 ? 0 : (domain[0] + domain[domain.length - 1]) / 2;
-            } else 
+            } else
                 return field.min();
         }
 
         // Replace the data on a field (and return that field)
-        function replaceData(name) {            
-            var field = d.field(name);
+        // "this" is the data set being evaluated
+        function replaceData(name) {
+            var field = this.field(name);
             if (!field) return null;
             field.oProvider = field.provider;                   // swap provider with a constant value
             field.provider = new BrunelData.values_ConstantProvider(
@@ -1146,15 +1149,14 @@ var BrunelD3 = (function () {
 
 
         // Look through the roles and pick the first that has usable fields
-        for (i = 0; i < targets.length; i++) {         
-            role = targets[i];
-            if (!(names = suitableFields(role)).length) break;
-        }
+        for (i = 0; i < targets.length && !names.length; i++)
+            names = suitableFields(role = targets[i]);
+
 
         if (!names.length) return vis.build(data);          // If no fields, stop trying
 
         vis.dataPostProcess(function (d) {                  // replace the post-processing definition with:
-            fields = names.map(replaceData);                // Modify the data (side effect -- setting fields
+            fields = names.map(replaceData, d);             // Modify the data (side effect -- setting fields)
             return originalPost(d);                         // call original function on modified data
         });
 
