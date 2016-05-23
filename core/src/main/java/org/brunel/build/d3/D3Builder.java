@@ -203,7 +203,7 @@ public class D3Builder extends AbstractBuilder {
 
         out.add("function build(transitionMillis) {").ln().indentMore();
         elementBuilder.generate(structure.index);
-        interaction.addElementHandlers(structure.vis);
+        interaction.addElementHandlers(structure.vis, dataBuilder);
 
         // If a chart is nested within us, build its facets
         Integer index = structure.chart.innerChartIndex;
@@ -218,7 +218,7 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}").ln().ln();
 
         // Expose the methods and variables we want the user to have access to
-        addElementExports(vis);
+        addElementExports(vis, dataBuilder);
 
         out.indentLess().onNewLine().add("}()").endStatement().ln();
     }
@@ -436,7 +436,7 @@ public class D3Builder extends AbstractBuilder {
         return result;
     }
 
-    private void addElementExports(VisSingle vis) {
+    private void addElementExports(VisSingle vis, D3DataBuilder dataBuilder) {
         out.add("return {").indentMore();
         out.onNewLine().add("data:").at(24).add("function() { return processed },");
         out.onNewLine().add("internal:").at(24).add("function() { return data },");
@@ -445,11 +445,19 @@ public class D3Builder extends AbstractBuilder {
         out.onNewLine().add("build:").at(24).add("build,");
         out.onNewLine().add("fields: {").indentMore();
         out.mark();
+
         writeFieldName("x", vis.fX);
         if (vis.fRange != null)
             writeFieldName("y", Arrays.asList(vis.fRange));
         else
             writeFieldName("y", vis.fY);
+
+        List<String> keys = dataBuilder.makeKeyFields();
+        if (!keys.isEmpty()) {
+            writeFieldName("key", keys);
+        }
+
+
         writeFieldName("color", vis.fColor);
         writeFieldName("size", vis.fSize);
         writeFieldName("opacity", vis.fOpacity);
@@ -466,13 +474,17 @@ public class D3Builder extends AbstractBuilder {
             return null;
     }
 
-    private void writeFieldName(String name, List<Param> fieldNames) {
+    private void writeFieldName(String name, List fieldNames) {
         if (fieldNames.isEmpty()) return;
         if (out.changedSinceMark()) out.add(",");
         List<String> names = new ArrayList<>();
-        for (Param p : fieldNames) names.add(p.asField());
+        for (Object p : fieldNames) {
+            if (p instanceof Param) names.add(((Param)p).asField());
+            else names.add(p.toString());
+        }
         out.onNewLine().add(name, ":").at(24).add("[").addQuotedCollection(names).add("]");
     }
+
 
     private void writeMainGroups(ChartStructure structure) {
         String chartClassID = "chart" + structure.chartID();                    // The class for our group

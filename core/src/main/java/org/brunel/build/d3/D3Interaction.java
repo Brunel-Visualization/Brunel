@@ -24,16 +24,18 @@ import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Interaction;
 
+import java.util.List;
+
 /**
  * sc
  * Handles adding interactivity to charts
  */
 public class D3Interaction {
-	
+
     public enum ZoomType {
-        MapZoom,                             
-        CoordinateZoom,                           
-        None                              
+        MapZoom,
+        CoordinateZoom,
+        None
     }
 
     private final ChartStructure structure;     // Chart Structure
@@ -45,19 +47,21 @@ public class D3Interaction {
         this.structure = structure;
         this.scales = scales;
         this.out = out;
-        if (isZoomable(structure.elementStructure)) this.zoomable = structure.geo == null ? ZoomType.CoordinateZoom : ZoomType.MapZoom; 
-        else this.zoomable = ZoomType.None; 
+        if (isZoomable(structure.elementStructure))
+            this.zoomable = structure.geo == null ? ZoomType.CoordinateZoom : ZoomType.MapZoom;
+        else this.zoomable = ZoomType.None;
     }
-    
+
     public ZoomType getZoomType() {
-    	return zoomable;
+        return zoomable;
     }
 
     private boolean isZoomable(ElementStructure[] elements) {
         // Check for things that just will not work currently
         if (structure.coordinates.xCategorical && structure.coordinates.yCategorical)
             return false;  // Only zoom numerical
-        if ( (structure.diagram != null && structure.geo == null ) || scales.coords == Coordinates.polar) return false;  // Doesn't work
+        if ((structure.diagram != null && structure.geo == null) || scales.coords == Coordinates.polar)
+            return false;  // Doesn't work
 
         // If anything says we want it, we get it
         // Otherwise, if anything says we do not, we do not
@@ -73,19 +77,54 @@ public class D3Interaction {
     /**
      * This attaches event handlers to the element for click-selection
      */
-    public void addElementHandlers(VisSingle vis) {
-        if (isSelectable(vis)) {
-            Param p = vis.tInteraction.get(Interaction.select);
-            String type = "click";
-            if (p.hasModifiers()) type = p.firstModifier().asString();
-            out.add("selection.on('" + type + "', function(d) { BrunelD3.select(d.row, processed, original, this, updateAll) } )").endStatement();
+    public void addElementHandlers(VisSingle vis, D3DataBuilder dataBuilder) {
+        // Standard event selection
+        Param p = vis.tInteraction.get(Interaction.select);
+        if (p != null)
+            out.add("selection.on('" + eventName(p) + "', function(d) { BrunelD3.select(d.row, processed, original, this, updateAll) } )").endStatement();
 
-        }
+        // Custom event selection
+
+        /*
+         * This gets called with the following parameters:
+         *
+         * row -- the row in the processed data (after aggregation, series, summaries, etc.)
+         * value -- the value of the key fields for the item hit.
+         *          May be an array (for multiple keys) or a comma-separated list of values if the key is #row
+         * data -- the processed data object
+         * element -- description of the element; in particular element.fields.key gives the key fields for this element
+         *
+         * When the function is called "this" is assigned to the SVG element that was interacted with
+         */
+
+        p = vis.tInteraction.get(Interaction.call);
+        if (p != null)
+            out.add("selection.on('" + eventName(p) + "', " + functionName(p, dataBuilder) +" )").endStatement();
+
     }
 
-    private static boolean isSelectable(VisSingle vis) {
-        // Only if explicitly requested
-        return vis.tInteraction.containsKey(Interaction.select);
+    // The first parameter name is the event name, which defaults to "click"
+    private String eventName(Param p) {
+        Param param = p.firstModifier();
+        return param == null ? "click" : param.asString();
+    }
+
+    // The second parameter name is the function name, which defaults to a call to alert
+    private String functionName(Param p, D3DataBuilder dataBuilder) {
+        String base;
+        if (p.modifiers().length > 1) return p.modifiers()[1].asString();
+        else
+            base = "BrunelD3.showSelect";
+
+        List<String> list = dataBuilder.makeKeyFields();
+        if (list.size() == 1 && list.get(0).equals("#row")) {
+            return "function(d) { " + base + ".call(this, d.row, data._key(d.row).toString(), processed, element) }";
+        } else if (list.size() == 1) {
+            return "function(d) { " + base + ".call(this, d.row, data._key(d.row), processed, element) }";
+        } else {
+            return "function(d) { " + base + ".call(this, d.row, data._key(d.row).split('|'), processed, element) }";
+        }
+
     }
 
     /**

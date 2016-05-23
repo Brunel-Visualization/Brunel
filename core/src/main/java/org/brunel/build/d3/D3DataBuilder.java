@@ -331,7 +331,7 @@ public class D3DataBuilder {
      *
      * @return list of keys
      */
-    private List<String> makeKeyFields() {
+    public List<String> makeKeyFields() {
         // If we have defined keys, util them
         if (!vis.fKeys.isEmpty()) return asFields(vis.fKeys);
 

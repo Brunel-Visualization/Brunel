@@ -1168,6 +1168,11 @@ var BrunelD3 = (function () {
         vis.rebuild(time);                                  // rebuild with the correct data, animated
     }
 
+    function showSelect(row, value, data, element) {
+        alert("Selected: " + value);
+        console.log("Selected: row=" + row + ", value=" + value + " (" + element.fields.key + "), hit=" + this);
+    }
+
 
     // Expose these methods
     return {
@@ -1193,7 +1198,8 @@ var BrunelD3 = (function () {
         'facet': facet,
         'time': time,
         'interpolate': interpolate,
-        'animateBuild': animateBuild
+        'animateBuild': animateBuild,
+        'showSelect': showSelect
     }
 
 })
