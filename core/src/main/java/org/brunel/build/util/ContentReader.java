@@ -18,13 +18,18 @@ package org.brunel.build.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
 
 public class ContentReader {
     public static String readContentFromUrl(URI uri) throws IOException {
         //TODO:  Centrally handle security
     	try {
-    		return readContent(uri.toURL().openStream());
+    		//Setting User-Agent avoids receiving an http 403 error.
+    	    HttpURLConnection httpcon = (HttpURLConnection) uri.toURL().openConnection();
+    	    httpcon.addRequestProperty("User-Agent", "Mozilla/4.0");
+
+    	    return readContent(httpcon.getInputStream());
     	}
     	catch(IllegalArgumentException ex) {
     		throw new IllegalArgumentException("Could not read data from: " + uri,ex.getCause());
