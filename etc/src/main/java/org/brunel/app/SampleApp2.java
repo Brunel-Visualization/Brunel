@@ -37,6 +37,7 @@ public class SampleApp2 {
      */
     public static void main(String[] args) throws Exception {
         // Process the commands:
+
         String command = "bar x(Region) y(#count) sort(#count) tooltip(#all)";
 
         Field regionField = Fields.makeColumnField("Region", "Data Regions", new String[] {
