@@ -720,6 +720,22 @@ attributes to the fields used for filtering.
     water:6-65)
 
 
+### Effects
+Although technically not interactivity, an effect is a usually animated feature of a visualization.
+In Brunel, we have define one simple effect so far, which animates the first appearance of a chart.
+It will only operate for single chart visualizations, and animates the size, y value or color if it
+finds a numeric field defined for that role. Otherwise this effect is ignored.
+
+Use the command `effect(enter)` to request an entrance animation. An optional time parameter in
+milliseconds allows the speed of the animation to be controlled, like this: `effect(enter:1200)`
+
+<!-- examples -->
+
+    x(region) y(violent_crimes) size(population:1000%) effect(enter)
+
+    bar x(region) y(violent_crimes) sum(violent_crimes) effect(enter:5000)
+
+
 
 Diagrams
 --------
@@ -886,8 +902,28 @@ both the number of list items produced and the number of characters to show in t
 
 
 
-Axes and Style
---------------
+Titles, Guides and Style
+------------------------
+
+### Titles and Footnotes
+The `title` command allows both titles and footnotes to be added to a graph. Options are used to
+denote a title ( `header`)vs. a footnote ( `footer`). Style settings can be used to control the
+appearance and placement. References to field names are also supported.
+
+<!-- examples -->
+
+    bar x(region) y(#count) title("Count Per Region")
+
+    bar x(region) y(#count) title("Count Per ", region)
+
+    bar x(region) y(#count) title("Count Per Region", "US Regions":footer)
+
+    bar x(region) y(#count) title("Count Per Region", "US Regions":footer) style('.footer
+    {label-location:left}.header {label-location:left}')
+
+    bar x(region) y(#count) title("Count Per Region", "US Regions":footer) style('.header
+    {fill:orange}')
+
 
 ### Axes
 The axes command controls which axes are displayed. Legal values are `none, x, y`
