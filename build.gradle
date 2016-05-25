@@ -107,7 +107,7 @@ task brunelSyntaxDoc(type: Copy) {
 
 
 task brunelGeoFiles(type: Copy) {
-    from project(':core').file('etc/geo files 1.1.zip')
+    from project(':core').file('etc/geo files 1.2.zip')
     into 'out'
 }
 
