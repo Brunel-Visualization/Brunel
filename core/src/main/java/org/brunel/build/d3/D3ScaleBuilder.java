@@ -21,6 +21,7 @@ import org.brunel.action.Param.Type;
 import org.brunel.build.d3.D3Util.DateBuilder;
 import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
+import org.brunel.build.util.Accessibility;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.color.ColorMapping;
@@ -314,8 +315,9 @@ public class D3ScaleBuilder {
         // Define the groups for the axes and add titles
         if (hAxis.exists()) {
             out.onNewLine().add("axes.append('g').attr('class', 'x axis')")
-                    .addChained("attr('transform','translate(0,' + " + height + " + ')')")
-                    .endStatement();
+                    .addChained("attr('transform','translate(0,' + " + height + " + ')')");
+            Accessibility.addRegion(structure, out, "Horizontal Axis");
+            out.endStatement();
             if (hAxis.title != null) {
                 // Add the title centered at the bottom
                 out.add("axes.select('g.axis.x').append('text').attr('class', 'title')")
@@ -328,8 +330,9 @@ public class D3ScaleBuilder {
         }
         if (vAxis.exists()) {
             out.onNewLine().add("axes.append('g').attr('class', 'y axis')")
-                    .addChained("attr('transform','translate(geom.chart_left, 0)')")
-                    .endStatement();
+                    .addChained("attr('transform','translate(geom.chart_left, 0)')");
+            Accessibility.addRegion(structure, out, "Vertical Axis");
+            out.endStatement();
             if (vAxis.title != null) {
                 // Add the title
                 out.add("axes.select('g.axis.y').append('text').attr('class', 'title')")

@@ -112,6 +112,7 @@ public class D3LabelBuilder {
 
     }
 
+
     private List<Param> prettify(List<Param> items, boolean longForm) {
 
         // If we have nothing but field names, and at least two, we add separators
@@ -130,7 +131,8 @@ public class D3LabelBuilder {
         return result;
     }
 
-    private void writeContent(List<Param> items, boolean forTooltip) {
+
+    public void writeContent(List<Param> items, boolean forTooltip) {
         // We must have some content
         if (items.isEmpty()) {
             // The position fields for a diagram

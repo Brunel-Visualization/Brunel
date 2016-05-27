@@ -40,7 +40,8 @@ public class ChartStructure {
     public final Diagram diagram;
     public final ElementStructure[] elementStructure;
     public final ChartStructure outer;                      // If non-null, the enclosing element for a nested chart
-    public final Integer innerChartIndex;                  // If non-null, the index of the chart we enclose
+    public final Integer innerChartIndex;                   // If non-null, the index of the chart we enclose
+    public boolean accessible;                               // If true, generate accessible content
 
     public final Dataset[] baseDataSets;
 
@@ -67,6 +68,10 @@ public class ChartStructure {
 
     public static String makeChartID(int index) {
         return "" + (index + 1);
+    }
+
+    public boolean hasMultipleElements() {
+        return elements.length > 1;
     }
 
     public boolean nested() {

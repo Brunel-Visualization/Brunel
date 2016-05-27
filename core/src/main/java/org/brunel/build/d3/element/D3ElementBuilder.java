@@ -24,6 +24,7 @@ import org.brunel.build.d3.ScalePurpose;
 import org.brunel.build.d3.diagrams.D3Diagram;
 import org.brunel.build.d3.diagrams.GeoMap;
 import org.brunel.build.info.ElementStructure;
+import org.brunel.build.util.Accessibility;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ModelUtil.Size;
 import org.brunel.build.util.ScriptWriter;
@@ -88,12 +89,16 @@ public class D3ElementBuilder {
         }
         labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape(), collisionDetectionGranularity);   // Labels
 
+        Accessibility.defineElementLabelFunction(structure, out, labelBuilder);
+
         // Set the values of things known to this element
         out.add("selection = main.selectAll('*').data(" + details.dataSource + ",", getKeyFunction(), ")").endStatement();
 
         // Define what happens when data is added ('enter')
         out.add("selection.enter().append('" + details.representation.getMark() + "')");
         out.add(".attr('class', ", details.classes, ")");
+
+        Accessibility.useElementLabelFunction(structure, out);
 
         if (diagram == null) {
             writeCoordEnter();

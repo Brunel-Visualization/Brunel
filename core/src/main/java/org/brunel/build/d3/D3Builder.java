@@ -23,6 +23,7 @@ import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.data.DataTransformParameters;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
+import org.brunel.build.util.Accessibility;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
@@ -69,6 +70,7 @@ public class D3Builder extends AbstractBuilder {
     private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
     private D3Interaction interaction;          // Builder for interactions
     private D3ElementBuilder[] elementBuilders; // Builder for each element
+    private boolean hasMultipleCharts;          // flag to indicate mulktiple charts in the same vis
 
     private D3Builder(BuilderOptions options) {
         super(options);
@@ -185,7 +187,7 @@ public class D3Builder extends AbstractBuilder {
                 .indentLess();
 
         // Add data variables used throughout
-        addElementGroups(elementBuilder, "element" + structure.elementID());
+        addElementGroups(elementBuilder, structure);
 
         // Data transforms
         int datasetIndex = structure.getBaseDatasetIndex();
@@ -227,6 +229,7 @@ public class D3Builder extends AbstractBuilder {
         this.visWidth = width;
         this.visHeight = height;
         this.out = new ScriptWriter(options);
+        this.hasMultipleCharts = main.children() != null && main.children().length > 1;
 
         // Write the class definition function (and flag to use strict mode)
         out.add("function ", options.className, "(visId) {").ln().indentMore();
@@ -381,19 +384,20 @@ public class D3Builder extends AbstractBuilder {
         return -1;
     }
 
-    private void addElementGroups(D3ElementBuilder builder, String elementID) {
+    private void addElementGroups(D3ElementBuilder builder, ElementStructure structure) {
         String elementTransform = makeElementTransform(scalesBuilder.coords);
-        out.add("var elementGroup = interior.append('g').attr('class', '" + elementID + "')");
+        out.add("var elementGroup = interior.append('g').attr('class', 'element" + structure.elementID() + "')");
+        Accessibility.addElementInformation(structure, out);
         if (elementTransform != null) out.addChained(elementTransform);
         if (builder.needsDiagramExtras())
             out.continueOnNextLine(",").add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");
         out.continueOnNextLine(",").add("main = elementGroup.append('g').attr('class', 'main')");
         if (builder.needsDiagramLabels())
             out.continueOnNextLine(",")
-                    .add("diagramLabels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'diagram labels'), elementGroup)");
+                    .add("diagramLabels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'diagram labels').attr('aria-hidden', 'true'), elementGroup)");
 
         out.continueOnNextLine(",")
-                .add("labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels'), elementGroup)").endStatement();
+                .add("labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup)").endStatement();
     }
 
     /*
@@ -499,11 +503,12 @@ public class D3Builder extends AbstractBuilder {
 
             // Now create the facet group that will contain the chart with data for the indicated facet
             out.add("var chart = outer.append('g').attr('class', 'facet')");
-
         } else {
             // For non-faceted charts, we only need the simple chart group to hold all the other parts
             out.add("var chart = vis.append('g').attr('class', '" + chartClassID + "')");
         }
+
+        Accessibility.addChartInformation(structure, out, hasMultipleCharts);
 
         out.addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
                 .endStatement();
@@ -530,9 +535,12 @@ public class D3Builder extends AbstractBuilder {
         if (scalesBuilder.needsAxes())
             out.add("var axes = chart.append('g').attr('class', 'axis')")
                     .addChained(axesTransform).endStatement();
-        if (scalesBuilder.needsLegends())
+        if (scalesBuilder.needsLegends()) {
             out.add("var legends = chart.append('g').attr('class', 'legend')")
-                    .addChained(makeTranslateTransform("(geom.chart_right-geom.chart_left - 3)", "0")).endStatement();
+                    .addChained(makeTranslateTransform("(geom.chart_right-geom.chart_left - 3)", "0"));
+            Accessibility.addRegion(structure, out, "Legend");
+            out.endStatement();
+        }
 
         if (!structure.nested()) {
             // Make the clip path for this: we expand by a pixel to avoid ugly cut-offs right at the edge
