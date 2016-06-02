@@ -15,7 +15,7 @@ Continued support for the prior project 'spark-kernel' will be included for a li
 Issue the following magic
 
 ```
-%AddJar -magic http://www.brunelvis.org/jar/spark-kernel-brunel-all-1.2.jar 
+%AddJar -magic https://brunelvis.org/jar/spark-kernel-brunel-all-1.2.jar 
 ```
 
 Notes:
