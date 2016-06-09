@@ -96,7 +96,7 @@ public class D3ElementBuilder {
 
         // Define what happens when data is added ('enter')
         out.add("selection.enter().append('" + details.representation.getMark() + "')");
-        out.add(".attr('class', ", details.classes, ")");
+        out.add(".attr('class', '", details.classes, "')");
 
         Accessibility.useElementLabelFunction(structure, out);
 
@@ -504,7 +504,7 @@ public class D3ElementBuilder {
     }
 
     private static GeomAttribute getOverallSize(VisSingle vis, ElementDetails def) {
-        Size size = ModelUtil.getElementSize(vis, "size");
+        Size size = ModelUtil.getElementSize(vis, "size", def.classes);
         boolean needsFunction = vis.fSize.size() == 1;
 
         if (size != null && !size.isPercent()) {

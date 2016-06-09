@@ -56,14 +56,15 @@ public class ModelUtil {
      *
      * @param vis the visualization to look for definitions in
      * @param tag height, width, size -- the name of the size field to look for
+     * @param classes the classes describing the element (bar, line, etc.)
      * @return a Size describing it
      */
-    public static Size getElementSize(VisSingle vis, String tag) {
-        StyleTarget target = new StyleTarget(null, STYLE_ELEMENT, "element");
+    public static Size getElementSize(VisSingle vis, String tag, String classes) {
+        StyleTarget target = new StyleTarget(null, STYLE_ELEMENT, classes.split(" "));
         String s = getStyle(vis, target, tag);
         if (s == null)
             if (tag.equals("size")) return null;            // No definition
-            else return getElementSize(vis, "size");        // Default height and width to size
+            else return getElementSize(vis, "size", classes);        // Default height and width to size
         return decompose(s);                                // Split into value and unit
     }
 

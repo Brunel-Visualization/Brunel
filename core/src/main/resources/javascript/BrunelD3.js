@@ -1174,6 +1174,40 @@ var BrunelD3 = (function () {
     }
 
 
+    // Makes a gridline.
+    // interior --  the svg group to add to
+    // scale -- the scale to use
+    // size -- the width or height of the line to draw
+    // x -- if true, for the x axis (vertical lines)
+    function makeGrid(interior, scale, size, x) {
+        var selection = interior.selectAll("line.grid." + (x ? "x" : "y"))
+        var grid = selection.data(scale.ticks());
+        grid.enter().append("line").attr("class", "grid " + (x ? "x" : "y"));
+        grid.exit().remove();
+
+        if (x)
+            grid.attr({
+                "y1": 0, "y2": size,
+                "x1": function (d) {
+                    return scale(d);
+                },
+                "x2": function (d) {
+                    return scale(d);
+                }
+            });
+        else
+            grid.attr({
+                "x1": 0, "x2": size,
+                "y1": function (d) {
+                    return scale(d);
+                },
+                "y2": function (d) {
+                    return scale(d);
+                }
+            });
+    }
+
+
     // Expose these methods
     return {
         'makeData': makeDataset,
@@ -1199,6 +1233,7 @@ var BrunelD3 = (function () {
         'time': time,
         'interpolate': interpolate,
         'animateBuild': animateBuild,
+        'makeGrid': makeGrid,
         'showSelect': showSelect
     }
 

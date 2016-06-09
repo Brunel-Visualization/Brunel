@@ -31,8 +31,8 @@ public class ElementDimension {
     public GeomAttribute right;                     // Where the right is to be (left will also be defined)
     public GeomAttribute size;                      // What the size is to be
 
-    public ElementDimension(VisSingle vis, String sizeName) {
-        sizeStyle = ModelUtil.getElementSize(vis, sizeName);
+    public ElementDimension(VisSingle vis, String sizeName, String classes) {
+        sizeStyle = ModelUtil.getElementSize(vis, sizeName, classes);
         if (vis.fSize.isEmpty()) sizeFunction = null;                   // No sizing
         else if (vis.fSize.size() == 1) sizeFunction = "size(d)";       // Multiply by overall size
         else sizeFunction = sizeName + "(d)";                           // use width(d) or height(d)

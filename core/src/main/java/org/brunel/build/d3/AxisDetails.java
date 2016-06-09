@@ -32,7 +32,7 @@ class AxisDetails {
 
     public final String title;                         // Title for the axis
     public final String scale;                         // Name for the scale to use for this axis
-    public boolean rotatedTicks;               // If true, ticks are to be rotated
+    public boolean rotatedTicks;                       // If true, ticks are to be rotated
     public Object[] tickValues;                        // If non-null, ony show these ticks
     public Integer tickCount;                          // If non-null, request this many ticks for the axis
     public int size;                                   // The size for this axis (perpendicular to axis direction)
@@ -44,9 +44,10 @@ class AxisDetails {
     private final Field[] fields;                      // Fields used in this axis
     private final boolean categorical;                 // True if the axis is categorical
     private final boolean inMillions;                  // True if the fields values are nicely shown in millions
+    public final boolean hasGrid;                      // true if gridlines are desired
 
     /* Constructs the axis for the given fields */
-    public AxisDetails(String dimension, Field[] definedFields, boolean categorical, String userTitle, int tickCount) {
+    public AxisDetails(String dimension, Field[] definedFields, boolean categorical, String userTitle, int tickCount, boolean grid) {
         this.scale = "scale_" + dimension;
         this.fields = definedFields;
         this.categorical = categorical;
@@ -58,6 +59,8 @@ class AxisDetails {
             this.title = title(fields);
 
         this.inMillions = !categorical && isInMillions(definedFields);
+
+        this.hasGrid = grid;
 
     }
 

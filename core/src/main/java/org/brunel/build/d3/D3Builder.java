@@ -529,6 +529,8 @@ public class D3Builder extends AbstractBuilder {
         out.add("interior.append('rect').attr('class', 'inner')")
                 .add(".attr('width', geom.inner_width).attr('height', geom.inner_height)")
                 .endStatement();
+        out.add("var gridGroup = interior.append('g').attr('class', 'grid')")
+                .endStatement();
 
         interaction.addPrerequisites();
 

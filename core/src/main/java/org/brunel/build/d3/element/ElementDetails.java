@@ -75,13 +75,13 @@ public class ElementDetails {
     }
 
     public ElementDetails(VisSingle vis, ElementRepresentation representation, String classes, String dataSource, boolean filled) {
-        x = new ElementDimension(vis, "width");
-        y = new ElementDimension(vis, "height");
+        this.classes = "element " + classes;
+        x = new ElementDimension(vis, "width", this.classes);
+        y = new ElementDimension(vis, "height", this.classes);
         if (filled) classes += " filled";
         this.strokedShape = !filled;
         this.dataSource = dataSource;
         this.representation = representation;
-        this.classes = "'element " + classes + "'";
         this.userDefinedLabelPosition = ModelUtil.getLabelPosition(vis);
         this.allowTextOverlap = vis.tDiagram == VisTypes.Diagram.network;                       // Diagrams can overlap text
     }

@@ -85,13 +85,13 @@ public class D3ScaleBuilder {
         // Set the axis information for each dimension
         AxisDetails xAxis, yAxis;
         if (axes[0] != null) {
-            xAxis = new AxisDetails("x", coords.allXFields, coords.xCategorical, axes[0].name, axes[0].ticks);
+            xAxis = new AxisDetails("x", coords.allXFields, coords.xCategorical, axes[0].name, axes[0].ticks, axes[0].grid);
         } else
-            xAxis = new AxisDetails("x", new Field[0], coords.xCategorical, null, 9999);
+            xAxis = new AxisDetails("x", new Field[0], coords.xCategorical, null, 9999, false);
         if (axes[1] != null)
-            yAxis = new AxisDetails("y", coords.allYFields, coords.yCategorical, axes[1].name, axes[1].ticks);
+            yAxis = new AxisDetails("y", coords.allYFields, coords.yCategorical, axes[1].name, axes[1].ticks, axes[1].grid);
         else
-            yAxis = new AxisDetails("y", new Field[0], coords.yCategorical, null, 9999);
+            yAxis = new AxisDetails("y", new Field[0], coords.yCategorical, null, 9999, false);
 
         // Map the dimension to the physical location on screen
         if (this.coords == Coordinates.transposed) {
@@ -202,7 +202,7 @@ public class D3ScaleBuilder {
 
     private int legendWidth() {
         if (!needsLegends()) return 0;
-        AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical(), null, 9999);
+        AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical(), null, 9999, false);
         int spaceNeededForTicks = 32 + legendAxis.maxCategoryWidth();
         int spaceNeededForTitle = colorLegendField.label.length() * 7;                // Assume 7 pixels per character
         return 6 + Math.max(spaceNeededForTicks, spaceNeededForTitle);                // Add some spacing
@@ -382,12 +382,18 @@ public class D3ScaleBuilder {
             out.onNewLine().add("axes.select('g.axis.x').call(axis_bottom)");
             if (hAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
+            if (hAxis.hasGrid)
+                out.onNewLine().add("BrunelD3.makeGrid(gridGroup, scale_x, geom.inner_height, true)")
+                        .endStatement();
         }
 
         if (vAxis.exists()) {
             out.onNewLine().add("axes.select('g.axis.y').call(axis_left)");
             if (vAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
+            if (vAxis.hasGrid)
+                out.onNewLine().add("BrunelD3.makeGrid(gridGroup, scale_y, geom.inner_width, false)")
+                        .endStatement();
         }
         out.indentLess().add("}").ln();
     }
@@ -753,23 +759,33 @@ public class D3ScaleBuilder {
 
         final int ticks;
         final String name;
+        final boolean grid;
 
         private AxisSpec() {
             ticks = 9999;
             name = null;
+            grid = false;
         }
 
-        public AxisSpec(int ticks, String name) {
+        public AxisSpec(int ticks, String name, boolean grid) {
             this.ticks = ticks;
             this.name = name;
+            this.grid = grid;
         }
 
         public AxisSpec merge(Param[] params) {
             AxisSpec result = this;
             for (Param p : params) {
-                if (p.type() == Type.number)
-                    result = new AxisSpec(Math.min((int) p.asDouble(), result.ticks), result.name);
-                if (p.type() == Type.string) result = new AxisSpec(result.ticks, p.asString());
+                if (p.type() == Type.number) {
+                    int newTicks = Math.min((int) p.asDouble(), result.ticks);
+                    result = new AxisSpec(newTicks, result.name, result.grid);
+                } else if (p.type() == Type.string) {
+                    String newTitle = p.asString();
+                    result = new AxisSpec(result.ticks, newTitle, result.grid);
+                } else if (p.type() == Type.option) {
+                    if ("grid".equals(p.asString()))
+                        result = new AxisSpec(result.ticks, result.name, true);
+                }
             }
             return result;
         }

@@ -12,10 +12,10 @@ sizedBar	    :: bar x($1) y(#count) size($2:100) color($2:blue) mean($2) sort(#c
 
 #### The Tests
 
-colorScatter baseball Age HomeRunRate Salary        :: pass
-colorScatter whiskey Rating Price Category          :: pass     :: Note the log Y axis
-colorScatter cpi Date ALL ALL                       :: pass     :: Leaves margins at left and right
-colorScatter cpi Date Date ALL                      :: pass
+colorScatter baseball Age HomeRunRate Salary / axes(x:grid, y:grid)        :: pass
+colorScatter whiskey Rating Price Category / axes(x:grid, y:grid)          :: pass     :: Note the log Y axis
+colorScatter cpi Date ALL ALL / axes(x:grid, y:grid)                       :: pass     :: Leaves margins at left and right
+colorScatter cpi Date Date ALL / axes(x:grid, y:grid)                      :: pass
 
 colorScatter whiskey Country Brand Rating           :: pass
 colorScatter whiskey Category Country #count        :: pass
