@@ -95,7 +95,7 @@ public class Accessibility {
     }
 
     /**
-     * Label ane element group as a region
+     * Label an element group as a region
      *
      * @param structure the element structure
      * @param out       writes to this
