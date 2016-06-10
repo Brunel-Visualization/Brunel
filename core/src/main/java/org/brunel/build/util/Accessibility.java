@@ -91,7 +91,7 @@ public class Accessibility {
      */
     public static void addRegion(ChartStructure structure, ScriptWriter out, String label) {
         if (structure.accessible)
-            out.add(".attr('role', 'region').attr('aria-label', '" + label + "')");
+            out.add(".attr('role', 'region').attr('aria-label', " + Data.quote(label) + ")");
     }
 
     /**
@@ -102,8 +102,8 @@ public class Accessibility {
      */
     public static void addElementInformation(ElementStructure structure, ScriptWriter out) {
         if (structure.chart.accessible)
-            out.add(".attr('role', 'region').attr('aria-label', '"
-                    + makeVisSingleLabel(structure.vis) + "')");
+            out.add(".attr('role', 'region').attr('aria-label', "
+                    + Data.quote(makeVisSingleLabel(structure.vis)) + ")");
     }
 
     protected static String makeVisSingleLabel(VisSingle vis) {
