@@ -18,16 +18,19 @@
 
 <H3>Titles and Footnotes</H3>
 <p>
-	The <code>title</code> command allows both titles and footnotes to be added to a graph.  Options 
-	are used to denote a title (<code>header</code>)vs. a footnote (<code>footer</code>). Style settings
-	can be used to control the appearance and placement. References to field names are also supported.  
+    The <code>title</code> command allows both titles and footnotes to be added to a graph. Options
+    are used to denote a title (<code>header</code>)vs. a footnote (<code>footer</code>). Style settings
+    can be used to control the appearance and placement. References to field names are also supported.
 </p>
 
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per Region")</a></p>
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per ", region)</a></p>
-<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per Region", "US Regions":footer)</a></p>
-<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per Region", "US Regions":footer) style('.footer {label-location:left} .header {label-location:left}')</a></p>
-<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per Region", "US Regions":footer) style('.header {fill:orange}')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per Region", "US
+    Regions":footer)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per Region", "US
+    Regions":footer) style('.footer {label-location:left} .header {label-location:left}')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per Region", "US
+    Regions":footer) style('.header {fill:orange}')</a></p>
 
 <H3>Axes</H3>
 <p>
@@ -40,13 +43,15 @@
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(y)</a></p>
 
 <p>
-    In addition, the <code>x</code> and <code>y</code> options can take string and/or numeric parameters.
-The numbers give a hint as to the number of ticks desired on a numeric axis, and the string sets the title for
-the axis. The empty string suppresses the axis
+    In addition, the <code>x</code> and <code>y</code> options can take string and/or numeric parameters,
+    as well as the option to ask for a grid.
+    The numbers give a hint as to the number of ticks desired on a numeric axis; the string sets the title for
+    the axis(an empty string suppresses the axis title). Adding a `grid` option displays a grid for the tickas on that
+    axis.
 </p>
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(x:'Geo Area')</a></p>
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(y:2:'Numbers', x:10)</a></p>
-
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(y:20:grid:'Numbers', x:10)</a></p>
 
 <H3>Legends</H3>
 <p>
@@ -82,6 +87,8 @@ the axis. The empty string suppresses the axis
     bold')</a></p>
 <p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('.axis .tick line
     {stroke-width:5;stroke:red} .axis .title {font-size:30px ;fill:cyan}')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(Summer) y(Population) axes(x:grid, y:grid)
+    style('.grid{opacity:1} .grid.y {stroke-dasharray:5,5} .grid.x {stroke-width:40px; opacity:0.2}')</a></p>
 
 <p>
     When there are multiple elements in a chart, if you use the simple form of style without a target,
@@ -97,27 +104,35 @@ the axis. The empty string suppresses the axis
     style sheet. However note:
 </p>
 <ul>
-    <li>Brunel reads the styles and uses the values for initial layout.; for example it may reserve space depending on font size.
-    This expands the list of possible style attributes, notably adding <code>symbol</code> and <code>size</code> as
-    attributes that can be specified.</li>
+    <li>Brunel reads the styles and uses the values for initial layout.; for example it may reserve space depending on
+        font size.
+        This expands the list of possible style attributes, notably adding <code>symbol</code> and <code>size</code> as
+        attributes that can be specified.
+    </li>
     <li>However, Brunel does not support all the complexities of CSS. If you stick to element names and paths and
-    combining them with commas and hierarchies, you should be fine.</li>
+        combining them with commas and hierarchies, you should be fine.
+    </li>
     <li>Local overrides (with the style command) are given them CSS "!important" tag. This means they will completely
-    override any other definition. So if you do <code>style('* {fill:blue}')</code> it will turn all of brunel blue ...</li>
+        override any other definition. So if you do <code>style('* {fill:blue}')</code> it will turn all of brunel blue
+        ...
+    </li>
     <li>SVG CSS is used, so we do not use "color" for color -- instead use "fill" or "stroke"</li>
 </ul>
 <p>
-    Brunel also extends these CSS definitions with <code>size</code>, which allows you to set the size of SVG elements, and
-    <code>label-location</code>, which can be defined for either an element or a label, and allows you to change where a label is
+    Brunel also extends these CSS definitions with <code>size</code>, which allows you to set the size of SVG elements,
+    and
+    <code>label-location</code>, which can be defined for either an element or a label, and allows you to change where a
+    label is
     located relative to the shape. The valid values are: <code>left, right, top, bottom, middle</code>.
 </p>
 
-<p class="examples"><a onClick="showAction(this.text)"><p class="examples"><a onClick="showAction(this.text)">line x(state) y(summer) style('stroke:red') + line x(state)
+<p class="examples"><a onClick="showAction(this.text)"><p class="examples"><a onClick="showAction(this.text)">line
+    x(state) y(summer) style('stroke:red') + line x(state)
     y(winter) style('stroke:blue')</a></p>
 
 <H4>Group Hierarchy for CSS</H4>
 <p>The hierarchy for CSS purposes is given below. This is not written in stone and may change slightly in the future.
-Be careful of depending on it too strongly</p>
+    Be careful of depending on it too strongly</p>
 <pre>
   svg.brunel#id             -- the top level svg container with an id as given by the application
     g.chart1                -- the first chart
@@ -140,6 +155,10 @@ Be careful of depending on it too strongly</p>
             text            -- tick mark label
         g.yaxis             -- y axis
           ...
+
+      g.grid
+        line.grid.x         -- grid lines for the x axis (vertical grid lines, usually)
+        line.grid.y         -- grid lines for the y axis (horizontal grid lines, usually)
 
       g.legend              -- axes for the first chart
         text.title          -- legend title
