@@ -41,7 +41,8 @@ public class SampleApp {
     public static void main(String[] args) throws Exception {
 
         // Process the commands:
-        String command = "bubble size(#count) color(country) label(country, #count) tooltip(brand) list(brand)";
+        String command = "bubble size(#count) color(country) label(country, #count) tooltip(brand) list(brand) " +
+                "style ('.background {fill:#222244}')";
         if (args.length > 0) command = args[0];
 
         String source = "http://brunel.mybluemix.net/sample_data/whiskey.csv";
@@ -71,6 +72,12 @@ public class SampleApp {
 
         // Add in style sheet definitions
         out.println(builder.makeStyleSheets());
+
+        String css = builder.getStyleOverrides();
+        if (!css.isEmpty()) {
+            out.println("\t<style>\n\t\t" + css + "\n\t</style>\n");
+        }
+
         out.println("</HEAD><BODY>");
         out.println("<svg id=\"visualization\" width=\"600\" height=\"600\"></svg>");
 
