@@ -278,11 +278,12 @@ var BrunelD3 = (function () {
     }
 
 
-    function makeTextSpan(loc, parent) {
+    function makeTextSpan(loc, parent, content) {
         var span = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
         span.setAttribute('class', 'label');
         span.setAttribute('x', loc.x);
         span.setAttribute('y', loc.y);
+        span.textContent = content;
         parent.appendChild(span);
         return span;
     }
@@ -305,24 +306,37 @@ var BrunelD3 = (function () {
     }
 
     function wrapInBox(textItem, text, loc) {
+        // Remove existing spans
         while (textItem.firstChild) textItem.removeChild(textItem.firstChild);
-        var words = text.split(/\s+/), word, content = [], height, tspan, i;
+
+        // words -- the array of words we try to add, one at a time
+        // content -- the array of words we are trying to add to the current span
+        // height -- the height of a single wrapped line
+        // W -- the width of the box into which the text must fit
+        var words = text.split(/\s+/), content = [], height, tspan, W = loc.box.width - 2,
+            word, i;
 
         for (i = 0; i < words.length; i++) {
-            tspan = tspan || makeTextSpan(loc, textItem);
             word = words[i];
             content.push(word);
-            tspan.textContent = content.join(" ");
-            height = height || textItem.getBBox().height;
+            if (!tspan) {
+                tspan = makeTextSpan(loc, textItem, word);
+                height = tspan.getBoundingClientRect().height
+            } else {
+                tspan.textContent = content.join(" ");
+            }
+
+            // Too many items; we cannot add the last item
             if (textItem.childNodes.length * height > loc.box.height) {
                 textItem.removeChild(tspan);
                 break;
             }
 
-            if (tspan.getComputedTextLength() > loc.box.width - 4) {
+            // If it doesn't fit, remove the content and try to add ellipses
+            if (tspan.getComputedTextLength() > W) {
                 content.pop();
-                if (content.length == 0) {
-                    if (!addEllipses(tspan, word, loc.box.width)) {
+                if (!content.length) {
+                    if (!addEllipses(tspan, word, W-4)) {
                         textItem.removeChild(tspan);
                         break;
                     }
@@ -1174,6 +1188,40 @@ var BrunelD3 = (function () {
     }
 
 
+    // Makes a gridline.
+    // interior --  the svg group to add to
+    // scale -- the scale to use
+    // size -- the width or height of the line to draw
+    // x -- if true, for the x axis (vertical lines)
+    function makeGrid(interior, scale, size, x) {
+        var selection = interior.selectAll("line.grid." + (x ? "x" : "y"))
+        var grid = selection.data(scale.ticks());
+        grid.enter().append("line").attr("class", "grid " + (x ? "x" : "y"));
+        grid.exit().remove();
+
+        if (x)
+            grid.attr({
+                "y1": 0, "y2": size,
+                "x1": function (d) {
+                    return scale(d);
+                },
+                "x2": function (d) {
+                    return scale(d);
+                }
+            });
+        else
+            grid.attr({
+                "x1": 0, "x2": size,
+                "y1": function (d) {
+                    return scale(d);
+                },
+                "y2": function (d) {
+                    return scale(d);
+                }
+            });
+    }
+
+
     // Expose these methods
     return {
         'makeData': makeDataset,
@@ -1199,6 +1247,7 @@ var BrunelD3 = (function () {
         'time': time,
         'interpolate': interpolate,
         'animateBuild': animateBuild,
+        'makeGrid': makeGrid,
         'showSelect': showSelect
     }
 

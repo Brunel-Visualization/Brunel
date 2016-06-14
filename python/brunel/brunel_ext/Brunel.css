@@ -24,6 +24,10 @@
     stroke: none;
 }
 
+.brunel .grid *, .brunel .axis * {
+    shape-rendering:crispEdges
+}
+
 .brunel .title {
     font-weight: bold;
     font-size: 14px;
