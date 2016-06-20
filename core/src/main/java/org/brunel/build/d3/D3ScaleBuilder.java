@@ -382,20 +382,34 @@ public class D3ScaleBuilder {
             out.onNewLine().add("axes.select('g.axis.x').call(axis_bottom)");
             if (hAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
-            if (hAxis.hasGrid)
-                out.onNewLine().add("BrunelD3.makeGrid(gridGroup, scale_x, geom.inner_height, true)")
-                        .endStatement();
         }
 
         if (vAxis.exists()) {
             out.onNewLine().add("axes.select('g.axis.y').call(axis_left)");
             if (vAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
-            if (vAxis.hasGrid)
-                out.onNewLine().add("BrunelD3.makeGrid(gridGroup, scale_y, geom.inner_width, false)")
-                        .endStatement();
         }
+
+        // The gridlines are with an untransposed group, which makes this logic
+        // much harder -- the 'hAxis' is on the horizontal, but it could be for the
+        // 'y' scale, and the widths are transposed, so they need inverting (when
+        // we want the transposed height, we as for the width)
+
+        if (hAxis.hasGrid) {
+            if (hAxis.isX()) addGrid("scale_x", "geom.inner_height", true);
+            else  addGrid("scale_y", "geom.inner_width", true);
+        }
+        if (vAxis.hasGrid) {
+            if (vAxis.isX()) addGrid("scale_x", "geom.inner_height", false);
+            else  addGrid("scale_y", "geom.inner_width", false);
+        }
+
         out.indentLess().add("}").ln();
+    }
+
+    private void addGrid(String scaleName, String extent, boolean isX) {
+        out.onNewLine().add("BrunelD3.makeGrid(gridGroup, " + scaleName + ", " + extent + ", " + isX + " )")
+                .endStatement();
     }
 
     private void addRotateTicks() {

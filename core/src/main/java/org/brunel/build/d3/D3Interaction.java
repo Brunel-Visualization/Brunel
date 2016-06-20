@@ -99,7 +99,7 @@ public class D3Interaction {
 
         p = vis.tInteraction.get(Interaction.call);
         if (p != null)
-            out.add("selection.on('" + eventName(p) + "', " + functionName(p, dataBuilder) +" )").endStatement();
+            out.add("selection.on('" + eventName(p) + "', " + functionName(p, dataBuilder) + " )").endStatement();
 
     }
 
@@ -138,10 +138,16 @@ public class D3Interaction {
                     .endStatement();
             // Add an overlay rectangle for zooming that will trap all mouse events and use them for pan/zoom
             out.add("var zoom = d3.behavior.zoom().on('zoom', function() {build(-1)} )").endStatement();
-            out.add("overlay.append('rect').attr('class', 'overlay')")
-                    .addChained("attr('width', geom.inner_width)")
-                    .addChained("attr('height', geom.inner_height)")
-                    .addChained("call(zoom)").endStatement();
+
+            out.add("overlay.append('rect').attr('class', 'overlay')");
+            if (scales.coords == Coordinates.transposed) {
+                out.addChained("attr('width', geom.inner_height)")
+                        .addChained("attr('height', geom.inner_width)");
+            } else {
+                out.addChained("attr('width', geom.inner_width)")
+                        .addChained("attr('height', geom.inner_height)");
+            }
+            out.addChained("call(zoom)").endStatement();
         }
     }
 

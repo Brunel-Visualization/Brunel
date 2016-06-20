@@ -64,6 +64,10 @@ class AxisDetails {
 
     }
 
+    public boolean isX() {
+        return scale.endsWith("x");
+    }
+
     private boolean isInMillions(Field[] definedFields) {
         for (Field f : definedFields) {
             if (!f.isDate() && f.max() != null && f.max() - f.min() > 2e6) return true;
