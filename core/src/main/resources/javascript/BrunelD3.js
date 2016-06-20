@@ -1194,30 +1194,31 @@ var BrunelD3 = (function () {
     // size -- the width or height of the line to draw
     // x -- if true, for the x axis (vertical lines)
     function makeGrid(interior, scale, size, x) {
-        var selection = interior.selectAll("line.grid." + (x ? "x" : "y"))
-        var grid = selection.data(scale.ticks());
+        var f, data;
+        if (scale.ticks) {
+            // Transform the ticks
+            data = scale.ticks();
+            f = function(d) {return scale(d)};
+        } else {
+            // Use raw range
+            data = scale.range();
+            f = function(d) {return d};
+        }
+
+        var selection = interior.selectAll("line.grid." + (x ? "x" : "y"));
+        var grid = selection.data(data);
         grid.enter().append("line").attr("class", "grid " + (x ? "x" : "y"));
         grid.exit().remove();
 
         if (x)
             grid.attr({
                 "y1": 0, "y2": size,
-                "x1": function (d) {
-                    return scale(d);
-                },
-                "x2": function (d) {
-                    return scale(d);
-                }
+                "x1": f, "x2": f
             });
         else
             grid.attr({
                 "x1": 0, "x2": size,
-                "y1": function (d) {
-                    return scale(d);
-                },
-                "y2": function (d) {
-                    return scale(d);
-                }
+                "y1": f, "y2": f
             });
     }
 
