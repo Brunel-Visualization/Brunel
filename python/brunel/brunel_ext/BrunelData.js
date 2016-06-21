@@ -2956,7 +2956,7 @@ $.extend(V.modify_Summarize, V.modify_DataOperation);
 $.copy(V.modify_Summarize, {
 
     transform: function(base, command) {
-        var _i, baseField, containsCount, containsRow, dimensions, fields, measureField,
+        var _i, baseField, containsCount, containsRow, containsSelection, dimensions, fields, measureField,
             measures, op, operations, percentBase, s, values;
         if (base.rowCount() == 0) return base;
         operations = V.modify_DataOperation.map(command);
@@ -2966,9 +2966,11 @@ $.copy(V.modify_Summarize, {
         percentBase = new $.List();
         containsCount = false;
         containsRow = false;
+        containsSelection = false;
         for(_i=$.iter(operations), op=_i.current; _i.hasNext(); op=_i.next()) {
             if (op[0] == "#count") containsCount = true;
             if (op[0] == "#row") containsRow = true;
+            if (op[0] == "#selection") containsSelection = true;
             values = op[1].split(":");
             baseField = base.field(values[0].trim());
             if (values.length == 1) {
@@ -2990,6 +2992,8 @@ $.copy(V.modify_Summarize, {
             measures.add(new V.summary_MeasureField(base.field("#count"), "#count", "sum"));
         if (!containsRow)
             measures.add(new V.summary_MeasureField(base.field("#row"), "#row", "list"));
+        if (!containsSelection)
+            measures.add(new V.summary_MeasureField(base.field("#selection"), "#selection", "mode"));
         s = new V.modify_Summarize(measures, dimensions, percentBase, base.rowCount());
         fields = s.make();
         return base.replaceFields(fields);

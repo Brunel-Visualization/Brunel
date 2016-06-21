@@ -432,8 +432,9 @@ public class D3Builder extends AbstractBuilder {
             Collections.addAll(needed, vis.usedFields(true));
         }
 
-        // We always want the row field
+        // We always want the row field and selection
         needed.add("#row");
+        needed.add("#selection");
 
         // Convert to map for easy lookup
         Map<String, Integer> result = new HashMap<>();

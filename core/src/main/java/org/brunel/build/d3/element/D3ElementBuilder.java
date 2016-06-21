@@ -109,6 +109,8 @@ public class D3ElementBuilder {
 
         out.add("BrunelD3.trans(selection,transitionMillis)");
 
+        out.addChained("classed('selected', function(d) { return data.$selection(d) == '\u2713' })");
+
         if (diagram == null || diagram instanceof GeoMap) {
             writeCoordinateDefinition(details);
             writeCoordinateLabelingAndAesthetics(details);
