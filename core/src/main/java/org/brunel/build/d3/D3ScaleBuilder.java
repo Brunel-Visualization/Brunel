@@ -484,15 +484,16 @@ public class D3ScaleBuilder {
 
         // Build a combined scale field and force the desired transform on it for x and y dimensions
         Field scaleField = fields.length == 1 ? field : combineNumericFields(fields);
+        ChartCoordinates coordinates = structure.coordinates;
         if (name.equals("x")) {
             // We need to copy it as we are modifying it
             if (scaleField == field) scaleField = field.rename(field.name, field.label);
-            scaleField.set("transform", structure.coordinates.xTransform);
+            scaleField.set("transform", coordinates.xTransform);
         }
         if (name.equals("y")) {
             // We need to copy it as we are modifying it
             if (scaleField == field) scaleField = field.rename(field.name, field.label);
-            scaleField.set("transform", structure.coordinates.yTransform);
+            scaleField.set("transform", coordinates.yTransform);
         }
 
         // We util a nice scale only for rectangular coordinates
@@ -509,6 +510,10 @@ public class D3ScaleBuilder {
         NumericScale detail = Auto.makeNumericScale(scaleField, nice, padding, includeZero, 9, false);
         double min = detail.min;
         double max = detail.max;
+
+        Double[] extent = name.equals("x") ? coordinates.xExtent : coordinates.yExtent;
+        if (extent != null && extent[0] != null) min = extent[0];
+        if (extent != null && extent[1] != null) max = extent[1];
 
         Object[] divs = new Object[numericDomainDivs];
         if (field.isDate()) {
@@ -528,8 +533,8 @@ public class D3ScaleBuilder {
             // Some scales (like for an area size) have a default transform (e.g. root) and we
             // util that if the field wants a linear scale.
             String transform = null;
-            if (name.equals("x")) transform = structure.coordinates.xTransform;
-            if (name.equals("y")) transform = structure.coordinates.yTransform;
+            if (name.equals("x")) transform = coordinates.xTransform;
+            if (name.equals("y")) transform = coordinates.yTransform;
 
             // Size must not get a transform as it will seriously distort things
             if (purpose == ScalePurpose.size) transform = defaultTransform;

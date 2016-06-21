@@ -26,6 +26,7 @@ import org.brunel.model.VisSingle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -36,6 +37,7 @@ public class ChartCoordinates {
     public final Field[] allXFields, allYFields, allXClusterFields;
     public final String xTransform, yTransform;
     public final boolean xCategorical, yCategorical;
+    public final Double[] xExtent, yExtent;                         // User-provided data overrides for the extents
 
     private final Map<VisSingle, Field[]> x = new HashMap<>();
     private final Map<VisSingle, Field[]> y = new HashMap<>();
@@ -44,20 +46,41 @@ public class ChartCoordinates {
 
         String xTransform = null, yTransform = null;                // If defined by the VisSingle
 
+        double xMin = Double.POSITIVE_INFINITY, yMin = Double.POSITIVE_INFINITY;
+        double xMax = Double.NEGATIVE_INFINITY, yMax = Double.NEGATIVE_INFINITY;
+
         ArrayList<Field> allX = new ArrayList<>();
         ArrayList<Field> allY = new ArrayList<>();
         ArrayList<Field> allCluster = new ArrayList<>();
         for (int i = 0; i < elements.length; i++) {
-            Field[] visXFields = getXFields(elements[i], elementData[i]);
-            Field[] visYFields = getYFields(elements[i], elementData[i]);
-            if (xTransform == null) xTransform = getDefinedXTransform(elements[i]);
-            if (yTransform == null) yTransform = getDefinedYTransform(elements[i]);
-            x.put(elements[i], visXFields);
-            y.put(elements[i], visYFields);
+            VisSingle vis = elements[i];
+            Field[] visXFields = getXFields(vis, elementData[i]);
+            Field[] visYFields = getYFields(vis, elementData[i]);
+
+            if (xTransform == null) xTransform = getDefinedXTransform(vis);
+            if (yTransform == null) yTransform = getDefinedYTransform(vis);
+
+            x.put(vis, visXFields);
+            y.put(vis, visYFields);
+
+            xMin = Math.min(xMin, getDefinedExtent(vis.fX, true));
+            yMin = Math.min(yMin, getDefinedExtent(vis.fY, true));
+            xMax = Math.max(xMax, getDefinedExtent(vis.fX, false));
+            yMax = Math.max(yMax, getDefinedExtent(vis.fY, false));
+
             if (visXFields.length > 0) allX.add(visXFields[0]);             // Only first X field (rest are clustered)
             if (visXFields.length > 1) allCluster.add(visXFields[1]);       // Add the clustered X field
             Collections.addAll(allY, visYFields);                           // All Y fields (used in ranges)
         }
+
+        if (Double.isInfinite(xMin) && Double.isInfinite(xMax))
+            xExtent = null;
+        else
+            xExtent = new Double[]{Double.isInfinite(xMin) ? null : xMin, Double.isInfinite(xMax) ? null : xMax};
+        if (Double.isInfinite(yMin) && Double.isInfinite(yMax))
+            yExtent = null;
+        else
+            yExtent = new Double[]{Double.isInfinite(yMin) ? null : yMin, Double.isInfinite(yMax) ? null : yMax};
 
         this.allXFields = allX.toArray(new Field[allX.size()]);
         this.allYFields = allY.toArray(new Field[allY.size()]);
@@ -76,6 +99,26 @@ public class ChartCoordinates {
             this.yTransform = yCategorical ? "linear" : chooseTransform(allYFields);
         else
             this.yTransform = yTransform;
+    }
+
+    private double getDefinedExtent(List<Param> items, boolean min) {
+        for (Param p : items)
+            if (p.isField() && p.hasModifiers()) {
+                for (Param q : p.modifiers()) {
+                    if (q.type() == Param.Type.list) {
+                        List<Param> extent = q.asList();
+                        if (extent.size() == 2) {
+                            Param e = extent.get(min ? 0 : 1);
+                            try {
+                                return e.asDouble();
+                            } catch (Exception ignored) {
+                                // Bad value or missing-- ignore it
+                            }
+                        }
+                    }
+                }
+            }
+        return min ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
     }
 
     private Field[] getXFields(VisSingle vis, Dataset data) {
@@ -104,7 +147,7 @@ public class ChartCoordinates {
         String s = vis.fY.get(0).asField();
         if (vis.stacked) {
             // Stacked has been handled by adding two new fields, so add them
-            return data.fieldArray(s + "$lower",s + "$upper");
+            return data.fieldArray(s + "$lower", s + "$upper");
         } else {
             // Simple case, a single y field
             return data.fieldArray(s);
@@ -113,16 +156,36 @@ public class ChartCoordinates {
 
     private String getDefinedXTransform(VisSingle v) {
         for (Param p : v.fX)
-            if (p.isField() && p.hasModifiers()) return p.firstModifier().asString();
+            if (p.isField() && p.hasModifiers()) {
+                String type = extractTransform(p);
+                if (type != null) return type;
+            }
+        return null;
+    }
+
+    private String extractTransform(Param p) {
+        for (Param q : p.modifiers()) {
+            String type = q.asString();
+            if (type.equals("log") || type.equals("linear") || type.equals("root")) return type;
+        }
         return null;
     }
 
     private String getDefinedYTransform(VisSingle v) {
         for (Param p : v.fY)
-            if (p.isField() && p.hasModifiers()) return p.firstModifier().asString();
+            if (p.isField() && p.hasModifiers()) {
+                String s = extractTransform(p);
+                if (s != null) return s;
+            }
         if (v.fRange != null) {
-            if (v.fRange[0].isField() && v.fRange[0].hasModifiers()) return v.fRange[0].firstModifier().asString();
-            if (v.fRange[1].isField() && v.fRange[1].hasModifiers()) return v.fRange[1].firstModifier().asString();
+            if (v.fRange[0].isField() && v.fRange[0].hasModifiers()) {
+                String s = extractTransform(v.fRange[0]);
+                if (s != null) return s;
+            }
+            if (v.fRange[1].isField() && v.fRange[1].hasModifiers()) {
+                String s = extractTransform(v.fRange[1]);
+                if (s != null) return s;
+            }
         }
         return null;
     }
