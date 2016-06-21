@@ -54,8 +54,8 @@ public class ModelUtil {
     /**
      * Returns the size of the element as defined by the style
      *
-     * @param vis the visualization to look for definitions in
-     * @param tag height, width, size -- the name of the size field to look for
+     * @param vis     the visualization to look for definitions in
+     * @param tag     height, width, size -- the name of the size field to look for
      * @param classes the classes describing the element (bar, line, etc.)
      * @return a Size describing it
      */
@@ -135,8 +135,9 @@ public class ModelUtil {
      *
      * @param vis the visualization to look for definitions in
      */
-    public static String getTitlePosition(VisSingle vis, String location) {
-        String s = getStyle(vis, new StyleTarget(null, STYLE_TOP, location), "label-location");
+    public static String getTitlePosition(VisSingle vis, String[] parentClasses, String... location) {
+        StyleTarget parent = parentClasses == null ? STYLE_TOP : new StyleTarget(null, STYLE_TOP, parentClasses);
+        String s = getStyle(vis, new StyleTarget(null, parent, location), "label-location");
         return s == null ? "center" : s;
     }
 
@@ -146,8 +147,9 @@ public class ModelUtil {
      * @param vis the visualization to look for definitions in
      * @return a Size describing it
      */
-    public static Size getTitleSize(VisSingle vis, String location) {
-        String s = getStyle(vis, new StyleTarget("text", STYLE_TOP, location), "font-size");
+    public static Size getTitleSize(VisSingle vis, String[] parentClasses, String... location) {
+        StyleTarget parent = parentClasses == null ? STYLE_TOP : new StyleTarget(null, STYLE_TOP, parentClasses);
+        String s = getStyle(vis, new StyleTarget("text", parent, location), "font-size");
         return decompose(s);
     }
 

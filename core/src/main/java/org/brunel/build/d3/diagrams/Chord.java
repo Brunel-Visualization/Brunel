@@ -51,7 +51,7 @@ class Chord extends D3Diagram {
 
         // take arc path font size into account, adding a bit of padding, to define the arc width
         Size labelSize = ModelUtil.getAxisLabelFontSize(vis);
-        double arcWidth = labelSize.valueInPixels(8);
+        double arcWidth = labelSize.valueInPixels(8) * 1.2;
         out.add("var arc_width =", Data.formatNumeric(arcWidth, false), ";").comment("Width of exterior arc");
         out.add("function keyFunction(d) { return d.source.index + '|' + d.target.index };").comment(" special key function for the edges");
 
@@ -68,7 +68,7 @@ class Chord extends D3Diagram {
 
         // We now need to add the arcs on the outside for the groups
         out.onNewLine().ln().comment("Add in the arcs on the outside for the groups");
-        out.add("diagramExtras.attr('class', 'diagram chord axis')").endStatement();
+        out.add("diagramExtras.attr('class', 'diagram chord arcs')").endStatement();
 
         // The arcs themselves
         out.add("var arcGroup = diagramExtras.selectAll('path').data(chord.groups)").endStatement();
@@ -78,7 +78,7 @@ class Chord extends D3Diagram {
                 .addChained("attr('id', function(d, i) { return 'arc' + i; })").endStatement();
 
         out.add("var arcText = diagramExtras.selectAll('text').data(chord.groups)").endStatement();
-        out.add("arcText.enter().append('text').attr('class', 'axis label')").endStatement();
+        out.add("arcText.enter().append('text').attr('class', 'label')").endStatement();
 
         out.add("arcText.filter(function() { return !this.firstChild } )").comment("Only add paths if nothing yet added")
                 .addChained("attr('dy', arc_width*0.72).attr('class', 'label')")

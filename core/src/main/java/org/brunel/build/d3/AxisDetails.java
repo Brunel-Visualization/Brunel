@@ -16,6 +16,7 @@
 
 package org.brunel.build.d3;
 
+import org.brunel.build.d3.titles.AxisTitleBuilder;
 import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
@@ -28,7 +29,7 @@ import java.util.List;
 /**
  * Calculates information on how to display axes
  */
-class AxisDetails {
+public class AxisDetails {
 
     public final String title;                         // Title for the axis
     public final String scale;                         // Name for the scale to use for this axis
@@ -45,6 +46,7 @@ class AxisDetails {
     private final boolean categorical;                 // True if the axis is categorical
     private final boolean inMillions;                  // True if the fields values are nicely shown in millions
     public final boolean hasGrid;                      // true if gridlines are desired
+    public AxisTitleBuilder titleBuilder;              // buidls the title for this axis
 
     /* Constructs the axis for the given fields */
     public AxisDetails(String dimension, Field[] definedFields, boolean categorical, String userTitle, int tickCount, boolean grid) {
@@ -59,9 +61,7 @@ class AxisDetails {
             this.title = title(fields);
 
         this.inMillions = !categorical && isInMillions(definedFields);
-
         this.hasGrid = grid;
-
     }
 
     public boolean isX() {
@@ -206,7 +206,7 @@ class AxisDetails {
 
     /* Space needed for title */
     private int estimatedTitleHeight() {
-        return title == null ? 0 : 16;
+        return (int) titleBuilder.verticalSpace();
     }
 
     public int estimatedSimpleSizeWhenHorizontal() {

@@ -100,6 +100,10 @@ public class StyleSheet {
         sorted = false;
     }
 
+    public boolean isEmpty() {
+        return entries.isEmpty();
+    }
+
     public void add(String text) {
         add(StyleFactory.instance().makeStyleSheet(text));
     }

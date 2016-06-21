@@ -20,6 +20,7 @@ import org.brunel.action.Param;
 import org.brunel.build.AbstractBuilder;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.d3.element.D3ElementBuilder;
+import org.brunel.build.d3.titles.ChartTitleBuilder;
 import org.brunel.build.data.DataTransformParameters;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
@@ -125,8 +126,8 @@ public class D3Builder extends AbstractBuilder {
         out.indentMore();
 
         double[] margins = scalesBuilder.marginsTLBR();
-        D3TitleBuilder title = new D3TitleBuilder(structure, "header");
-        D3TitleBuilder sub = new D3TitleBuilder(structure, "footer");
+        ChartTitleBuilder title = new ChartTitleBuilder(structure, "header");
+        ChartTitleBuilder sub = new ChartTitleBuilder(structure, "footer");
         margins[0] += title.verticalSpace();
         margins[2] += sub.verticalSpace();
         scalesBuilder.setAdditionalHAxisOffset(sub.verticalSpace());
@@ -144,8 +145,8 @@ public class D3Builder extends AbstractBuilder {
         writeMainGroups(structure);
         for (D3ElementBuilder builder : elementBuilders) builder.writePerChartDefinitions();
 
-        title.writeContent(out);
-        sub.writeContent(out);
+        title.writeContent("chart", out);
+        sub.writeContent("chart", out);
 
         // Diagrams do not need scales; everything else does
         if (structure.diagram == null) {
@@ -461,7 +462,6 @@ public class D3Builder extends AbstractBuilder {
             writeFieldName("key", keys);
         }
 
-
         writeFieldName("color", vis.fColor);
         writeFieldName("size", vis.fSize);
         writeFieldName("opacity", vis.fOpacity);
@@ -483,12 +483,11 @@ public class D3Builder extends AbstractBuilder {
         if (out.changedSinceMark()) out.add(",");
         List<String> names = new ArrayList<>();
         for (Object p : fieldNames) {
-            if (p instanceof Param) names.add(((Param)p).asField());
+            if (p instanceof Param) names.add(((Param) p).asField());
             else names.add(p.toString());
         }
         out.onNewLine().add(name, ":").at(24).add("[").addQuotedCollection(names).add("]");
     }
-
 
     private void writeMainGroups(ChartStructure structure) {
         String chartClassID = "chart" + structure.chartID();                    // The class for our group

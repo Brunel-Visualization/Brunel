@@ -19,6 +19,7 @@ package org.brunel.build.d3;
 import org.brunel.action.Param;
 import org.brunel.action.Param.Type;
 import org.brunel.build.d3.D3Util.DateBuilder;
+import org.brunel.build.d3.titles.AxisTitleBuilder;
 import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.util.Accessibility;
@@ -60,7 +61,8 @@ import java.util.Set;
  */
 public class D3ScaleBuilder {
 
-    public static final double MIN_SIZE_FACTOR = 0.001;
+    private static final double MIN_SIZE_FACTOR = 0.001;
+
     final Coordinates coords;                       // Combined coordinate system derived from all elements
     private final Field colorLegendField;           // Field to use for the color legend
     private final AxisDetails hAxis, vAxis;         // Details for each axis
@@ -68,7 +70,6 @@ public class D3ScaleBuilder {
     private final ChartStructure structure;         // Overall detail on the chart composition
     private final VisSingle[] elements;             // The elements that define the scales used
     private final ScriptWriter out;                 // Write definitions to here
-    private double additionalHOffset;               // Extra space needed to allow for footnotes
 
     public D3ScaleBuilder(ChartStructure structure, double chartWidth, double chartHeight, ScriptWriter out) {
         this.structure = structure;
@@ -102,6 +103,9 @@ public class D3ScaleBuilder {
             vAxis = yAxis;
         }
 
+        hAxis.titleBuilder = new AxisTitleBuilder(structure, hAxis, true);
+        vAxis.titleBuilder = new AxisTitleBuilder(structure, vAxis, false);
+
         int legendWidth = legendWidth();
 
         /*
@@ -128,7 +132,7 @@ public class D3ScaleBuilder {
     }
 
     public void setAdditionalHAxisOffset(double v) {
-        additionalHOffset = v;
+        hAxis.titleBuilder.bottomOffset = v;
     }
 
     private Coordinates makeCombinedCoords() {
@@ -303,14 +307,7 @@ public class D3ScaleBuilder {
         if (!hAxis.exists() && !vAxis.exists()) return;                          // No axes needed
 
         // Define the spaces needed to work in
-        String width = "geom.inner_width";
-        String height = "geom.inner_height";
-        if (coords == Coordinates.transposed) {
-            // They needs swapping
-            String t = width;
-            width = height;
-            height = t;
-        }
+        String height = coords == Coordinates.transposed ? "geom.inner_width" : "geom.inner_height";
 
         // Define the groups for the axes and add titles
         if (hAxis.exists()) {
@@ -318,30 +315,18 @@ public class D3ScaleBuilder {
                     .addChained("attr('transform','translate(0,' + " + height + " + ')')");
             Accessibility.addRegion(structure, out, "Horizontal Axis");
             out.endStatement();
-            if (hAxis.title != null) {
-                // Add the title centered at the bottom
-                out.add("axes.select('g.axis.x').append('text').attr('class', 'title')")
-                        .addChained("attr('text-anchor', 'middle')")
-                        .addChained("attr('x', " + width + "/2)")
-                        .addChained("attr('y', geom.inner_bottom - " + (additionalHOffset + 6) + ")")
-                        .addChained("text(" + Data.quote(hAxis.title) + ")")
-                        .endStatement();
-            }
+
+            // Add the title if necessary
+            hAxis.titleBuilder.writeContent("axes.select('g.axis.x')", out);
         }
         if (vAxis.exists()) {
             out.onNewLine().add("axes.append('g').attr('class', 'y axis')")
                     .addChained("attr('transform','translate(geom.chart_left, 0)')");
             Accessibility.addRegion(structure, out, "Vertical Axis");
             out.endStatement();
-            if (vAxis.title != null) {
-                // Add the title
-                out.add("axes.select('g.axis.y').append('text').attr('class', 'title')")
-                        .addChained("attr('text-anchor', 'middle')")
-                        .addChained("attr('x', -" + height + "/2)")
-                        .addChained("attr('y', 6-geom.inner_left).attr('dy', '0.7em').attr('transform', 'rotate(270)')")
-                        .addChained("text(" + Data.quote(vAxis.title) + ")")
-                        .endStatement();
-            }
+
+            // Add the title if necessary
+            vAxis.titleBuilder.writeContent("axes.select('g.axis.y')", out);
 
         }
 
@@ -397,11 +382,11 @@ public class D3ScaleBuilder {
 
         if (hAxis.hasGrid) {
             if (hAxis.isX()) addGrid("scale_x", "geom.inner_height", true);
-            else  addGrid("scale_y", "geom.inner_width", true);
+            else addGrid("scale_y", "geom.inner_width", true);
         }
         if (vAxis.hasGrid) {
             if (vAxis.isX()) addGrid("scale_x", "geom.inner_height", false);
-            else  addGrid("scale_y", "geom.inner_width", false);
+            else addGrid("scale_y", "geom.inner_width", false);
         }
 
         out.indentLess().add("}").ln();
