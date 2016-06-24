@@ -67,7 +67,7 @@ public class D3Builder extends AbstractBuilder {
     }
 
     private ScriptWriter out;                   // Where to write code
-    public int visWidth, visHeight;              // Overall vis size
+    public int visWidth, visHeight;             // Overall vis size
     private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
     private D3Interaction interaction;          // Builder for interactions
     private D3ElementBuilder[] elementBuilders; // Builder for each element
@@ -367,7 +367,14 @@ public class D3Builder extends AbstractBuilder {
 
     private int enterAnimate(VisItem main, int dataSetCount) {
         if (dataSetCount != 1) return -1;                           // Need a single data set to animate over
-        if (main.getSingle() == null) return -1;                    // Need a single top level vis
+
+        if (main.children() != null) {
+            // Check children
+            for (VisItem child : main.children()) {
+                int v = enterAnimate(child, dataSetCount);
+                if (v >= 0) return v;
+            }
+        }
 
         List<Param> effects = main.getSingle().getSingle().fEffects;
         for (Param p : effects) {

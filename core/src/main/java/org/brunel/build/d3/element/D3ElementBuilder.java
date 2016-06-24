@@ -92,7 +92,9 @@ public class D3ElementBuilder {
         Accessibility.defineElementLabelFunction(structure, out, labelBuilder);
 
         // Set the values of things known to this element
-        out.add("selection = main.selectAll('*').data(" + details.dataSource + ",", getKeyFunction(), ")").endStatement();
+        out.add("selection = main.selectAll('*').data(" + details.dataSource + ",", getKeyFunction(), ")")
+                .addChained("classed('selected', function(d) { return data.$selection(d) == '\u2713' })")
+                .endStatement();
 
         // Define what happens when data is added ('enter')
         out.add("selection.enter().append('" + details.representation.getMark() + "')");
@@ -108,8 +110,6 @@ public class D3ElementBuilder {
         }
 
         out.add("BrunelD3.trans(selection,transitionMillis)");
-
-        out.addChained("classed('selected', function(d) { return data.$selection(d) == '\u2713' })");
 
         if (diagram == null || diagram instanceof GeoMap) {
             writeCoordinateDefinition(details);

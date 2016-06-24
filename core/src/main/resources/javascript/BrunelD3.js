@@ -1129,12 +1129,16 @@ var BrunelD3 = (function () {
 
         // Find suitable fields (by name) that have the given role (size, y, color)
         function suitableFields(type) {
-            var i, y, result = [];   // collect all element's y fields
+            var i, y, f, seen={}, result = [];              // collect all element's y fields
             chart.elements.forEach(function (e) {
                 y = e.fields[type];
-                if (y) for (i = 0; i < y.length; i++)
-                    if (isNumeric(y[i]))    // If numeric add values (add upper / lower ranges for stacking)
-                        result.push(y[i], y[i] + "$lower", y[i] + "$upper");
+                if (y) for (i = 0; i < y.length; i++) {
+                    f = y[i];
+                    if (seen[f] || f[0] == "'") continue;   // No duplicates and no constant values
+                    if (isNumeric(f))   			        // If numeric add values (upper / lower for stacking)
+                        result.push(f, f + "$lower", f + "$upper");
+                    seen[f] = true;
+                }
             });
             return result;
         }
@@ -1154,8 +1158,9 @@ var BrunelD3 = (function () {
         // "this" is the data set being evaluated
         function replaceData(name) {
             var field = this.field(name);
-            if (!field) return null;
-            field.oProvider = field.provider;                   // swap provider with a constant value
+            if (!field) return null;                                // Does not exist
+            if (field.oProvider) return field;                      // Already done
+            field.oProvider = field.provider;                       // swap provider with a constant value
             field.provider = new BrunelData.values_ConstantProvider(
                 start(field, role), field.rowCount());
             return field;
