@@ -28,11 +28,13 @@ import org.brunel.build.util.Accessibility;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ModelUtil.Size;
 import org.brunel.build.util.ScriptWriter;
+import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 import org.brunel.model.VisTypes.Using;
+import org.brunel.model.style.StyleTarget;
 
 public class D3ElementBuilder {
 
@@ -98,7 +100,7 @@ public class D3ElementBuilder {
 
         // Define what happens when data is added ('enter')
         out.add("selection.enter().append('" + details.representation.getMark() + "')");
-        out.add(".attr('class', '", details.classes, "')");
+        out.add(".attr('class', '", Data.join(details.classes, " "), "')");
 
         Accessibility.useElementLabelFunction(structure, out);
 
@@ -298,9 +300,10 @@ public class D3ElementBuilder {
 
     private void writeCoordEnter() {
         // Added rounded styling if needed
-        Size size = ModelUtil.getRoundRectangleRadius(vis);
+        StyleTarget target = StyleTarget.makeElementTarget("rect", "element", "point");
+        Size size = ModelUtil.getSize(vis, target, "border-radius");
         if (size != null)
-            out.addChained("attr('rx'," + size.valueInPixels(8) + ").attr('ry', " + size.valueInPixels(8) + ")").ln();
+            out.addChained("attr('rx'," + size.value((double) 8) + ").attr('ry', " + size.value((double) 8) + ")").ln();
         out.endStatement().onNewLine().ln();
     }
 
@@ -434,7 +437,7 @@ public class D3ElementBuilder {
         String baseAmount;
         if (dim.sizeStyle != null && !dim.sizeStyle.isPercent()) {
             // Absolute size overrides everything
-            baseAmount = "" + dim.sizeStyle.value();
+            baseAmount = "" + dim.sizeStyle.value(100);
         } else if (fields.length == 0) {
             if (vis.tDiagram != null) {
                 // Default point size for diagrams
@@ -492,7 +495,7 @@ public class D3ElementBuilder {
 
         // If the size definition is a percent, use that to scale by
         if (dim.sizeStyle != null && dim.sizeStyle.isPercent())
-            baseAmount = dim.sizeStyle.value() + " * " + baseAmount;
+            baseAmount = dim.sizeStyle.value(1) + " * " + baseAmount;
 
         if (dim.sizeFunction != null) baseAmount = dim.sizeFunction + " * " + baseAmount;
 
@@ -506,15 +509,16 @@ public class D3ElementBuilder {
     }
 
     private static GeomAttribute getOverallSize(VisSingle vis, ElementDetails def) {
-        Size size = ModelUtil.getElementSize(vis, "size", def.classes);
+        StyleTarget target = StyleTarget.makeElementTarget(null, def.classes);
+        Size size = ModelUtil.getSize(vis, target, "size");
         boolean needsFunction = vis.fSize.size() == 1;
 
         if (size != null && !size.isPercent()) {
             // Just multiply by the aesthetic if needed
             if (needsFunction)
-                return GeomAttribute.makeFunction("size(d) * " + size.value());
+                return GeomAttribute.makeFunction("size(d) * " + size.value(1));
             else
-                return GeomAttribute.makeConstant(Double.toString(size.value()));
+                return GeomAttribute.makeConstant(Double.toString(size.value(1)));
         }
 
         // Use the X and Y extents to define the overall one

@@ -20,11 +20,11 @@ import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ModelUtil;
-import org.brunel.build.util.ModelUtil.Size;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
+import org.brunel.model.style.StyleTarget;
 
 class Chord extends D3Diagram {
 
@@ -50,8 +50,9 @@ class Chord extends D3Diagram {
         out.add("var chord = d3.layout.chord().padding(.025).sortSubgroups(d3.descending).matrix(chordData.matrix())").endStatement();
 
         // take arc path font size into account, adding a bit of padding, to define the arc width
-        Size labelSize = ModelUtil.getAxisLabelFontSize(vis);
-        double arcWidth = labelSize.valueInPixels(8) * 1.2;
+        StyleTarget target = StyleTarget.makeElementTarget("text", "axis", "label");
+        double labelSize = ModelUtil.getSize(vis, target, "font-size", 8);
+        double arcWidth = labelSize * 1.2;
         out.add("var arc_width =", Data.formatNumeric(arcWidth, false), ";").comment("Width of exterior arc");
         out.add("function keyFunction(d) { return d.source.index + '|' + d.target.index };").comment(" special key function for the edges");
 

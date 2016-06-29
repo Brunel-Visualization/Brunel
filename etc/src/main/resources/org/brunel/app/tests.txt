@@ -103,7 +103,7 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - simple    / data('raw:A,B;a,b;a,c;a,d;b,c;a,e;e,f;g,h;m,n;n,o') edge key(A, B) + network y(A, B) color(#values) label(#values) legends(none) style('fill-opacity:1;size:20px') :: pass
 
 - simple    / data('raw:x;"a,b";"a";"a,c,b";"a,b";"a,b";"a,b,c"') bar x(x) y(#count) color(x) | bar x(x) y(#count) color(x) each(x) | bubble color(x) size(#count) label(x) | bubble color(x) size(#count) label(x) each(x) :: pass
-
+- baseball  / x(PutOutRate) y(AssistRate) style('.axis.y .tick text{fill:red;padding-right:10px}') style('.axis.x .tick text{fill:blue;font-size:1cm; padding:2mm} .axis .tick line{size:-5mm} ') style('.axis .title {label-location:left;font-size:20px}') style('.axis .title {label-location:left;font-size:20px;font-style:italic;padding-left:1in}') style('.header {fill:red;font-size:40px;padding-bottom:50px;label-location:right}') title('Ugly Style test') :: pass
 #### Note
 
 baseball:   Age Weight Height BattingAvg OnBasePct HomeRunRate SlugRate RBIRate WalkRate

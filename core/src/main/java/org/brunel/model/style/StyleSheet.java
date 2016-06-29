@@ -114,7 +114,7 @@ public class StyleSheet {
 
     public Map<String, String> stylesFor(StyleTarget parent, String type, String... classes) {
         ensureSorted();
-        StyleTarget target = new StyleTarget(type, parent, classes);
+        StyleTarget target = StyleTarget.makeTarget(type, parent, classes);
         Map<String, String> result = new TreeMap<>();
 
         // Only add the first occurrences of each org.brunel.app.match as they override each color in order

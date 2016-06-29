@@ -17,9 +17,9 @@
 package org.brunel.build.d3.titles;
 
 import org.brunel.build.d3.AxisDetails;
-import org.brunel.build.info.ChartStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.model.VisSingle;
+import org.brunel.model.style.StyleTarget;
 
 /**
  * Defines titles for axes
@@ -28,37 +28,19 @@ public class AxisTitleBuilder extends TitleBuilder {
 
     private final AxisDetails axis;
     private final boolean isHorizontal;
-
     public double bottomOffset;                             // Extra offset to account for footers
 
     /**
      * For building an axis title
      *
-     * @param structure    chart structure
+     * @param vis    chart structure
      * @param axis         the axis info
      * @param isHorizontal true if the horizontal axis
      */
-    public AxisTitleBuilder(ChartStructure structure, AxisDetails axis, boolean isHorizontal) {
-        super(findLikelyElement(structure), makeClasses(axis.isX()), "title");
+    public AxisTitleBuilder(VisSingle vis, AxisDetails axis, boolean isHorizontal) {
+        super(vis, StyleTarget.makeTarget("text", axis.styleTarget, "title"));
         this.axis = axis;
         this.isHorizontal = isHorizontal;
-    }
-
-    private static String[] makeClasses(boolean axisX) {
-        return new String[]{"axis", axisX ? "x" : "y"};
-    }
-
-    private static VisSingle findLikelyElement(ChartStructure structure) {
-        // Look for the first element defining axes
-        for (VisSingle vis : structure.elements)
-            if (!vis.fAxes.isEmpty()) return vis;
-
-        // Look for the first vis defining any styles
-        for (VisSingle vis : structure.elements)
-            if (vis.styles != null) return vis;
-
-        // Just use the first
-        return structure.elements[0];
     }
 
     protected String[] getXOffsets() {
@@ -76,9 +58,9 @@ public class AxisTitleBuilder extends TitleBuilder {
 
     protected void defineVerticalLocation(ScriptWriter out) {
         if (isHorizontal) {
-            out.addChained("attr('y', geom.inner_bottom - " + bottomOffset + ").attr('dy','-0.27em')");
+            out.addChained("attr('y', geom.inner_bottom - " + (bottomOffset + padding.bottom) + ").attr('dy','-0.27em')");
         } else {
-            out.addChained("attr('y', 6-geom.inner_left).attr('dy', '0.7em').attr('transform', 'rotate(270)')");
+            out.addChained("attr('y', " + (2 + padding.top) + "-geom.inner_left).attr('dy', '0.7em').attr('transform', 'rotate(270)')");
         }
     }
 

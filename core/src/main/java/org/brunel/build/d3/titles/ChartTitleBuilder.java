@@ -22,6 +22,7 @@ import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
+import org.brunel.model.style.StyleTarget;
 
 /**
  * Defines titles
@@ -37,7 +38,7 @@ public class ChartTitleBuilder extends TitleBuilder {
      * @param location  where to place the text
      */
     public ChartTitleBuilder(ChartStructure structure, String location) {
-        super(findTitleElement(structure), null, "title", location);
+        super(findTitleElement(structure), StyleTarget.makeTopLevelTarget(null, "title", location));
         this.location = location;
     }
 
@@ -56,9 +57,9 @@ public class ChartTitleBuilder extends TitleBuilder {
 
     protected void defineVerticalLocation(ScriptWriter out) {
         if ("header".equals(location)) {
-            out.addChained("attr('y',0).attr('dy','0.8em')");
+            out.addChained("attr('y'," + padding.top + ").attr('dy','0.8em')");
         } else {
-            out.addChained("attr('y','100%').attr('dy', '-0.4em')");
+            out.addChained("attr('y','100%').attr('dy', -" + (padding.bottom + fontSize * 4 / 10) + ")");
         }
     }
 

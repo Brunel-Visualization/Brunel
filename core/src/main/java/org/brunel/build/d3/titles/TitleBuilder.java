@@ -17,35 +17,37 @@
 package org.brunel.build.d3.titles;
 
 import org.brunel.build.util.ModelUtil;
+import org.brunel.build.util.Padding;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.model.VisSingle;
+import org.brunel.model.style.StyleTarget;
 
 /**
  * An abstract class for a builder to construct text content for titles.
  * Handles singles lines of text only at present
  */
 public abstract class TitleBuilder {
-    protected final VisSingle vis;
-    private final String alignment;
-    private final int fontSize;
-    private final String[] classes;
-    private String content;
+    protected final VisSingle vis;                  // Owning vis
+    protected final StyleTarget styleTarget;        // Style target
+    protected final Padding padding;                // Space around element
+    private final String alignment;                 // left, middle, right
+    protected final int fontSize;                   // font height
+    private String content;                         // The text to show
 
     /**
      * An abstract class for a builder to construct text content for titles
      * Used for char titles, axis titles and legend titles
      *
-     * @param vis     the element that defines the item
-     * @param classes the css classes to examine for style info
+     * @param vis         the element that defines the item
+     * @param styleTarget the css style target
      */
-    public TitleBuilder(VisSingle vis, String[] parentClasses, String... classes) {
+    public TitleBuilder(VisSingle vis, StyleTarget styleTarget) {
         this.vis = vis;
-        this.classes = classes;
-        alignment = ModelUtil.getTitlePosition(vis, parentClasses, classes);
-        ModelUtil.Size size = ModelUtil.getTitleSize(vis, parentClasses, classes);
-        if (size == null) fontSize = 16;
-        else fontSize = (int) Math.round(size.valueInPixels(16));
+        this.styleTarget = styleTarget;
+        alignment = ModelUtil.getTitlePosition(vis, styleTarget);
+        padding = ModelUtil.getPadding(vis, styleTarget, 4);
+        fontSize = (int) ModelUtil.getFontSize(vis, styleTarget, 16);
     }
 
     public String content() {
@@ -65,7 +67,7 @@ public abstract class TitleBuilder {
     public void writeContent(String group, ScriptWriter out) {
         if (content() == null) return;
 
-        out.add(group + ".append('text').attr('class', '" + Data.join(classes, " ") + "')")
+        out.add(group + ".append('text').attr('class', '" + Data.join(styleTarget.classes, " ") + "')")
                 .add(".text(" + content() + ")");
         defineHorizontalLocation(out);
         defineVerticalLocation(out);
@@ -76,18 +78,27 @@ public abstract class TitleBuilder {
         String[] xOffsets = getXOffsets();
 
         String xLoc, anchor;
-        if (alignment.equals("left")) {
-            xLoc = xOffsets[0];
-            anchor = "start";
-        } else if (alignment.equals("right")) {
-            xLoc = xOffsets[2];
-            anchor = "end";
-        } else {
-            xLoc = xOffsets[1];
-            anchor = "middle";
+        int dx;
+        switch (alignment) {
+            case "left":
+                xLoc = xOffsets[0];
+                anchor = "start";
+                dx = padding.left;
+                break;
+            case "right":
+                xLoc = xOffsets[2];
+                anchor = "end";
+                dx = -padding.right;
+                break;
+            default:
+                xLoc = xOffsets[1];
+                anchor = "middle";
+                dx = (padding.left - padding.right)/2;
+                break;
         }
         out.add(".style('text-anchor', '" + anchor + "')")
                 .addChained("attr('x'," + xLoc + ")");
+        if (dx != 0) out.addChained("attr('dx',", dx, ")");
     }
 
     protected String[] getXOffsets() {
@@ -98,7 +109,7 @@ public abstract class TitleBuilder {
     protected abstract void defineVerticalLocation(ScriptWriter out);
 
     public double verticalSpace() {
-        return content() == null ? 0 : fontSize;
+        return content() == null ? 0 : fontSize + padding.vertical();
     }
 
     protected abstract String makeText();

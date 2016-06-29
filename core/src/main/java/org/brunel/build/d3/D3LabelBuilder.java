@@ -27,6 +27,7 @@ import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
+import org.brunel.model.style.StyleTarget;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,11 +63,12 @@ public class D3LabelBuilder {
 
     public static void addFontSizeAttribute(VisSingle vis, ScriptWriter out) {
         if (!vis.fSize.isEmpty()) {
-            Size parts = ModelUtil.getFontSize(vis);
+            StyleTarget target = StyleTarget.makeElementTarget("text", "label");
+            Size parts = ModelUtil.getSize(vis, target, "font-size");
             if (parts == null) {
                 out.addChained("style('font-size', function(d) { return (100*size(d)) + '%' })");
             } else {
-                out.addChained("style('font-size', function(d) { return (", parts.value(), "* size(d)) +'" + parts.suffix() + "' })");
+                out.addChained("style('font-size', function(d) { return (", parts.value(12), "* size(d)) +'" + parts.suffix() + "' })");
             }
         }
     }

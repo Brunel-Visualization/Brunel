@@ -52,7 +52,7 @@ public class ElementDetails {
 
     public final String dataSource;                     // Where the data for d3 lives
     public final ElementRepresentation representation;  // The type of element produced
-    public final String classes;                        // Class names for this item
+    public final String[] classes;                      // Class names for this item
     private final String userDefinedLabelPosition;      // Custom override for the label position
     private final boolean strokedShape;                 // If true, the shape is to be stroked, not filled
     private final boolean allowTextOverlap;             // If true, allow text labels to overlap
@@ -74,11 +74,12 @@ public class ElementDetails {
         this.refLocation = GeomAttribute.makeFunction("[" + Data.join(references) + "]");
     }
 
-    public ElementDetails(VisSingle vis, ElementRepresentation representation, String classes, String dataSource, boolean filled) {
-        this.classes = "element " + classes;
-        x = new ElementDimension(vis, "width", this.classes);
+    public ElementDetails(VisSingle vis, ElementRepresentation representation, String className, String dataSource, boolean filled) {
+        if (className == null || className.contains(" "))
+            throw new IllegalArgumentException("Class name must be a single word");
+        classes = filled ? new String[] {"element",className, "filled"} : new String[] {"element",className};
+        x = new ElementDimension(vis, "width", classes);
         y = new ElementDimension(vis, "height", this.classes);
-        if (filled) classes += " filled";
         this.strokedShape = !filled;
         this.dataSource = dataSource;
         this.representation = representation;

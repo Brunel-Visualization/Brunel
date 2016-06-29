@@ -20,11 +20,34 @@ package org.brunel.model.style;
  * This is something that can be targeted by a style
  */
 public class StyleTarget {
+
+    /* Top level style target -- all targets should parent to this */
+    private static final StyleTarget STYLE_TOP = new StyleTarget("svg", null, "brunel");
+
+    /* Targets the current element */
+    private static final StyleTarget STYLE_ELEMENT = new StyleTarget(null, STYLE_TOP, "currentElement");
+
+
+
     public final String element;            // Type of element (text, label, ...)
     public final String[] classes;          // Classes this belongs to
     public final StyleTarget parent;        // parent class
 
-    public StyleTarget(String element, StyleTarget parent, String... classes) {
+
+    public static StyleTarget makeTopLevelTarget(String element, String... classes) {
+        return new StyleTarget(element, STYLE_TOP, classes);
+    }
+
+    public static StyleTarget makeElementTarget(String element, String... classes) {
+        return new StyleTarget(element, STYLE_ELEMENT, classes);
+    }
+
+    public static StyleTarget makeTarget(String element, StyleTarget parent, String... classes) {
+        return new StyleTarget(element, parent, classes);
+    }
+
+
+    StyleTarget(String element, StyleTarget parent, String... classes) {
         this.element = element;
         this.classes = classes;
         this.parent = parent;

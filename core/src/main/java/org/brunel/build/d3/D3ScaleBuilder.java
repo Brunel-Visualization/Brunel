@@ -19,7 +19,6 @@ package org.brunel.build.d3;
 import org.brunel.action.Param;
 import org.brunel.action.Param.Type;
 import org.brunel.build.d3.D3Util.DateBuilder;
-import org.brunel.build.d3.titles.AxisTitleBuilder;
 import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.util.Accessibility;
@@ -103,8 +102,8 @@ public class D3ScaleBuilder {
             vAxis = yAxis;
         }
 
-        hAxis.titleBuilder = new AxisTitleBuilder(structure, hAxis, true);
-        vAxis.titleBuilder = new AxisTitleBuilder(structure, vAxis, false);
+        hAxis.setTextDetails(structure, true);
+        vAxis.setTextDetails(structure, false);
 
         int legendWidth = legendWidth();
 
@@ -132,7 +131,7 @@ public class D3ScaleBuilder {
     }
 
     public void setAdditionalHAxisOffset(double v) {
-        hAxis.titleBuilder.bottomOffset = v;
+        hAxis.setAdditionalHAxisOffset(v);
     }
 
     private Coordinates makeCombinedCoords() {
@@ -207,6 +206,7 @@ public class D3ScaleBuilder {
     private int legendWidth() {
         if (!needsLegends()) return 0;
         AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical(), null, 9999, false);
+        legendAxis.setTextDetails(structure, false);
         int spaceNeededForTicks = 32 + legendAxis.maxCategoryWidth();
         int spaceNeededForTitle = colorLegendField.label.length() * 7;                // Assume 7 pixels per character
         return 6 + Math.max(spaceNeededForTicks, spaceNeededForTitle);                // Add some spacing
@@ -317,7 +317,7 @@ public class D3ScaleBuilder {
             out.endStatement();
 
             // Add the title if necessary
-            hAxis.titleBuilder.writeContent("axes.select('g.axis.x')", out);
+            hAxis.writeTitle("axes.select('g.axis.x')", out);
         }
         if (vAxis.exists()) {
             out.onNewLine().add("axes.append('g').attr('class', 'y axis')")
@@ -326,21 +326,23 @@ public class D3ScaleBuilder {
             out.endStatement();
 
             // Add the title if necessary
-            vAxis.titleBuilder.writeContent("axes.select('g.axis.y')", out);
+            vAxis.writeTitle("axes.select('g.axis.y')", out);
 
         }
 
         // Define the axes themselves and the method to build (and re-build) them
         out.onNewLine().ln();
-        defineAxis("var axis_bottom = d3.svg.axis()", this.hAxis);
-        defineAxis("var axis_left = d3.svg.axis().orient('left')", this.vAxis);
+        defineAxis("var axis_bottom = d3.svg.axis()", this.hAxis, true);
+        defineAxis("var axis_left = d3.svg.axis().orient('left')", this.vAxis, false);
         defineAxesBuild();
     }
 
-    private void defineAxis(String basicDefinition, AxisDetails axis) {
+    private void defineAxis(String basicDefinition, AxisDetails axis, boolean horizontal) {
         if (axis.exists()) {
+            int padding = horizontal ? axis.tickPadding.top : axis.tickPadding.right;
             out.add(basicDefinition)
-                    .addChained("scale(" + axis.scale + ").innerTickSize(3).outerTickSize(0)");
+                    .addChained("scale(" + axis.scale + ").innerTickSize(" + axis.markSize
+                            + ").tickPadding(" + padding + ").outerTickSize(0)");
             if (axis.tickValues != null)
                 out.addChained("tickValues([").addQuoted(axis.tickValues).add("])");
             if (axis.isLog()) out.addChained("ticks(7, ',.g3')");
