@@ -30,7 +30,9 @@ import org.brunel.model.VisTypes.Element;
 import org.brunel.model.style.StyleTarget;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -82,24 +84,43 @@ public class D3LabelBuilder {
 
     /**
      * Define a structure to be used to label
-     * @param items the items to form the content
-     * @param textMethod method for placing text relative to the object it is attached to
-     * @param forTooltip true if this is for a tooltip
-     * @param fitsShape true if the text is to fit inside the shape
+     *
+     * @param items                the items to form the content
+     * @param textMethod           method for placing text relative to the object it is attached to
+     * @param forTooltip           true if this is for a tooltip
+     * @param fitsShape            true if the text is to fit inside the shape (if the shape wants it)
      * @param hitDetectGranularity if >0, the pixel level granularity to use for hit detection. If zero, none will be done
      */
     public void defineLabeling(List<Param> items, String textMethod, boolean forTooltip, boolean fitsShape, int hitDetectGranularity) {
         if (vis.tElement != Element.text && items.isEmpty()) return;
         String name = forTooltip ? "tooltipLabeling" : "labeling";
         out.add("var", name, "= {").ln().indentMore();
+
+        boolean inside = true, fit = true;
+
         if (textMethod.equals("geo")) {
             // We define a function to extract the coordinates from the geo, and project them
             String func = "function(box,text,d) {var p = projection([d.geo_properties.c, d.geo_properties.d]); return {box:box, x:p[0], y:p[1]}}";
             out.onNewLine().add("where:", func, ",");
         } else {
-            out.onNewLine().add("method:", out.quote(textMethod), ", ");
+            HashSet<String> parts = new HashSet<>(Arrays.asList(textMethod.split("-")));
+            inside = isInside(parts, fitsShape);
+            String method = getMethod(parts);
+            String location = getLocation(parts);
+            String align = getAlignment(parts, inside);
+            double offset = getOffset(parts, inside);
+            fit = inside && fitsShape;
+            int pad = inside ? -3 : 3;
+            out.onNewLine()
+                    .add("method:", Data.quote(method))
+                    .add(", location:", location)
+                    .add(", inside:", inside)
+                    .add(", align:", Data.quote(align))
+                    .add(", pad:", pad)
+                    .add(", dy:", offset, ",");
         }
-        out.onNewLine().add("fit:", fitsShape, ", granularity:", hitDetectGranularity, ",");
+
+        out.onNewLine().add("fit:", fit, ", granularity:", hitDetectGranularity, ",");
         if (textMethod.equals("path") || textMethod.equals("wedge"))
             out.onNewLine().add("path: path,");
 
@@ -114,6 +135,45 @@ public class D3LabelBuilder {
 
     }
 
+    // How to offset the text so it fits correctly
+    private double getOffset(HashSet<String> parts, boolean inside) {
+        if (parts.contains("top")) return inside ? 0.7 : -0.25;
+        if (parts.contains("bottom")) return inside ? -0.25 : 0.7;
+        return 0.3;
+
+    }
+
+    // Gets the text alignment based on where to draw relative to the shape
+    private String getAlignment(HashSet<String> parts, boolean inside) {
+        if (parts.contains("left")) return inside ? "start" : "end";
+        if (parts.contains("right")) return inside ? "end" : "start";
+        return "middle";
+    }
+
+    private boolean isInside(HashSet<String> parts, boolean fitsShape) {
+        // The user request  is checked first. Then, if asked to fit, we assume inside
+        if (parts.contains("inside")) return true;
+        else if (parts.contains("outside")) return false;
+        else return fitsShape;
+    }
+
+    // Returns the important function that defiens how we will find the shape
+    private String getMethod(HashSet<String> parts) {
+        for (String s : parts)
+            if (s.equals("path") || s.equals("wedge") || s.equals("area") || s.equals("poly") || s.equals("geo"))
+                return s;
+        return "box";
+    }
+
+    // returns a two part array with the horizontal and vertical method locations
+    private String getLocation(HashSet<String> parts) {
+        String h = "center", v = "center";
+        if (parts.contains("left")) h = "left";
+        if (parts.contains("right")) h = "right";
+        if (parts.contains("top")) v = "top";
+        if (parts.contains("bottom")) v = "bottom";
+        return "['" + h + "', '" + v + "']";
+    }
 
     private List<Param> prettify(List<Param> items, boolean longForm) {
 
@@ -132,7 +192,6 @@ public class D3LabelBuilder {
         }
         return result;
     }
-
 
     public void writeContent(List<Param> items, boolean forTooltip) {
         // We must have some content

@@ -248,8 +248,8 @@ var BrunelD3 = (function () {
 
     // Returns an object with 'x', 'y' and 'box' that "surrounds" the text
     function makeLoc(target, labeling, s) {
-        var datum = target.__data__,                            // Associated data value
-            box, loc, method = labeling.method;
+        var datum = target.__data__, pad = labeling.pad,
+            box, loc, method = labeling.method, pos = labeling.location;
         if (labeling.where) {
             box = target.getBBox();
             var p = labeling.where(box, s, datum);
@@ -269,8 +269,8 @@ var BrunelD3 = (function () {
             box = transformBox(target.getBBox(), target.getCTM());
 
             // Add 3 pixels padding
-            var dx = method == 'left' ? -3 : (method == 'right' ? box.width + 3 : box.width / 2);
-            var dy = method == 'top' ? -3 : (method == 'bottom' ? box.height + 3 : box.height / 2);
+            var dx = pos[0] == 'left' ? -pad : (pos[0] == 'right' ? box.width + pad : box.width / 2);
+            var dy = pos[1] == 'top' ? -pad : (pos[1] == 'bottom' ? box.height + pad : box.height / 2);
             return {x: box.x + dx, y: box.y + dy, box: box}
         }
         // Modify for the transform
@@ -305,7 +305,7 @@ var BrunelD3 = (function () {
         return min > 0; // True if we have valid text
     }
 
-    function wrapInBox(textItem, text, loc) {
+    function wrapInBox(textItem, text, loc, offset) {
         // Remove existing spans
         while (textItem.firstChild) textItem.removeChild(textItem.firstChild);
 
@@ -352,9 +352,11 @@ var BrunelD3 = (function () {
         var spans = textItem.childNodes;
         if (!spans) return;
 
+        var D = 0.5 + offset;
+
         // Move everything up to center them
         for (i = 0; i < spans.length; i++)
-            spans[i].setAttribute('dy', ((i - spans.length / 2.0) * 1.1 + 0.85) + "em");
+            spans[i].setAttribute('dy', ((i - spans.length / 2.0) * 1.1 + D ) + "em");
     }
 
 
@@ -624,16 +626,6 @@ var BrunelD3 = (function () {
     }
 
 
-    // for each position, gives the text-anchor and y offset
-    var LABEL_DEF = {
-        'center': ['middle', '0.3em'],
-        'left': ['end', '0.3em'],
-        'inner-left': ['start', '0.85em'],
-        'right': ['start', '0.3em'],
-        'top': ['middle', '-0.3em'],
-        'bottom': ['middle', '0.7em']
-    };
-
     // Check if it hits an existing space
     function hitsExisting(box, hits) {
         if (!hits || !hits.D) return false;                // Not needed if no hits or no granularity requested
@@ -682,12 +674,11 @@ var BrunelD3 = (function () {
         if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
         else txt.classed('label', true);
 
-        var attrs = LABEL_DEF[labeling.method] || LABEL_DEF['center'];          // Default to center
-        txt.style('text-anchor', attrs[0]).attr('dy', attrs[1]);
+        txt.style('text-anchor', labeling.align).attr('dy', labeling.dy);
 
+        // Do not wrap if the text has been explicitly placed
         if (labeling.fit && !labeling.where) {
-            // Do not wrap if the text has been explicitly placed
-            wrapInBox(textNode, content, loc);
+            wrapInBox(textNode, content, loc, labeling.dy);
         } else {
 
             // Place at the required location
