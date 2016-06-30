@@ -100,7 +100,7 @@ public class D3ElementBuilder {
 
         // Define what happens when data is added ('enter')
         out.add("selection.enter().append('" + details.representation.getMark() + "')");
-        out.add(".attr('class', '", Data.join(details.classes, " "), "')");
+        out.add(".attr('class', '" + Data.join(details.classes, " ") + "')");
 
         Accessibility.useElementLabelFunction(structure, out);
 

@@ -32,9 +32,9 @@ public class ElementDimension {
     public GeomAttribute right;                     // Where the right is to be (left will also be defined)
     public GeomAttribute size;                      // What the size is to be
 
-    public ElementDimension(VisSingle vis, String sizeName, String[] classes) {
-        StyleTarget target = StyleTarget.makeElementTarget(null, classes);
-        sizeStyle = ModelUtil.getSize(vis, target, "size");
+    public ElementDimension(VisSingle vis, String sizeName, ElementRepresentation representation, String[] classes) {
+        StyleTarget target = StyleTarget.makeElementTarget(representation.getMark(), classes);
+        sizeStyle = ModelUtil.getSize(vis, target, sizeName);
 
         if (vis.fSize.isEmpty()) sizeFunction = null;                   // No sizing
         else if (vis.fSize.size() == 1) sizeFunction = "size(d)";       // Multiply by overall size

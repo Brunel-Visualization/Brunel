@@ -78,8 +78,8 @@ public class ElementDetails {
         if (className == null || className.contains(" "))
             throw new IllegalArgumentException("Class name must be a single word");
         classes = filled ? new String[] {"element",className, "filled"} : new String[] {"element",className};
-        x = new ElementDimension(vis, "width", classes);
-        y = new ElementDimension(vis, "height", this.classes);
+        x = new ElementDimension(vis, "width", representation, classes);
+        y = new ElementDimension(vis, "height", representation, classes);
         this.strokedShape = !filled;
         this.dataSource = dataSource;
         this.representation = representation;
