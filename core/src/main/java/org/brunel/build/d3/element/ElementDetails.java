@@ -56,11 +56,21 @@ public class ElementDetails {
     private final String userDefinedLabelPosition;      // Custom override for the label position
     private final boolean strokedShape;                 // If true, the shape is to be stroked, not filled
     private final boolean allowTextOverlap;             // If true, allow text labels to overlap
+    private final double labelPadding;                  // How much to pad labels by
+    private final String labelAlignment;                // User defined label alignment (may be null)
 
     public final ElementDimension x, y;                 // Definitions for x and y fields
     public GeomAttribute overallSize;                   // A general size for the whole item
     private GeomAttribute refLocation;                  // Defines the location using a reference to another element
     public GeomAttribute clusterSize;                   // The size of a cluster
+
+    public String getAlignment() {
+        return labelAlignment;
+    }
+
+    public double getPadding() {
+        return labelPadding;
+    }
 
     public GeomAttribute getRefLocation() {
         return refLocation;
@@ -84,6 +94,8 @@ public class ElementDetails {
         this.dataSource = dataSource;
         this.representation = representation;
         this.userDefinedLabelPosition = ModelUtil.getLabelPosition(vis);
+        this.labelPadding = ModelUtil.getLabelPadding(vis, 3);
+        this.labelAlignment = ModelUtil.getLabelAlignment(vis);
         this.allowTextOverlap = vis.tDiagram == VisTypes.Diagram.network;                       // Diagrams can overlap text
     }
 

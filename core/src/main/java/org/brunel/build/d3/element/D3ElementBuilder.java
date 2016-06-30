@@ -89,7 +89,9 @@ public class D3ElementBuilder {
             collisionDetectionGranularity = (int) Math.pow(2, Math.floor(pow));
             collisionDetectionGranularity = Math.min(16, Math.max(1, collisionDetectionGranularity));
         }
-        labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape(), collisionDetectionGranularity);   // Labels
+        labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape(),
+                details.getAlignment(), details.getPadding(),
+                collisionDetectionGranularity);   // Labels
 
         Accessibility.defineElementLabelFunction(structure, out, labelBuilder);
 

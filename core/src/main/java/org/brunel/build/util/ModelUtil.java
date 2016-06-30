@@ -124,7 +124,19 @@ public class ModelUtil {
         if (vis == null) return null;
         String s = getStyle(vis, StyleTarget.makeElementTarget(null, "element"), "label-location");
         if (s != null) return s;
-        return getStyle(vis,  StyleTarget.makeElementTarget(null, "label"), "label-location");
+        return getStyle(vis, StyleTarget.makeElementTarget(null, "label"), "label-location");
+    }
+
+    public static String getLabelAlignment(VisSingle vis) {
+        String s = getStyle(vis, StyleTarget.makeElementTarget(null, "element"), "text-align");
+        if (s != null) return s;
+        return getStyle(vis, StyleTarget.makeElementTarget(null, "label"), "text-align");
+    }
+
+    public static double getLabelPadding(VisSingle vis, int defaultValue) {
+        Size s = getSize(vis, StyleTarget.makeElementTarget(null, "element"), "padding");
+        if (s == null) s = getSize(vis, StyleTarget.makeElementTarget(null, "label"), "padding");
+        return s == null ? defaultValue : s.value(defaultValue);
     }
 
     /**
@@ -136,9 +148,6 @@ public class ModelUtil {
         String s = getStyle(vis, target, "label-location");
         return s == null ? "center" : s;
     }
-
-
-
 
     public static Padding getPadding(VisSingle vis, StyleTarget target, int defaultSize) {
         int top = defaultSize, left = defaultSize, bottom = defaultSize, right = defaultSize;
@@ -163,7 +172,6 @@ public class ModelUtil {
 
         return new Padding(top, left, bottom, right);
     }
-
 
     public static double getSize(VisSingle vis, StyleTarget target, String tag, double defaultSize) {
         Size size = getSize(vis, target, tag);

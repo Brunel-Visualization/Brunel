@@ -78,25 +78,26 @@ public class D3LabelBuilder {
     public void addTooltips(ElementDetails details) {
         if (vis.itemsTooltip.isEmpty()) return;
         out.onNewLine().ln();
-        defineLabeling(prettify(vis.itemsTooltip, true), details.representation.getTooltipTextMethod(), true, true, 0);
+        defineLabeling(prettify(vis.itemsTooltip, true), details.representation.getTooltipTextMethod(), true, true, null, 0, 0);
         out.add("BrunelD3.addTooltip(selection, tooltipLabeling, geom)").endStatement();
     }
 
     /**
      * Define a structure to be used to label
-     *
-     * @param items                the items to form the content
+     *  @param items                the items to form the content
      * @param textMethod           method for placing text relative to the object it is attached to
      * @param forTooltip           true if this is for a tooltip
      * @param fitsShape            true if the text is to fit inside the shape (if the shape wants it)
+     * @param alignment             left | right | center
+     * @param padding               numeric amount
      * @param hitDetectGranularity if >0, the pixel level granularity to use for hit detection. If zero, none will be done
      */
-    public void defineLabeling(List<Param> items, String textMethod, boolean forTooltip, boolean fitsShape, int hitDetectGranularity) {
+    public void defineLabeling(List<Param> items, String textMethod, boolean forTooltip, boolean fitsShape, String alignment, double padding, int hitDetectGranularity) {
         if (vis.tElement != Element.text && items.isEmpty()) return;
         String name = forTooltip ? "tooltipLabeling" : "labeling";
         out.add("var", name, "= {").ln().indentMore();
 
-        boolean inside = true, fit = true;
+        boolean fit = true;
 
         if (textMethod.equals("geo")) {
             // We define a function to extract the coordinates from the geo, and project them
@@ -104,19 +105,18 @@ public class D3LabelBuilder {
             out.onNewLine().add("where:", func, ",");
         } else {
             HashSet<String> parts = new HashSet<>(Arrays.asList(textMethod.split("-")));
-            inside = isInside(parts, fitsShape);
+            boolean inside = isInside(parts, fitsShape);
             String method = getMethod(parts);
             String location = getLocation(parts);
-            String align = getAlignment(parts, inside);
+            String align = alignment != null ? alignment : getAlignment(parts, inside);
             double offset = getOffset(parts, inside);
             fit = inside && fitsShape;
-            int pad = inside ? -3 : 3;
             out.onNewLine()
                     .add("method:", Data.quote(method))
                     .add(", location:", location)
                     .add(", inside:", inside)
                     .add(", align:", Data.quote(align))
-                    .add(", pad:", pad)
+                    .add(", pad:", padding)
                     .add(", dy:", offset, ",");
         }
 
