@@ -75,9 +75,10 @@ object Brunel {
     for (i <- 0 to cols.length - 1) {
       val name = CSV.identifier(cols(i).trim)   //Brunel-friendly field name from spark column name
       val label = CSV.identifier(cols(i).trim)  //Brunel-friendly label
-      val provider = makeProvider(dtypes(i)._2, i, rows)
+      val dataType = dtypes(i)._2.split("\\(")(0)
+      val provider = makeProvider(dataType, i, rows)
       fields(i) = new Field(name, label, provider)
-      addTypeInfo(fields(i), dtypes(i)._2)
+      addTypeInfo(fields(i), dataType)
     }
 
     return Dataset.make(fields, false)

@@ -22,7 +22,7 @@ import org.scalatest.junit.JUnitRunner
 import org.apache.spark._
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.types.DecimalType
 
 @RunWith(classOf[JUnitRunner])
 class BrunelSpec extends UnitSpec {
@@ -41,7 +41,7 @@ class BrunelSpec extends UnitSpec {
     (187, "missing", "2007-12-12", "Porsche"))).toDF("mpg", "horsepower", "date", "name")
 
   //Column type conversion
-  val df = df_orig.withColumn("date", to_date(df_orig("date"))).withColumn("horsepower", df_orig("horsepower").cast(DoubleType))
+  val df = df_orig.withColumn("date", to_date(df_orig("date"))).withColumn("horsepower", df_orig("horsepower").cast(DecimalType(31,2)))
   val rows = df.collect()
 
   "The SparkDataProvider columns" should "have proper length and expected memory size" in {
