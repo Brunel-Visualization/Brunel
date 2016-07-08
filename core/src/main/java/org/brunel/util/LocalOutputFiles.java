@@ -62,7 +62,7 @@ public class LocalOutputFiles {
     public static Writer makeFileWriter(String fileName) {
         File f = new File(INSTANCE.home, fileName);
         try {
-            f.mkdirs();
+            f.getParentFile().mkdirs();
             return new OutputStreamWriter(new FileOutputStream(f), "utf-8");
         } catch (Exception e) {
             throw new RuntimeException("Error creating file to write to: " + f.getAbsolutePath());
