@@ -96,7 +96,7 @@ public class D3ElementBuilder {
         Accessibility.defineElementLabelFunction(structure, out, labelBuilder);
 
         // Set the values of things known to this element
-        out.add("selection = main.selectAll('*').data(" + details.dataSource + ",", getKeyFunction(), ")")
+        out.add("selection = main.selectAll('.element').data(" + details.dataSource + ",", getKeyFunction(), ")")
                 .addChained("classed('selected', function(d) { return data.$selection(d) == '\u2713' })")
                 .endStatement();
 
