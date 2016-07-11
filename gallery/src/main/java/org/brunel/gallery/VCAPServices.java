@@ -51,7 +51,7 @@ public class VCAPServices {
 	}
 	
 	private static JSONObject getDataCacheCredentials() {
-		return getCredentials("DataCache-1.0");
+		return getCredentials("DataCache");
 	}
 	
 
