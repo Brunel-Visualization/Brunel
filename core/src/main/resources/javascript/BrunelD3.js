@@ -717,7 +717,7 @@ var BrunelD3 = (function () {
         if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
         else txt.classed('label', true);
 
-        txt.style('text-anchor', labeling.align).attr('dy', labeling.dy);
+        txt.style('text-anchor', labeling.align).attr('dy', labeling.dy + "em");
 
         // Do not wrap if the text has been explicitly placed
         if (labeling.fit && !labeling.where) {
