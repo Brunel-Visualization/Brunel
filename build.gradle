@@ -111,7 +111,7 @@ task brunelGeoFiles(type: Copy) {
     into 'out'
 }
 
-task build(dependsOn: [project(':core').brunelJar, project(':etc').brunelJar, project(':data').brunelJar,
+task build(dependsOn: [project(':core').brunelJar, project(':etc').brunelJar, project(':data').brunelJar, 'scala:uploadArchives',
                        project(':service').brunelJar, 'spark-kernel:uploadArchives', brunelJS, brunelJavadoc, brunelSyntaxDoc, brunelGeoFiles ]) {
 }
 
