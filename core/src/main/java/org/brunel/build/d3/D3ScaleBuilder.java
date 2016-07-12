@@ -321,7 +321,7 @@ public class D3ScaleBuilder {
         }
         if (vAxis.exists()) {
             out.onNewLine().add("axes.append('g').attr('class', 'y axis')")
-                    .addChained("attr('transform','translate(geom.chart_left, 0)')");
+                    .addChained("attr('transform','translate(' + geom.chart_left + ', 0)')");
             Accessibility.addRegion(structure, out, "Vertical Axis");
             out.endStatement();
 

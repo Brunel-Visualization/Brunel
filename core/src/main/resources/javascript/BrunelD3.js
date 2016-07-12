@@ -97,23 +97,32 @@ var BrunelD3 = (function () {
 
 
     // Create Split data structure for use in lines, paths and areas
-    function split(data, pathFunction, xFunction) {
+    function split(data, path, xFunction) {
         // Create an array for the unique split categories
         var splits = data._rows.map(data._split).filter(function (v, i, a) {
             return a.indexOf(v) === i
         });
 
+        // Creates a list of points on the path
+        function makePoints(path, d) {
+            var x = path.x(), y = path.y(),                     // Path functions for x and y
+                i, pts = [];
+            for (i = 0; i < d.length; i++)                      // For each point ...
+                pts.push({x: x(d[i]), y: y(d[i]), d: d[i]});    // ... add the x,y, and data index
+            return pts;
+        }
+
         // Define a function for each category that extracts the rows and sorts them into x order
         // It returns a structure for use in the element containing sample row, key and path
-        var f = function (category) {
+        function f(category) {
             var d = data._rows.filter(function (d) {
                 return data._split(d) == category;
             });
             if (xFunction) d.sort(function (a, b) {
                 return xFunction(a) - xFunction(b)
             });
-            return {'path': pathFunction(d), 'key': d[0].key, 'row': d[0].row}
-        };
+            return {'path': path(d), 'key': d[0].key, 'row': d[0].row, 'points': makePoints(path, d)}
+        }
 
         // Convert array of categories into array of above structures
         return splits.map(f)
@@ -339,7 +348,7 @@ var BrunelD3 = (function () {
             if (tspan.getComputedTextLength() > W) {
                 content.pop();
                 if (!content.length) {
-                    if (!addEllipses(tspan, word, W-4)) {
+                    if (!addEllipses(tspan, word, W - 4)) {
                         textItem.removeChild(tspan);
                         break;
                     }
@@ -572,7 +581,45 @@ var BrunelD3 = (function () {
             w = +svg.attributes.width.value, h = +svg.attributes.height.value,  // width and height
             pt = svg.createSVGPoint();                                      // For matrix calculations
 
-        d3Target.on('mouseover', function (d) {
+
+        d3Target.on('mousemove', function (d) {
+            if (!d) return;
+
+            // Offsets for scrolling
+            var ox = document.documentElement.scrollLeft || document.body.scrollLeft,
+                oy = document.documentElement.scrollTop || document.body.scrollTop,
+                p;
+
+            function getScreenTipPosition(item, d) {
+                var labelPos = makeLoc(item, labeling, '', d), ctm = svg.getScreenCTM();
+                pt.x = labelPos.x + ctm.e + ox;
+                pt.y = labelPos.y + ctm.f + oy;
+                return pt;
+            }
+
+
+            if (d.points) {
+                // This is a path and we need to find the best point on it
+                var pp = d3.mouse(this), off = this.getScreenCTM();
+                function d2(a) { return (a.x-pp[0])*(a.x-pp[0]) + (a.y-pp[1])*(a.y-pp[1]) }
+
+                var i, dd, pts = d.points, best = pts[0], bestD = d2(best);
+                for (i=1; i<pts.length; i++) {
+                    dd = d2(pts[i]);
+                    if (dd < bestD) {
+                        bestD = dd;
+                        best = pts[i];
+                    }
+                }
+                d = best.d;                                         // replace with the closest 'd' in array
+                p = {                                               // replace p by closest point on path
+                    x: best.x + off.e + ox,
+                    y: best.y + off.f + oy
+                }
+            } else {
+                p = getScreenTipPosition(this, d);                          // get absolute location of the target
+            }
+
             var content = labeling.content(d);                              // To set html content
             if (!content) return;                                           // No tooltips if no data
 
@@ -589,7 +636,6 @@ var BrunelD3 = (function () {
             if (tooltip.offsetWidth > max_width)                            // If too wide, set a width for the div
                 tooltip.style.width = max_width + "px";
 
-            var p = getScreenTipPosition(this, d);                          // get absolute location of the target
             var top = p.y - 10 - tooltip.offsetHeight;                      // top location
             if (top < 2 && p.y < h / 2) {                                   // We are in top half up AND overflow top
                 var old = labeling.method;                                  // save the original method
@@ -608,12 +654,6 @@ var BrunelD3 = (function () {
             if (tooltip) tooltip.style.visibility = 'hidden';
         });   // hide it
 
-        function getScreenTipPosition(item, d) {
-            var labelPos = makeLoc(item, labeling, '', d), ctm = svg.getScreenCTM();
-            pt.x = labelPos.x + ctm.e + (document.documentElement.scrollLeft || document.body.scrollLeft);
-            pt.y = labelPos.y + ctm.f + (document.documentElement.scrollTop || document.body.scrollTop);
-            return pt;
-        }
 
     }
 
@@ -1123,7 +1163,7 @@ var BrunelD3 = (function () {
 
         // Find suitable fields (by name) that have the given role (size, y, color)
         function suitableFields(type) {
-            var i, y, f, seen={}, result = [];              // collect all element's y fields
+            var i, y, f, seen = {}, result = [];              // collect all element's y fields
             chart.elements.forEach(function (e) {
                 y = e.fields[type];
                 if (y) for (i = 0; i < y.length; i++) {
@@ -1197,11 +1237,15 @@ var BrunelD3 = (function () {
         if (scale.ticks) {
             // Transform the ticks
             data = scale.ticks();
-            f = function(d) {return scale(d)};
+            f = function (d) {
+                return scale(d)
+            };
         } else {
             // Use raw range
             data = scale.range();
-            f = function(d) {return d};
+            f = function (d) {
+                return d
+            };
         }
 
         var selection = interior.selectAll("line.grid." + (x ? "x" : "y"));
