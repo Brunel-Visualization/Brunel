@@ -97,23 +97,32 @@ var BrunelD3 = (function () {
 
 
     // Create Split data structure for use in lines, paths and areas
-    function split(data, pathFunction, xFunction) {
+    function split(data, path, xFunction) {
         // Create an array for the unique split categories
         var splits = data._rows.map(data._split).filter(function (v, i, a) {
             return a.indexOf(v) === i
         });
 
+        // Creates a list of points on the path
+        function makePoints(path, d) {
+            var x = path.x(), y = path.y(),                     // Path functions for x and y
+                i, pts = [];
+            for (i = 0; i < d.length; i++)                      // For each point ...
+                pts.push({x: x(d[i]), y: y(d[i]), d: d[i]});    // ... add the x,y, and data index
+            return pts;
+        }
+
         // Define a function for each category that extracts the rows and sorts them into x order
         // It returns a structure for use in the element containing sample row, key and path
-        var f = function (category) {
+        function f(category) {
             var d = data._rows.filter(function (d) {
                 return data._split(d) == category;
             });
             if (xFunction) d.sort(function (a, b) {
                 return xFunction(a) - xFunction(b)
             });
-            return {'path': pathFunction(d), 'key': d[0].key, 'row': d[0].row}
-        };
+            return {'path': path(d), 'key': d[0].key, 'row': d[0].row, 'points': makePoints(path, d)}
+        }
 
         // Convert array of categories into array of above structures
         return splits.map(f)
@@ -248,8 +257,8 @@ var BrunelD3 = (function () {
 
     // Returns an object with 'x', 'y' and 'box' that "surrounds" the text
     function makeLoc(target, labeling, s) {
-        var datum = target.__data__,                            // Associated data value
-            box, loc, method = labeling.method;
+        var datum = target.__data__, pad = labeling.pad,
+            box, loc, method = labeling.method, pos = labeling.location;
         if (labeling.where) {
             box = target.getBBox();
             var p = labeling.where(box, s, datum);
@@ -268,9 +277,12 @@ var BrunelD3 = (function () {
         } else {
             box = transformBox(target.getBBox(), target.getCTM());
 
+            var hPad = labeling.align == 'left' ? pad : -pad;
+            var vPad = labeling.inside ? -pad : pad;
+
             // Add 3 pixels padding
-            var dx = method == 'left' ? -3 : (method == 'right' ? box.width + 3 : box.width / 2);
-            var dy = method == 'top' ? -3 : (method == 'bottom' ? box.height + 3 : box.height / 2);
+            var dx = pos[0] == 'left' ? hPad : (pos[0] == 'right' ? box.width + hPad : box.width / 2);
+            var dy = pos[1] == 'top' ? -vPad : (pos[1] == 'bottom' ? box.height + vPad : box.height / 2);
             return {x: box.x + dx, y: box.y + dy, box: box}
         }
         // Modify for the transform
@@ -305,7 +317,7 @@ var BrunelD3 = (function () {
         return min > 0; // True if we have valid text
     }
 
-    function wrapInBox(textItem, text, loc) {
+    function wrapInBox(textItem, text, loc, offset) {
         // Remove existing spans
         while (textItem.firstChild) textItem.removeChild(textItem.firstChild);
 
@@ -336,7 +348,7 @@ var BrunelD3 = (function () {
             if (tspan.getComputedTextLength() > W) {
                 content.pop();
                 if (!content.length) {
-                    if (!addEllipses(tspan, word, W-4)) {
+                    if (!addEllipses(tspan, word, W - 4)) {
                         textItem.removeChild(tspan);
                         break;
                     }
@@ -352,9 +364,11 @@ var BrunelD3 = (function () {
         var spans = textItem.childNodes;
         if (!spans) return;
 
+        var D = 0.5 + offset;
+
         // Move everything up to center them
         for (i = 0; i < spans.length; i++)
-            spans[i].setAttribute('dy', ((i - spans.length / 2.0) * 1.1 + 0.85) + "em");
+            spans[i].setAttribute('dy', ((i - spans.length / 2.0) * 1.1 + D ) + "em");
     }
 
 
@@ -567,7 +581,45 @@ var BrunelD3 = (function () {
             w = +svg.attributes.width.value, h = +svg.attributes.height.value,  // width and height
             pt = svg.createSVGPoint();                                      // For matrix calculations
 
-        d3Target.on('mouseover', function (d) {
+
+        d3Target.on('mousemove', function (d) {
+            if (!d) return;
+
+            // Offsets for scrolling
+            var ox = document.documentElement.scrollLeft || document.body.scrollLeft,
+                oy = document.documentElement.scrollTop || document.body.scrollTop,
+                p;
+
+            function getScreenTipPosition(item, d) {
+                var labelPos = makeLoc(item, labeling, '', d), ctm = svg.getScreenCTM();
+                pt.x = labelPos.x + ctm.e + ox;
+                pt.y = labelPos.y + ctm.f + oy;
+                return pt;
+            }
+
+
+            if (d.points) {
+                // This is a path and we need to find the best point on it
+                var pp = d3.mouse(this), off = this.getScreenCTM();
+                function d2(a) { return (a.x-pp[0])*(a.x-pp[0]) + (a.y-pp[1])*(a.y-pp[1]) }
+
+                var i, dd, pts = d.points, best = pts[0], bestD = d2(best);
+                for (i=1; i<pts.length; i++) {
+                    dd = d2(pts[i]);
+                    if (dd < bestD) {
+                        bestD = dd;
+                        best = pts[i];
+                    }
+                }
+                d = best.d;                                         // replace with the closest 'd' in array
+                p = {                                               // replace p by closest point on path
+                    x: best.x + off.e + ox,
+                    y: best.y + off.f + oy
+                }
+            } else {
+                p = getScreenTipPosition(this, d);                          // get absolute location of the target
+            }
+
             var content = labeling.content(d);                              // To set html content
             if (!content) return;                                           // No tooltips if no data
 
@@ -584,7 +636,6 @@ var BrunelD3 = (function () {
             if (tooltip.offsetWidth > max_width)                            // If too wide, set a width for the div
                 tooltip.style.width = max_width + "px";
 
-            var p = getScreenTipPosition(this, d);                          // get absolute location of the target
             var top = p.y - 10 - tooltip.offsetHeight;                      // top location
             if (top < 2 && p.y < h / 2) {                                   // We are in top half up AND overflow top
                 var old = labeling.method;                                  // save the original method
@@ -603,12 +654,6 @@ var BrunelD3 = (function () {
             if (tooltip) tooltip.style.visibility = 'hidden';
         });   // hide it
 
-        function getScreenTipPosition(item, d) {
-            var labelPos = makeLoc(item, labeling, '', d), ctm = svg.getScreenCTM();
-            pt.x = labelPos.x + ctm.e + (document.documentElement.scrollLeft || document.body.scrollLeft);
-            pt.y = labelPos.y + ctm.f + (document.documentElement.scrollTop || document.body.scrollTop);
-            return pt;
-        }
 
     }
 
@@ -623,16 +668,6 @@ var BrunelD3 = (function () {
         }
     }
 
-
-    // for each position, gives the text-anchor and y offset
-    var LABEL_DEF = {
-        'center': ['middle', '0.3em'],
-        'left': ['end', '0.3em'],
-        'inner-left': ['start', '0.85em'],
-        'right': ['start', '0.3em'],
-        'top': ['middle', '-0.3em'],
-        'bottom': ['middle', '0.7em']
-    };
 
     // Check if it hits an existing space
     function hitsExisting(box, hits) {
@@ -682,12 +717,11 @@ var BrunelD3 = (function () {
         if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
         else txt.classed('label', true);
 
-        var attrs = LABEL_DEF[labeling.method] || LABEL_DEF['center'];          // Default to center
-        txt.style('text-anchor', attrs[0]).attr('dy', attrs[1]);
+        txt.style('text-anchor', labeling.align).attr('dy', labeling.dy + "em");
 
+        // Do not wrap if the text has been explicitly placed
         if (labeling.fit && !labeling.where) {
-            // Do not wrap if the text has been explicitly placed
-            wrapInBox(textNode, content, loc);
+            wrapInBox(textNode, content, loc, labeling.dy);
         } else {
 
             // Place at the required location
@@ -1129,12 +1163,16 @@ var BrunelD3 = (function () {
 
         // Find suitable fields (by name) that have the given role (size, y, color)
         function suitableFields(type) {
-            var i, y, result = [];   // collect all element's y fields
+            var i, y, f, seen = {}, result = [];              // collect all element's y fields
             chart.elements.forEach(function (e) {
                 y = e.fields[type];
-                if (y) for (i = 0; i < y.length; i++)
-                    if (isNumeric(y[i]))    // If numeric add values (add upper / lower ranges for stacking)
-                        result.push(y[i], y[i] + "$lower", y[i] + "$upper");
+                if (y) for (i = 0; i < y.length; i++) {
+                    f = y[i];
+                    if (seen[f] || f[0] == "'") continue;   // No duplicates and no constant values
+                    if (isNumeric(f))   			        // If numeric add values (upper / lower for stacking)
+                        result.push(f, f + "$lower", f + "$upper");
+                    seen[f] = true;
+                }
             });
             return result;
         }
@@ -1154,8 +1192,9 @@ var BrunelD3 = (function () {
         // "this" is the data set being evaluated
         function replaceData(name) {
             var field = this.field(name);
-            if (!field) return null;
-            field.oProvider = field.provider;                   // swap provider with a constant value
+            if (!field) return null;                                // Does not exist
+            if (field.oProvider) return field;                      // Already done
+            field.oProvider = field.provider;                       // swap provider with a constant value
             field.provider = new BrunelData.values_ConstantProvider(
                 start(field, role), field.rowCount());
             return field;
@@ -1198,11 +1237,15 @@ var BrunelD3 = (function () {
         if (scale.ticks) {
             // Transform the ticks
             data = scale.ticks();
-            f = function(d) {return scale(d)};
+            f = function (d) {
+                return scale(d)
+            };
         } else {
             // Use raw range
             data = scale.range();
-            f = function(d) {return d};
+            f = function (d) {
+                return d
+            };
         }
 
         var selection = interior.selectAll("line.grid." + (x ? "x" : "y"));

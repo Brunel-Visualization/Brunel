@@ -2416,6 +2416,7 @@ $.copy(V.modify_ConvertSeries, {
         $.addAll(result, list);
         if (!result.contains("#row")) result.add("#row");
         if (!result.contains("#count")) result.add("#count");
+        if (!result.contains("#selection")) result.add("#selection");
         return result.toArray();
     }
 
