@@ -1265,6 +1265,12 @@ var BrunelD3 = (function () {
             });
     }
 
+    function filterTicks(scale) {
+        var range = scale.range(), delta = Math.abs(range[1] - range[0]);
+        var skip = Math.ceil(16 / delta);
+        return skip < 2 ? scale.domain() : scale.domain().filter(function(d, i) { return !(i % skip); })
+    }
+
 
     // Expose these methods
     return {
@@ -1292,7 +1298,8 @@ var BrunelD3 = (function () {
         'interpolate': interpolate,
         'animateBuild': animateBuild,
         'makeGrid': makeGrid,
-        'showSelect': showSelect
+        'showSelect': showSelect,
+        'filterTicks': filterTicks
     }
 
 })

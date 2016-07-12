@@ -476,7 +476,7 @@ public class D3ElementBuilder {
             // Use the categories to define the size to fill if there are any categories
             if (categories > 0) {
                 // Distance between two categories
-                baseAmount = "(" + scaleName + "(" + scaleName + ".domain()[1])"
+                baseAmount = "Math.abs(" + scaleName + "(" + scaleName + ".domain()[1])"
                         + " - " + scaleName + "(" + scaleName + ".domain()[0])"
                         + " )";
 

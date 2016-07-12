@@ -55,7 +55,7 @@ public class AxisDetails {
     public int markSize;                                // Size of the tick mark
 
     private final Field[] fields;                       // Fields used in this axis
-    private final boolean categorical;                  // True if the axis is categorical
+    public final boolean categorical;                  // True if the axis is categorical
     private final boolean inMillions;                   // True if the fields values are nicely shown in millions
     private AxisTitleBuilder titleBuilder;              // builds the title for this axis
 

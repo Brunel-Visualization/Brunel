@@ -343,8 +343,6 @@ public class D3ScaleBuilder {
             out.add(basicDefinition)
                     .addChained("scale(" + axis.scale + ").innerTickSize(" + axis.markSize
                             + ").tickPadding(" + padding + ").outerTickSize(0)");
-            if (axis.tickValues != null)
-                out.addChained("tickValues([").addQuoted(axis.tickValues).add("])");
             if (axis.isLog()) out.addChained("ticks(7, ',.g3')");
             else if (axis.tickCount != null)
                 out.addChained("ticks(").add(axis.tickCount).add(")");
@@ -366,12 +364,21 @@ public class D3ScaleBuilder {
     private void defineAxesBuild() {
         out.onNewLine().ln().add("function buildAxes() {").indentMore();
         if (hAxis.exists()) {
+            if (hAxis.categorical) {
+                // Ensure the ticks are filtered so as not to overlap
+                out.onNewLine().add("axis_bottom.tickValues(BrunelD3.filterTicks(" + hAxis.scale + "))");
+            }
             out.onNewLine().add("axes.select('g.axis.x').call(axis_bottom)");
             if (hAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
         }
 
         if (vAxis.exists()) {
+            if (vAxis.categorical) {
+                // Ensure the ticks are filtered so as not to overlap
+                out.onNewLine().add("axis_left.tickValues(BrunelD3.filterTicks(" + vAxis.scale + "))");
+            }
+
             out.onNewLine().add("axes.select('g.axis.y').call(axis_left)");
             if (vAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
