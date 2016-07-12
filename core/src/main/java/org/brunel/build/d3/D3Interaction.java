@@ -24,6 +24,7 @@ import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Interaction;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,15 +42,44 @@ public class D3Interaction {
     private final ChartStructure structure;     // Chart Structure
     private final D3ScaleBuilder scales;        // Scales for the chart
     private final ScriptWriter out;             // Write definitions here
-    private final ZoomType zoomable;             // Same for all elements
+    private final ZoomType zoomable;            // Same for all elements
+    private final boolean canZoomX, canZoomY;   // for coordinate zoom, which axes we can zoom
 
     public D3Interaction(ChartStructure structure, D3ScaleBuilder scales, ScriptWriter out) {
         this.structure = structure;
         this.scales = scales;
         this.out = out;
-        if (isZoomable(structure.elementStructure))
-            this.zoomable = structure.geo == null ? ZoomType.CoordinateZoom : ZoomType.MapZoom;
-        else this.zoomable = ZoomType.None;
+        if (isZoomable(structure.elementStructure)) {
+            if (structure.geo == null) {
+                this.zoomable = ZoomType.CoordinateZoom;
+                canZoomX = checkCoordinate(structure, "x", structure.coordinates.xCategorical);
+                canZoomY = checkCoordinate(structure, "y", structure.coordinates.yCategorical);
+            } else {
+                this.zoomable = ZoomType.MapZoom;
+                canZoomX = canZoomY = true;
+            }
+        } else {
+            this.zoomable = ZoomType.None;
+            canZoomX = canZoomY = false;
+        }
+    }
+
+    /**
+     * Decide if this dimension is to be pan/zoomed
+     * @param structure chart structure
+     * @param dimName "x" or "y"
+     * @param dimIsCategorical if true, the dimension is categorical
+     * @return true if we want to zoom for this dimension
+     */
+    private boolean checkCoordinate(ChartStructure structure, String dimName, boolean dimIsCategorical) {
+        for (VisSingle e : structure.elements) {
+            Param param = e.tInteraction.get(Interaction.panzoom);
+            if (param != null && param.hasModifiers()){
+                String s = param.firstModifier().asString();
+                return dimName.equalsIgnoreCase(s) || "both".equalsIgnoreCase(s);
+            }
+        }
+        return !dimIsCategorical;
     }
 
     public ZoomType getZoomType() {
@@ -57,21 +87,29 @@ public class D3Interaction {
     }
 
     private boolean isZoomable(ElementStructure[] elements) {
-        // Check for things that just will not work currently
-        if (structure.coordinates.xCategorical && structure.coordinates.yCategorical)
-            return false;  // Only zoom numerical
+        // we cannot zoom diagrams (except for maps) or polar coordinates
         if ((structure.diagram != null && structure.geo == null) || scales.coords == Coordinates.polar)
-            return false;  // Doesn't work
+            return false;
 
-        // If anything says we want it, we get it
-        // Otherwise, if anything says we do not, we do not
-        // Otherwise, we get it
-        boolean defaultResult = true;
+        // Explicit requests in the code are honored. In case of multiple specs, just the first one is used
         for (ElementStructure e : elements) {
-            if (e.vis.tInteraction.containsKey(Interaction.panzoom)) return true;
-            if (e.vis.tInteraction.containsKey(Interaction.none)) defaultResult = false;
+            Param param = e.vis.tInteraction.get(Interaction.panzoom);
+            if (param != null) return isNeeded(param);
+            if (e.vis.tInteraction.containsKey(Interaction.none)) return false;
         }
-        return defaultResult;
+
+        // By default, we do not zoom for all categorical data
+        if (structure.coordinates.xCategorical && structure.coordinates.yCategorical)
+            return false;
+
+        // Otherwise, we want some zooming
+        return true;
+    }
+
+    private boolean isNeeded(Param param) {
+        if (!param.hasModifiers()) return true;
+        String s = param.firstModifier().asString();
+        return !s.equals("none");
     }
 
     /**
@@ -136,8 +174,10 @@ public class D3Interaction {
             out.add("var overlay = interior.append('g').attr('class', 'element')")
                     .addChained("attr('class', 'overlay').style('cursor','move').style('fill','none').style('pointer-events','all')")
                     .endStatement();
+
             // Add an overlay rectangle for zooming that will trap all mouse events and use them for pan/zoom
-            out.add("var zoom = d3.behavior.zoom().on('zoom', function() {build(-1)} )").endStatement();
+            out.add("var zoom = d3.behavior.zoom()").endStatement();
+            out.add("zoom.on('zoom', function() {build(-1)} )").endStatement();
 
             out.add("overlay.append('rect').attr('class', 'overlay')");
             if (scales.coords == Coordinates.transposed) {
@@ -156,15 +196,37 @@ public class D3Interaction {
      */
     public void addScaleInteractivity() {
         if (zoomable == ZoomType.None) return;
+        List<String> zoomCalls = new ArrayList<>();
+
         out.add("zoom");
-        if (scales.coords == Coordinates.transposed) {
-            // Attach x to y and y to x
-            if (!structure.coordinates.xCategorical) out.add(".y(scale_x)");
-            if (!structure.coordinates.yCategorical) out.add(".x(scale_y)");
-        } else {
-            if (!structure.coordinates.xCategorical) out.add(".x(scale_x)");
-            if (!structure.coordinates.yCategorical) out.add(".y(scale_y)");
+
+        if (canZoomX) {
+            if (structure.coordinates.xCategorical) {
+                zoomCalls.add("scale_x.rangePoints([zoom.translate()[0], zoom.translate()[0] + zoom.scale() * geom.inner_width], 1);");
+            } else if (scales.coords == Coordinates.transposed) {
+                out.add(".y(scale_x)");
+            } else {
+                out.add(".x(scale_x)");
+            }
+        }
+
+        if (canZoomY) {
+            if (structure.coordinates.yCategorical) {
+                zoomCalls.add("scale_y.rangePoints([zoom.translate()[1], zoom.translate()[1] + zoom.scale() * geom.inner_height], 1);");
+            } else if (scales.coords == Coordinates.transposed) {
+                out.add(".x(scale_y)");
+            } else {
+                out.add(".y(scale_y)");
+            }
+        }
+
+        if (!zoomCalls.isEmpty()) {
+            out.addChained("on('zoom', function() {").indentMore();
+            for (String s : zoomCalls) out.onNewLine().add(s).endStatement();
+            out.onNewLine().add("build(-1)").endStatement();
+            out.indentLess().onNewLine().add("})");
         }
         out.endStatement();
+
     }
 }

@@ -434,7 +434,7 @@ public class D3ElementBuilder {
     }
 
     private GeomAttribute getSize(Field[] fields, String extent, ScalePurpose purpose, ElementDimension dim) {
-
+        String scaleName = "scale_" + purpose.name();
         boolean needsFunction = dim.sizeFunction != null;
         String baseAmount;
         if (dim.sizeStyle != null && !dim.sizeStyle.isPercent()) {
@@ -475,8 +475,10 @@ public class D3ElementBuilder {
             }
             // Use the categories to define the size to fill if there are any categories
             if (categories > 0) {
-                // divide up the space by the number of categories
-                baseAmount = (categories == 1) ? extent : extent + "/" + categories;
+                // Distance between two categories
+                baseAmount = "(" + scaleName + "(" + scaleName + ".domain()[1])"
+                        + " - " + scaleName + "(" + scaleName + ".domain()[0])"
+                        + " )";
 
                 // Create some spacing between categories -- ONLY if we have all categorical data,
                 // or if we are clustering (in which case a larger gap is better)
@@ -487,7 +489,6 @@ public class D3ElementBuilder {
                     baseAmount = BAR_SPACING + " * " + baseAmount;
 
             } else if (granularity != null) {
-                String scaleName = "scale_" + purpose.name();
                 baseAmount = "Math.abs( " + scaleName + "(" + granularity + ") - " + scaleName + "(0) )";
                 needsFunction = true;
             } else {
