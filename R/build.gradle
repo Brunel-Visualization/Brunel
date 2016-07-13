@@ -13,6 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+ 
+task copyRJarFiles(type: Copy, dependsOn: [project(':core').build, project(':data').build]) {
+    description 'Copies required .jar files needed for execution'    
+    from (project(':core').configurations.compile.files { it.name == "gson" }) 
+    from project(':core').jar.archivePath
+    from project(':data').jar.archivePath
+    into 'inst/java'
+}
 
-include 'data', 'core', 'etc', 'service', 'python', 'gallery', 'scala', 'spark-kernel', 'r'
+task build(dependsOn: [copyRJarFiles]) {
+}
 
+defaultTasks 'build'
