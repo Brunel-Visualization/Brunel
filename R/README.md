@@ -4,7 +4,7 @@ This project contains code for integrating Brunel into Jupyter using the [IRkern
 [rJava](https://cran.r-project.org/web/packages/rJava/index.html) is used for the integration between R and Java for Brunel Visualization.
 
 ## Pre-requisites
-* The [IRkernel](https://github.com/IRkernel/IRkernel) must be installed into Jupyter.  This code will only work via a Jupyter notebook.  It will not work in R desktop.
+* The [IRkernel](http://irkernel.github.io/) must be installed into Jupyter.  This code will only work via a Jupyter notebook.  It will not work in R desktop.
 * Java 1.7 or greater must be installed
 * The `JAVA_HOME` env variable must be set to the location of the `Java` installation
 * Install [Brunel Visualization for Jupyter Notebooks](https://pypi.python.org/pypi/brunel):  `pip install brunel`
