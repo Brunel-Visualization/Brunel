@@ -14,15 +14,23 @@
  * limitations under the License.
  */
  
-task copyRJarFiles(type: Copy, dependsOn: [project(':core').build, project(':data').build]) {
-    description 'Copies required .jar files needed for execution'    
+task copyJarFiles(type: Copy, dependsOn: [project(':core').build, project(':data').build]) {
+    description 'Copies required .jar files needed for execution in R'    
     from (project(':core').configurations.compile.files { it.name == "gson" }) 
     from project(':core').jar.archivePath
     from project(':data').jar.archivePath
     into 'inst/java'
 }
 
-task build(dependsOn: [copyRJarFiles]) {
+task copyRFiles(type: Copy, dependsOn: [copyJarFiles]) {
+    description 'Copies R files needed for deployment'    
+    from (".") {
+    	exclude '**/.project', '**/*.gradle', '**/.ipynb_checkpoints/'
+    }
+    into '../out/R'
+}
+
+task build(dependsOn: [copyRFiles]) {
 }
 
 defaultTasks 'build'
