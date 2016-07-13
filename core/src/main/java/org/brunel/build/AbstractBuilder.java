@@ -203,7 +203,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         }
 
 
-        ChartStructure structure = new ChartStructure(chartIndex, elements, data, datasets, outer, innerChartIndex);
+        ChartStructure structure = new ChartStructure(chartIndex, elements, data, datasets, outer, innerChartIndex, options.visIdentifier);
         structure.accessible = options.accessibleContent;
         defineChart(structure, loc);
         for (ElementStructure e : structure.elementStructure) buildElement(e);

@@ -25,7 +25,7 @@ import org.brunel.model.VisTypes;
  * This class builds the information needed to build locations for the shapes
  */
 class DefineLocations {
-    static final String CLUSTER_SPACING = "0.75";       // Spacing between clusters
+    static final String CLUSTER_SPACING = "0.8";       // Spacing between clusters
 
     private static String addClusterMultiplier(Field cluster, boolean widthIsFunc) {
         return " + "

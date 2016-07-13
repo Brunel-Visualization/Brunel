@@ -18,7 +18,6 @@ package org.brunel.build.d3;
 
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.util.Accessibility;
-import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 
 /**
@@ -27,12 +26,10 @@ import org.brunel.build.util.ScriptWriter;
 public class SVGGroupUtility {
     public final String chartClassID;               // ID for the chart group
     private final ChartStructure structure;
-    private final BuilderOptions options;
 
-    public SVGGroupUtility(ChartStructure structure, BuilderOptions options) {
+    public SVGGroupUtility(ChartStructure structure) {
         this.chartClassID = "chart" + structure.chartID();                    // The class for our group
         this.structure = structure;
-        this.options = options;
     }
 
     /**
@@ -41,9 +38,19 @@ public class SVGGroupUtility {
      * @param out where to write to
      */
     public void addAccessibleChartInfo(ScriptWriter out) {
-        if (!options.accessibleContent) return;
-        String label = Accessibility.makeNumberingTitle("chart", structure.chartIndex);
-        Accessibility.writeLabelAttribute(structure, out, label);
+        if (structure.accessible)
+            addAccessibleTitle(Accessibility.makeNumberingTitle("chart", structure.chartIndex), out);
+    }
+
+    /**
+     * Writes out accessible labels for the group
+     *
+     * @param title the name to give this
+     * @param out   where to write to
+     */
+    public void addAccessibleTitle(String title, ScriptWriter out) {
+        if (structure.accessible)
+            Accessibility.writeLabelAttribute(title, out);
     }
 
     public void addClipPathReference(ScriptWriter out) {
@@ -68,7 +75,7 @@ public class SVGGroupUtility {
 
     // returns an id that is unique to the chart and the visualization
     private String clipID(String prefix) {
-        return prefix + options.visIdentifier + "_" + structure.chartID();
+        return prefix + structure.visIdentifier + "_" + structure.chartID();
     }
 
 }

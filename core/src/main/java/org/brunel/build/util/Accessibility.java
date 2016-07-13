@@ -17,7 +17,6 @@
 package org.brunel.build.util;
 
 import org.brunel.build.d3.D3LabelBuilder;
-import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.data.Data;
 import org.brunel.model.VisSingle;
@@ -40,7 +39,7 @@ public class Accessibility {
     public static void defineElementLabelFunction(ElementStructure structure, ScriptWriter out, D3LabelBuilder labelBuilder) {
         if (!structure.chart.accessible) return;
         VisSingle vis = structure.vis;
-        out.add("function ariaLabel(d) {return ");
+        out.onNewLine().add("function ariaLabel(d) { return ");
         if (!vis.itemsTooltip.isEmpty())
             labelBuilder.writeContent(vis.itemsTooltip, false);
         else if (!vis.itemsLabel.isEmpty())
@@ -48,7 +47,7 @@ public class Accessibility {
         else {
             out.add("data._key(d.row)");
         }
-        out.add("}");
+        out.add("}").endStatement();
     }
 
     /**
@@ -59,7 +58,7 @@ public class Accessibility {
      */
     public static void useElementLabelFunction(ElementStructure structure, ScriptWriter out) {
         if (structure.chart.accessible)
-            out.add(".attr('role', 'img').attr('aria-label', ariaLabel)");
+            out.addChained("attr('role', 'img').attr('aria-label', ariaLabel)");
     }
 
     public static String makeNumberingTitle(String name, int index) {
@@ -72,13 +71,11 @@ public class Accessibility {
     /**
      * Label a chart item as a region
      *
-     * @param structure the element structure
-     * @param out       writes to this
-     * @param label     name for it
+     * @param label name for it
+     * @param out   writes to this
      */
-    public static void writeLabelAttribute(ChartStructure structure, ScriptWriter out, String label) {
-        if (structure.accessible)
-            out.add(".attr('role', 'region').attr('aria-label', " + Data.quote(label) + ")");
+    public static void writeLabelAttribute(String label, ScriptWriter out) {
+        out.addChained("attr('role', 'region').attr('aria-label', " + Data.quote(label) + ")");
     }
 
     /**
@@ -89,14 +86,14 @@ public class Accessibility {
      */
     public static void addElementInformation(ElementStructure structure, ScriptWriter out) {
         if (structure.chart.accessible)
-            out.add(".attr('role', 'region').attr('aria-label', "
+            out.addChained("attr('role', 'region').attr('aria-label', "
                     + Data.quote(makeVisSingleLabel(structure.vis)) + ")");
     }
 
     protected static String makeVisSingleLabel(VisSingle vis) {
 
         String[] pos = vis.positionFields();
-        String label = pos.length == 0 ? "No data": Data.join(pos);
+        String label = pos.length == 0 ? "No data" : Data.join(pos);
 
         if (vis.tDiagram != null)
             label += " as a " + vis.tDiagram + " diagram";

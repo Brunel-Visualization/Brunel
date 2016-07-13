@@ -41,16 +41,19 @@ public class ChartStructure {
     public final ElementStructure[] elementStructure;
     public final ChartStructure outer;                      // If non-null, the enclosing element for a nested chart
     public final Integer innerChartIndex;                   // If non-null, the index of the chart we enclose
-    public boolean accessible;                               // If true, generate accessible content
+    public final String visIdentifier;                      // Identifier for the overall vis (the SVG ID)
+    public boolean accessible;                              // If true, generate accessible content
 
     public final Dataset[] baseDataSets;
 
-    public ChartStructure(int chartIndex, VisSingle[] elements, Dataset[] data, Dataset[] dataSets, ChartStructure outer, Integer innerChartIndex) {
+    public ChartStructure(int chartIndex, VisSingle[] elements, Dataset[] data, Dataset[] dataSets,
+                          ChartStructure outer, Integer innerChartIndex, String visIdentifier) {
         this.baseDataSets = dataSets;
         this.chartIndex = chartIndex;
         this.elements = elements;
         this.outer = outer;
         this.innerChartIndex = innerChartIndex;
+        this.visIdentifier = visIdentifier;
         this.coordinates = new ChartCoordinates(elements, data);
         this.elementStructure = new ElementStructure[elements.length];
         this.diagram = findDiagram();

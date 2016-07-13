@@ -21,7 +21,6 @@ import org.brunel.action.Param.Type;
 import org.brunel.build.d3.D3Util.DateBuilder;
 import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
-import org.brunel.build.util.Accessibility;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.color.ColorMapping;
@@ -306,13 +305,15 @@ public class D3ScaleBuilder {
     public void writeAxes() {
         if (!hAxis.exists() && !vAxis.exists()) return;                          // No axes needed
 
+        SVGGroupUtility groupUtil = new SVGGroupUtility(structure);
+
         // Define the spaces needed to work in
 
         // Define the groups for the axes and add titles
         if (hAxis.exists()) {
             out.onNewLine().add("axes.append('g').attr('class', 'x axis')")
                     .addChained("attr('transform','translate(0,' + geom.inner_rawHeight + ')')");
-            Accessibility.writeLabelAttribute(structure, out, "Horizontal Axis");
+            groupUtil.addAccessibleTitle("Horizontal Axis",out);
             out.endStatement();
 
             // Add the title if necessary
@@ -321,7 +322,7 @@ public class D3ScaleBuilder {
         if (vAxis.exists()) {
             out.onNewLine().add("axes.append('g').attr('class', 'y axis')")
                     .addChained("attr('transform','translate(' + geom.chart_left + ', 0)')");
-            Accessibility.writeLabelAttribute(structure, out, "Vertical Axis");
+            groupUtil.addAccessibleTitle("Vertical Axis",out);
             out.endStatement();
 
             // Add the title if necessary
@@ -567,7 +568,7 @@ public class D3ScaleBuilder {
 
     public List<Object> getCategories(Field[] ff) {
         Set<Object> all = new LinkedHashSet<>();
-        for (Field f : ff) if (!f.isNumeric()) Collections.addAll(all, f.categories());
+        for (Field f : ff) if (f.preferCategorical()) Collections.addAll(all, f.categories());
         return new ArrayList<>(all);
     }
 

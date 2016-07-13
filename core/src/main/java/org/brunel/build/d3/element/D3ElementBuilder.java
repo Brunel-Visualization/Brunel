@@ -464,14 +464,12 @@ public class D3ElementBuilder {
             if (purpose == ScalePurpose.inner) baseFields = new Field[]{fields[1]};         // Just the cluster
 
             int categories = scales.getCategories(baseFields).size();
-            if (purpose == ScalePurpose.x && fields.length > 1) {
-                // We want the size of the bars for a clustered chart
-                // Each major cluster is divided into subclusters so we multiply to find the number
-                // of paired categories
-                Object[] cats = fields[1].categories();
-                if (cats != null) categories *= cats.length;
-            }
             Double granularity = scales.getGranularitySuitableForSizing(baseFields);
+            if (purpose == ScalePurpose.x || purpose == ScalePurpose.inner) {
+                if (baseFields.length == 1 && baseFields[0].isNumeric()) categories = 0;
+            }
+
+
             if (vis.tDiagram != null) {
                 // Diagrams do not define these things
                 granularity = null;
@@ -490,16 +488,12 @@ public class D3ElementBuilder {
                 }
 
                 // Create some spacing between categories -- ONLY if we have all categorical data,
-                // or if we are clustering (in which case a larger gap is better)
-
-                if (purpose == ScalePurpose.x && dim.clusterSize != null)
+                if (purpose == ScalePurpose.x && fields.length > 1)
                     baseAmount = DefineLocations.CLUSTER_SPACING + " * " + baseAmount;
                 else if ((dim.sizeStyle == null || !dim.sizeStyle.isPercent()) && !scales.allNumeric(baseFields))
                     baseAmount = BAR_SPACING + " * " + baseAmount;
-
             } else if (granularity != null) {
-                baseAmount = "Math.abs( " + scaleName + "(" + granularity + ") - " + scaleName + "(0) )";
-                needsFunction = true;
+                baseAmount = "Math.abs( " + scaleName + "(" + scaleName + ".domain()[0] + " + granularity + ") - " + scaleName + ".range()[0] )";
             } else {
                 baseAmount = "geom.default_point_size";
             }

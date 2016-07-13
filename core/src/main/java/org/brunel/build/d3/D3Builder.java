@@ -498,7 +498,7 @@ public class D3Builder extends AbstractBuilder {
     }
 
     private void writeMainGroups(ChartStructure structure) {
-        SVGGroupUtility groupUtil = new SVGGroupUtility(structure, options);
+        SVGGroupUtility groupUtil = new SVGGroupUtility(structure);
 
         if (structure.nested()) {
             out.onNewLine().comment("Nesting -- create an outer chart and place groups inside for each facet");
@@ -547,7 +547,7 @@ public class D3Builder extends AbstractBuilder {
         if (scalesBuilder.needsLegends()) {
             out.add("var legends = chart.append('g').attr('class', 'legend')")
                     .addChained(makeTranslateTransform("(geom.chart_right-geom.chart_left - 3)", "0"));
-            Accessibility.writeLabelAttribute(structure, out, "Legend");
+            groupUtil.addAccessibleTitle("Legend", out);
             out.endStatement();
         }
 

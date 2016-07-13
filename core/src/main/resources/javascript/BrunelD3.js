@@ -1134,7 +1134,7 @@ var BrunelD3 = (function () {
 
     // v is in the range -1/2 to 1/2
     function interpolate(a, b, v) {
-        return (a + b) / 2 + v * (a - b);
+        return (a + b) / 2 + v * (b - a);
     }
 
     // An animated start to a visualization
