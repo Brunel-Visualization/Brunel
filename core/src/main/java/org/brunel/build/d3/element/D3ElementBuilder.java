@@ -140,9 +140,6 @@ public class D3ElementBuilder {
     }
 
     private void writeCoordinateFunctions(ElementDetails details) {
-        // Add definition for the internal width of a cluster category
-        if (details.clusterSize != null)
-            out.add("var clusterWidth =", details.clusterSize).endStatement();
 
         writeDimLocations(details.x, "x", "w");
         writeDimLocations(details.y, "y", "h");
@@ -166,6 +163,9 @@ public class D3ElementBuilder {
      * @param sizeName the name of the sie function ('width' or 'height')
      */
     private void writeDimLocations(ElementDimension dim, String mainName, String sizeName) {
+        if (dim.clusterSize != null) out.add("var clusterWidth =", dim.clusterSize).endStatement();
+        if (dim.size != null) out.add("var", sizeName, "=", dim.size).endStatement();
+
         if (dim.left != null && dim.right != null) {
             // Use the left and right values to define x1,x2 (or y1, y2)
             out.add("var", mainName + "1 =", dim.left).endStatement();
@@ -174,7 +174,6 @@ public class D3ElementBuilder {
 
         // Define the center and size
         if (dim.center != null) out.add("var", mainName, "=", dim.center).endStatement();
-        if (dim.size != null) out.add("var", sizeName, "=", dim.size).endStatement();
     }
 
     public boolean needsDiagramExtras() {
@@ -219,15 +218,24 @@ public class D3ElementBuilder {
         }
 
         if (structure.chart.geo != null) {
+            e.x.size = getSize(new Field[0], "geom.default_point_size", null, e.x);
+            e.y.size = getSize(new Field[0], "geom.default_point_size", null, e.x);
+
             // Maps with feature data do not need the geo coordinates set
             if (vis.tDiagram != Diagram.map)
                 setLocationsByProjection(e, x, y);
             else if (e.representation != ElementRepresentation.geoFeature)
                 setLocationsByGeoPropertiesCenter(e);
             // Just use the default point size
-            e.x.size = getSize(new Field[0], "geom.default_point_size", null, e.x);
-            e.y.size = getSize(new Field[0], "geom.default_point_size", null, e.x);
         } else {
+            // Must define cluster size before anything else, as other things use it
+            if (x.length > 1) {
+                e.x.clusterSize = getSize(x, "geom.inner_width", ScalePurpose.x, e.x);
+                e.x.size = getSize(x, "geom.inner_width", ScalePurpose.inner, e.x);
+            } else {
+                e.x.size = getSize(x, "geom.inner_width", ScalePurpose.x, e.x);
+            }
+            e.y.size = getSize(y, "geom.inner_height", ScalePurpose.y, e.y);
             DefineLocations.setLocations(e.representation, structure, e.x, "x", x, structure.chart.coordinates.xCategorical);
             DefineLocations.setLocations(e.representation, structure, e.y, "y", y, structure.chart.coordinates.yCategorical);
             if (e.representation == ElementRepresentation.area && e.y.right == null) {
@@ -236,10 +244,6 @@ public class D3ElementBuilder {
                 e.y.left = GeomAttribute.makeConstant("scale_y.range()[0]");
                 e.y.center = null;
             }
-            e.x.size = getSize(x, "geom.inner_width", ScalePurpose.x, e.x);
-            e.y.size = getSize(y, "geom.inner_height", ScalePurpose.y, e.y);
-            if (x.length > 1)
-                e.clusterSize = getSize(x, "geom.inner_width", ScalePurpose.inner, e.x);
         }
         e.overallSize = getOverallSize(vis, e);
     }
@@ -434,7 +438,6 @@ public class D3ElementBuilder {
     }
 
     private GeomAttribute getSize(Field[] fields, String extent, ScalePurpose purpose, ElementDimension dim) {
-        String scaleName = "scale_" + purpose.name();
         boolean needsFunction = dim.sizeFunction != null;
         String baseAmount;
         if (dim.sizeStyle != null && !dim.sizeStyle.isPercent()) {
@@ -453,12 +456,13 @@ public class D3ElementBuilder {
             baseAmount = "Math.abs(" + dim.left.definition() + "-" + dim.right.definition() + ")";
             needsFunction = true;
         } else {
+            String scaleName = "scale_" + purpose.name();
+
             // Use size of categories
             Field[] baseFields = fields;
-            if (purpose == ScalePurpose.x || purpose == ScalePurpose.inner) {
-                // Do not count the other fields
-                baseFields = new Field[]{fields[0]};
-            }
+            if (purpose == ScalePurpose.x) baseFields = new Field[]{fields[0]};             // Just the X
+            if (purpose == ScalePurpose.inner) baseFields = new Field[]{fields[1]};         // Just the cluster
+
             int categories = scales.getCategories(baseFields).size();
             if (purpose == ScalePurpose.x && fields.length > 1) {
                 // We want the size of the bars for a clustered chart
@@ -475,15 +479,20 @@ public class D3ElementBuilder {
             }
             // Use the categories to define the size to fill if there are any categories
             if (categories > 0) {
-                // Distance between two categories
-                baseAmount = "Math.abs(" + scaleName + "(" + scaleName + ".domain()[1])"
-                        + " - " + scaleName + "(" + scaleName + ".domain()[0])"
-                        + " )";
+                if (categories > 1) {
+                    // Distance between two categories
+                    baseAmount = "Math.abs(" + scaleName + "(" + scaleName + ".domain()[1])"
+                            + " - " + scaleName + "(" + scaleName + ".domain()[0])"
+                            + " )";
+                } else {
+                    // The whole space
+                    baseAmount = extent;
+                }
 
                 // Create some spacing between categories -- ONLY if we have all categorical data,
                 // or if we are clustering (in which case a larger gap is better)
 
-                if (purpose == ScalePurpose.inner || purpose == ScalePurpose.x && fields.length > 1)
+                if (purpose == ScalePurpose.x && dim.clusterSize != null)
                     baseAmount = DefineLocations.CLUSTER_SPACING + " * " + baseAmount;
                 else if ((dim.sizeStyle == null || !dim.sizeStyle.isPercent()) && !scales.allNumeric(baseFields))
                     baseAmount = BAR_SPACING + " * " + baseAmount;
@@ -499,6 +508,12 @@ public class D3ElementBuilder {
         // If the size definition is a percent, use that to scale by
         if (dim.sizeStyle != null && dim.sizeStyle.isPercent())
             baseAmount = dim.sizeStyle.value(1) + " * " + baseAmount;
+
+        // Multiple by the size of the cluster
+        if (dim.clusterSize != null) {
+            if (dim.clusterSize.isFunc()) baseAmount += " * clusterWidth(d)";
+            else baseAmount += " * clusterWidth";
+        }
 
         if (dim.sizeFunction != null) baseAmount = dim.sizeFunction + " * " + baseAmount;
 

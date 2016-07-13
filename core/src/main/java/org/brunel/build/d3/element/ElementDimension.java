@@ -31,6 +31,7 @@ public class ElementDimension {
     public GeomAttribute left;                      // Where the left is to be (right will also be defined)
     public GeomAttribute right;                     // Where the right is to be (left will also be defined)
     public GeomAttribute size;                      // What the size is to be
+    public GeomAttribute clusterSize;               // What the size of a cluster is
 
     public ElementDimension(VisSingle vis, String sizeName, ElementRepresentation representation, String[] classes) {
         StyleTarget target = StyleTarget.makeElementTarget(representation.getMark(), classes);

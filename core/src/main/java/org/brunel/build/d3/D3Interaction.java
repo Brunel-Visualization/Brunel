@@ -66,15 +66,16 @@ public class D3Interaction {
 
     /**
      * Decide if this dimension is to be pan/zoomed
-     * @param structure chart structure
-     * @param dimName "x" or "y"
+     *
+     * @param structure        chart structure
+     * @param dimName          "x" or "y"
      * @param dimIsCategorical if true, the dimension is categorical
      * @return true if we want to zoom for this dimension
      */
     private boolean checkCoordinate(ChartStructure structure, String dimName, boolean dimIsCategorical) {
         for (VisSingle e : structure.elements) {
             Param param = e.tInteraction.get(Interaction.panzoom);
-            if (param != null && param.hasModifiers()){
+            if (param != null && param.hasModifiers()) {
                 String s = param.firstModifier().asString();
                 return dimName.equalsIgnoreCase(s) || "both".equalsIgnoreCase(s);
             }
@@ -179,14 +180,9 @@ public class D3Interaction {
             out.add("var zoom = d3.behavior.zoom()").endStatement();
             out.add("zoom.on('zoom', function() {build(-1)} )").endStatement();
 
-            out.add("overlay.append('rect').attr('class', 'overlay')");
-            if (scales.coords == Coordinates.transposed) {
-                out.addChained("attr('width', geom.inner_height)")
-                        .addChained("attr('height', geom.inner_width)");
-            } else {
-                out.addChained("attr('width', geom.inner_width)")
-                        .addChained("attr('height', geom.inner_height)");
-            }
+            out.add("overlay.append('rect').attr('class', 'overlay')")
+                    .addChained("attr('width', geom.inner_rawWidth)")
+                    .addChained("attr('height', geom.inner_rawHeight)");
             out.addChained("call(zoom)").endStatement();
         }
     }

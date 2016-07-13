@@ -62,20 +62,7 @@ public class Accessibility {
             out.add(".attr('role', 'img').attr('aria-label', ariaLabel)");
     }
 
-    /**
-     * Add labels and role to the group for a chart
-     * Only do this for multiple charts; if we haev just one, that is all we need
-     *
-     * @param structure    the element structure
-     * @param out          writes to this
-     * @param oneOfSeveral true if the chart is one of many
-     */
-    public static void addChartInformation(ChartStructure structure, ScriptWriter out, boolean oneOfSeveral) {
-        if (structure.accessible && oneOfSeveral)
-            addRegion(structure, out, makeNumberingTitle("chart", structure.chartIndex));
-    }
-
-    private static String makeNumberingTitle(String name, int index) {
+    public static String makeNumberingTitle(String name, int index) {
         if (index == 0) return "First " + name;
         if (index == 1) return "Second " + name;
         if (index == 2) return "Third " + name;
@@ -89,7 +76,7 @@ public class Accessibility {
      * @param out       writes to this
      * @param label     name for it
      */
-    public static void addRegion(ChartStructure structure, ScriptWriter out, String label) {
+    public static void writeLabelAttribute(ChartStructure structure, ScriptWriter out, String label) {
         if (structure.accessible)
             out.add(".attr('role', 'region').attr('aria-label', " + Data.quote(label) + ")");
     }

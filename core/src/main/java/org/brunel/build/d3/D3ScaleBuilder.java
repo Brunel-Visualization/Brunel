@@ -307,13 +307,12 @@ public class D3ScaleBuilder {
         if (!hAxis.exists() && !vAxis.exists()) return;                          // No axes needed
 
         // Define the spaces needed to work in
-        String height = coords == Coordinates.transposed ? "geom.inner_width" : "geom.inner_height";
 
         // Define the groups for the axes and add titles
         if (hAxis.exists()) {
             out.onNewLine().add("axes.append('g').attr('class', 'x axis')")
-                    .addChained("attr('transform','translate(0,' + " + height + " + ')')");
-            Accessibility.addRegion(structure, out, "Horizontal Axis");
+                    .addChained("attr('transform','translate(0,' + geom.inner_rawHeight + ')')");
+            Accessibility.writeLabelAttribute(structure, out, "Horizontal Axis");
             out.endStatement();
 
             // Add the title if necessary
@@ -322,7 +321,7 @@ public class D3ScaleBuilder {
         if (vAxis.exists()) {
             out.onNewLine().add("axes.append('g').attr('class', 'y axis')")
                     .addChained("attr('transform','translate(' + geom.chart_left + ', 0)')");
-            Accessibility.addRegion(structure, out, "Vertical Axis");
+            Accessibility.writeLabelAttribute(structure, out, "Vertical Axis");
             out.endStatement();
 
             // Add the title if necessary
@@ -568,7 +567,7 @@ public class D3ScaleBuilder {
 
     public List<Object> getCategories(Field[] ff) {
         Set<Object> all = new LinkedHashSet<>();
-        for (Field f : ff) if (f.preferCategorical()) Collections.addAll(all, f.categories());
+        for (Field f : ff) if (!f.isNumeric()) Collections.addAll(all, f.categories());
         return new ArrayList<>(all);
     }
 

@@ -498,24 +498,24 @@ public class D3Builder extends AbstractBuilder {
     }
 
     private void writeMainGroups(ChartStructure structure) {
-        String chartClassID = "chart" + structure.chartID();                    // The class for our group
+        SVGGroupUtility groupUtil = new SVGGroupUtility(structure, options);
 
         if (structure.nested()) {
             out.onNewLine().comment("Nesting -- create an outer chart and place groups inside for each facet");
 
             // We only want one outer group, but this function gets called for each facet, so check to see if it is
             // present and only create the chart group if it has not already been created.
-            out.add("var outer = vis.select('g." + chartClassID + "')").endStatement();
-            out.add("if (outer.empty()) outer = vis.append('g').attr('class', '" + chartClassID + "')").endStatement();
+            out.add("var outer = vis.select('g." + groupUtil.chartClassID + "')").endStatement();
+            out.add("if (outer.empty()) outer = ", groupUtil.createChart()).endStatement();
 
             // Now create the facet group that will contain the chart with data for the indicated facet
             out.add("var chart = outer.append('g').attr('class', 'facet')");
         } else {
             // For non-faceted charts, we only need the simple chart group to hold all the other parts
-            out.add("var chart = vis.append('g').attr('class', '" + chartClassID + "')");
+            out.add("var chart = ", groupUtil.createChart());
         }
 
-        Accessibility.addChartInformation(structure, out, hasMultipleCharts);
+        if (hasMultipleCharts) groupUtil.addAccessibleChartInfo(out);
 
         out.addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
                 .endStatement();
@@ -530,7 +530,7 @@ public class D3Builder extends AbstractBuilder {
                 .addChained(axesTransform);
 
         // Nested charts do not need additional clipping
-        if (!structure.nested()) out.addChained("attr('clip-path', 'url(#" + clipID(structure) + ")')");
+        if (!structure.nested()) groupUtil.addClipPathReference(out);
 
         out.endStatement();
         out.add("interior.append('rect').attr('class', 'inner')")
@@ -547,29 +547,17 @@ public class D3Builder extends AbstractBuilder {
         if (scalesBuilder.needsLegends()) {
             out.add("var legends = chart.append('g').attr('class', 'legend')")
                     .addChained(makeTranslateTransform("(geom.chart_right-geom.chart_left - 3)", "0"));
-            Accessibility.addRegion(structure, out, "Legend");
+            Accessibility.writeLabelAttribute(structure, out, "Legend");
             out.endStatement();
         }
 
-        if (!structure.nested()) {
-            // Make the clip path for this: we expand by a pixel to avoid ugly cut-offs right at the edge
-            out.add("vis.append('clipPath').attr('id', '" + clipID(structure) + "').append('rect')");
-            out.addChained("attr('x', -1).attr('y', -1)");
-            if (scalesBuilder.coords == Coordinates.transposed)
-                out.addChained("attr('width', geom.inner_height+2).attr('height', geom.inner_width+2)").endStatement();
-            else
-                out.addChained("attr('width', geom.inner_width+2).attr('height', geom.inner_height+2)").endStatement();
-        }
+        if (!structure.nested()) groupUtil.defineClipPath(out);
     }
 
     private String makeTranslateTransform(String dx, String dy) {
         return "attr('transform','translate(' + " + dx + " + ',' + " + dy + " + ')')";
     }
 
-    // returns an id that is unique to the chart and the visualization
-    private String clipID(ChartStructure structure) {
-        return "clip_" + options.visIdentifier + "_" + structure.chartID();
-    }
 
     public Controls getControls() {
         return controls;

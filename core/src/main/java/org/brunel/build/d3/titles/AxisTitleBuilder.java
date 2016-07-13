@@ -44,15 +44,10 @@ public class AxisTitleBuilder extends TitleBuilder {
     }
 
     protected String[] getXOffsets() {
-        // Mismatch means we are transposed
-        boolean transposed = axis.isX() != isHorizontal;
-
         if (isHorizontal) {
-            String width = transposed ? "geom.inner_height" : "geom.inner_width";
-            return new String[]{"0", width + "/2", width};
+            return new String[]{"0", "geom.inner_rawWidth/2", "geom.inner_rawWidth"};
         } else {
-            String height = transposed ? "-geom.inner_width" : "-geom.inner_height";
-            return new String[]{height, height + "/2", "0"};
+            return new String[]{"-geom.inner_rawHeight", "-geom.inner_rawHeight/2", "0"};
         }
     }
 

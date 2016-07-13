@@ -57,6 +57,8 @@ var BrunelD3 = (function () {
         g.margin_right = w - g.chart_right + g.inner_right;
         g.inner_width = g.outer_width - g.margin_left - g.margin_right;
         g.inner_height = g.outer_height - g.margin_top - g.margin_bottom;
+        g.inner_rawWidth = g.inner_width;
+        g.inner_rawHeight = g.inner_height;
         g.inner_radius = Math.min(g.inner_width, g.inner_height) / 2;
         g.default_point_size = Math.max(6, g.inner_radius * 0.035);
         return g;
@@ -1266,9 +1268,13 @@ var BrunelD3 = (function () {
     }
 
     function filterTicks(scale) {
-        var range = scale.range(), delta = Math.abs(range[1] - range[0]);
-        var skip = Math.ceil(16 / delta);
-        return skip < 2 ? scale.domain() : scale.domain().filter(function(d, i) { return !(i % skip); })
+        // For small domains, just use that domain
+        var domain = scale.domain();
+        if (domain.length < 3) return domain;
+        var range = scale.range(),
+            delta = Math.abs(range[1] - range[0]),
+            skip = Math.ceil(16 / delta);
+        return skip < 2 ? domain : domain.filter(function(d, i) { return !(i % skip); })
     }
 
 

@@ -62,7 +62,6 @@ public class ElementDetails {
     public final ElementDimension x, y;                 // Definitions for x and y fields
     public GeomAttribute overallSize;                   // A general size for the whole item
     private GeomAttribute refLocation;                  // Defines the location using a reference to another element
-    public GeomAttribute clusterSize;                   // The size of a cluster
 
     public String getAlignment() {
         return labelAlignment;
