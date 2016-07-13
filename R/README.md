@@ -25,6 +25,7 @@ and then install the brunel package.  For example:
 ```
 install.packages("devtools")
 library("devtools")
+#set this to the location of the R folder in the unzipped Brunel Visualization release.
 setwd('/brunel/R')
 install('brunel')
 ```
