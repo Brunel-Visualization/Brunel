@@ -498,14 +498,14 @@ public class D3Builder extends AbstractBuilder {
     }
 
     private void writeMainGroups(ChartStructure structure) {
-        SVGGroupUtility groupUtil = new SVGGroupUtility(structure);
+        SVGGroupUtility groupUtil = new SVGGroupUtility(structure, "chart" + structure.chartID(), out);
 
         if (structure.nested()) {
             out.onNewLine().comment("Nesting -- create an outer chart and place groups inside for each facet");
 
             // We only want one outer group, but this function gets called for each facet, so check to see if it is
             // present and only create the chart group if it has not already been created.
-            out.add("var outer = vis.select('g." + groupUtil.chartClassID + "')").endStatement();
+            out.add("var outer = vis.select('g." + groupUtil.className + "')").endStatement();
             out.add("if (outer.empty()) outer = ", groupUtil.createChart()).endStatement();
 
             // Now create the facet group that will contain the chart with data for the indicated facet
@@ -515,7 +515,7 @@ public class D3Builder extends AbstractBuilder {
             out.add("var chart = ", groupUtil.createChart());
         }
 
-        if (hasMultipleCharts) groupUtil.addAccessibleChartInfo(out);
+        if (hasMultipleCharts) groupUtil.addAccessibleChartInfo();
 
         out.addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
                 .endStatement();
@@ -547,11 +547,11 @@ public class D3Builder extends AbstractBuilder {
         if (scalesBuilder.needsLegends()) {
             out.add("var legends = chart.append('g').attr('class', 'legend')")
                     .addChained(makeTranslateTransform("(geom.chart_right-geom.chart_left - 3)", "0"));
-            groupUtil.addAccessibleTitle("Legend", out);
+            groupUtil.addAccessibleTitle("Legend");
             out.endStatement();
         }
 
-        if (!structure.nested()) groupUtil.defineClipPath(out);
+        if (!structure.nested()) groupUtil.defineInnerClipPath();
     }
 
     private String makeTranslateTransform(String dx, String dy) {

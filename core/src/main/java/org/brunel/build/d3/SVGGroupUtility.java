@@ -24,37 +24,36 @@ import org.brunel.build.util.ScriptWriter;
  * This contains methods for modifying an SVG group; a container for other items
  */
 public class SVGGroupUtility {
-    public final String chartClassID;               // ID for the chart group
-    private final ChartStructure structure;
+    public final String className;                  // ID for the chart group
+    private final ChartStructure structure;         // General info
+    private final ScriptWriter out;                 // Where to write info to
 
-    public SVGGroupUtility(ChartStructure structure) {
-        this.chartClassID = "chart" + structure.chartID();                    // The class for our group
+    public SVGGroupUtility(ChartStructure structure, String className, ScriptWriter out) {
+        this.className = className;                    // The class for our group
         this.structure = structure;
+        this.out = out;
     }
 
     /**
      * Writes out accessible labels for the group
-     *
-     * @param out where to write to
      */
-    public void addAccessibleChartInfo(ScriptWriter out) {
+    public void addAccessibleChartInfo() {
         if (structure.accessible)
-            addAccessibleTitle(Accessibility.makeNumberingTitle("chart", structure.chartIndex), out);
+            addAccessibleTitle(Accessibility.makeNumberingTitle("chart", structure.chartIndex));
     }
 
     /**
      * Writes out accessible labels for the group
      *
      * @param title the name to give this
-     * @param out   where to write to
      */
-    public void addAccessibleTitle(String title, ScriptWriter out) {
+    public void addAccessibleTitle(String title) {
         if (structure.accessible)
             Accessibility.writeLabelAttribute(title, out);
     }
 
     public void addClipPathReference(ScriptWriter out) {
-        out.addChained("attr('clip-path', 'url(#" + clipID("clip_") + ")')");
+        out.addChained("attr('clip-path', 'url(#" + clipID() + ")')");
     }
 
     /**
@@ -63,19 +62,27 @@ public class SVGGroupUtility {
      * @return Javascript fragment that appends a group
      */
     public String createChart() {
-        return "vis.append('g').attr('class', 'chart" + structure.chartID() + "')";
+        return "vis.append('g').attr('class', 'chart" + className + "')";
     }
 
-    public void defineClipPath(ScriptWriter out) {
+    public void defineInnerClipPath() {
         // Make the clip path for this: we expand by a pixel to avoid ugly cut-offs right at the edge
-        out.add("vis.append('clipPath').attr('id', '" + clipID("clip_") + "').append('rect')");
-        out.addChained("attr('x', -1).attr('y', -1)");
-        out.addChained("attr('width', geom.inner_rawWidth+2).attr('height', geom.inner_rawHeight+2)").endStatement();
+        out.add("vis.append('clipPath').attr('id', '" + clipID() + "').append('rect')")
+                .addChained("attr('x', -1).attr('y', -1)")
+                .addChained("attr('width', geom.inner_rawWidth+2).attr('height', geom.inner_rawHeight+2)")
+                .endStatement();
+    }
+
+    public void defineHorizontalAxisClipPath() {
+        // we add a cut-out for the Y axis
+        out.add("vis.append('clipPath').attr('id', '" + clipID() + "').append('polyline')")
+                .addChained("attr('points', '-1,-1 -1001,1000, 10000,1000 10000,-1')")
+                .endStatement();
     }
 
     // returns an id that is unique to the chart and the visualization
-    private String clipID(String prefix) {
-        return prefix + structure.visIdentifier + "_" + structure.chartID();
+    private String clipID() {
+        return "clip_" + structure.visIdentifier + "_" + className;
     }
 
 }
