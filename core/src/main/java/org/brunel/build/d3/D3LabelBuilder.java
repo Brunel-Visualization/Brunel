@@ -54,13 +54,13 @@ public class D3LabelBuilder {
         if (vis.itemsLabel.isEmpty()) return;
         // Networks are updated on ticks., so just attach once -- no transitions
         if (vis.tDiagram == Diagram.network) {
-            out.add("BrunelD3.label(selection, labels, labeling, 0)").endStatement();
+            out.add("BrunelD3.label(selection, labels, labeling, 0, geom)").endStatement();
             return;
         }
 
         // Text elements define labeling as the main item; they do not need labels attached, which is what this does
         if (vis.tElement != Element.text)
-            out.add("BrunelD3.label(selection, labels, labeling, transitionMillis)").endStatement();
+            out.add("BrunelD3.label(selection, labels, labeling, transitionMillis, geom)").endStatement();
     }
 
     public static void addFontSizeAttribute(VisSingle vis, ScriptWriter out) {
@@ -230,7 +230,7 @@ public class D3LabelBuilder {
         out.indentMore().onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth }, ");
         out.indentMore().onNewLine().add("where :   function(box) { return {'x': box.x + 2, 'y': box.y, 'box': box} }").indentLess();
         out.add("}").endStatement();
-        out.add("BrunelD3.label(selection, diagramLabels, treeLabeling, transitionMillis)").endStatement();
+        out.add("BrunelD3.label(selection, diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
     }
 
 }

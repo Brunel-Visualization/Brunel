@@ -106,7 +106,7 @@ public class GeoMapLabels extends D3Diagram {
                 .indentLess().onNewLine().add("}").endStatement();
 
         out.add("BrunelD3.time('start labeling')").endStatement();
-        out.add("BrunelD3.label(selection, labels, labeling, 0)").endStatement();
+        out.add("BrunelD3.label(selection, labels, labeling, 0, geom)").endStatement();
         out.add("BrunelD3.time('end labeling')").endStatement();
 
     }
