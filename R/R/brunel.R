@@ -12,6 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#JS locations passed to HTML template are read from env variable if present.  Defaults otherwise.
+D3_LOC <- "//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min"
+TOPO_JSON_LOC <- "//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min"
+JS_LOC <- "/nbextensions/brunel_ext"
+BRUNEL_CONFIG <- trimws(Sys.getenv("BRUNEL_CONFIG"))
+OPTS <- strsplit(BRUNEL_CONFIG,";")[[1]]
+
+get_config_key <- function (in_key) {
+	return (tolower(trimws(in_key)))
+}
+
+for (opt in OPTS) {
+	keyval <- strsplit(trimws(opt),"=")
+	if (length(keyval) >=1) {
+		if (identical(get_config_key(keyval[[1]][1]), "locd3")) 
+			D3_LOC <- keyval[[1]][2]
+		if (identical(get_config_key(keyval[[1]][1]), "locjavascript"))
+			JS_LOC <- keyval[[1]][2]	
+		if (identical(get_config_key(keyval[[1]][1]), "loctopojson")) 
+			TOPO_JSON_LOC <- keyval[[1]][2]	
+	}
+}
+
+
 #The docs say that .jpackage() is the preferred way to load the VM
 #However, this failed under Win64 w/IBM JDK
 load_java <- function() {
@@ -64,7 +88,7 @@ to_csv <- function(data) {
 	return (str)
 }
 
-#Get the brunel JSON containing the display information.  This will be a String
+#Get the brunel JSON containing the display information.  
 brunel_d3_json <- function(csv, brunel_src, width, height, visId, controlsId) {
 	response <- rJava::J("org.brunel.util.D3Integration")$createBrunelJSON(csv, brunel_src, as.integer(width), as.integer(height), visId, controlsId)
 	
@@ -95,7 +119,8 @@ display_d3_output <- function(brunel_json, visid, controlsid, width, height) {
   	d3css <- brunel_json$css
 
     #render the HTML
-	html_values <- list(d3css=d3css, visId=visid, width=width, height=height, d3js=d3js, controlsid=controlsid)
+	html_values <- list(d3css=d3css, visId=visid, width=width, height=height, d3js=d3js, controlsid=controlsid, 
+		d3loc=D3_LOC, topoJsonloc=TOPO_JSON_LOC, jsloc=JS_LOC )
 	html <- template_render(d3_template_html, html_values)
 	IRdisplay::display_html(html)
 }
