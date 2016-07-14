@@ -127,6 +127,10 @@
     pointer-events: none;
 }
 
+.brunel .overlap {
+    visibility:hidden;
+}
+
 .brunel .header {
     fill: #0b9bdb;
     font-size: 18px;

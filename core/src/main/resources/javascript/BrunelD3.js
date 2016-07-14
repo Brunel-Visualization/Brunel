@@ -754,10 +754,12 @@ var BrunelD3 = (function () {
                 kill = hitsExisting(b, hits);
             }
 
-            if (kill) {
-                textNode.parentNode.removeChild(textNode);          // remove from parent
-                item.__label__ = null;                              // dissociate from item
-            }
+            txt.classed("overlap", kill);                  // Set the style for overlappign text
+
+            // if (kill) {
+            //     textNode.parentNode.removeChild(textNode);          // remove from parent
+            //     item.__label__ = null;                              // dissociate from item
+            // }
         }
     }
 
