@@ -280,7 +280,7 @@ var BrunelD3 = (function () {
         } else {
             box = transformBox(target.getBBox(), target.getCTM());
 
-            var hPad = labeling.align == 'left' ? pad : -pad;
+            var hPad = labeling.align == 'start' ? pad : -pad;
             var vPad = labeling.inside ? -pad : pad;
 
             // Add 3 pixels padding
@@ -727,6 +727,8 @@ var BrunelD3 = (function () {
 
         loc = makeLoc(item, labeling, content);        // Get center point (x,y) and surrounding box (box)
 
+
+
         if (posV.endsWith("px"))
             loc.y += Number(posV.substring(0, posV.length - 2));
 
@@ -741,6 +743,11 @@ var BrunelD3 = (function () {
             wrapInBox(textNode, content, loc, labeling.dy);
         } else {
 
+            // This code moves the point on screen if possible
+            if (loc.x < 0 && label.align == 'start' && loc.x + textNode.getComputedTextLength() > 0)
+                loc.x = 0;
+
+
             // Place at the required location
             txt.attr('x', loc.x).attr('y', loc.y).text(content);
 
@@ -754,12 +761,8 @@ var BrunelD3 = (function () {
                 kill = hitsExisting(b, hits);
             }
 
-            txt.classed("overlap", kill);                  // Set the style for overlappign text
+            txt.classed("overlap", kill);                  // Set the style for overlapping text
 
-            // if (kill) {
-            //     textNode.parentNode.removeChild(textNode);          // remove from parent
-            //     item.__label__ = null;                              // dissociate from item
-            // }
         }
     }
 
