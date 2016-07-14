@@ -258,6 +258,7 @@ var BrunelD3 = (function () {
     }
 
     // Returns an object with 'x', 'y' and 'box' that "surrounds" the text
+    // hPos and vPos are optional
     function makeLoc(target, labeling, s) {
         var datum = target.__data__, pad = labeling.pad,
             box, loc, method = labeling.method, pos = labeling.location;
@@ -603,10 +604,13 @@ var BrunelD3 = (function () {
             if (d.points) {
                 // This is a path and we need to find the best point on it
                 var pp = d3.mouse(this), off = this.getScreenCTM();
-                function d2(a) { return (a.x-pp[0])*(a.x-pp[0]) + (a.y-pp[1])*(a.y-pp[1]) }
+
+                function d2(a) {
+                    return (a.x - pp[0]) * (a.x - pp[0]) + (a.y - pp[1]) * (a.y - pp[1])
+                }
 
                 var i, dd, pts = d.points, best = pts[0], bestD = d2(best);
-                for (i=1; i<pts.length; i++) {
+                for (i = 1; i < pts.length; i++) {
                     dd = d2(pts[i]);
                     if (dd < bestD) {
                         bestD = dd;
@@ -703,7 +707,6 @@ var BrunelD3 = (function () {
         var content = labeling.content(item.__data__);
         if (!content) return;                               // If there is no content, we are done
 
-        var loc = makeLoc(item, labeling, content);         // Get center point (x,y) and surrounding box (box)
 
         // Ensure the label exists and cross-reference both to each other
         var txt = item.__label__;
@@ -714,7 +717,19 @@ var BrunelD3 = (function () {
             txt.__labeling__ = labeling;
         }
 
-        var textNode = txt.node();
+        txt.classed("selected", item.classList.contains("selected"));           // Copy selection status to label
+
+        var loc,
+            textNode = txt.node(),                                              // SVG node
+            style = getComputedStyle(textNode),                                 // SVG style
+            posV = style.verticalAlign;                                         // positioning
+
+
+        loc = makeLoc(item, labeling, content);        // Get center point (x,y) and surrounding box (box)
+
+        if (posV.endsWith("px"))
+            loc.y += Number(posV.substring(0, posV.length - 2));
+
 
         if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
         else txt.classed('label', true);
@@ -1274,7 +1289,9 @@ var BrunelD3 = (function () {
         var range = scale.range(),
             delta = Math.abs(range[1] - range[0]),
             skip = Math.ceil(16 / delta);
-        return skip < 2 ? domain : domain.filter(function(d, i) { return !(i % skip); })
+        return skip < 2 ? domain : domain.filter(function (d, i) {
+            return !(i % skip);
+        })
     }
 
 

@@ -62,7 +62,7 @@ public class SVGGroupUtility {
      * @return Javascript fragment that appends a group
      */
     public String createChart() {
-        return "vis.append('g').attr('class', 'chart" + className + "')";
+        return "vis.append('g').attr('class', '" + className + "')";
     }
 
     public void defineInnerClipPath() {

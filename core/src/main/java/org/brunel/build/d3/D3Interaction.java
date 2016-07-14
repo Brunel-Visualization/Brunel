@@ -119,8 +119,12 @@ public class D3Interaction {
     public void addElementHandlers(VisSingle vis, D3DataBuilder dataBuilder) {
         // Standard event selection
         Param p = vis.tInteraction.get(Interaction.select);
-        if (p != null)
-            out.add("selection.on('" + eventName(p) + "', function(d) { BrunelD3.select(d.row, processed, original, this, updateAll) } )").endStatement();
+        String eventName = p == null ? null : eventName(p);
+        if (p != null) {
+            out.add("selection.on('" + eventName + "', function(d) { BrunelD3.select(d.row, processed, original, this, updateAll) } )").endStatement();
+            if (eventName.equals("mouseover"))
+                out.add("selection.on('mouseout', function(d) { BrunelD3.select(null, processed, original, this, updateAll) } )").endStatement();
+        }
 
         // Custom event selection
 
@@ -137,8 +141,9 @@ public class D3Interaction {
          */
 
         p = vis.tInteraction.get(Interaction.call);
-        if (p != null)
-            out.add("selection.on('" + eventName(p) + "', " + functionName(p, dataBuilder) + " )").endStatement();
+        if (p != null) {
+            out.add("selection.on('" + eventName + "', " + functionName(p, dataBuilder) + " )").endStatement();
+        }
 
     }
 

@@ -312,7 +312,7 @@ public class Dataset extends Informative implements Serializable {
      * @param row    the row from the source data to use in the operation
      * @param source the Dataset in which we found the rows
      */
-    public void modifySelection(String method, int row, Dataset source) {
+    public void modifySelection(String method, Integer row, Dataset source) {
         String off = Field.VAL_UNSELECTED, on = Field.VAL_SELECTED;
         Field sel = field("#selection");
         int n = rowCount();
@@ -336,7 +336,10 @@ public class Dataset extends Informative implements Serializable {
      * @param row target
      * @return target rows (zero based)
      */
-    private Set<Integer> expandedOriginalRows(int row) {
+    private Set<Integer> expandedOriginalRows(Integer row) {
+        Set<Integer> expanded = new HashSet<>();
+        if (row  == null) return expanded;                                   // No data -- no rows
+
         int n = rowCount();
 
         // Get all the fields we want to use for comparison
@@ -352,7 +355,6 @@ public class Dataset extends Informative implements Serializable {
         Field rowField = field("#row");
 
         // Create a set of all rows similar to the target one
-        Set<Integer> expanded = new HashSet<>();
         for (int i = 0; i < n; i++)
             if (compare.compare(i, row) == 0) {
                 Object o = rowField.value(i);

@@ -1267,15 +1267,16 @@ $.copy(V.Dataset.prototype, {
     },
 
     expandedOriginalRows: function(row) {
-        var _i, compare, expanded, f, i, j, list, o, rowField, targetFields;
-        var n = this.rowCount();
-        var important = new $.Set();
+        var _i, compare, f, i, important, j, list, n, o, rowField, targetFields;
+        var expanded = new $.Set();
+        if (row == null) return expanded;
+        n = this.rowCount();
+        important = new $.Set();
         for(_i=$.iter(this.fields), f=_i.current; _i.hasNext(); f=_i.next())
             if (!f.isSynthetic() && f.property("derived") == null) important.add(f);
         targetFields = important.toArray();
         compare = new V.summary_FieldRowComparison(targetFields, null, false);
         rowField = this.field("#row");
-        expanded = new $.Set();
         for (i = 0; i < n; i++)
             if (compare.compare(i, row) == 0) {
                 o = rowField.value(i);
