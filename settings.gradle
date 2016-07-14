@@ -14,5 +14,5 @@
  * limitations under the License.
  */
 
-include 'data', 'core', 'etc', 'service', 'python', 'gallery', 'scala', 'spark-kernel'
+include 'data', 'core', 'etc', 'service', 'python', 'gallery', 'scala', 'spark-kernel', 'r'
 

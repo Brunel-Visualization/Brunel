@@ -40,7 +40,7 @@ task copyWebFilesToNbextensions(type: Copy, dependsOn: copyWebFiles) {
 
 task copyJarFiles(type: Copy, dependsOn: [project(':core').build, project(':data').build]) {
     description 'Copies required .jar files needed for execution'
-    from project(':core').configurations.runtime.files { it.name == "gson" }
+    from (project(':core').configurations.compile.files { it.name == "gson" }) 
     from project(':core').jar.archivePath
     from project(':data').jar.archivePath
     into 'brunel/lib'

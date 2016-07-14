@@ -12,12 +12,49 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-d3_template_html <-  readLines(system.file("templates", "D3_Template.html", package = "brunel"))
-brunel_server <- Sys.getenv("BRUNEL_SERVER")
+#JS locations passed to HTML template are read from env variable if present.  Defaults otherwise.
+D3_LOC <- "//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min"
+TOPO_JSON_LOC <- "//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min"
+JS_LOC <- "/nbextensions/brunel_ext"
+BRUNEL_CONFIG <- trimws(Sys.getenv("BRUNEL_CONFIG"))
+OPTS <- strsplit(BRUNEL_CONFIG,";")[[1]]
 
-#sessionid is needed since the R implementation currently uses Brunel web service which caches the data.
-#This should avoid problems with same named dataframes in different notebooks.
-sessionid <- paste("",uuid::UUIDgenerate(),sep='')
+get_config_key <- function (in_key) {
+	return (tolower(trimws(in_key)))
+}
+
+for (opt in OPTS) {
+	keyval <- strsplit(trimws(opt),"=")
+	if (length(keyval) >=1) {
+		if (identical(get_config_key(keyval[[1]][1]), "locd3")) 
+			D3_LOC <- keyval[[1]][2]
+		if (identical(get_config_key(keyval[[1]][1]), "locjavascript"))
+			JS_LOC <- keyval[[1]][2]	
+		if (identical(get_config_key(keyval[[1]][1]), "loctopojson")) 
+			TOPO_JSON_LOC <- keyval[[1]][2]	
+	}
+}
+
+
+#The docs say that .jpackage() is the preferred way to load the VM
+#However, this failed under Win64 w/IBM JDK
+load_java <- function() {
+	rJava::.jinit()
+	core_jar <- brunel_jar_name("core")
+	data_jar <- brunel_jar_name("data")
+	rJava::.jaddClassPath(system.file("java", core_jar, package = "brunel"))
+	rJava::.jaddClassPath(system.file("java", data_jar, package = "brunel"))
+	rJava::.jaddClassPath(system.file("java", "gson-2.3.1.jar", package = "brunel"))
+}
+
+#Dynamically add a version to the .jar file name.
+brunel_jar_name <- function (module) {
+	version <- packageVersion("brunel")
+	return ( paste("brunel-", module, "-", version, ".jar", sep="") )
+}
+
+#Main HTML template containing results
+d3_template_html <-  readLines(system.file("templates", "D3_Template.html", package = "brunel"))
 
 #' Produce a Brunel visualization
 #'
@@ -31,64 +68,61 @@ sessionid <- paste("",uuid::UUIDgenerate(),sep='')
 #' height the heigh in pixels for the resulting visualization
 
 brunel <- function(brunel, data=NULL, width=800, height=600) {
+	load_java()
     cache_data(brunel)
 	visid <-  paste("vis", uuid::UUIDgenerate(), sep='')
 	controlsid <- paste("controls", uuid::UUIDgenerate(), sep='')
-	query_params = list(src=brunel, width=width, height=height, visid=visid, controlsid=controlsid, data_prefix=sessionid)
 	csv <- to_csv(data)
-	response <- brunel_service_call(query_params, csv)
-	display_d3_output(response, visid, controlsid, width, height)	
+	brunel_json <- brunel_d3_json(csv, brunel, width, height,visid, controlsid)
+	display_d3_output(brunel_json, visid, controlsid, width, height)	
 }
 
+#CSV conversion of a dataframe
 to_csv <- function(data) {
     if (is.null(data)) return(NULL)
 	tc <- textConnection("out", "w") 
 	write.csv(data, tc, row.names =FALSE)	
+	#collapse the CSV to a single string so it aligns with the Java method parameter
+	str <- paste(out, collapse='\n')
 	close(tc)
-	return(out)
+	return (str)
 }
 
-brunel_service_call <- function (query_params, csv) {
-	url = paste(brunel_server, "/brunel/interpret/d3", sep='')	
-	response <- httr::POST(url, query = query_params, httr::content_type("text/plain"), httr::accept_json(), body=csv) 
+#Get the brunel JSON containing the display information.  
+brunel_d3_json <- function(csv, brunel_src, width, height, visId, controlsId) {
+	response <- rJava::J("org.brunel.util.D3Integration")$createBrunelJSON(csv, brunel_src, as.integer(width), as.integer(height), visId, controlsId)
+	
+	#Parse the String into a JSON object
+	jsonlite::fromJSON(response)
 }
 
+#Find all names of data objects in the brunel
 get_dataset_names <- function (brunel) {
-    query_params <- list(brunel_src=brunel)
-    url = paste(brunel_server, "/brunel/interpret/data_names", sep='')
-    response <- httr::GET(url, query = query_params,  httr::accept_json()) 
-    con <- httr::content(response)
+    result <- rJava::J("org.brunel.util.D3Integration")$getDatasetNames(brunel)
 }
 
+#Add data to Brunel's data cache
 cache_data <- function (brunel) {
     data_set_names <- get_dataset_names(brunel)
     for (name in data_set_names) {
         obj <- get(name)
         if (class(obj) == "data.frame") {
-            query_params <- list(data_key=name, prefix=sessionid)
             csv <- to_csv(obj)
-            url <- paste(brunel_server, "/brunel/interpret/cache", sep='')
-            response <- httr::POST(url, query = query_params, httr::content_type("text/plain"), body=csv) 
+            rJava::J("org.brunel.util.D3Integration", "cacheData", name, csv)           
         }
-    }
-    
+    }    
 }
 
-display_d3_output <- function(response, visid, controlsid, width, height) {
+display_d3_output <- function(brunel_json, visid, controlsid, width, height) {
 
-    con <- httr::content(response)
+	d3js <- brunel_json$js
+  	d3css <- brunel_json$css
 
-	if (response$status_code != 200)  {
-		IRdisplay::display_html(con)
-	}
-	else {
-		d3js <- con$js
-      	d3css <- con$css
-
-		html_values <- list(d3css=d3css, visId=visid, width=width, height=height, d3js=d3js, controlsid=controlsid)
-		html <- template_render(d3_template_html, html_values)
-		IRdisplay::display_html(html)
-  	}
+    #render the HTML
+	html_values <- list(d3css=d3css, visId=visid, width=width, height=height, d3js=d3js, controlsid=controlsid, 
+		d3loc=D3_LOC, topoJsonloc=TOPO_JSON_LOC, jsloc=JS_LOC )
+	html <- template_render(d3_template_html, html_values)
+	IRdisplay::display_html(html)
 }
 
 template_render <- function(template, values) {
