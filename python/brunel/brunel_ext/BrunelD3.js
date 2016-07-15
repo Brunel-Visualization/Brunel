@@ -280,7 +280,7 @@ var BrunelD3 = (function () {
         } else {
             box = transformBox(target.getBBox(), target.getCTM());
 
-            var hPad = labeling.align == 'left' ? pad : -pad;
+            var hPad = labeling.align == 'start' ? pad : -pad;
             var vPad = labeling.inside ? -pad : pad;
 
             // Add 3 pixels padding
@@ -700,10 +700,34 @@ var BrunelD3 = (function () {
         return false;
     }
 
+    // Moves a label (text) inside the space defined by geom so long as part of it would overlap
+    function nudgeInside(text, labeling, geom) {
+        var o, b = text.getBBox(), D = 2;                                      // D is the pad distance
+        if (!labeling.fit) {
+            var L = geom.inner_left, R = L + geom.inner_rawWidth,              // left and right of the space
+                l = b.x, r = l + b.width;                                   // box left and right
+            if (l < L + D && r > L - D) {
+                // Offset to the right
+                o = L + D;
+                if (labeling.align == 'end') o += (r - l);
+                else if (labeling.align == 'middle') o += (r - l) / 2;
+                text.setAttribute("x", o);
+            } else if (r > R - D && l < R + D) {
+                // Offset to the right
+                o = R - D;
+                if (labeling.align == 'start') o -= (r - l);
+                else if (labeling.align == 'middle') o -= (r - l) / 2;
+                text.setAttribute("x", o);
+            }
+        }
+        return b;
+    }
+
 
     // Add a label for the selection 'item' to the group 'labelGroup', using the information in 'labeling'
     // 'hits' keeps track of text hit boxes to prevent heavy overlapping
-    function labelItem(item, labelGroup, labeling, hits) {
+    // 'geom' give the space into which the labels should fit
+    function labelItem(item, labelGroup, labeling, hits, geom) {
         var content = labeling.content(item.__data__);
         if (!content) return;                               // If there is no content, we are done
 
@@ -727,6 +751,7 @@ var BrunelD3 = (function () {
 
         loc = makeLoc(item, labeling, content);        // Get center point (x,y) and surrounding box (box)
 
+
         if (posV.endsWith("px"))
             loc.y += Number(posV.substring(0, posV.length - 2));
 
@@ -741,10 +766,9 @@ var BrunelD3 = (function () {
             wrapInBox(textNode, content, loc, labeling.dy);
         } else {
 
-            // Place at the required location
-            txt.attr('x', loc.x).attr('y', loc.y).text(content);
 
-            var kill, b = textNode.getBBox();
+            txt.attr('x', loc.x).attr('y', loc.y).text(content);            // Place at the required location
+            var kill, b = nudgeInside(textNode, labeling, geom);            // Nudge inside (and get the box for it)
             // If it doesn't fit, kill the text
             if (labeling.fit) {
                 // Too tall to fit a single line, or too wide and could not add ellipses
@@ -754,28 +778,26 @@ var BrunelD3 = (function () {
                 kill = hitsExisting(b, hits);
             }
 
-            if (kill) {
-                textNode.parentNode.removeChild(textNode);          // remove from parent
-                item.__label__ = null;                              // dissociate from item
-            }
+            txt.classed("overlap", kill);                  // Set the style for overlapping text
+
         }
     }
 
 
     // Apply labeling
-    function applyLabeling(element, group, labeling, time) {
+    function applyLabeling(element, group, labeling, time, geom) {
         var hits = {D: labeling.granularity};                      // Keep track of hit items; not the pixel granularity
         if (time > 0)
             return element.transition("labels").duration(time).tween('func', function () {
                 var item = this;
                 return function () {
-                    labelItem(item, group, labeling, hits);
+                    labelItem(item, group, labeling, hits, geom);
                 }
             });
         else
             return element.each(
                 function () {
-                    labelItem(this, group, labeling, hits)
+                    labelItem(this, group, labeling, hits, geom)
                 }
             );
     }
@@ -1100,7 +1122,7 @@ var BrunelD3 = (function () {
                             txt.attr('y', txt.__off__.dy + d.py);
                         } else {
                             // First time placement, and then record the offset relative to the node (note no hit collision handling)
-                            labelItem(this, null, txt.__labeling__, null);
+                            labelItem(this, null, txt.__labeling__, null, null);
                             txt.__off__ = {
                                 dx: +txt.attr('x') - d.x,
                                 dy: +txt.attr('y') - d.y
