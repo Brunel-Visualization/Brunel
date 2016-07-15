@@ -24,7 +24,7 @@ colorScatter whiskey Category 'a' #count  / transpose label(Category)          :
 
 line baseball Age HomeRunRate Salary                :: pass
 line whiskey Rating Age Category                    :: pass
-line whiskey Rating Age Category / transpose        :: pass     :: Note: transposed
+line whiskey Rating Age Category / transpose(1.0)   :: pass     :: Note: transposed.
 line cpi Date ALL 'overall' / transpose             :: pass     :: Note: transposed
 
 cloud whiskey category rating / style("font-family:Impact, Charcoal, sans-serif")               :: pass

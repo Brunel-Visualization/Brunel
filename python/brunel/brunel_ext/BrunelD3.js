@@ -1315,6 +1315,40 @@ var BrunelD3 = (function () {
             return !(i % skip);
         })
     }
+    
+    //Sets the aspect ratio of the data domain values
+    function setAspect(scale_x, scale_y, aspect) {
+    	
+    	//Is it safe to do?
+    	if (! scale_x.domain() || scale_x.domain().length == 0 || typeof scale_x.domain()[0] != 'number' ||
+    			! scale_y.domain() || scale_y.domain().length == 0 || typeof scale_y.domain()[0] != 'number') 
+    		return
+    		
+
+    	//Find the non-zero value for the range (this handles transpose case)
+    	var xRange = scale_x.range()[1] != 0 ? scale_x.range()[1] : scale_x.range()[0];
+    	var yRange = scale_y.range()[0] != 0 ? scale_y.range()[0] : scale_y.range()[1];
+    	
+
+    	
+    	//Domain widths
+    	var xDomain = scale_x.domain()[1] - scale_x.domain()[0];
+    	var yDomain = scale_y.domain()[1] - scale_y.domain()[0];
+
+    	//Largest domain : range 
+    	var xRatio = xDomain/xRange;
+    	var yRatio = yDomain/yRange;
+    	var r = Math.max(xRatio, yRatio);
+
+    	//Scale the domain values to the desired aspect ratio
+        var minX = scale_x.domain()[0];
+        var maxX = minX + aspect * r * xRange;
+        var minY = scale_y.domain()[0];
+        var maxY = minY + r * yRange;
+
+    	scale_x.domain([minX, maxX]);
+    	scale_y.domain([minY, maxY]);
+    }
 
 
     // Expose these methods
@@ -1344,7 +1378,8 @@ var BrunelD3 = (function () {
         'animateBuild': animateBuild,
         'makeGrid': makeGrid,
         'showSelect': showSelect,
-        'filterTicks': filterTicks
+        'filterTicks': filterTicks,
+        'setAspect': setAspect
     }
 
 })

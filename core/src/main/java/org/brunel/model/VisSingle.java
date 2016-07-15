@@ -46,7 +46,8 @@ public class VisSingle extends VisItem implements Cloneable {
 
     public StyleSheet styles;              // Specific styles for this vis (null is the default)
     public Param[] bounds;                 // If defined, bounds
-    public Coordinates coords;              // Coordinate util
+    public Coordinates coords;             // Coordinate util
+    public Param aspect;		  		   // Desired aspect ratio
     public List<Param> fColor, fSize, fOpacity;  // Aesthetics
     public List<Param> fFilter;            // Fields for filtering
     public List<Param> fSort;              // Fields used to sort the data
@@ -664,8 +665,14 @@ public class VisSingle extends VisItem implements Cloneable {
         Collections.addAll(itemsTooltip, items);
     }
 
-    public void transpose() {
+    public void transpose(Param aspect) {
         coords = Coordinates.transposed;
+        this.aspect = aspect;
+    }
+    
+    public void rectangular(Param aspect) {
+        coords = Coordinates.regular;
+        this.aspect = aspect;
     }
 
     public void using(Param type) {

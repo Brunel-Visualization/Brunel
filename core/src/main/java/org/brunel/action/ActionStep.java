@@ -127,7 +127,10 @@ public class ActionStep {
                 item.interaction(parameters);
                 return item;
             } else if (name.equals("transpose")) {
-                item.transpose();
+                item.transpose(oneParam());
+                return item;
+            } else if (name.equals("rectangular")) {
+                item.rectangular(oneParam());
                 return item;
             } else if (name.equals("polar")) {
                 item.polar();

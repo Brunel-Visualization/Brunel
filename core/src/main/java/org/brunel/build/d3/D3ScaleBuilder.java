@@ -421,7 +421,16 @@ public class D3ScaleBuilder {
         writePositionScale(ScalePurpose.x, structure.coordinates.allXFields, getXRange(), elementsFillHorizontal(ScalePurpose.x));
         writePositionScale(ScalePurpose.inner, structure.coordinates.allXClusterFields, "[-0.5, 0.5]", elementsFillHorizontal(ScalePurpose.inner));
         writePositionScale(ScalePurpose.y, structure.coordinates.allYFields, getYRange(), false);
+        writeAspect();
         interaction.addScaleInteractivity();
+    }
+    
+    private void writeAspect() {
+    	Double aspect = getAspect();
+    	if (aspect != null) {
+            out.onNewLine().add("BrunelD3.setAspect(scale_x, scale_y, " + aspect + ")");
+            out.endStatement();
+    	}
     }
 
     private void writePositionScale(ScalePurpose purpose, Field[] fields, String range, boolean fillToEdge) {
@@ -459,7 +468,16 @@ public class D3ScaleBuilder {
         if (reverseRange(structure.coordinates.allYFields)) reversed = !reversed;
         return reversed ? "[geom.inner_height,0]" : "[0, geom.inner_height]";
     }
-
+    
+    private Double getAspect() {
+    	for (VisSingle e: elements) {
+    		if (e.aspect != null) {
+    			return e.aspect.asDouble();
+    		}
+    	}
+    	return null;
+    }
+    
     private boolean reverseRange(Field[] fields) {
         if (fields.length == 0) return false;
         // Ranking causes us to reverse the order
