@@ -479,6 +479,8 @@ public class D3ScaleBuilder {
     			for (Param p : e.fCoords) {
     				if (p.asString().equals("aspect")) {
     					Param m = p.firstModifier();
+    					
+    					//Use "square" for 1.0 aspect ratio
     					if (m.asString().equals("square")) return 1.0;
     					else return m.asDouble();
     				}
