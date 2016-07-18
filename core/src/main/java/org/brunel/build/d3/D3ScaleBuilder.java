@@ -427,11 +427,14 @@ public class D3ScaleBuilder {
     
     private void writeAspect() {
     	Double aspect = getAspect();
-    	if (aspect != null) {
+    	boolean anyCategorial = structure.coordinates.xCategorical || structure.coordinates.yCategorical;
+    	
+    	if (aspect != null && ! anyCategorial) {
             out.onNewLine().add("BrunelD3.setAspect(scale_x, scale_y, " + aspect + ")");
             out.endStatement();
     	}
     }
+    
 
     private void writePositionScale(ScalePurpose purpose, Field[] fields, String range, boolean fillToEdge) {
         int categories = scaleWithDomain(purpose.name(), fields, purpose, 2, "linear", null);
@@ -470,9 +473,16 @@ public class D3ScaleBuilder {
     }
     
     private Double getAspect() {
+    	//Find Param with "aspect" and return its value
     	for (VisSingle e: elements) {
-    		if (e.aspect != null) {
-    			return e.aspect.asDouble();
+    		if (e.fCoords != null) {
+    			for (Param p : e.fCoords) {
+    				if (p.asString().equals("aspect")) {
+    					Param m = p.firstModifier();
+    					if (m.asString().equals("square")) return 1.0;
+    					else return m.asDouble();
+    				}
+    			}
     		}
     	}
     	return null;

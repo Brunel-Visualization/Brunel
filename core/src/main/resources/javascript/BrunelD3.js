@@ -1320,20 +1320,27 @@ var BrunelD3 = (function () {
     function setAspect(scale_x, scale_y, aspect) {
     	
     	//Is it safe to do?
-    	if (! scale_x.domain() || scale_x.domain().length == 0 || typeof scale_x.domain()[0] != 'number' ||
-    			! scale_y.domain() || scale_y.domain().length == 0 || typeof scale_y.domain()[0] != 'number') 
-    		return
-    		
+    	if (! scale_x.domain() || scale_x.domain().length != 2  ||
+    			! scale_y.domain() || scale_y.domain().length != 2 ) 
+    		return;    		
 
     	//Find the non-zero value for the range (this handles transpose case)
     	var xRange = scale_x.range()[1] != 0 ? scale_x.range()[1] : scale_x.range()[0];
     	var yRange = scale_y.range()[0] != 0 ? scale_y.range()[0] : scale_y.range()[1];
     	
+    	//Were the domains Dates?
+    	var xDIsDate = scale_x.domain()[0].getTime
+    	var yDIsDate = scale_y.domain()[0].getTime   	
 
+    	//Use numerics for calculations
+    	var xD1 = BrunelData.Data.asNumeric(scale_x.domain()[1]);
+    	var xD0 = BrunelData.Data.asNumeric(scale_x.domain()[0]);
+    	var yD1 = BrunelData.Data.asNumeric(scale_y.domain()[1]);
+    	var yD0 = BrunelData.Data.asNumeric(scale_y.domain()[0]);
     	
     	//Domain widths
-    	var xDomain = scale_x.domain()[1] - scale_x.domain()[0];
-    	var yDomain = scale_y.domain()[1] - scale_y.domain()[0];
+    	var xDomain = Math.abs(xD1 - xD0);
+    	var yDomain = Math.abs(yD1 - yD0);
 
     	//Largest domain : range 
     	var xRatio = xDomain/xRange;
@@ -1341,10 +1348,20 @@ var BrunelD3 = (function () {
     	var r = Math.max(xRatio, yRatio);
 
     	//Scale the domain values to the desired aspect ratio
-        var minX = scale_x.domain()[0];
+        var minX = xD0;
         var maxX = minX + aspect * r * xRange;
-        var minY = scale_y.domain()[0];
+        var minY = yD0;
         var maxY = minY + r * yRange;
+        
+        //Convert back to dates if needed
+        if (xDIsDate) {
+        	minX = BrunelData.Data.asDate(minX);
+        	maxX = BrunelData.Data.asDate(maxX);
+        }
+        if (yDIsDate) {
+        	minY = BrunelData.Data.asDate(minY);
+        	maxY = BrunelData.Data.asDate(maxY);        	
+        }
 
     	scale_x.domain([minX, maxX]);
     	scale_y.domain([minY, maxY]);

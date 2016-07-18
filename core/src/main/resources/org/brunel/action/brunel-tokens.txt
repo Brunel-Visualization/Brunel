@@ -34,8 +34,8 @@ yrange position FIELD+ NUMBER+ STRING+
 ## Coords
 stack coords
 polar coords
-rectangular coords - NUMBER
-transpose coords - NUMBER
+rectangular coords aspect - NUMBER
+transpose coords aspect - NUMBER
 flipx coords
 flip coords
 
