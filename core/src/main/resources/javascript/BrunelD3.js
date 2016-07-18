@@ -731,6 +731,7 @@ var BrunelD3 = (function () {
         var content = labeling.content(item.__data__);
         if (!content) return;                               // If there is no content, we are done
 
+        if (!labeling.align) labeling.align = "middle";
 
         // Ensure the label exists and cross-reference both to each other
         var txt = item.__label__;
@@ -741,12 +742,14 @@ var BrunelD3 = (function () {
             txt.__labeling__ = labeling;
         }
 
+        if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
+        else txt.classed('label', true);
         txt.classed("selected", item.classList.contains("selected"));           // Copy selection status to label
 
         var loc,
             textNode = txt.node(),                                              // SVG node
             style = getComputedStyle(textNode),                                 // SVG style
-            posV = style.verticalAlign;                                         // positioning
+            posV = style.verticalAlign,                                         // positioning
 
 
         loc = makeLoc(item, labeling, content);        // Get center point (x,y) and surrounding box (box)
@@ -755,9 +758,6 @@ var BrunelD3 = (function () {
         if (posV.endsWith("px"))
             loc.y += Number(posV.substring(0, posV.length - 2));
 
-
-        if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
-        else txt.classed('label', true);
 
         txt.style('text-anchor', labeling.align).attr('dy', labeling.dy + "em");
 
