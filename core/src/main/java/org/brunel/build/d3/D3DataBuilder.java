@@ -188,8 +188,12 @@ public class D3DataBuilder {
 
     public void writeDataManipulation(Map<String, Integer> requiredFields) {
         out.onNewLine().ln().add("function makeData() {").ln().indentMore();
-        writeDataTransforms();
-        writeHookup(requiredFields);
+
+        // Guides do not use data, just the fields around it
+        if (vis.tGuides.isEmpty()) {
+            writeDataTransforms();
+            writeHookup(requiredFields);
+        }
         out.indentLess().onNewLine().add("}").ln();
     }
 
@@ -197,6 +201,7 @@ public class D3DataBuilder {
         // The parameters are stored in the data set when it is transformed
         DataTransformParameters params = (DataTransformParameters) data.property("parameters");
         D3Util.addTiming("Data Start", out);
+
         out.add("original = datasets[" + datasetIndex + "]").endStatement();
         out.add("if (filterRows) original = original.retainRows(filterRows)").endStatement();
         out.add("processed = pre(original,", datasetIndex, ")");

@@ -86,6 +86,7 @@ smooth data FIELD+
 using other dodge interpolate
 axes other + none x y
 axes other + none x y
+guide other + x y
 legends other auto none all color size
 at other NUMBER+
 style other STRING

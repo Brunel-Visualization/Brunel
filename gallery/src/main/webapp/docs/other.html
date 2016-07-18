@@ -53,6 +53,33 @@
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(y:2:'Numbers', x:10)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(y:20:grid:'Numbers', x:10)</a></p>
 
+<H3>Guides</H3>
+
+<p>
+    An element which defines a guide does not use data; it is intended to be used with other elements and
+    provides a reference line or function to be used with those elements. To define a guide element,
+    the command `guide` is used, together with one or more parameters each of which defines either an `x` or
+    a `y` function. These functions are expressions, corresponding to standard expression syntax, but restricted to the
+    following tokens:
+</p>
+
+<ul>
+    <li>`t` -- ranges from zero to one and defiens the position along the path</li>
+    <li>`x`, `y` -- define the position a fraction `t` along the dimension</li>
+    <li>`+`,`-`,`*`,`/`,`(`,`) -- mathematical symbols</li>
+    <li>`?`, `:`,`>`,`<`,`==`,`<=`,`>=`,`!=` -- symbols used to construct if/then statements such as `x<5 ? 10: 20`</li>
+    <li>`e`, `pi` -- constants</li>
+    <li>`abs`, `acos`, `asin`, `atan`, `atan2`, `ceil`, `cos`, `exp`, `floor`,
+        `log`, `max`, `min`, `pow`, `random`, `round`, `sin`, `sqrt`, `tan` -- math functions</li>
+</ul>
+
+<p>
+    Each guide is given a CSS class of `guide` and also a second class of `guideN`, where N is the index of the
+    guide number within the element. Following is an example of a guide:
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) + guide(y:40+x, y:70, y:'70+10*sin(x)') style('.guide1{stroke:red} .guide3 {stroke-dasharray:none}')</a></p>
+
+
 <H3>Legends</H3>
 <p>
     The legends command controls which axes are displayed. Legal values are <code>none, all, auto</code>

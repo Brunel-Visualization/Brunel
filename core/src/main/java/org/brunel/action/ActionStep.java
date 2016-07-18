@@ -150,6 +150,9 @@ public class ActionStep {
             } else if (name.equals("data")) {
                 item.data(oneParam());
                 return item;
+            } else if (name.equals("guide")) {
+                item.guide(parameters);
+                return item;
             }
 
             else if (name.equals("annotation")) {

@@ -172,8 +172,13 @@ public class D3Builder extends AbstractBuilder {
 
         ElementStructure[] structures = structure.elementStructure;
         elementBuilders = new D3ElementBuilder[structures.length];
-        for (int i = 0; i < structures.length; i++)
-            elementBuilders[i] = new D3ElementBuilder(structures[i], out, scalesBuilder, interaction);
+        for (int i = 0; i < structures.length; i++) {
+            if (structures[i].vis.tGuides.isEmpty())
+                elementBuilders[i] = new D3ElementBuilder(structures[i], out, scalesBuilder, interaction);
+            else
+                elementBuilders[i] = new GuideBuilder(structures[i], out, scalesBuilder, interaction);
+
+        }
     }
 
     protected void defineElement(ElementStructure structure) {
@@ -557,7 +562,6 @@ public class D3Builder extends AbstractBuilder {
     private String makeTranslateTransform(String dx, String dy) {
         return "attr('transform','translate(' + " + dx + " + ',' + " + dy + " + ')')";
     }
-
 
     public Controls getControls() {
         return controls;

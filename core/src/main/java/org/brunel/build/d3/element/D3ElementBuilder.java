@@ -40,13 +40,13 @@ public class D3ElementBuilder {
 
     private static final String BAR_SPACING = "0.9";            // Spacing between categorical bars
 
-    private final ScriptWriter out;                             // To write code out to
-    private final VisSingle vis;                                // Element definition
+    protected final ScriptWriter out;                             // To write code out to
+    protected final VisSingle vis;                                // Element definition
 
     private final D3ScaleBuilder scales;                        // Helper to build scales
     private final D3LabelBuilder labelBuilder;                  // Helper to build labels
     private final D3Diagram diagram;                            // Helper to build diagrams
-    private final ElementStructure structure;
+    protected final ElementStructure structure;
 
     public D3ElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales, D3Interaction interaction) {
         this.structure = structure;
@@ -139,7 +139,7 @@ public class D3ElementBuilder {
                 .add("})").endStatement();
     }
 
-    private void writeCoordinateFunctions(ElementDetails details) {
+    protected void writeCoordinateFunctions(ElementDetails details) {
 
         writeDimLocations(details.x, "x", "w");
         writeDimLocations(details.y, "y", "h");
@@ -192,7 +192,7 @@ public class D3ElementBuilder {
         if (diagram != null) diagram.writePerChartDefinitions();
     }
 
-    private ElementDetails makeDetails() {
+    protected ElementDetails makeDetails() {
         // When we create diagrams this has the side effect of writing the data calls needed
         if (structure.isGraphEdge()) {
             out.onNewLine().comment("Defining graph edge element");
@@ -205,7 +205,7 @@ public class D3ElementBuilder {
         }
     }
 
-    private void setGeometry(ElementDetails e) {
+    protected void setGeometry(ElementDetails e) {
 
         Field[] x = structure.chart.coordinates.getX(vis);
         Field[] y = structure.chart.coordinates.getY(vis);
@@ -299,7 +299,7 @@ public class D3ElementBuilder {
     }
 
     /* The key function ensure we have object constancy when animating */
-    private String getKeyFunction() {
+    protected String getKeyFunction() {
         String content = diagram != null ? diagram.getRowKey() : "d.key";
         return "function(d) { return " + content + "}";
     }

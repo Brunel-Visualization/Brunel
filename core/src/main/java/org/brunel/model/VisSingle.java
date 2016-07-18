@@ -64,6 +64,7 @@ public class VisSingle extends VisItem implements Cloneable {
     public Using tUsing;                   // Any element modifications?
     public Diagram tDiagram;               // If defined, the layout to use instead of dimensions and axes
     public Param[] tDiagramParameters;     // If defined diagram parameters
+    public List<Param> tGuides;            // Guides
     public Element tElement;               // Element util (bar, line, point, ...)
     public Legends tLegends;               // Which legends to display (when aesthetic present)
     public boolean flipX;
@@ -110,6 +111,7 @@ public class VisSingle extends VisItem implements Cloneable {
         fSort = Collections.EMPTY_LIST;
         fFilter = Collections.EMPTY_LIST;
         fSplits = Collections.EMPTY_LIST;
+        tGuides = Collections.EMPTY_LIST;
         fEffects = Collections.EMPTY_LIST;
         itemsLabel = Collections.EMPTY_LIST;
         itemsTitle = Collections.EMPTY_LIST;
@@ -212,6 +214,16 @@ public class VisSingle extends VisItem implements Cloneable {
         }
 
     }
+
+    /**
+     * Defines guides for the current item
+     * @param params guide definitions
+     */
+    public void guide(Param... params) {
+        if (tGuides.isEmpty()) tGuides = new ArrayList<>();
+        Collections.addAll(tGuides, params);
+    }
+
 
     public void key(Param... fieldNames) {
         if (fKeys.isEmpty()) fKeys = new ArrayList<>(fieldNames.length);
@@ -669,7 +681,7 @@ public class VisSingle extends VisItem implements Cloneable {
         coords = Coordinates.transposed;
         this.aspect = aspect;
     }
-    
+
     public void rectangular(Param aspect) {
         coords = Coordinates.regular;
         this.aspect = aspect;
