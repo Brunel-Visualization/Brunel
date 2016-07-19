@@ -420,9 +420,10 @@ var BrunelD3 = (function () {
     // This will wait until any transition is completed, and will then call the desired rebuild function
     // The row selected refers into the rowData dataset, but the selection to be modified is in the data dataset
     function select(row, rowData, data, target, func) {
-        var sel = data.field("#selection"),                     // Selection field
-            method = d3.event.altKey ? "tog" : "sel";           // how to select the data (add, subtract, toggle, select)
-        if (d3.event.shiftKey) method = d3.event.altKey ? "sub" : "add";
+        var e = d3.event || event,                              // jQuery can sometimes kill the d3.event
+            sel = data.field("#selection"),                     // Selection field
+            method = e.altKey ? "tog" : "sel";                  // how to select the data (add, subtract, toggle, select)
+        if (e.shiftKey) method = e.altKey ? "sub" : "add";
         data.modifySelection(method, row, rowData);             // Modify the selection
         callWhenReady(func, target);                            // Request a redraw after current transition done
     }
@@ -1315,27 +1316,27 @@ var BrunelD3 = (function () {
             return !(i % skip);
         })
     }
-    
+
     //Sets the aspect ratio of the data domain values
     function setAspect(scale_x, scale_y, aspect) {
-    	
+
     	//Is it safe to do?
     	if (! scale_x.domain() || scale_x.domain().length == 0 || typeof scale_x.domain()[0] != 'number' ||
-    			! scale_y.domain() || scale_y.domain().length == 0 || typeof scale_y.domain()[0] != 'number') 
+    			! scale_y.domain() || scale_y.domain().length == 0 || typeof scale_y.domain()[0] != 'number')
     		return
-    		
+
 
     	//Find the non-zero value for the range (this handles transpose case)
     	var xRange = scale_x.range()[1] != 0 ? scale_x.range()[1] : scale_x.range()[0];
     	var yRange = scale_y.range()[0] != 0 ? scale_y.range()[0] : scale_y.range()[1];
-    	
 
-    	
+
+
     	//Domain widths
     	var xDomain = scale_x.domain()[1] - scale_x.domain()[0];
     	var yDomain = scale_y.domain()[1] - scale_y.domain()[0];
 
-    	//Largest domain : range 
+    	//Largest domain : range
     	var xRatio = xDomain/xRange;
     	var yRatio = yDomain/yRange;
     	var r = Math.max(xRatio, yRatio);
