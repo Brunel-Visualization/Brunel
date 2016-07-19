@@ -1330,13 +1330,17 @@ var BrunelD3 = (function () {
     	
     	//Were the domains Dates?
     	var xDIsDate = scale_x.domain()[0].getTime
-    	var yDIsDate = scale_y.domain()[0].getTime   	
+    	var yDIsDate = scale_y.domain()[0].getTime   
 
     	//Use numerics for calculations
     	var xD1 = BrunelData.Data.asNumeric(scale_x.domain()[1]);
     	var xD0 = BrunelData.Data.asNumeric(scale_x.domain()[0]);
     	var yD1 = BrunelData.Data.asNumeric(scale_y.domain()[1]);
-    	var yD0 = BrunelData.Data.asNumeric(scale_y.domain()[0]);
+    	var yD0 = BrunelData.Data.asNumeric(scale_y.domain()[0]);    	
+    	
+    	//Adjusts max values if scales were reversed
+    	var xSign = xD0 > xD1 ? -1.0 : 1.0;
+    	var ySign = yD0 > yD1 ? -1.0 : 1.0;
     	
     	//Domain widths
     	var xDomain = Math.abs(xD1 - xD0);
@@ -1349,9 +1353,9 @@ var BrunelD3 = (function () {
 
     	//Scale the domain values to the desired aspect ratio
         var minX = xD0;
-        var maxX = minX + aspect * r * xRange;
+        var maxX = minX + aspect * r * xRange * xSign;
         var minY = yD0;
-        var maxY = minY + r * yRange;
+        var maxY = minY + r * yRange * ySign;
         
         //Convert back to dates if needed
         if (xDIsDate) {
@@ -1362,7 +1366,7 @@ var BrunelD3 = (function () {
         	minY = BrunelData.Data.asDate(minY);
         	maxY = BrunelData.Data.asDate(maxY);        	
         }
-
+        
     	scale_x.domain([minX, maxX]);
     	scale_y.domain([minY, maxY]);
     }

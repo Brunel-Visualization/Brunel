@@ -15,7 +15,7 @@ sizedBar	    :: bar x($1) y(#count) size($2:100) color($2:blue) mean($2) sort(#c
 colorScatter baseball Age HomeRunRate Salary / axes(x:grid, y:grid)        :: pass
 colorScatter whiskey Rating Price Category / axes(x:grid, y:grid)          :: pass     :: Note the log Y axis
 colorScatter cpi Date ALL ALL / axes(x:grid, y:grid)                       :: pass     :: Leaves margins at left and right
-colorScatter cpi Date Date ALL / axes(x:grid, y:grid)                      :: pass
+colorScatter cpi Date Date ALL / axes(x:grid:reverse, y:grid)              :: pass     :: X-axis should be reversed
 
 colorScatter whiskey Country Brand Rating           :: pass
 colorScatter whiskey Category Country #count        :: pass
