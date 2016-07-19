@@ -80,6 +80,13 @@
 </p>
 <p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) + guide(y:40+x, y:70, y:'70+10*sin(x)') style('.guide1{stroke:red} .guide3 {stroke-dasharray:none}')</a></p>
 
+<p>
+    When constructing the guide, it creates points evenly spaced out along the line to draw it. By default we use 40
+    points, but an optional parameter at the end of the definition can modify that. For example, when you know the
+    guide is linear in a simple rectangular coordinate system, you might use `guide(y:x:2)` to use just two points for
+    maximal speed. Alternatively, if you have a very curvy function (such as the sin wave in the example above), you
+    may want to increase the number of points.
+</p>
 
 <H3>Legends</H3>
 <p>

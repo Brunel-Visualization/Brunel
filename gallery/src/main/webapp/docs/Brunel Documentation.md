@@ -211,10 +211,15 @@ generate two values (a high and a low), exactly like two fields would.
 
 
 ### Coordinate Transforms
+ * Rectangular is the default coordinate system.
  * Transpose flips the X and the Y dimensions, so 'Y' reads horizontally and 'X' vertically. Note that
 this is not the same as simply swapping X and Y as the direction of the elements also changes.
  * Polar maps the Y dimension to the polar radius, and the X direction to the polar angle
  * Stack takes all items with the same X value and stacks them on top of each other
+
+Both `rectangular` and `transpose` support the `aspect` parameter which controls the aspect ratio of
+the data on the axes (x:y). A value of `1.0` or `square` results in equal spacing of data on both
+axes.
 
 Currently, polar is poorly supported; stacked polar bars (pie charts) work, and you can set the size
 on them to do a Rose Diagram (a pie chart with different radii for each wedge). Little else works.
@@ -226,6 +231,8 @@ Examples:
     bar x(region) y(#count)
 
     transpose bar x(region) y(#count)
+
+    x(summer) y(winter) rectangular(aspect:square)
 
     stack bar x(summer) bin(summer) y(#count) color(region)
 
@@ -938,14 +945,16 @@ The axes command controls which axes are displayed. Legal values are `none, x, y
 
     bar x(region) y(#count) axes(y)
 
-In addition, the `x` and `y` options can take string and/or numeric parameters, as well as the
-option to ask for a grid. The numbers give a hint as to the number of ticks desired on a numeric
-axis; the string sets the title for the axis(an empty string suppresses the axis title). Adding a
-`grid` option displays a grid for the tickas on that axis.
+In addition, the `x` and `y` options can take string and/or numeric parameters, including an option
+to ask for a grid or to reverse the axis. The numbers give a hint as to the number of ticks desired
+on a numeric axis; the string sets the title for the axis(an empty string suppresses the axis
+title). Adding a `grid` option displays a grid for the tickas on that axis.
 
 <!-- examples -->
 
     bar x(region) y(#count) axes(x:'Geo Area')
+
+    bar x(region) y(#count) axes(x:'Geo Area':reverse)
 
     bar x(region) y(#count) axes(y:2:'Numbers', x:10)
 
@@ -975,6 +984,12 @@ of the guide number within the element. Following is an example of a guide:
 
     x(winter) y(summer) + guide(y:40+x, y:70, y:'70+10*sin(x)') style('.guide1{stroke:red}.guide3
     {stroke-dasharray:none}')
+
+when constructing the guide, it creates points evenly spaced out along the line to draw it. By
+default we use 40 points, but an optional parameter at the end of the definition can modify that.
+For example, when you know the guide is linear in a simple rectangular coordinate system, you might
+use `guide(y:x:2)` to use just two points for maximal speed. Alternatively, if you have a very curvy
+function (such as the sin wave in the example above), you may want to increase the number of points.
 
 
 ### Legends

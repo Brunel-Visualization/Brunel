@@ -26,6 +26,7 @@ import java.io.StreamTokenizer;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -44,37 +45,35 @@ public class GuideBuilder extends D3ElementBuilder {
 
     public void generate(int elementIndex) {
 
+        List<Param> guides = vis.tGuides;
+
+        int steps = getSteps(guides);
+
         // Define the variables and domains we will need
         out.add("var i, x, y, t, selection, path, data = [], ")
-                .onNewLine().add("xDomain = scale_x.domain(), x0 = xDomain[0], x1 = xDomain[xDomain.length-1], ")
-                .onNewLine().add("yDomain = scale_y.domain(), y0 = yDomain[0], y1 = xDomain[yDomain.length-1]").endStatement();
+                .onNewLine().add("xDomain = scale_x.domain(), x0 = xDomain[0], xs = xDomain[xDomain.length-1]-x0, ")
+                .onNewLine().add("yDomain = scale_y.domain(), y0 = yDomain[0], ys = xDomain[yDomain.length-1]-y0").endStatement();
 
         // Generate the data for the guide functions
-        out.add("for (i=0; i<=300; i++) {").indentMore().onNewLine();
-        out.add("t = i/300").endStatement();
-        out.add("x = x0 + (x1-x0)*t").endStatement();
-        out.add("y = y0 + (y1-y0)*t").endStatement();
-        out.add("data[i] = {").indentMore();
+        out.add("var guideData = Array.apply(null, Array(" + steps + ")).map(function (v, i) {")
+                .indentMore().onNewLine()
+                .add("t = i /", steps, ";", "return {x:x0 + xs*t, y:y0 + ys*t, t:t} })").endStatement();
 
-        // Define the data x1, y1 ... yN, yN for each  of the N parameters
         int index = 0;
-        for (Param p : vis.tGuides) {
+        for (Param p : guides) {
             index++;
-            if (index > 1) out.add(", ");
-            out.onNewLine().add("x" + index + ":" + definition(p, "x") + ", y" + index + ":" + definition(p, "y"));
-        }
-        out.indentLess().onNewLine().add("}")
-                .indentLess().onNewLine().add("}").endStatement();
+            out.onNewLine().ln().comment("Defining guide #" + index).onNewLine();
 
-        index = 0;
-        for (Param p : vis.tGuides) {
-            index++;
+            String defX = definition(p, "x");                   // Defines X
+            String defY = definition(p, "y");                   // Defines Y
 
             // Define the path
-            out.add("path = d3.svg.line().x(function(d) {return scale_x(d.x" + index + ")}).y(function(d) {return scale_y(d.y" + index + ")})")
+            out.add("path = d3.svg.line().interpolate('basis')")
+                    .addChained("x(function(d) { return scale_x(", defX, ") })")
+                    .addChained("y(function(d) { return scale_y(", defY, ") })")
                     .endStatement();
 
-            out.add("selection = main.selectAll('.element.guide" + index + "').data(data)").endStatement();
+            out.add("selection = main.selectAll('.element.guide" + index + "').data(guideData)").endStatement();
 
             out.add("selection.enter().append('path').attr('class', 'element line guide guide" + index + "')");
             if (structure.chart.accessible)
@@ -82,10 +81,24 @@ public class GuideBuilder extends D3ElementBuilder {
             out.endStatement();
 
             out.add("BrunelD3.trans(selection,transitionMillis)")
-                    .addChained("attr('d', path(data))")
+                    .addChained("attr('d', path(guideData))")
                     .endStatement();
         }
 
+    }
+
+    private int getSteps(List<Param> guides) {
+        int max = 0;
+        for (Param p : guides) {
+            if (p.modifiers().length > 1) {
+                try {
+                    max = Math.max((int) p.modifiers()[1].asDouble(), max);
+                } catch (Exception e) {
+                    throw new IllegalArgumentException("When setting number of steps in a guide, the value must be an integer");
+                }
+            }
+        }
+        return max <= 1 ? 40 : max;
     }
 
     // Returns the definition of the given coord (which defaults to the defined value)
@@ -93,7 +106,7 @@ public class GuideBuilder extends D3ElementBuilder {
         if (p.asString().equals(coord)) {
             return sanitize(p.firstModifier().asString());
         } else {
-            return coord;
+            return "d." + coord;
         }
     }
 
@@ -111,7 +124,7 @@ public class GuideBuilder extends D3ElementBuilder {
                 else if (tok == StreamTokenizer.TT_WORD) {
                     String s = in.sval.toLowerCase();
                     if (s.equals("x") || s.equals("y") || s.equals("t"))        // Known x,y,t defined variables
-                        out.append(s);
+                        out.append("d.").append(s);                             // x -> d.x, etc.
                     else if (MATH_FUNCTIONS.contains(s))                        // Math functions
                         out.append("Math.").append(s);
                     else throw new IllegalStateException("Cannot use term '" + s + "' in a function definition");
