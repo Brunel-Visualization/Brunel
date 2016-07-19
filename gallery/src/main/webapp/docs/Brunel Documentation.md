@@ -938,15 +938,43 @@ The axes command controls which axes are displayed. Legal values are `none, x, y
 
     bar x(region) y(#count) axes(y)
 
-In addition, the `x` and `y` options can take string and/or numeric parameters. The numbers give a
-hint as to the number of ticks desired on a numeric axis, and the string sets the title for the
-axis. The empty string suppresses the axis
+In addition, the `x` and `y` options can take string and/or numeric parameters, as well as the
+option to ask for a grid. The numbers give a hint as to the number of ticks desired on a numeric
+axis; the string sets the title for the axis(an empty string suppresses the axis title). Adding a
+`grid` option displays a grid for the tickas on that axis.
 
 <!-- examples -->
 
     bar x(region) y(#count) axes(x:'Geo Area')
 
     bar x(region) y(#count) axes(y:2:'Numbers', x:10)
+
+    bar x(region) y(#count) axes(y:20:grid:'Numbers', x:10)
+
+
+### Guides
+An element which defines a guide does not use data; it is intended to be used with other elements
+and provides a reference line or function to be used with those elements. To define a guide element,
+the command `guide` is used, together with one or more parameters each of which defines either an
+`x` or a `y` function. These functions are expressions, corresponding to standard expression syntax,
+but restricted to the following tokens:
+
+ * `t` -- ranges from zero to one and defiens the position along the path
+ * `x`, `y` -- define the position a fraction `t` along the dimension
+ * `+`,`-`,`*`,`/`,`(`,`) -- mathematical symbols
+ * `?`, `:`,`>`,`<`,`==`,`<=`,`>=`,`!=` -- symbols used to construct if/then statements such as `x<5 ?
+10: 20`
+ * `e`, `pi` -- constants
+ * `abs`, `acos`, `asin`, `atan`, `atan2`, `ceil`, `cos`, `exp`, `floor`, `log`, `max`, `min`, `pow`,
+`random`, `round`, `sin`, `sqrt`, `tan` -- math functions
+
+Each guide is given a CSS class of `guide` and also a second class of `guideN`, where N is the index
+of the guide number within the element. Following is an example of a guide:
+
+<!-- examples -->
+
+    x(winter) y(summer) + guide(y:40+x, y:70, y:'70+10*sin(x)') style('.guide1{stroke:red}.guide3
+    {stroke-dasharray:none}')
 
 
 ### Legends
@@ -990,6 +1018,9 @@ applies to, it defaults to the element being show. The possible styles include `
 
     x(region) y(#count) style('.axis.tick line {stroke-width:5;stroke:red}.axis.title {font-size:30px
     ;fill:cyan}')
+
+    x(Summer) y(Population) axes(x:grid, y:grid) style('.grid{opacity:1}.grid.y {stroke-dasharray:5,5}
+    .grid.x {stroke-width:40px; opacity:0.2}')
 
 When there are multiple elements in a chart, if you use the simple form of style without a target,
 it will choose the current element only as the target.
@@ -1049,6 +1080,10 @@ in the future. Be careful of depending on it too strongly
                 text            -- tick mark label
             g.yaxis             -- y axis
               ...
+    
+          g.grid
+            line.grid.x         -- grid lines for the x axis (vertical grid lines, usually)
+            line.grid.y         -- grid lines for the y axis (horizontal grid lines, usually)
     
           g.legend              -- axes for the first chart
             text.title          -- legend title

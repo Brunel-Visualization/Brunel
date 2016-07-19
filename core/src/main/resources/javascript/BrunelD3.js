@@ -435,7 +435,7 @@ var BrunelD3 = (function () {
         // It is also the distance between curves of the spiral.
         // dx and dy are delta, but spread out to fit the space better for non-square results
         // When we start searching out from the center in the spiral, we look for anything larger than us
-        // and start outside that. 'precision' reduces the concept of 'larger' so we search less space
+        // and start outside that. 'precision' reduces the concept of 'larger' so we search less space0
 
         var delta = 1;
         var precision = Math.pow(0.8, Math.sqrt(data.rowCount() / 200));
