@@ -2511,7 +2511,7 @@ $.copy(V.modify_Filter, {
             if (q < 0) q = $.len(c);
             field[i] = base.field(c.substring(0, p).trim());
             t = V.modify_Filter.getType(c.substring(p, q).trim());
-            par = V.modify_Filter.getParams(c.substring(q).trim(), field[i].preferCategorical());
+            par = V.modify_Filter.getParams(c.substring(q).trim(), field[i].preferCategorical(), field[i].isDate());
             if (t == 4 || t == -4) {
                 par = V.modify_Filter.getRankedObjects(field[i], V.Data.asNumeric(par[0]), V.Data.asNumeric(par[1]));
                 t = t < 0 ? -3 : 3;
@@ -2551,15 +2551,18 @@ $.copy(V.modify_Filter, {
         throw new $.Exception("Cannot use filter command " + s);
     },
 
-    getParams: function(s, categorical) {
-        var i;
+    getParams: function(s, categorical, isDate) {
+        var aPart, i;
         var parts = s.split(",");
         var result = $.Array(parts.length, null);
         for (i = 0; i < result.length; i++){
+            aPart = parts[i].trim();
             if (categorical)
-                result[i] = parts[i].trim();
+                result[i] = aPart;
+            else if (isDate)
+                result[i] = V.Data.asDate(V.Data.asNumeric(aPart));
             else
-                result[i] = V.Data.asNumeric(parts[i].trim());
+                result[i] = V.Data.asNumeric(aPart);
         }
         return result;
     },

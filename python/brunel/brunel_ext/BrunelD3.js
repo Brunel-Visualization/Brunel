@@ -420,9 +420,10 @@ var BrunelD3 = (function () {
     // This will wait until any transition is completed, and will then call the desired rebuild function
     // The row selected refers into the rowData dataset, but the selection to be modified is in the data dataset
     function select(row, rowData, data, target, func) {
-        var sel = data.field("#selection"),                     // Selection field
-            method = d3.event.altKey ? "tog" : "sel";           // how to select the data (add, subtract, toggle, select)
-        if (d3.event.shiftKey) method = d3.event.altKey ? "sub" : "add";
+        var e = d3.event || event,                              // jQuery can sometimes kill the d3.event
+            sel = data.field("#selection"),                     // Selection field
+            method = e.altKey ? "tog" : "sel";                  // how to select the data (add, subtract, toggle, select)
+        if (e.shiftKey) method = e.altKey ? "sub" : "add";
         data.modifySelection(method, row, rowData);             // Modify the selection
         callWhenReady(func, target);                            // Request a redraw after current transition done
     }
@@ -434,7 +435,7 @@ var BrunelD3 = (function () {
         // It is also the distance between curves of the spiral.
         // dx and dy are delta, but spread out to fit the space better for non-square results
         // When we start searching out from the center in the spiral, we look for anything larger than us
-        // and start outside that. 'precision' reduces the concept of 'larger' so we search less space
+        // and start outside that. 'precision' reduces the concept of 'larger' so we search less space0
 
         var delta = 1;
         var precision = Math.pow(0.8, Math.sqrt(data.rowCount() / 200));
@@ -731,6 +732,7 @@ var BrunelD3 = (function () {
         var content = labeling.content(item.__data__);
         if (!content) return;                               // If there is no content, we are done
 
+        if (!labeling.align) labeling.align = "middle";
 
         // Ensure the label exists and cross-reference both to each other
         var txt = item.__label__;
@@ -741,23 +743,19 @@ var BrunelD3 = (function () {
             txt.__labeling__ = labeling;
         }
 
+        if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
+        else txt.classed('label', true);
         txt.classed("selected", item.classList.contains("selected"));           // Copy selection status to label
 
-        var loc,
-            textNode = txt.node(),                                              // SVG node
-            style = getComputedStyle(textNode),                                 // SVG style
-            posV = style.verticalAlign;                                         // positioning
-
-
-        loc = makeLoc(item, labeling, content);        // Get center point (x,y) and surrounding box (box)
+        var textNode = txt.node(),                          // SVG node
+            style = getComputedStyle(textNode),             // SVG style
+            posV = style.verticalAlign,                     // positioning
+            loc = makeLoc(item, labeling, content);         // Get center point (x,y) and surrounding box (box)
 
 
         if (posV.endsWith("px"))
             loc.y += Number(posV.substring(0, posV.length - 2));
 
-
-        if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
-        else txt.classed('label', true);
 
         txt.style('text-anchor', labeling.align).attr('dy', labeling.dy + "em");
 
@@ -1315,38 +1313,38 @@ var BrunelD3 = (function () {
             return !(i % skip);
         })
     }
-    
+
     //Sets the aspect ratio of the data domain values
     function setAspect(scale_x, scale_y, aspect) {
-    	
+
     	//Is it safe to do?
     	if (! scale_x.domain() || scale_x.domain().length != 2  ||
-    			! scale_y.domain() || scale_y.domain().length != 2 ) 
-    		return;    		
+    			! scale_y.domain() || scale_y.domain().length != 2 )
+    		return;
 
     	//Find the non-zero value for the range (this handles transpose case)
     	var xRange = scale_x.range()[1] != 0 ? scale_x.range()[1] : scale_x.range()[0];
     	var yRange = scale_y.range()[0] != 0 ? scale_y.range()[0] : scale_y.range()[1];
-    	
+
     	//Were the domains Dates?
     	var xDIsDate = scale_x.domain()[0].getTime
-    	var yDIsDate = scale_y.domain()[0].getTime   
+    	var yDIsDate = scale_y.domain()[0].getTime
 
     	//Use numerics for calculations
     	var xD1 = BrunelData.Data.asNumeric(scale_x.domain()[1]);
     	var xD0 = BrunelData.Data.asNumeric(scale_x.domain()[0]);
     	var yD1 = BrunelData.Data.asNumeric(scale_y.domain()[1]);
-    	var yD0 = BrunelData.Data.asNumeric(scale_y.domain()[0]);    	
-    	
+    	var yD0 = BrunelData.Data.asNumeric(scale_y.domain()[0]);
+
     	//Adjusts max values if scales were reversed
     	var xSign = xD0 > xD1 ? -1.0 : 1.0;
     	var ySign = yD0 > yD1 ? -1.0 : 1.0;
-    	
+
     	//Domain widths
     	var xDomain = Math.abs(xD1 - xD0);
     	var yDomain = Math.abs(yD1 - yD0);
 
-    	//Largest domain : range 
+    	//Largest domain : range
     	var xRatio = xDomain/xRange;
     	var yRatio = yDomain/yRange;
     	var r = Math.max(xRatio, yRatio);
@@ -1356,7 +1354,7 @@ var BrunelD3 = (function () {
         var maxX = minX + aspect * r * xRange * xSign;
         var minY = yD0;
         var maxY = minY + r * yRange * ySign;
-        
+
         //Convert back to dates if needed
         if (xDIsDate) {
         	minX = BrunelData.Data.asDate(minX);
@@ -1364,9 +1362,9 @@ var BrunelD3 = (function () {
         }
         if (yDIsDate) {
         	minY = BrunelData.Data.asDate(minY);
-        	maxY = BrunelData.Data.asDate(maxY);        	
+        	maxY = BrunelData.Data.asDate(maxY);
         }
-        
+
     	scale_x.domain([minX, maxX]);
     	scale_y.domain([minY, maxY]);
     }

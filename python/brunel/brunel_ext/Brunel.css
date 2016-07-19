@@ -163,6 +163,12 @@
     fill: none;
 }
 
+.brunel path.element.guide {
+    stroke-width: 1px;
+    stroke: lightGray;
+    stroke-dasharray:10 5
+}
+
 .brunel .element.bar, .brunel .element.polygon, .brunel .element.area, .brunel .element.line.filled, .brunel .element.path.filled {
     fill-rule: nonzero;
     fill: #0b9bdb;
