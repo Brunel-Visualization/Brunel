@@ -142,7 +142,7 @@ public class D3Interaction {
 
         p = vis.tInteraction.get(Interaction.call);
         if (p != null) {
-            out.add("selection.on('" + eventName + "', " + functionName(p, dataBuilder) + " )").endStatement();
+            out.add("selection.on('" + eventName(p) + "', " + functionName(p, dataBuilder) + " )").endStatement();
         }
 
     }
@@ -162,11 +162,11 @@ public class D3Interaction {
 
         List<String> list = dataBuilder.makeKeyFields();
         if (list.size() == 1 && list.get(0).equals("#row")) {
-            return "function(d) { " + base + ".call(this, d.row, data._key(d.row).toString(), processed, element) }";
+            return "function(d) { " + base + ".call(this, d, element) }";
         } else if (list.size() == 1) {
-            return "function(d) { " + base + ".call(this, d.row, data._key(d.row), processed, element) }";
+            return "function(d) { " + base + ".call(this, d, element) }";
         } else {
-            return "function(d) { " + base + ".call(this, d.row, data._key(d.row).split('|'), processed, element) }";
+            return "function(d) { " + base + ".call(this, d, element) }";
         }
 
     }

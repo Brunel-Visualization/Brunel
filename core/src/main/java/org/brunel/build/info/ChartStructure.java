@@ -34,7 +34,7 @@ public class ChartStructure {
     public final int sourceIndex;
 
     public final ChartCoordinates coordinates;
-    public final int chartIndex;
+    public final int chartIndex;                            // 0-based chart index
     public final VisSingle[] elements;
     public final GeoInformation geo;
     public final Diagram diagram;

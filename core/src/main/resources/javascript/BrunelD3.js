@@ -1258,9 +1258,36 @@ var BrunelD3 = (function () {
         vis.rebuild(time);                                  // rebuild with the correct data, animated
     }
 
-    function showSelect(row, value, data, element) {
-        alert("Selected: " + value);
-        console.log("Selected: row=" + row + ", value=" + value + " (" + element.fields.key + "), hit=" + this);
+    function showSelect(item, element) {
+        var coords = d3.mouse(this),
+            chart = element.chart(),
+            scales = chart.scales,
+            group = chart.container;
+
+        if (!group || !scales || !scales.x  || !scales.y) return;
+
+        var x = scales.x.invert(coords[0]),
+            y = scales.y.invert(coords[1]),
+            x0 = scales.x.range()[0], x1 = scales.x.range()[1],
+            y0 = scales.y.range()[0], y1 = scales.y.range()[1];
+
+        var crosshairs = group.selectAll("g.crosshairs");
+
+        if (crosshairs.empty()) {
+            crosshairs = group.append("g").attr("class", "crosshairs");
+            crosshairs.append("line").attr("class", "x").style("stroke", "red");
+            crosshairs.append("line").attr("class", "y").style("stroke", "red");
+        }
+
+
+
+        crosshairs.select("line.x")
+            .attr("x1", coords[0]).attr("x2",coords[0])
+            .attr("y1", y0).attr("y2", coords[1]);
+        crosshairs.select("line.y")
+            .attr("x1", x0).attr("x2",coords[0])
+            .attr("y1", coords[1]).attr("y2", coords[1]);
+
     }
 
 
@@ -1327,8 +1354,8 @@ var BrunelD3 = (function () {
     	var yRange = scale_y.range()[0] != 0 ? scale_y.range()[0] : scale_y.range()[1];
 
     	//Were the domains Dates?
-    	var xDIsDate = scale_x.domain()[0].getTime
-    	var yDIsDate = scale_y.domain()[0].getTime
+    	var xDIsDate = scale_x.domain()[0].getTime;
+    	var yDIsDate = scale_y.domain()[0].getTime;
 
     	//Use numerics for calculations
     	var xD1 = BrunelData.Data.asNumeric(scale_x.domain()[1]);

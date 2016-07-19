@@ -226,7 +226,7 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}").ln().ln();
 
         // Expose the methods and variables we want the user to have access to
-        addElementExports(vis, dataBuilder);
+        addElementExports(vis, dataBuilder, structure);
 
         out.indentLess().onNewLine().add("}()").endStatement().ln();
     }
@@ -282,7 +282,7 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}").ln();
 
         out.ln().comment("Expose the following components of the chart");
-        out.add("return {build : build, elements : elements");
+        out.add("return {build : build, elements : elements, container : interior");
         if (structure.diagram == null) out.add(", scales: {x:scale_x, y:scale_y}");
         out.add("}").endStatement();
 
@@ -454,13 +454,14 @@ public class D3Builder extends AbstractBuilder {
         return result;
     }
 
-    private void addElementExports(VisSingle vis, D3DataBuilder dataBuilder) {
+    private void addElementExports(VisSingle vis, D3DataBuilder dataBuilder, ElementStructure structure) {
         out.add("return {").indentMore();
         out.onNewLine().add("data:").at(24).add("function() { return processed },");
         out.onNewLine().add("internal:").at(24).add("function() { return data },");
         out.onNewLine().add("selection:").at(24).add("function() { return selection },");
         out.onNewLine().add("makeData:").at(24).add("makeData,");
         out.onNewLine().add("build:").at(24).add("build,");
+        out.onNewLine().add("chart:").at(24).add("function() { return charts[" + structure.chart.chartIndex + "] },");
         out.onNewLine().add("fields: {").indentMore();
         out.mark();
 
