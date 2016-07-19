@@ -66,8 +66,6 @@ public class VisSingle extends VisItem implements Cloneable {
     public Param[] tDiagramParameters;     // If defined diagram parameters
     public Element tElement;               // Element util (bar, line, point, ...)
     public Legends tLegends;               // Which legends to display (when aesthetic present)
-    public boolean flipX;
-    public boolean flipY;                  // reverse the X or y scale
     public List<Param> fKeys;              // Fields used as fKeys
     public List<Param> fEffects;           // Effects (usually animated)
     public Param fData;                    // Data sets used
@@ -185,14 +183,6 @@ public class VisSingle extends VisItem implements Cloneable {
     public void filter(Param... fieldNames) {
         if (fFilter.isEmpty()) fFilter = new ArrayList<>(fieldNames.length);
         Collections.addAll(fFilter, fieldNames);
-    }
-
-    public void flip() {
-        this.flipY = !flipY;
-    }
-
-    public void flipx() {
-        this.flipX = !flipX;
     }
 
     /**

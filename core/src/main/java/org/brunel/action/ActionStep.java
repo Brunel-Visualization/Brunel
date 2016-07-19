@@ -141,12 +141,6 @@ public class ActionStep {
             } else if (name.equals("using")) {
                 item.using(oneParam());
                 return item;
-            } else if (name.equals("flipx")) {
-                item.flipx();
-                return item;
-            } else if (name.equals("flip")) {
-                item.flip();
-                return item;
             } else if (name.equals("data")) {
                 item.data(oneParam());
                 return item;

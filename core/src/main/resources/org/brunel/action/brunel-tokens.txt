@@ -36,8 +36,6 @@ stack coords
 polar coords
 rectangular coords aspect - NUMBER
 transpose coords aspect - NUMBER
-flipx coords
-flip coords
 
 ## Aesthetics
 color aesthetic FIELD+ NUMBER+ STRING+
