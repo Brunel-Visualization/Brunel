@@ -47,7 +47,7 @@ public class VisSingle extends VisItem implements Cloneable {
     public StyleSheet styles;              // Specific styles for this vis (null is the default)
     public Param[] bounds;                 // If defined, bounds
     public Coordinates coords;             // Coordinate util
-    public Param aspect;		  		   // Desired aspect ratio
+    public List<Param> fCoords;		  	   // Coordinate Parameters
     public List<Param> fColor, fSize, fOpacity;  // Aesthetics
     public List<Param> fFilter;            // Fields for filtering
     public List<Param> fSort;              // Fields used to sort the data
@@ -67,8 +67,6 @@ public class VisSingle extends VisItem implements Cloneable {
     public List<Param> tGuides;            // Guides
     public Element tElement;               // Element util (bar, line, point, ...)
     public Legends tLegends;               // Which legends to display (when aesthetic present)
-    public boolean flipX;
-    public boolean flipY;                  // reverse the X or y scale
     public List<Param> fKeys;              // Fields used as fKeys
     public List<Param> fEffects;           // Effects (usually animated)
     public Param fData;                    // Data sets used
@@ -187,14 +185,6 @@ public class VisSingle extends VisItem implements Cloneable {
     public void filter(Param... fieldNames) {
         if (fFilter.isEmpty()) fFilter = new ArrayList<>(fieldNames.length);
         Collections.addAll(fFilter, fieldNames);
-    }
-
-    public void flip() {
-        this.flipY = !flipY;
-    }
-
-    public void flipx() {
-        this.flipX = !flipX;
     }
 
     /**
@@ -679,12 +669,16 @@ public class VisSingle extends VisItem implements Cloneable {
 
     public void transpose(Param aspect) {
         coords = Coordinates.transposed;
-        this.aspect = aspect;
+        if (aspect != null) {
+        	this.fCoords = aspect.asList();
+        }
     }
 
     public void rectangular(Param aspect) {
         coords = Coordinates.regular;
-        this.aspect = aspect;
+        if (aspect != null) {
+        	this.fCoords = aspect.asList();
+        }
     }
 
     public void using(Param type) {

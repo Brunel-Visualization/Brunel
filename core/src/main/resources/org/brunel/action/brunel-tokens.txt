@@ -34,10 +34,8 @@ yrange position FIELD+ NUMBER+ STRING+
 ## Coords
 stack coords
 polar coords
-rectangular coords - NUMBER
-transpose coords - NUMBER
-flipx coords
-flip coords
+rectangular coords aspect - NUMBER
+transpose coords aspect - NUMBER
 
 ## Aesthetics
 color aesthetic FIELD+ NUMBER+ STRING+

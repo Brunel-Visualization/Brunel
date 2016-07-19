@@ -15,7 +15,7 @@ sizedBar	    :: bar x($1) y(#count) size($2:100) color($2:blue) mean($2) sort(#c
 colorScatter baseball Age HomeRunRate Salary / axes(x:grid, y:grid)        :: pass
 colorScatter whiskey Rating Price Category / axes(x:grid, y:grid)          :: pass     :: Note the log Y axis
 colorScatter cpi Date ALL ALL / axes(x:grid, y:grid)                       :: pass     :: Leaves margins at left and right
-colorScatter cpi Date Date ALL / axes(x:grid, y:grid)                      :: pass
+colorScatter cpi Date Date ALL / axes(x:grid:reverse, y:grid)              :: pass     :: X-axis should be reversed
 
 colorScatter whiskey Country Brand Rating           :: pass
 colorScatter whiskey Category Country #count        :: pass
@@ -104,7 +104,7 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 
 - simple    / data('raw:x;"a,b";"a";"a,c,b";"a,b";"a,b";"a,b,c"') bar x(x) y(#count) color(x) | bar x(x) y(#count) color(x) each(x) | bubble color(x) size(#count) label(x) | bubble color(x) size(#count) label(x) each(x) :: pass
 - baseball  / x(PutOutRate) y(AssistRate) style('.axis.y .tick text{fill:red;padding-right:10px}') style('.axis.x .tick text{fill:blue;font-size:1cm; padding:2mm} .axis .tick line{size:-5mm} ') style('.axis .title {label-location:left;font-size:20px}') style('.axis .title {label-location:left;font-size:20px;font-style:italic;padding-left:1in}') style('.header {fill:red;font-size:40px;padding-bottom:50px;label-location:right}') title('Ugly Style test') :: pass
-colorScatter whiskey Rating Price Category / y(Price:linear) rectangular(1.0)         :: pass     :: Data aspect ratio should be square
+colorScatter whiskey Rating Price Category / y(Price:linear) rectangular(aspect:1.0)         :: pass     :: Data aspect ratio should be square
 
 #### Note
 

@@ -69,20 +69,30 @@ they generate two values (a high and a low), exactly like two fields would.
 <H3>Coordinate Transforms</H3>
 
 <ul>
+	<li> Rectangular is the default coordinate system.
     <li> Transpose flips the X and the Y dimensions, so 'Y' reads horizontally and 'X' vertically.
         Note that this is not the same as simply swapping X and Y as the direction of the elements also changes.
     <li> Polar maps the Y dimension to the polar radius, and the X direction to the polar angle
     <li> Stack takes all items with the same X value and stacks them on top of each other
 </ul>
 
+<p>
+Both <code>rectangular</code> and <code>transpose</code> support the <code>aspect</code> parameter which controls
+the aspect ratio of the data on the axes (x:y).  A value of <code>1.0</code> or <code>square</code> results in
+equal spacing of data on both axes.
+</p>
+
+<p>
 Currently, polar is poorly supported; stacked polar bars (pie charts) work, and you can set the size on them to
 do a Rose Diagram (a pie chart with different radii for each wedge). Little else works.
+</p>
 
 <p>
     Examples:
 </p>
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">transpose bar x(region) y(#count)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(summer) y(winter) rectangular(aspect:square)</a>
 <p class="examples"><a onClick="showAction(this.text)">stack bar x(summer) bin(summer) y(#count) color(region)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">stack transpose bar x(summer) bin(summer) y(#count)
     color(region)</a></p>
@@ -90,6 +100,7 @@ do a Rose Diagram (a pie chart with different radii for each wedge). Little else
 <p class="examples"><a onClick="showAction(this.text)">y(population) stack polar color(region) size(income)
     label(region) tooltip(#all) sum(population) mean(income)</a></p>
 </p>
+
 
 
 
