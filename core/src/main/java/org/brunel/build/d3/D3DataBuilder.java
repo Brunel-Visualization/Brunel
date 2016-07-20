@@ -347,13 +347,10 @@ public class D3DataBuilder {
         // If we split by aesthetics, they are the keys
         if (vis.tElement.producesSingleShape) return makeSplitFields();
 
-        // Only want categorical / date position fields
+        // Only want categorical / date position fields, also aesthetic fields
         Set<String> result = new LinkedHashSet<>();
         addIfCategorical(result, vis.positionFields());
-
-        // We only want to include the aesthetics when we they are stacked
-        if (vis.stacked)
-            addIfCategorical(result, vis.aestheticFields());
+        addIfCategorical(result, vis.aestheticFields());
 
         if (!suitableForKey(result)) {
             result.clear();
@@ -397,15 +394,7 @@ public class D3DataBuilder {
     private void addIfCategorical(Collection<String> result, String... fieldNames) {
         for (String f : fieldNames) {
             Field field = data.field(f, true);
-            if (field.preferCategorical() || field.isDate()) result.add(f);
-        }
-    }
-
-    private void addIfCategorical(Collection<String> result, List<Param> fieldParameters) {
-        for (Param f : fieldParameters) {
-            String name = f.asField();
-            Field field = data.field(name, true);
-            if (field.preferCategorical() || field.isDate()) result.add(name);
+            if ((field.preferCategorical() || field.isDate()) && !field.isProperty("calculated")) result.add(f);
         }
     }
 
