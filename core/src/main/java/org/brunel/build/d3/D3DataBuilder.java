@@ -38,7 +38,6 @@ import org.brunel.model.VisTypes.Interaction;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -46,6 +45,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Write the Javascript for the data
@@ -340,57 +340,73 @@ public class D3DataBuilder {
         // If we have defined keys, util them
         if (!vis.fKeys.isEmpty()) return asFields(vis.fKeys);
 
-        if (vis.tDiagram == Diagram.chord) {
-            List<String> result = new ArrayList<>();
-            Collections.addAll(result, vis.positionFields());
-            Collections.addAll(result, vis.aestheticFields());
-            if (suitableForKey(result)) return result;
-        }
-
-        // Positions are the keys  treemaps
-        if (vis.tDiagram == Diagram.map) {
-            // Otherwise just use the position fields as usual
-            return Arrays.asList(vis.positionFields());
-        }
-
-        if (vis.tDiagram == Diagram.network) {
-            // The following handles the case when we use the edges as y values to make a key field for the nodes
-            if (vis.fY.size() > 1) return Collections.singletonList("#values");
-        }
+        // Handle diagrams specially
+        if (vis.tDiagram != null)
+            return makeKeyFieldForDiagram(vis.tDiagram);
 
         // If we split by aesthetics, they are the keys
         if (vis.tElement.producesSingleShape) return makeSplitFields();
 
-        // For non-diagrams,
-        if (vis.tDiagram == null) {
-            // Always want the X fields
-            List<String> result = asFields(vis.fX);
+        // Only want categorical / date position fields
+        Set<String> result = new LinkedHashSet<>();
+        addIfCategorical(result, vis.positionFields());
 
-            // Y fields only if categorical
-            for (Param p : vis.fY) {
-                Field field = data.field(p.asField());
-                if (field != null && field.preferCategorical()) result.add(p.asField());
+        // We only want to include the aesthetics when we they are stacked
+        if (vis.stacked)
+            addIfCategorical(result, vis.aestheticFields());
+
+        if (!suitableForKey(result)) {
+            result.clear();
+            result.add("#row");
+
+            // Multiple rows have the same "#row" when we do make series
+            if (vis.fY.size() > 1) result.add("#series");
+
+            // Multiple rows have the same "#row" when we split up a list field using "each"
+            for (Entry<Param, String> e : vis.fTransform.entrySet()) {
+                if (e.getValue().equals("each")) result.add(e.getKey().asField());
             }
-
-            // We only want to include the aesthetics when we they are stacked
-            if (vis.stacked)
-                Collections.addAll(result, vis.aestheticFields());
-            if (suitableForKey(result)) return result;
         }
 
-        // Default is the row values
-        List<String> result = new ArrayList<>();
-        result.add("#row");
+        return new ArrayList<>(result);
+    }
 
-        // Multiple rows have the same "#row" when we do make series
-        if (vis.fY.size() > 1) result.add("#series");
+    private List<String> makeKeyFieldForDiagram(Diagram diagram) {
+        Set<String> result = new LinkedHashSet<>();
 
-        // Multiple rows have the same "#row" when we split up a list field using "each"
-        for (Entry<Param, String> e : vis.fTransform.entrySet()) {
-            if (e.getValue().equals("each")) result.add(e.getKey().asField());
+        if (diagram == Diagram.network) {
+            // The following handles the case when we use the edges as y values to make a key field for the nodes
+            if (vis.fY.size() > 1) return Collections.singletonList("#values");
         }
 
-        return result;
+        // All position fields are needed for diagrams
+        Collections.addAll(result, vis.positionFields());
+
+        // Categorical aesthetic fields for everything except maps
+        if (diagram != Diagram.map) {
+            addIfCategorical(result, vis.aestheticFields());
+        }
+
+        // Check it's OK
+        if (suitableForKey(result)) return new ArrayList<>(result);
+
+        // If not, we give up and just use the row
+        return Collections.singletonList("#row");
+    }
+
+    private void addIfCategorical(Collection<String> result, String... fieldNames) {
+        for (String f : fieldNames) {
+            Field field = data.field(f, true);
+            if (field.preferCategorical() || field.isDate()) result.add(f);
+        }
+    }
+
+    private void addIfCategorical(Collection<String> result, List<Param> fieldParameters) {
+        for (Param f : fieldParameters) {
+            String name = f.asField();
+            Field field = data.field(name, true);
+            if (field.preferCategorical() || field.isDate()) result.add(name);
+        }
     }
 
     private List<String> makeSplitFields() {
@@ -416,10 +432,13 @@ public class D3DataBuilder {
         return fields;
     }
 
-    private boolean suitableForKey(List<String> result) {
+    private boolean suitableForKey(Collection<String> result) {
         if (result.isEmpty()) return false;
         Field[] fields = new Field[result.size()];
-        for (int i = 0; i < fields.length; i++) fields[i] = data.field(result.get(i));
+
+        int index = 0;
+        for (String s : result) fields[index] = data.field(s);
+
         // Sort and see if any adjacent 'keys' are the same
         FieldRowComparison rowComparison = new FieldRowComparison(fields, null, false);
         int[] order = rowComparison.makeSortedOrder();
