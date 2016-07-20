@@ -211,7 +211,7 @@ public class D3Builder extends AbstractBuilder {
 
         out.add("function build(transitionMillis) {").ln().indentMore();
         elementBuilder.generate(structure.index);
-        interaction.addElementHandlers(structure.vis, dataBuilder);
+        interaction.addHandlers(vis.tInteraction);
 
         // If a chart is nested within us, build its facets
         Integer index = structure.chart.innerChartIndex;
@@ -457,6 +457,7 @@ public class D3Builder extends AbstractBuilder {
     private void addElementExports(VisSingle vis, D3DataBuilder dataBuilder, ElementStructure structure) {
         out.add("return {").indentMore();
         out.onNewLine().add("data:").at(24).add("function() { return processed },");
+        out.onNewLine().add("original:").at(24).add("function() { return original },");
         out.onNewLine().add("internal:").at(24).add("function() { return data },");
         out.onNewLine().add("selection:").at(24).add("function() { return selection },");
         out.onNewLine().add("makeData:").at(24).add("makeData,");
