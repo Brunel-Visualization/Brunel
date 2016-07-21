@@ -42,7 +42,7 @@ public class FilterControl {
      * @param modifier the modifier Param for the filter field which is expected to contain default values.
      * @return built Filter description
      */
-    public static FilterControl makeForField(Dataset data, String fieldID, Param modifier) {
+    public static FilterControl makeForFilterField(Dataset data, String fieldID, Param modifier) {
         Field field = data.field(fieldID);
         if (field.preferCategorical()) {
         	String[] selectedCategories = null;
@@ -60,7 +60,7 @@ public class FilterControl {
 	        		
 	        	}
         	}
-            return new FilterControl(data.name(), fieldID, field.label, field.categories(), null, null, null, null, selectedCategories);
+            return new FilterControl(data.name(), fieldID, field.label, field.categories(), null, null, null, null, selectedCategories, false, null, null);
         }
         else {
         	Double low = null;
@@ -77,13 +77,41 @@ public class FilterControl {
 	        			high = params.get(1).asDouble();
 	        		}
 	        	}
+
         	}
         	
-            return new FilterControl(data.name(), fieldID, field.label, null, field.min(), field.max(), low, high, null);
+            return new FilterControl(data.name(), fieldID, field.label, null, field.min(), field.max(), low, high, null, false, null, null);
 
         }
 
     }
+    
+    public static FilterControl makeForAnimation (Dataset data, List<Param> p) {
+    	
+    	
+    	String fieldId = null;
+    	Field field = null;
+    	Double animateFrames = null;
+    	Double animateSpeed = null;
+    	
+    	for (Param param : p) {
+    		if (param.isField()) {
+    			fieldId = param.asField(data);
+    	        field = data.field(fieldId);
+    	        if (field.preferCategorical()) return null;
+    	        Param frames = param.firstModifier();
+    	        if (frames != null) animateFrames = frames.asDouble();
+    		}
+    		if (param.type() == Type.option) {
+    			if (param.asString().equals("speed")) animateSpeed = param.firstModifier().asDouble();
+    		}
+    	}
+    	
+    	if (fieldId == null) return null;
+        return new FilterControl(data.name(), fieldId, field.label, null, field.min(), field.max(), null, null, null, true, animateSpeed, animateFrames);
+
+    }
+    
     
     public static JsonObject buildFilterDefaults(List<FilterControl> filterControls) {
     	JsonObject jobj = new JsonObject();
@@ -127,9 +155,13 @@ public class FilterControl {
     public final Double lowValue;							//default provided by syntax
     public final Double highValue;							//default provided by syntax
     public final Object[] selectedCategories;				//default provided by syntax
+    public final Double animateSpeed;
+    public final Double animateFrames;
+    public final boolean animate;
+    
 
     private FilterControl(String data, String id, String label, Object[] categories, Double min, Double max,
-    		Double lowValue, Double highValue, Object[] selectedCategories) {
+    		Double lowValue, Double highValue, Object[] selectedCategories, boolean animate, Double animateSpeed, Double animateFrames) {
         this.data = data;
         this.id = id;
         this.label = label;
@@ -139,6 +171,9 @@ public class FilterControl {
         this.lowValue = lowValue == null ? null : Math.max(min,lowValue);
         this.highValue = highValue == null ? null : Math.min(max, highValue);
         this.selectedCategories = selectedCategories;
+        this.animateSpeed = animateSpeed;
+        this.animateFrames = animateFrames;
+        this.animate = animate;
         
         if (lowValue != null && highValue != null && lowValue > highValue) {
         	throw new IllegalArgumentException("Low filter value (" + lowValue +") cannot be greater than high filter value ("+highValue+") for: " + label);

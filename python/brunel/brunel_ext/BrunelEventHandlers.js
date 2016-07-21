@@ -92,10 +92,11 @@ function BrunelEventHandlers (brunel) {
 		return {
 			
 			//Executes a request to filter
-			filter: function (filterField, filterValue) {
+			filter: function (filterField, filterValue, animationSpeed) {
+				 if (animationSpeed == null) animationSpeed = 500;
 	             if (filterField != null && filterValue != null) {
 					 filterState[filterField] = filterValue;
-					 buildVisualization();
+					 buildVisualization(animationSpeed);
 	             }
 			},
 			
@@ -110,8 +111,8 @@ function BrunelEventHandlers (brunel) {
     	filterHandler = FilterHandler(defaultFilter);
         addDataProcess();
 
-		$.subscribe('filter.' + brunel.visId, function (_, a, b) {
-			filterHandler.filter(a, b);
+		$.subscribe('filter.' + brunel.visId, function (_, a, b, c) {
+			filterHandler.filter(a, b, c);
 		});
      }
 	
@@ -125,9 +126,9 @@ function BrunelEventHandlers (brunel) {
 	}
 	
 	//Rebuild a visualization including any data processing.
-	function buildVisualization() {		
+	function buildVisualization(animationSpeed) {		
 		addDataProcess();
-    	brunel.build();
+    	brunel.rebuild(animationSpeed);
 	}
 
 

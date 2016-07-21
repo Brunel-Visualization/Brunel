@@ -45,6 +45,7 @@ split aesthetic FIELD+
 key aesthetic FIELD+
 sort aesthetic FIELD+
 filter aesthetic FIELD+
+animate aesthetic FIELD speed
 label aesthetic FIELD+ NUMBER+ STRING+
 tooltip aesthetic FIELD+ NUMBER+ STRING+
 

@@ -366,7 +366,7 @@ public class D3Builder extends AbstractBuilder {
         }
 
         // Add controls code
-        controls.writeControls(out);
+        controls.writeControls(out, "v");
 
     }
 
