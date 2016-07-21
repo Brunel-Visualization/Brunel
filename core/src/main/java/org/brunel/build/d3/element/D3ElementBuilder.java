@@ -44,6 +44,7 @@ public class D3ElementBuilder {
     protected final VisSingle vis;                                // Element definition
 
     private final D3ScaleBuilder scales;                        // Helper to build scales
+    private final D3Interaction interaction;
     private final D3LabelBuilder labelBuilder;                  // Helper to build labels
     private final D3Diagram diagram;                            // Helper to build diagrams
     protected final ElementStructure structure;
@@ -53,6 +54,7 @@ public class D3ElementBuilder {
         this.vis = structure.vis;
         this.out = out;
         this.scales = scales;
+        this.interaction = interaction;
         this.labelBuilder = new D3LabelBuilder(vis, out, structure.data);
         this.diagram = D3Diagram.make(structure, interaction, out);
     }
@@ -97,8 +99,11 @@ public class D3ElementBuilder {
 
         // Set the values of things known to this element
         out.add("selection = main.selectAll('.element').data(" + details.dataSource + ",", getKeyFunction(), ")")
-                .addChained("classed('selected', function(d) { return data.$selection(d) == '\u2713' })")
-                .endStatement();
+                .addChained("classed('selected', function(d) { return data.$selection(d) == '\u2713' })");
+        if (!interaction.hasElementInteraction(structure))
+            out.addChained("style('pointer-events', 'none')");
+
+        out.endStatement();
 
         // Define what happens when data is added ('enter')
         out.add("selection.enter().append('" + details.representation.getMark() + "')");
@@ -192,7 +197,7 @@ public class D3ElementBuilder {
         if (diagram != null) diagram.writePerChartDefinitions();
     }
 
-    protected ElementDetails makeDetails() {
+    private ElementDetails makeDetails() {
         // When we create diagrams this has the side effect of writing the data calls needed
         if (structure.isGraphEdge()) {
             out.onNewLine().comment("Defining graph edge element");
@@ -205,7 +210,7 @@ public class D3ElementBuilder {
         }
     }
 
-    protected void setGeometry(ElementDetails e) {
+    private void setGeometry(ElementDetails e) {
 
         Field[] x = structure.chart.coordinates.getX(vis);
         Field[] y = structure.chart.coordinates.getY(vis);
@@ -299,7 +304,7 @@ public class D3ElementBuilder {
     }
 
     /* The key function ensure we have object constancy when animating */
-    protected String getKeyFunction() {
+    private String getKeyFunction() {
         String content = diagram != null ? diagram.getRowKey() : "d.key";
         return "function(d) { return " + content + "}";
     }
@@ -468,7 +473,6 @@ public class D3ElementBuilder {
             if (purpose == ScalePurpose.x || purpose == ScalePurpose.inner) {
                 if (baseFields.length == 1 && baseFields[0].isNumeric()) categories = 0;
             }
-
 
             if (vis.tDiagram != null) {
                 // Diagrams do not define these things

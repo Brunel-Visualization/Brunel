@@ -418,14 +418,22 @@ var BrunelD3 = (function () {
 
     // Select the indicated rows of the data.
     // This will wait until any transition is completed, and will then call the desired rebuild function
-    // The row selected refers into the rowData dataset, but the selection to be modified is in the data dataset
-    function select(row, rowData, data, target, func) {
-        var e = d3.event || event,                              // jQuery can sometimes kill the d3.event
-            sel = data.field("#selection"),                     // Selection field
-            method = e.altKey ? "tog" : "sel";                  // how to select the data (add, subtract, toggle, select)
-        if (e.shiftKey) method = e.altKey ? "sub" : "add";
-        data.modifySelection(method, row, rowData);             // Modify the selection
-        callWhenReady(func, target);                            // Request a redraw after current transition done
+    // item -- the data for the item being selected (contains 'row' and 'points' for a path)
+    // target -- the SVG target
+    // element -- the brunel element this selection is operating on
+    // func -- callback function to rebuild everything when selection is done
+    function select(item, target, element, func) {
+        var e = d3.event || event,                                      // jQuery can sometimes kill the d3.event
+            data = element.data(),                                      // the processed data
+            sel = data.field("#selection"),                             // Selection field
+            method = e.altKey ? "tog" : "sel";                          // how to select the data ...
+        if (e.shiftKey) method = e.altKey ? "sub" : "add";              // ... add, subtract, toggle, select
+
+        // The selection is in terms of the processed data, but we need to propagate that
+        // back to the original data set
+        data.modifySelection(method, item ? item.row : null, element.original());
+
+        callWhenReady(func, target);                                    // Request a redraw after  transition done
     }
 
 
@@ -1258,9 +1266,67 @@ var BrunelD3 = (function () {
         vis.rebuild(time);                                  // rebuild with the correct data, animated
     }
 
-    function showSelect(row, value, data, element) {
-        alert("Selected: " + value);
-        console.log("Selected: row=" + row + ", value=" + value + " (" + element.fields.key + "), hit=" + this);
+
+    // Find the closest item in the selection
+    function closestItem(selection) {
+        var pp, v, x, y, box, result = {distance: 9e99};
+        selection.each(function (d) {
+            pp = pp || d3.mouse(this);                        // Define the mouse location relative to the selection
+            box = this.getBBox();
+            x = box.x + box.width / 2;
+            y = box.y + box.height / 2;
+            v = (x - pp[0]) * (x - pp[0]) + (y - pp[1]) * (y - pp[1]);
+            if (v < result.distance) {
+                result.distance = v;
+                result.item = d;
+                result.x = x;
+                result.y = y;
+                result.box = box;
+                result.target = this;
+            }
+        });
+        result.distance = Math.sqrt(result.distance);
+        return result;
+    }
+
+    function showSelect(item, target, element) {
+        var chart = element.chart(),
+            scales = chart.scales,
+            group = chart.container;
+
+        if (!group || !scales || !scales.x || !scales.y) return;
+
+        var crosshairs = group.selectAll("g.crosshairs");
+
+        if (!item) {
+            crosshairs.remove();
+            return;
+        }
+
+        var box = target.getBBox(),
+            px = box.x + box.width/2,
+            py = box.y + box.height/2,
+            x = scales.x.invert(px),
+            y = scales.y.invert(py),
+            x0 = scales.x.range()[0],
+            x1 = scales.x.range()[1],
+            y0 = scales.y.range()[0],
+            y1 = scales.y.range()[1];
+
+
+        if (crosshairs.empty()) {
+            crosshairs = group.append("g").attr("class", "crosshairs");
+            crosshairs.append("line").attr("class", "x").style("stroke", "red").style("pointer-events", "none");
+            crosshairs.append("line").attr("class", "y").style("stroke", "red").style("pointer-events", "none");
+        }
+
+        crosshairs.select("line.x")
+            .attr("x1", px).attr("x2", px)
+            .attr("y1", y0).attr("y2", py);
+        crosshairs.select("line.y")
+            .attr("x1", x0).attr("x2", px)
+            .attr("y1", py).attr("y2", py);
+
     }
 
 
@@ -1317,39 +1383,38 @@ var BrunelD3 = (function () {
     //Sets the aspect ratio of the data domain values
     function setAspect(scale_x, scale_y, aspect) {
 
-    	//Is it safe to do?
-    	if (! scale_x.domain() || scale_x.domain().length != 2  ||
-    			! scale_y.domain() || scale_y.domain().length != 2 )
-    		return;
+        //Is it safe to do?
+        if (!scale_x.domain() || scale_x.domain().length != 2 || !scale_y.domain() || scale_y.domain().length != 2)
+            return;
 
-    	//Find the non-zero value for the range (this handles transpose case)
-    	var xRange = scale_x.range()[1] != 0 ? scale_x.range()[1] : scale_x.range()[0];
-    	var yRange = scale_y.range()[0] != 0 ? scale_y.range()[0] : scale_y.range()[1];
+        //Find the non-zero value for the range (this handles transpose case)
+        var xRange = scale_x.range()[1] != 0 ? scale_x.range()[1] : scale_x.range()[0];
+        var yRange = scale_y.range()[0] != 0 ? scale_y.range()[0] : scale_y.range()[1];
 
-    	//Were the domains Dates?
-    	var xDIsDate = scale_x.domain()[0].getTime
-    	var yDIsDate = scale_y.domain()[0].getTime
+        //Were the domains Dates?
+        var xDIsDate = scale_x.domain()[0].getTime;
+        var yDIsDate = scale_y.domain()[0].getTime;
 
-    	//Use numerics for calculations
-    	var xD1 = BrunelData.Data.asNumeric(scale_x.domain()[1]);
-    	var xD0 = BrunelData.Data.asNumeric(scale_x.domain()[0]);
-    	var yD1 = BrunelData.Data.asNumeric(scale_y.domain()[1]);
-    	var yD0 = BrunelData.Data.asNumeric(scale_y.domain()[0]);
+        //Use numerics for calculations
+        var xD1 = BrunelData.Data.asNumeric(scale_x.domain()[1]);
+        var xD0 = BrunelData.Data.asNumeric(scale_x.domain()[0]);
+        var yD1 = BrunelData.Data.asNumeric(scale_y.domain()[1]);
+        var yD0 = BrunelData.Data.asNumeric(scale_y.domain()[0]);
 
-    	//Adjusts max values if scales were reversed
-    	var xSign = xD0 > xD1 ? -1.0 : 1.0;
-    	var ySign = yD0 > yD1 ? -1.0 : 1.0;
+        //Adjusts max values if scales were reversed
+        var xSign = xD0 > xD1 ? -1.0 : 1.0;
+        var ySign = yD0 > yD1 ? -1.0 : 1.0;
 
-    	//Domain widths
-    	var xDomain = Math.abs(xD1 - xD0);
-    	var yDomain = Math.abs(yD1 - yD0);
+        //Domain widths
+        var xDomain = Math.abs(xD1 - xD0);
+        var yDomain = Math.abs(yD1 - yD0);
 
-    	//Largest domain : range
-    	var xRatio = xDomain/xRange;
-    	var yRatio = yDomain/yRange;
-    	var r = Math.max(xRatio, yRatio);
+        //Largest domain : range
+        var xRatio = xDomain / xRange;
+        var yRatio = yDomain / yRange;
+        var r = Math.max(xRatio, yRatio);
 
-    	//Scale the domain values to the desired aspect ratio
+        //Scale the domain values to the desired aspect ratio
         var minX = xD0;
         var maxX = minX + aspect * r * xRange * xSign;
         var minY = yD0;
@@ -1357,16 +1422,16 @@ var BrunelD3 = (function () {
 
         //Convert back to dates if needed
         if (xDIsDate) {
-        	minX = BrunelData.Data.asDate(minX);
-        	maxX = BrunelData.Data.asDate(maxX);
+            minX = BrunelData.Data.asDate(minX);
+            maxX = BrunelData.Data.asDate(maxX);
         }
         if (yDIsDate) {
-        	minY = BrunelData.Data.asDate(minY);
-        	maxY = BrunelData.Data.asDate(maxY);
+            minY = BrunelData.Data.asDate(minY);
+            maxY = BrunelData.Data.asDate(maxY);
         }
 
-    	scale_x.domain([minX, maxX]);
-    	scale_y.domain([minY, maxY]);
+        scale_x.domain([minX, maxX]);
+        scale_y.domain([minY, maxY]);
     }
 
 
@@ -1398,6 +1463,7 @@ var BrunelD3 = (function () {
         'makeGrid': makeGrid,
         'showSelect': showSelect,
         'filterTicks': filterTicks,
+        'closest': closestItem,
         'setAspect': setAspect
     }
 

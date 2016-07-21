@@ -90,7 +90,7 @@ legends other auto none all color size
 at other NUMBER+
 style other STRING
 effect other enter
-interaction other select panzoom filter auto call none
+interaction other + select panzoom filter auto call snap none
 title other STRING+ FIELD+ NUMBER+
 
 ## Combination actions

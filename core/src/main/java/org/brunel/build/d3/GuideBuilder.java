@@ -57,7 +57,7 @@ public class GuideBuilder extends D3ElementBuilder {
         // Generate the data for the guide functions
         out.add("var guideData = Array.apply(null, Array(" + steps + ")).map(function (v, i) {")
                 .indentMore().onNewLine()
-                .add("t = i /", steps, ";", "return {x:x0 + xs*t, y:y0 + ys*t, t:t} })").endStatement();
+                .add("t = i /", (steps-1), ";", "return {x:x0 + xs*t, y:y0 + ys*t, t:t} })").endStatement();
 
         int index = 0;
         for (Param p : guides) {
