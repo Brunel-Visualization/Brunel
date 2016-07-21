@@ -1268,7 +1268,8 @@ var BrunelD3 = (function () {
 
 
     // Find the closest item in the selection
-    function closestItem(selection) {
+    // selection is the items to search for; maxDistance is the furthest distance out to accept
+    function closestItem(selection, maxDistance) {
         var pp, v, x, y, box, result = {distance: 9e99};
         selection.each(function (d) {
             pp = pp || d3.mouse(this);                        // Define the mouse location relative to the selection
@@ -1279,20 +1280,20 @@ var BrunelD3 = (function () {
             if (v < result.distance) {
                 result.distance = v;
                 result.item = d;
-                result.x = x;
-                result.y = y;
-                result.box = box;
                 result.target = this;
             }
         });
+
+        // If we are not close enough, set the result item to null
         result.distance = Math.sqrt(result.distance);
+        if  (result.distance > maxDistance) result.item = null;
         return result;
     }
 
-    function showSelect(item, target, element) {
+    function showCrossHairs(item, target, element) {
         var chart = element.chart(),
             scales = chart.scales,
-            group = chart.container;
+            group = element.group();
 
         if (!group || !scales || !scales.x || !scales.y) return;
 
@@ -1461,7 +1462,7 @@ var BrunelD3 = (function () {
         'interpolate': interpolate,
         'animateBuild': animateBuild,
         'makeGrid': makeGrid,
-        'showSelect': showSelect,
+        'crosshairs': showCrossHairs,
         'filterTicks': filterTicks,
         'closest': closestItem,
         'setAspect': setAspect

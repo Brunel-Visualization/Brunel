@@ -83,8 +83,12 @@ public class Param implements Comparable<Param> {
         else return Double.parseDouble(content.toString());
     }
 
+    public <T extends Enum<T>> T asEnum(Class<T> clazz) {
+        return Enum.valueOf(clazz, content.toString());
+    }
+
     /**
-     * Return the name fo the matching field in the data
+     * Return the name of the matching field in the data
      *
      * @param data the data set to match into; if null no matching will be done and the name assumed correct
      * @return name as known in the data set

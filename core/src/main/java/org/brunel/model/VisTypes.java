@@ -78,7 +78,6 @@ public class VisTypes {
         panzoom,                    // Allow panning and zooming using the mouse
         filter,                     // Apply filtering to the data
         call,                       // A custom call to user code
-        snap,                       // modifies interactivity by snapping all mouse events to nearest data object
         auto,                       // automatic interaction behavior
         none                        // turn off interactivity
     }

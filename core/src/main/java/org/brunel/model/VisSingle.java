@@ -47,7 +47,7 @@ public class VisSingle extends VisItem implements Cloneable {
     public StyleSheet styles;              // Specific styles for this vis (null is the default)
     public Param[] bounds;                 // If defined, bounds
     public Coordinates coords;             // Coordinate util
-    public List<Param> fCoords;		  	   // Coordinate Parameters
+    public List<Param> fCoords;               // Coordinate Parameters
     public List<Param> fColor, fSize, fOpacity;  // Aesthetics
     public List<Param> fFilter;            // Fields for filtering
     public List<Param> fSort;              // Fields used to sort the data
@@ -71,8 +71,8 @@ public class VisSingle extends VisItem implements Cloneable {
     public List<Param> fEffects;           // Effects (usually animated)
     public Param fData;                    // Data sets used
 
-    public Map<Axes, Param[]> fAxes;               // Axes mapped to their parameters
-    public Map<Interaction, Param> tInteraction;   // Which interactive features to support (with maps to options)
+    public Map<Axes, Param[]> fAxes;        // Axes mapped to their parameters
+    public List<Param> tInteraction;        // Which interactive features to support (with maps to options)
 
     private Dataset dataset;                // Dataset in which dataset fields are to be found (may be null)
     private String[] used;                  // Data that is used in the vis (does not include filters)
@@ -96,11 +96,12 @@ public class VisSingle extends VisItem implements Cloneable {
         coords = Coordinates.regular;
         tUsing = Using.none;
         tLegends = Legends.auto;
-        tInteraction = Collections.EMPTY_MAP;
+        tInteraction = Collections.EMPTY_LIST;
         fAxes = Collections.EMPTY_MAP;
 
         // For memory and speed, these are all fixed as empty until used
         fX = Collections.EMPTY_LIST;
+        tInteraction = Collections.EMPTY_LIST;
         fY = Collections.EMPTY_LIST;
         fColor = Collections.EMPTY_LIST;
         fKeys = Collections.EMPTY_LIST;
@@ -195,25 +196,21 @@ public class VisSingle extends VisItem implements Cloneable {
      * @param types options to set
      * @return this object, for chaining calls
      */
-    public void interaction(Param... types) {
-        if (tInteraction.isEmpty()) tInteraction = new LinkedHashMap<>();
-        for (Param a : types) {
-            Interaction option = Interaction.valueOf(a.asString());
-            if (option == Interaction.auto || option == Interaction.none) tInteraction.clear();
-            tInteraction.put(option, a);
-        }
-
+    public VisSingle interaction(Param... types) {
+        if (tInteraction.isEmpty()) tInteraction = new ArrayList<>();
+        Collections.addAll(tInteraction, types);
+        return this;
     }
 
     /**
      * Defines guides for the current item
+     *
      * @param params guide definitions
      */
     public void guide(Param... params) {
         if (tGuides.isEmpty()) tGuides = new ArrayList<>();
         Collections.addAll(tGuides, params);
     }
-
 
     public void key(Param... fieldNames) {
         if (fKeys.isEmpty()) fKeys = new ArrayList<>(fieldNames.length);
@@ -348,7 +345,11 @@ public class VisSingle extends VisItem implements Cloneable {
         LinkedHashSet<String> all = new LinkedHashSet<>();
         Collections.addAll(all, pos);
         Collections.addAll(all, nonPos);
-        if (tInteraction.containsKey(Interaction.filter)) all.add("#selection");
+
+        // Ensure the selection is added when we are filtering
+        for (Param p : tInteraction)
+            if (p.asString().equals(Interaction.filter.name()))
+                all.add("#selection");
 
         addFields(all, fTransform.keySet());
         addFields(all, fSummarize.keySet());
@@ -670,14 +671,14 @@ public class VisSingle extends VisItem implements Cloneable {
     public void transpose(Param aspect) {
         coords = Coordinates.transposed;
         if (aspect != null) {
-        	this.fCoords = aspect.asList();
+            this.fCoords = aspect.asList();
         }
     }
 
     public void rectangular(Param aspect) {
         coords = Coordinates.regular;
         if (aspect != null) {
-        	this.fCoords = aspect.asList();
+            this.fCoords = aspect.asList();
         }
     }
 

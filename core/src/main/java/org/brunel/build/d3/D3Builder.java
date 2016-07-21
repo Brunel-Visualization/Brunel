@@ -282,7 +282,7 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}").ln();
 
         out.ln().comment("Expose the following components of the chart");
-        out.add("return {build : build, elements : elements, container : interior");
+        out.add("return {build : build, elements : elements, interior : interior");
         if (structure.diagram == null) out.add(", scales: {x:scale_x, y:scale_y}");
         out.add("}").endStatement();
 
@@ -463,6 +463,7 @@ public class D3Builder extends AbstractBuilder {
         out.onNewLine().add("makeData:").at(24).add("makeData,");
         out.onNewLine().add("build:").at(24).add("build,");
         out.onNewLine().add("chart:").at(24).add("function() { return charts[" + structure.chart.chartIndex + "] },");
+        out.onNewLine().add("group:").at(24).add("function() { return elementGroup },");
         out.onNewLine().add("fields: {").indentMore();
         out.mark();
 

@@ -68,19 +68,27 @@ public class D3Interaction {
 
     /**
      * Returns true if the element has any mouse events to be attached to it
-     * @return
-     * @param structure
+     *
+     * @param structure the element information
+     * @return true if any handler will need to be attached to the element
      */
     public boolean hasElementInteraction(ElementStructure structure) {
-        Map<Interaction, Param> interaction = structure.vis.tInteraction;
-
-        // Snap operates on overlay, not element, so if snap is present, no element handler is needed
-        if (interaction.containsKey(Interaction.snap)) return false;
-
-        // Otherwise, check for a handler
-        return interaction.containsKey(Interaction.select) || interaction.containsKey(Interaction.call);
+        for (Param p : structure.vis.tInteraction) {
+            String s = p.asString();
+            // Only these types create element event handlers
+            if (s.equals(Interaction.select.name()) || s.equals(Interaction.call.name())) {
+                if (targetsElement(p)) return true;
+            }
+        }
+        return false;
     }
 
+    private boolean targetsElement(Param param) {
+        if (param == null) return false;                    // No interaction => no targeting
+        for (Param p : param.modifiers())
+            if (p.asString().equals("snap")) return false;  // snap means the handler is attached to background
+        return true;                                        // No snap means we do need an element handler
+    }
 
     /**
      * Decide if this dimension is to be pan/zoomed
@@ -92,13 +100,19 @@ public class D3Interaction {
      */
     private boolean checkCoordinate(ChartStructure structure, String dimName, boolean dimIsCategorical) {
         for (VisSingle e : structure.elements) {
-            Param param = e.tInteraction.get(Interaction.panzoom);
+            Param param = getInteractionParam(e, Interaction.panzoom);
             if (param != null && param.hasModifiers()) {
                 String s = param.firstModifier().asString();
                 return dimName.equalsIgnoreCase(s) || "both".equalsIgnoreCase(s);
             }
         }
         return !dimIsCategorical;
+    }
+
+    public static Param getInteractionParam(VisSingle vis, Interaction type) {
+        for (Param p : vis.tInteraction)
+            if (p.asEnum(Interaction.class) == type) return p;
+        return null;
     }
 
     public ZoomType getZoomType() {
@@ -112,9 +126,9 @@ public class D3Interaction {
 
         // Explicit requests in the code are honored. In case of multiple specs, just the first one is used
         for (ElementStructure e : elements) {
-            Param param = e.vis.tInteraction.get(Interaction.panzoom);
+            Param param = getInteractionParam(e.vis, Interaction.panzoom);
             if (param != null) return isNeeded(param);
-            if (e.vis.tInteraction.containsKey(Interaction.none)) return false;
+            if (getInteractionParam(e.vis, Interaction.none) != null) return false;
         }
 
         // By default, we do not zoom for all categorical data
@@ -133,81 +147,72 @@ public class D3Interaction {
 
     /**
      * This attaches event handlers to the element for click-selection
+     *
+     * @param interactions the defined interactivity
      */
-    public void addHandlers(Map<Interaction, Param> interactions) {
+    public void addHandlers(List<Param> interactions) {
 
-        // Two potential functions for selection
-        Param standardSelection = interactions.get(Interaction.select);
-        Param customSelection = interactions.get(Interaction.call);
+        // A map from the event names to a set of commands to write for each event
+        // One map for the element, the other for 'snap' events, which go on the overlay
+        LinkedHashMap<String, List<String>> elementEvents = new LinkedHashMap<>();
+        LinkedHashMap<String, List<String>> overlayEvents = new LinkedHashMap<>();
 
-        // Check if we need to do anything
-        if (standardSelection == null && customSelection == null) return;
-
-        // Check if we need to snap the selection to the grid. If so find the radius
-        // The radius is a String value we can use in an expression
-        String snapRadius = findSnapRadius(interactions.get(Interaction.snap));
-
-        if (snapRadius != null) {
-            addOverlayHandlers(standardSelection, customSelection, snapRadius);
-        } else {
-            addElementHandlers(standardSelection, customSelection);
-        }
-    }
-
-    private void addOverlayHandlers(Param standardSelection, Param customSelection, String snapRadius) {
-        LinkedHashMap<String, List<String>> dispatching = new LinkedHashMap<>();
-
-        if (standardSelection != null) {
-            // for standard selection, we dispatch to our code.
-            // For mouseovers we also add the "mouseout" call to get rid of the selection
-            String event = eventName(standardSelection);
-            addFunctionDefinition(event, "BrunelD3.select(item, target, element, updateAll)", dispatching);
-            if (event.equals("mouseover") || event.equals("mousemove"))
-                addFunctionDefinition("mouseout", "BrunelD3.select(null, target, element, updateAll)", dispatching);
-        }
-
-        if (customSelection != null) {
-            // For mouseovers we also add the "mouseout" call to get rid of the selection
-            String event = eventName(customSelection);
-            addFunctionDefinition(event, customFunction(customSelection, "item", "target"), dispatching);
-            if (event.equals("mouseover") || event.equals("mousemove"))
-                addFunctionDefinition("mouseout", customFunction(customSelection, "null", "target"), dispatching);
-        }
-
-        // Add the definitions of the needed variables (item, target) at the start of each list
-        for (List<String> list : dispatching.values()) {
-            list.add(0, "var c = BrunelD3.closest(selection), target = c.target");
-            list.add(1, "var item = c.distance < " + snapRadius + "? c.item : null");
-        }
-
-        out.add("interior.select('rect.overlay')").at(60).comment("Attach handlers to the overlay");
-        addDispatchers(dispatching);
-    }
-
-    private void addElementHandlers(Param standardSelection, Param customSelection) {
-        LinkedHashMap<String, List<String>> dispatching = new LinkedHashMap<>();
-
-        if (standardSelection != null) {
-            // for standard selection, we dispatch to our code.
-            // For mouseovers we also add the "mouseout" call to get rid of the selection
-            String event = eventName(standardSelection);
-            addFunctionDefinition(event, "BrunelD3.select(d, this, element, updateAll)", dispatching);
-            if (event.equals("mouseover") || event.equals("mousemove"))
-                addFunctionDefinition("mouseout", "BrunelD3.select(null, this, element, updateAll)", dispatching);
+        String snapRadius = null;
+        for (Param p : interactions) {
+            Interaction type = p.asEnum(Interaction.class);
+            snapRadius = findSnapRadius(p);
+            if (type == Interaction.select) {
+                // One of select, select:mouseXXX, select:snap, select:snap:ZZ
+                if (snapRadius != null) {
+                    // We want a snap overlay event that will call select -- all snap events are overlays
+                    // Also add corresponding mouse out event
+                    addFunctionDefinition("mousemove",
+                            "BrunelD3.select(c.item, c.target, element, updateAll)", overlayEvents);
+                    addFunctionDefinition("mouseout",
+                            "BrunelD3.select(null, c.target, element, updateAll)", overlayEvents);
+                } else {
+                    // We want an event handler on the element -- Also add corresponding mouse out event
+                    String eventName = p.hasModifiers() ? p.firstModifier().asString() : "click";
+                    addFunctionDefinition(eventName,
+                            "BrunelD3.select(d, this, element, updateAll)", elementEvents);
+                    if (eventName.equals("mouseover") || eventName.equals("mousemove"))
+                        addFunctionDefinition("mouseout",
+                                "BrunelD3.select(null, this, element, updateAll)", elementEvents);
+                }
+            } else if (type == Interaction.call) {
+                // One of call, call:func, call:func:mouseXXX, call:func:snap, call:func:snap:ZZ
+                String functionName = p.hasModifiers() ? p.firstModifier().asString() : "BrunelD3.crosshairs";
+                if (snapRadius != null) {
+                    // We want a snap overlay event that will call a custom function -- all snap events are overlays
+                    addFunctionDefinition("mousemove", functionName + "(c.item, c.target, element)", overlayEvents);
+                    addFunctionDefinition("mouseout", functionName + "(null, c.target, element)", overlayEvents);
+                } else {
+                    // We want an event handler on the element
+                    String eventName = p.modifiers().length > 1 ? p.modifiers()[1].toString() : "click";
+                    addFunctionDefinition(eventName, functionName + "(d, this, element)", elementEvents);
+                    if (eventName.equals("mouseover") || eventName.equals("mousemove"))
+                        addFunctionDefinition("mouseout", functionName + "(null, this, element)", elementEvents);
+                }
+            }
         }
 
-        if (customSelection != null) {
-            // For mouseovers we also add the "mouseout" call to get rid of the selection
-            String event = eventName(customSelection);
-            addFunctionDefinition(event, customFunction(customSelection, "d", "this"), dispatching);
-            if (event.equals("mouseover") || event.equals("mousemove"))
-                addFunctionDefinition("mouseout", customFunction(customSelection, "null", "this"), dispatching);
+        if (!overlayEvents.isEmpty()) {
+            // Start each set of overlay commands with a command to find the closest item
+            for (List<String> e : overlayEvents.values())
+                e.add(0, "var c = BrunelD3.closest(selection, " + snapRadius + ")");
+            out.add("interior.select('rect.overlay')").at(60).comment("Attach handlers to the overlay");
+            addDispatchers(overlayEvents);
         }
 
         out.add("selection").at(60).comment("Attach handlers to the element");
-        addDispatchers(dispatching);
+        addDispatchers(elementEvents);
     }
 
+    /**
+     * Adds event handlers for each event, with a list of things to call.
+     *
+     * @param dispatching map of event name to list of commands
+     */
     private void addDispatchers(Map<String, List<String>> dispatching) {
         // Add all the chained items
         for (Map.Entry<String, List<String>> e : dispatching.entrySet()) {
@@ -241,26 +246,21 @@ public class D3Interaction {
 
     // The distance to use to snap points to locations
     private String findSnapRadius(Param param) {
-        if (param == null) return null;                     // Undefined, so no snapping
-        if (param.hasModifiers()) {
-            double d = param.firstModifier().asDouble();
-            return d < 1 ? null : "" + (int) d;
-        } else {
-            return "geom.inner_radius/4";                   // Default to a quarter the space allowed on screen
+        boolean foundSnap = false;
+        for (Param p : param.modifiers()) {
+            if (p.asString().equals("snap")) {
+                foundSnap = true;
+            } else if (foundSnap) {
+                // Next param is the numeric value
+                double d = p.asDouble();
+                return d < 1 ? null : "" + (int) d;
+            }
         }
-    }
 
-    // The first parameter name is the event name, which defaults to "click"
-    private String eventName(Param p) {
-        Param param = p.firstModifier();
-        return param == null ? "click" : param.asString();
-    }
-
-    // The second parameter name is the function name, which defaults to a call to alert
-    private String customFunction(Param p, String param1, String param2) {
-        String base = (p.modifiers().length > 1) ?
-                p.modifiers()[1].asString() : "BrunelD3.showSelect";
-        return base + "(" + param1 + ", " + param2 + ", element)";
+        if (foundSnap)
+            return "geom.inner_radius/4";                   // Default to a quarter the space allowed on screen
+        else
+            return null;                                    // No snap
     }
 
     /**

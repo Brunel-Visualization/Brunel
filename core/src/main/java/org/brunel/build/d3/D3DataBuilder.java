@@ -209,7 +209,7 @@ public class D3DataBuilder {
         writeTransform("addConstants", params.constantsCommand);
 
         // Check for selection filtering
-        Param param = vis.tInteraction.get(Interaction.filter);
+        Param param = D3Interaction.getInteractionParam(vis,Interaction.filter);
         if (param != null) {
             if ("unselected".equals(param.asString()))
                 writeTransform("filter", "#selection is " + Field.VAL_UNSELECTED);
