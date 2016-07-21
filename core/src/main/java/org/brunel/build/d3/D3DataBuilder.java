@@ -352,6 +352,9 @@ public class D3DataBuilder {
         addIfCategorical(result, vis.positionFields());
         addIfCategorical(result, vis.aestheticFields());
 
+        // Remove #selection
+        result.remove("#selection");
+
         if (!suitableForKey(result)) {
             result.clear();
             result.add("#row");
