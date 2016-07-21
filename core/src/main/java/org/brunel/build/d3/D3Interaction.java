@@ -73,6 +73,8 @@ public class D3Interaction {
      * @return true if any handler will need to be attached to the element
      */
     public boolean hasElementInteraction(ElementStructure structure) {
+        if (!structure.vis.itemsTooltip.isEmpty()) return true;         // tooltips require a handler
+
         for (Param p : structure.vis.tInteraction) {
             String s = p.asString();
             // Only these types create element event handlers
@@ -86,7 +88,7 @@ public class D3Interaction {
     private boolean targetsElement(Param param) {
         if (param == null) return false;                    // No interaction => no targeting
         for (Param p : param.modifiers())
-            if (p.asString().equals("snap")) return false;  // snap means the handler is attached to background
+            if (p.asString().startsWith("snap")) return false;  // snap means the handler is attached to background
         return true;                                        // No snap means we do need an element handler
     }
 
@@ -157,13 +159,15 @@ public class D3Interaction {
         LinkedHashMap<String, List<String>> elementEvents = new LinkedHashMap<>();
         LinkedHashMap<String, List<String>> overlayEvents = new LinkedHashMap<>();
 
-        String snapRadius = null;
+        String[] snapInfo = null;
+        for (Param p : interactions)
+            if (snapInfo == null) snapInfo = findSnapInfo(p);
+
         for (Param p : interactions) {
             Interaction type = p.asEnum(Interaction.class);
-            snapRadius = findSnapRadius(p);
             if (type == Interaction.select) {
                 // One of select, select:mouseXXX, select:snap, select:snap:ZZ
-                if (snapRadius != null) {
+                if (snapInfo != null) {
                     // We want a snap overlay event that will call select -- all snap events are overlays
                     // Also add corresponding mouse out event
                     addFunctionDefinition("mousemove",
@@ -182,10 +186,10 @@ public class D3Interaction {
             } else if (type == Interaction.call) {
                 // One of call, call:func, call:func:mouseXXX, call:func:snap, call:func:snap:ZZ
                 String functionName = p.hasModifiers() ? p.firstModifier().asString() : "BrunelD3.crosshairs";
-                if (snapRadius != null) {
+                if (snapInfo != null) {
                     // We want a snap overlay event that will call a custom function -- all snap events are overlays
-                    addFunctionDefinition("mousemove", functionName + "(c.item, c.target, element)", overlayEvents);
-                    addFunctionDefinition("mouseout", functionName + "(null, c.target, element)", overlayEvents);
+                    addFunctionDefinition("mousemove", functionName + "(c.item, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
+                    addFunctionDefinition("mouseout", functionName +  "(null, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
                 } else {
                     // We want an event handler on the element
                     String eventName = p.modifiers().length > 1 ? p.modifiers()[1].toString() : "click";
@@ -198,8 +202,10 @@ public class D3Interaction {
 
         if (!overlayEvents.isEmpty()) {
             // Start each set of overlay commands with a command to find the closest item
-            for (List<String> e : overlayEvents.values())
-                e.add(0, "var c = BrunelD3.closest(selection, " + snapRadius + ")");
+            for (List<String> e : overlayEvents.values()) {
+                e.add(0, "var c = BrunelD3.closest(selection, '" + snapInfo[0] + "', " + snapInfo[1] + " )");
+            }
+
             out.add("interior.select('rect.overlay')").at(60).comment("Attach handlers to the overlay");
             addDispatchers(overlayEvents);
         }
@@ -245,20 +251,23 @@ public class D3Interaction {
     }
 
     // The distance to use to snap points to locations
-    private String findSnapRadius(Param param) {
-        boolean foundSnap = false;
+    // returns the snap method (snap, snapX, snapY) and then the distance
+    private String[] findSnapInfo(Param param) {
+        String snapFunction = null;
         for (Param p : param.modifiers()) {
-            if (p.asString().equals("snap")) {
-                foundSnap = true;
-            } else if (foundSnap) {
+            if (p.asString().startsWith("snap")) {
+                if (p.asString().equalsIgnoreCase("snapx")) snapFunction = "x";
+                else if (p.asString().equalsIgnoreCase("snapy")) snapFunction = "y";
+                else snapFunction = "xy";
+            } else if (snapFunction != null) {
                 // Next param is the numeric value
                 double d = p.asDouble();
-                return d < 1 ? null : "" + (int) d;
+                return d < 1 ? null : new String[]{snapFunction, "" + (int) d};
             }
         }
 
-        if (foundSnap)
-            return "geom.inner_radius/4";                   // Default to a quarter the space allowed on screen
+        if (snapFunction != null)
+            return new String[]{snapFunction, "geom.inner_radius/4"};   // Default to a quarter the space allowed on screen
         else
             return null;                                    // No snap
     }

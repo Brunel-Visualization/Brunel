@@ -614,18 +614,8 @@ var BrunelD3 = (function () {
                 // This is a path and we need to find the best point on it
                 var pp = d3.mouse(this), off = this.getScreenCTM();
 
-                function d2(a) {
-                    return (a.x - pp[0]) * (a.x - pp[0]) + (a.y - pp[1]) * (a.y - pp[1])
-                }
-
-                var i, dd, pts = d.points, best = pts[0], bestD = d2(best);
-                for (i = 1; i < pts.length; i++) {
-                    dd = d2(pts[i]);
-                    if (dd < bestD) {
-                        bestD = dd;
-                        best = pts[i];
-                    }
-                }
+                // Find closest point on the path
+                var best = closestPathPoint(d.points, pp[0], pp[1], true, true);
                 d = best.d;                                         // replace with the closest 'd' in array
                 p = {                                               // replace p by closest point on path
                     x: best.x + off.e + ox,
@@ -1180,6 +1170,27 @@ var BrunelD3 = (function () {
         return (a + b) / 2 + v * (b - a);
     }
 
+    // find the closest point on a path
+    // array is an array of objects with (x,y,d) values
+    // (x,y) is the target point to find the enarest array point to
+    // distanceMethod is one of "x", "y", or "xy"
+    function closestPathPoint(array, x, y, distanceMethod) {
+        result = {distance: 1e99};
+        array.forEach(
+            function (t) {
+                v = 0;
+                if (distanceMethod != "y") v += (t.x - x) * (t.x - x);
+                if (distanceMethod != "x") v += (t.y - y) * (t.y - y);
+                if (v < result.distance) {
+                    result.distance = v;
+                    result.d = t.d;
+                    result.x = t.x;
+                    result.y = t.y;
+                }
+            });
+        return result;
+    }
+
     // An animated start to a visualization
     // vis is the base Brunel object
     // data is the raw data table (CSV-like)
@@ -1267,20 +1278,42 @@ var BrunelD3 = (function () {
     }
 
 
-    // Find the closest item in the selection
+    // Find the closest item in the selection to the mouse location
     // selection is the items to search for; maxDistance is the furthest distance out to accept
-    function closestItem(selection, maxDistance) {
-        var pp, v, x, y, box, result = {distance: 9e99};
+    // distanceMethod is one of "x", "y", or "xy"
+    function closestItem(selection, distanceMethod, maxDistance) {
+        var pp, v, x, y, t, that, result = {distance: 9e99};
         selection.each(function (d) {
+            that = this;
             pp = pp || d3.mouse(this);                        // Define the mouse location relative to the selection
-            box = this.getBBox();
-            x = box.x + box.width / 2;
-            y = box.y + box.height / 2;
-            v = (x - pp[0]) * (x - pp[0]) + (y - pp[1]) * (y - pp[1]);
-            if (v < result.distance) {
-                result.distance = v;
-                result.item = d;
-                result.target = this;
+            if (d.points) {
+                d.points.forEach(
+                    function (t) {
+                        v = 0;
+                        if (distanceMethod != "y") v += (t.x - pp[0]) * (t.x - pp[0]);
+                        if (distanceMethod != "x") v += (t.y - pp[1]) * (t.y - pp[1]);
+                        if (v < result.distance) {
+                            result.distance = v;
+                            result.item = d;
+                            result.target = that;
+                            result.x = t.x;
+                            result.y = t.y;
+                        }
+                    });
+            } else {
+                t = this.getBBox();
+                x = t.x + t.width / 2;
+                y = t.y + t.height / 2;
+                v = 0;
+                if (distanceMethod != "y") v += (x - pp[0]) * (x - pp[0]);
+                if (distanceMethod != "x") v += (y - pp[1]) * (y - pp[1]);
+                if (v < result.distance) {
+                    result.distance = v;
+                    result.item = d;
+                    result.target = that;
+                    result.x = x;
+                    result.y = y;
+                }
             }
         });
 
@@ -1290,7 +1323,7 @@ var BrunelD3 = (function () {
         return result;
     }
 
-    function showCrossHairs(item, target, element) {
+    function showCrossHairs(item, target, element, distanceMethod) {
         var i, R = 10,
             chart = element.chart(),
             scales = chart.scales,
@@ -1323,10 +1356,20 @@ var BrunelD3 = (function () {
         }
 
 
-        var box = target.getBBox(),
-            px = box.x + box.width / 2,
-            py = box.y + box.height / 2,
-            x = scales.x.invert(px),
+        var px, py;
+        if (item.points) {
+            // Item is a path with a set of points -- find the closest to the mouse
+            var pp = d3.mouse(target);
+            p = closestPathPoint(item.points, pp[0], pp[1], distanceMethod);
+            px = p.x;
+            py = p.y;
+        } else {
+            var box = target.getBBox();
+            px = box.x + box.width / 2;
+            py = box.y + box.height / 2;
+        }
+
+        var x = scales.x.invert(px),
             y = scales.y.invert(py),
             x1 = scales.x.range()[0],
             x2 = scales.x.range()[1],
@@ -1483,6 +1526,7 @@ var BrunelD3 = (function () {
         'makeGrid': makeGrid,
         'crosshairs': showCrossHairs,
         'filterTicks': filterTicks,
+        'closestOnPath': closestPathPoint,
         'closest': closestItem,
         'setAspect': setAspect
     }

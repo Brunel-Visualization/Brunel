@@ -352,8 +352,10 @@ public class D3DataBuilder {
         addIfCategorical(result, vis.positionFields());
         addIfCategorical(result, vis.aestheticFields());
 
-        // Remove #selection
+        // Remove any synthetic fields
         result.remove("#selection");
+        result.remove("#row");
+        result.remove("#count");
 
         if (!suitableForKey(result)) {
             result.clear();
@@ -429,7 +431,7 @@ public class D3DataBuilder {
         Field[] fields = new Field[result.size()];
 
         int index = 0;
-        for (String s : result) fields[index] = data.field(s);
+        for (String s : result) fields[index++] = data.field(s);
 
         // Sort and see if any adjacent 'keys' are the same
         FieldRowComparison rowComparison = new FieldRowComparison(fields, null, false);

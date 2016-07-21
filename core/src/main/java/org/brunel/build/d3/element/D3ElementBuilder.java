@@ -470,7 +470,7 @@ public class D3ElementBuilder {
 
             int categories = scales.getCategories(baseFields).size();
             Double granularity = scales.getGranularitySuitableForSizing(baseFields);
-            if (purpose == ScalePurpose.x || purpose == ScalePurpose.inner) {
+            if (purpose == ScalePurpose.x || purpose == ScalePurpose.y || purpose == ScalePurpose.inner) {
                 if (baseFields.length == 1 && baseFields[0].isNumeric()) categories = 0;
             }
 
