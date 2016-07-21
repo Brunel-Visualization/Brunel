@@ -1286,48 +1286,67 @@ var BrunelD3 = (function () {
 
         // If we are not close enough, set the result item to null
         result.distance = Math.sqrt(result.distance);
-        if  (result.distance > maxDistance) result.item = null;
+        if (result.distance > maxDistance) result.item = null;
         return result;
     }
 
     function showCrossHairs(item, target, element) {
-        var chart = element.chart(),
+        var i, R = 10,
+            chart = element.chart(),
             scales = chart.scales,
             group = element.group();
 
         if (!group || !scales || !scales.x || !scales.y) return;
 
-        var crosshairs = group.selectAll("g.crosshairs");
+        var g = group.selectAll("g.crosshairs");
+
+        // Create the group and shapes for the cross hairs
+        if (g.empty()) {
+            g = group.append("g").attr("class", "crosshairs");
+
+            function style(line, colName, dashing) {
+                line.style(colName, "red").style("pointer-events", "none").style("stroke-dasharray", dashing || "none");
+            }
+
+            // 4 lines, a central circle, and text tags
+            for (i = 0; i < 4; i++)
+                style(g.append("line").attr("class", "dim" + Math.floor(i / 2) + " part" + i), "stroke", "8 4");
+            style(g.append("circle").style("fill", "none"), "stroke");
+            style(g.append("text").attr("class", "dim0").attr("dy", "-0.3em"), "fill");
+            style(g.append("text").attr("class", "dim1").attr("dy", "-0.3em"), "fill");
+        }
+
 
         if (!item) {
-            crosshairs.remove();
+            g.style("visibility", "hidden");
             return;
         }
 
+
         var box = target.getBBox(),
-            px = box.x + box.width/2,
-            py = box.y + box.height/2,
+            px = box.x + box.width / 2,
+            py = box.y + box.height / 2,
             x = scales.x.invert(px),
             y = scales.y.invert(py),
-            x0 = scales.x.range()[0],
-            x1 = scales.x.range()[1],
-            y0 = scales.y.range()[0],
-            y1 = scales.y.range()[1];
+            x1 = scales.x.range()[0],
+            x2 = scales.x.range()[1],
+            y1 = scales.y.range()[0],
+            y2 = scales.y.range()[1],
+            xText = element.data().field(element.fields.x[0]).format(x),
+            yText = element.data().field(element.fields.y[0]).format(y);
 
 
-        if (crosshairs.empty()) {
-            crosshairs = group.append("g").attr("class", "crosshairs");
-            crosshairs.append("line").attr("class", "x").style("stroke", "red").style("pointer-events", "none");
-            crosshairs.append("line").attr("class", "y").style("stroke", "red").style("pointer-events", "none");
-        }
-
-        crosshairs.select("line.x")
-            .attr("x1", px).attr("x2", px)
-            .attr("y1", y0).attr("y2", py);
-        crosshairs.select("line.y")
-            .attr("x1", x0).attr("x2", px)
-            .attr("y1", py).attr("y2", py);
-
+        // Place the parts
+        g.selectAll("line.dim0").attr("x1", px).attr("x2", px);
+        g.selectAll("line.dim1").attr("y1", py).attr("y2", py);
+        g.select("line.part0").attr("y1", y1).attr("y2", py + R);
+        g.select("line.part1").attr("y1", py - R).attr("y2", y2);
+        g.select("line.part2").attr("x1", x1).attr("x2", px - R);
+        g.select("line.part3").attr("x1", px + R).attr("x2", x2);
+        g.select("circle").attr("cx", px).attr("cy", py).attr("r", R);
+        g.select("text.dim0").attr("x", px).attr("y", y1).text("\u00a0" + xText);
+        g.select("text.dim1").attr("y", py).attr("x", x1).text("\u00a0" + yText);
+        g.style("visibility", "visible");
     }
 
 

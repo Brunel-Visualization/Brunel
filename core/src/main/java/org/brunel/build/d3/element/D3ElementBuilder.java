@@ -100,14 +100,14 @@ public class D3ElementBuilder {
         // Set the values of things known to this element
         out.add("selection = main.selectAll('.element').data(" + details.dataSource + ",", getKeyFunction(), ")")
                 .addChained("classed('selected', function(d) { return data.$selection(d) == '\u2713' })");
-        if (!interaction.hasElementInteraction(structure))
-            out.addChained("style('pointer-events', 'none')");
 
         out.endStatement();
 
         // Define what happens when data is added ('enter')
         out.add("selection.enter().append('" + details.representation.getMark() + "')");
         out.add(".attr('class', '" + Data.join(details.classes, " ") + "')");
+        if (!interaction.hasElementInteraction(structure))
+            out.addChained("style('pointer-events', 'none')");
 
         Accessibility.useElementLabelFunction(structure, out);
 
