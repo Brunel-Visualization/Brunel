@@ -1118,7 +1118,7 @@ var BrunelD3 = (function () {
                             txt.attr('y', txt.__off__.dy + d.py);
                         } else {
                             // First time placement, and then record the offset relative to the node (note no hit collision handling)
-                            labelItem(this, null, txt.__labeling__, null, null);
+                            labelItem(this, null, txt.__labeling__, null, geom);
                             txt.__off__ = {
                                 dx: +txt.attr('x') - d.x,
                                 dy: +txt.attr('y') - d.y

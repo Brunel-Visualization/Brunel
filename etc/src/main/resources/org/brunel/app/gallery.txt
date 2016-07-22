@@ -25,7 +25,7 @@
                 players. These age ratings are given by the BGG reviewers and are the median responses
                 for each game
 #width          600
-#height         600
+#height         600nbr
 #brunel         data('sample:BGG Top 2000 Games.csv')
                 chord x(categories) y(playerage) color(playerage) size(#count) tooltip(#all)
 
@@ -35,8 +35,8 @@
                 colored by income levels using a separate data source.
 #width          800
 #height         600
-#brunel         data('sample:US States.csv') map x(State) color(Income:blues)  + map(labels) + 
-                data('sample:airports2008na.csv') x(Long)  y(Lat) size(Flights:500%) legends(none)  
+#brunel         data('sample:US States.csv') map x(State) color(Income:blues)  + map(labels) +
+                data('sample:airports2008na.csv') x(Long)  y(Lat) size(Flights:500%) legends(none)
 
 #id             lesmis
 #title          Character Connections in Les Mis
@@ -44,9 +44,9 @@
 		        depending on the number of times the characters appear together.
 #width          800
 #height         600
-#brunel         data('sample:LesMis-Connections.csv') edge key(a, b) opacity(Count) tooltip(Count)  + 
+#brunel         data('sample:LesMis-Connections.csv') edge key(a, b) opacity(Count) tooltip(Count)  +
 				data('sample:LesMis-Characters.csv') network(2.0) color(main:[beige, brown]) size(main:[60%, 100%]) key(id) label(name:3) tooltip(name) legends(none) style('* {font-size: 7pt}')
-                
+
 #id             bggpub
 #title          When top games were published
 #description    The main path element shows, by size, the number of games published each year, with
