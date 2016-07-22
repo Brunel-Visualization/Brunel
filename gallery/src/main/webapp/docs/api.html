@@ -1,0 +1,172 @@
+<!--
+  ~ Copyright (c) 2016 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<H1>API for programmatic extension</H1>
+
+<p>
+    Although most users of Brunel will have sufficent tools with the syntax, we provide a number of
+    extension points to allow more to be done. This section documents those APIs
+</p>
+
+
+<H3>Mouse Events</H3>
+<p>
+    The <code>interaction(call:functionName:eventName)</code> command adds a handler for the element that processes
+    the given mouse event. When the named event occurs on the element, then the given function is called.
+    Events supported are <code>click, mouseover, mousemove and mouseout</code>. We also support the special event <code>snap</code>
+    as described in the section on interactivity. It is a <code>mousemove</code> event that snaps to the nearest data
+    item.
+</p>
+<p>
+    When the function is called, it is passed the following parameters:
+</p>
+<ul>
+    <b>item</b> -- the data item for this item; a structure with a number of fields as detailed below.
+    <b>target</b> -- the raw SVG item targeted by this event.
+    <b>element</b> -- a structure describing the element that was interacted with, detailed below.
+</ul>
+
+
+<H3>Item</H3>
+<p>
+    The `item` contains a set of fields used to define the target of the event. They include:
+</p>
+
+<ul>
+    <li><b>row</b> -- A row of the processed table that was used to make this element. For a simple chart
+        such as a scatterplot, that is the same as the row in the original data passed in. For an aggregated table,
+        or for the data froma diagram like a treemap or chord chart, it might not be so. It is also possible for this
+        to be null, if a non-data item was selected (such as an interior node in a bubble chart).
+    </li>
+
+    <li><b>key</b> -- Most elements define a key. This is a value or set of values that identifies the data items
+        as being the same for the purposes of updates (including filters and animation). It can be a useful
+        name for the item, or a debugging hint.
+    </li>
+
+    <li><b>points</b> -- only defined for shapes like paths and lines, where the shape consists of multiple data points,
+        this is an array of objects with fields <code>{x, y, d}</code>. The `x` and `y` members give the pixel
+        coordinates of each
+        constituent point, and the `d` member gives an `item` for that point (with its own `row` and `key`)
+    </li>
+
+</ul>
+
+<H3>Element</H3>
+<p>
+    The <code>element</code> contains a set of member fields and functions for working with the visualization. They
+    include:
+</p>
+
+<ul>
+    <li><b>chart()</b> -- Returns a structure for the parent chart (see below)</li>
+
+    <li><b>data()</b> -- Returns the processed Data object (summarized , etc.)</li>
+
+    <li><b>original()</b> -- Returns the original Data object before any transformations were performed on it</li>
+
+    <li><b>selection()</b> -- Returns the d3 selection that defines the data marks</li>
+
+    <li><b>group()</b> -- The SVG group containing the element. This is where you would add custom decorations or items</li>
+
+    <li><b>fields</b> -- A structure containing sub-fields that define the names of fields that were used in the chart
+        (such as <code>x, y, color</code> and <code>key</code>). Each of these is an array, even if only of size one
+    </li>
+
+</ul>
+
+
+<H3>Chart</H3>
+<p>
+    The <code>chart</code> contains a set of member fields and functions for working with the visualization. They
+    include:
+</p>
+
+<ul>
+    <li><b>elements</b> -- An array of elements contained in the chart (see above)</li>
+
+    <li><b>scales</b> -- If defined, gives the coordinate scales as a structure `{x, y}`. These are standard d3
+        scales, configured by Brunel.
+    </li>
+
+</ul>
+
+<H2>Examples of Use</H2>
+<p>
+    Here are some code fragments suitable for use in a callback showing how to use the information passed in:
+</p>
+
+<H4>Checking Parameters</H4>
+<pre>
+    var scales = element.chart().scales;
+    if (!scales || !scales.x || !scales.y || !item.row) return;
+</pre>
+<p>
+    The above code is a simple guard that means nothing will happen if we don't have both data and scales
+</p>
+
+<H4>Finding data and pixel coordinates</H4>
+<pre>
+    var mouse = d3.mouse(target), x = mouse[0], y = mouse[1];           // Mouse pixel coordinates
+    var dataX = scales.x.invert(x);                                     // The X coordinate as a data value
+    var extent = scales.x.range(), minX = extent[0],                    // pixel ranges for the x dimension
+        maxX = extent[extent.length-1];
+</pre>
+<p>
+    These give examples of using coordinates and scales. Note that some scales (like ones for categorical data)
+    are not invertible in d3, so this may fail.
+</p>
+
+<H4>Finding Brunel fields and data values</H4>
+<pre>
+    var xField = element.data().field(element.fields.x[0]);             // Getting the field for the x axis
+    var formattedText = xField.format(dataX);                           // Human-readable value for x
+</pre>
+<p>
+    The Dataset <code>element.data()</code> and the Field object have a lot of power and many attributes.
+    They have the same calls in JavaScript as in Java, so you can look up th Java docs to see their usage.
+</p>
+
+<H4>Adding your own elements</H4>
+<pre>
+    var circle = element.group().selectAll("circle.MyClass");           // Find the circle I created
+    if (g.empty())                                                      // Make it if necessary
+        circle = element.group().append("circle").attr("class", "MyClass");
+    g.attr("r", 20).attr('x', x).attr(y, y);                            // Use d3 to set the attributes
+</pre>
+<p>
+    The above example places a circle where the mouse is, using d3
+</p>
+
+<H4>Adding your own elements, alternative version</H4>
+<pre>
+    var circle = element.group().selectAll("circle.MyClass");           // Find the circle I created
+    if (g.empty())                                                      // Make it if necessary
+        circle = element.group().append("circle").attr("class", "MyClass");
+    var box = target.getBBox();                                         // SVG call for target's bounds
+    var cx = box.x + box.width/2, cy = box.y + box.height/2,            // get box center and radius around it
+        r = Math.max(box.width, box.height)/2;
+    g.attr('r', r).attr('x', cx).attr(y, cy);                            // Use d3 to set the attributes
+</pre>
+<p>
+    The above example places a circle around the target of the mouse event
+</p>
+
+
+
+
+
+

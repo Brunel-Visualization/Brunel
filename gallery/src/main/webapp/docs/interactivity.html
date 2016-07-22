@@ -26,16 +26,18 @@
 
 <h3>Pan/Zoom</h3>
 <p>
-    By default this is set <b>on</b>, but this feature will only apply to <i>numeric</i> dimensions of charts that
-    do not specify a diagram.
-    When this feature is active, a chart can be panned and zoomed by dragging
-    or double-clicking on any <b>blank</b> area of the chart.
+    By default this is set <b>on</b>, but  will only apply to <i>numeric</i> dimensions of charts that do not specify a diagram.
+    When this feature is active, a chart can be panned and zoomed by dragging or double-clicking on any <b>blank</b> area of the chart.
     Holding down the shift key while double-clicking zooms the chart out instead of in.
 </p>
 <p class="examples"><a onClick="showAction(this.text)">text x(winter) y(summer) tooltip(state, region) label(abbr)</a>
 </p>
 <p class="examples"><a onClick="showAction(this.text)">x(latitude) y(summer) | x(latitude) y(winter)
     interaction(none)</a>
+</p>
+<p>
+    This parameter takes the options <code>x</code>, <code>y</code>, <code>xy</code>,<code>none</code>, ,<code>none</code>
+    which allow control over exactly which dimensions can be panned or zoomed.
 </p>
 
 <h3>Selection</h3>
@@ -45,8 +47,17 @@
     of
     them states that they use selection interactivity. When clicking on elements of that chart, those selections
     will then be propagated through to the other charts in that system. You can modify the selection to make it
-    apply whenever hovering over the element by adding the option 'mouseover'
+    apply to different events by adding an event parameter <code>interaction(select:<i>event</i>)</code>:
 </p>
+<ul>
+    <li><b>click</b> -- the default, fired when an element is clicked on</li>
+    <li><b>mouseover</b> -- fired when an element is moved on top of</li>
+    <li><b>mousemove</b> -- fired continuously as the mouse moves over an element</li>
+    <li><b>mouseout</b> -- fired when the mouse leaves an element</li>
+    <li><b>snap</b> -- this is a special event that is fired when the mouse moves over the chart, and
+    "sufficiently close" to an item. Variants "snapX" and "snapY" are used to measure distance only in one dimension,
+    and an optional numeric parameter allows the sufficient distance to be specified in pixels</li>
+</ul>
 <p>
 
     Selection takes on two possible values, an 'x' for unselected and a check mark for selected. One common use case is
@@ -59,6 +70,9 @@
     size(population) color(#selection) label(abbr) | bar x(boys_name) y(#count) stack color(#selection)
     interaction(select) transpose axes(x) | bar x(girls_name) axes(x) y(#count) stack color(#selection)
     interaction(select) color(#selection) transpose axes(x) legends(none) stack</a></p>
+<p class="examples"><a onClick="showAction(this.text)">line x(winter) y(summer) + x(winter) y(summer)
+    size(#selection:200%) label(summer) style('.label:not(.selected) {visibility:hidden}')
+    interaction(select:snapx:1000)</a></p>
 
 <h3>Interaction(filter)</h3>
 <p>
@@ -96,20 +110,20 @@
     filter(presidential_choice, water)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">x(population) y(violent_crimes) color(dem_rep) size(water:600%)
     filter(Region:[Pacific, South], water:6-65)</a></p>
-    
+
 <h3>Animation</h3>
 <p>
     The <code>animate</code> command will create an interactive control that animates over the values of a continuous field.
     The button will pause or continue the animation and it will automatically loop back to the beginning.  When
-    the animation is paused, the slider may be used as a regular filter.  A numeric option on the field name requests a 
-    desired number of animation frames.  Note the results may not have exactly this number of frames depending on the data.  
-    The number of milliseconds between frames may be controlled using the <code>speed</code> option. 
+    the animation is paused, the slider may be used as a regular filter.  A numeric option on the field name requests a
+    desired number of animation frames.  Note the results may not have exactly this number of frames depending on the data.
+    The number of milliseconds between frames may be controlled using the <code>speed</code> option.
 </p>
 
 <p class="examples"><a onClick="showAction(this.text)">data('sample:Unemployment.csv') bar x(Period) y(Women)
  animate(Year:10, speed:200) mean(Women)</a></p>
 
-        
+
 <h3>Effects</h3>
 <p>
     Although technically not interactivity, an effect is a usually animated feature of a visualization.

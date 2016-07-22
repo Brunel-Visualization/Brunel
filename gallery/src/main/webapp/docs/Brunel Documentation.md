@@ -727,6 +727,34 @@ attributes to the fields used for filtering.
     water:6-65)
 
 
+### Filter
+The `filter` command is an interaction command which will create one or more interactive controls
+(sliders, check boxes,...) beside the visualization and allow dynamic filtering using those items.
+As is true for all interactivity, the filtering happens client-side and sorting and summarization
+happen afterwards and so will respect the filtered data. Default filter values may be provided as
+attributes to the fields used for filtering.
+
+<!-- examples -->
+
+    x(population) y(violent_crimes) color(dem_rep) size(water:600%) filter(presidential_choice, water)
+
+    x(population) y(violent_crimes) color(dem_rep) size(water:600%) filter(Region:[Pacific, South],
+    water:6-65)
+
+
+### Animation
+The `animate` command will create an interactive control that animates over the values of a
+continuous field. The button will pause or continue the animation and it will automatically loop
+back to the beginning. When the animation is paused, the slider may be used as a regular filter. A
+numeric option on the field name requests a desired number of animation frames. Note the results may
+not have exactly this number of frames depending on the data. The number of milliseconds between
+frames may be controlled using the `speed` option.
+
+<!-- examples -->
+
+    data('sample:Unemployment.csv') bar x(Period) y(Women) animate(Year:10, speed:200) mean(Women)
+
+
 ### Effects
 Although technically not interactivity, an effect is a usually animated feature of a visualization.
 In Brunel, we have define one simple effect so far, which animates the first appearance of a chart.
@@ -985,7 +1013,7 @@ of the guide number within the element. Following is an example of a guide:
     x(winter) y(summer) + guide(y:40+x, y:70, y:'70+10*sin(x)') style('.guide1{stroke:red}.guide3
     {stroke-dasharray:none}')
 
-when constructing the guide, it creates points evenly spaced out along the line to draw it. By
+When constructing the guide, it creates points evenly spaced out along the line to draw it. By
 default we use 40 points, but an optional parameter at the end of the definition can modify that.
 For example, when you know the guide is linear in a simple rectangular coordinate system, you might
 use `guide(y:x:2)` to use just two points for maximal speed. Alternatively, if you have a very curvy
@@ -1160,5 +1188,117 @@ This method of composition places one chart inside the other. To do this the two
 hierarchical nature -- the first chart should represent an aggregation of the second, so the nesting
 makes sense. When that is defined, the second chart will be replicated as small multiples within the
 other chart.
+
+
+
+API for programmatic extension
+------------------------------
+Although most users of Brunel will have sufficent tools with the syntax, we provide a number of
+extension points to allow more to be done. This section documents those APIs
+
+
+### Mouse Events
+The `interaction(call:functionName:eventName)` command adds a handler for the element that processes
+the given mouse event. When the named event occurs on the element, then the given function is
+called. Events supported are `click, mouseover, mousemove and mouseout`. We also support the special
+event `snap` as described in the section on interactivity. It is a `mousemove` event that snaps to
+the nearest data item.
+
+When the function is called, it is passed the following parameters:
+
+**item** -- the data item for this item; a structure with a number of fields as detailed below. **
+target** -- the raw SVG item targeted by this event. **element** -- a structure describing the element
+that was interacted with, detailed below.
+
+
+### Item
+The `item` contains a set of fields used to define the target of the event. They include:
+
+ * **row** -- A row of the processed table that was used to make this element. For a simple chart such as
+a scatterplot, that is the same as the row in the original data passed in. For an aggregated table,
+or for the data froma diagram like a treemap or chord chart, it might not be so. It is also possible
+for this to be null, if a non-data item was selected (such as an interior node in a bubble chart).
+ * **key** -- Most elements define a key. This is a value or set of values that identifies the data items
+as being the same for the purposes of updates (including filters and animation). It can be a useful
+name for the item, or a debugging hint.
+ * **points** -- only defined for shapes like paths and lines, where the shape consists of multiple data
+points, this is an array of objects with fields `{x, y, d}`. The `x` and `y` members give the pixel
+coordinates of each constituent point, and the `d` member gives an `item` for that point (with its
+own `row` and `key`)
+
+
+### Element
+The `element` contains a set of member fields and functions for working with the visualization. They
+include:
+
+ * **chart()** -- Returns a structure for the parent chart (see below)
+ * **data()** -- Returns the processed Data object (summarized, etc.)
+ * **original()** -- Returns the original Data object before any transformations were performed on it
+ * **selection()** -- Returns the d3 selection that defines the data marks
+ * **group()** -- The SVG group containing the element. This is where you would add custom decorations or
+items
+ * **fields** -- A structure containing sub-fields that define the names of fields that were used in the
+chart (such as `x, y, color` and `key`). Each of these is an array, even if only of size one
+
+
+### Chart
+The `chart` contains a set of member fields and functions for working with the visualization. They
+include:
+
+ * **elements** -- An array of elements contained in the chart (see above)
+ * **scales** -- If defined, gives the coordinate scales as a structure `{x, y}`. These are standard d3
+scales, configured by Brunel.
+
+
+### Examples of Use
+Here are some code fragments suitable for use in a callback showing how to use the information
+passed in:
+
+
+### Checking Parameters
+ 
+        var scales = element.chart().scales;
+        if (!scales || !scales.x || !scales.y || !item.row) return;
+     The above code is a simple guard that means nothing will happen if we don't have both data and
+scales
+
+
+### Finding data and pixel coordinates
+ 
+        var mouse = d3.mouse(target), x = mouse[0], y = mouse[1];           // Mouse pixel coordinates
+        var dataX = scales.x.invert(x);                                     // The X coordinate as a data value
+        var extent = scales.x.range(), minX = extent[0],                    // pixel ranges for the x dimension
+            maxX = extent[extent.length-1];
+     These give examples of using coordinates and scales. Note that some scales (like ones for
+categorical data) are not invertible in d3, so this may fail.
+
+
+### Finding Brunel fields and data values
+ 
+        var xField = element.data().field(element.fields.x[0]);             // Getting the field for the x axis
+        var formattedText = xField.format(dataX);                           // Human-readable value for x
+     The Dataset `element.data()` and the Field object have a lot of power and many attributes. They have
+the same calls in JavaScript as in Java, so you can look up th Java docs to see their usage.
+
+
+### Adding your own elements
+ 
+        var circle = element.group().selectAll("circle.MyClass");           // Find the circle I created
+        if (g.empty())                                                      // Make it if necessary
+            circle = element.group().append("circle").attr("class", "MyClass");
+        g.attr("r", 20).attr('x', x).attr(y, y);                            // Use d3 to set the attributes
+     The above example places a circle where the mouse is, using d3
+
+
+### Adding your own elements, alternative version
+ 
+        var circle = element.group().selectAll("circle.MyClass");           // Find the circle I created
+        if (g.empty())                                                      // Make it if necessary
+            circle = element.group().append("circle").attr("class", "MyClass");
+        var box = target.getBBox();                                         // SVG call for target's bounds
+        var cx = box.x + box.width/2, cy = box.y + box.height/2,            // get box center and radius around it
+            r = Math.max(box.width, box.height)/2;
+        g.attr('r', r).attr('x', cx).attr(y, cy);                            // Use d3 to set the attributes
+     The above example places a circle around the target of the mouse event
 
 
