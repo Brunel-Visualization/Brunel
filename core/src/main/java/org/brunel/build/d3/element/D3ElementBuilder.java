@@ -129,18 +129,18 @@ public class D3ElementBuilder {
             diagram.writeDefinition(details);
         }
 
-        writeLabelRemoval();
+        writeRemovalOnExit(out);
 
     }
 
-    private void writeLabelRemoval() {
+    public static void writeRemovalOnExit(ScriptWriter out) {
         // This fires when items leave the system
         // It removes the item and any associated labels
         out.onNewLine().ln().add("BrunelD3.trans(selection.exit(),transitionMillis/3)");
         out.addChained("style('opacity', 0.5).each( function() {")
-                .indentMore().indentMore()
+                .indentMore().indentMore().onNewLine()
                 .add("this.remove(); if (this.__label__) this.__label__.remove()")
-                .indentLess().indentLess()
+                .indentLess().indentLess().onNewLine()
                 .add("})").endStatement();
     }
 

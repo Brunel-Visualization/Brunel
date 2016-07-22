@@ -225,8 +225,10 @@ public class D3Interaction {
             addDispatchers(overlayEvents);
         }
 
-        out.add("selection").at(60).comment("Attach handlers to the element");
-        addDispatchers(elementEvents);
+        if (!elementEvents.isEmpty()) {
+            out.add("selection").at(60).comment("Attach handlers to the element");
+            addDispatchers(elementEvents);
+        }
     }
 
     /**
