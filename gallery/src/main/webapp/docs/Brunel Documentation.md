@@ -120,13 +120,13 @@ as regular charts with the simple addition of a diagram keyword.
 The language allows you to specify any of the following element types, which define the base way the
 data is displayed.
 
-   point, bar, text,            line, area, path, polygon The most important thing to note about the element is whether it is an **aggregating** element. The
-first three elements ( _point_, _bar_ and _text_) are not, and they generate one symbol per row of
-data. The second group of four elements create a single graphic shape from all the data, and so some
-care is needed when applying **color**, **label** or other aesthetics as must ensure the value of that
-field is the same for the whole graphic shape. If the aesthetic field is a categorical one, then
-Brunel handles that for you automatically by splitting up the shape and making one graphic shape per
-group.
+   point, bar, text,            line, area, path, polygon  The most important thing to note about the element is whether it is an **
+aggregating** element. The first three elements ( _point_, _bar_ and _text_) are not, and they
+generate one symbol per row of data. The second group of four elements create a single graphic shape
+from all the data, and so some care is needed when applying **color**, **label** or other aesthetics as
+must ensure the value of that field is the same for the whole graphic shape. If the aesthetic field
+is a categorical one, then Brunel handles that for you automatically by splitting up the shape and
+making one graphic shape per group.
 
 if you do not specify an element, then the `point` element is the default. However a **diagram** knows
 which element it likes, and so will provide a suitable default. In general it is simplest not to
@@ -666,10 +666,10 @@ is specified on a per-chart basis, so each chart can have a different mode of us
 
 
 ### Pan/Zoom
-By default this is set **on**, but this feature will only apply to _numeric_ dimensions of charts that
-do not specify a diagram. When this feature is active, a chart can be panned and zoomed by dragging
-or double-clicking on any **blank** area of the chart. Holding down the shift key while
-double-clicking zooms the chart out instead of in.
+By default this is set **on**, but will only apply to _numeric_ dimensions of charts that do not
+specify a diagram. When this feature is active, a chart can be panned and zoomed by dragging or
+double-clicking on any **blank** area of the chart. Holding down the shift key while double-clicking
+zooms the chart out instead of in.
 
 <!-- examples -->
 
@@ -677,14 +677,26 @@ double-clicking zooms the chart out instead of in.
 
     x(latitude) y(summer) | x(latitude) y(winter) interaction(none)
 
+This parameter takes the options `x`, `y`, `xy`, `none`,, `none` which allow control over exactly
+which dimensions can be panned or zoomed.
+
 
 ### Selection
 Each data set has a special field `"#selection"` that can be used in the same way as any other field
 -- for color, coordinates, etc. In general this feature not be useful unless you have multiple
 charts and at least one of them states that they use selection interactivity. When clicking on
 elements of that chart, those selections will then be propagated through to the other charts in that
-system. You can modify the selection to make it apply whenever hovering over the element by adding
-the option 'mouseover'
+system. You can modify the selection to make it apply to different events by adding an event
+parameter `interaction(select: _event_)` :
+
+ * **click** -- the default, fired when an element is clicked on
+ * **mouseover** -- fired when an element is moved on top of
+ * **mousemove** -- fired continuously as the mouse moves over an element
+ * **mouseout** -- fired when the mouse leaves an element
+ * **snap** -- this is a special event that is fired when the mouse moves over the chart, and
+"sufficiently close" to an item. Variants "snapX" and "snapY" are used to measure distance only in
+one dimension, and an optional numeric parameter allows the sufficient distance to be specified in
+pixels
 
 Selection takes on two possible values, an 'x' for unselected and a check mark for selected. One
 common use case is to map the value to color to show the selected parts from one chart as
@@ -700,6 +712,9 @@ highlighted in the other chart.
     | bar x(boys_name) y(#count) stack color(#selection) interaction(select) transpose axes(x) | bar
     x(girls_name) axes(x) y(#count) stack color(#selection) interaction(select) color(#selection)
     transpose axes(x) legends(none) stack
+
+    line x(winter) y(summer) + x(winter) y(summer) size(#selection:200%) label(summer)
+    style('.label:not(.selected) {visibility:hidden}') interaction(select:snapx:1000)
 
 
 ### Interaction(filter)
@@ -1259,8 +1274,8 @@ passed in:
  
         var scales = element.chart().scales;
         if (!scales || !scales.x || !scales.y || !item.row) return;
-     The above code is a simple guard that means nothing will happen if we don't have both data and
-scales
+     The above code is a simple guard that means nothing will happen
+if we don't have both data and scales
 
 
 ### Finding data and pixel coordinates
@@ -1269,7 +1284,8 @@ scales
         var dataX = scales.x.invert(x);                                     // The X coordinate as a data value
         var extent = scales.x.range(), minX = extent[0],                    // pixel ranges for the x dimension
             maxX = extent[extent.length-1];
-     These give examples of using coordinates and scales. Note that some scales (like ones for
+     
+These give examples of using coordinates and scales. Note that some scales (like ones for
 categorical data) are not invertible in d3, so this may fail.
 
 
@@ -1277,8 +1293,9 @@ categorical data) are not invertible in d3, so this may fail.
  
         var xField = element.data().field(element.fields.x[0]);             // Getting the field for the x axis
         var formattedText = xField.format(dataX);                           // Human-readable value for x
-     The Dataset `element.data()` and the Field object have a lot of power and many attributes. They have
-the same calls in JavaScript as in Java, so you can look up th Java docs to see their usage.
+     The
+Dataset `element.data()` and the Field object have a lot of power and many attributes. They have the
+same calls in JavaScript as in Java, so you can look up th Java docs to see their usage.
 
 
 ### Adding your own elements
@@ -1287,7 +1304,8 @@ the same calls in JavaScript as in Java, so you can look up th Java docs to see 
         if (g.empty())                                                      // Make it if necessary
             circle = element.group().append("circle").attr("class", "MyClass");
         g.attr("r", 20).attr('x', x).attr(y, y);                            // Use d3 to set the attributes
-     The above example places a circle where the mouse is, using d3
+     
+The above example places a circle where the mouse is, using d3
 
 
 ### Adding your own elements, alternative version
@@ -1298,7 +1316,8 @@ the same calls in JavaScript as in Java, so you can look up th Java docs to see 
         var box = target.getBBox();                                         // SVG call for target's bounds
         var cx = box.x + box.width/2, cy = box.y + box.height/2,            // get box center and radius around it
             r = Math.max(box.width, box.height)/2;
-        g.attr('r', r).attr('x', cx).attr(y, cy);                            // Use d3 to set the attributes
-     The above example places a circle around the target of the mouse event
+        g.attr('r', r).attr('x', cx).attr(y, cy);                            // Use d3 to set the attributesX
+     
+The above example places a circle around the target of the mouse event
 
 

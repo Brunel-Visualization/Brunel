@@ -125,6 +125,7 @@
     var extent = scales.x.range(), minX = extent[0],                    // pixel ranges for the x dimension
         maxX = extent[extent.length-1];
 </pre>
+
 <p>
     These give examples of using coordinates and scales. Note that some scales (like ones for categorical data)
     are not invertible in d3, so this may fail.
@@ -135,6 +136,7 @@
     var xField = element.data().field(element.fields.x[0]);             // Getting the field for the x axis
     var formattedText = xField.format(dataX);                           // Human-readable value for x
 </pre>
+
 <p>
     The Dataset <code>element.data()</code> and the Field object have a lot of power and many attributes.
     They have the same calls in JavaScript as in Java, so you can look up th Java docs to see their usage.
@@ -147,6 +149,7 @@
         circle = element.group().append("circle").attr("class", "MyClass");
     g.attr("r", 20).attr('x', x).attr(y, y);                            // Use d3 to set the attributes
 </pre>
+
 <p>
     The above example places a circle where the mouse is, using d3
 </p>
@@ -159,8 +162,9 @@
     var box = target.getBBox();                                         // SVG call for target's bounds
     var cx = box.x + box.width/2, cy = box.y + box.height/2,            // get box center and radius around it
         r = Math.max(box.width, box.height)/2;
-    g.attr('r', r).attr('x', cx).attr(y, cy);                            // Use d3 to set the attributes
+    g.attr('r', r).attr('x', cx).attr(y, cy);                            // Use d3 to set the attributesX
 </pre>
+
 <p>
     The above example places a circle around the target of the mouse event
 </p>
