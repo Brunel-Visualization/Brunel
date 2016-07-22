@@ -40,23 +40,23 @@ public class TestSeries {
     public void testOnlyKeys() {
         // One series leaves it unchanged
         Dataset a = simple.series("C,D;");
-        Assert.assertEquals("#series|#values|#row|#count -- C|1|1|1 -- C|2|2|1 -- C|1|3|1 -- C|2|4|1 -- D|4|1|1 -- D|3|2|1 -- D|2|3|1 -- D|1|4|1", CannedData.dump(a));
+        Assert.assertEquals("#series|#values|#row|#count -- C|1|1|1 -- C|2|2|1 -- C|1|3|1 -- C|2|4|1 -- D|4|1|1 -- D|3|2|1 -- D|2|3|1 -- D|1|4|1", CannedData.dumpData(a));
     }
 
     @Test
     public void testSimple() {
         // One series leaves it unchanged
         Dataset a = simple.series("A; B");
-        Assert.assertEquals("A|B|C|D|#count|#row -- a|x|1|4|1|1 -- b|x|2|3|1|2 -- c|y|1|2|1|3 -- c|x|2|1|1|4", CannedData.dump(a));
+        Assert.assertEquals("A|B|C|D|#count|#row -- a|x|1|4|1|1 -- b|x|2|3|1|2 -- c|y|1|2|1|3 -- c|x|2|1|1|4", CannedData.dumpData(a));
 
 
         // two series is where the action is
         a = simple.series("C,D; A,B");
-        Assert.assertEquals("#series|#values|A|B|#row|#count -- C|1|a|x|1|1 -- C|2|b|x|2|1 -- C|1|c|y|3|1 -- C|2|c|x|4|1 -- D|4|a|x|1|1 -- D|3|b|x|2|1 -- D|2|c|y|3|1 -- D|1|c|x|4|1", CannedData.dump(a));
+        Assert.assertEquals("#series|#values|A|B|#row|#count -- C|1|a|x|1|1 -- C|2|b|x|2|1 -- C|1|c|y|3|1 -- C|2|c|x|4|1 -- D|4|a|x|1|1 -- D|3|b|x|2|1 -- D|2|c|y|3|1 -- D|1|c|x|4|1", CannedData.dumpData(a));
 
         // make sure duplicated fields work
         a = simple.series("C,D; D");
-        Assert.assertEquals("#series|#values|D|#row|#count -- C|1|4|1|1 -- C|2|3|2|1 -- C|1|2|3|1 -- C|2|1|4|1 -- D|4|4|1|1 -- D|3|3|2|1 -- D|2|2|3|1 -- D|1|1|4|1", CannedData.dump(a));
+        Assert.assertEquals("#series|#values|D|#row|#count -- C|1|4|1|1 -- C|2|3|2|1 -- C|1|2|3|1 -- C|2|1|4|1 -- D|4|4|1|1 -- D|3|3|2|1 -- D|2|2|3|1 -- D|1|1|4|1", CannedData.dumpData(a));
     }
 
 }

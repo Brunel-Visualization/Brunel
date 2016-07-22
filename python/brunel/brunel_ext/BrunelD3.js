@@ -431,7 +431,7 @@ var BrunelD3 = (function () {
 
         // The selection is in terms of the processed data, but we need to propagate that
         // back to the original data set
-        data.modifySelection(method, item ? item.row : null, element.original(), element.fields.key);
+        element.original().modifySelection(method, item ? item.row : null, data, element.fields.key);
 
         callWhenReady(func, target);                                    // Request a redraw after  transition done
     }
@@ -1118,7 +1118,7 @@ var BrunelD3 = (function () {
                             txt.attr('y', txt.__off__.dy + d.py);
                         } else {
                             // First time placement, and then record the offset relative to the node (note no hit collision handling)
-                            labelItem(this, null, txt.__labeling__, null, null);
+                            labelItem(this, null, txt.__labeling__, null, geom);
                             txt.__off__ = {
                                 dx: +txt.attr('x') - d.x,
                                 dy: +txt.attr('y') - d.y

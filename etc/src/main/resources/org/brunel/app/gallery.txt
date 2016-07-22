@@ -25,7 +25,7 @@
                 players. These age ratings are given by the BGG reviewers and are the median responses
                 for each game
 #width          600
-#height         600nbr
+#height         600
 #brunel         data('sample:BGG Top 2000 Games.csv')
                 chord x(categories) y(playerage) color(playerage) size(#count) tooltip(#all)
 

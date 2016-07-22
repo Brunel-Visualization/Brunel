@@ -37,14 +37,14 @@ public class TestSummary {
         Dataset a = Summarize.transform(data, "gender=gender; count=:count");
         assertEquals("gender|count|#count|#row -- " +
                 "Female|12|12|3, 4, 8, 9, 10, 11, 14, 20, 21, 23, 24, 25 -- " +
-                "Male|13|13|1, 2, 5, 6, 7, 12, 13, 15, 16, 17, 18, \u2026", CannedData.dump(a));
+                "Male|13|13|1, 2, 5, 6, 7, 12, 13, 15, 16, 17, 18, \u2026", CannedData.dumpData(a));
 
         a = Summarize.transform(data, "gender=gender; educ=educ; count=:count");
 
         assertEquals("educ|gender|count|#count|#row -- "
                         + "8|Female|1|1|4 -- 8|Male|1|1|12 -- 12|Female|5|5|3, 8, 10, 20, 24 -- 12|Male|4|4|15, 16, 19, 22 -- "
                         + "15|Female|4|4|9, 14, 23, 25 -- 15|Male|6|6|1, 5, 6, 7, 13, 17 -- 16|Female|2|2|11, 21 -- 16|Male|2|2|2, 18",
-                CannedData.dump(a));
+                CannedData.dumpData(a));
 
     }
 
@@ -54,7 +54,7 @@ public class TestSummary {
         assertEquals("gender|jobcat|#percent|#count|#row -- " +
                 "Female|Clerical|52.2%|12|3, 4, 8, 9, 10, 11, 14, 20, 21, 23, 24, 25 -- " +
                 "Male|Clerical|47.8%|11|2, 5, 6, 7, 12, 13, 15, 16, 17, 19, 22 -- " +
-                "Male|Manager|100%|2|1, 18", CannedData.dump(a));
+                "Male|Manager|100%|2|1, 18", CannedData.dumpData(a));
     }
 
     @Test
@@ -62,7 +62,7 @@ public class TestSummary {
         Dataset a = Summarize.transform(data, "gender=gender; #percent=#count:percent");
         assertEquals("gender|#percent|#count|#row -- " +
                 "Female|48%|12|3, 4, 8, 9, 10, 11, 14, 20, 21, 23, 24, 25 -- " +
-                "Male|52%|13|1, 2, 5, 6, 7, 12, 13, 15, 16, 17, 18, \u2026", CannedData.dump(a));
+                "Male|52%|13|1, 2, 5, 6, 7, 12, 13, 15, 16, 17, 18, \u2026", CannedData.dumpData(a));
     }
 
     @Test
@@ -70,7 +70,7 @@ public class TestSummary {
         Dataset a = Summarize.transform(data, "gender=gender:base; #percent=#count:percent:overall");
         assertEquals("gender|#percent|#count|#row -- " +
                 "Female|48%|12|3, 4, 8, 9, 10, 11, 14, 20, 21, 23, 24, 25 -- " +
-                "Male|52%|13|1, 2, 5, 6, 7, 12, 13, 15, 16, 17, 18, \u2026", CannedData.dump(a));
+                "Male|52%|13|1, 2, 5, 6, 7, 12, 13, 15, 16, 17, 18, \u2026", CannedData.dumpData(a));
     }
 
     @Test
@@ -80,7 +80,7 @@ public class TestSummary {
         Dataset a = Dataset.make(new Field[]{x, y});
         a = Summarize.transform(a, "x=x; y1=y:min; y2=y:sum; y3=y:iqr; y4=y:valid; y5=y:median");
         assertEquals("x|y1|y2|y3|y4|y5|#count|#row -- " +
-                "1|?|?|?|0|?|1|1 -- 2|?|?|?|0|?|1|2", CannedData.dump(a));
+                "1|?|?|?|0|?|1|1 -- 2|?|?|?|0|?|1|2", CannedData.dumpData(a));
     }
 
     /*
@@ -96,20 +96,20 @@ public class TestSummary {
                 "gender|a|b|#count|#row -- " +
                         "Female|16,950\u202638,850|21,675\u202629,100|12|3, 4, 8, 9, 10, 11, 14, 20, 21, 23, 24, 25 -- " +
                         "Male|21,750\u2026103,750|28,350\u202645,000|13|1, 2, 5, 6, 7, 12, 13, 15, 16, 17, 18, \u2026",
-                CannedData.dump(a));
+                CannedData.dumpData(a));
     }
 
     @Test
     public void testSimpleCount() {
         Dataset a = Summarize.transform(data, "count = : count");
-        assertEquals("count|#count|#row -- 25|25|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, \u2026", CannedData.dump(a));
+        assertEquals("count|#count|#row -- 25|25|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, \u2026", CannedData.dumpData(a));
         assertEquals(true, a.fields[0].isNumeric());
 
         a = Summarize.transform(data, "COUNT = : count");
-        assertEquals("COUNT|#count|#row -- 25|25|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, \u2026", CannedData.dump(a));
+        assertEquals("COUNT|#count|#row -- 25|25|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, \u2026", CannedData.dumpData(a));
 
         a = Summarize.transform(data, "g=gender:count");
-        assertEquals("g|#count|#row -- 25|25|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, \u2026", CannedData.dump(a));
+        assertEquals("g|#count|#row -- 25|25|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, \u2026", CannedData.dumpData(a));
     }
 
     /*
@@ -125,7 +125,7 @@ public class TestSummary {
                 "gender|a|b|c|d|e|f|g|h|#count|#row -- " +
                         "Female|13.333333|8|16|12|13.5|2.3868326|4|12|12|3, 4, 8, 9, 10, 11, 14, 20, 21, 23, 24, 25 -- " +
                         "Male|13.692308|8|16|13|15|2.3232382|4|15|13|1, 2, 5, 6, 7, 12, 13, 15, 16, 17, 18, \u2026",
-                CannedData.dump(a));
+                CannedData.dumpData(a));
     }
 
     @Test
@@ -134,7 +134,7 @@ public class TestSummary {
         Dataset a = Summarize.transform(data, spec);
         assertEquals("gender|a|b|d|e|f|g|h|#count|#row -- " +
                 "Female|Clerical|?|12|?|?|1|Clerical|12|3, 4, 8, 9, 10, 11, 14, 20, 21, 23, 24, 25 -- " +
-                "Male|Clerical|?|13|?|?|2|Clerical|13|1, 2, 5, 6, 7, 12, 13, 15, 16, 17, 18, \u2026", CannedData.dump(a));
+                "Male|Clerical|?|13|?|?|2|Clerical|13|1, 2, 5, 6, 7, 12, 13, 15, 16, 17, 18, \u2026", CannedData.dumpData(a));
 
     }
 

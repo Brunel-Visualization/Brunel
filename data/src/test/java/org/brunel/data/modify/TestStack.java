@@ -57,7 +57,7 @@ public class TestStack {
 
         assertEquals(6, a.rowCount());
         assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- a|y|?|?|0|0|?|? -- a|x|1|4|0|4|1|1 -- b|y|?|?|0|0|?|? -- b|x|2|3|0|3|1|2 -- c|y|1|2|0|2|1|3 -- c|x|2|1|2|3|1|4",
-                CannedData.dump(a));
+                CannedData.dumpData(a));
 
     }
 
@@ -74,7 +74,7 @@ public class TestStack {
             c   y   1   2   1   3
         */
         assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- a|x|1|4|0|4|1|1 -- b|x|2|3|4|7|1|2 -- c|y|1|2|7|9|1|3 -- c|x|2|1|9|10|1|4",
-                CannedData.dump(a));
+                CannedData.dumpData(a));
     }
 
     @Test
@@ -91,7 +91,7 @@ public class TestStack {
             c   y   1   2   1   3
         */
         assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- a|x|1|4|0|4|1|1 -- b|x|2|3|4|7|1|2 -- c|x|2|1|7|8|1|4 -- c|y|1|2|8|10|1|3",
-                CannedData.dump(a));
+                CannedData.dumpData(a));
     }
 
 
@@ -154,7 +154,7 @@ public class TestStack {
         */
 
         assertEquals("A|B|C|D|D$lower|D$upper|#count|#row -- a|x|1|4|0|4|1|1 -- b|x|2|3|0|3|1|2 -- c|y|1|2|0|2|1|3 -- c|x|2|1|2|3|1|4",
-                CannedData.dump(a));
+                CannedData.dumpData(a));
     }
 
     @Test public void testLargeData() {

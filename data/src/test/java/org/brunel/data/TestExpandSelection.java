@@ -51,11 +51,11 @@ public class TestExpandSelection {
 
         // Select row 0
         data.modifySelection("sel", 0, a, keys);
-        assertEquals("N,N,Y,Y,N,N,N,Y,Y,Y,Y,N,N,Y,N,N,N,N,N,Y,Y,N,Y,Y,Y", CannedData.dump(select));
+        assertEquals("N,N,Y,Y,N,N,N,Y,Y,Y,Y,N,N,Y,N,N,N,N,N,Y,Y,N,Y,Y,Y", CannedData.dumpField(select));
 
         // Select row 1
         data.modifySelection("sel", 1, a, keys);
-        assertEquals("Y,Y,N,N,Y,Y,Y,N,N,N,N,Y,Y,N,Y,Y,Y,Y,Y,N,N,Y,N,N,N", CannedData.dump(select));
+        assertEquals("Y,Y,N,N,Y,Y,Y,N,N,N,N,Y,Y,N,Y,Y,Y,Y,Y,N,N,Y,N,N,N", CannedData.dumpField(select));
 
     }
 
