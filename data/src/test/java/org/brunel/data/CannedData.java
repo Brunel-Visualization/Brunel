@@ -130,6 +130,18 @@ public class CannedData {
         return Data.join(rows, " -- ");
     }
 
+    public static String dump(Field f) {
+        String[] items = new String[f.rowCount()];
+        for (int i=0; i<items.length;i++) {
+            String s = f.valueFormatted(i);
+            if (s.equals(Field.VAL_SELECTED)) s = "Y";
+            if (s.equals(Field.VAL_UNSELECTED)) s = "N";
+            items[i] = s;
+        }
+        return Data.join(items, ",");
+    }
+
+
     private static String stripLast(String text, boolean strip) {
         if (!strip) return text;
         int p = text.lastIndexOf("|");

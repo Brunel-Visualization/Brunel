@@ -1182,8 +1182,7 @@ $.copy(V.Dataset.prototype, {
         return (field != null || !lax) ? field : this.fieldByName.get(name.toLowerCase());
     },
 
-    fieldArray: function() {
-        var names = Array.prototype.slice.call(arguments, 0);
+    fieldArray: function(names) {
         var i;
         var ff = $.Array(names.length, null);
         for (i = 0; i < ff.length; i++)
@@ -1246,7 +1245,7 @@ $.copy(V.Dataset.prototype, {
         return dataset;
     },
 
-    modifySelection: function(method, row, source) {
+    modifySelection: function(method, row, source, keys) {
         var _i, expanded, i;
         var off = V.Field.VAL_UNSELECTED;
         var on = V.Field.VAL_SELECTED;
@@ -1255,7 +1254,7 @@ $.copy(V.Dataset.prototype, {
         if (method == "sel")
             for (i = 0; i < n; i++)
                 sel.setValue(off, i);
-        expanded = source.expandedOriginalRows(row);
+        expanded = source.expandedOriginalRows(row, keys);
         for(_i=$.iter(expanded), i=_i.current; _i.hasNext(); i=_i.next()) {
             if ((method == "sel") || (method == "add"))
                 sel.setValue(on, i);
@@ -1266,16 +1265,13 @@ $.copy(V.Dataset.prototype, {
         }
     },
 
-    expandedOriginalRows: function(row) {
-        var _i, compare, f, i, important, j, list, n, o, rowField, targetFields;
+    expandedOriginalRows: function(row, keys) {
+        var compare, i, j, keyFields, list, n, o, rowField;
         var expanded = new $.Set();
         if (row == null) return expanded;
         n = this.rowCount();
-        important = new $.Set();
-        for(_i=$.iter(this.fields), f=_i.current; _i.hasNext(); f=_i.next())
-            if (!f.isSynthetic() && f.property("derived") == null) important.add(f);
-        targetFields = important.toArray();
-        compare = new V.summary_FieldRowComparison(targetFields, null, false);
+        keyFields = this.fieldArray(keys);
+        compare = new V.summary_FieldRowComparison(keyFields, null, false);
         rowField = this.field("#row");
         for (i = 0; i < n; i++)
             if (compare.compare(i, row) == 0) {

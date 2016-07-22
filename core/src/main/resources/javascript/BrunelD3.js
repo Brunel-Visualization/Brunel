@@ -431,7 +431,7 @@ var BrunelD3 = (function () {
 
         // The selection is in terms of the processed data, but we need to propagate that
         // back to the original data set
-        data.modifySelection(method, item ? item.row : null, element.original());
+        element.original().modifySelection(method, item ? item.row : null, data, element.fields.key);
 
         callWhenReady(func, target);                                    // Request a redraw after  transition done
     }

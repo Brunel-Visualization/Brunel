@@ -157,7 +157,7 @@ public class Dataset extends Informative implements Serializable {
         return (field != null || !lax) ? field : fieldByName.get(name.toLowerCase());
     }
 
-    public Field[] fieldArray(String... names) {
+    public Field[] fieldArray(String[] names) {
         Field[] ff = new Field[names.length];
         for (int i = 0; i < ff.length; i++) ff[i] = field(names[i], false);
         return ff;
@@ -311,8 +311,9 @@ public class Dataset extends Informative implements Serializable {
      * @param method one of "add", "sub", "sel", "tog"
      * @param row    the row from the source data to use in the operation
      * @param source the Dataset in which we found the rows
+     * @param keys the fields that identify which rows are the same (data keys)
      */
-    public void modifySelection(String method, Integer row, Dataset source) {
+    public void modifySelection(String method, Integer row, Dataset source, String[] keys) {
         String off = Field.VAL_UNSELECTED, on = Field.VAL_SELECTED;
         Field sel = field("#selection");
         int n = rowCount();
@@ -321,7 +322,7 @@ public class Dataset extends Informative implements Serializable {
         if (method.equals("sel"))
             for (int i = 0; i < n; i++) sel.setValue(off, i);
 
-        Set<Integer> expanded = source.expandedOriginalRows(row);
+        Set<Integer> expanded = source.expandedOriginalRows(row, keys);
         for (int i : expanded) {
             if (method.equals("sel") || method.equals("add")) sel.setValue(on, i);
             else if (method.equals("sub")) sel.setValue(off, i);
@@ -332,25 +333,21 @@ public class Dataset extends Informative implements Serializable {
 
     /**
      * Expands this row to find similar rows, then returns all rows for the original data for those rows
+     * "Similar" means that they have the same values for the key fields
      *
-     * @param row target
+     * @param row target row to start with
+     * @param keys names of the fields to use as keys
      * @return target rows (zero based)
      */
-    private Set<Integer> expandedOriginalRows(Integer row) {
+    private Set<Integer> expandedOriginalRows(Integer row, String[] keys) {
         Set<Integer> expanded = new HashSet<>();
         if (row  == null) return expanded;                                   // No data -- no rows
 
         int n = rowCount();
 
-        // Get all the fields we want to use for comparison
-        // No synthetic or summary fields are desired
-        Set<Field> important = new HashSet<>();
-        for (Field f : fields)
-            if (!f.isSynthetic() && f.property("derived") == null)
-                important.add(f);
-
-        Field[] targetFields = important.toArray(new Field[important.size()]);
-        FieldRowComparison compare = new FieldRowComparison(targetFields, null, false);
+        // Get all the fields we want to use for comparison and build comparator
+        Field[] keyFields = fieldArray(keys);
+        FieldRowComparison compare = new FieldRowComparison(keyFields, null, false);
 
         Field rowField = field("#row");
 

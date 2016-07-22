@@ -138,19 +138,19 @@ public class ChartCoordinates {
         } else if (vis.fY.size() > 1) {
             // Handle series
             if (vis.stacked)
-                return data.fieldArray("#values$lower", "#values$upper");
+                return data.fieldArray(new String[] {"#values$lower", "#values$upper"});
             else
-                return data.fieldArray("#values");
+                return data.fieldArray(new String[] {"#values"});
         }
 
         // We have a single Y field
         String s = vis.fY.get(0).asField();
         if (vis.stacked) {
             // Stacked has been handled by adding two new fields, so add them
-            return data.fieldArray(s + "$lower", s + "$upper");
+            return data.fieldArray(new String[] {s + "$lower", s + "$upper"});
         } else {
             // Simple case, a single y field
-            return data.fieldArray(s);
+            return data.fieldArray(new String[] {s});
         }
     }
 

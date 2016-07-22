@@ -209,7 +209,7 @@ public class D3DataBuilder {
         writeTransform("addConstants", params.constantsCommand);
 
         // Check for selection filtering
-        Param param = D3Interaction.getInteractionParam(vis,Interaction.filter);
+        Param param = D3Interaction.getInteractionParam(vis, Interaction.filter);
         if (param != null) {
             if ("unselected".equals(param.asString()))
                 writeTransform("filter", "#selection is " + Field.VAL_UNSELECTED);
@@ -344,18 +344,19 @@ public class D3DataBuilder {
         if (vis.tDiagram != null)
             return makeKeyFieldForDiagram(vis.tDiagram);
 
-        // If we split by aesthetics, they are the keys
-        if (vis.tElement.producesSingleShape) return makeSplitFields();
+        if (vis.tElement.producesSingleShape) {
+            // If we split by aesthetics, they are the keys
+            List<String> list = makeSplitFields();
+            removeSynthetic(list);
+            return list;
+        }
 
         // Only want categorical / date position fields, also aesthetic fields
         Set<String> result = new LinkedHashSet<>();
         addIfCategorical(result, vis.positionFields());
         addIfCategorical(result, vis.aestheticFields());
 
-        // Remove any synthetic fields
-        result.remove("#selection");
-        result.remove("#row");
-        result.remove("#count");
+        removeSynthetic(result);
 
         if (!suitableForKey(result)) {
             result.clear();
@@ -371,6 +372,13 @@ public class D3DataBuilder {
         }
 
         return new ArrayList<>(result);
+    }
+
+    private void removeSynthetic(Collection<String> result) {
+        // Remove synthetic fields except #values and #series
+        result.remove("#selection");
+        result.remove("#row");
+        result.remove("#count");
     }
 
     private List<String> makeKeyFieldForDiagram(Diagram diagram) {

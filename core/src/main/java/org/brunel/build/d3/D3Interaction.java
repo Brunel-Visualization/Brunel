@@ -186,6 +186,7 @@ public class D3Interaction {
             } else if (type == Interaction.call) {
                 // One of call, call:func, call:func:mouseXXX, call:func:snap, call:func:snap:ZZ
                 String functionName = p.hasModifiers() ? p.firstModifier().asString() : "BrunelD3.crosshairs";
+                if (functionName.isEmpty()) functionName = "BrunelD3.crosshairs";
                 if (snapInfo != null) {
                     // We want a snap overlay event that will call a custom function -- all snap events are overlays
                     addFunctionDefinition("mousemove", functionName + "(c.item, c.target, element, '" + snapInfo[0] + "')", overlayEvents);

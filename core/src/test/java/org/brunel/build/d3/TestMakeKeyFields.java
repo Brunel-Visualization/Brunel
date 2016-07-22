@@ -41,6 +41,8 @@ public class TestMakeKeyFields {
         assertEquals("Date", getElementKeys("x(date) y(population) mean(population)"));
         assertEquals("#row", getElementKeys("x(income) y(population) mean(population)"));
         assertEquals("Income", getElementKeys("x(income) y(population) bin(income) mean(population)"));
+        assertEquals("Region", getElementKeys("line x(Summer) y(Density) color(region) size(#selection)"));
+
 
         // Trickier case -- should grab the aesthetic
         assertEquals("Region", getElementKeys("x(Summer) y(Winter) color(region) filter(winter) mean(summer, winter)"));

@@ -177,10 +177,16 @@ public class Parser {
                             // A modifier for the field
                             token.parsedType = "syntax";
                             if (i > parametersEnd - 2) throw new IllegalStateException("Unterminated option ':'");
-                            Param modifier;
+
+                            if (":".equals(tokens.get(i+1).content)) {
+                                // Two consecutive ':' characters indicate a missing parameter
+                                params.push(params.pop().addModifiers(Param.makeString("")));
+                                continue;
+                            }
 
                             BrunelToken nextToken = tokens.get(++i);    // We have handled an extra token so increment i
 
+                            Param modifier;
                             if (nextToken.content.equals("[")) {
                                 // Handle a list of values
                                 nextToken.parsedType = "syntax";
