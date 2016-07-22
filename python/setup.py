@@ -38,7 +38,7 @@ setup(
     name='brunel',
     version='2.0',
     packages=['brunel'],
-    install_requires= ['pandas', 'jinja2', 'ipython', 'jupyter-pip', jpype_name, 'ipywidgets', 'traitlets'],
+    install_requires= ['pandas', 'jinja2', 'ipython', 'jupyter-pip', jpype_name],
     package_data= {
         'brunel': ['*.js', '*.html', 'lib/*.jar', 'brunel_ext/*.*']
     },
