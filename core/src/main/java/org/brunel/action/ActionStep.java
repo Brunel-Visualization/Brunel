@@ -108,6 +108,9 @@ public class ActionStep {
             } else if (name.equals("filter")) {
                 item.filter(parameters);
                 return item;
+            }else if (name.equals("animate")) {
+                item.animate(parameters);
+                return item;
             } else if (name.equals("key")) {
                 item.key(parameters);
                 return item;

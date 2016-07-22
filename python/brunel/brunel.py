@@ -22,7 +22,6 @@ import fnmatch
 import jpype
 import sys
 
-import brunel.brunelWidgets as brunelWidgets
 import brunel.brunel_util as brunel_util
 import jinja2 as jin
 from IPython.display import Javascript, HTML
@@ -50,11 +49,12 @@ def display(brunel, data, width=800, height=600, output='d3'):
 
     # unique identifier for HTML tags
     visid = "visid" + str(uuid.uuid1())
+    controlsid = "controlsid" + str(uuid.uuid1())
 
     # D3 is currently the only supported renderer
     if output == 'd3':
-        result = brunel_jpype_call(csv, brunel, width, height, visid)
-        return d3_output(result, visid, width, height)
+        result = brunel_jpype_call(csv, brunel, width, height, visid, controlsid)
+        return d3_output(result, visid, controlsid, width, height)
     else:
         raise ValueError("Valid Output Choices Are:   d3")
 
@@ -80,9 +80,10 @@ def to_csv(df):
             return csv
 
 # Uses jpype to call the main Brunel D3 integration method
-def brunel_jpype_call(data, brunel_src, width, height, visid):
+def brunel_jpype_call(data, brunel_src, width, height, visid, controlsid):
     try:
-        return brunel_util_java.D3Integration.createBrunelJSON(data, brunel_src, int(width), int(height), visid, None)
+        return brunel_util_java.D3Integration.createBrunelJSON(data, brunel_src, int(width), int(height), visid,
+                                                               controlsid)
     except jpype.JavaException as exception:
         raise ValueError(exception.message())
 
@@ -94,22 +95,16 @@ def cacheData(data_key, data):
     brunel_util_java.D3Integration.cacheData(data_key, data)
 
 # D3 response should contain the D3 JS and D3 CSS
-def d3_output(response, visid, width, height):
+def d3_output(response, visid, controlsid, width, height):
     results = json.loads(response)
     d3js = results["js"]
     d3css = results["css"]
     controls = results["controls"]
-    html = D3_TEMPLATE_HTML.render({'jsloc': brunel_util.JS_LOC, 'd3css': d3css, 'visId': visid, 'width': width, 'height': height})
+    html = D3_TEMPLATE_HTML.render({'jsloc': brunel_util.JS_LOC, 'd3css': d3css, 'visId': visid, 'width': width, 'height': height, 'controlsid': controlsid})
     # side effect pushes required D3 HTML to the client
     ipydisplay(HTML(html))
-    widgets = brunelWidgets.build_widgets(controls, visid)
-    if (widgets is not None):
-        # Push widgets & D3 JS
-        js = D3_TEMPLATE.render({'jsloc': brunel_util.JS_LOC, 'd3loc': brunel_util.D3_LOC, 'topojsonloc':brunel_util.TOPO_JSON_LOC, 'd3js': d3js})
-        return ipydisplay(widgets['widget_box'], Javascript(js))
-    else:
-        js = D3_TEMPLATE.render({'jsloc': brunel_util.JS_LOC, 'd3loc': brunel_util.D3_LOC, 'topojsonloc':brunel_util.TOPO_JSON_LOC, 'd3js': d3js})
-        return Javascript(js)
+    js = D3_TEMPLATE.render({'jsloc': brunel_util.JS_LOC, 'd3loc': brunel_util.D3_LOC, 'topojsonloc':brunel_util.TOPO_JSON_LOC, 'd3js': d3js})
+    return Javascript(js)
 
 #File search given a path.  Used to find the JVM if needed
 def find_file(pattern, path):

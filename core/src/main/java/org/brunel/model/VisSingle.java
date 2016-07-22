@@ -50,6 +50,7 @@ public class VisSingle extends VisItem implements Cloneable {
     public List<Param> fCoords;               // Coordinate Parameters
     public List<Param> fColor, fSize, fOpacity;  // Aesthetics
     public List<Param> fFilter;            // Fields for filtering
+    public List<Param> fAnimate;           // Fields for animating
     public List<Param> fSort;              // Fields used to sort the data
     public List<Param> fSplits;            // "Split" Aesthetics
     public List<Param> fX;                 // X dimension and then cluster dimensions
@@ -109,6 +110,7 @@ public class VisSingle extends VisItem implements Cloneable {
         fSize = Collections.EMPTY_LIST;
         fSort = Collections.EMPTY_LIST;
         fFilter = Collections.EMPTY_LIST;
+        fAnimate = Collections.EMPTY_LIST;
         fSplits = Collections.EMPTY_LIST;
         tGuides = Collections.EMPTY_LIST;
         fEffects = Collections.EMPTY_LIST;
@@ -187,6 +189,11 @@ public class VisSingle extends VisItem implements Cloneable {
         if (fFilter.isEmpty()) fFilter = new ArrayList<>(fieldNames.length);
         Collections.addAll(fFilter, fieldNames);
     }
+    
+    public void animate(Param... params) {
+        if (fAnimate.isEmpty()) fAnimate = new ArrayList<>(params.length);
+        Collections.addAll(fAnimate, params);
+    }
 
     /**
      * Sets interactivity. Note the following:
@@ -252,6 +259,7 @@ public class VisSingle extends VisItem implements Cloneable {
         if (duplicatesWithin(fX)) error = addError(error, "X contains duplicate fields");
         if (duplicatesWithin(fColor)) error = addError(error, "color contains duplicate fields");
         if (duplicatesWithin(fFilter)) error = addError(error, "filter contains duplicate fields");
+        if (duplicatesWithin(fAnimate)) error = addError(error, "animate contains duplicate fields");
         if (duplicatesWithin(fSplits)) error = addError(error, "splits contains duplicate fields");
 
         if (tDiagram != null && stacked) error = addError(error, "diagrams cannot be stacked");
@@ -356,8 +364,9 @@ public class VisSingle extends VisItem implements Cloneable {
 
         used = all.toArray(new String[all.size()]);
 
-        // Add the filters
+        // Add the filters & animators
         addFieldNames(all, true, fFilter);
+        addFieldNames(all, true, fAnimate);
         includingFilters = all.toArray(new String[all.size()]);
     }
 
@@ -401,6 +410,7 @@ public class VisSingle extends VisItem implements Cloneable {
         ensureCanonical(fSize, "size");
         ensureCanonical(fOpacity, "opacity");
         ensureCanonical(fFilter, "filter");
+        ensureCanonical(fAnimate, "animate");
         ensureCanonical(fSort, "sort");
         ensureCanonical(fKeys, "key");
         ensureCanonical(fSplits, "split");
@@ -468,6 +478,7 @@ public class VisSingle extends VisItem implements Cloneable {
             result.fSize = replaceAllField(result.fSize, replacement);
             result.fOpacity = replaceAllField(result.fOpacity, replacement);
             result.fFilter = replaceAllField(result.fFilter, replacement);
+            result.fAnimate = replaceAllField(result.fAnimate, replacement);
             result.fSort = replaceAllField(result.fSort, replacement);
             result.fKeys = replaceAllField(result.fKeys, replacement);
             result.fSplits = replaceAllField(result.fSplits, replacement);

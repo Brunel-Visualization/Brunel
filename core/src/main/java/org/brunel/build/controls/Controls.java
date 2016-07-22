@@ -45,24 +45,26 @@ public class Controls {
 
     public void buildControls(VisSingle vis, Dataset data) {
         for (Param f : vis.fFilter) {
-            filters.add(FilterControl.makeForField(data, f.asField(data), f.firstModifier()));
+            filters.add(FilterControl.makeForFilterField(data, f.asField(data), f.firstModifier()));
         }
+        FilterControl animationControl = FilterControl.makeForAnimation(data, vis.fAnimate);
+        if (animationControl != null) filters.add(animationControl);
     }
 
     public boolean isNeeded() {
         return !filters.isEmpty();
     }
 
-    public void writeControls(ScriptWriter out) {
+    public void writeControls(ScriptWriter out, String visInstance) {
     	if (options.controlsIdentifier != null)
-    		writeControls(options.controlsIdentifier, "BrunelJQueryControlFactory", out);
+    		writeControls(options.controlsIdentifier, "BrunelJQueryControlFactory", out, visInstance);
     }
 
-    public void writeControls(String controlId, String uiFactoryClass, ScriptWriter out) {
+    public void writeControls(String controlId, String uiFactoryClass, ScriptWriter out, String visInstance) {
         if (!needsControls()) return;
         out.titleComment("Create and wire controls");
         out.add("$(function() {").ln().indentMore();
-        createFilters(controlId, uiFactoryClass, out);
+        createFilters(controlId, uiFactoryClass, out, visInstance);
 
         out.indentLess().ln();
         out.add("})").endStatement();
@@ -82,22 +84,26 @@ public class Controls {
     	return !filters.isEmpty(); 
     }
 
-    private void createFilters(String controlId, String uiFactoryClass, ScriptWriter out) {
+    private void createFilters(String controlId, String uiFactoryClass, ScriptWriter out, String visInstance) {
 
         for (FilterControl filter : filters) {
             String fieldId = filter.id;
             String label = filter.label;
             Object[] categories = filter.categories;
-            Double min = filter.min;
-            Double max = filter.max;
             Double low = filter.lowValue;
             Double high = filter.highValue;
             Object[] selectedCategories = filter.selectedCategories;
+            Double animateSpeed = filter.animateSpeed;
+            Double animateFrames = filter.animateFrames;
+            boolean animate = filter.animate;
+            
+            
 
             //Range filter
             if (categories == null) {
                 out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_range_slider(", out.quote(options.visIdentifier), ",",
-                        out.quote(fieldId), ",", out.quote(label), ",", min, ",", max, ",", low, ",", high, "))").endStatement();
+                        out.quote(fieldId), ",", out.quote(label), ",", low, ",", high, ",",
+                        visInstance, ".data().field(", out.quote(fieldId), "),", animate, "," , animateFrames, ",", animateSpeed, "))").endStatement();
             }
 
             //Category filter
