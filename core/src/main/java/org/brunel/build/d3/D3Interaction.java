@@ -38,6 +38,7 @@ public class D3Interaction {
     public enum ZoomType {
         MapZoom,
         CoordinateZoom,
+        GraphicZoom,
         None
     }
 
@@ -51,7 +52,7 @@ public class D3Interaction {
         this.structure = structure;
         this.scales = scales;
         this.out = out;
-        if (isZoomable(structure.elementStructure)) {
+        if (isSemanticZoomable(structure.elementStructure)) {
             if (structure.geo == null) {
                 this.zoomable = ZoomType.CoordinateZoom;
                 canZoomX = checkCoordinate(structure, "x", structure.coordinates.xCategorical);
@@ -60,10 +61,23 @@ public class D3Interaction {
                 this.zoomable = ZoomType.MapZoom;
                 canZoomX = canZoomY = true;
             }
+        } else if (zoomRequested(structure.elementStructure)) {
+            this.zoomable = ZoomType.GraphicZoom;
+            canZoomX = canZoomY = false;
         } else {
             this.zoomable = ZoomType.None;
             canZoomX = canZoomY = false;
         }
+    }
+
+    private boolean zoomRequested(ElementStructure[] elements) {
+        // Explicit requests in the code are honored. In case of multiple specs, just the first one is used
+        for (ElementStructure e : elements) {
+            Param param = getInteractionParam(e.vis, Interaction.panzoom);
+            if (param != null) return isNeeded(param);
+            if (getInteractionParam(e.vis, Interaction.none) != null) return false;
+        }
+        return false;
     }
 
     /**
@@ -121,7 +135,7 @@ public class D3Interaction {
         return zoomable;
     }
 
-    private boolean isZoomable(ElementStructure[] elements) {
+    private boolean isSemanticZoomable(ElementStructure[] elements) {
         // we cannot zoom diagrams (except for maps) or polar coordinates
         if ((structure.diagram != null && structure.geo == null) || scales.coords == Coordinates.polar)
             return false;
@@ -190,7 +204,7 @@ public class D3Interaction {
                 if (snapInfo != null) {
                     // We want a snap overlay event that will call a custom function -- all snap events are overlays
                     addFunctionDefinition("mousemove", functionName + "(c.item, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
-                    addFunctionDefinition("mouseout", functionName +  "(null, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
+                    addFunctionDefinition("mouseout", functionName + "(null, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
                 } else {
                     // We want an event handler on the element
                     String eventName = p.modifiers().length > 1 ? p.modifiers()[1].toString() : "click";
@@ -277,21 +291,28 @@ public class D3Interaction {
      * Set up the overlay group and shapes for trapping events for zooming.
      */
     public void addPrerequisites() {
-        if (zoomable == ZoomType.CoordinateZoom) {
-            // The group for the overlay
-            out.add("var overlay = interior.append('g').attr('class', 'element')")
-                    .addChained("attr('class', 'overlay').style('cursor','move').style('fill','none').style('pointer-events','all')")
-                    .endStatement();
+        // The group for the overlay
+        out.add("var overlay = interior.append('g').attr('class', 'element')")
+                .addChained("attr('class', 'overlay').style('cursor','move').style('fill','none').style('pointer-events','all')")
+                .endStatement();
 
-            // Add an overlay rectangle for zooming that will trap all mouse events and use them for pan/zoom
-            out.add("var zoom = d3.behavior.zoom()").endStatement();
-            out.add("zoom.on('zoom', function() {build(-1)} )").endStatement();
+        // Add an overlay rectangle for zooming that will trap all mouse events and use them for pan/zoom
+        out.add("var zoom = d3.behavior.zoom()").endStatement();
 
-            out.add("overlay.append('rect').attr('class', 'overlay')")
-                    .addChained("attr('width', geom.inner_rawWidth)")
-                    .addChained("attr('height', geom.inner_rawHeight)");
-            out.addChained("call(zoom)").endStatement();
-        }
+        // Zoom by coordinate or projection
+        if (zoomable == ZoomType.CoordinateZoom || zoomable == ZoomType.MapZoom)
+            out.add("zoom.on('zoom', function() { build(-1) } )").endStatement();
+
+        // Zoom by graphic transform
+        if (zoomable == ZoomType.GraphicZoom)
+            out.add("zoom.on('zoom', function() { interior.attr('transform', 'translate(' + d3.event.translate + ')' + ' scale(' + d3.event.scale + ')' ) } )").endStatement();
+
+        // Add the zoom overlay and attach behavior
+        out.add("overlay.append('rect').attr('class', 'overlay')")
+                .addChained("attr('width', geom.inner_rawWidth)")
+                .addChained("attr('height', geom.inner_rawHeight)");
+        if (zoomable != ZoomType.None) out.addChained("call(zoom)");
+        out.endStatement();
     }
 
     /**
