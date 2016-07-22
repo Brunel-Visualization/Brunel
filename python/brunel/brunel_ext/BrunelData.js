@@ -1419,6 +1419,15 @@ $.copy(V.diagram_Hierarchical, {
     makeByNestingFields: function(data, sizeField) {
         var fields = Array.prototype.slice.call(arguments, 2);
         return new V.diagram_Hierarchical(data, sizeField, fields);
+    },
+
+    compare: function(a, b) {
+        var d = V.Data.compare(a.meanRow(), b.meanRow());
+        return d != 0 ? d : V.Data.compare(a.key, b.key);
+    },
+
+    compareReverse: function(a, b) {
+        return V.diagram_Hierarchical.compare(b, a);
     }
 
 });
@@ -1490,6 +1499,26 @@ V.diagram_Node = function(row, value, innerNodeName, children) {
     this.innerNodeName = innerNodeName;
     this.children = children;
 }
+
+$.copy(V.diagram_Node.prototype, {
+
+    meanRow: function() {
+        var _i, n, s, v;
+        if (this.children != null) {
+            v = 0;
+            s = 0;
+            for(_i=$.iter(this.children), n=_i.current; _i.hasNext(); n=_i.next()) {
+                v += n.meanRow() * n.value;
+                s += n.value;
+            }
+            return v / s;
+        } else {
+            return this.row;
+        }
+    }
+
+});
+
 ////////////////////// Field ///////////////////////////////////////////////////////////////////////////////////////////
 
 

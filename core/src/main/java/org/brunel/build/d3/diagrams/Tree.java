@@ -53,7 +53,7 @@ class Tree extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details) {
-        out.addChained("attr('class', function(d) { return (d.children ? 'L' + d.depth : 'leaf element " + element.name() + "') })");
+        out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 
         if (vis.coords == Coordinates.polar) {
             out.addChained("attr('transform', function(d) { return 'rotate(' + (d.x - 90) + ') translate(' + d.y + ')' })");

@@ -37,6 +37,17 @@ public class Hierarchical {
 
     public final Node root;
 
+    // Used by javascript
+    public static int compare(Node a, Node b) {
+        int d = Data.compare(a.meanRow(), b.meanRow());
+        return d != 0 ? d : Data.compare(a.key, b.key);
+    }
+
+    // Used by javascript
+    public static int compareReverse(Node a, Node b) {
+        return compare(b, a);
+    }
+
     private Hierarchical(Dataset data, String sizeFieldName, String[] fieldNames) {
         Field size = sizeFieldName == null ? null : data.field(sizeFieldName);
         Field[] fields = toFields(data, fieldNames);

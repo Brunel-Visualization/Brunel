@@ -189,7 +189,7 @@ public class VisSingle extends VisItem implements Cloneable {
         if (fFilter.isEmpty()) fFilter = new ArrayList<>(fieldNames.length);
         Collections.addAll(fFilter, fieldNames);
     }
-    
+
     public void animate(Param... params) {
         if (fAnimate.isEmpty()) fAnimate = new ArrayList<>(params.length);
         Collections.addAll(fAnimate, params);
@@ -402,7 +402,7 @@ public class VisSingle extends VisItem implements Cloneable {
      * This method must be called before any building can be done on a vis item and the
      * building performed on the returned vis
      *
-     * @return
+     * @return fully resolved vis
      */
     public VisSingle makeCanonical() {
 
