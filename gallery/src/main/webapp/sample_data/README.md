@@ -35,3 +35,7 @@ the U.S. Census, the U.S. Bureau of Labor Statistics and The United States Socia
 
 ### whiskey.csv
 This data set was part of IBM's Many Eyes suite and is in the public domain.
+
+## cars.csv
+The cars data set was original a PRIM-9 dataset, but was massaged for the 1983 ASA Data Exposition. It is public domain
+and available in original form at [statlib](http://lib.stat.cmu.edu/datasets/)

@@ -964,7 +964,7 @@ appearance and placement. References to field names are also supported.
 
     bar x(region) y(#count) title("Count Per Region")
 
-    bar x(region) y(#count) title("Count Per ", region)
+    bar x(region)(#count) title("Count Per ", region)
 
     bar x(region) y(#count) title("Count Per Region", "US Regions":footer)
 
@@ -1274,8 +1274,8 @@ passed in:
  
         var scales = element.chart().scales;
         if (!scales || !scales.x || !scales.y || !item.row) return;
-     The above code is a simple guard that means nothing will happen
-if we don't have both data and scales
+     The above code is a simple guard that means nothing will happen if we don't have both data and
+scales
 
 
 ### Finding data and pixel coordinates
@@ -1284,8 +1284,7 @@ if we don't have both data and scales
         var dataX = scales.x.invert(x);                                     // The X coordinate as a data value
         var extent = scales.x.range(), minX = extent[0],                    // pixel ranges for the x dimension
             maxX = extent[extent.length-1];
-     
-These give examples of using coordinates and scales. Note that some scales (like ones for
+     These give examples of using coordinates and scales. Note that some scales (like ones for
 categorical data) are not invertible in d3, so this may fail.
 
 
@@ -1293,9 +1292,8 @@ categorical data) are not invertible in d3, so this may fail.
  
         var xField = element.data().field(element.fields.x[0]);             // Getting the field for the x axis
         var formattedText = xField.format(dataX);                           // Human-readable value for x
-     The
-Dataset `element.data()` and the Field object have a lot of power and many attributes. They have the
-same calls in JavaScript as in Java, so you can look up th Java docs to see their usage.
+     The Dataset `element.data()` and the Field object have a lot of power and many attributes. They have
+the same calls in JavaScript as in Java, so you can look up th Java docs to see their usage.
 
 
 ### Adding your own elements
@@ -1304,8 +1302,7 @@ same calls in JavaScript as in Java, so you can look up th Java docs to see thei
         if (g.empty())                                                      // Make it if necessary
             circle = element.group().append("circle").attr("class", "MyClass");
         g.attr("r", 20).attr('x', x).attr(y, y);                            // Use d3 to set the attributes
-     
-The above example places a circle where the mouse is, using d3
+     The above example places a circle where the mouse is, using d3
 
 
 ### Adding your own elements, alternative version
@@ -1317,7 +1314,9 @@ The above example places a circle where the mouse is, using d3
         var cx = box.x + box.width/2, cy = box.y + box.height/2,            // get box center and radius around it
             r = Math.max(box.width, box.height)/2;
         g.attr('r', r).attr('x', cx).attr(y, cy);                            // Use d3 to set the attributesX
-     
-The above example places a circle around the target of the mouse event
+     The above example places a circle around the target of the mouse event
+
+
+nt
 
 
