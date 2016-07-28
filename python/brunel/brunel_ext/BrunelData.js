@@ -4120,9 +4120,17 @@ $.copy(V.util_Range, {
 
     makeNumeric: function(low, high, nameAtMid) {
         var mid = (high + low) / 2;
-        var name = nameAtMid ? V.Data.formatNumeric(mid, null, true) : V.Data.formatNumeric(low, null, true) +
-            "\u2026" + V.Data.formatNumeric(high, null, true);
+        var ext = high - low;
+        var name = nameAtMid ? V.util_Range.formatV(mid, ext) : V.util_Range.formatV(low,
+            ext) + "\u2026" + V.util_Range.formatV(high, ext);
         return new V.util_Range(low, high, mid, name);
+    },
+
+    formatV: function(v, ext) {
+        if (ext > 2e6)
+            return V.Data.formatNumeric(v / 1e6, null, false) + "M";
+        else
+            return V.Data.formatNumeric(v, null, true);
     },
 
     makeDate: function(low, high, nameAtMid, df) {
