@@ -30,7 +30,9 @@ import org.brunel.data.Field;
 import org.brunel.data.Fields;
 import org.brunel.data.auto.Auto;
 import org.brunel.data.auto.NumericScale;
+import org.brunel.data.stats.DateStats;
 import org.brunel.data.util.DateFormat;
+import org.brunel.data.util.DateUnit;
 import org.brunel.data.util.Range;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Axes;
@@ -305,7 +307,6 @@ public class D3ScaleBuilder {
     public void writeAxes() {
         if (!hAxis.exists() && !vAxis.exists()) return;                          // No axes needed
 
-
         // Define the spaces needed to work in
 
         // Define the groups for the axes and add titles
@@ -426,15 +427,14 @@ public class D3ScaleBuilder {
     }
 
     private void writeAspect() {
-    	Double aspect = getAspect();
-    	boolean anyCategorial = structure.coordinates.xCategorical || structure.coordinates.yCategorical;
+        Double aspect = getAspect();
+        boolean anyCategorial = structure.coordinates.xCategorical || structure.coordinates.yCategorical;
 
-    	if (aspect != null && ! anyCategorial) {
+        if (aspect != null && !anyCategorial) {
             out.onNewLine().add("BrunelD3.setAspect(scale_x, scale_y, " + aspect + ")");
             out.endStatement();
-    	}
+        }
     }
-
 
     private void writePositionScale(ScalePurpose purpose, Field[] fields, String range, boolean fillToEdge, boolean reverse) {
         int categories = scaleWithDomain(purpose.name(), fields, purpose, 2, "linear", null, reverse);
@@ -473,21 +473,21 @@ public class D3ScaleBuilder {
     }
 
     private Double getAspect() {
-    	//Find Param with "aspect" and return its value
-    	for (VisSingle e: elements) {
-    		if (e.fCoords != null) {
-    			for (Param p : e.fCoords) {
-    				if (p.asString().equals("aspect")) {
-    					Param m = p.firstModifier();
+        //Find Param with "aspect" and return its value
+        for (VisSingle e : elements) {
+            if (e.fCoords != null) {
+                for (Param p : e.fCoords) {
+                    if (p.asString().equals("aspect")) {
+                        Param m = p.firstModifier();
 
-    					//Use "square" for 1.0 aspect ratio
-    					if (m.asString().equals("square")) return 1.0;
-    					else return m.asDouble();
-    				}
-    			}
-    		}
-    	}
-    	return null;
+                        //Use "square" for 1.0 aspect ratio
+                        if (m.asString().equals("square")) return 1.0;
+                        else return m.asDouble();
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     private boolean reverseRange(Field[] fields) {
@@ -500,7 +500,7 @@ public class D3ScaleBuilder {
     }
 
     private int scaleWithDomain(String name, Field[] fields, ScalePurpose purpose, int numericDomainDivs, String defaultTransform, Object[] partitionPoints,
-    		boolean reverse) {
+                                boolean reverse) {
 
         out.onNewLine().add("var", "scale_" + name, "= ");
 
@@ -599,16 +599,14 @@ public class D3ScaleBuilder {
         }
 
         if (reverse) {
-        	List<Object> l = Arrays.asList(divs);
-        	Collections.reverse(l);
-        	divs = l.toArray();
+            List<Object> l = Arrays.asList(divs);
+            Collections.reverse(l);
+            divs = l.toArray();
         }
 
         out.addChained("domain([").add(Data.join(divs)).add("])");
         return -1;
     }
-
-
 
     public List<Object> getCategories(Field[] ff) {
         Set<Object> all = new LinkedHashSet<>();
@@ -706,8 +704,11 @@ public class D3ScaleBuilder {
             }
 
             if (colorLegendField.isDate()) {
-                // Convert to dates
-                dateFormat = (DateFormat) colorLegendField.property("dateFormat");
+                // We cannot use the format for the date field, as it may be much more detailed than we need
+                // We can instwad look at the difference between ticks to get the best format
+                DateUnit dateUnit = DateStats.getUnit(Math.abs(divisions[divisions.length - 1] - divisions[0]));
+                dateFormat = DateStats.getFormat(dateUnit, Math.abs(divisions[1] - divisions[0]));
+
                 DateBuilder dateBuilder = new DateBuilder();
                 String[] divs = new String[divisions.length];
                 for (int i = 0; i < divs.length; i++)
@@ -726,7 +727,7 @@ public class D3ScaleBuilder {
         out.add("BrunelD3.addLegend(legends, " + out.quote(title) + ", scale_color, " + legendTicks);
         if (dateFormat != null)
             out.add(", BrunelData.util_DateFormat." + dateFormat.name());
-            out.add(")").endStatement();
+        out.add(")").endStatement();
     }
 
     private void addColorScale(Param p, VisSingle vis) {
