@@ -102,6 +102,13 @@
         scales, configured by Brunel.
     </li>
 
+    <li><b>zoom(params, time)</b> -- A function that, if called with no parameters, will return an object
+    <code>{ translate:[x,y], scale:s }</code> giving a 2 item array with x and y offsets, and the zoom scale.
+        The same object can be passed in as the first argument to set the pan-zoom. The time is an optional parameter
+        determining the speed at which the zoom is animated (zero means instant).
+    </li>
+
+
 </ul>
 
 <H2>Examples of Use</H2>
@@ -170,6 +177,28 @@
 </p>
 
 
+<H4>Programmatic control of pan and zoom</H4>
+<pre>
+    var v = new BrunelVis('visualization');
+    v.build(table1);
+
+    function panBy(dx) {
+	    var z = v.charts[0].zoom(), t = z.translate;
+	    v.charts[0].zoom( { translate:[t[0]+dx, t[1]], scale:z.scale }, 3000);
+    }
+
+    /// ....
+
+    &lt;button type="button" onclick="panBy(-50)"&gt;LEFT&lt;/button&gt;
+
+    &lt;button type="button" onclick="panBy(50)"&gt;RIGHT&lt;/button&gt;
+
+</pre>
+
+<p>
+The above code fragment calls the chart's zoom method first to get the current values, and then to update and
+set them, with a very slow animation speed.
+</p>
 
 
 

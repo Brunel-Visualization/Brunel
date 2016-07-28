@@ -464,6 +464,9 @@ public class VisSingle extends VisItem implements Cloneable {
             if (tDiagram != null) {
                 // Diagrams know what they like
                 result.tElement = tDiagram.defaultElement;
+            } else if (!tGuides.isEmpty()) {
+                // Guides are paths
+                result.tElement = Element.path;
             } else if (stacked) {
                 // Bars work well for stacking usually
                 result.tElement = Element.bar;

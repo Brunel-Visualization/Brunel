@@ -251,7 +251,7 @@ public class D3Builder extends AbstractBuilder {
     }
 
     protected void endChart(ChartStructure structure) {
-        out.onNewLine().add("function build(time) {").indentMore();
+        out.onNewLine().add("function build(time, noData) {").indentMore();
         out.onNewLine().add("var first = elements[0].data() == null").endStatement();
         out.add("if (first) time = 0;").comment("No transition for first call");
 
@@ -265,7 +265,7 @@ public class D3Builder extends AbstractBuilder {
 
         Integer[] order = structure.elementBuildOrder();
 
-        out.onNewLine().add("if (first || time > -1) ");
+        out.onNewLine().add("if ((first || time > -1) && !noData)");
         if (order.length > 1) {
             out.add("{").indentMore();
             for (int i : order)
@@ -282,9 +282,24 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}").ln();
 
         out.ln().comment("Expose the following components of the chart");
-        out.add("return {build : build, elements : elements, interior : interior");
-        if (structure.diagram == null) out.add(", scales: {x:scale_x, y:scale_y}");
-        out.add("}").endStatement();
+        out.add("return {").indentMore()
+                .onNewLine().add("elements : elements,")
+                .onNewLine().add("interior : interior,");
+
+        if (structure.diagram == null) {
+            out.onNewLine().add("scales: {x:scale_x, y:scale_y},");
+        }
+
+        if (interaction.getZoomType() != D3Interaction.ZoomType.None) {
+            out.onNewLine().add("zoom: function(params, time) {")
+                    .continueOnNextLine().add("var v = BrunelD3.panzoom(params, zoom);")
+                    .continueOnNextLine().add("if (params) build(time > 0 ? time : 0, true);")
+                    .continueOnNextLine().add("return v;");
+            out.onNewLine().add("},");
+        }
+
+        out.onNewLine().add("build : build")
+                .indentLess().onNewLine().add("}").endStatement();
 
         // Finish the chart method
         if (nesting.containsKey(structure.chartIndex)) {

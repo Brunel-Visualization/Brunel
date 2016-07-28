@@ -1443,6 +1443,17 @@ var BrunelD3 = (function () {
         })
     }
 
+    // Programmatic control of pan and zoom
+    // params may be null (just to return values) or {translate:[x,y], scale:s} for the zooming
+    // zoom is the d3 zoom object
+    function panzoom(params, zoom) {
+        if (params)
+            zoom.translate(params.translate).scale(params.scale);
+        return {translate: zoom.translate(), scale: zoom.scale()}
+    }
+
+
+
     //Sets the aspect ratio of the data domain values
     function setAspect(scale_x, scale_y, aspect) {
 
@@ -1528,6 +1539,7 @@ var BrunelD3 = (function () {
         'filterTicks': filterTicks,
         'closestOnPath': closestPathPoint,
         'closest': closestItem,
+        'panzoom': panzoom,
         'setAspect': setAspect
     }
 

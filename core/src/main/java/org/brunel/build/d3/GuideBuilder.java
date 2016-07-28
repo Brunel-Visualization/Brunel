@@ -18,6 +18,7 @@ package org.brunel.build.d3;
 
 import org.brunel.action.Param;
 import org.brunel.build.d3.element.D3ElementBuilder;
+import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 
@@ -60,6 +61,10 @@ public class GuideBuilder extends D3ElementBuilder {
                 .add("t = i /", (steps-1), ";", "return {x:x0 + xs*t, y:y0 + ys*t, t:t} })").endStatement();
 
         int index = 0;
+
+        ElementDetails details = makeDetails();         // Create the details of what the element should be
+        setGeometry(details);                           // And the coordinate definitions
+
         for (Param p : guides) {
             index++;
             out.onNewLine().ln().comment("Defining guide #" + index).onNewLine();
@@ -73,6 +78,10 @@ public class GuideBuilder extends D3ElementBuilder {
                     .addChained("y(function(d) { return scale_y(", defY, ") })")
                     .endStatement();
 
+            // define the labeling structure to be used later
+            defineLabeling(details);
+
+
             out.add("selection = main.selectAll('.element.guide" + index + "').data(guideData)").endStatement();
 
             out.add("selection.enter().append('path').attr('class', 'element line guide guide" + index + "')");
@@ -83,6 +92,10 @@ public class GuideBuilder extends D3ElementBuilder {
             out.add("BrunelD3.trans(selection,transitionMillis)")
                     .addChained("attr('d', path(guideData))")
                     .endStatement();
+
+
+            writeCoordinateLabelingAndAesthetics(details);
+
         }
 
     }

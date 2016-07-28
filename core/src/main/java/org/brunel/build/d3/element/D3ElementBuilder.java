@@ -81,21 +81,8 @@ public class D3ElementBuilder {
             out.add("main.attr('class',", diagram.getStyleClasses(), ")").endStatement();
         }
 
-        int collisionDetectionGranularity;
-        if (details.textCanOverlap()) {
-            collisionDetectionGranularity = 0;
-        } else {
-            // Set the grid size as a power of 2 depending how much data we have seen
-            int n = structure.data.rowCount();
-            double pow = Math.log((n / 10)) / Math.log(4);
-            collisionDetectionGranularity = (int) Math.pow(2, Math.floor(pow));
-            collisionDetectionGranularity = Math.min(16, Math.max(1, collisionDetectionGranularity));
-        }
-        labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape(),
-                details.getAlignment(), details.getPadding(),
-                collisionDetectionGranularity);   // Labels
-
-        Accessibility.defineElementLabelFunction(structure, out, labelBuilder);
+        // define the labeling structure to be used later
+        defineLabeling(details);
 
         // Set the values of things known to this element
         out.add("selection = main.selectAll('.element').data(" + details.dataSource + ",", getKeyFunction(), ")")
@@ -131,6 +118,25 @@ public class D3ElementBuilder {
 
         writeRemovalOnExit(out);
 
+    }
+
+    protected void defineLabeling(ElementDetails details) {
+        int collisionDetectionGranularity;
+        if (details.textCanOverlap()) {
+            collisionDetectionGranularity = 0;
+        } else {
+            // Set the grid size as a power of 2 depending how much data we have seen
+            int n = structure.data.rowCount();
+            double pow = Math.log((n / 10)) / Math.log(4);
+            collisionDetectionGranularity = (int) Math.pow(2, Math.floor(pow));
+            collisionDetectionGranularity = Math.min(16, Math.max(1, collisionDetectionGranularity));
+        }
+
+        labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape(),
+                details.getAlignment(), details.getPadding(),
+                collisionDetectionGranularity);   // Labels
+
+        Accessibility.defineElementLabelFunction(structure, out, labelBuilder);
     }
 
     public static void writeRemovalOnExit(ScriptWriter out) {
@@ -197,7 +203,7 @@ public class D3ElementBuilder {
         if (diagram != null) diagram.writePerChartDefinitions();
     }
 
-    private ElementDetails makeDetails() {
+    protected ElementDetails makeDetails() {
         // When we create diagrams this has the side effect of writing the data calls needed
         if (structure.isGraphEdge()) {
             out.onNewLine().comment("Defining graph edge element");
@@ -210,7 +216,7 @@ public class D3ElementBuilder {
         }
     }
 
-    private void setGeometry(ElementDetails e) {
+    protected void setGeometry(ElementDetails e) {
 
         Field[] x = structure.chart.coordinates.getX(vis);
         Field[] y = structure.chart.coordinates.getY(vis);
@@ -342,7 +348,7 @@ public class D3ElementBuilder {
             defineCircle(details);
     }
 
-    private void writeCoordinateLabelingAndAesthetics(ElementDetails details) {
+    protected void writeCoordinateLabelingAndAesthetics(ElementDetails details) {
         // Define colors using the color function
         if (!vis.fColor.isEmpty()) {
             String colorType = details.isStroked() ? "stroke" : "fill";

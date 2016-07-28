@@ -84,12 +84,13 @@ public class D3LabelBuilder {
 
     /**
      * Define a structure to be used to label
-     *  @param items                the items to form the content
+     *
+     * @param items                the items to form the content
      * @param textMethod           method for placing text relative to the object it is attached to
      * @param forTooltip           true if this is for a tooltip
      * @param fitsShape            true if the text is to fit inside the shape (if the shape wants it)
-     * @param alignment             left | right | center
-     * @param padding               numeric amount
+     * @param alignment            left | right | center
+     * @param padding              numeric amount
      * @param hitDetectGranularity if >0, the pixel level granularity to use for hit detection. If zero, none will be done
      */
     public void defineLabeling(List<Param> items, String textMethod, boolean forTooltip, boolean fitsShape, String alignment, double padding, int hitDetectGranularity) {
@@ -127,12 +128,23 @@ public class D3LabelBuilder {
         // Write it out as a wrapped function
         out.onNewLine().add("content: function(d) {").indentMore();
 
-        out.onNewLine().add("return d.row == null ? null : ");
+        // If we need data, guard against not having any
+        if (needsData(items))
+            out.onNewLine().add("return d.row == null ? null : ");
+        else
+            out.onNewLine().add("return ");
+
         writeContent(items, forTooltip);
         out.indentLess().onNewLine().add("}");
 
         out.indentLess().onNewLine().add("}").endStatement();
 
+    }
+
+    private boolean needsData(List<Param> items) {
+        for (Param p : prettify(items, false))
+            if (p.isField()) return true;
+        return false;
     }
 
     // How to offset the text so it fits correctly
