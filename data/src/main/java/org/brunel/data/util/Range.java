@@ -34,10 +34,18 @@ public class Range implements Comparable<Range> {
     }
 
     public static Range makeNumeric(double low, double high, boolean nameAtMid) {
-        double mid = (high + low) / 2;
-        String name = nameAtMid ? Data.formatNumeric(mid, true)
-                : Data.formatNumeric(low, true) + "\u2026" + Data.formatNumeric(high, true);
+        double mid = (high + low) / 2, ext = high - low;
+
+        String name = nameAtMid ? formatV(mid, ext) : formatV(low, ext) + "\u2026" + formatV(high, ext);
         return new Range(low, high, mid, name);
+    }
+
+    protected static String formatV(double v, double ext) {
+        if (ext > 2e6)
+            return Data.formatNumeric(v / 1e6, null, false) + "M";
+        else
+            return Data.formatNumeric(v, null, true);
+
     }
 
     public static Range makeDate(double low, double high, boolean nameAtMid, DateFormat df) {

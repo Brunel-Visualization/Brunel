@@ -83,7 +83,7 @@ class ByteOutput {
         if (Double.isNaN(value.doubleValue()))
             addString("NaN");
         else
-            addString(Data.formatNumeric(value.doubleValue(), false));
+            addString(Data.formatNumeric(value.doubleValue(), null, false));
     }
 
     public void addDate(Date date) {

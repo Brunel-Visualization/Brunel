@@ -85,16 +85,36 @@ var BrunelD3 = (function () {
 
     // Add a color legend
     function colorLegend(target, title, scale, ticks, labels) {
+        var textf,
+            domain = scale.domain(),
+            range = Math.abs(domain[domain.length - 1] - domain[0]),
+            decimalPlaces = range > 0 ? Math.max(0, 4 - Math.log(range) / Math.log(10)) : null,
+            inMillions = range > 2e6;
+
+        labels = null;
+
         target.attr('class', 'legend').append('text').attr('x', 0).attr('y', 0)
             .style('text-anchor', 'end').attr('dy', '0.85em').text(title).attr('class', 'title');
+
         var legend = target.selectAll('legend').data(ticks).enter().append('g').attr('class', 'swatch')
             .attr('transform', function (d, i) {
                 return 'translate(-20,' + (20 + i * 20) + ')';
             });
+
+        // Append swatch boxes and text
         legend.append('rect').attr('x', 6).attr('width', 14).attr('height', 14).style('fill', scale);
-        legend.append('text').attr('y', 7).attr('dy', '.35em').style('text-anchor', 'end').text(function (d, i) {
-            return labels ? labels[i] : BrunelData.Data.format(d, true);
-        })
+
+        if (inMillions) textf = function (d) {
+            return BrunelData.Data.format(d / 1e6, 0, true) + "M"
+        };
+        else textf = function (d) {
+            return BrunelData.Data.format(d, decimalPlaces, true)
+        };
+
+        legend.append('text').attr('y', 7).attr('dy', '.35em').style('text-anchor', 'end')
+            .text(function (d, i) {
+                return labels ? labels[i] : textf(d);
+            })
     }
 
 
@@ -1451,7 +1471,6 @@ var BrunelD3 = (function () {
             zoom.translate(params.translate).scale(params.scale);
         return {translate: zoom.translate(), scale: zoom.scale()}
     }
-
 
 
     //Sets the aspect ratio of the data domain values

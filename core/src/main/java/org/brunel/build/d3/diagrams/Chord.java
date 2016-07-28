@@ -53,7 +53,7 @@ class Chord extends D3Diagram {
         StyleTarget target = StyleTarget.makeElementTarget("text", "axis", "label");
         double labelSize = ModelUtil.getSize(vis, target, "font-size", 8);
         double arcWidth = labelSize * 1.2;
-        out.add("var arc_width =", Data.formatNumeric(arcWidth, false), ";").comment("Width of exterior arc");
+        out.add("var arc_width =", Data.formatNumeric(arcWidth, null, false), ";").comment("Width of exterior arc");
         out.add("function keyFunction(d) { return d.source.index + '|' + d.target.index };").comment(" special key function for the edges");
 
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.polygon, "edge", "chord.chords()");

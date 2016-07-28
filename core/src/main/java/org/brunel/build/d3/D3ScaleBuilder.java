@@ -424,17 +424,17 @@ public class D3ScaleBuilder {
         writeAspect();
         interaction.addScaleInteractivity();
     }
-    
+
     private void writeAspect() {
     	Double aspect = getAspect();
     	boolean anyCategorial = structure.coordinates.xCategorical || structure.coordinates.yCategorical;
-    	
+
     	if (aspect != null && ! anyCategorial) {
             out.onNewLine().add("BrunelD3.setAspect(scale_x, scale_y, " + aspect + ")");
             out.endStatement();
     	}
     }
-    
+
 
     private void writePositionScale(ScalePurpose purpose, Field[] fields, String range, boolean fillToEdge, boolean reverse) {
         int categories = scaleWithDomain(purpose.name(), fields, purpose, 2, "linear", null, reverse);
@@ -471,7 +471,7 @@ public class D3ScaleBuilder {
         if (reverseRange(structure.coordinates.allYFields)) reversed = !reversed;
         return reversed ? "[geom.inner_height,0]" : "[0, geom.inner_height]";
     }
-    
+
     private Double getAspect() {
     	//Find Param with "aspect" and return its value
     	for (VisSingle e: elements) {
@@ -479,7 +479,7 @@ public class D3ScaleBuilder {
     			for (Param p : e.fCoords) {
     				if (p.asString().equals("aspect")) {
     					Param m = p.firstModifier();
-    					
+
     					//Use "square" for 1.0 aspect ratio
     					if (m.asString().equals("square")) return 1.0;
     					else return m.asDouble();
@@ -489,7 +489,7 @@ public class D3ScaleBuilder {
     	}
     	return null;
     }
-    
+
     private boolean reverseRange(Field[] fields) {
         if (fields.length == 0) return false;
         // Ranking causes us to reverse the order
@@ -517,7 +517,7 @@ public class D3ScaleBuilder {
             // Combine all categories in the position after each color
             // We use all the categories in the data; we do not need the partition points
             List<Object> list = getCategories(fields);
-            if (reverse) Collections.reverse(list);            
+            if (reverse) Collections.reverse(list);
             out.add("d3.scale.ordinal()").addChained("domain([").addQuotedCollection(list).add("])");
             return list.size();
         }
@@ -597,17 +597,17 @@ public class D3ScaleBuilder {
                     divs[i] = partitionPoints[i];
             }
         }
-        
+
         if (reverse) {
         	List<Object> l = Arrays.asList(divs);
         	Collections.reverse(l);
         	divs = l.toArray();
         }
-        
+
         out.addChained("domain([").add(Data.join(divs)).add("])");
         return -1;
     }
-    
+
 
 
     public List<Object> getCategories(Field[] ff) {
@@ -678,9 +678,10 @@ public class D3ScaleBuilder {
     }
 
     public void writeLegends(VisSingle vis) {
+        DateFormat dateFormat = null;
         if (vis.fColor.isEmpty() || colorLegendField == null) return;
         if (!vis.fColor.get(0).asField().equals(colorLegendField.name)) return;
-        String legendTicks, legendLabels = null;
+        String legendTicks;
         if (colorLegendField.preferCategorical()) {
             // Categorical data can just grab it from the domain
             legendTicks = "scale_color.domain()";
@@ -706,16 +707,13 @@ public class D3ScaleBuilder {
 
             if (colorLegendField.isDate()) {
                 // Convert to dates
-                DateFormat dateFormat = (DateFormat) colorLegendField.property("dateFormat");
+                dateFormat = (DateFormat) colorLegendField.property("dateFormat");
                 DateBuilder dateBuilder = new DateBuilder();
                 String[] divs = new String[divisions.length];
-                String[] labels = new String[divisions.length];
-                for (int i = 0; i < divs.length; i++) {
+                for (int i = 0; i < divs.length; i++)
                     divs[i] = dateBuilder.make(Data.asDate(divisions[i]), dateFormat, true);
-                    labels[i] = "'" + colorLegendField.format(divisions[i]) + "'";
-                }
+
                 legendTicks = "[" + Data.join(divs) + "]";
-                legendLabels = "[" + Data.join(labels) + "]";
             } else {
                 legendTicks = "[" + Data.join(divisions) + "]";
             }
@@ -724,9 +722,11 @@ public class D3ScaleBuilder {
         String title = colorLegendField.label;
         if (title == null) title = colorLegendField.name;
 
+        // Add the date format field in only for date legends
         out.add("BrunelD3.addLegend(legends, " + out.quote(title) + ", scale_color, " + legendTicks);
-        if (legendLabels != null) out.add(", ").add(legendLabels);
-        out.add(")").endStatement();
+        if (dateFormat != null)
+            out.add(", BrunelData.util_DateFormat." + dateFormat.name());
+            out.add(")").endStatement();
     }
 
     private void addColorScale(Param p, VisSingle vis) {
@@ -847,7 +847,7 @@ public class D3ScaleBuilder {
                         result = new AxisSpec(result.ticks, result.name, true, result.reverse);
                     else if ("reverse".equals(p.asString()))
                         result = new AxisSpec(result.ticks, result.name, result.grid, true);
-                } 
+                }
             }
             return result;
         }

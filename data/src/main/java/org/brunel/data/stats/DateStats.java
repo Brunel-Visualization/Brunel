@@ -45,6 +45,7 @@ public class DateStats {
 
     private static DateFormat getFormat(DateUnit unit, double granularity) {
         // HourMinSec, HourMin, DayHour, YearMonthDay, YearMonth, Year;
+        if (unit == DateUnit.century || unit == DateUnit.decade) return DateFormat.Year;
         if (granularity > 360) return DateFormat.Year;
         if (granularity > 13) return DateFormat.YearMonth;
         if (granularity > 0.9) return DateFormat.YearMonthDay;

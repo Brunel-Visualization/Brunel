@@ -198,8 +198,8 @@ var $ = {
         return s.replace(/[0]?0e/, 'e').replace('+', '');
     },
 
-    formatFixed: function (d, useGrouping) {
-        var s = d.toPrecision(8);
+    formatFixed: function (d, places, useGrouping) {
+        var s = d.toFixed(places);
         var p = s.length;
         // Strip trailing zeros
         while (s.charAt(p - 1) == '0')
@@ -857,15 +857,15 @@ $.copy(V.Data, {
 
     format: function(o, useGrouping) {
         if (o == null) return '?';
-        if (typeof(o) == 'number') return V.Data.formatNumeric(o, useGrouping);
+        if (typeof(o) == 'number') return V.Data.formatNumeric(o, null, useGrouping);
         return '' + o;
     },
 
-    formatNumeric: function(d, useGrouping) {
+    formatNumeric: function(d, decimalPlaces, useGrouping) {
         if (d == 0) return '0';
         if (Math.abs(d) <= 1e-6 || Math.abs(d) >= 1e8) return $.formatScientific(d);
         if (Math.abs((d - Math.round(d)) / d) < 1e-9) return $.formatInt(Math.round(d), useGrouping);
-        return $.formatFixed(d, useGrouping);
+        return $.formatFixed(d, decimalPlaces || 6, useGrouping);
     },
 
     asNumeric: function(c) {
@@ -1692,7 +1692,7 @@ $.copy(V.Field.prototype, {
     },
 
     format: function(v) {
-        var d;
+        var d, s;
         if (v == null) return "?";
         if (v instanceof V.util_Range) return v.toString();
         if (this.isDate())
@@ -1700,11 +1700,12 @@ $.copy(V.Field.prototype, {
         if ("percent" == this.property("summary")) {
             d = V.Data.asNumeric(v);
             if (d == null) return null;
-            return V.Data.formatNumeric(Math.round(d * 10) / 10.0, false) + "%";
+            return V.Data.formatNumeric(Math.round(d * 10) / 10.0, null, false) + "%";
         }
         if (this.isNumeric()) {
             d = V.Data.asNumeric(v);
-            return d == null ? "?" : V.Data.formatNumeric(d, true);
+            s = (d == null) ? "?" : V.Data.formatNumeric(d, this.numProperty("decimalPlaces"), true);
+            return "percent" == this.property("summary") ? s + "%" : s;
         }
         if (this.isProperty("list"))
             return v.toString(this.property("dateFormat"));
@@ -1868,7 +1869,7 @@ $.copy(V.io_ByteOutput.prototype, {
         if (isNaN(value))
             this.addString("NaN");
         else
-            this.addString(V.Data.formatNumeric(value, false));
+            this.addString(V.Data.formatNumeric(value, null, false));
     },
 
     addDate: function(date) {
@@ -3357,7 +3358,7 @@ V.stats_NumericStats = function() {};
 $.copy(V.stats_NumericStats, {
 
     populate: function(f) {
-        var d, data, high, i, item, low, m1, m2, m3, m4, max, min, minD;
+        var allInteger, d, data, granularity, high, i, item, low, m1, m2, m3, m4, max, min, places, range;
         var n = f.rowCount();
         var valid = new $.List();
         for (i = 0; i < n; i++){
@@ -3400,13 +3401,19 @@ $.copy(V.stats_NumericStats, {
             f.set("q1", V.stats_NumericStats.av(data, (n - 1) * 0.25));
             f.set("q3", V.stats_NumericStats.av(data, (n - 1) / 2 + (n - 1) * 0.25));
         }
-        minD = max - min;
-        if (minD == 0) minD = Math.abs(max);
+        granularity = max - min;
+        allInteger = true;
+        if (granularity == 0) granularity = Math.abs(max);
         for (i = 1; i < data.length; i++){
             d = data[i] - data[i - 1];
-            if (d > 0) minD = Math.min(minD, d);
+            if (d > 0)
+                granularity = Math.min(granularity, d);
+            if (allInteger && data[i] != Math.round(data[i])) allInteger = false;
         }
-        f.set("granularity", minD);
+        f.set("granularity", granularity);
+        range = max == min ? (max == 0 ? 1 : max) : max - min;
+        places = Math.max(0, Math.round(4 - Math.log(range) / Math.log(10)));
+        f.set("decimalPlaces", allInteger && max - min > 5 ? 0 : places);
     },
 
     moment: function(data, c, p, N) {
@@ -3424,8 +3431,8 @@ $.copy(V.stats_NumericStats, {
 
     creates: function(key) {
         return ("validNumeric" == key) || ("mean" == key) || ("stddev" == key) || ("variance" == key) || ("skew" ==
-            key) || ("kurtosis" == key) || ("min" == key) || ("max" == key) || ("q1" == key) || ("q3" ==
-            key) || ("median" == key) || ("granularity" == key);
+            key) || ("kurtosis" == key) || ("min" == key) || ("max" == key) || ("q1" == key) || ("q3" == key)
+            || ("median" == key) || ("granularity" == key) || ("decimalPlaces" == key);
     }
 
 });
@@ -3997,7 +4004,7 @@ $.copy(V.util_ItemsList.prototype, {
             } else {
                 d = V.Data.asNumeric(v);
                 if (d != null)
-                    s += V.Data.formatNumeric(d, false);
+                    s += V.Data.formatNumeric(d, null, false);
                 else
                     s += v.toString();
             }
@@ -4113,8 +4120,8 @@ $.copy(V.util_Range, {
 
     makeNumeric: function(low, high, nameAtMid) {
         var mid = (high + low) / 2;
-        var name = nameAtMid ? V.Data.formatNumeric(mid, true) : V.Data.formatNumeric(low,
-            true) + "\u2026" + V.Data.formatNumeric(high, true);
+        var name = nameAtMid ? V.Data.formatNumeric(mid, null, true) : V.Data.formatNumeric(low, null, true) +
+            "\u2026" + V.Data.formatNumeric(high, null, true);
         return new V.util_Range(low, high, mid, name);
     },
 

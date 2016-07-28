@@ -129,7 +129,7 @@ public class Param implements Comparable<Param> {
     }
 
     public String asString() {
-        if (type == Type.number) return Data.formatNumeric(asDouble(), false);
+        if (type == Type.number) return Data.formatNumeric(asDouble(), null, false);
         else return content.toString();
     }
 
