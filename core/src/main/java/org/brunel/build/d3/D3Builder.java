@@ -71,7 +71,7 @@ public class D3Builder extends AbstractBuilder {
     private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
     private D3Interaction interaction;          // Builder for interactions
     private D3ElementBuilder[] elementBuilders; // Builder for each element
-    private boolean hasMultipleCharts;          // flag to indicate mulktiple charts in the same vis
+    private boolean hasMultipleCharts;          // flag to indicate multiple charts in the same vis
 
     private D3Builder(BuilderOptions options) {
         super(options);
@@ -252,16 +252,22 @@ public class D3Builder extends AbstractBuilder {
 
     protected void endChart(ChartStructure structure) {
         out.onNewLine().add("function build(time, noData) {").indentMore();
+
+        // This is a bit of hack to get around d3 support for catgeroical scales.
+        // we cannot simply set the zooming, so we have to add this work around at the
+        // start of the build
+        interaction.addCategoricalScaleAdjustment();
+
         out.onNewLine().add("var first = elements[0].data() == null").endStatement();
         out.add("if (first) time = 0;").comment("No transition for first call");
 
         // For coordinate system charts, see if axes are needed
         if (scalesBuilder.needsAxes())
-            out.onNewLine().add("buildAxes()").endStatement();
+            out.onNewLine().add("buildAxes(time)").endStatement();
 
         // For maps, see if the graticule is needed
         if (structure.geo != null && structure.geo.withGraticule)
-            out.onNewLine().add("buildAxes()").endStatement();
+            out.onNewLine().add("buildAxes(time)").endStatement();
 
         Integer[] order = structure.elementBuildOrder();
 

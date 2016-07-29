@@ -366,13 +366,14 @@ public class D3ScaleBuilder {
      * Adds the calls to set the axes into the already defined scale groups
      */
     private void defineAxesBuild() {
-        out.onNewLine().ln().add("function buildAxes() {").indentMore();
+        out.onNewLine().ln().add("function buildAxes(time) {").indentMore();
         if (hAxis.exists()) {
             if (hAxis.categorical) {
                 // Ensure the ticks are filtered so as not to overlap
                 out.onNewLine().add("axis_bottom.tickValues(BrunelD3.filterTicks(" + hAxis.scale + "))");
             }
-            out.onNewLine().add("axes.select('g.axis.x').call(axis_bottom)");
+            out.onNewLine().add("var axis_x = axes.select('g.axis.x');");
+            out.onNewLine().add("BrunelD3.trans(axis_x, time).call(axis_bottom)");
             if (hAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
         }
@@ -383,7 +384,8 @@ public class D3ScaleBuilder {
                 out.onNewLine().add("axis_left.tickValues(BrunelD3.filterTicks(" + vAxis.scale + "))");
             }
 
-            out.onNewLine().add("axes.select('g.axis.y').call(axis_left)");
+            out.onNewLine().add("var axis_y = axes.select('g.axis.y');");
+            out.onNewLine().add("BrunelD3.trans(axis_y, time).call(axis_left)");
             if (vAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
         }
@@ -412,10 +414,12 @@ public class D3ScaleBuilder {
 
     private void addRotateTicks() {
         out.add(".selectAll('.tick text')")
-                .addChained("style('text-anchor', 'end')")
-                .addChained("attr('dx', '-.3em')")
-                .addChained("attr('dy', '.6em')")
-                .addChained("attr('transform', function(d) { return 'rotate(-45)' })");
+                .addChained("attr('transform', function() {")
+                .indentMore().indentMore().onNewLine()
+                .onNewLine().add("var v = this.getComputedTextLength() / Math.sqrt(2)/2;")
+                .onNewLine().add("return 'translate(-' + (v+6) + ',' + v + ') rotate(-45)'")
+                .indentLess().indentLess().onNewLine().add("})");
+
     }
 
     public void writeCoordinateScales(D3Interaction interaction) {

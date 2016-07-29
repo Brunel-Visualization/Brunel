@@ -323,37 +323,39 @@ public class D3Interaction {
      */
     public void addScaleInteractivity() {
         if (zoomable == ZoomType.None) return;
-        List<String> zoomCalls = new ArrayList<>();
 
         out.add("zoom");
 
-        if (canZoomX) {
-            if (structure.coordinates.xCategorical) {
-                zoomCalls.add("scale_x.rangePoints([zoom.translate()[0], zoom.translate()[0] + zoom.scale() * geom.inner_width], 1);");
-            } else if (scales.coords == Coordinates.transposed) {
+        if (canZoomX && !structure.coordinates.xCategorical) {
+            if (scales.coords == Coordinates.transposed) {
                 out.add(".y(scale_x)");
             } else {
                 out.add(".x(scale_x)");
             }
         }
 
-        if (canZoomY) {
-            if (structure.coordinates.yCategorical) {
-                zoomCalls.add("scale_y.rangePoints([zoom.translate()[1], zoom.translate()[1] + zoom.scale() * geom.inner_height], 1);");
-            } else if (scales.coords == Coordinates.transposed) {
+        if (canZoomY && !structure.coordinates.yCategorical) {
+            if (scales.coords == Coordinates.transposed) {
                 out.add(".x(scale_y)");
             } else {
                 out.add(".y(scale_y)");
             }
         }
-
-        if (!zoomCalls.isEmpty()) {
-            out.addChained("on('zoom', function() {").indentMore();
-            for (String s : zoomCalls) out.onNewLine().add(s).endStatement();
-            out.onNewLine().add("build(-1)").endStatement();
-            out.indentLess().onNewLine().add("})");
-        }
         out.endStatement();
+    }
 
+    /**
+     * Add calls to set the range points for the categorical scale based on the zoom transform
+     */
+    public void addCategoricalScaleAdjustment(){
+        if (zoomable != ZoomType.CoordinateZoom) return;
+
+        if (canZoomX && structure.coordinates.xCategorical || canZoomY && structure.coordinates.yCategorical)
+            out.comment("Redefine categorical scale range points for the zoom");
+
+        if (canZoomX && structure.coordinates.xCategorical)
+                out.add("scale_x.rangePoints([zoom.translate()[0], zoom.translate()[0] + zoom.scale() * geom.inner_width], 1);");
+        if (canZoomY && structure.coordinates.yCategorical)
+                out.add("scale_y.rangePoints([zoom.translate()[1], zoom.translate()[1] + zoom.scale() * geom.inner_height], 1);");
     }
 }

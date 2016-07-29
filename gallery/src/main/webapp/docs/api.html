@@ -103,7 +103,7 @@
     </li>
 
     <li><b>zoom(params, time)</b> -- A function that, if called with no parameters, will return an object
-    <code>{ translate:[x,y], scale:s }</code> giving a 2 item array with x and y offsets, and the zoom scale.
+    <code>{ dx, dy, s }</code> giving a 3 item array with x and y offsets, and the zoom scale.
         The same object can be passed in as the first argument to set the pan-zoom. The time is an optional parameter
         determining the speed at which the zoom is animated (zero means instant).
     </li>
@@ -182,9 +182,9 @@
     var v = new BrunelVis('visualization');
     v.build(table1);
 
-    function panBy(dx) {
-	    var z = v.charts[0].zoom(), t = z.translate;
-	    v.charts[0].zoom( { translate:[t[0]+dx, t[1]], scale:z.scale }, 3000);
+    function panBy(amount) {
+	    var z = v.charts[0].zoom();
+	    v.charts[0].zoom( { dx: z.dx+amount }, 3000);
     }
 
     /// ....

@@ -297,9 +297,12 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
         new PageOutput(builder, writer)
                 .pageTitle("Brunel: " + shortForm(a))
                 .addTitles("<h2 style='text-align:center'>" + a + "</h2>")
-//                .addExecutionScript("console.log('start');", "alert('success');")
+//                .addExecutionScript(zoomChartForFixedBars())
                 .write();
+
+
         try {
+            writer.append("<button onclick='var c = v.charts[0]; c.zoom({dx:c.zoom().dx+80}, 1000);'>RIGHT</button>\n");
             writer.close();
         } catch (IOException ignored) {
         }
@@ -327,6 +330,17 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
         if (source.strProperty("uri") != null) settings.putString("last-source", source.strProperty("uri"));
         setTitle(source.name());
         updateVis();
+    }
+
+    // Demo code for pre-zooming
+    public String[] zoomChartForFixedBars() {
+        return new String[] {
+                "var chart = v.charts[0], scx = chart.scales.x, range = scx.range(), nCats = scx.domain().length;",
+                "var width = Math.abs(range[range.length-1] - range[0]); ",
+                "var desiredGap = 20;",
+                "var desiredRange = desiredGap * nCats;",
+                "chart.zoom( {s: desiredRange/width}, 0 );"
+        };
     }
 
 }

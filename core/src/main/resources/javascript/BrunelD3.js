@@ -1469,13 +1469,21 @@ var BrunelD3 = (function () {
         })
     }
 
-    // Programmatic control of pan and zoom
-    // params may be null (just to return values) or {translate:[x,y], scale:s} for the zooming
-    // zoom is the d3 zoom object
+    /**
+     * Set zooming parameters. Missing parameter values are left unchanged
+     * @param params - if not null, the values inside are used to zoom
+     * @param zoom - d3.zoom to manipulate
+     * @returns {{dx, dy, s}}
+     */
     function panzoom(params, zoom) {
-        if (params)
-            zoom.translate(params.translate).scale(params.scale);
-        return {translate: zoom.translate(), scale: zoom.scale()}
+        var dx = zoom.translate()[0], dy = zoom.translate()[1], s = zoom.scale();
+        if (params) {
+            dx = params.dx || dx;
+            dy = params.dy || dy;
+            s = params.s || s;
+            zoom.translate([dx, dy]).scale(s);
+        }
+        return {dx:dx, dy:dy, s:s}
     }
 
     /**
