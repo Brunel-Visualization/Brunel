@@ -303,7 +303,8 @@ public class D3Interaction {
 
         // Zoom by coordinate or projection
         if (zoomable == ZoomType.CoordinateZoom || zoomable == ZoomType.MapZoom)
-            out.add("zoom.on('zoom', function() { build(-1) } )").endStatement();
+            out.add("zoom.on('zoom', function() { BrunelD3.restrictZoom(zoom, geom); build(-1) })")
+                    .endStatement();
 
         // Zoom by graphic transform
         if (zoomable == ZoomType.GraphicZoom)

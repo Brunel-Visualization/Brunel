@@ -51,6 +51,7 @@ import java.util.Scanner;
 @SuppressWarnings("serial")
 public class BrunelPad extends JFrame implements AppEventListener, Droppable {
 
+
     private static final String JS_FILE = "/org/brunel/util/animation.js";
     private static final String JS = new Scanner(WebDisplay.class.getResourceAsStream(JS_FILE), "UTF-8").useDelimiter("\\A").next();
 
@@ -296,6 +297,7 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
         new PageOutput(builder, writer)
                 .pageTitle("Brunel: " + shortForm(a))
                 .addTitles("<h2 style='text-align:center'>" + a + "</h2>")
+//                .addExecutionScript("console.log('start');", "alert('success');")
                 .write();
         try {
             writer.close();

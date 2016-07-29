@@ -1478,6 +1478,44 @@ var BrunelD3 = (function () {
         return {translate: zoom.translate(), scale: zoom.scale()}
     }
 
+    /**
+     * Restricts the parameters of the pan zoom so as to disallow meaningless transformations
+     * @param zoom -- the zoom to manipulate, in place
+     * @param geom -- the space we have available
+     * @param maxScaleFactor -- maximum scaling we allow
+     */
+    function restrictZoom(zoom, geom, maxScaleFactor) {
+
+        if (d3.event && d3.event.sourceEvent
+            && d3.event.sourceEvent.altKey) return;                     // Alt key disables the check
+
+        var D = 0.5,                                                    // Minimum fraction of screen screen
+            dx = zoom.translate()[0], dy = zoom.translate()[1],         // transform offsets
+            s = zoom.scale(),                                           // transform scale
+            W = geom.inner_width, H = geom.inner_height,                // chart bounds
+            minW = D * W, minH = D * H;                                 // minumum number of pixels to show
+
+        maxScaleFactor = maxScaleFactor || 3;                           // Default max
+
+        // Handle the case when the scale is out of bounds
+        if (s > maxScaleFactor || s < 1 / maxScaleFactor) {
+            s = s > 1 ? maxScaleFactor : 1 / maxScaleFactor;
+            if (zoom._LC) {
+                dx += (zoom._LC[0] - (dx + s * W / 2));                 // Translate to center at the previous center
+                dy += (zoom._LC[1] - (dy + s * H / 2));
+            }
+        }
+
+
+        if (dx + s * W < minW) dx = minW - s * W;                       // Don't allow scrolling off the left
+        if (dx > W - minW) dx = W - minW;                               // Don't allow scrolling off the right
+        if (dy + s * H < minH) dy = minH - s * H;                       // Don't allow scrolling off the top
+        if (dy > H - minH) dy = H - minH;                               // Don't allow scrolling off the bottom
+
+        zoom._LC = [dx + s * W / 2, dy + s * H / 2];                    // Store in case we go out of bounds again
+        zoom.scale(s).translate([dx, dy]);                              // Set the values in the zoom
+    }
+
 
     //Sets the aspect ratio of the data domain values
     function setAspect(scale_x, scale_y, aspect) {
@@ -1565,6 +1603,7 @@ var BrunelD3 = (function () {
         'closestOnPath': closestPathPoint,
         'closest': closestItem,
         'panzoom': panzoom,
+        'restrictZoom': restrictZoom,
         'setAspect': setAspect
     }
 
