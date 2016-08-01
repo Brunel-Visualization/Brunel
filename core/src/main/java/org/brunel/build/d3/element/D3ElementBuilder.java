@@ -109,7 +109,7 @@ public class D3ElementBuilder {
 
         if (diagram == null || diagram instanceof GeoMap) {
             writeCoordinateDefinition(details);
-            writeCoordinateLabelingAndAesthetics(details);
+            writeCoordinateLabelingAndAesthetics(details, true);
             if (diagram != null) diagram.writeDefinition(details);
 
         } else {
@@ -348,20 +348,34 @@ public class D3ElementBuilder {
             defineCircle(details);
     }
 
-    protected void writeCoordinateLabelingAndAesthetics(ElementDetails details) {
+    protected void writeCoordinateLabelingAndAesthetics(ElementDetails details, boolean filterToDataOnly) {
+        writeAesthetics(details, filterToDataOnly, vis, out, labelBuilder);
+    }
+
+    public static void writeAesthetics(ElementDetails details, boolean filterToDataOnly, VisSingle vis, ScriptWriter out, D3LabelBuilder labelBuilder) {
+        boolean showsColor = !vis.fColor.isEmpty();
+        boolean showsStrokeSize = details.isStroked() && !vis.fSize.isEmpty();
+        boolean showsOpacity = !vis.fOpacity.isEmpty();
+
+        if (filterToDataOnly && (showsColor || showsOpacity || showsStrokeSize)) {
+            // Filter only to show the data based items
+            out.addChained("filter(hasData)").at(50).comment("following only performed for data items");
+        }
+
         // Define colors using the color function
-        if (!vis.fColor.isEmpty()) {
+        if (showsColor) {
             String colorType = details.isStroked() ? "stroke" : "fill";
             out.addChained("style('" + colorType + "', color)");
         }
 
         // Define line width if needed
-        if (details.isStroked() && !vis.fSize.isEmpty())
+        if (showsStrokeSize)
             out.addChained("style('stroke-width', size)");
 
         // Define opacity
-        if (!vis.fOpacity.isEmpty()) {
-            out.addChained("style('fill-opacity', opacity)").addChained("style('stroke-opacity', opacity)");
+        if (showsOpacity) {
+            out.addChained("style('fill-opacity', opacity)").
+                    addChained("style('stroke-opacity', opacity)");
         }
 
         out.endStatement();
@@ -369,7 +383,6 @@ public class D3ElementBuilder {
         labelBuilder.addElementLabeling();
 
         labelBuilder.addTooltips(details);
-
     }
 
     private void defineText(ElementDetails elementDef, VisSingle vis) {

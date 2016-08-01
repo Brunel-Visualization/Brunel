@@ -19,6 +19,7 @@ package org.brunel.build.d3.diagrams;
 import org.brunel.action.Param;
 import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
+import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
@@ -37,10 +38,10 @@ public abstract class D3Diagram {
         Dataset data = structure.data;
         if (vis.tDiagram == null) return null;
         if (vis.tDiagram == Diagram.bubble) return new Bubble(vis, data, interaction, out);
-        if (vis.tDiagram == Diagram.chord) return new Chord(vis, data, interaction,out);
-        if (vis.tDiagram == Diagram.cloud) return new Cloud(vis, data, interaction,out);
-        if (vis.tDiagram == Diagram.tree) return new Tree(vis, data, interaction,out);
-        if (vis.tDiagram == Diagram.treemap) return new Treemap(vis, data, interaction,out);
+        if (vis.tDiagram == Diagram.chord) return new Chord(vis, data, interaction, out);
+        if (vis.tDiagram == Diagram.cloud) return new Cloud(vis, data, interaction, out);
+        if (vis.tDiagram == Diagram.tree) return new Tree(vis, data, interaction, out);
+        if (vis.tDiagram == Diagram.treemap) return new Treemap(vis, data, interaction, out);
         if (vis.tDiagram == Diagram.network)
             return new Network(vis, data, structure, structure.chart.getEdge(), interaction, out);
         if (vis.tDiagram == Diagram.map) {
@@ -61,7 +62,7 @@ public abstract class D3Diagram {
     final String[] position;
     private boolean isHierarchy;
 
-    D3Diagram(VisSingle vis, Dataset data,  D3Interaction interaction, ScriptWriter out) {
+    D3Diagram(VisSingle vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
         this.vis = vis;
         this.out = out;
         this.size = vis.fSize.isEmpty() ? null : vis.fSize.get(0);
@@ -91,9 +92,9 @@ public abstract class D3Diagram {
         // By default, no labels needed
         return false;
     }
-    
+
     public D3Interaction.ZoomType getZoomType() {
-    	return interaction.getZoomType();
+        return interaction.getZoomType();
     }
 
     public void preBuildDefinitions() {
@@ -121,24 +122,9 @@ public abstract class D3Diagram {
         // By Default, do nothing
     }
 
-    void addAestheticsAndTooltips(ElementDetails details, boolean addLabels) {
-        String remapAesthetics = "if (d == null || d.row == null) return; ";
-        if (!vis.itemsTooltip.isEmpty()) {
-            labelBuilder.addTooltips(details);
-        }
-
-        if (!vis.fColor.isEmpty())
-            out.add("selection.style('fill', function(d) { " + remapAesthetics + "return color(d) })").endStatement();
-
-        if (!vis.fOpacity.isEmpty())
-            out.add("selection.style('fill-opacity', function(d) { " + remapAesthetics + "return opacity(d) })")
-                    .addChained("style('stroke-opacity', function(d) { " + remapAesthetics + "return opacity(d) })")
-                    .endStatement();
-
-        if (addLabels) labelBuilder.addElementLabeling();
-
+    void addAestheticsAndTooltips(ElementDetails details) {
+        D3ElementBuilder.writeAesthetics(details, true, vis, out, labelBuilder);
     }
-
 
     void makeHierarchicalTree() {
         String[] positionFields = vis.positionFields();

@@ -324,8 +324,7 @@ public class D3ScaleBuilder {
         }
         if (vAxis.exists()) {
             SVGGroupUtility groupUtil = new SVGGroupUtility(structure, "y_axis", out);
-            out.onNewLine().add("axes.append('g').attr('class', 'y axis')")
-                    .addChained("attr('transform','translate(' + geom.chart_left + ', 0)')");
+            out.onNewLine().add("axes.append('g').attr('class', 'y axis')");
             groupUtil.addAccessibleTitle("Vertical Axis");
             out.endStatement();
 
@@ -523,7 +522,7 @@ public class D3ScaleBuilder {
             List<Object> list = getCategories(fields);
             if (reverse) Collections.reverse(list);
             out.add("d3.scale.ordinal()").addChained("domain([");
-            // Write numebers as numbers, everything else becomes a string
+            // Write numbers as numbers, everything else becomes a string
             for (int i = 0; i < list.size(); i++) {
                 Object o = list.get(i);
                 if (i>0) out.add(", ");

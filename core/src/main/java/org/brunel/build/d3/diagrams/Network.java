@@ -90,8 +90,8 @@ class Network extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details) {
-        out.addChained("attr('r',", details.overallSize, ")").endStatement();
-        addAestheticsAndTooltips(details, true);
+        out.addChained("attr('r',", details.overallSize, ")");
+        addAestheticsAndTooltips(details);
     }
 
 }

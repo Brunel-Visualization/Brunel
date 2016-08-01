@@ -94,7 +94,7 @@ public class GuideBuilder extends D3ElementBuilder {
                     .endStatement();
 
 
-            writeCoordinateLabelingAndAesthetics(details);
+            writeCoordinateLabelingAndAesthetics(details, false);
 
         }
 

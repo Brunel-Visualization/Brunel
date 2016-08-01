@@ -63,9 +63,9 @@ class Chord extends D3Diagram {
 
         // The Chords themselves are simple to create
         out.addChained("attr('d', d3.svg.chord().radius(geom.inner_radius-arc_width))")
-                .addChained("attr('class', 'element " + element.name() + "')").endStatement();
+                .addChained("attr('class', 'element " + element.name() + "')");
 
-        addAestheticsAndTooltips(details, true);
+        addAestheticsAndTooltips(details);
 
         // We now need to add the arcs on the outside for the groups
         out.onNewLine().ln().comment("Add in the arcs on the outside for the groups");

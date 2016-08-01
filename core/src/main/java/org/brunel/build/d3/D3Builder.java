@@ -247,7 +247,8 @@ public class D3Builder extends AbstractBuilder {
         out.add("    post = function(d, i) { return d },").at(50).comment("Default post-process does nothing");
         out.add("    transitionTime = 200,").at(50).comment("Transition time for animations");
         out.add("    charts = [],").at(50).comment("The charts in the system");
-        out.add("    vis = d3.select('#' + visId).attr('class', 'brunel');").at(60).comment("the SVG container");
+        out.add("    hasData = function(d) {return d && (d.row != null)},").at(50).comment("Filters to data items");
+        out.add("    vis = d3.select('#' + visId).attr('class', 'brunel')").at(60).comment("the SVG container");
     }
 
     protected void endChart(ChartStructure structure) {

@@ -48,10 +48,10 @@ class Treemap extends D3Diagram {
                 .addChained("attr('y', function(d) { return d.y; })")
                 .addChained("attr('width', function(d) { return d.dx; })")
                 .addChained("style('width', function(d) { return d.dx; })")
-                .addChained("attr('height', function(d) { return d.dy; })").endStatement();
+                .addChained("attr('height', function(d) { return d.dy; })");
+        addAestheticsAndTooltips(details);
 
         labelBuilder.addTreeInternalLabels();
-        addAestheticsAndTooltips(details, true);
     }
 
     public boolean needsDiagramLabels() {
@@ -59,7 +59,7 @@ class Treemap extends D3Diagram {
     }
 
     public String getRowKey() {
-        return "d.key || data._key(d.row)";
+        return "d.key == null ?  data._key(d.row) : d.key";
     }
 
 }
