@@ -302,9 +302,11 @@ public class D3Interaction {
         out.add("var zoom = d3.behavior.zoom()").endStatement();
 
         // Zoom by coordinate or projection
-        if (zoomable == ZoomType.CoordinateZoom || zoomable == ZoomType.MapZoom)
+        if (zoomable == ZoomType.CoordinateZoom)
             out.add("zoom.on('zoom', function() { BrunelD3.restrictZoom(zoom, geom); build(-1) })")
                     .endStatement();
+        if (zoomable == ZoomType.MapZoom)
+            out.add("zoom.on('zoom', function() { build(-1) })").endStatement();
 
         // Zoom by graphic transform
         if (zoomable == ZoomType.GraphicZoom)
@@ -347,15 +349,15 @@ public class D3Interaction {
     /**
      * Add calls to set the range points for the categorical scale based on the zoom transform
      */
-    public void addCategoricalScaleAdjustment(){
+    public void addCategoricalScaleAdjustment() {
         if (zoomable != ZoomType.CoordinateZoom) return;
 
         if (canZoomX && structure.coordinates.xCategorical || canZoomY && structure.coordinates.yCategorical)
             out.comment("Redefine categorical scale range points for the zoom");
 
         if (canZoomX && structure.coordinates.xCategorical)
-                out.add("scale_x.rangePoints([zoom.translate()[0], zoom.translate()[0] + zoom.scale() * geom.inner_width], 1);");
+            out.add("scale_x.rangePoints([zoom.translate()[0], zoom.translate()[0] + zoom.scale() * geom.inner_width], 1);");
         if (canZoomY && structure.coordinates.yCategorical)
-                out.add("scale_y.rangePoints([zoom.translate()[1], zoom.translate()[1] + zoom.scale() * geom.inner_height], 1);");
+            out.add("scale_y.rangePoints([zoom.translate()[1], zoom.translate()[1] + zoom.scale() * geom.inner_height], 1);");
     }
 }

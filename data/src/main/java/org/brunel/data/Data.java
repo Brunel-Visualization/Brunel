@@ -226,7 +226,7 @@ public class Data {
             if ("year".equals(method)) {
                 // Must be numeric and is equal to years
                 Double v = asNumeric(o);
-                if (v != null) data[i] = asDate(Data.format(v, false) + "-01-01");
+                if (v != null && v > 0) data[i] = asDate(Data.format(v, false) + "-01-01");
             } else if ("excel".equals(method)) {
                 // Must be numeric and is equal to the number of days since 1900.
                 // We use the number of days since 1970, so we need to subtract the difference

@@ -181,8 +181,8 @@ public class Auto {
     }
 
     private static boolean isYearly(Field asNumeric) {
-        if (asNumeric.min() < 1600) return false;
-        if (asNumeric.max() > 2100) return false;
+        if (asNumeric.numProperty("q1") < 1600) return false;           // Use the lower quartile (to avoid outliers)
+        if (asNumeric.numProperty("q3") > 2100) return false;           // High value is usually OK
         Double d = asNumeric.numProperty("granularity");
         return d != null && d - Math.floor(d) < 1e-6;
     }
