@@ -522,7 +522,15 @@ public class D3ScaleBuilder {
             // We use all the categories in the data; we do not need the partition points
             List<Object> list = getCategories(fields);
             if (reverse) Collections.reverse(list);
-            out.add("d3.scale.ordinal()").addChained("domain([").addQuotedCollection(list).add("])");
+            out.add("d3.scale.ordinal()").addChained("domain([");
+            // Write numebers as numbers, everything else becomes a string
+            for (int i = 0; i < list.size(); i++) {
+                Object o = list.get(i);
+                if (i>0) out.add(", ");
+                if (o instanceof Number) out.add(Data.format(o, false));
+                else out.add(Data.quote(o.toString()));
+            }
+            out.add("])");
             return list.size();
         }
 
