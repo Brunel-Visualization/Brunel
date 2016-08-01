@@ -629,8 +629,8 @@ $.copy(V.auto_Auto, {
 
     isYearly: function(asNumeric) {
         var d;
-        if (asNumeric.min() < 1600) return false;
-        if (asNumeric.max() > 2100) return false;
+        if (asNumeric.numProperty("q1") < 1600) return false;
+        if (asNumeric.numProperty("q3") > 2100) return false;
         d = asNumeric.numProperty("granularity");
         return d != null && d - Math.floor(d) < 1e-6;
     }
@@ -894,7 +894,7 @@ $.copy(V.Data, {
             o = f.value(i);
             if ("year" == method) {
                 v = V.Data.asNumeric(o);
-                if (v != null)
+                if (v != null && v > 0)
                     data[i] = V.Data.asDate(V.Data.format(v, false) + "-01-01");
             } else if ("excel" == method) {
                 v = V.Data.asNumeric(o);
@@ -4120,7 +4120,7 @@ $.copy(V.util_Range, {
 
     makeNumeric: function(low, high, nameAtMid) {
         var mid = (high + low) / 2;
-        var ext = high - low;
+        var ext = 2 * (high - low) + 1;
         var name = nameAtMid ? V.util_Range.formatV(mid, ext) : V.util_Range.formatV(low,
             ext) + "\u2026" + V.util_Range.formatV(high, ext);
         return new V.util_Range(low, high, mid, name);

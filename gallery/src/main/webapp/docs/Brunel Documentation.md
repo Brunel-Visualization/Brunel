@@ -964,7 +964,7 @@ appearance and placement. References to field names are also supported.
 
     bar x(region) y(#count) title("Count Per Region")
 
-    bar x(region)(#count) title("Count Per ", region)
+    bar x(region) y(#count) title("Count Per ", region)
 
     bar x(region) y(#count) title("Count Per Region", "US Regions":footer)
 
@@ -1263,6 +1263,10 @@ include:
  * **elements** -- An array of elements contained in the chart (see above)
  * **scales** -- If defined, gives the coordinate scales as a structure `{x, y}`. These are standard d3
 scales, configured by Brunel.
+ * **zoom(params, time)** -- A function that, if called with no parameters, will return an object `{ dx, dy, s }`
+giving a 3 item array with x and y offsets, and the zoom scale. The same object can be passed in as
+the first argument to set the pan-zoom. The time is an optional parameter determining the speed at
+which the zoom is animated (zero means instant).
 
 
 ### Examples of Use
@@ -1274,8 +1278,8 @@ passed in:
  
         var scales = element.chart().scales;
         if (!scales || !scales.x || !scales.y || !item.row) return;
-     The above code is a simple guard that means nothing will happen if we don't have both data and
-scales
+     The above code is a simple guard that means nothing will happen
+if we don't have both data and scales
 
 
 ### Finding data and pixel coordinates
@@ -1284,7 +1288,8 @@ scales
         var dataX = scales.x.invert(x);                                     // The X coordinate as a data value
         var extent = scales.x.range(), minX = extent[0],                    // pixel ranges for the x dimension
             maxX = extent[extent.length-1];
-     These give examples of using coordinates and scales. Note that some scales (like ones for
+     
+These give examples of using coordinates and scales. Note that some scales (like ones for
 categorical data) are not invertible in d3, so this may fail.
 
 
@@ -1292,8 +1297,9 @@ categorical data) are not invertible in d3, so this may fail.
  
         var xField = element.data().field(element.fields.x[0]);             // Getting the field for the x axis
         var formattedText = xField.format(dataX);                           // Human-readable value for x
-     The Dataset `element.data()` and the Field object have a lot of power and many attributes. They have
-the same calls in JavaScript as in Java, so you can look up th Java docs to see their usage.
+     The
+Dataset `element.data()` and the Field object have a lot of power and many attributes. They have the
+same calls in JavaScript as in Java, so you can look up th Java docs to see their usage.
 
 
 ### Adding your own elements
@@ -1302,7 +1308,8 @@ the same calls in JavaScript as in Java, so you can look up th Java docs to see 
         if (g.empty())                                                      // Make it if necessary
             circle = element.group().append("circle").attr("class", "MyClass");
         g.attr("r", 20).attr('x', x).attr(y, y);                            // Use d3 to set the attributes
-     The above example places a circle where the mouse is, using d3
+     
+The above example places a circle where the mouse is, using d3
 
 
 ### Adding your own elements, alternative version
@@ -1314,9 +1321,28 @@ the same calls in JavaScript as in Java, so you can look up th Java docs to see 
         var cx = box.x + box.width/2, cy = box.y + box.height/2,            // get box center and radius around it
             r = Math.max(box.width, box.height)/2;
         g.attr('r', r).attr('x', cx).attr(y, cy);                            // Use d3 to set the attributesX
-     The above example places a circle around the target of the mouse event
+     
+The above example places a circle around the target of the mouse event
 
 
-nt
+### Programmatic control of pan and zoom
+ 
+        var v = new BrunelVis('visualization');
+        v.build(table1);
+    
+        function panBy(amount) {
+    	    var z = v.charts[0].zoom();
+    	    v.charts[0].zoom( { dx: z.dx+amount }, 3000);
+        }
+    
+        /// ....
+    
+        &lt;button type="button" onclick="panBy(-50)"&gt;LEFT&lt;/button&gt;
+    
+        &lt;button type="button" onclick="panBy(50)"&gt;RIGHT&lt;/button&gt;
+    
+     
+The above code fragment calls the chart's zoom method first to get the current values, and then to
+update and set them, with a very slow animation speed.
 
 

@@ -500,7 +500,8 @@ public class D3ElementBuilder {
                 // Create some spacing between categories -- ONLY if we have all categorical data,
                 if (purpose == ScalePurpose.x && fields.length > 1)
                     baseAmount = DefineLocations.CLUSTER_SPACING + " * " + baseAmount;
-                else if ((dim.sizeStyle == null || !dim.sizeStyle.isPercent()) && !scales.allNumeric(baseFields))
+                else if (purpose != ScalePurpose.inner && !scales.allNumeric(baseFields)
+                        && (dim.sizeStyle == null || !dim.sizeStyle.isPercent()))
                     baseAmount = BAR_SPACING + " * " + baseAmount;
             } else if (granularity != null) {
                 baseAmount = "Math.abs( " + scaleName + "(" + scaleName + ".domain()[0] + " + granularity + ") - " + scaleName + ".range()[0] )";

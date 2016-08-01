@@ -21,7 +21,7 @@
 
 
 var BrunelJQueryControlFactory = (function () {
-	
+
 	//Note, this includes support for animation multiple fields, but the syntax does not support this yet.
 	var animations = {};            //Currently running animations.  Only 1 per vis.  {visid: {interval id, index, buttonid}}
 
@@ -42,11 +42,11 @@ var BrunelJQueryControlFactory = (function () {
 		if (animateFrames == null) animateFrames = 4;
 		var scale = BrunelData.auto_Auto.makeNumericScale(field, true, [0,0], 0, animateFrames+1, true).divisions;
 		var sliderId = "slider" + visid + fieldid;
-		var buttonId = "animateButton" + visid + fieldid;;
+		var buttonId = "animateButton" + visid + fieldid;
 
 		var min = scale[0];
 		var max = scale[scale.length-1];
-		
+
 		var valueStyle = "legend control-label";
 		var valueLeftStyle = valueStyle + " control-left-label";
 		var sliderStyle = "horizontal-box";
@@ -77,7 +77,7 @@ var BrunelJQueryControlFactory = (function () {
 		    		}
 		    	}). appendTo(rangeSlider);
 	    }
- 	    
+
 	    var lowValue = $('<div />')
 	        .appendTo(rangeSlider)
 	        .addClass(valueLeftStyle);
@@ -85,10 +85,10 @@ var BrunelJQueryControlFactory = (function () {
 		var highValue = $('<div />')
         	.addClass(valueStyle);
 		highValue.html(field.format(max));
-		
+
 		if (!low) low = min;
 		if (!high) high = max;
-		
+
 	    var slider = $('<div />', {
 	    		id: sliderId
 	    	})
@@ -119,24 +119,24 @@ var BrunelJQueryControlFactory = (function () {
 
 	    return rangeSlider;
 	}
-	
+
 	//Whether any animations happening
 	function isAnimating(visid) {
 		return animations[visid] != null && animations[visid].id != null;
 	}
-	
+
 	//Whether the animation for the given play button is running
 	function isButtonAnimating(visid, buttonId) {
 		return isAnimating(visid) && animations[visid].buttonId === buttonId;
 	}
-	
+
 	//Stops all animations for the visid
 	function stopAnimation (visid) {
 		clearInterval(animations[visid].id);
 		$("#" + animations[visid].buttonId).button("option", "icons", {primary: "ui-icon-play"});
 		delete animations[visid].id;
 	}
-	
+
 	//Main animation loop.
 	function runAnimation(f, visid, speed) {
 		if (isAnimating(visid)) stopAnimation(visid);
@@ -144,7 +144,7 @@ var BrunelJQueryControlFactory = (function () {
 			f();
 		}, speed);
 	}
-	
+
 	//Stops any running animation and starts a new one
 	function startAnimation (visid, sliderId, scale, buttonId, fromStart, speed) {
 
@@ -152,12 +152,12 @@ var BrunelJQueryControlFactory = (function () {
 
 		if (!animations[visid]) {
 		 	animations[visid] = {
-	 			index : 0,
+	 			index : 0
 		 	};
 		}
 		animations[visid].buttonId = buttonId;
 		if (fromStart) animations[visid].index = 0;
-		
+
 		runAnimation (function() {
 			if (animations[visid].index < scale.length-1) {
 		 		$("#" + sliderId).slider('values',0,scale[animations[visid].index]);
@@ -185,10 +185,10 @@ var BrunelJQueryControlFactory = (function () {
         	.appendTo(categoryFilter);
 
 		for (var x in categories) {
-							
+
 			var sel = (selectedCategories && selectedCategories.indexOf(categories[x]) >= 0) ? true : false;
 			if (!selectedCategories) sel = "selected";
-			
+
 			$("<option />", {value: x, text: categories[x], selected: sel}).appendTo(select);
 		}
 
