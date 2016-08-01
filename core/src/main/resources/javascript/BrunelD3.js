@@ -787,8 +787,6 @@ var BrunelD3 = (function () {
         if (labeling.fit && !labeling.where) {
             wrapInBox(textNode, content, loc, labeling.dy);
         } else {
-
-
             txt.attr('x', loc.x).attr('y', loc.y).text(content);            // Place at the required location
             var kill, b = nudgeInside(textNode, labeling, geom);            // Nudge inside (and get the box for it)
             // If it doesn't fit, kill the text
@@ -796,11 +794,15 @@ var BrunelD3 = (function () {
                 // Too tall to fit a single line, or too wide and could not add ellipses
                 kill = (b.height > loc.box.height ||
                 b.width > loc.box.width && !addEllipses(textNode, content, loc.box.width));
-            } else {
-                kill = hitsExisting(b, hits);
+                if (kill) {
+                    textNode.parentNode.removeChild(textNode);          // remove from parent
+                    item.__label__ = null;                              // dissociate from item
+                }
+
+            } else if (style.visibility != 'hidden') {
+                if (hitsExisting(b, hits)) txt.classed("overlap", true);     // Set the style for overlapping text
             }
 
-            txt.classed("overlap", kill);                  // Set the style for overlapping text
 
         }
     }

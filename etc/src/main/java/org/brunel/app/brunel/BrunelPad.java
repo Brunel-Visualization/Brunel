@@ -51,7 +51,6 @@ import java.util.Scanner;
 @SuppressWarnings("serial")
 public class BrunelPad extends JFrame implements AppEventListener, Droppable {
 
-
     private static final String JS_FILE = "/org/brunel/util/animation.js";
     private static final String JS = new Scanner(WebDisplay.class.getResourceAsStream(JS_FILE), "UTF-8").useDelimiter("\\A").next();
 
@@ -299,9 +298,7 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
                 .addTitles("<h2 style='text-align:center'>" + a + "</h2>")
                 .write();
 
-
         try {
-            writer.append("<button onclick='var c = v.charts[0]; c.zoom({dx:c.zoom().dx+80}, 1000);'>RIGHT</button>\n");
             writer.close();
         } catch (IOException ignored) {
         }
