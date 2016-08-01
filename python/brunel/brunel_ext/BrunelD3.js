@@ -787,8 +787,6 @@ var BrunelD3 = (function () {
         if (labeling.fit && !labeling.where) {
             wrapInBox(textNode, content, loc, labeling.dy);
         } else {
-
-
             txt.attr('x', loc.x).attr('y', loc.y).text(content);            // Place at the required location
             var kill, b = nudgeInside(textNode, labeling, geom);            // Nudge inside (and get the box for it)
             // If it doesn't fit, kill the text
@@ -796,11 +794,15 @@ var BrunelD3 = (function () {
                 // Too tall to fit a single line, or too wide and could not add ellipses
                 kill = (b.height > loc.box.height ||
                 b.width > loc.box.width && !addEllipses(textNode, content, loc.box.width));
-            } else {
-                kill = hitsExisting(b, hits);
+                if (kill) {
+                    textNode.parentNode.removeChild(textNode);          // remove from parent
+                    item.__label__ = null;                              // dissociate from item
+                }
+
+            } else if (style.visibility != 'hidden') {
+                if (hitsExisting(b, hits)) txt.classed("overlap", true);     // Set the style for overlapping text
             }
 
-            txt.classed("overlap", kill);                  // Set the style for overlapping text
 
         }
     }
@@ -1469,13 +1471,59 @@ var BrunelD3 = (function () {
         })
     }
 
-    // Programmatic control of pan and zoom
-    // params may be null (just to return values) or {translate:[x,y], scale:s} for the zooming
-    // zoom is the d3 zoom object
+    /**
+     * Set zooming parameters. Missing parameter values are left unchanged
+     * @param params - if not null, the values inside are used to zoom
+     * @param zoom - d3.zoom to manipulate
+     * @returns {{dx, dy, s}}
+     */
     function panzoom(params, zoom) {
-        if (params)
-            zoom.translate(params.translate).scale(params.scale);
-        return {translate: zoom.translate(), scale: zoom.scale()}
+        var dx = zoom.translate()[0], dy = zoom.translate()[1], s = zoom.scale();
+        if (params) {
+            dx = params.dx || dx;
+            dy = params.dy || dy;
+            s = params.s || s;
+            zoom.translate([dx, dy]).scale(s);
+        }
+        return {dx:dx, dy:dy, s:s}
+    }
+
+    /**
+     * Restricts the parameters of the pan zoom so as to disallow meaningless transformations
+     * @param zoom -- the zoom to manipulate, in place
+     * @param geom -- the space we have available
+     * @param maxScaleFactor -- maximum scaling we allow
+     */
+    function restrictZoom(zoom, geom, maxScaleFactor) {
+
+        if (d3.event && d3.event.sourceEvent
+            && d3.event.sourceEvent.altKey) return;                     // Alt key disables the check
+
+        var D = 0.5,                                                    // Minimum fraction of screen screen
+            dx = zoom.translate()[0], dy = zoom.translate()[1],         // transform offsets
+            s = zoom.scale(),                                           // transform scale
+            W = geom.inner_width, H = geom.inner_height,                // chart bounds
+            minW = D * W, minH = D * H;                                 // minumum number of pixels to show
+
+        maxScaleFactor = maxScaleFactor || 3;                           // Default max
+
+        // Handle the case when the scale is out of bounds
+        if (s > maxScaleFactor || s < 1 / maxScaleFactor) {
+            s = s > 1 ? maxScaleFactor : 1 / maxScaleFactor;
+            if (zoom._LC) {
+                dx += (zoom._LC[0] - (dx + s * W / 2));                 // Translate to center at the previous center
+                dy += (zoom._LC[1] - (dy + s * H / 2));
+            }
+        }
+
+
+        if (dx + s * W < minW) dx = minW - s * W;                       // Don't allow scrolling off the left
+        if (dx > W - minW) dx = W - minW;                               // Don't allow scrolling off the right
+        if (dy + s * H < minH) dy = minH - s * H;                       // Don't allow scrolling off the top
+        if (dy > H - minH) dy = H - minH;                               // Don't allow scrolling off the bottom
+
+        zoom._LC = [dx + s * W / 2, dy + s * H / 2];                    // Store in case we go out of bounds again
+        zoom.scale(s).translate([dx, dy]);                              // Set the values in the zoom
     }
 
 
@@ -1565,6 +1613,7 @@ var BrunelD3 = (function () {
         'closestOnPath': closestPathPoint,
         'closest': closestItem,
         'panzoom': panzoom,
+        'restrictZoom': restrictZoom,
         'setAspect': setAspect
     }
 
