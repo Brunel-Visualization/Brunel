@@ -76,7 +76,7 @@ public class SVGGroupUtility {
     public void defineHorizontalAxisClipPath() {
         // we add a cut-out for the Y axis
         out.add("vis.append('clipPath').attr('id', '" + clipID() + "').append('polyline')")
-                .addChained("attr('points', '-1,-1 -1001,1000, 10000,1000 10000,-1')")
+                .addChained("attr('points', '-1,1 -5,5, -1000,5, -100,1000, 10000,1000 10000,-1')")
                 .endStatement();
     }
 
