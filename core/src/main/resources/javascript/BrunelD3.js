@@ -1466,7 +1466,7 @@ var BrunelD3 = (function () {
         if (domain.length < 3) return domain;
         var range = scale.range(),
             delta = Math.abs(range[1] - range[0]),
-            skip = Math.ceil(16 / delta);
+            skip = Math.ceil(16 * domain.length / delta);
         return skip < 2 ? domain : domain.filter(function (d, i) {
             return !(i % skip);
         })

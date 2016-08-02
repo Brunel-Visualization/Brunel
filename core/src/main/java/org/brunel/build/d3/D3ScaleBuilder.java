@@ -379,7 +379,7 @@ public class D3ScaleBuilder {
                 out.onNewLine().add("axis_bottom.tickValues(BrunelD3.filterTicks(" + hAxis.scale + "))");
             }
             out.onNewLine().add("var axis_x = axes.select('g.axis.x');");
-            out.onNewLine().add("BrunelD3.transition(axis_x, time).call(axis_bottom.scale(scale_x))");
+            out.onNewLine().add("BrunelD3.transition(axis_x, time).call(axis_bottom.scale(" + hAxis.scale + "))");
             if (hAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
         }
@@ -391,7 +391,7 @@ public class D3ScaleBuilder {
             }
 
             out.onNewLine().add("var axis_y = axes.select('g.axis.y');");
-            out.onNewLine().add("BrunelD3.transition(axis_y, time).call(axis_left.scale(scale_y))");
+            out.onNewLine().add("BrunelD3.transition(axis_y, time).call(axis_left.scale(" + vAxis.scale + "))");
             if (vAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
         }
