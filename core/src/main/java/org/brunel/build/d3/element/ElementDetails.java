@@ -52,15 +52,24 @@ public class ElementDetails {
 
     public final String dataSource;                     // Where the data for d3 lives
     public final ElementRepresentation representation;  // The type of element produced
-    public final String classes;                        // Class names for this item
+    public final String[] classes;                      // Class names for this item
     private final String userDefinedLabelPosition;      // Custom override for the label position
     private final boolean strokedShape;                 // If true, the shape is to be stroked, not filled
     private final boolean allowTextOverlap;             // If true, allow text labels to overlap
+    private final double labelPadding;                  // How much to pad labels by
+    private final String labelAlignment;                // User defined label alignment (may be null)
 
     public final ElementDimension x, y;                 // Definitions for x and y fields
     public GeomAttribute overallSize;                   // A general size for the whole item
     private GeomAttribute refLocation;                  // Defines the location using a reference to another element
-    public GeomAttribute clusterSize;                   // The size of a cluster
+
+    public String getAlignment() {
+        return labelAlignment;
+    }
+
+    public double getPadding() {
+        return labelPadding;
+    }
 
     public GeomAttribute getRefLocation() {
         return refLocation;
@@ -74,15 +83,18 @@ public class ElementDetails {
         this.refLocation = GeomAttribute.makeFunction("[" + Data.join(references) + "]");
     }
 
-    public ElementDetails(VisSingle vis, ElementRepresentation representation, String classes, String dataSource, boolean filled) {
-        x = new ElementDimension(vis, "width");
-        y = new ElementDimension(vis, "height");
-        if (filled) classes += " filled";
+    public ElementDetails(VisSingle vis, ElementRepresentation representation, String className, String dataSource, boolean filled) {
+        if (className == null || className.contains(" "))
+            throw new IllegalArgumentException("Class name must be a single word");
+        classes = filled ? new String[] {"element",className, "filled"} : new String[] {"element",className};
+        x = new ElementDimension(vis, "width", representation, classes);
+        y = new ElementDimension(vis, "height", representation, classes);
         this.strokedShape = !filled;
         this.dataSource = dataSource;
         this.representation = representation;
-        this.classes = "'element " + classes + "'";
         this.userDefinedLabelPosition = ModelUtil.getLabelPosition(vis);
+        this.labelPadding = ModelUtil.getLabelPadding(vis, 3);
+        this.labelAlignment = ModelUtil.getLabelAlignment(vis);
         this.allowTextOverlap = vis.tDiagram == VisTypes.Diagram.network;                       // Diagrams can overlap text
     }
 

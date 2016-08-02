@@ -24,6 +24,10 @@
     stroke: none;
 }
 
+.brunel .grid *, .brunel .axis * {
+    shape-rendering:crispEdges
+}
+
 .brunel .title {
     font-weight: bold;
     font-size: 14px;
@@ -123,6 +127,10 @@
     pointer-events: none;
 }
 
+.brunel .overlap {
+    visibility:hidden;
+}
+
 .brunel .header {
     fill: #0b9bdb;
     font-size: 18px;
@@ -153,6 +161,12 @@
     stroke-width: 2px;
     stroke: #0b9bdb;
     fill: none;
+}
+
+.brunel path.element.guide {
+    stroke-width: 1px;
+    stroke: lightGray;
+    stroke-dasharray:10 5
 }
 
 .brunel .element.bar, .brunel .element.polygon, .brunel .element.area, .brunel .element.line.filled, .brunel .element.path.filled {

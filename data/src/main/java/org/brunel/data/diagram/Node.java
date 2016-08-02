@@ -35,4 +35,17 @@ public class Node {
         this.innerNodeName = innerNodeName;
         this.children = children;
     }
+
+    public double meanRow() {
+        if (children != null) {
+            double v = 0, s = 0;
+            for (Node n : (Node[]) children) {
+                v += n.meanRow() * n.value;
+                s += n.value;
+            }
+            return v / s;
+        } else {
+            return row;
+        }
+    }
 }

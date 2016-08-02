@@ -120,13 +120,13 @@ as regular charts with the simple addition of a diagram keyword.
 The language allows you to specify any of the following element types, which define the base way the
 data is displayed.
 
-   point, bar, text,            line, area, path, polygon The most important thing to note about the element is whether it is an **aggregating** element. The
-first three elements ( _point_, _bar_ and _text_) are not, and they generate one symbol per row of
-data. The second group of four elements create a single graphic shape from all the data, and so some
-care is needed when applying **color**, **label** or other aesthetics as must ensure the value of that
-field is the same for the whole graphic shape. If the aesthetic field is a categorical one, then
-Brunel handles that for you automatically by splitting up the shape and making one graphic shape per
-group.
+   point, bar, text,            line, area, path, polygon  The most important thing to note about the element is whether it is an **
+aggregating** element. The first three elements ( _point_, _bar_ and _text_) are not, and they
+generate one symbol per row of data. The second group of four elements create a single graphic shape
+from all the data, and so some care is needed when applying **color**, **label** or other aesthetics as
+must ensure the value of that field is the same for the whole graphic shape. If the aesthetic field
+is a categorical one, then Brunel handles that for you automatically by splitting up the shape and
+making one graphic shape per group.
 
 if you do not specify an element, then the `point` element is the default. However a **diagram** knows
 which element it likes, and so will provide a suitable default. In general it is simplest not to
@@ -211,10 +211,15 @@ generate two values (a high and a low), exactly like two fields would.
 
 
 ### Coordinate Transforms
+ * Rectangular is the default coordinate system.
  * Transpose flips the X and the Y dimensions, so 'Y' reads horizontally and 'X' vertically. Note that
 this is not the same as simply swapping X and Y as the direction of the elements also changes.
  * Polar maps the Y dimension to the polar radius, and the X direction to the polar angle
  * Stack takes all items with the same X value and stacks them on top of each other
+
+Both `rectangular` and `transpose` support the `aspect` parameter which controls the aspect ratio of
+the data on the axes (x:y). A value of `1.0` or `square` results in equal spacing of data on both
+axes.
 
 Currently, polar is poorly supported; stacked polar bars (pie charts) work, and you can set the size
 on them to do a Rose Diagram (a pie chart with different radii for each wedge). Little else works.
@@ -226,6 +231,8 @@ Examples:
     bar x(region) y(#count)
 
     transpose bar x(region) y(#count)
+
+    x(summer) y(winter) rectangular(aspect:square)
 
     stack bar x(summer) bin(summer) y(#count) color(region)
 
@@ -659,10 +666,10 @@ is specified on a per-chart basis, so each chart can have a different mode of us
 
 
 ### Pan/Zoom
-By default this is set **on**, but this feature will only apply to _numeric_ dimensions of charts that
-do not specify a diagram. When this feature is active, a chart can be panned and zoomed by dragging
-or double-clicking on any **blank** area of the chart. Holding down the shift key while
-double-clicking zooms the chart out instead of in.
+By default this is set **on**, but will only apply to _numeric_ dimensions of charts that do not
+specify a diagram. When this feature is active, a chart can be panned and zoomed by dragging or
+double-clicking on any **blank** area of the chart. Holding down the shift key while double-clicking
+zooms the chart out instead of in.
 
 <!-- examples -->
 
@@ -670,14 +677,26 @@ double-clicking zooms the chart out instead of in.
 
     x(latitude) y(summer) | x(latitude) y(winter) interaction(none)
 
+This parameter takes the options `x`, `y`, `xy`, `none`,, `none` which allow control over exactly
+which dimensions can be panned or zoomed.
+
 
 ### Selection
 Each data set has a special field `"#selection"` that can be used in the same way as any other field
 -- for color, coordinates, etc. In general this feature not be useful unless you have multiple
 charts and at least one of them states that they use selection interactivity. When clicking on
 elements of that chart, those selections will then be propagated through to the other charts in that
-system. You can modify the selection to make it apply whenever hovering over the element by adding
-the option 'mouseover'
+system. You can modify the selection to make it apply to different events by adding an event
+parameter `interaction(select: _event_)` :
+
+ * **click** -- the default, fired when an element is clicked on
+ * **mouseover** -- fired when an element is moved on top of
+ * **mousemove** -- fired continuously as the mouse moves over an element
+ * **mouseout** -- fired when the mouse leaves an element
+ * **snap** -- this is a special event that is fired when the mouse moves over the chart, and
+"sufficiently close" to an item. Variants "snapX" and "snapY" are used to measure distance only in
+one dimension, and an optional numeric parameter allows the sufficient distance to be specified in
+pixels
 
 Selection takes on two possible values, an 'x' for unselected and a check mark for selected. One
 common use case is to map the value to color to show the selected parts from one chart as
@@ -693,6 +712,9 @@ highlighted in the other chart.
     | bar x(boys_name) y(#count) stack color(#selection) interaction(select) transpose axes(x) | bar
     x(girls_name) axes(x) y(#count) stack color(#selection) interaction(select) color(#selection)
     transpose axes(x) legends(none) stack
+
+    line x(winter) y(summer) + x(winter) y(summer) size(#selection:200%) label(summer)
+    style('.label:not(.selected) {visibility:hidden}') interaction(select:snapx:1000)
 
 
 ### Interaction(filter)
@@ -718,6 +740,34 @@ attributes to the fields used for filtering.
 
     x(population) y(violent_crimes) color(dem_rep) size(water:600%) filter(Region:[Pacific, South],
     water:6-65)
+
+
+### Filter
+The `filter` command is an interaction command which will create one or more interactive controls
+(sliders, check boxes,...) beside the visualization and allow dynamic filtering using those items.
+As is true for all interactivity, the filtering happens client-side and sorting and summarization
+happen afterwards and so will respect the filtered data. Default filter values may be provided as
+attributes to the fields used for filtering.
+
+<!-- examples -->
+
+    x(population) y(violent_crimes) color(dem_rep) size(water:600%) filter(presidential_choice, water)
+
+    x(population) y(violent_crimes) color(dem_rep) size(water:600%) filter(Region:[Pacific, South],
+    water:6-65)
+
+
+### Animation
+The `animate` command will create an interactive control that animates over the values of a
+continuous field. The button will pause or continue the animation and it will automatically loop
+back to the beginning. When the animation is paused, the slider may be used as a regular filter. A
+numeric option on the field name requests a desired number of animation frames. Note the results may
+not have exactly this number of frames depending on the data. The number of milliseconds between
+frames may be controlled using the `speed` option.
+
+<!-- examples -->
+
+    data('sample:Unemployment.csv') bar x(Period) y(Women) animate(Year:10, speed:200) mean(Women)
 
 
 ### Effects
@@ -938,15 +988,51 @@ The axes command controls which axes are displayed. Legal values are `none, x, y
 
     bar x(region) y(#count) axes(y)
 
-In addition, the `x` and `y` options can take string and/or numeric parameters. The numbers give a
-hint as to the number of ticks desired on a numeric axis, and the string sets the title for the
-axis. The empty string suppresses the axis
+In addition, the `x` and `y` options can take string and/or numeric parameters, including an option
+to ask for a grid or to reverse the axis. The numbers give a hint as to the number of ticks desired
+on a numeric axis; the string sets the title for the axis(an empty string suppresses the axis
+title). Adding a `grid` option displays a grid for the tickas on that axis.
 
 <!-- examples -->
 
     bar x(region) y(#count) axes(x:'Geo Area')
 
+    bar x(region) y(#count) axes(x:'Geo Area':reverse)
+
     bar x(region) y(#count) axes(y:2:'Numbers', x:10)
+
+    bar x(region) y(#count) axes(y:20:grid:'Numbers', x:10)
+
+
+### Guides
+An element which defines a guide does not use data; it is intended to be used with other elements
+and provides a reference line or function to be used with those elements. To define a guide element,
+the command `guide` is used, together with one or more parameters each of which defines either an
+`x` or a `y` function. These functions are expressions, corresponding to standard expression syntax,
+but restricted to the following tokens:
+
+ * `t` -- ranges from zero to one and defiens the position along the path
+ * `x`, `y` -- define the position a fraction `t` along the dimension
+ * `+`,`-`,`*`,`/`,`(`,`) -- mathematical symbols
+ * `?`, `:`,`>`,`<`,`==`,`<=`,`>=`,`!=` -- symbols used to construct if/then statements such as `x<5 ?
+10: 20`
+ * `e`, `pi` -- constants
+ * `abs`, `acos`, `asin`, `atan`, `atan2`, `ceil`, `cos`, `exp`, `floor`, `log`, `max`, `min`, `pow`,
+`random`, `round`, `sin`, `sqrt`, `tan` -- math functions
+
+Each guide is given a CSS class of `guide` and also a second class of `guideN`, where N is the index
+of the guide number within the element. Following is an example of a guide:
+
+<!-- examples -->
+
+    x(winter) y(summer) + guide(y:40+x, y:70, y:'70+10*sin(x)') style('.guide1{stroke:red}.guide3
+    {stroke-dasharray:none}')
+
+When constructing the guide, it creates points evenly spaced out along the line to draw it. By
+default we use 40 points, but an optional parameter at the end of the definition can modify that.
+For example, when you know the guide is linear in a simple rectangular coordinate system, you might
+use `guide(y:x:2)` to use just two points for maximal speed. Alternatively, if you have a very curvy
+function (such as the sin wave in the example above), you may want to increase the number of points.
 
 
 ### Legends
@@ -990,6 +1076,9 @@ applies to, it defaults to the element being show. The possible styles include `
 
     x(region) y(#count) style('.axis.tick line {stroke-width:5;stroke:red}.axis.title {font-size:30px
     ;fill:cyan}')
+
+    x(Summer) y(Population) axes(x:grid, y:grid) style('.grid{opacity:1}.grid.y {stroke-dasharray:5,5}
+    .grid.x {stroke-width:40px; opacity:0.2}')
 
 When there are multiple elements in a chart, if you use the simple form of style without a target,
 it will choose the current element only as the target.
@@ -1049,6 +1138,10 @@ in the future. Be careful of depending on it too strongly
                 text            -- tick mark label
             g.yaxis             -- y axis
               ...
+    
+          g.grid
+            line.grid.x         -- grid lines for the x axis (vertical grid lines, usually)
+            line.grid.y         -- grid lines for the y axis (horizontal grid lines, usually)
     
           g.legend              -- axes for the first chart
             text.title          -- legend title
@@ -1110,5 +1203,146 @@ This method of composition places one chart inside the other. To do this the two
 hierarchical nature -- the first chart should represent an aggregation of the second, so the nesting
 makes sense. When that is defined, the second chart will be replicated as small multiples within the
 other chart.
+
+
+
+API for programmatic extension
+------------------------------
+Although most users of Brunel will have sufficent tools with the syntax, we provide a number of
+extension points to allow more to be done. This section documents those APIs
+
+
+### Mouse Events
+The `interaction(call:functionName:eventName)` command adds a handler for the element that processes
+the given mouse event. When the named event occurs on the element, then the given function is
+called. Events supported are `click, mouseover, mousemove and mouseout`. We also support the special
+event `snap` as described in the section on interactivity. It is a `mousemove` event that snaps to
+the nearest data item.
+
+When the function is called, it is passed the following parameters:
+
+**item** -- the data item for this item; a structure with a number of fields as detailed below. **
+target** -- the raw SVG item targeted by this event. **element** -- a structure describing the element
+that was interacted with, detailed below.
+
+
+### Item
+The `item` contains a set of fields used to define the target of the event. They include:
+
+ * **row** -- A row of the processed table that was used to make this element. For a simple chart such as
+a scatterplot, that is the same as the row in the original data passed in. For an aggregated table,
+or for the data froma diagram like a treemap or chord chart, it might not be so. It is also possible
+for this to be null, if a non-data item was selected (such as an interior node in a bubble chart).
+ * **key** -- Most elements define a key. This is a value or set of values that identifies the data items
+as being the same for the purposes of updates (including filters and animation). It can be a useful
+name for the item, or a debugging hint.
+ * **points** -- only defined for shapes like paths and lines, where the shape consists of multiple data
+points, this is an array of objects with fields `{x, y, d}`. The `x` and `y` members give the pixel
+coordinates of each constituent point, and the `d` member gives an `item` for that point (with its
+own `row` and `key`)
+
+
+### Element
+The `element` contains a set of member fields and functions for working with the visualization. They
+include:
+
+ * **chart()** -- Returns a structure for the parent chart (see below)
+ * **data()** -- Returns the processed Data object (summarized, etc.)
+ * **original()** -- Returns the original Data object before any transformations were performed on it
+ * **selection()** -- Returns the d3 selection that defines the data marks
+ * **group()** -- The SVG group containing the element. This is where you would add custom decorations or
+items
+ * **fields** -- A structure containing sub-fields that define the names of fields that were used in the
+chart (such as `x, y, color` and `key`). Each of these is an array, even if only of size one
+
+
+### Chart
+The `chart` contains a set of member fields and functions for working with the visualization. They
+include:
+
+ * **elements** -- An array of elements contained in the chart (see above)
+ * **scales** -- If defined, gives the coordinate scales as a structure `{x, y}`. These are standard d3
+scales, configured by Brunel.
+ * **zoom(params, time)** -- A function that, if called with no parameters, will return an object `{ dx, dy, s }`
+giving a 3 item array with x and y offsets, and the zoom scale. The same object can be passed in as
+the first argument to set the pan-zoom. The time is an optional parameter determining the speed at
+which the zoom is animated (zero means instant).
+
+
+### Examples of Use
+Here are some code fragments suitable for use in a callback showing how to use the information
+passed in:
+
+
+### Checking Parameters
+ 
+        var scales = element.chart().scales;
+        if (!scales || !scales.x || !scales.y || !item.row) return;
+     The above code is a simple guard that means nothing will happen
+if we don't have both data and scales
+
+
+### Finding data and pixel coordinates
+ 
+        var mouse = d3.mouse(target), x = mouse[0], y = mouse[1];           // Mouse pixel coordinates
+        var dataX = scales.x.invert(x);                                     // The X coordinate as a data value
+        var extent = scales.x.range(), minX = extent[0],                    // pixel ranges for the x dimension
+            maxX = extent[extent.length-1];
+     
+These give examples of using coordinates and scales. Note that some scales (like ones for
+categorical data) are not invertible in d3, so this may fail.
+
+
+### Finding Brunel fields and data values
+ 
+        var xField = element.data().field(element.fields.x[0]);             // Getting the field for the x axis
+        var formattedText = xField.format(dataX);                           // Human-readable value for x
+     The
+Dataset `element.data()` and the Field object have a lot of power and many attributes. They have the
+same calls in JavaScript as in Java, so you can look up th Java docs to see their usage.
+
+
+### Adding your own elements
+ 
+        var circle = element.group().selectAll("circle.MyClass");           // Find the circle I created
+        if (g.empty())                                                      // Make it if necessary
+            circle = element.group().append("circle").attr("class", "MyClass");
+        g.attr("r", 20).attr('x', x).attr(y, y);                            // Use d3 to set the attributes
+     
+The above example places a circle where the mouse is, using d3
+
+
+### Adding your own elements, alternative version
+ 
+        var circle = element.group().selectAll("circle.MyClass");           // Find the circle I created
+        if (g.empty())                                                      // Make it if necessary
+            circle = element.group().append("circle").attr("class", "MyClass");
+        var box = target.getBBox();                                         // SVG call for target's bounds
+        var cx = box.x + box.width/2, cy = box.y + box.height/2,            // get box center and radius around it
+            r = Math.max(box.width, box.height)/2;
+        g.attr('r', r).attr('x', cx).attr(y, cy);                            // Use d3 to set the attributesX
+     
+The above example places a circle around the target of the mouse event
+
+
+### Programmatic control of pan and zoom
+ 
+        var v = new BrunelVis('visualization');
+        v.build(table1);
+    
+        function panBy(amount) {
+    	    var z = v.charts[0].zoom();
+    	    v.charts[0].zoom( { dx: z.dx+amount }, 3000);
+        }
+    
+        /// ....
+    
+        &lt;button type="button" onclick="panBy(-50)"&gt;LEFT&lt;/button&gt;
+    
+        &lt;button type="button" onclick="panBy(50)"&gt;RIGHT&lt;/button&gt;
+    
+     
+The above code fragment calls the chart's zoom method first to get the current values, and then to
+update and set them, with a very slow animation speed.
 
 

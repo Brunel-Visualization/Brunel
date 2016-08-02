@@ -64,10 +64,12 @@ public class Summarize extends DataOperation {
 
         boolean containsCount = false;
         boolean containsRow = false;
+        boolean containsSelection = false;
 
         for (String[] op : operations) {
             if (op[0].equals("#count")) containsCount = true;
             if (op[0].equals("#row")) containsRow = true;
+            if (op[0].equals("#selection")) containsSelection = true;
             String[] values = op[1].split(":");
             Field baseField = base.field(values[0].trim());
             if (values.length == 1) {
@@ -91,6 +93,7 @@ public class Summarize extends DataOperation {
         // ensure #count and #row are included
         if (!containsCount) measures.add(new MeasureField(base.field("#count"), "#count", "sum"));
         if (!containsRow) measures.add(new MeasureField(base.field("#row"), "#row", "list"));
+        if (!containsSelection) measures.add(new MeasureField(base.field("#selection"), "#selection", "mode"));
 
         Summarize s = new Summarize(measures, dimensions, percentBase, base.rowCount());
         Field[] fields = s.make();

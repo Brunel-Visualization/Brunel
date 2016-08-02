@@ -43,11 +43,11 @@ public class TestFilter {
         assertEquals(a, simple);
 
         a = simple.filter("A in c,z");
-        assertEquals("A|B|C|D|#count|#row -- c|y|1|2|1|3 -- c|?|2|1|1|4", CannedData.dump(a));
+        assertEquals("A|B|C|D|#count|#row -- c|y|1|2|1|3 -- c|?|2|1|1|4", CannedData.dumpData(a));
         assertEquals("c", Data.join(a.fields[0].categories()));
 
         a = simple.filter("D in 1.5, 3.5");
-        assertEquals("A|B|C|D|#count|#row -- b|x|2|3|1|2 -- c|y|1|2|1|3", CannedData.dump(a));
+        assertEquals("A|B|C|D|#count|#row -- b|x|2|3|1|2 -- c|y|1|2|1|3", CannedData.dumpData(a));
     }
 
     @Test
@@ -60,10 +60,10 @@ public class TestFilter {
         assertEquals(a, simple);
 
         a = simple.filter("C ranked 1,1");
-        assertEquals("A|B|C|D|#count|#row -- b|x|2|3|1|2 -- c|?|2|1|1|4", CannedData.dump(a));
+        assertEquals("A|B|C|D|#count|#row -- b|x|2|3|1|2 -- c|?|2|1|1|4", CannedData.dumpData(a));
 
         a = simple.filter("B !ranked 2,100");
-        assertEquals("A|B|C|D|#count|#row -- c|y|1|2|1|3", CannedData.dump(a));
+        assertEquals("A|B|C|D|#count|#row -- c|y|1|2|1|3", CannedData.dumpData(a));
 
     }
 
@@ -78,10 +78,10 @@ public class TestFilter {
         assertEquals(a, simple);
 
         a = simple.filter("A is c");
-        assertEquals("A|B|C|D|#count|#row -- c|y|1|2|1|3 -- c|?|2|1|1|4", CannedData.dump(a));
+        assertEquals("A|B|C|D|#count|#row -- c|y|1|2|1|3 -- c|?|2|1|1|4", CannedData.dumpData(a));
 
         a = simple.filter("D is 1,3.0");
-        assertEquals("A|B|C|D|#count|#row -- b|x|2|3|1|2 -- c|?|2|1|1|4", CannedData.dump(a));
+        assertEquals("A|B|C|D|#count|#row -- b|x|2|3|1|2 -- c|?|2|1|1|4", CannedData.dumpData(a));
     }
 
     @Test
@@ -91,10 +91,10 @@ public class TestFilter {
         assertEquals(a, simple);
 
         a = simple.filter("A !is c");
-        assertEquals("A|B|C|D|#count|#row -- a|x|1|4|1|1 -- b|x|2|3|1|2", CannedData.dump(a));
+        assertEquals("A|B|C|D|#count|#row -- a|x|1|4|1|1 -- b|x|2|3|1|2", CannedData.dumpData(a));
 
         a = simple.filter("D !is 1,3.0");
-        assertEquals("A|B|C|D|#count|#row -- a|x|1|4|1|1 -- c|y|1|2|1|3", CannedData.dump(a));
+        assertEquals("A|B|C|D|#count|#row -- a|x|1|4|1|1 -- c|y|1|2|1|3", CannedData.dumpData(a));
     }
 
     @Test
@@ -104,7 +104,7 @@ public class TestFilter {
         assertEquals(a, simple);
 
         a = simple.filter("B valid");
-        assertEquals("A|B|C|D|#count|#row -- a|x|1|4|1|1 -- b|x|2|3|1|2 -- c|y|1|2|1|3", CannedData.dump(a));
+        assertEquals("A|B|C|D|#count|#row -- a|x|1|4|1|1 -- b|x|2|3|1|2 -- c|y|1|2|1|3", CannedData.dumpData(a));
 
     }
 
@@ -115,7 +115,7 @@ public class TestFilter {
         assertEquals(a, simple);
 
         a = simple.filter("B valid; D in -1,3");
-        assertEquals("A|B|C|D|#count|#row -- b|x|2|3|1|2 -- c|y|1|2|1|3", CannedData.dump(a));
+        assertEquals("A|B|C|D|#count|#row -- b|x|2|3|1|2 -- c|y|1|2|1|3", CannedData.dumpData(a));
     }
 
 }

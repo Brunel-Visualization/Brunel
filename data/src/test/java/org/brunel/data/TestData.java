@@ -16,7 +16,6 @@
 
 package org.brunel.data;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -154,68 +153,68 @@ public class TestData {
 
     @Test
     public void testNumericFormat() {
-        assertEquals("0", Data.formatNumeric((double) 0, true));
-        assertEquals("0", Data.formatNumeric(0.0, true));
-        assertEquals("22", Data.formatNumeric((double) 22, true));
-        assertEquals("22", Data.formatNumeric(22.0000000000001, true));
-        assertEquals("22", Data.formatNumeric(21.999999999, true));
-        assertEquals("22.0001", Data.formatNumeric(22.0001, true));
-        assertEquals("22.0001", Data.formatNumeric(22.000100000001, true));
+        assertEquals("0", Data.formatNumeric((double) 0, null, true));
+        assertEquals("0", Data.formatNumeric(0.0, null, true));
+        assertEquals("22", Data.formatNumeric((double) 22, null, true));
+        assertEquals("22", Data.formatNumeric(22.0000000000001, null, true));
+        assertEquals("22", Data.formatNumeric(21.999999999, null, true));
+        assertEquals("22.0001", Data.formatNumeric(22.0001, null, true));
+        assertEquals("22.0001", Data.formatNumeric(22.000100000001, null, true));
         double d14 = -22;
-        assertEquals("-22", Data.formatNumeric(d14, true));
+        assertEquals("-22", Data.formatNumeric(d14, null, true));
         double d13 = -22.0000000000001;
-        assertEquals("-22", Data.formatNumeric(d13, true));
+        assertEquals("-22", Data.formatNumeric(d13, null, true));
         double d12 = -21.999999999;
-        assertEquals("-22", Data.formatNumeric(d12, true));
+        assertEquals("-22", Data.formatNumeric(d12, null, true));
         double d11 = -22.0001;
-        assertEquals("-22.0001", Data.formatNumeric(d11, true));
+        assertEquals("-22.0001", Data.formatNumeric(d11, null, true));
         double d10 = -22.000100000001;
-        assertEquals("-22.0001", Data.formatNumeric(d10, true));
+        assertEquals("-22.0001", Data.formatNumeric(d10, null, true));
 
-        assertEquals("1500", Data.formatNumeric((double) 1500, true));
+        assertEquals("1500", Data.formatNumeric((double) 1500, null, true));
         double d9 = -1500.000001;
-        assertEquals("-1500", Data.formatNumeric(d9, true));
+        assertEquals("-1500", Data.formatNumeric(d9, null, true));
         double d8 = -1499.999999;
-        assertEquals("-1500", Data.formatNumeric(d8, true));
+        assertEquals("-1500", Data.formatNumeric(d8, null, true));
 
-        assertEquals("15,000", Data.formatNumeric((double) 15000, true));
-        assertEquals("10,000", Data.formatNumeric((double) 10000, true));
-        assertEquals("9999", Data.formatNumeric((double) 9999, true));
+        assertEquals("15,000", Data.formatNumeric((double) 15000, null, true));
+        assertEquals("10,000", Data.formatNumeric((double) 10000, null, true));
+        assertEquals("9999", Data.formatNumeric((double) 9999, null, true));
 
-        assertEquals("0.00001", Data.formatNumeric(0.00001, true));
-        assertEquals("1.0e-6", Data.formatNumeric(0.000001, true));
-        assertEquals("5.73e-7", Data.formatNumeric(0.000000573, true));
-        assertEquals("5.734e-7", Data.formatNumeric(0.00000057339, true));
+        assertEquals("0.00001", Data.formatNumeric(0.00001, null, true));
+        assertEquals("1.0e-6", Data.formatNumeric(0.000001, null, true));
+        assertEquals("5.73e-7", Data.formatNumeric(0.000000573, null, true));
+        assertEquals("5.734e-7", Data.formatNumeric(0.00000057339, null, true));
         double d7 = -0.00001;
-        assertEquals("-0.00001", Data.formatNumeric(d7, true));
+        assertEquals("-0.00001", Data.formatNumeric(d7, null, true));
         double d6 = -0.000001;
-        assertEquals("-1.0e-6", Data.formatNumeric(d6, true));
+        assertEquals("-1.0e-6", Data.formatNumeric(d6, null, true));
         double d5 = -0.00000057305;
-        assertEquals("-5.73e-7", Data.formatNumeric(d5, true));
+        assertEquals("-5.73e-7", Data.formatNumeric(d5, null, true));
 
-        assertEquals("99,999.99", Data.formatNumeric(99999.99, true));
-        assertEquals("999,999.99", Data.formatNumeric(999999.99, true));
-        assertEquals("10,000,000", Data.formatNumeric(9999999.99, true));
-        assertEquals("100,000,000", Data.formatNumeric(99999999.99, true));
-        assertEquals("1.0e9", Data.formatNumeric(999999999.99, true));
+        assertEquals("99,999.99", Data.formatNumeric(99999.99, null, true));
+        assertEquals("999,999.99", Data.formatNumeric(999999.99, null, true));
+        assertEquals("10,000,000", Data.formatNumeric(9999999.99, null, true));
+        assertEquals("100,000,000", Data.formatNumeric(99999999.99, null, true));
+        assertEquals("1.0e9", Data.formatNumeric(999999999.99, null, true));
 
         double d4 = -99999.99;
-        assertEquals("-99,999.99", Data.formatNumeric(d4, true));
+        assertEquals("-99,999.99", Data.formatNumeric(d4, null, true));
         double d3 = -999999.99;
-        assertEquals("-999,999.99", Data.formatNumeric(d3, true));
+        assertEquals("-999,999.99", Data.formatNumeric(d3, null, true));
         double d2 = -9999999.99;
-        assertEquals("-10,000,000", Data.formatNumeric(d2, true));
+        assertEquals("-10,000,000", Data.formatNumeric(d2, null, true));
         double d1 = -99999999.99;
-        assertEquals("-100,000,000", Data.formatNumeric(d1, true));
+        assertEquals("-100,000,000", Data.formatNumeric(d1, null, true));
         double d = -999999999.99;
-        assertEquals("-1.0e9", Data.formatNumeric(d, true));
+        assertEquals("-1.0e9", Data.formatNumeric(d, null, true));
 
-        assertEquals("1.0e9", Data.formatNumeric(1.00001e9, true));
-        assertEquals("1.001e9", Data.formatNumeric(1.001e9, true));
-        assertEquals("1.01e9", Data.formatNumeric(1.01e9, true));
-        assertEquals("1.1e9", Data.formatNumeric(1.1e9, true));
+        assertEquals("1.0e9", Data.formatNumeric(1.00001e9, null, true));
+        assertEquals("1.001e9", Data.formatNumeric(1.001e9, null, true));
+        assertEquals("1.01e9", Data.formatNumeric(1.01e9, null, true));
+        assertEquals("1.1e9", Data.formatNumeric(1.1e9, null, true));
 
-        assertEquals("13.333333", Data.formatNumeric(13.333333333333333333333333, true));
+        assertEquals("13.333333", Data.formatNumeric(13.333333333333333333333333, null, true));
 
     }
 

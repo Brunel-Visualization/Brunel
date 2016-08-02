@@ -93,7 +93,7 @@ public class GeoMapLabels extends D3Diagram {
 
     public void writeDefinition(ElementDetails details) {
         out.addChained("attr('d', function(d) { return BrunelD3.symbol(['star','square','circle','circle','circle'][d[4]], d[3]*geom.default_point_size/14)})")
-                .addChained("attr('class', function(d) { return 'mark L' + d[4] })");
+                .addChained("attr('class', function(d) { return 'element mark L' + d[4] })");
         out.addChained("attr('transform', projectTransform)");
         out.endStatement();
 
@@ -101,14 +101,11 @@ public class GeoMapLabels extends D3Diagram {
         out.add("labels.classed('map', true)").endStatement();
 
         out.add("var labeling = {").indentMore()
-                .onNewLine().add("method:'right',")
-                .onNewLine().add("content: function(d) {return d[2]}")
+                .onNewLine().add("method:'box', pad:3, inside:false, align:'start', granularity:2,")
+                .onNewLine().add("location:['right', 'middle'], content: function(d) {return d[2]}")
                 .indentLess().onNewLine().add("}").endStatement();
 
-        out.add("BrunelD3.time('start labeling')").endStatement();
-        out.add("BrunelD3.label(selection, labels, labeling, 0)").endStatement();
-        out.add("BrunelD3.time('end labeling')").endStatement();
-
+        out.add("BrunelD3.label(selection, labels, labeling, 0, geom)").endStatement();
     }
 
     public boolean needsDiagramLabels() {

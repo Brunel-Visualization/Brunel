@@ -108,6 +108,9 @@ public class ActionStep {
             } else if (name.equals("filter")) {
                 item.filter(parameters);
                 return item;
+            }else if (name.equals("animate")) {
+                item.animate(parameters);
+                return item;
             } else if (name.equals("key")) {
                 item.key(parameters);
                 return item;
@@ -127,7 +130,10 @@ public class ActionStep {
                 item.interaction(parameters);
                 return item;
             } else if (name.equals("transpose")) {
-                item.transpose();
+                item.transpose(oneParam());
+                return item;
+            } else if (name.equals("rectangular")) {
+                item.rectangular(oneParam());
                 return item;
             } else if (name.equals("polar")) {
                 item.polar();
@@ -138,14 +144,11 @@ public class ActionStep {
             } else if (name.equals("using")) {
                 item.using(oneParam());
                 return item;
-            } else if (name.equals("flipx")) {
-                item.flipx();
-                return item;
-            } else if (name.equals("flip")) {
-                item.flip();
-                return item;
             } else if (name.equals("data")) {
                 item.data(oneParam());
+                return item;
+            } else if (name.equals("guide")) {
+                item.guide(parameters);
                 return item;
             }
 

@@ -26,7 +26,7 @@ import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 
 /**
- * Created by graham on 12/15/15.
+ * Defines how to display an element
  */
 public class ElementStructure {
     public final ChartStructure chart;

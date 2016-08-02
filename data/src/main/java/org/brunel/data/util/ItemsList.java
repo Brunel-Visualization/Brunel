@@ -88,7 +88,7 @@ public class ItemsList implements Comparable<ItemsList> {
             else {
                 Double d = Data.asNumeric(v);
                 if (d != null)
-                    s += Data.formatNumeric(d, false);
+                    s += Data.formatNumeric(d, null, false);
                 else
                     s += v.toString();
             }

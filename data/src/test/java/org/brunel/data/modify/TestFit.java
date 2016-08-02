@@ -42,7 +42,7 @@ public class TestFit {
     public void testSimple() {
         // Fit the whole thing --  the line Y = 1.5 + 0.5x
         Dataset a = simple.summarize("Y=Y:fit; X=X:base");
-        Assert.assertEquals("X|Y|#count|#row -- 1|2|2|1, 3 -- 2|2.5|2|2, 4 -- 3|3|1|5", CannedData.dump(a));
+        Assert.assertEquals("X|Y|#count|#row -- 1|2|2|1, 3 -- 2|2.5|2|2, 4 -- 3|3|1|5", CannedData.dumpData(a));
     }
 
     @Test
@@ -51,7 +51,7 @@ public class TestFit {
         // first is y=x, second is y=3
 
         Dataset a = simple.summarize("Y=Y:fit; X=X:base; C=C");
-        Assert.assertEquals("C|X|Y|#count|#row -- a|1|1|1|1 -- a|2|2|1|2 -- b|1|3|1|3 -- b|2|3|1|4 -- b|3|3|1|5", CannedData.dump(a));
+        Assert.assertEquals("C|X|Y|#count|#row -- a|1|1|1|1 -- a|2|2|1|2 -- b|1|3|1|3 -- b|2|3|1|4 -- b|3|3|1|5", CannedData.dumpData(a));
     }
 
 

@@ -106,6 +106,8 @@ public class DocsToMarkdown {
     }
 
     private void output(String s) {
+        if (s.equals("attributesX"))
+            System.out.println();
         out.print(s);
     }
 
@@ -134,10 +136,12 @@ public class DocsToMarkdown {
             if (inPre) {
                 if (t.equals("</pre>")) {
                     inPre = false;
+                    ensureBlankLine();
                     continue;
                 } else {
                     if (s.equals("\n")) output("\n    ");
                     else output(s);
+                    column++;
                 }
                 continue;
             }

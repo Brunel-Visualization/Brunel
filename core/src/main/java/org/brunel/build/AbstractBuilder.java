@@ -16,11 +16,11 @@
 
 package org.brunel.build;
 
-import org.brunel.build.info.ChartLayout;
-import org.brunel.build.info.ChartStructure;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.data.DataBuilder;
 import org.brunel.build.data.DataModifier;
+import org.brunel.build.info.ChartLayout;
+import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.data.Dataset;
@@ -106,14 +106,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
                 double[] loc = new ChartLayout(width, height, main).getLocation(0);
                 buildSingleChart(0, children, loc, null, null);
             } else if (compositionMethod == Composition.inside || compositionMethod == Composition.nested) {
-                // The following rules should be ensured by the parser
-                if (children.length != 2)
-                    throw new IllegalStateException("Nested charts only implemented for exactly one inner, one outer");
-                if (children[0].children() != null)
-                    throw new IllegalStateException("Inner chart in nesting must be atomic");
-                if (children[1].children() != null)
-                    throw new IllegalStateException("Outer chart in nesting must be atomic");
-                buildNestedCharts(width, height, children[1].getSingle(), children[0].getSingle());
+                buildNestedChart(width, height, children);
             }
 
         }
@@ -121,14 +114,24 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         endVisSystem(main);
     }
 
-    private void buildNestedCharts(int width, int height, VisSingle inner, VisSingle outer) {
+    private void buildNestedChart(int width, int height, VisItem[] children) {
+        // The following rules should be ensured by the parser
+        if (children.length != 2)
+            throw new IllegalStateException("Nested charts only implemented for exactly one inner, one outer");
+        if (children[0].children() != null)
+            throw new IllegalStateException("Inner chart in nesting must be atomic");
+        if (children[1].children() != null)
+            throw new IllegalStateException("Outer chart in nesting must be atomic");
+
+        VisSingle inner = children[1].getSingle();
+        VisSingle outer = children[0].getSingle();
+
         // For now, just deal with simple case of two charts, 0 and 1
         nesting.put(1, 0);
-
         double[] loc = new ChartLayout(width, height, outer).getLocation(0);
-        ChartStructure outerStructure = buildSingleChart(0, new VisItem[] {outer}, loc, null, 1);
+        ChartStructure outerStructure = buildSingleChart(0, new VisItem[]{outer}, loc, null, 1);
         loc = new ChartLayout(width, height, inner).getLocation(0);
-        buildSingleChart(1, new VisItem[] {inner}, loc, outerStructure, null);
+        buildSingleChart(1, new VisItem[]{inner}, loc, outerStructure, null);
     }
 
     public final BuilderOptions getOptions() {
@@ -202,8 +205,8 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
             data[i] = new DataBuilder(elements[i], this).build();
         }
 
-
-        ChartStructure structure = new ChartStructure(chartIndex, elements, data, datasets, outer, innerChartIndex);
+        ChartStructure structure = new ChartStructure(chartIndex, elements, data, datasets, outer, innerChartIndex, options.visIdentifier);
+        structure.accessible = options.accessibleContent;
         defineChart(structure, loc);
         for (ElementStructure e : structure.elementStructure) buildElement(e);
         endChart(structure);
@@ -218,14 +221,20 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
             VisItem chart = charts[i];
             double[] loc = layout.getLocation(i);
             VisItem[] items = chart.children();
+
             if (items == null) {
                 // The chart is a single element
                 buildSingleChart(i, new VisItem[]{chart}, loc, null, null);
             } else {
-                buildSingleChart(i, items, loc, null, null);
+                Composition compositionMethod = ((VisComposition) chart).method;
+                if (compositionMethod == Composition.inside || compositionMethod == Composition.nested) {
+                    buildNestedChart(width, height, items);
+                } else {
+                    buildSingleChart(i, items, loc, null, null);
+                }
             }
-
         }
+
     }
 
 }

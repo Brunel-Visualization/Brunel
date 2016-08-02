@@ -198,8 +198,8 @@ var $ = {
         return s.replace(/[0]?0e/, 'e').replace('+', '');
     },
 
-    formatFixed: function (d, useGrouping) {
-        var s = d.toPrecision(8);
+    formatFixed: function (d, places, useGrouping) {
+        var s = d.toFixed(places);
         var p = s.length;
         // Strip trailing zeros
         while (s.charAt(p - 1) == '0')
@@ -629,8 +629,8 @@ $.copy(V.auto_Auto, {
 
     isYearly: function(asNumeric) {
         var d;
-        if (asNumeric.min() < 1600) return false;
-        if (asNumeric.max() > 2100) return false;
+        if (asNumeric.numProperty("q1") < 1600) return false;
+        if (asNumeric.numProperty("q3") > 2100) return false;
         d = asNumeric.numProperty("granularity");
         return d != null && d - Math.floor(d) < 1e-6;
     }
@@ -857,15 +857,15 @@ $.copy(V.Data, {
 
     format: function(o, useGrouping) {
         if (o == null) return '?';
-        if (typeof(o) == 'number') return V.Data.formatNumeric(o, useGrouping);
+        if (typeof(o) == 'number') return V.Data.formatNumeric(o, null, useGrouping);
         return '' + o;
     },
 
-    formatNumeric: function(d, useGrouping) {
+    formatNumeric: function(d, decimalPlaces, useGrouping) {
         if (d == 0) return '0';
         if (Math.abs(d) <= 1e-6 || Math.abs(d) >= 1e8) return $.formatScientific(d);
         if (Math.abs((d - Math.round(d)) / d) < 1e-9) return $.formatInt(Math.round(d), useGrouping);
-        return $.formatFixed(d, useGrouping);
+        return $.formatFixed(d, decimalPlaces || 6, useGrouping);
     },
 
     asNumeric: function(c) {
@@ -894,7 +894,7 @@ $.copy(V.Data, {
             o = f.value(i);
             if ("year" == method) {
                 v = V.Data.asNumeric(o);
-                if (v != null)
+                if (v != null && v > 0)
                     data[i] = V.Data.asDate(V.Data.format(v, false) + "-01-01");
             } else if ("excel" == method) {
                 v = V.Data.asNumeric(o);
@@ -1182,8 +1182,7 @@ $.copy(V.Dataset.prototype, {
         return (field != null || !lax) ? field : this.fieldByName.get(name.toLowerCase());
     },
 
-    fieldArray: function() {
-        var names = Array.prototype.slice.call(arguments, 0);
+    fieldArray: function(names) {
         var i;
         var ff = $.Array(names.length, null);
         for (i = 0; i < ff.length; i++)
@@ -1246,7 +1245,7 @@ $.copy(V.Dataset.prototype, {
         return dataset;
     },
 
-    modifySelection: function(method, row, source) {
+    modifySelection: function(method, row, source, keys) {
         var _i, expanded, i;
         var off = V.Field.VAL_UNSELECTED;
         var on = V.Field.VAL_SELECTED;
@@ -1255,7 +1254,7 @@ $.copy(V.Dataset.prototype, {
         if (method == "sel")
             for (i = 0; i < n; i++)
                 sel.setValue(off, i);
-        expanded = source.expandedOriginalRows(row);
+        expanded = source.expandedOriginalRows(row, keys);
         for(_i=$.iter(expanded), i=_i.current; _i.hasNext(); i=_i.next()) {
             if ((method == "sel") || (method == "add"))
                 sel.setValue(on, i);
@@ -1266,16 +1265,14 @@ $.copy(V.Dataset.prototype, {
         }
     },
 
-    expandedOriginalRows: function(row) {
-        var _i, compare, expanded, f, i, j, list, o, rowField, targetFields;
-        var n = this.rowCount();
-        var important = new $.Set();
-        for(_i=$.iter(this.fields), f=_i.current; _i.hasNext(); f=_i.next())
-            if (!f.isSynthetic() && f.property("derived") == null) important.add(f);
-        targetFields = important.toArray();
-        compare = new V.summary_FieldRowComparison(targetFields, null, false);
+    expandedOriginalRows: function(row, keys) {
+        var compare, i, j, keyFields, list, n, o, rowField;
+        var expanded = new $.Set();
+        if (row == null) return expanded;
+        n = this.rowCount();
+        keyFields = this.fieldArray(keys);
+        compare = new V.summary_FieldRowComparison(keyFields, null, false);
         rowField = this.field("#row");
-        expanded = new $.Set();
         for (i = 0; i < n; i++)
             if (compare.compare(i, row) == 0) {
                 o = rowField.value(i);
@@ -1422,6 +1419,15 @@ $.copy(V.diagram_Hierarchical, {
     makeByNestingFields: function(data, sizeField) {
         var fields = Array.prototype.slice.call(arguments, 2);
         return new V.diagram_Hierarchical(data, sizeField, fields);
+    },
+
+    compare: function(a, b) {
+        var d = V.Data.compare(a.meanRow(), b.meanRow());
+        return d != 0 ? d : V.Data.compare(a.key, b.key);
+    },
+
+    compareReverse: function(a, b) {
+        return V.diagram_Hierarchical.compare(b, a);
     }
 
 });
@@ -1493,6 +1499,26 @@ V.diagram_Node = function(row, value, innerNodeName, children) {
     this.innerNodeName = innerNodeName;
     this.children = children;
 }
+
+$.copy(V.diagram_Node.prototype, {
+
+    meanRow: function() {
+        var _i, n, s, v;
+        if (this.children != null) {
+            v = 0;
+            s = 0;
+            for(_i=$.iter(this.children), n=_i.current; _i.hasNext(); n=_i.next()) {
+                v += n.meanRow() * n.value;
+                s += n.value;
+            }
+            return v / s;
+        } else {
+            return this.row;
+        }
+    }
+
+});
+
 ////////////////////// Field ///////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1666,7 +1692,7 @@ $.copy(V.Field.prototype, {
     },
 
     format: function(v) {
-        var d;
+        var d, s;
         if (v == null) return "?";
         if (v instanceof V.util_Range) return v.toString();
         if (this.isDate())
@@ -1674,11 +1700,12 @@ $.copy(V.Field.prototype, {
         if ("percent" == this.property("summary")) {
             d = V.Data.asNumeric(v);
             if (d == null) return null;
-            return V.Data.formatNumeric(Math.round(d * 10) / 10.0, false) + "%";
+            return V.Data.formatNumeric(Math.round(d * 10) / 10.0, null, false) + "%";
         }
         if (this.isNumeric()) {
             d = V.Data.asNumeric(v);
-            return d == null ? "?" : V.Data.formatNumeric(d, true);
+            s = (d == null) ? "?" : V.Data.formatNumeric(d, this.numProperty("decimalPlaces"), true);
+            return "percent" == this.property("summary") ? s + "%" : s;
         }
         if (this.isProperty("list"))
             return v.toString(this.property("dateFormat"));
@@ -1842,7 +1869,7 @@ $.copy(V.io_ByteOutput.prototype, {
         if (isNaN(value))
             this.addString("NaN");
         else
-            this.addString(V.Data.formatNumeric(value, false));
+            this.addString(V.Data.formatNumeric(value, null, false));
     },
 
     addDate: function(date) {
@@ -2416,6 +2443,7 @@ $.copy(V.modify_ConvertSeries, {
         $.addAll(result, list);
         if (!result.contains("#row")) result.add("#row");
         if (!result.contains("#count")) result.add("#count");
+        if (!result.contains("#selection")) result.add("#selection");
         return result.toArray();
     }
 
@@ -2509,7 +2537,7 @@ $.copy(V.modify_Filter, {
             if (q < 0) q = $.len(c);
             field[i] = base.field(c.substring(0, p).trim());
             t = V.modify_Filter.getType(c.substring(p, q).trim());
-            par = V.modify_Filter.getParams(c.substring(q).trim(), field[i].preferCategorical());
+            par = V.modify_Filter.getParams(c.substring(q).trim(), field[i].preferCategorical(), field[i].isDate());
             if (t == 4 || t == -4) {
                 par = V.modify_Filter.getRankedObjects(field[i], V.Data.asNumeric(par[0]), V.Data.asNumeric(par[1]));
                 t = t < 0 ? -3 : 3;
@@ -2549,15 +2577,18 @@ $.copy(V.modify_Filter, {
         throw new $.Exception("Cannot use filter command " + s);
     },
 
-    getParams: function(s, categorical) {
-        var i;
+    getParams: function(s, categorical, isDate) {
+        var aPart, i;
         var parts = s.split(",");
         var result = $.Array(parts.length, null);
         for (i = 0; i < result.length; i++){
+            aPart = parts[i].trim();
             if (categorical)
-                result[i] = parts[i].trim();
+                result[i] = aPart;
+            else if (isDate)
+                result[i] = V.Data.asDate(V.Data.asNumeric(aPart));
             else
-                result[i] = V.Data.asNumeric(parts[i].trim());
+                result[i] = V.Data.asNumeric(aPart);
         }
         return result;
     },
@@ -2956,7 +2987,7 @@ $.extend(V.modify_Summarize, V.modify_DataOperation);
 $.copy(V.modify_Summarize, {
 
     transform: function(base, command) {
-        var _i, baseField, containsCount, containsRow, dimensions, fields, measureField,
+        var _i, baseField, containsCount, containsRow, containsSelection, dimensions, fields, measureField,
             measures, op, operations, percentBase, s, values;
         if (base.rowCount() == 0) return base;
         operations = V.modify_DataOperation.map(command);
@@ -2966,9 +2997,11 @@ $.copy(V.modify_Summarize, {
         percentBase = new $.List();
         containsCount = false;
         containsRow = false;
+        containsSelection = false;
         for(_i=$.iter(operations), op=_i.current; _i.hasNext(); op=_i.next()) {
             if (op[0] == "#count") containsCount = true;
             if (op[0] == "#row") containsRow = true;
+            if (op[0] == "#selection") containsSelection = true;
             values = op[1].split(":");
             baseField = base.field(values[0].trim());
             if (values.length == 1) {
@@ -2990,6 +3023,8 @@ $.copy(V.modify_Summarize, {
             measures.add(new V.summary_MeasureField(base.field("#count"), "#count", "sum"));
         if (!containsRow)
             measures.add(new V.summary_MeasureField(base.field("#row"), "#row", "list"));
+        if (!containsSelection)
+            measures.add(new V.summary_MeasureField(base.field("#selection"), "#selection", "mode"));
         s = new V.modify_Summarize(measures, dimensions, percentBase, base.rowCount());
         fields = s.make();
         return base.replaceFields(fields);
@@ -3323,7 +3358,7 @@ V.stats_NumericStats = function() {};
 $.copy(V.stats_NumericStats, {
 
     populate: function(f) {
-        var d, data, high, i, item, low, m1, m2, m3, m4, max, min, minD;
+        var allInteger, d, data, granularity, high, i, item, low, m1, m2, m3, m4, max, min, places, range;
         var n = f.rowCount();
         var valid = new $.List();
         for (i = 0; i < n; i++){
@@ -3366,13 +3401,19 @@ $.copy(V.stats_NumericStats, {
             f.set("q1", V.stats_NumericStats.av(data, (n - 1) * 0.25));
             f.set("q3", V.stats_NumericStats.av(data, (n - 1) / 2 + (n - 1) * 0.25));
         }
-        minD = max - min;
-        if (minD == 0) minD = Math.abs(max);
+        granularity = max - min;
+        allInteger = true;
+        if (granularity == 0) granularity = Math.abs(max);
         for (i = 1; i < data.length; i++){
             d = data[i] - data[i - 1];
-            if (d > 0) minD = Math.min(minD, d);
+            if (d > 0)
+                granularity = Math.min(granularity, d);
+            if (allInteger && data[i] != Math.round(data[i])) allInteger = false;
         }
-        f.set("granularity", minD);
+        f.set("granularity", granularity);
+        range = max == min ? (max == 0 ? 1 : max) : max - min;
+        places = Math.max(0, Math.round(4 - Math.log(range) / Math.log(10)));
+        f.set("decimalPlaces", allInteger && max - min > 5 ? 0 : places);
     },
 
     moment: function(data, c, p, N) {
@@ -3390,8 +3431,8 @@ $.copy(V.stats_NumericStats, {
 
     creates: function(key) {
         return ("validNumeric" == key) || ("mean" == key) || ("stddev" == key) || ("variance" == key) || ("skew" ==
-            key) || ("kurtosis" == key) || ("min" == key) || ("max" == key) || ("q1" == key) || ("q3" ==
-            key) || ("median" == key) || ("granularity" == key);
+            key) || ("kurtosis" == key) || ("min" == key) || ("max" == key) || ("q1" == key) || ("q3" == key)
+            || ("median" == key) || ("granularity" == key) || ("decimalPlaces" == key);
     }
 
 });
@@ -3963,7 +4004,7 @@ $.copy(V.util_ItemsList.prototype, {
             } else {
                 d = V.Data.asNumeric(v);
                 if (d != null)
-                    s += V.Data.formatNumeric(d, false);
+                    s += V.Data.formatNumeric(d, null, false);
                 else
                     s += v.toString();
             }
@@ -4079,9 +4120,17 @@ $.copy(V.util_Range, {
 
     makeNumeric: function(low, high, nameAtMid) {
         var mid = (high + low) / 2;
-        var name = nameAtMid ? V.Data.formatNumeric(mid, true) : V.Data.formatNumeric(low,
-            true) + "\u2026" + V.Data.formatNumeric(high, true);
+        var ext = 2 * (high - low) + 1;
+        var name = nameAtMid ? V.util_Range.formatV(mid, ext) : V.util_Range.formatV(low,
+            ext) + "\u2026" + V.util_Range.formatV(high, ext);
         return new V.util_Range(low, high, mid, name);
+    },
+
+    formatV: function(v, ext) {
+        if (ext > 2e6)
+            return V.Data.formatNumeric(v / 1e6, null, false) + "M";
+        else
+            return V.Data.formatNumeric(v, null, true);
     },
 
     makeDate: function(low, high, nameAtMid, df) {

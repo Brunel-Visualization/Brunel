@@ -21,7 +21,9 @@ require.config({
         'topojson': '{{topojsonloc}}',
         'BrunelD3': '{{jsloc}}/BrunelD3',
         'BrunelData': '{{jsloc}}/BrunelData',
-        'BrunelEventHandlers': '{{jsloc}}/BrunelEventHandlers'
+        'BrunelEventHandlers': '{{jsloc}}/BrunelEventHandlers',
+        'BrunelJQueryControlFactory': '{{jsloc}}/BrunelJQueryControlFactory',
+        'SumoSelect': '{{jsloc}}/sumoselect/jquery.sumoselect.min'
     },
     shim: {
         'BrunelD3': {
@@ -33,12 +35,14 @@ require.config({
         },
         'BrunelEventHandlers': {
             exports: 'BrunelEventHandlers'
+        },
+        'BrunelJQueryControlFactory': {
+            exports: 'BrunelJQueryControlFactory'
         }
-
     }
 
 });
 
-require(["d3", "BrunelD3", "BrunelData", "BrunelEventHandlers"], function(d3, BrunelD3, BrunelData, BrunelEventHandlers ) {
+require(["d3", "BrunelD3", "BrunelData", "BrunelEventHandlers", "BrunelJQueryControlFactory", "SumoSelect"], function(d3, BrunelD3, BrunelData, BrunelEventHandlers, BrunelJQueryControlFactory, SumoSelect ) {
     {{d3js}}
 });

@@ -115,7 +115,7 @@ public class CannedData {
             + "Johnnie Walker Black Label Scotch Whisky,70,Scotland,Blended,45,43,12,Johnnie Walker";
 
 
-    public static String dump(Dataset d) {
+    public static String dumpData(Dataset d) {
         // We ignore the selection field ... the very last one.
         boolean strip = d.fields[d.fields.length - 1].name.equals("#selection");
 
@@ -129,6 +129,18 @@ public class CannedData {
         }
         return Data.join(rows, " -- ");
     }
+
+    public static String dumpField(Field f) {
+        String[] items = new String[f.rowCount()];
+        for (int i=0; i<items.length;i++) {
+            String s = f.valueFormatted(i);
+            if (s.equals(Field.VAL_SELECTED)) s = "Y";
+            if (s.equals(Field.VAL_UNSELECTED)) s = "N";
+            items[i] = s;
+        }
+        return Data.join(items, ",");
+    }
+
 
     private static String stripLast(String text, boolean strip) {
         if (!strip) return text;

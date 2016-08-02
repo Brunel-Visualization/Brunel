@@ -53,7 +53,7 @@ class Tree extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details) {
-        out.addChained("attr('class', function(d) { return (d.children ? 'L' + d.depth : 'leaf element " + element.name() + "') })");
+        out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 
         if (vis.coords == Coordinates.polar) {
             out.addChained("attr('transform', function(d) { return 'rotate(' + (d.x - 90) + ') translate(' + d.y + ')' })");
@@ -62,9 +62,8 @@ class Tree extends D3Diagram {
                     .addChained("attr('cy', function(d) { return d.y })");
         }
 
-        out.addChained("attr('r', " + details.overallSize.halved() + ")").endStatement();
-
-        addAestheticsAndTooltips(details, true);
+        out.addChained("attr('r', " + details.overallSize.halved() + ")");
+        addAestheticsAndTooltips(details);
 
         // We add the tree edges
         // TODO: if there is an edge definition in the chart, use that instead
@@ -82,10 +81,7 @@ class Tree extends D3Diagram {
         } else {
             out.add("())");
         }
-
-        out.endStatement();
-
-        addAestheticsAndTooltips(details, true);
+        addAestheticsAndTooltips(details);
     }
 
     public boolean needsDiagramExtras() {

@@ -17,7 +17,6 @@
 package org.brunel.build.util;
 
 import org.brunel.data.Field;
-import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.style.StyleSheet;
 import org.brunel.model.style.StyleTarget;
@@ -26,10 +25,6 @@ import org.brunel.model.style.StyleTarget;
  * Utilities for VisItem and model items
  */
 public class ModelUtil {
-
-    /* Top level style targets -- all targets should parent to this */
-    private static final StyleTarget STYLE_TOP = new StyleTarget("svg", null, "brunel");
-    private static final StyleTarget STYLE_ELEMENT = new StyleTarget(null, STYLE_TOP, "currentElement");
 
     /**
      * Determine if the fields are best represented by a categorical (as opposed to numeric) scale
@@ -54,17 +49,20 @@ public class ModelUtil {
     /**
      * Returns the size of the element as defined by the style
      *
-     * @param vis the visualization to look for definitions in
-     * @param tag height, width, size -- the name of the size field to look for
+     * @param vis    the visualization to look for definitions in
+     * @param target style to look for
+     * @param tag    height, width, size -- the name of the size field to look for
      * @return a Size describing it
      */
-    public static Size getElementSize(VisSingle vis, String tag) {
-        StyleTarget target = new StyleTarget(null, STYLE_ELEMENT, "element");
+    public static Size getSize(VisSingle vis, StyleTarget target, String tag) {
         String s = getStyle(vis, target, tag);
-        if (s == null)
-            if (tag.equals("size")) return null;            // No definition
-            else return getElementSize(vis, "size");        // Default height and width to size
-        return decompose(s);                                // Split into value and unit
+        if (s == null) {
+            if (tag.equals("height") || tag.equals("width"))
+                return getSize(vis, target, "size");            // height and width default to size
+            else
+                return null;
+        }
+        return decompose(s);                                    // Split into value and unit
     }
 
     /**
@@ -74,7 +72,7 @@ public class ModelUtil {
      * @return "rect", "circle", etc.
      */
     public static String getElementSymbol(VisSingle vis) {
-        StyleTarget target = new StyleTarget(null, STYLE_ELEMENT, "element", "point");
+        StyleTarget target = StyleTarget.makeElementTarget(null, "element", "point");
         return vis.styles == null ? null : vis.styles.get(target, "symbol");
     }
 
@@ -82,11 +80,11 @@ public class ModelUtil {
      * Returns the font size of the element as defined by the style
      *
      * @param vis the visualization to look for definitions in
-     * @return a Size describing it
+     * @return integer size
      */
-    public static Size getFontSize(VisSingle vis) {
-        String s = getStyle(vis, new StyleTarget("text", STYLE_ELEMENT, "element"), "font-size");
-        return decompose(s);
+    public static double getFontSize(VisSingle vis, StyleTarget target, int defaultSize) {
+        Size size = getSize(vis, target, "font-size");
+        return size == null ? defaultSize : size.value(defaultSize);
     }
 
     /**
@@ -124,9 +122,21 @@ public class ModelUtil {
      */
     public static String getLabelPosition(VisSingle vis) {
         if (vis == null) return null;
-        String s = getStyle(vis, new StyleTarget(null, STYLE_ELEMENT, "element"), "label-location");
+        String s = getStyle(vis, StyleTarget.makeElementTarget(null, "element"), "label-location");
         if (s != null) return s;
-        return getStyle(vis, new StyleTarget(null, STYLE_ELEMENT, "label"), "label-location");
+        return getStyle(vis, StyleTarget.makeElementTarget(null, "label"), "label-location");
+    }
+
+    public static String getLabelAlignment(VisSingle vis) {
+        String s = getStyle(vis, StyleTarget.makeElementTarget(null, "element"), "text-align");
+        if (s != null) return s;
+        return getStyle(vis, StyleTarget.makeElementTarget(null, "label"), "text-align");
+    }
+
+    public static double getLabelPadding(VisSingle vis, int defaultValue) {
+        Size s = getSize(vis, StyleTarget.makeElementTarget(null, "element"), "padding");
+        if (s == null) s = getSize(vis, StyleTarget.makeElementTarget(null, "label"), "padding");
+        return s == null ? defaultValue : s.value(defaultValue);
     }
 
     /**
@@ -134,58 +144,38 @@ public class ModelUtil {
      *
      * @param vis the visualization to look for definitions in
      */
-    public static String getTitlePosition(VisSingle vis, String location) {
-        String s = getStyle(vis, new StyleTarget(null, STYLE_TOP, location), "label-location");
+    public static String getTitlePosition(VisSingle vis, StyleTarget target) {
+        String s = getStyle(vis, target, "label-location");
         return s == null ? "center" : s;
     }
 
-    /**
-     * Returns the font size of the element as defined by the style
-     *
-     * @param vis the visualization to look for definitions in
-     * @return a Size describing it
-     */
-    public static Size getTitleSize(VisSingle vis, String location) {
-        String s = getStyle(vis, new StyleTarget("text", STYLE_TOP, location), "font-size");
-        return decompose(s);
+    public static Padding getPadding(VisSingle vis, StyleTarget target, int defaultSize) {
+        int top = defaultSize, left = defaultSize, bottom = defaultSize, right = defaultSize;
+
+        // Global size
+        String s = getStyle(vis, target, "padding");
+        if (s != null)
+            top = left = right = bottom = (int) decompose(s).value((double) 100);
+
+        // Top
+        s = getStyle(vis, target, "padding-top");
+        if (s != null) top = (int) decompose(s).value((double) 100);
+        // Bottom
+        s = getStyle(vis, target, "padding-bottom");
+        if (s != null) bottom = (int) decompose(s).value((double) 100);
+        // Left
+        s = getStyle(vis, target, "padding-left");
+        if (s != null) left = (int) decompose(s).value((double) 100);
+        // Right
+        s = getStyle(vis, target, "padding-right");
+        if (s != null) right = (int) decompose(s).value((double) 100);
+
+        return new Padding(top, left, bottom, right);
     }
 
-    /**
-     * Returns the font size of the label for the axis as defined by the style
-     *
-     * @param vis the visualization to look for definitions in
-     * @return a Size describing it
-     */
-    public static Size getAxisLabelFontSize(VisSingle vis) {
-        String s = getStyle(vis, new StyleTarget("text", STYLE_ELEMENT, "axis", "label"), "font-size");
-        return decompose(s);
-    }
-
-    /**
-     * Returns the corner radius forthe element as defined by the style
-     *
-     * @param vis the visualization to look for definitions in
-     * @return a Size describing it
-     */
-    public static Size getRoundRectangleRadius(VisSingle vis) {
-        String s = getStyle(vis, new StyleTarget("rect", STYLE_ELEMENT, "element", "point"), "border-radius");
-        return decompose(s);
-    }
-
-    public static boolean hasFilters(VisItem target) {
-        if (target.children() == null) return !target.getSingle().fFilter.isEmpty();
-        for (VisItem v : target.children()) if (hasFilters(v)) return true;
-        return false;
-    }
-
-    // Split a string into the numeric and unit parts
-    private static String[] splitByUnit(String text) {
-        if (text == null) return new String[]{"12", "px"};
-        int p = text.length();
-        while (p > 0)
-            if (Character.isDigit(text.charAt(--p))) break;
-        if (p == text.length() - 1) return new String[]{text, "px"};
-        return new String[]{text.substring(0, p + 1), text.substring(p + 1)};
+    public static double getSize(VisSingle vis, StyleTarget target, String tag, double defaultSize) {
+        Size size = getSize(vis, target, tag);
+        return size == null ? defaultSize : size.value(defaultSize);
     }
 
     /**
@@ -215,12 +205,8 @@ public class ModelUtil {
             return value + unit;
         }
 
-        public double valueInPixels(double percentSize100) {
-            return isPercent() ? value() * percentSize100 : value;
-        }
-
-        public double value() {
-            if (isPercent()) return value / 100;
+        public double value(double percentSize100) {
+            if (isPercent()) return value * percentSize100 / 100;
             if (unit.equals("px")) return value;
             if (unit.equals("mm")) return value * DPI / 25.4;
             if (unit.equals("cm")) return value * DPI / 2.54;

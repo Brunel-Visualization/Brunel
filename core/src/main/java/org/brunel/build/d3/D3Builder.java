@@ -20,9 +20,11 @@ import org.brunel.action.Param;
 import org.brunel.build.AbstractBuilder;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.d3.element.D3ElementBuilder;
+import org.brunel.build.d3.titles.ChartTitleBuilder;
 import org.brunel.build.data.DataTransformParameters;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
+import org.brunel.build.util.Accessibility;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
@@ -65,10 +67,11 @@ public class D3Builder extends AbstractBuilder {
     }
 
     private ScriptWriter out;                   // Where to write code
-    public int visWidth, visHeight;              // Overall vis size
+    public int visWidth, visHeight;             // Overall vis size
     private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
     private D3Interaction interaction;          // Builder for interactions
     private D3ElementBuilder[] elementBuilders; // Builder for each element
+    private boolean hasMultipleCharts;          // flag to indicate multiple charts in the same vis
 
     private D3Builder(BuilderOptions options) {
         super(options);
@@ -123,8 +126,8 @@ public class D3Builder extends AbstractBuilder {
         out.indentMore();
 
         double[] margins = scalesBuilder.marginsTLBR();
-        D3TitleBuilder title = new D3TitleBuilder(structure, "header");
-        D3TitleBuilder sub = new D3TitleBuilder(structure, "footer");
+        ChartTitleBuilder title = new ChartTitleBuilder(structure, "header");
+        ChartTitleBuilder sub = new ChartTitleBuilder(structure, "footer");
         margins[0] += title.verticalSpace();
         margins[2] += sub.verticalSpace();
         scalesBuilder.setAdditionalHAxisOffset(sub.verticalSpace());
@@ -142,8 +145,8 @@ public class D3Builder extends AbstractBuilder {
         writeMainGroups(structure);
         for (D3ElementBuilder builder : elementBuilders) builder.writePerChartDefinitions();
 
-        title.writeContent(out);
-        sub.writeContent(out);
+        title.writeContent("chart", out);
+        sub.writeContent("chart", out);
 
         // Diagrams do not need scales; everything else does
         if (structure.diagram == null) {
@@ -169,8 +172,13 @@ public class D3Builder extends AbstractBuilder {
 
         ElementStructure[] structures = structure.elementStructure;
         elementBuilders = new D3ElementBuilder[structures.length];
-        for (int i = 0; i < structures.length; i++)
-            elementBuilders[i] = new D3ElementBuilder(structures[i], out, scalesBuilder, interaction);
+        for (int i = 0; i < structures.length; i++) {
+            if (structures[i].vis.tGuides.isEmpty())
+                elementBuilders[i] = new D3ElementBuilder(structures[i], out, scalesBuilder, interaction);
+            else
+                elementBuilders[i] = new GuideBuilder(structures[i], out, scalesBuilder, interaction);
+
+        }
     }
 
     protected void defineElement(ElementStructure structure) {
@@ -185,7 +193,7 @@ public class D3Builder extends AbstractBuilder {
                 .indentLess();
 
         // Add data variables used throughout
-        addElementGroups(elementBuilder, "element" + structure.elementID());
+        addElementGroups(elementBuilder, structure);
 
         // Data transforms
         int datasetIndex = structure.getBaseDatasetIndex();
@@ -203,7 +211,7 @@ public class D3Builder extends AbstractBuilder {
 
         out.add("function build(transitionMillis) {").ln().indentMore();
         elementBuilder.generate(structure.index);
-        interaction.addElementHandlers(structure.vis, dataBuilder);
+        interaction.addHandlers(vis.tInteraction);
 
         // If a chart is nested within us, build its facets
         Integer index = structure.chart.innerChartIndex;
@@ -218,7 +226,7 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}").ln().ln();
 
         // Expose the methods and variables we want the user to have access to
-        addElementExports(vis, dataBuilder);
+        addElementExports(vis, dataBuilder, structure);
 
         out.indentLess().onNewLine().add("}()").endStatement().ln();
     }
@@ -227,6 +235,7 @@ public class D3Builder extends AbstractBuilder {
         this.visWidth = width;
         this.visHeight = height;
         this.out = new ScriptWriter(options);
+        this.hasMultipleCharts = main.children() != null && main.children().length > 1;
 
         // Write the class definition function (and flag to use strict mode)
         out.add("function ", options.className, "(visId) {").ln().indentMore();
@@ -238,25 +247,32 @@ public class D3Builder extends AbstractBuilder {
         out.add("    post = function(d, i) { return d },").at(50).comment("Default post-process does nothing");
         out.add("    transitionTime = 200,").at(50).comment("Transition time for animations");
         out.add("    charts = [],").at(50).comment("The charts in the system");
-        out.add("    vis = d3.select('#' + visId).attr('class', 'brunel');").at(60).comment("the SVG container");
+        out.add("    hasData = function(d) {return d && (d.row != null)},").at(50).comment("Filters to data items");
+        out.add("    vis = d3.select('#' + visId).attr('class', 'brunel')").at(60).comment("the SVG container");
     }
 
     protected void endChart(ChartStructure structure) {
-        out.onNewLine().add("function build(time) {").indentMore();
+        out.onNewLine().add("function build(time, noData) {").indentMore();
+
+        // This is a bit of hack to get around d3 support for catgeroical scales.
+        // we cannot simply set the zooming, so we have to add this work around at the
+        // start of the build
+        interaction.addCategoricalScaleAdjustment();
+
         out.onNewLine().add("var first = elements[0].data() == null").endStatement();
         out.add("if (first) time = 0;").comment("No transition for first call");
 
         // For coordinate system charts, see if axes are needed
         if (scalesBuilder.needsAxes())
-            out.onNewLine().add("buildAxes()").endStatement();
+            out.onNewLine().add("buildAxes(time)").endStatement();
 
         // For maps, see if the graticule is needed
         if (structure.geo != null && structure.geo.withGraticule)
-            out.onNewLine().add("buildAxes()").endStatement();
+            out.onNewLine().add("buildAxes(time)").endStatement();
 
         Integer[] order = structure.elementBuildOrder();
 
-        out.onNewLine().add("if (first || time > -1) ");
+        out.onNewLine().add("if ((first || time > -1) && !noData)");
         if (order.length > 1) {
             out.add("{").indentMore();
             for (int i : order)
@@ -273,9 +289,24 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}").ln();
 
         out.ln().comment("Expose the following components of the chart");
-        out.add("return {build : build, elements : elements");
-        if (structure.diagram == null) out.add(", scales: {x:scale_x, y:scale_y}");
-        out.add("}").endStatement();
+        out.add("return {").indentMore()
+                .onNewLine().add("elements : elements,")
+                .onNewLine().add("interior : interior,");
+
+        if (structure.diagram == null) {
+            out.onNewLine().add("scales: {x:scale_x, y:scale_y},");
+        }
+
+        if (interaction.getZoomType() != D3Interaction.ZoomType.None) {
+            out.onNewLine().add("zoom: function(params, time) {")
+                    .continueOnNextLine().add("var v = BrunelD3.panzoom(params, zoom);")
+                    .continueOnNextLine().add("if (params) build(time > 0 ? time : 0, true);")
+                    .continueOnNextLine().add("return v;");
+            out.onNewLine().add("},");
+        }
+
+        out.onNewLine().add("build : build")
+                .indentLess().onNewLine().add("}").endStatement();
 
         // Finish the chart method
         if (nesting.containsKey(structure.chartIndex)) {
@@ -357,13 +388,20 @@ public class D3Builder extends AbstractBuilder {
         }
 
         // Add controls code
-        controls.writeControls(out);
+        controls.writeControls(out, "v");
 
     }
 
     private int enterAnimate(VisItem main, int dataSetCount) {
         if (dataSetCount != 1) return -1;                           // Need a single data set to animate over
-        if (main.getSingle() == null) return -1;                    // Need a single top level vis
+
+        if (main.children() != null) {
+            // Check children
+            for (VisItem child : main.children()) {
+                int v = enterAnimate(child, dataSetCount);
+                if (v >= 0) return v;
+            }
+        }
 
         List<Param> effects = main.getSingle().getSingle().fEffects;
         for (Param p : effects) {
@@ -381,19 +419,20 @@ public class D3Builder extends AbstractBuilder {
         return -1;
     }
 
-    private void addElementGroups(D3ElementBuilder builder, String elementID) {
+    private void addElementGroups(D3ElementBuilder builder, ElementStructure structure) {
         String elementTransform = makeElementTransform(scalesBuilder.coords);
-        out.add("var elementGroup = interior.append('g').attr('class', '" + elementID + "')");
+        out.add("var elementGroup = interior.append('g').attr('class', 'element" + structure.elementID() + "')");
+        Accessibility.addElementInformation(structure, out);
         if (elementTransform != null) out.addChained(elementTransform);
         if (builder.needsDiagramExtras())
             out.continueOnNextLine(",").add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");
         out.continueOnNextLine(",").add("main = elementGroup.append('g').attr('class', 'main')");
         if (builder.needsDiagramLabels())
             out.continueOnNextLine(",")
-                    .add("diagramLabels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'diagram labels'), elementGroup)");
+                    .add("diagramLabels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'diagram labels').attr('aria-hidden', 'true'), elementGroup)");
 
         out.continueOnNextLine(",")
-                .add("labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels'), elementGroup)").endStatement();
+                .add("labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup)").endStatement();
     }
 
     /*
@@ -427,8 +466,9 @@ public class D3Builder extends AbstractBuilder {
             Collections.addAll(needed, vis.usedFields(true));
         }
 
-        // We always want the row field
+        // We always want the row field and selection
         needed.add("#row");
+        needed.add("#selection");
 
         // Convert to map for easy lookup
         Map<String, Integer> result = new HashMap<>();
@@ -436,13 +476,16 @@ public class D3Builder extends AbstractBuilder {
         return result;
     }
 
-    private void addElementExports(VisSingle vis, D3DataBuilder dataBuilder) {
+    private void addElementExports(VisSingle vis, D3DataBuilder dataBuilder, ElementStructure structure) {
         out.add("return {").indentMore();
         out.onNewLine().add("data:").at(24).add("function() { return processed },");
+        out.onNewLine().add("original:").at(24).add("function() { return original },");
         out.onNewLine().add("internal:").at(24).add("function() { return data },");
         out.onNewLine().add("selection:").at(24).add("function() { return selection },");
         out.onNewLine().add("makeData:").at(24).add("makeData,");
         out.onNewLine().add("build:").at(24).add("build,");
+        out.onNewLine().add("chart:").at(24).add("function() { return charts[" + structure.chart.chartIndex + "] },");
+        out.onNewLine().add("group:").at(24).add("function() { return elementGroup },");
         out.onNewLine().add("fields: {").indentMore();
         out.mark();
 
@@ -456,7 +499,6 @@ public class D3Builder extends AbstractBuilder {
         if (!keys.isEmpty()) {
             writeFieldName("key", keys);
         }
-
 
         writeFieldName("color", vis.fColor);
         writeFieldName("size", vis.fSize);
@@ -479,31 +521,31 @@ public class D3Builder extends AbstractBuilder {
         if (out.changedSinceMark()) out.add(",");
         List<String> names = new ArrayList<>();
         for (Object p : fieldNames) {
-            if (p instanceof Param) names.add(((Param)p).asField());
+            if (p instanceof Param) names.add(((Param) p).asField());
             else names.add(p.toString());
         }
         out.onNewLine().add(name, ":").at(24).add("[").addQuotedCollection(names).add("]");
     }
 
-
     private void writeMainGroups(ChartStructure structure) {
-        String chartClassID = "chart" + structure.chartID();                    // The class for our group
+        SVGGroupUtility groupUtil = new SVGGroupUtility(structure, "chart" + structure.chartID(), out);
 
         if (structure.nested()) {
             out.onNewLine().comment("Nesting -- create an outer chart and place groups inside for each facet");
 
             // We only want one outer group, but this function gets called for each facet, so check to see if it is
             // present and only create the chart group if it has not already been created.
-            out.add("var outer = vis.select('g." + chartClassID + "')").endStatement();
-            out.add("if (outer.empty()) outer = vis.append('g').attr('class', '" + chartClassID + "')").endStatement();
+            out.add("var outer = vis.select('g." + groupUtil.className + "')").endStatement();
+            out.add("if (outer.empty()) outer = ", groupUtil.createChart()).endStatement();
 
             // Now create the facet group that will contain the chart with data for the indicated facet
             out.add("var chart = outer.append('g').attr('class', 'facet')");
-
         } else {
             // For non-faceted charts, we only need the simple chart group to hold all the other parts
-            out.add("var chart = vis.append('g').attr('class', '" + chartClassID + "')");
+            out.add("var chart = ", groupUtil.createChart());
         }
+
+        if (hasMultipleCharts) groupUtil.addAccessibleChartInfo();
 
         out.addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
                 .endStatement();
@@ -518,11 +560,13 @@ public class D3Builder extends AbstractBuilder {
                 .addChained(axesTransform);
 
         // Nested charts do not need additional clipping
-        if (!structure.nested()) out.addChained("attr('clip-path', 'url(#" + clipID(structure) + ")')");
+        if (!structure.nested()) groupUtil.addClipPathReference(out);
 
         out.endStatement();
         out.add("interior.append('rect').attr('class', 'inner')")
                 .add(".attr('width', geom.inner_width).attr('height', geom.inner_height)")
+                .endStatement();
+        out.add("var gridGroup = interior.append('g').attr('class', 'grid')")
                 .endStatement();
 
         interaction.addPrerequisites();
@@ -530,28 +574,18 @@ public class D3Builder extends AbstractBuilder {
         if (scalesBuilder.needsAxes())
             out.add("var axes = chart.append('g').attr('class', 'axis')")
                     .addChained(axesTransform).endStatement();
-        if (scalesBuilder.needsLegends())
+        if (scalesBuilder.needsLegends()) {
             out.add("var legends = chart.append('g').attr('class', 'legend')")
-                    .addChained(makeTranslateTransform("(geom.chart_right-geom.chart_left - 3)", "0")).endStatement();
-
-        if (!structure.nested()) {
-            // Make the clip path for this: we expand by a pixel to avoid ugly cut-offs right at the edge
-            out.add("vis.append('clipPath').attr('id', '" + clipID(structure) + "').append('rect')");
-            out.addChained("attr('x', -1).attr('y', -1)");
-            if (scalesBuilder.coords == Coordinates.transposed)
-                out.addChained("attr('width', geom.inner_height+2).attr('height', geom.inner_width+2)").endStatement();
-            else
-                out.addChained("attr('width', geom.inner_width+2).attr('height', geom.inner_height+2)").endStatement();
+                    .addChained(makeTranslateTransform("(geom.chart_right-geom.chart_left - 3)", "0"));
+            groupUtil.addAccessibleTitle("Legend");
+            out.endStatement();
         }
+
+        if (!structure.nested()) groupUtil.defineInnerClipPath();
     }
 
     private String makeTranslateTransform(String dx, String dy) {
         return "attr('transform','translate(' + " + dx + " + ',' + " + dy + " + ')')";
-    }
-
-    // returns an id that is unique to the chart and the visualization
-    private String clipID(ChartStructure structure) {
-        return "clip_" + options.visIdentifier + "_" + structure.chartID();
     }
 
     public Controls getControls() {

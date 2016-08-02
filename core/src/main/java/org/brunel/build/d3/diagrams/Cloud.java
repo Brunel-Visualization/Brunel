@@ -40,8 +40,8 @@ class Cloud extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details) {
-        out.addChained("each(cloud.prepare).call(cloud.build)").endStatement();
-        addAestheticsAndTooltips(details, false);
+        out.addChained("each(cloud.prepare).call(cloud.build)");
+        addAestheticsAndTooltips(details);
     }
 
     public void writeDiagramEnter() {

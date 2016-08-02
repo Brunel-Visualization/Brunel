@@ -41,11 +41,11 @@ class Bubble extends D3Diagram {
 
     public void writeDefinition(ElementDetails details) {
         // Simple circles, with classes defined for CSS
-        out.addChained("attr('class', function(d) { return (d.children ? 'L' + d.depth : 'leaf element " + element.name() + "') })")
+        out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })")
                 .addChained("attr('cx', function(d) { return d.x; })")
                 .addChained("attr('cy', function(d) { return d.y; })")
-                .addChained("attr('r', function(d) { return d.r; })").endStatement();
-        addAestheticsAndTooltips(details, true);
+                .addChained("attr('r', function(d) { return d.r; })");
+        addAestheticsAndTooltips(details);
     }
 
     public String getRowKey() {

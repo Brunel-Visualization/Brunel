@@ -297,6 +297,7 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
                 .pageTitle("Brunel: " + shortForm(a))
                 .addTitles("<h2 style='text-align:center'>" + a + "</h2>")
                 .write();
+
         try {
             writer.close();
         } catch (IOException ignored) {

@@ -57,6 +57,8 @@ var BrunelD3 = (function () {
         g.margin_right = w - g.chart_right + g.inner_right;
         g.inner_width = g.outer_width - g.margin_left - g.margin_right;
         g.inner_height = g.outer_height - g.margin_top - g.margin_bottom;
+        g.inner_rawWidth = g.inner_width;
+        g.inner_rawHeight = g.inner_height;
         g.inner_radius = Math.min(g.inner_width, g.inner_height) / 2;
         g.default_point_size = Math.max(6, g.inner_radius * 0.035);
         return g;
@@ -82,38 +84,73 @@ var BrunelD3 = (function () {
     }
 
     // Add a color legend
-    function colorLegend(target, title, scale, ticks, labels) {
-        target.attr('class', 'legend').append('text').attr('x', 0).attr('y', 0)
-            .style('text-anchor', 'end').attr('dy', '0.85em').text(title).attr('class', 'title');
+    function colorLegend(target, title, scale, ticks, dateFormat) {
+
         var legend = target.selectAll('legend').data(ticks).enter().append('g').attr('class', 'swatch')
             .attr('transform', function (d, i) {
                 return 'translate(-20,' + (20 + i * 20) + ')';
             });
+
+        // Append swatch boxes and text
         legend.append('rect').attr('x', 6).attr('width', 14).attr('height', 14).style('fill', scale);
-        legend.append('text').attr('y', 7).attr('dy', '.35em').style('text-anchor', 'end').text(function (d, i) {
-            return labels ? labels[i] : BrunelData.Data.format(d, true);
-        })
+
+        // Create an appropriate text function nicely to format the ticks
+        var textf;
+        if (dateFormat)
+            textf = function (d) {
+                return dateFormat.format(d);
+            };
+        else if (typeof(ticks[0]) == 'number') {
+            var range = Math.abs(ticks[ticks.length - 1] - ticks[0]),
+                decimalPlaces = Math.max(0, 4 - Math.log(range) / Math.log(10)),
+                inMillions = range > 2e6;
+
+            if (inMillions)
+                textf = function (d) {
+                    return BrunelData.Data.formatNumeric(d / 1e6, 0, true) + "M"
+                };
+            else
+                textf = function (d) {
+                    return BrunelData.Data.formatNumeric(d, decimalPlaces, true)
+                };
+        } else
+            textf = function (d) {
+                return BrunelData.Data.format(d, true)
+            };
+
+        legend.append('text').attr('y', 7).attr('dy', '.35em').style('text-anchor', 'end').text(textf)
+            .attr('class', 'legend').append('text').attr('x', 0).attr('y', 0)
+            .style('text-anchor', 'end').attr('dy', '0.85em').text(title).attr('class', 'title');
     }
 
 
     // Create Split data structure for use in lines, paths and areas
-    function split(data, pathFunction, xFunction) {
+    function split(data, path, xFunction) {
         // Create an array for the unique split categories
         var splits = data._rows.map(data._split).filter(function (v, i, a) {
             return a.indexOf(v) === i
         });
 
+        // Creates a list of points on the path
+        function makePoints(path, d) {
+            var x = path.x(), y = path.y(),                     // Path functions for x and y
+                i, pts = [];
+            for (i = 0; i < d.length; i++)                      // For each point ...
+                pts.push({x: x(d[i]), y: y(d[i]), d: d[i]});    // ... add the x,y, and data index
+            return pts;
+        }
+
         // Define a function for each category that extracts the rows and sorts them into x order
         // It returns a structure for use in the element containing sample row, key and path
-        var f = function (category) {
+        function f(category) {
             var d = data._rows.filter(function (d) {
                 return data._split(d) == category;
             });
             if (xFunction) d.sort(function (a, b) {
                 return xFunction(a) - xFunction(b)
             });
-            return {'path': pathFunction(d), 'key': d[0].key, 'row': d[0].row}
-        };
+            return {'path': path(d), 'key': d[0].key, 'row': d[0].row, 'points': makePoints(path, d)}
+        }
 
         // Convert array of categories into array of above structures
         return splits.map(f)
@@ -247,9 +284,10 @@ var BrunelD3 = (function () {
     }
 
     // Returns an object with 'x', 'y' and 'box' that "surrounds" the text
+    // hPos and vPos are optional
     function makeLoc(target, labeling, s) {
-        var datum = target.__data__,                            // Associated data value
-            box, loc, method = labeling.method;
+        var datum = target.__data__, pad = labeling.pad,
+            box, loc, method = labeling.method, pos = labeling.location;
         if (labeling.where) {
             box = target.getBBox();
             var p = labeling.where(box, s, datum);
@@ -268,9 +306,12 @@ var BrunelD3 = (function () {
         } else {
             box = transformBox(target.getBBox(), target.getCTM());
 
+            var hPad = labeling.align == 'start' ? pad : -pad;
+            var vPad = labeling.inside ? -pad : pad;
+
             // Add 3 pixels padding
-            var dx = method == 'left' ? -3 : (method == 'right' ? box.width + 3 : box.width / 2);
-            var dy = method == 'top' ? -3 : (method == 'bottom' ? box.height + 3 : box.height / 2);
+            var dx = pos[0] == 'left' ? hPad : (pos[0] == 'right' ? box.width + hPad : box.width / 2);
+            var dy = pos[1] == 'top' ? -vPad : (pos[1] == 'bottom' ? box.height + vPad : box.height / 2);
             return {x: box.x + dx, y: box.y + dy, box: box}
         }
         // Modify for the transform
@@ -278,11 +319,12 @@ var BrunelD3 = (function () {
     }
 
 
-    function makeTextSpan(loc, parent) {
+    function makeTextSpan(loc, parent, content) {
         var span = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
         span.setAttribute('class', 'label');
         span.setAttribute('x', loc.x);
         span.setAttribute('y', loc.y);
+        span.textContent = content;
         parent.appendChild(span);
         return span;
     }
@@ -304,25 +346,38 @@ var BrunelD3 = (function () {
         return min > 0; // True if we have valid text
     }
 
-    function wrapInBox(textItem, text, loc) {
+    function wrapInBox(textItem, text, loc, offset) {
+        // Remove existing spans
         while (textItem.firstChild) textItem.removeChild(textItem.firstChild);
-        var words = text.split(/\s+/), word, content = [], height, tspan, i;
+
+        // words -- the array of words we try to add, one at a time
+        // content -- the array of words we are trying to add to the current span
+        // height -- the height of a single wrapped line
+        // W -- the width of the box into which the text must fit
+        var words = text.split(/\s+/), content = [], height, tspan, W = loc.box.width - 2,
+            word, i;
 
         for (i = 0; i < words.length; i++) {
-            tspan = tspan || makeTextSpan(loc, textItem);
             word = words[i];
             content.push(word);
-            tspan.textContent = content.join(" ");
-            height = height || textItem.getBBox().height;
+            if (!tspan) {
+                tspan = makeTextSpan(loc, textItem, word);
+                height = tspan.getBoundingClientRect().height
+            } else {
+                tspan.textContent = content.join(" ");
+            }
+
+            // Too many items; we cannot add the last item
             if (textItem.childNodes.length * height > loc.box.height) {
                 textItem.removeChild(tspan);
                 break;
             }
 
-            if (tspan.getComputedTextLength() > loc.box.width - 4) {
+            // If it doesn't fit, remove the content and try to add ellipses
+            if (tspan.getComputedTextLength() > W) {
                 content.pop();
-                if (content.length == 0) {
-                    if (!addEllipses(tspan, word, loc.box.width)) {
+                if (!content.length) {
+                    if (!addEllipses(tspan, word, W - 4)) {
                         textItem.removeChild(tspan);
                         break;
                     }
@@ -338,9 +393,11 @@ var BrunelD3 = (function () {
         var spans = textItem.childNodes;
         if (!spans) return;
 
+        var D = 0.5 + offset;
+
         // Move everything up to center them
         for (i = 0; i < spans.length; i++)
-            spans[i].setAttribute('dy', ((i - spans.length / 2.0) * 1.1 + 0.85) + "em");
+            spans[i].setAttribute('dy', ((i - spans.length / 2.0) * 1.1 + D ) + "em");
     }
 
 
@@ -387,13 +444,22 @@ var BrunelD3 = (function () {
 
     // Select the indicated rows of the data.
     // This will wait until any transition is completed, and will then call the desired rebuild function
-    // The row selected refers into the rowData dataset, but the selection to be modified is in the data dataset
-    function select(row, rowData, data, target, func) {
-        var sel = data.field("#selection"),                     // Selection field
-            method = d3.event.altKey ? "tog" : "sel";           // how to select the data (add, subtract, toggle, select)
-        if (d3.event.shiftKey) method = d3.event.altKey ? "sub" : "add";
-        data.modifySelection(method, row, rowData);             // Modify the selection
-        callWhenReady(func, target);                            // Request a redraw after current transition done
+    // item -- the data for the item being selected (contains 'row' and 'points' for a path)
+    // target -- the SVG target
+    // element -- the brunel element this selection is operating on
+    // func -- callback function to rebuild everything when selection is done
+    function select(item, target, element, func) {
+        var e = d3.event || event,                                      // jQuery can sometimes kill the d3.event
+            data = element.data(),                                      // the processed data
+            sel = data.field("#selection"),                             // Selection field
+            method = e.altKey ? "tog" : "sel";                          // how to select the data ...
+        if (e.shiftKey) method = e.altKey ? "sub" : "add";              // ... add, subtract, toggle, select
+
+        // The selection is in terms of the processed data, but we need to propagate that
+        // back to the original data set
+        element.original().modifySelection(method, item ? item.row : null, data, element.fields.key);
+
+        callWhenReady(func, target);                                    // Request a redraw after  transition done
     }
 
 
@@ -403,7 +469,7 @@ var BrunelD3 = (function () {
         // It is also the distance between curves of the spiral.
         // dx and dy are delta, but spread out to fit the space better for non-square results
         // When we start searching out from the center in the spiral, we look for anything larger than us
-        // and start outside that. 'precision' reduces the concept of 'larger' so we search less space
+        // and start outside that. 'precision' reduces the concept of 'larger' so we search less space0
 
         var delta = 1;
         var precision = Math.pow(0.8, Math.sqrt(data.rowCount() / 200));
@@ -553,7 +619,38 @@ var BrunelD3 = (function () {
             w = +svg.attributes.width.value, h = +svg.attributes.height.value,  // width and height
             pt = svg.createSVGPoint();                                      // For matrix calculations
 
-        d3Target.on('mouseover', function (d) {
+
+        d3Target.on('mousemove', function (d) {
+            if (!d) return;
+
+            // Offsets for scrolling
+            var ox = document.documentElement.scrollLeft || document.body.scrollLeft,
+                oy = document.documentElement.scrollTop || document.body.scrollTop,
+                p;
+
+            function getScreenTipPosition(item, d) {
+                var labelPos = makeLoc(item, labeling, '', d), ctm = svg.getScreenCTM();
+                pt.x = labelPos.x + ctm.e + ox;
+                pt.y = labelPos.y + ctm.f + oy;
+                return pt;
+            }
+
+
+            if (d.points) {
+                // This is a path and we need to find the best point on it
+                var pp = d3.mouse(this), off = this.getScreenCTM();
+
+                // Find closest point on the path
+                var best = closestPathPoint(d.points, pp[0], pp[1], true, true);
+                d = best.d;                                         // replace with the closest 'd' in array
+                p = {                                               // replace p by closest point on path
+                    x: best.x + off.e + ox,
+                    y: best.y + off.f + oy
+                }
+            } else {
+                p = getScreenTipPosition(this, d);                          // get absolute location of the target
+            }
+
             var content = labeling.content(d);                              // To set html content
             if (!content) return;                                           // No tooltips if no data
 
@@ -570,7 +667,6 @@ var BrunelD3 = (function () {
             if (tooltip.offsetWidth > max_width)                            // If too wide, set a width for the div
                 tooltip.style.width = max_width + "px";
 
-            var p = getScreenTipPosition(this, d);                          // get absolute location of the target
             var top = p.y - 10 - tooltip.offsetHeight;                      // top location
             if (top < 2 && p.y < h / 2) {                                   // We are in top half up AND overflow top
                 var old = labeling.method;                                  // save the original method
@@ -589,12 +685,6 @@ var BrunelD3 = (function () {
             if (tooltip) tooltip.style.visibility = 'hidden';
         });   // hide it
 
-        function getScreenTipPosition(item, d) {
-            var labelPos = makeLoc(item, labeling, '', d), ctm = svg.getScreenCTM();
-            pt.x = labelPos.x + ctm.e + (document.documentElement.scrollLeft || document.body.scrollLeft);
-            pt.y = labelPos.y + ctm.f + (document.documentElement.scrollTop || document.body.scrollTop);
-            return pt;
-        }
 
     }
 
@@ -609,16 +699,6 @@ var BrunelD3 = (function () {
         }
     }
 
-
-    // for each position, gives the text-anchor and y offset
-    var LABEL_DEF = {
-        'center': ['middle', '0.3em'],
-        'left': ['end', '0.3em'],
-        'inner-left': ['start', '0.85em'],
-        'right': ['start', '0.3em'],
-        'top': ['middle', '-0.3em'],
-        'bottom': ['middle', '0.7em']
-    };
 
     // Check if it hits an existing space
     function hitsExisting(box, hits) {
@@ -645,14 +725,38 @@ var BrunelD3 = (function () {
         return false;
     }
 
+    // Moves a label (text) inside the space defined by geom so long as part of it would overlap
+    function nudgeInside(text, labeling, geom) {
+        var o, b = text.getBBox(), D = 2;                                      // D is the pad distance
+        if (!labeling.fit) {
+            var L = geom.inner_left, R = L + geom.inner_rawWidth,              // left and right of the space
+                l = b.x, r = l + b.width;                                   // box left and right
+            if (l < L + D && r > L - D) {
+                // Offset to the right
+                o = L + D;
+                if (labeling.align == 'end') o += (r - l);
+                else if (labeling.align == 'middle') o += (r - l) / 2;
+                text.setAttribute("x", o);
+            } else if (r > R - D && l < R + D) {
+                // Offset to the right
+                o = R - D;
+                if (labeling.align == 'start') o -= (r - l);
+                else if (labeling.align == 'middle') o -= (r - l) / 2;
+                text.setAttribute("x", o);
+            }
+        }
+        return b;
+    }
+
 
     // Add a label for the selection 'item' to the group 'labelGroup', using the information in 'labeling'
     // 'hits' keeps track of text hit boxes to prevent heavy overlapping
-    function labelItem(item, labelGroup, labeling, hits) {
+    // 'geom' give the space into which the labels should fit
+    function labelItem(item, labelGroup, labeling, hits, geom) {
         var content = labeling.content(item.__data__);
         if (!content) return;                               // If there is no content, we are done
 
-        var loc = makeLoc(item, labeling, content);         // Get center point (x,y) and surrounding box (box)
+        if (!labeling.align) labeling.align = "middle";
 
         // Ensure the label exists and cross-reference both to each other
         var txt = item.__label__;
@@ -663,54 +767,61 @@ var BrunelD3 = (function () {
             txt.__labeling__ = labeling;
         }
 
-        var textNode = txt.node();
-
         if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
         else txt.classed('label', true);
+        txt.classed("selected", item.classList.contains("selected"));           // Copy selection status to label
 
-        var attrs = LABEL_DEF[labeling.method] || LABEL_DEF['center'];          // Default to center
-        txt.style('text-anchor', attrs[0]).attr('dy', attrs[1]);
+        var textNode = txt.node(),                          // SVG node
+            style = getComputedStyle(textNode),             // SVG style
+            posV = style.verticalAlign,                     // positioning
+            loc = makeLoc(item, labeling, content);         // Get center point (x,y) and surrounding box (box)
 
+
+        if (posV.endsWith("px"))
+            loc.y += Number(posV.substring(0, posV.length - 2));
+
+
+        txt.style('text-anchor', labeling.align).attr('dy', labeling.dy + "em");
+
+        // Do not wrap if the text has been explicitly placed
         if (labeling.fit && !labeling.where) {
-            // Do not wrap if the text has been explicitly placed
-            wrapInBox(textNode, content, loc);
+            wrapInBox(textNode, content, loc, labeling.dy);
         } else {
-
-            // Place at the required location
-            txt.attr('x', loc.x).attr('y', loc.y).text(content);
-
-            var kill, b = textNode.getBBox();
+            txt.attr('x', loc.x).attr('y', loc.y).text(content);            // Place at the required location
+            var kill, b = nudgeInside(textNode, labeling, geom);            // Nudge inside (and get the box for it)
             // If it doesn't fit, kill the text
             if (labeling.fit) {
                 // Too tall to fit a single line, or too wide and could not add ellipses
                 kill = (b.height > loc.box.height ||
                 b.width > loc.box.width && !addEllipses(textNode, content, loc.box.width));
-            } else {
-                kill = hitsExisting(b, hits);
+                if (kill) {
+                    textNode.parentNode.removeChild(textNode);          // remove from parent
+                    item.__label__ = null;                              // dissociate from item
+                }
+
+            } else if (style.visibility != 'hidden') {
+                if (hitsExisting(b, hits)) txt.classed("overlap", true);     // Set the style for overlapping text
             }
 
-            if (kill) {
-                textNode.parentNode.removeChild(textNode);          // remove from parent
-                item.__label__ = null;                              // dissociate from item
-            }
+
         }
     }
 
 
     // Apply labeling
-    function applyLabeling(element, group, labeling, time) {
+    function applyLabeling(element, group, labeling, time, geom) {
         var hits = {D: labeling.granularity};                      // Keep track of hit items; not the pixel granularity
         if (time > 0)
             return element.transition("labels").duration(time).tween('func', function () {
                 var item = this;
                 return function () {
-                    labelItem(item, group, labeling, hits);
+                    labelItem(item, group, labeling, hits, geom);
                 }
             });
         else
             return element.each(
                 function () {
-                    labelItem(this, group, labeling, hits)
+                    labelItem(this, group, labeling, hits, geom)
                 }
             );
     }
@@ -1035,7 +1146,7 @@ var BrunelD3 = (function () {
                             txt.attr('y', txt.__off__.dy + d.py);
                         } else {
                             // First time placement, and then record the offset relative to the node (note no hit collision handling)
-                            labelItem(this, null, txt.__labeling__, null);
+                            labelItem(this, null, txt.__labeling__, null, geom);
                             txt.__off__ = {
                                 dx: +txt.attr('x') - d.x,
                                 dy: +txt.attr('y') - d.y
@@ -1084,7 +1195,28 @@ var BrunelD3 = (function () {
 
     // v is in the range -1/2 to 1/2
     function interpolate(a, b, v) {
-        return (a + b) / 2 + v * (a - b);
+        return (a + b) / 2 + v * (b - a);
+    }
+
+    // find the closest point on a path
+    // array is an array of objects with (x,y,d) values
+    // (x,y) is the target point to find the enarest array point to
+    // distanceMethod is one of "x", "y", or "xy"
+    function closestPathPoint(array, x, y, distanceMethod) {
+        result = {distance: 1e99};
+        array.forEach(
+            function (t) {
+                v = 0;
+                if (distanceMethod != "y") v += (t.x - x) * (t.x - x);
+                if (distanceMethod != "x") v += (t.y - y) * (t.y - y);
+                if (v < result.distance) {
+                    result.distance = v;
+                    result.d = t.d;
+                    result.x = t.x;
+                    result.y = t.y;
+                }
+            });
+        return result;
     }
 
     // An animated start to a visualization
@@ -1115,12 +1247,16 @@ var BrunelD3 = (function () {
 
         // Find suitable fields (by name) that have the given role (size, y, color)
         function suitableFields(type) {
-            var i, y, result = [];   // collect all element's y fields
+            var i, y, f, seen = {}, result = [];              // collect all element's y fields
             chart.elements.forEach(function (e) {
                 y = e.fields[type];
-                if (y) for (i = 0; i < y.length; i++)
-                    if (isNumeric(y[i]))    // If numeric add values (add upper / lower ranges for stacking)
-                        result.push(y[i], y[i] + "$lower", y[i] + "$upper");
+                if (y) for (i = 0; i < y.length; i++) {
+                    f = y[i];
+                    if (seen[f] || f[0] == "'") continue;   // No duplicates and no constant values
+                    if (isNumeric(f))   			        // If numeric add values (upper / lower for stacking)
+                        result.push(f, f + "$lower", f + "$upper");
+                    seen[f] = true;
+                }
             });
             return result;
         }
@@ -1140,8 +1276,9 @@ var BrunelD3 = (function () {
         // "this" is the data set being evaluated
         function replaceData(name) {
             var field = this.field(name);
-            if (!field) return null;
-            field.oProvider = field.provider;                   // swap provider with a constant value
+            if (!field) return null;                                // Does not exist
+            if (field.oProvider) return field;                      // Already done
+            field.oProvider = field.provider;                       // swap provider with a constant value
             field.provider = new BrunelData.values_ConstantProvider(
                 start(field, role), field.rowCount());
             return field;
@@ -1168,9 +1305,280 @@ var BrunelD3 = (function () {
         vis.rebuild(time);                                  // rebuild with the correct data, animated
     }
 
-    function showSelect(row, value, data, element) {
-        alert("Selected: " + value);
-        console.log("Selected: row=" + row + ", value=" + value + " (" + element.fields.key + "), hit=" + this);
+
+    // Find the closest item in the selection to the mouse location
+    // selection is the items to search for; maxDistance is the furthest distance out to accept
+    // distanceMethod is one of "x", "y", or "xy"
+    function closestItem(selection, distanceMethod, maxDistance) {
+        var pp, v, x, y, t, that, result = {distance: 9e99};
+        selection.each(function (d) {
+            that = this;
+            pp = pp || d3.mouse(this);                        // Define the mouse location relative to the selection
+            if (d.points) {
+                d.points.forEach(
+                    function (t) {
+                        v = 0;
+                        if (distanceMethod != "y") v += (t.x - pp[0]) * (t.x - pp[0]);
+                        if (distanceMethod != "x") v += (t.y - pp[1]) * (t.y - pp[1]);
+                        if (v < result.distance) {
+                            result.distance = v;
+                            result.item = d;
+                            result.target = that;
+                            result.x = t.x;
+                            result.y = t.y;
+                        }
+                    });
+            } else {
+                t = this.getBBox();
+                x = t.x + t.width / 2;
+                y = t.y + t.height / 2;
+                v = 0;
+                if (distanceMethod != "y") v += (x - pp[0]) * (x - pp[0]);
+                if (distanceMethod != "x") v += (y - pp[1]) * (y - pp[1]);
+                if (v < result.distance) {
+                    result.distance = v;
+                    result.item = d;
+                    result.target = that;
+                    result.x = x;
+                    result.y = y;
+                }
+            }
+        });
+
+        // If we are not close enough, set the result item to null
+        result.distance = Math.sqrt(result.distance);
+        if (result.distance > maxDistance) result.item = null;
+        return result;
+    }
+
+    function showCrossHairs(item, target, element, distanceMethod) {
+        var i, R = 10,
+            chart = element.chart(),
+            scales = chart.scales,
+            group = element.group();
+
+        if (!group || !scales || !scales.x || !scales.y) return;
+
+        var g = group.selectAll("g.crosshairs");
+
+        // Create the group and shapes for the cross hairs
+        if (g.empty()) {
+            g = group.append("g").attr("class", "crosshairs");
+
+            function style(line, colName, dashing) {
+                line.style(colName, "red").style("pointer-events", "none").style("stroke-dasharray", dashing || "none");
+            }
+
+            // 4 lines, a central circle, and text tags
+            for (i = 0; i < 4; i++)
+                style(g.append("line").attr("class", "dim" + Math.floor(i / 2) + " part" + i), "stroke", "8 4");
+            style(g.append("circle").style("fill", "none"), "stroke");
+            style(g.append("text").attr("class", "dim0").attr("dy", "-0.3em"), "fill");
+            style(g.append("text").attr("class", "dim1").attr("dy", "-0.3em"), "fill");
+        }
+
+
+        if (!item) {
+            g.style("visibility", "hidden");
+            return;
+        }
+
+
+        var px, py;
+        if (item.points) {
+            // Item is a path with a set of points -- find the closest to the mouse
+            var pp = d3.mouse(target);
+            p = closestPathPoint(item.points, pp[0], pp[1], distanceMethod);
+            px = p.x;
+            py = p.y;
+        } else {
+            var box = target.getBBox();
+            px = box.x + box.width / 2;
+            py = box.y + box.height / 2;
+        }
+
+        var x = scales.x.invert(px),
+            y = scales.y.invert(py),
+            x1 = scales.x.range()[0],
+            x2 = scales.x.range()[1],
+            y1 = scales.y.range()[0],
+            y2 = scales.y.range()[1],
+            xText = element.data().field(element.fields.x[0]).format(x),
+            yText = element.data().field(element.fields.y[0]).format(y);
+
+
+        // Place the parts
+        g.selectAll("line.dim0").attr("x1", px).attr("x2", px);
+        g.selectAll("line.dim1").attr("y1", py).attr("y2", py);
+        g.select("line.part0").attr("y1", y1).attr("y2", py + R);
+        g.select("line.part1").attr("y1", py - R).attr("y2", y2);
+        g.select("line.part2").attr("x1", x1).attr("x2", px - R);
+        g.select("line.part3").attr("x1", px + R).attr("x2", x2);
+        g.select("circle").attr("cx", px).attr("cy", py).attr("r", R);
+        g.select("text.dim0").attr("x", px).attr("y", y1).text("\u00a0" + xText);
+        g.select("text.dim1").attr("y", py).attr("x", x1).text("\u00a0" + yText);
+        g.style("visibility", "visible");
+    }
+
+
+    // Makes a gridline.
+    // interior --  the svg group to add to
+    // scale -- the scale to use
+    // size -- the width or height of the line to draw
+    // x -- if true, for the x axis (vertical lines)
+    function makeGrid(interior, scale, size, x) {
+        var f, data;
+        if (scale.ticks) {
+            // Transform the ticks
+            data = scale.ticks();
+            f = function (d) {
+                return scale(d)
+            };
+        } else {
+            // Use raw range
+            data = scale.range();
+            f = function (d) {
+                return d
+            };
+        }
+
+        var selection = interior.selectAll("line.grid." + (x ? "x" : "y"));
+        var grid = selection.data(data);
+        grid.enter().append("line").attr("class", "grid " + (x ? "x" : "y"));
+        grid.exit().remove();
+
+        if (x)
+            grid.attr({
+                "y1": 0, "y2": size,
+                "x1": f, "x2": f
+            });
+        else
+            grid.attr({
+                "x1": 0, "x2": size,
+                "y1": f, "y2": f
+            });
+    }
+
+    function filterTicks(scale) {
+        // For small domains, just use that domain
+        var domain = scale.domain();
+        if (domain.length < 3) return domain;
+        var range = scale.range(),
+            delta = Math.abs(range[1] - range[0]),
+            skip = Math.ceil(16 / delta);
+        return skip < 2 ? domain : domain.filter(function (d, i) {
+            return !(i % skip);
+        })
+    }
+
+    /**
+     * Set zooming parameters. Missing parameter values are left unchanged
+     * @param params - if not null, the values inside are used to zoom
+     * @param zoom - d3.zoom to manipulate
+     * @returns {{dx, dy, s}}
+     */
+    function panzoom(params, zoom) {
+        var dx = zoom.translate()[0], dy = zoom.translate()[1], s = zoom.scale();
+        if (params) {
+            dx = params.dx || dx;
+            dy = params.dy || dy;
+            s = params.s || s;
+            zoom.translate([dx, dy]).scale(s);
+        }
+        return {dx:dx, dy:dy, s:s}
+    }
+
+    /**
+     * Restricts the parameters of the pan zoom so as to disallow meaningless transformations
+     * @param zoom -- the zoom to manipulate, in place
+     * @param geom -- the space we have available
+     * @param maxScaleFactor -- maximum scaling we allow
+     */
+    function restrictZoom(zoom, geom, maxScaleFactor) {
+
+        if (d3.event && d3.event.sourceEvent
+            && d3.event.sourceEvent.altKey) return;                     // Alt key disables the check
+
+        var D = 0.5,                                                    // Minimum fraction of screen screen
+            dx = zoom.translate()[0], dy = zoom.translate()[1],         // transform offsets
+            s = zoom.scale(),                                           // transform scale
+            W = geom.inner_width, H = geom.inner_height,                // chart bounds
+            minW = D * W, minH = D * H;                                 // minumum number of pixels to show
+
+        maxScaleFactor = maxScaleFactor || 3;                           // Default max
+
+        // Handle the case when the scale is out of bounds
+        if (s > maxScaleFactor || s < 1 / maxScaleFactor) {
+            s = s > 1 ? maxScaleFactor : 1 / maxScaleFactor;
+            if (zoom._LC) {
+                dx += (zoom._LC[0] - (dx + s * W / 2));                 // Translate to center at the previous center
+                dy += (zoom._LC[1] - (dy + s * H / 2));
+            }
+        }
+
+
+        if (dx + s * W < minW) dx = minW - s * W;                       // Don't allow scrolling off the left
+        if (dx > W - minW) dx = W - minW;                               // Don't allow scrolling off the right
+        if (dy + s * H < minH) dy = minH - s * H;                       // Don't allow scrolling off the top
+        if (dy > H - minH) dy = H - minH;                               // Don't allow scrolling off the bottom
+
+        zoom._LC = [dx + s * W / 2, dy + s * H / 2];                    // Store in case we go out of bounds again
+        zoom.scale(s).translate([dx, dy]);                              // Set the values in the zoom
+    }
+
+
+    //Sets the aspect ratio of the data domain values
+    function setAspect(scale_x, scale_y, aspect) {
+
+        //Is it safe to do?
+        if (!scale_x.domain() || scale_x.domain().length != 2 || !scale_y.domain() || scale_y.domain().length != 2)
+            return;
+
+        //Find the non-zero value for the range (this handles transpose case)
+        var xRange = scale_x.range()[1] != 0 ? scale_x.range()[1] : scale_x.range()[0];
+        var yRange = scale_y.range()[0] != 0 ? scale_y.range()[0] : scale_y.range()[1];
+
+        //Were the domains Dates?
+        var xDIsDate = scale_x.domain()[0].getTime;
+        var yDIsDate = scale_y.domain()[0].getTime;
+
+        //Use numerics for calculations
+        var xD1 = BrunelData.Data.asNumeric(scale_x.domain()[1]);
+        var xD0 = BrunelData.Data.asNumeric(scale_x.domain()[0]);
+        var yD1 = BrunelData.Data.asNumeric(scale_y.domain()[1]);
+        var yD0 = BrunelData.Data.asNumeric(scale_y.domain()[0]);
+
+        //Adjusts max values if scales were reversed
+        var xSign = xD0 > xD1 ? -1.0 : 1.0;
+        var ySign = yD0 > yD1 ? -1.0 : 1.0;
+
+        //Domain widths
+        var xDomain = Math.abs(xD1 - xD0);
+        var yDomain = Math.abs(yD1 - yD0);
+
+        //Largest domain : range
+        var xRatio = xDomain / xRange;
+        var yRatio = yDomain / yRange;
+        var r = Math.max(xRatio, yRatio);
+
+        //Scale the domain values to the desired aspect ratio
+        var minX = xD0;
+        var maxX = minX + aspect * r * xRange * xSign;
+        var minY = yD0;
+        var maxY = minY + r * yRange * ySign;
+
+        //Convert back to dates if needed
+        if (xDIsDate) {
+            minX = BrunelData.Data.asDate(minX);
+            maxX = BrunelData.Data.asDate(maxX);
+        }
+        if (yDIsDate) {
+            minY = BrunelData.Data.asDate(minY);
+            maxY = BrunelData.Data.asDate(maxY);
+        }
+
+        scale_x.domain([minX, maxX]);
+        scale_y.domain([minY, maxY]);
     }
 
 
@@ -1199,7 +1607,14 @@ var BrunelD3 = (function () {
         'time': time,
         'interpolate': interpolate,
         'animateBuild': animateBuild,
-        'showSelect': showSelect
+        'makeGrid': makeGrid,
+        'crosshairs': showCrossHairs,
+        'filterTicks': filterTicks,
+        'closestOnPath': closestPathPoint,
+        'closest': closestItem,
+        'panzoom': panzoom,
+        'restrictZoom': restrictZoom,
+        'setAspect': setAspect
     }
 
 })

@@ -70,7 +70,7 @@ public class BuildTests {
         builder.build(vis, 200, 200);
         String javascript = builder.getVisualization().toString();
         // Should limit the number of ticks
-        assertTrue(javascript.contains(".ticks(4)"));
+        assertTrue(javascript.contains(".ticks(3)"));
     }
 
     @Test

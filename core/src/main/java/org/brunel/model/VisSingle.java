@@ -46,9 +46,11 @@ public class VisSingle extends VisItem implements Cloneable {
 
     public StyleSheet styles;              // Specific styles for this vis (null is the default)
     public Param[] bounds;                 // If defined, bounds
-    public Coordinates coords;              // Coordinate util
+    public Coordinates coords;             // Coordinate util
+    public List<Param> fCoords;               // Coordinate Parameters
     public List<Param> fColor, fSize, fOpacity;  // Aesthetics
     public List<Param> fFilter;            // Fields for filtering
+    public List<Param> fAnimate;           // Fields for animating
     public List<Param> fSort;              // Fields used to sort the data
     public List<Param> fSplits;            // "Split" Aesthetics
     public List<Param> fX;                 // X dimension and then cluster dimensions
@@ -63,16 +65,15 @@ public class VisSingle extends VisItem implements Cloneable {
     public Using tUsing;                   // Any element modifications?
     public Diagram tDiagram;               // If defined, the layout to use instead of dimensions and axes
     public Param[] tDiagramParameters;     // If defined diagram parameters
+    public List<Param> tGuides;            // Guides
     public Element tElement;               // Element util (bar, line, point, ...)
     public Legends tLegends;               // Which legends to display (when aesthetic present)
-    public boolean flipX;
-    public boolean flipY;                  // reverse the X or y scale
     public List<Param> fKeys;              // Fields used as fKeys
     public List<Param> fEffects;           // Effects (usually animated)
     public Param fData;                    // Data sets used
 
-    public Map<Axes, Param[]> fAxes;               // Axes mapped to their parameters
-    public Map<Interaction, Param> tInteraction;   // Which interactive features to support (with maps to options)
+    public Map<Axes, Param[]> fAxes;        // Axes mapped to their parameters
+    public List<Param> tInteraction;        // Which interactive features to support (with maps to options)
 
     private Dataset dataset;                // Dataset in which dataset fields are to be found (may be null)
     private String[] used;                  // Data that is used in the vis (does not include filters)
@@ -96,11 +97,12 @@ public class VisSingle extends VisItem implements Cloneable {
         coords = Coordinates.regular;
         tUsing = Using.none;
         tLegends = Legends.auto;
-        tInteraction = Collections.EMPTY_MAP;
+        tInteraction = Collections.EMPTY_LIST;
         fAxes = Collections.EMPTY_MAP;
 
         // For memory and speed, these are all fixed as empty until used
         fX = Collections.EMPTY_LIST;
+        tInteraction = Collections.EMPTY_LIST;
         fY = Collections.EMPTY_LIST;
         fColor = Collections.EMPTY_LIST;
         fKeys = Collections.EMPTY_LIST;
@@ -108,7 +110,9 @@ public class VisSingle extends VisItem implements Cloneable {
         fSize = Collections.EMPTY_LIST;
         fSort = Collections.EMPTY_LIST;
         fFilter = Collections.EMPTY_LIST;
+        fAnimate = Collections.EMPTY_LIST;
         fSplits = Collections.EMPTY_LIST;
+        tGuides = Collections.EMPTY_LIST;
         fEffects = Collections.EMPTY_LIST;
         itemsLabel = Collections.EMPTY_LIST;
         itemsTitle = Collections.EMPTY_LIST;
@@ -186,12 +190,9 @@ public class VisSingle extends VisItem implements Cloneable {
         Collections.addAll(fFilter, fieldNames);
     }
 
-    public void flip() {
-        this.flipY = !flipY;
-    }
-
-    public void flipx() {
-        this.flipX = !flipX;
+    public void animate(Param... params) {
+        if (fAnimate.isEmpty()) fAnimate = new ArrayList<>(params.length);
+        Collections.addAll(fAnimate, params);
     }
 
     /**
@@ -202,14 +203,20 @@ public class VisSingle extends VisItem implements Cloneable {
      * @param types options to set
      * @return this object, for chaining calls
      */
-    public void interaction(Param... types) {
-        if (tInteraction.isEmpty()) tInteraction = new LinkedHashMap<>();
-        for (Param a : types) {
-            Interaction option = Interaction.valueOf(a.asString());
-            if (option == Interaction.auto || option == Interaction.none) tInteraction.clear();
-            tInteraction.put(option, a);
-        }
+    public VisSingle interaction(Param... types) {
+        if (tInteraction.isEmpty()) tInteraction = new ArrayList<>();
+        Collections.addAll(tInteraction, types);
+        return this;
+    }
 
+    /**
+     * Defines guides for the current item
+     *
+     * @param params guide definitions
+     */
+    public void guide(Param... params) {
+        if (tGuides.isEmpty()) tGuides = new ArrayList<>();
+        Collections.addAll(tGuides, params);
     }
 
     public void key(Param... fieldNames) {
@@ -252,6 +259,7 @@ public class VisSingle extends VisItem implements Cloneable {
         if (duplicatesWithin(fX)) error = addError(error, "X contains duplicate fields");
         if (duplicatesWithin(fColor)) error = addError(error, "color contains duplicate fields");
         if (duplicatesWithin(fFilter)) error = addError(error, "filter contains duplicate fields");
+        if (duplicatesWithin(fAnimate)) error = addError(error, "animate contains duplicate fields");
         if (duplicatesWithin(fSplits)) error = addError(error, "splits contains duplicate fields");
 
         if (tDiagram != null && stacked) error = addError(error, "diagrams cannot be stacked");
@@ -345,15 +353,20 @@ public class VisSingle extends VisItem implements Cloneable {
         LinkedHashSet<String> all = new LinkedHashSet<>();
         Collections.addAll(all, pos);
         Collections.addAll(all, nonPos);
-        if (tInteraction.containsKey(Interaction.filter)) all.add("#selection");
+
+        // Ensure the selection is added when we are filtering
+        for (Param p : tInteraction)
+            if (p.asString().equals(Interaction.filter.name()))
+                all.add("#selection");
 
         addFields(all, fTransform.keySet());
         addFields(all, fSummarize.keySet());
 
         used = all.toArray(new String[all.size()]);
 
-        // Add the filters
+        // Add the filters & animators
         addFieldNames(all, true, fFilter);
+        addFieldNames(all, true, fAnimate);
         includingFilters = all.toArray(new String[all.size()]);
     }
 
@@ -389,7 +402,7 @@ public class VisSingle extends VisItem implements Cloneable {
      * This method must be called before any building can be done on a vis item and the
      * building performed on the returned vis
      *
-     * @return
+     * @return fully resolved vis
      */
     public VisSingle makeCanonical() {
 
@@ -397,6 +410,7 @@ public class VisSingle extends VisItem implements Cloneable {
         ensureCanonical(fSize, "size");
         ensureCanonical(fOpacity, "opacity");
         ensureCanonical(fFilter, "filter");
+        ensureCanonical(fAnimate, "animate");
         ensureCanonical(fSort, "sort");
         ensureCanonical(fKeys, "key");
         ensureCanonical(fSplits, "split");
@@ -450,6 +464,9 @@ public class VisSingle extends VisItem implements Cloneable {
             if (tDiagram != null) {
                 // Diagrams know what they like
                 result.tElement = tDiagram.defaultElement;
+            } else if (!tGuides.isEmpty()) {
+                // Guides are paths
+                result.tElement = Element.path;
             } else if (stacked) {
                 // Bars work well for stacking usually
                 result.tElement = Element.bar;
@@ -464,6 +481,7 @@ public class VisSingle extends VisItem implements Cloneable {
             result.fSize = replaceAllField(result.fSize, replacement);
             result.fOpacity = replaceAllField(result.fOpacity, replacement);
             result.fFilter = replaceAllField(result.fFilter, replacement);
+            result.fAnimate = replaceAllField(result.fAnimate, replacement);
             result.fSort = replaceAllField(result.fSort, replacement);
             result.fKeys = replaceAllField(result.fKeys, replacement);
             result.fSplits = replaceAllField(result.fSplits, replacement);
@@ -664,8 +682,18 @@ public class VisSingle extends VisItem implements Cloneable {
         Collections.addAll(itemsTooltip, items);
     }
 
-    public void transpose() {
+    public void transpose(Param aspect) {
         coords = Coordinates.transposed;
+        if (aspect != null) {
+            this.fCoords = aspect.asList();
+        }
+    }
+
+    public void rectangular(Param aspect) {
+        coords = Coordinates.regular;
+        if (aspect != null) {
+            this.fCoords = aspect.asList();
+        }
     }
 
     public void using(Param type) {

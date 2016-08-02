@@ -30,7 +30,9 @@ import org.brunel.data.Field;
 import org.brunel.data.Fields;
 import org.brunel.data.auto.Auto;
 import org.brunel.data.auto.NumericScale;
+import org.brunel.data.stats.DateStats;
 import org.brunel.data.util.DateFormat;
+import org.brunel.data.util.DateUnit;
 import org.brunel.data.util.Range;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Axes;
@@ -59,7 +61,8 @@ import java.util.Set;
  */
 public class D3ScaleBuilder {
 
-    public static final double MIN_SIZE_FACTOR = 0.001;
+    private static final double MIN_SIZE_FACTOR = 0.001;
+
     final Coordinates coords;                       // Combined coordinate system derived from all elements
     private final Field colorLegendField;           // Field to use for the color legend
     private final AxisDetails hAxis, vAxis;         // Details for each axis
@@ -67,7 +70,6 @@ public class D3ScaleBuilder {
     private final ChartStructure structure;         // Overall detail on the chart composition
     private final VisSingle[] elements;             // The elements that define the scales used
     private final ScriptWriter out;                 // Write definitions to here
-    private double additionalHOffset;               // Extra space needed to allow for footnotes
 
     public D3ScaleBuilder(ChartStructure structure, double chartWidth, double chartHeight, ScriptWriter out) {
         this.structure = structure;
@@ -84,13 +86,13 @@ public class D3ScaleBuilder {
         // Set the axis information for each dimension
         AxisDetails xAxis, yAxis;
         if (axes[0] != null) {
-            xAxis = new AxisDetails("x", coords.allXFields, coords.xCategorical, axes[0].name, axes[0].ticks);
+            xAxis = new AxisDetails("x", coords.allXFields, coords.xCategorical, axes[0].name, axes[0].ticks, axes[0].grid, axes[0].reverse);
         } else
-            xAxis = new AxisDetails("x", new Field[0], coords.xCategorical, null, 9999);
+            xAxis = new AxisDetails("x", new Field[0], coords.xCategorical, null, 9999, false, false);
         if (axes[1] != null)
-            yAxis = new AxisDetails("y", coords.allYFields, coords.yCategorical, axes[1].name, axes[1].ticks);
+            yAxis = new AxisDetails("y", coords.allYFields, coords.yCategorical, axes[1].name, axes[1].ticks, axes[1].grid, axes[1].reverse);
         else
-            yAxis = new AxisDetails("y", new Field[0], coords.yCategorical, null, 9999);
+            yAxis = new AxisDetails("y", new Field[0], coords.yCategorical, null, 9999, false, false);
 
         // Map the dimension to the physical location on screen
         if (this.coords == Coordinates.transposed) {
@@ -100,6 +102,9 @@ public class D3ScaleBuilder {
             hAxis = xAxis;
             vAxis = yAxis;
         }
+
+        hAxis.setTextDetails(structure, true);
+        vAxis.setTextDetails(structure, false);
 
         int legendWidth = legendWidth();
 
@@ -127,7 +132,7 @@ public class D3ScaleBuilder {
     }
 
     public void setAdditionalHAxisOffset(double v) {
-        additionalHOffset = v;
+        hAxis.setAdditionalHAxisOffset(v);
     }
 
     private Coordinates makeCombinedCoords() {
@@ -201,7 +206,8 @@ public class D3ScaleBuilder {
 
     private int legendWidth() {
         if (!needsLegends()) return 0;
-        AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical(), null, 9999);
+        AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical(), null, 9999, false, false);
+        legendAxis.setTextDetails(structure, false);
         int spaceNeededForTicks = 32 + legendAxis.maxCategoryWidth();
         int spaceNeededForTitle = colorLegendField.label.length() * 7;                // Assume 7 pixels per character
         return 6 + Math.max(spaceNeededForTicks, spaceNeededForTitle);                // Add some spacing
@@ -302,59 +308,44 @@ public class D3ScaleBuilder {
         if (!hAxis.exists() && !vAxis.exists()) return;                          // No axes needed
 
         // Define the spaces needed to work in
-        String width = "geom.inner_width";
-        String height = "geom.inner_height";
-        if (coords == Coordinates.transposed) {
-            // They needs swapping
-            String t = width;
-            width = height;
-            height = t;
-        }
 
         // Define the groups for the axes and add titles
         if (hAxis.exists()) {
+            SVGGroupUtility groupUtil = new SVGGroupUtility(structure, "x_axis", out);
             out.onNewLine().add("axes.append('g').attr('class', 'x axis')")
-                    .addChained("attr('transform','translate(0,' + " + height + " + ')')")
-                    .endStatement();
-            if (hAxis.title != null) {
-                // Add the title centered at the bottom
-                out.add("axes.select('g.axis.x').append('text').attr('class', 'title')")
-                        .addChained("attr('text-anchor', 'middle')")
-                        .addChained("attr('x', " + width + "/2)")
-                        .addChained("attr('y', geom.inner_bottom - " + (additionalHOffset + 6) + ")")
-                        .addChained("text(" + Data.quote(hAxis.title) + ")")
-                        .endStatement();
-            }
+                    .addChained("attr('transform','translate(0,' + geom.inner_rawHeight + ')')");
+            groupUtil.addClipPathReference(out);
+            groupUtil.addAccessibleTitle("Horizontal Axis");
+            out.endStatement();
+            groupUtil.defineHorizontalAxisClipPath();
+
+            // Add the title if necessary
+            hAxis.writeTitle("axes.select('g.axis.x')", out);
         }
         if (vAxis.exists()) {
-            out.onNewLine().add("axes.append('g').attr('class', 'y axis')")
-                    .addChained("attr('transform','translate(geom.chart_left, 0)')")
-                    .endStatement();
-            if (vAxis.title != null) {
-                // Add the title
-                out.add("axes.select('g.axis.y').append('text').attr('class', 'title')")
-                        .addChained("attr('text-anchor', 'middle')")
-                        .addChained("attr('x', -" + height + "/2)")
-                        .addChained("attr('y', 6-geom.inner_left).attr('dy', '0.7em').attr('transform', 'rotate(270)')")
-                        .addChained("text(" + Data.quote(vAxis.title) + ")")
-                        .endStatement();
-            }
+            SVGGroupUtility groupUtil = new SVGGroupUtility(structure, "y_axis", out);
+            out.onNewLine().add("axes.append('g').attr('class', 'y axis')");
+            groupUtil.addAccessibleTitle("Vertical Axis");
+            out.endStatement();
+
+            // Add the title if necessary
+            vAxis.writeTitle("axes.select('g.axis.y')", out);
 
         }
 
         // Define the axes themselves and the method to build (and re-build) them
         out.onNewLine().ln();
-        defineAxis("var axis_bottom = d3.svg.axis()", this.hAxis);
-        defineAxis("var axis_left = d3.svg.axis().orient('left')", this.vAxis);
+        defineAxis("var axis_bottom = d3.svg.axis()", this.hAxis, true);
+        defineAxis("var axis_left = d3.svg.axis().orient('left')", this.vAxis, false);
         defineAxesBuild();
     }
 
-    private void defineAxis(String basicDefinition, AxisDetails axis) {
+    private void defineAxis(String basicDefinition, AxisDetails axis, boolean horizontal) {
         if (axis.exists()) {
+            int padding = horizontal ? axis.tickPadding.top : axis.tickPadding.right;
             out.add(basicDefinition)
-                    .addChained("scale(" + axis.scale + ").innerTickSize(3).outerTickSize(0)");
-            if (axis.tickValues != null)
-                out.addChained("tickValues([").addQuoted(axis.tickValues).add("])");
+                    .addChained("scale(" + axis.scale + ").innerTickSize(" + axis.markSize
+                            + ").tickPadding(" + padding + ").outerTickSize(0)");
             if (axis.isLog()) out.addChained("ticks(7, ',.g3')");
             else if (axis.tickCount != null)
                 out.addChained("ticks(").add(axis.tickCount).add(")");
@@ -374,38 +365,82 @@ public class D3ScaleBuilder {
      * Adds the calls to set the axes into the already defined scale groups
      */
     private void defineAxesBuild() {
-        out.onNewLine().ln().add("function buildAxes() {").indentMore();
+        out.onNewLine().ln().add("function buildAxes(time) {").indentMore();
         if (hAxis.exists()) {
-            out.onNewLine().add("axes.select('g.axis.x').call(axis_bottom)");
+            if (hAxis.categorical) {
+                // Ensure the ticks are filtered so as not to overlap
+                out.onNewLine().add("axis_bottom.tickValues(BrunelD3.filterTicks(" + hAxis.scale + "))");
+            }
+            out.onNewLine().add("var axis_x = axes.select('g.axis.x');");
+            out.onNewLine().add("BrunelD3.trans(axis_x, time).call(axis_bottom)");
             if (hAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
         }
 
         if (vAxis.exists()) {
-            out.onNewLine().add("axes.select('g.axis.y').call(axis_left)");
+            if (vAxis.categorical) {
+                // Ensure the ticks are filtered so as not to overlap
+                out.onNewLine().add("axis_left.tickValues(BrunelD3.filterTicks(" + vAxis.scale + "))");
+            }
+
+            out.onNewLine().add("var axis_y = axes.select('g.axis.y');");
+            out.onNewLine().add("BrunelD3.trans(axis_y, time).call(axis_left)");
             if (vAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
         }
+
+        // The gridlines are with an untransposed group, which makes this logic
+        // much harder -- the 'hAxis' is on the horizontal, but it could be for the
+        // 'y' scale, and the widths are transposed, so they need inverting (when
+        // we want the transposed height, we as for the width)
+
+        if (hAxis.hasGrid) {
+            if (hAxis.isX()) addGrid("scale_x", "geom.inner_height", true);
+            else addGrid("scale_y", "geom.inner_width", true);
+        }
+        if (vAxis.hasGrid) {
+            if (vAxis.isX()) addGrid("scale_x", "geom.inner_height", false);
+            else addGrid("scale_y", "geom.inner_width", false);
+        }
+
         out.indentLess().add("}").ln();
+    }
+
+    private void addGrid(String scaleName, String extent, boolean isX) {
+        out.onNewLine().add("BrunelD3.makeGrid(gridGroup, " + scaleName + ", " + extent + ", " + isX + " )")
+                .endStatement();
     }
 
     private void addRotateTicks() {
         out.add(".selectAll('.tick text')")
-                .addChained("style('text-anchor', 'end')")
-                .addChained("attr('dx', '-.3em')")
-                .addChained("attr('dy', '.6em')")
-                .addChained("attr('transform', function(d) { return 'rotate(-45)' })");
+                .addChained("attr('transform', function() {")
+                .indentMore().indentMore().onNewLine()
+                .onNewLine().add("var v = this.getComputedTextLength() / Math.sqrt(2)/2;")
+                .onNewLine().add("return 'translate(-' + (v+6) + ',' + v + ') rotate(-45)'")
+                .indentLess().indentLess().onNewLine().add("})");
+
     }
 
     public void writeCoordinateScales(D3Interaction interaction) {
-        writePositionScale(ScalePurpose.x, structure.coordinates.allXFields, getXRange(), elementsFillHorizontal(ScalePurpose.x));
-        writePositionScale(ScalePurpose.inner, structure.coordinates.allXClusterFields, "[-0.5, 0.5]", elementsFillHorizontal(ScalePurpose.inner));
-        writePositionScale(ScalePurpose.y, structure.coordinates.allYFields, getYRange(), false);
+        writePositionScale(ScalePurpose.x, structure.coordinates.allXFields, getXRange(), elementsFillHorizontal(ScalePurpose.x), hAxis.isReversed);
+        writePositionScale(ScalePurpose.inner, structure.coordinates.allXClusterFields, "[-0.5, 0.5]", elementsFillHorizontal(ScalePurpose.inner), false);
+        writePositionScale(ScalePurpose.y, structure.coordinates.allYFields, getYRange(), false, vAxis.isReversed);
+        writeAspect();
         interaction.addScaleInteractivity();
     }
 
-    private void writePositionScale(ScalePurpose purpose, Field[] fields, String range, boolean fillToEdge) {
-        int categories = scaleWithDomain(purpose.name(), fields, purpose, 2, "linear", null);
+    private void writeAspect() {
+        Double aspect = getAspect();
+        boolean anyCategorial = structure.coordinates.xCategorical || structure.coordinates.yCategorical;
+
+        if (aspect != null && !anyCategorial) {
+            out.onNewLine().add("BrunelD3.setAspect(scale_x, scale_y, " + aspect + ")");
+            out.endStatement();
+        }
+    }
+
+    private void writePositionScale(ScalePurpose purpose, Field[] fields, String range, boolean fillToEdge, boolean reverse) {
+        int categories = scaleWithDomain(purpose.name(), fields, purpose, 2, "linear", null, reverse);
 
         if (fields.length == 0) {
             out.addChained("range(" + range + ")");
@@ -440,6 +475,24 @@ public class D3ScaleBuilder {
         return reversed ? "[geom.inner_height,0]" : "[0, geom.inner_height]";
     }
 
+    private Double getAspect() {
+        //Find Param with "aspect" and return its value
+        for (VisSingle e : elements) {
+            if (e.fCoords != null) {
+                for (Param p : e.fCoords) {
+                    if (p.asString().equals("aspect")) {
+                        Param m = p.firstModifier();
+
+                        //Use "square" for 1.0 aspect ratio
+                        if (m.asString().equals("square")) return 1.0;
+                        else return m.asDouble();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     private boolean reverseRange(Field[] fields) {
         if (fields.length == 0) return false;
         // Ranking causes us to reverse the order
@@ -449,7 +502,8 @@ public class D3ScaleBuilder {
         return true;
     }
 
-    private int scaleWithDomain(String name, Field[] fields, ScalePurpose purpose, int numericDomainDivs, String defaultTransform, Object[] partitionPoints) {
+    private int scaleWithDomain(String name, Field[] fields, ScalePurpose purpose, int numericDomainDivs, String defaultTransform, Object[] partitionPoints,
+                                boolean reverse) {
 
         out.onNewLine().add("var", "scale_" + name, "= ");
 
@@ -466,7 +520,16 @@ public class D3ScaleBuilder {
             // Combine all categories in the position after each color
             // We use all the categories in the data; we do not need the partition points
             List<Object> list = getCategories(fields);
-            out.add("d3.scale.ordinal()").addChained("domain([").addQuotedCollection(list).add("])");
+            if (reverse) Collections.reverse(list);
+            out.add("d3.scale.ordinal()").addChained("domain([");
+            // Write numbers as numbers, everything else becomes a string
+            for (int i = 0; i < list.size(); i++) {
+                Object o = list.get(i);
+                if (i>0) out.add(", ");
+                if (o instanceof Number) out.add(Data.format(o, false));
+                else out.add(Data.quote(o.toString()));
+            }
+            out.add("])");
             return list.size();
         }
 
@@ -476,15 +539,16 @@ public class D3ScaleBuilder {
 
         // Build a combined scale field and force the desired transform on it for x and y dimensions
         Field scaleField = fields.length == 1 ? field : combineNumericFields(fields);
+        ChartCoordinates coordinates = structure.coordinates;
         if (name.equals("x")) {
             // We need to copy it as we are modifying it
             if (scaleField == field) scaleField = field.rename(field.name, field.label);
-            scaleField.set("transform", structure.coordinates.xTransform);
+            scaleField.set("transform", coordinates.xTransform);
         }
         if (name.equals("y")) {
             // We need to copy it as we are modifying it
             if (scaleField == field) scaleField = field.rename(field.name, field.label);
-            scaleField.set("transform", structure.coordinates.yTransform);
+            scaleField.set("transform", coordinates.yTransform);
         }
 
         // We util a nice scale only for rectangular coordinates
@@ -501,6 +565,10 @@ public class D3ScaleBuilder {
         NumericScale detail = Auto.makeNumericScale(scaleField, nice, padding, includeZero, 9, false);
         double min = detail.min;
         double max = detail.max;
+
+        Double[] extent = name.equals("x") ? coordinates.xExtent : coordinates.yExtent;
+        if (extent != null && extent[0] != null) min = extent[0];
+        if (extent != null && extent[1] != null) max = extent[1];
 
         Object[] divs = new Object[numericDomainDivs];
         if (field.isDate()) {
@@ -520,8 +588,8 @@ public class D3ScaleBuilder {
             // Some scales (like for an area size) have a default transform (e.g. root) and we
             // util that if the field wants a linear scale.
             String transform = null;
-            if (name.equals("x")) transform = structure.coordinates.xTransform;
-            if (name.equals("y")) transform = structure.coordinates.yTransform;
+            if (name.equals("x")) transform = coordinates.xTransform;
+            if (name.equals("y")) transform = coordinates.yTransform;
 
             // Size must not get a transform as it will seriously distort things
             if (purpose == ScalePurpose.size) transform = defaultTransform;
@@ -540,6 +608,13 @@ public class D3ScaleBuilder {
                     divs[i] = partitionPoints[i];
             }
         }
+
+        if (reverse) {
+            List<Object> l = Arrays.asList(divs);
+            Collections.reverse(l);
+            divs = l.toArray();
+        }
+
         out.addChained("domain([").add(Data.join(divs)).add("])");
         return -1;
     }
@@ -612,9 +687,10 @@ public class D3ScaleBuilder {
     }
 
     public void writeLegends(VisSingle vis) {
+        DateFormat dateFormat = null;
         if (vis.fColor.isEmpty() || colorLegendField == null) return;
         if (!vis.fColor.get(0).asField().equals(colorLegendField.name)) return;
-        String legendTicks, legendLabels = null;
+        String legendTicks;
         if (colorLegendField.preferCategorical()) {
             // Categorical data can just grab it from the domain
             legendTicks = "scale_color.domain()";
@@ -639,17 +715,17 @@ public class D3ScaleBuilder {
             }
 
             if (colorLegendField.isDate()) {
-                // Convert to dates
-                DateFormat dateFormat = (DateFormat) colorLegendField.property("dateFormat");
+                // We cannot use the format for the date field, as it may be much more detailed than we need
+                // We can instwad look at the difference between ticks to get the best format
+                DateUnit dateUnit = DateStats.getUnit(Math.abs(divisions[divisions.length - 1] - divisions[0]));
+                dateFormat = DateStats.getFormat(dateUnit, Math.abs(divisions[1] - divisions[0]));
+
                 DateBuilder dateBuilder = new DateBuilder();
                 String[] divs = new String[divisions.length];
-                String[] labels = new String[divisions.length];
-                for (int i = 0; i < divs.length; i++) {
+                for (int i = 0; i < divs.length; i++)
                     divs[i] = dateBuilder.make(Data.asDate(divisions[i]), dateFormat, true);
-                    labels[i] = "'" + colorLegendField.format(divisions[i]) + "'";
-                }
+
                 legendTicks = "[" + Data.join(divs) + "]";
-                legendLabels = "[" + Data.join(labels) + "]";
             } else {
                 legendTicks = "[" + Data.join(divisions) + "]";
             }
@@ -658,8 +734,10 @@ public class D3ScaleBuilder {
         String title = colorLegendField.label;
         if (title == null) title = colorLegendField.name;
 
+        // Add the date format field in only for date legends
         out.add("BrunelD3.addLegend(legends, " + out.quote(title) + ", scale_color, " + legendTicks);
-        if (legendLabels != null) out.add(", ").add(legendLabels);
+        if (dateFormat != null)
+            out.add(", BrunelData.util_DateFormat." + dateFormat.name());
         out.add(")").endStatement();
     }
 
@@ -676,7 +754,7 @@ public class D3ScaleBuilder {
             largeElement = true;
 
         ColorMapping palette = Palette.makeColorMapping(f, p.modifiers(), largeElement);
-        scaleWithDomain("color", new Field[]{f}, ScalePurpose.color, palette.values.length, "linear", palette.values);
+        scaleWithDomain("color", new Field[]{f}, ScalePurpose.color, palette.values.length, "linear", palette.values, false);
         out.addChained("range([ ").addQuoted((Object[]) palette.colors).add("])").endStatement();
     }
 
@@ -684,7 +762,7 @@ public class D3ScaleBuilder {
         double min = p.hasModifiers() ? p.firstModifier().asDouble() : 0.2;
         Field f = fieldById(p, vis);
 
-        scaleWithDomain("opacity", new Field[]{f}, ScalePurpose.color, 2, "linear", null);
+        scaleWithDomain("opacity", new Field[]{f}, ScalePurpose.color, 2, "linear", null, false);
         if (f.preferCategorical()) {
             int length = f.categories().length;
             double[] sizes = new double[length];
@@ -711,7 +789,7 @@ public class D3ScaleBuilder {
 
         Field f = fieldById(p, vis);
         Object[] divisions = f.isNumeric() ? null : f.categories();
-        scaleWithDomain(name, new Field[]{f}, ScalePurpose.size, sizes.length, defaultTransform, divisions);
+        scaleWithDomain(name, new Field[]{f}, ScalePurpose.size, sizes.length, defaultTransform, divisions, false);
         out.addChained("range([ ").add(Data.join(sizes)).add("])").endStatement();
     }
 
@@ -750,23 +828,38 @@ public class D3ScaleBuilder {
 
         final int ticks;
         final String name;
+        final boolean grid;
+        final boolean reverse;
 
         private AxisSpec() {
             ticks = 9999;
             name = null;
+            grid = false;
+            reverse = false;
         }
 
-        public AxisSpec(int ticks, String name) {
+        public AxisSpec(int ticks, String name, boolean grid, boolean reverse) {
             this.ticks = ticks;
             this.name = name;
+            this.grid = grid;
+            this.reverse = reverse;
         }
 
         public AxisSpec merge(Param[] params) {
             AxisSpec result = this;
             for (Param p : params) {
-                if (p.type() == Type.number)
-                    result = new AxisSpec(Math.min((int) p.asDouble(), result.ticks), result.name);
-                if (p.type() == Type.string) result = new AxisSpec(result.ticks, p.asString());
+                if (p.type() == Type.number) {
+                    int newTicks = Math.min((int) p.asDouble(), result.ticks);
+                    result = new AxisSpec(newTicks, result.name, result.grid, result.reverse);
+                } else if (p.type() == Type.string) {
+                    String newTitle = p.asString();
+                    result = new AxisSpec(result.ticks, newTitle, result.grid, result.reverse);
+                } else if (p.type() == Type.option) {
+                    if ("grid".equals(p.asString()))
+                        result = new AxisSpec(result.ticks, result.name, true, result.reverse);
+                    else if ("reverse".equals(p.asString()))
+                        result = new AxisSpec(result.ticks, result.name, result.grid, true);
+                }
             }
             return result;
         }

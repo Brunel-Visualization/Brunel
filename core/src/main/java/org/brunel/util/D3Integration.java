@@ -158,7 +158,7 @@ public class D3Integration {
 	//Creates a D3Builder to produce the d3 output
     public static D3Builder makeD3(Dataset data, String actionText, int width, int height, String visId, String controlsId) {
     	try {
-            BuilderOptions options = new BuilderOptions();
+            BuilderOptions options = BuilderOptions.makeFromENV();
             options.visIdentifier = visId;
             options.controlsIdentifier = controlsId;
             D3Builder builder = D3Builder.make(options);

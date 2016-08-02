@@ -18,7 +18,6 @@ package org.brunel.data;
 
 import org.brunel.data.util.DateUnit;
 import org.brunel.translator.JSTranslation;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Date;
@@ -274,6 +273,35 @@ public class TestField {
         assertEquals(1, skew.numProperty("granularity"), 0.01);
         assertEquals(1, a.numProperty("granularity"), 0.01);
         assertEquals(2, b.numProperty("granularity"), 0.01);
+    }
+
+    @Test
+    public void testFieldNumericFormatting() {
+        Field f = Fields.makeColumnField("a", "label", new Object[]{15.0, 16.0, 34.0, 56.0, 444.0});
+        f = Data.toNumeric(f);
+        assertEquals((Double) 0.0, f.numProperty("decimalPlaces"));
+        assertEquals("15", f.valueFormatted(0));
+        assertEquals("16", f.valueFormatted(1));
+        assertEquals("444", f.valueFormatted(4));
+
+        f = Fields.makeColumnField("a", "label", new Object[]{1.123456789, 2.3456789, 3.456789, 7.890123});
+        f = Data.toNumeric(f);
+        assertEquals((Double) 3.0, f.numProperty("decimalPlaces"));
+        assertEquals("1.123", f.valueFormatted(0));
+        assertEquals("2.346", f.valueFormatted(1));
+        assertEquals("3.457", f.valueFormatted(2));
+
+        f = Fields.makeColumnField("a", "label", new Object[]{123456, 234567, 345678});
+        f = Data.toNumeric(f);
+        assertEquals((Double) 0.0, f.numProperty("decimalPlaces"));
+        assertEquals("123,456", f.valueFormatted(0));
+        assertEquals("234,567", f.valueFormatted(1));
+        assertEquals("345,678", f.valueFormatted(2));
+
+        f = Fields.makeColumnField("a", "label", new Object[]{0.0});
+        f = Data.toNumeric(f);
+        assertEquals((Double) 4.0, f.numProperty("decimalPlaces"));
+
     }
 
 }

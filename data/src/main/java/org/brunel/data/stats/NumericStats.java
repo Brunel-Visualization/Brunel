@@ -82,13 +82,19 @@ public class NumericStats {
             f.set("q3", av(data, (n - 1) / 2 + (n - 1) * 0.25));
         }
 
-        double minD = max - min;
-        if (minD == 0) minD = Math.abs(max);
+        double granularity = max - min;
+        boolean allInteger = true;
+        if (granularity == 0) granularity = Math.abs(max);
         for (int i = 1; i < data.length; i++) {
             double d = data[i] - data[i - 1];
-            if (d > 0) minD = Math.min(minD, d);
+            if (d > 0) granularity = Math.min(granularity, d);
+            if (allInteger && data[i] != Math.round(data[i])) allInteger = false;
         }
-        f.set("granularity", minD);
+        f.set("granularity", granularity);
+
+        double range = max == min ? (max == 0 ? 1 : max) : max - min;
+        double places = Math.max(0, Math.round(4 - Math.log(range)/Math.log(10)));         // decimal places to show range
+        f.set("decimalPlaces", allInteger && max - min > 5 ? 0 : places);
     }
 
     /*
@@ -115,6 +121,7 @@ public class NumericStats {
                 || "skew".equals(key) || "kurtosis".equals(key)
                 || "min".equals(key) || "max".equals(key)
                 || "q1".equals(key) || "q3".equals(key)
-                || "median".equals(key) || "granularity".equals(key);
+                || "median".equals(key) || "granularity".equals(key)
+                || "decimalPlaces".equals(key);
     }
 }

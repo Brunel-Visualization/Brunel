@@ -77,7 +77,7 @@ public class Field extends Informative implements Comparable<Field> {
         if (categoryOrder == null) {
             // Build it no matter what so next call is faster
             categoryOrder = new MapInt();
-            if (preferCategorical())  categoryOrder.index(categories());
+            if (preferCategorical()) categoryOrder.index(categories());
         }
         return provider.compareRows(a, b, categoryOrder);
     }
@@ -224,14 +224,14 @@ public class Field extends Informative implements Comparable<Field> {
         if (isDate())
             return ((DateFormat) property("dateFormat")).format(Data.asDate(v));
         if ("percent".equals(property("summary"))) {
-            // Show one decimal place at most
             Double d = Data.asNumeric(v);
             if (d == null) return null;
-            return Data.formatNumeric(Math.round(d * 10) / 10.0, false) + "%";
+            return Data.formatNumeric(Math.round(d * 10) / 10.0, null, false) + "%";
         }
         if (isNumeric()) {
             Double d = Data.asNumeric(v);
-            return d == null ? "?" : Data.formatNumeric(d, true);
+            String s = (d == null) ? "?" : Data.formatNumeric(d, numProperty("decimalPlaces"), true);
+            return "percent".equals(property("summary")) ? s + "%" : s;
         }
         if (isProperty("list"))
             return ((ItemsList) v).toString((DateFormat) property("dateFormat"));

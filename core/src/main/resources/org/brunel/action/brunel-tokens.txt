@@ -34,9 +34,8 @@ yrange position FIELD+ NUMBER+ STRING+
 ## Coords
 stack coords
 polar coords
-transpose coords
-flipx coords
-flip coords
+rectangular coords aspect - NUMBER
+transpose coords aspect - NUMBER
 
 ## Aesthetics
 color aesthetic FIELD+ NUMBER+ STRING+
@@ -46,6 +45,7 @@ split aesthetic FIELD+
 key aesthetic FIELD+
 sort aesthetic FIELD+
 filter aesthetic FIELD+
+animate aesthetic FIELD speed
 label aesthetic FIELD+ NUMBER+ STRING+
 tooltip aesthetic FIELD+ NUMBER+ STRING+
 
@@ -85,11 +85,12 @@ smooth data FIELD+
 using other dodge interpolate
 axes other + none x y
 axes other + none x y
+guide other + x y
 legends other auto none all color size
 at other NUMBER+
 style other STRING
 effect other enter
-interaction other select panzoom filter auto call none
+interaction other + select panzoom filter auto call none
 title other STRING+ FIELD+ NUMBER+
 
 ## Combination actions

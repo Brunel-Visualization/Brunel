@@ -98,12 +98,13 @@ public class Data {
 
     @JSTranslation(js = {
             "if (o == null) return '?';",
-            "if (typeof(o) == 'number') return $$CLASS$$.formatNumeric(o, useGrouping);",
+            "if (typeof(o) == 'number') return $$CLASS$$.formatNumeric(o, null, useGrouping);",
             "return '' + o;"
     })
+
     public static String format(Object o, boolean useGrouping) {
         if (o == null) return "?";
-        if (o instanceof Number) return formatNumeric(((Number) o).doubleValue(), useGrouping);
+        if (o instanceof Number) return formatNumeric(((Number) o).doubleValue(), null, useGrouping);
         return o.toString();
     }
 
@@ -111,16 +112,18 @@ public class Data {
             "if (d == 0) return '0';",
             "if (Math.abs(d) <= 1e-6 || Math.abs(d) >= 1e8) return $.formatScientific(d);",
             "if (Math.abs((d - Math.round(d)) / d) < 1e-9) return $.formatInt(Math.round(d), useGrouping);",
-            "return $.formatFixed(d, useGrouping);"
+            "return $.formatFixed(d, decimalPlaces || 6, useGrouping);"
     })
-    public static String formatNumeric(double d, boolean useGrouping) {
+    public static String formatNumeric(double d, Number decimalPlaces, boolean useGrouping) {
         if (d == 0) return "0";
         if (Math.abs(d) <= 1e-6 || Math.abs(d) >= 1e8)
             return scientificFormat.format(d).replace('E', 'e');
         else if (Math.abs((d - Math.round(d)) / d) < 1e-9)
             return Math.abs(d) >= 1e4 && useGrouping ? bigIntegerFormat.format(d) : integerFormat.format(d);
         else {
-            int place = 7 - Math.min(7, Math.max(0, (int) Math.floor(Math.log10(d))));
+
+            int place = (decimalPlaces != null) ? decimalPlaces.intValue() :
+                    7 - Math.min(7, Math.max(0, (int) Math.floor(Math.log10(d))));
             return (useGrouping ? numericFormatGrouped : numericFormat)[place].format(d);
         }
     }
@@ -223,7 +226,7 @@ public class Data {
             if ("year".equals(method)) {
                 // Must be numeric and is equal to years
                 Double v = asNumeric(o);
-                if (v != null) data[i] = asDate(Data.format(v, false) + "-01-01");
+                if (v != null && v > 0) data[i] = asDate(Data.format(v, false) + "-01-01");
             } else if ("excel".equals(method)) {
                 // Must be numeric and is equal to the number of days since 1900.
                 // We use the number of days since 1970, so we need to subtract the difference

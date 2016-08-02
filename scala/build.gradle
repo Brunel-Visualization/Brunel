@@ -25,6 +25,15 @@ repositories {
     }
 }
 
+uploadArchives {
+    repositories {
+        flatDir {
+            dirs '../out/java'
+        }
+    }
+}
+
+
 dependencies {
     testCompile 'junit:junit:4.11'
     testCompile 'org.scalatest:scalatest_2.10:2.2.4'

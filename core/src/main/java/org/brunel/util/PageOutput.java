@@ -59,6 +59,7 @@ public class PageOutput {
     private final PrintWriter out;          // destination to write to
     private final List<String> titleList;   // Titles to add to the chart
     private final List<String> footerList;  // Footnotes to add to the chart
+    private final List<String> postList;    // Script to add after the vis building commands
     private String pageTitle;               // title for the page
 
     /**
@@ -72,6 +73,7 @@ public class PageOutput {
         this.builder = builder;
         this.titleList = new ArrayList<>();
         this.footerList = new ArrayList<>();
+        this.postList = new ArrayList<>();
         this.pageTitle = "Brunel Output";
     }
 
@@ -87,6 +89,11 @@ public class PageOutput {
 
     public PageOutput addFooters(String... names) {
         Collections.addAll(footerList, names);
+        return this;
+    }
+
+    public PageOutput addExecutionScript(String... items) {
+        Collections.addAll(postList, items);
         return this;
     }
 
@@ -147,6 +154,12 @@ public class PageOutput {
 
         writeSection(scriptStart, "<script>");
         writeSection(brunel, builder.getVisualization());
+
+        if (!postList.isEmpty()) {
+            writeSection(brunel, "/* Custom additions */");
+            writeSection(brunel, postList.toArray(new String[postList.size()]));
+        }
+
         writeSection(scriptEnd, "</script>");
 
         return this;

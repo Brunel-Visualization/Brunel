@@ -25,13 +25,16 @@ import org.brunel.model.VisTypes;
  * This class builds the information needed to build locations for the shapes
  */
 class DefineLocations {
-    static final String CLUSTER_SPACING = "0.75";       // Spacing between clusters
+    static final String CLUSTER_SPACING = "0.8";       // Spacing between clusters
 
-    private static String addClusterMultiplier(Field cluster) {
-        if (isRange(cluster))
-            return " + clusterWidth * scale_inner(" + D3Util.writeCall(cluster) + ".mid)";
-        else
-            return " + clusterWidth * scale_inner(" + D3Util.writeCall(cluster) + ")";
+    private static String addClusterMultiplier(Field cluster, boolean widthIsFunc) {
+        return " + "
+                + (widthIsFunc ? "clusterWidth(d)" : "clusterWidth")    // The cluster width
+                + " * scale_inner("                                     // times the inner scale position
+                + D3Util.writeCall(cluster)                             // for the cluster field
+                + (isRange(cluster) ? ".mid" : "")                      // taking the midpoint if necessary
+                + ")";
+
     }
 
     static boolean isRange(Field field) {
@@ -137,7 +140,7 @@ class DefineLocations {
                 // This is a range field, but we have not been asked to show both ends,
                 // so we use the midpoint
                 String def = scaleName + "(" + dataFunction + ".mid)";
-                if (cluster != null) def += addClusterMultiplier(cluster);
+                if (cluster != null) def += addClusterMultiplier(cluster, dim.clusterSize.isFunc());
                 dim.center = GeomAttribute.makeFunction(def);
             } else if (structure.vis.tElement == VisTypes.Element.bar && dimName.equals("y")) {
                 // // Bars implicitly drop from top to zero point
@@ -146,7 +149,7 @@ class DefineLocations {
             } else {
                 // Nothing unusual -- just define the center
                 String def = scaleName + "(" + dataFunction + ")";
-                if (cluster != null) def += addClusterMultiplier(cluster);
+                if (cluster != null) def += addClusterMultiplier(cluster, dim.clusterSize.isFunc());
                 dim.center = GeomAttribute.makeFunction(def);
             }
 

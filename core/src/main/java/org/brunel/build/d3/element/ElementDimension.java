@@ -18,6 +18,7 @@ package org.brunel.build.d3.element;
 
 import org.brunel.build.util.ModelUtil;
 import org.brunel.model.VisSingle;
+import org.brunel.model.style.StyleTarget;
 
 /**
  * Describes how we will define an element geometry dimension (usually by center + size, or left-right)
@@ -30,9 +31,12 @@ public class ElementDimension {
     public GeomAttribute left;                      // Where the left is to be (right will also be defined)
     public GeomAttribute right;                     // Where the right is to be (left will also be defined)
     public GeomAttribute size;                      // What the size is to be
+    public GeomAttribute clusterSize;               // What the size of a cluster is
 
-    public ElementDimension(VisSingle vis, String sizeName) {
-        sizeStyle = ModelUtil.getElementSize(vis, sizeName);
+    public ElementDimension(VisSingle vis, String sizeName, ElementRepresentation representation, String[] classes) {
+        StyleTarget target = StyleTarget.makeElementTarget(representation.getMark(), classes);
+        sizeStyle = ModelUtil.getSize(vis, target, sizeName);
+
         if (vis.fSize.isEmpty()) sizeFunction = null;                   // No sizing
         else if (vis.fSize.size() == 1) sizeFunction = "size(d)";       // Multiply by overall size
         else sizeFunction = sizeName + "(d)";                           // use width(d) or height(d)

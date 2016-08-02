@@ -62,7 +62,7 @@ public class Filter extends DataOperation {
             if (q < 0) q = c.length();
             field[i] = base.field(c.substring(0, p).trim());
             int t = getType(c.substring(p, q).trim());
-            Object[] par = getParams(c.substring(q).trim(), field[i].preferCategorical());
+            Object[] par = getParams(c.substring(q).trim(), field[i].preferCategorical(), field[i].isDate());
             if (t == 4 || t == -4) {
                 // Convert the parameters to objects at the requested edge points and then use "in"
                 par = getRankedObjects(field[i], Data.asNumeric(par[0]), Data.asNumeric(par[1]));
@@ -109,12 +109,15 @@ public class Filter extends DataOperation {
         throw new IllegalArgumentException("Cannot use filter command " + s);
     }
 
-    private static Object[] getParams(String s, boolean categorical) {
+    private static Object[] getParams(String s, boolean categorical, boolean isDate) {
         String[] parts = s.split(",");
         Object[] result = new Object[parts.length];
         for (int i = 0; i < result.length; i++) {
-            if (categorical) result[i] = parts[i].trim();
-            else result[i] = Data.asNumeric(parts[i].trim());
+            String aPart = parts[i].trim();
+			if (categorical) result[i] = aPart;
+			//Ensure date values for date fields
+            else if (isDate) result[i] = Data.asDate(Data.asNumeric(aPart));
+            else result[i] = Data.asNumeric(aPart);
         }
         return result;
     }

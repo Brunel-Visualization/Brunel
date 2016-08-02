@@ -16,10 +16,17 @@
 
 package org.brunel.build.d3;
 
+import org.brunel.build.d3.titles.AxisTitleBuilder;
+import org.brunel.build.info.ChartStructure;
+import org.brunel.build.util.ModelUtil;
+import org.brunel.build.util.Padding;
+import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
 import org.brunel.data.util.Range;
+import org.brunel.model.VisSingle;
+import org.brunel.model.style.StyleTarget;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -28,29 +35,38 @@ import java.util.List;
 /**
  * Calculates information on how to display axes
  */
-class AxisDetails {
+public class AxisDetails {
 
     public final String title;                         // Title for the axis
     public final String scale;                         // Name for the scale to use for this axis
-    public boolean rotatedTicks;               // If true, ticks are to be rotated
+    public final boolean hasGrid;                      // true if gridlines are desired
+    public final boolean isReversed;				   // Whether to reverse (flip) the min/max
+    public final StyleTarget styleTarget;              // style to target the axis
+    public boolean rotatedTicks;                       // If true, ticks are to be rotated
     public Object[] tickValues;                        // If non-null, ony show these ticks
     public Integer tickCount;                          // If non-null, request this many ticks for the axis
     public int size;                                   // The size for this axis (perpendicular to axis direction)
     public int leftGutter;
     public int rightGutter;                            // Space needed on left and right (for horizontal chart only)
     public int topGutter;
-    public int bottomGutter;                           // Space above and below chart (for vertical chart only)
+    public int bottomGutter;                            // Space above and below chart (for vertical chart only)
 
-    private final Field[] fields;                      // Fields used in this axis
-    private final boolean categorical;                 // True if the axis is categorical
-    private final boolean inMillions;                  // True if the fields values are nicely shown in millions
+    public int fontSize;                                // font height
+    public Padding tickPadding;                         // Padding for the ticks
+    public int markSize;                                // Size of the tick mark
+
+    private final Field[] fields;                       // Fields used in this axis
+    public final boolean categorical;                  // True if the axis is categorical
+    private final boolean inMillions;                   // True if the fields values are nicely shown in millions
+    private AxisTitleBuilder titleBuilder;              // builds the title for this axis
 
     /* Constructs the axis for the given fields */
-    public AxisDetails(String dimension, Field[] definedFields, boolean categorical, String userTitle, int tickCount) {
+    public AxisDetails(String dimension, Field[] definedFields, boolean categorical, String userTitle, int tickCount, boolean grid, boolean isReversed) {
         this.scale = "scale_" + dimension;
         this.fields = definedFields;
         this.categorical = categorical;
         this.tickCount = tickCount < 100 ? tickCount : null;
+        this.isReversed = isReversed;
 
         if (userTitle != null)
             this.title = (userTitle.isEmpty() ? null : userTitle);
@@ -58,7 +74,59 @@ class AxisDetails {
             this.title = title(fields);
 
         this.inMillions = !categorical && isInMillions(definedFields);
+        this.hasGrid = grid;
+        this.styleTarget = StyleTarget.makeTopLevelTarget("g", "axis", isX() ? "x" : "y");
+    }
 
+    public boolean isX() {
+        return scale.endsWith("x");
+    }
+
+    public void setAdditionalHAxisOffset(double additionalHAxisOffset) {
+        if (exists()) titleBuilder.bottomOffset = additionalHAxisOffset;
+    }
+
+    public void setTextDetails(ChartStructure structure, boolean isHorizontal) {
+        if (!exists()) return;
+        VisSingle vis = findLikelyElement(structure);
+        titleBuilder = new AxisTitleBuilder(vis, this, isHorizontal);
+
+        StyleTarget tick = StyleTarget.makeTarget("g", styleTarget, "tick");    // tick  group
+        StyleTarget mark = StyleTarget.makeTarget("line", tick);                // the mark within the tick
+        StyleTarget text = StyleTarget.makeTarget("text", tick);                // the text within the tick
+
+        tickPadding = ModelUtil.getPadding(vis, text, 3);                       // padding for tick text
+        fontSize = (int) ModelUtil.getFontSize(vis, text, 12);                  // font size
+        markSize = (int) ModelUtil.getSize(vis, mark, "size", 3);               // mark size
+    }
+
+    /**
+     * Find the first element that describes an axis, or just the first element if none do
+     *
+     * @param structure the chart elements
+     * @return a VisSingle -- will not be null
+     */
+    private VisSingle findLikelyElement(ChartStructure structure) {
+        // Look for the first element defining axes
+        for (VisSingle vis : structure.elements)
+            if (!vis.fAxes.isEmpty()) return vis;
+
+        // Look for the first vis defining any styles
+        for (VisSingle vis : structure.elements)
+            if (vis.styles != null) return vis;
+
+        // Just use the first
+        return structure.elements[0];
+    }
+
+    /**
+     * Add the title definition to the designated axis group element
+     *
+     * @param group svg group for the element
+     * @param out   writer
+     */
+    public void writeTitle(String group, ScriptWriter out) {
+        titleBuilder.writeContent(group, out);
     }
 
     private boolean isInMillions(Field[] definedFields) {
@@ -119,7 +187,8 @@ class AxisDetails {
             rotatedTicks = true;
             tickValues = makeSkippingTickValues(availableSpace, tickCount);
             int tickHeight = (int) (tickWidth / Math.sqrt(2));
-            size = tickHeight + 16 + estimatedTitleHeight();
+
+            size = tickHeight + fontSize + spaceForMarks() + estimatedTitleHeight();
             if (fillToEdge) {
                 rightGutter = 10;                       // Our ticks are offset about 6-8 pixels to right
                 leftGutter = tickHeight - 8;            // Since it's diagonal, width == height
@@ -170,7 +239,7 @@ class AxisDetails {
                 maxCharCount = Math.max(maxCharCount, 3);
             }
         }
-        return (int) (maxCharCount * 6.5);      // Assume a font with about this character width
+        return estimatedTickLength(maxCharCount);
     }
 
     private int countTicks(Field[] fields) {
@@ -186,7 +255,7 @@ class AxisDetails {
     private Object[] makeSkippingTickValues(double width, int count) {
         if (!categorical) return null;    // Only good for categorical
         double spacePerTick = width / count;
-        int skipFrequency = (int) Math.round(20 / spacePerTick);
+        int skipFrequency = (int) Math.round((fontSize * 3/2 + tickPadding.vertical()) / spacePerTick);
         if (skipFrequency < 2) return null;
         List<Object> useThese = new ArrayList<>();
         int at = 0;
@@ -199,11 +268,16 @@ class AxisDetails {
 
     /* Space needed for title */
     private int estimatedTitleHeight() {
-        return title == null ? 0 : 16;
+        return (int) titleBuilder.verticalSpace();
     }
 
     public int estimatedSimpleSizeWhenHorizontal() {
-        return exists() ? 20 + estimatedTitleHeight() : 0;
+        return exists() ? fontSize + tickPadding.vertical() + spaceForMarks() + estimatedTitleHeight() : 0;
+    }
+
+    // A negative mark size is drawn inside, but we don't want to subtract the size!
+    private int spaceForMarks() {
+        return Math.max(markSize,0);
     }
 
     public void layoutVertically(double availableSpace) {
@@ -219,16 +293,16 @@ class AxisDetails {
         if (categorical) {
             tickValues = makeSkippingTickValues(availableSpace, tickCount);
         } else {
-            int tickWidth = 16;   // We like about this much space between ticks
-            if (tickWidth * tickCount > availableSpace && this.tickCount == null) {
-                this.tickCount = (int) (availableSpace / tickWidth);
+            int tickHeight = fontSize * 3/4;
+            if (tickHeight * tickCount > availableSpace && this.tickCount == null) {
+                this.tickCount = (int) (availableSpace / tickHeight);
             }
 
         }
 
-        // Add 10 pixels for tick marks and gap between title and ticks
+        // Add 6 pixels for gap between title and ticks
         size = tickValues == null ? maxCategoryWidth() : maxTickWidth();
-        size += estimatedTitleHeight() + 10;
+        size += estimatedTitleHeight() + spaceForMarks();
     }
 
     /* Estimate the space needed to show all text categories */
@@ -239,7 +313,12 @@ class AxisDetails {
             if (s instanceof Range) length++;                   // The ellipsis is often rather long
             maxCharCount = Math.max(maxCharCount, length);
         }
-        return (int) (maxCharCount * 6.5);      // Assume a font with about this character width
+        return estimatedTickLength(maxCharCount);
+    }
+
+    private int estimatedTickLength(int maxCharCount) {
+        // Assume a font with about this character width
+        return tickPadding.horizontal() + maxCharCount * (fontSize + 1) / 2;
     }
 
 }
