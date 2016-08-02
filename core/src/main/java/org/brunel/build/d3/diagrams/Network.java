@@ -61,7 +61,7 @@ class Network extends D3Diagram {
         String density = "";
         if (vis.tDiagramParameters.length > 0) density = ", " + vis.tDiagramParameters[0].asDouble();
         out.onNewLine().add("if (first) ")
-                .add("BrunelD3.network(d3.layout.force(), graph, elements[" + nodes.index
+                .add("BrunelD3.network(d3.forceSimulation(), graph, elements[" + nodes.index
                         + "], elements[" + edges.index + "], geom" + density + ")").endStatement();
     }
 

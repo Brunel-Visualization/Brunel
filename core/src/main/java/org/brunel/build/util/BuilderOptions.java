@@ -31,7 +31,7 @@ public class BuilderOptions {
     public boolean accessibleContent = false;                   // If true, generate accessible content
     public String locJavaScript = "https://brunelvis.org/js";   // The location of the javascript libraries
     public String locMaps = "https://brunelvis.org/geo";        // The location of the mapping resources
-    public String locD3 = "//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min";  //Location of D3
+    public String locD3 = "//d3js.org/d3.v4.min.js";            //Location of D3
     public String locTopoJson = "//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min";  //Location of D3's TopoJson support
     public String version = "2.0";                              // Which online version to use
 

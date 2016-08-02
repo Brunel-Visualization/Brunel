@@ -84,15 +84,15 @@ public class D3ElementBuilder {
         // define the labeling structure to be used later
         defineLabeling(details);
 
-        // Set the values of things known to this element
+        // Define the main selection
         out.add("selection = main.selectAll('.element').data(" + details.dataSource + ",", getKeyFunction(), ")")
+                .endStatement();
+
+        // ENTER: Append representations for new data
+        out.add("var appended = selection.enter().append('" + details.representation.getMark() + "')")
+                .addChained("attr('class', '" + Data.join(details.classes, " ") + "')")
                 .addChained("classed('selected', function(d) { return data.$selection(d) == '\u2713' })");
 
-        out.endStatement();
-
-        // Define what happens when data is added ('enter')
-        out.add("selection.enter().append('" + details.representation.getMark() + "')");
-        out.add(".attr('class', '" + Data.join(details.classes, " ") + "')");
         if (!interaction.hasElementInteraction(structure))
             out.addChained("style('pointer-events', 'none')");
 
@@ -105,7 +105,8 @@ public class D3ElementBuilder {
             diagram.writePreDefinition(details);
         }
 
-        out.add("BrunelD3.trans(selection,transitionMillis)");
+        // UPDATE + ENTER: Define the values that can be changed based on the data
+        out.add("BrunelD3.transition(selection, appended, transitionMillis)");
 
         if (diagram == null || diagram instanceof GeoMap) {
             writeCoordinateDefinition(details);
@@ -142,7 +143,7 @@ public class D3ElementBuilder {
     public static void writeRemovalOnExit(ScriptWriter out) {
         // This fires when items leave the system
         // It removes the item and any associated labels
-        out.onNewLine().ln().add("BrunelD3.trans(selection.exit(),transitionMillis/3)");
+        out.onNewLine().ln().add("BrunelD3.transition(selection.exit(), false, transitionMillis/3)");
         out.addChained("style('opacity', 0.5).each( function() {")
                 .indentMore().indentMore().onNewLine()
                 .add("this.remove(); if (this.__label__) this.__label__.remove()")
@@ -277,7 +278,7 @@ public class D3ElementBuilder {
 
         // Now actual paths
         if (vis.tElement == Element.area) {
-            out.add("var path = d3.svg.area().x(x).y1(y2).y0(y1)");
+            out.add("var path = d3.area().x(x).y1(y2).y0(y1)");
         } else if (vis.tElement.producesSingleShape) {
             // Choose the top line if there is a range (say for stacking)
             String yDef = elementDef.y.right == null ? "y" : "y2";
@@ -286,7 +287,7 @@ public class D3ElementBuilder {
                 GeomAttribute size = elementDef.y.size != null ? elementDef.y.size : elementDef.overallSize;
                 out.addChained("r( function(d) { return " + size.definition() + "})");
             } else {
-                out.add("var path = d3.svg.line().x(x).y(" + yDef + ")");
+                out.add("var path = d3.line().x(x).y(" + yDef + ")");
             }
         }
         if (vis.tUsing == Using.interpolate) {
@@ -297,7 +298,7 @@ public class D3ElementBuilder {
     }
 
     private void defineWedgePath() {
-        out.add("var path = d3.svg.arc().innerRadius(0)");
+        out.add("var path = d3.arc().innerRadius(0)");
         if (vis.fSize.isEmpty())
             out.addChained("outerRadius(geom.inner_radius)");
         else

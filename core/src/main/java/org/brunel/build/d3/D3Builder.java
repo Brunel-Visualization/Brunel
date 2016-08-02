@@ -86,7 +86,7 @@ public class D3Builder extends AbstractBuilder {
         String pattern = "\t<script src=\"%s\" charset=\"utf-8\"></script>\n";
 
         String base = COPYRIGHT_COMMENTS +
-                String.format(pattern, "http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js")
+                String.format(pattern, "https://d3js.org/d3.v4.js")
                 + String.format(pattern, "http://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js");
 
         if (getControls().isNeeded()) {
@@ -151,7 +151,7 @@ public class D3Builder extends AbstractBuilder {
         // Diagrams do not need scales; everything else does
         if (structure.diagram == null) {
             out.titleComment("Scales");
-            scalesBuilder.writeCoordinateScales(interaction);
+            scalesBuilder.writeCoordinateScales();
 
             // Define the Axes
             if (scalesBuilder.needsAxes()) {
@@ -159,6 +159,9 @@ public class D3Builder extends AbstractBuilder {
                 scalesBuilder.writeAxes();
             }
         }
+
+        // Attach the zoom
+        interaction.addZoomFunctionality();
 
     }
 
@@ -253,11 +256,6 @@ public class D3Builder extends AbstractBuilder {
 
     protected void endChart(ChartStructure structure) {
         out.onNewLine().add("function build(time, noData) {").indentMore();
-
-        // This is a bit of hack to get around d3 support for catgeroical scales.
-        // we cannot simply set the zooming, so we have to add this work around at the
-        // start of the build
-        interaction.addCategoricalScaleAdjustment();
 
         out.onNewLine().add("var first = elements[0].data() == null").endStatement();
         out.add("if (first) time = 0;").comment("No transition for first call");
@@ -569,7 +567,7 @@ public class D3Builder extends AbstractBuilder {
         out.add("var gridGroup = interior.append('g').attr('class', 'grid')")
                 .endStatement();
 
-        interaction.addPrerequisites();
+        interaction.addOverlayForZoom();
 
         if (scalesBuilder.needsAxes())
             out.add("var axes = chart.append('g').attr('class', 'axis')")

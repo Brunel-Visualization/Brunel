@@ -292,25 +292,14 @@ public class D3Interaction {
     /**
      * Set up the overlay group and shapes for trapping events for zooming.
      */
-    public void addPrerequisites() {
+    public void addOverlayForZoom() {
         // The group for the overlay
         out.add("var overlay = interior.append('g').attr('class', 'element')")
                 .addChained("attr('class', 'overlay').style('cursor','move').style('fill','none').style('pointer-events','all')")
                 .endStatement();
 
         // Add an overlay rectangle for zooming that will trap all mouse events and use them for pan/zoom
-        out.add("var zoom = d3.behavior.zoom()").endStatement();
-
-        // Zoom by coordinate or projection
-        if (zoomable == ZoomType.CoordinateZoom)
-            out.add("zoom.on('zoom', function() { BrunelD3.restrictZoom(zoom, geom); build(-1) })")
-                    .endStatement();
-        if (zoomable == ZoomType.MapZoom)
-            out.add("zoom.on('zoom', function() { build(-1) })").endStatement();
-
-        // Zoom by graphic transform
-        if (zoomable == ZoomType.GraphicZoom)
-            out.add("zoom.on('zoom', function() { interior.attr('transform', 'translate(' + d3.event.translate + ')' + ' scale(' + d3.event.scale + ')' ) } )").endStatement();
+        out.add("var zoom = d3.zoom()").endStatement();
 
         // Add the zoom overlay and attach behavior
         out.add("overlay.append('rect').attr('class', 'overlay')")
@@ -321,43 +310,34 @@ public class D3Interaction {
     }
 
     /**
-     * Zooming modifies the scales, and this code makes that happen
+     * Set up the overlay group and shapes for trapping events for zooming.
      */
-    public void addScaleInteractivity() {
+    public void addZoomFunctionality() {
+
+        // Check if anything to do
         if (zoomable == ZoomType.None) return;
 
-        out.add("zoom");
+        // Define the zoom function
+        out.add("zoom.on('zoom', function() {")
+                .indentMore().indentMore().ln()
+                .add("var t = d3.event.transform")
+                .endStatement();
 
-        if (canZoomX && !structure.coordinates.xCategorical) {
-            if (scales.coords == Coordinates.transposed) {
-                out.add(".y(scale_x)");
-            } else {
-                out.add(".x(scale_x)");
-            }
+        // Zoom by coordinate or projection
+        if (zoomable == ZoomType.CoordinateZoom) {
+            if (canZoomX) out.add("scale_x = t.rescaleX(base_scales[0])").endStatement();
+            if (canZoomY) out.add("scale_y = t.rescaleY(base_scales[1])").endStatement();
+            out.add("build(-1)").endStatement();
         }
+//        if (zoomable == ZoomType.MapZoom)
+//            out.add("zoom.on('zoom', function() { build(-1) })").endStatement();
+//
+//        // Zoom by graphic transform
+//        if (zoomable == ZoomType.GraphicZoom)
+//            out.add("zoom.on('zoom', function() { interior.attr('transform', 'translate(' + d3.event.translate + ')' + ' scale(' + d3.event.scale + ')' ) } )").endStatement();
 
-        if (canZoomY && !structure.coordinates.yCategorical) {
-            if (scales.coords == Coordinates.transposed) {
-                out.add(".x(scale_y)");
-            } else {
-                out.add(".y(scale_y)");
-            }
-        }
-        out.endStatement();
+        out.indentLess().indentLess().add("})").endStatement();
+
     }
 
-    /**
-     * Add calls to set the range points for the categorical scale based on the zoom transform
-     */
-    public void addCategoricalScaleAdjustment() {
-        if (zoomable != ZoomType.CoordinateZoom) return;
-
-        if (canZoomX && structure.coordinates.xCategorical || canZoomY && structure.coordinates.yCategorical)
-            out.comment("Redefine categorical scale range points for the zoom");
-
-        if (canZoomX && structure.coordinates.xCategorical)
-            out.add("scale_x.rangePoints([zoom.translate()[0], zoom.translate()[0] + zoom.scale() * geom.inner_width], 1);");
-        if (canZoomY && structure.coordinates.yCategorical)
-            out.add("scale_y.rangePoints([zoom.translate()[1], zoom.translate()[1] + zoom.scale() * geom.inner_height], 1);");
-    }
 }

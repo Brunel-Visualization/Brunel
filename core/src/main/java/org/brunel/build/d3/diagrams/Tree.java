@@ -28,7 +28,7 @@ class Tree extends D3Diagram {
 
     private final int pad;          // Amount to pad tree by
 
-    public Tree(VisSingle vis, Dataset data, D3Interaction interaction,  ScriptWriter out) {
+    public Tree(VisSingle vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
         super(vis, data, interaction, out);
         this.pad = 10;
     }
@@ -36,10 +36,11 @@ class Tree extends D3Diagram {
     public ElementDetails initializeDiagram() {
         out.comment("Define tree (hierarchy) data structures");
         makeHierarchicalTree();
-        out.add("var treeLayout = d3.layout.tree()")
+        out.add("var treeLayout = d3.tree()")
                 .addChained("sort(BrunelData.diagram_Hierarchical.compare)");
         if (vis.coords == Coordinates.polar) {
-            out.addChained("size([360, geom.inner_radius-" + pad + "])");
+            out.addChained("size([360, geom.inner_radius-" + pad + "])")
+                    .addChained("separation(function(a,b) { return (a.parent == b.parent ? 1 : 2) / a.depth }");
         } else {
             out.addChained("size([geom.inner_width-" + 2 * pad + ", geom.inner_height-" + 2 * pad + "])");
         }
@@ -73,14 +74,14 @@ class Tree extends D3Diagram {
         // The edges
         out.add("var edgeGroup = diagramExtras.selectAll('path').data(treeLayout.links(" + details.dataSource + "))").endStatement();
         out.add("edgeGroup.enter().append('path').attr('class', 'edge')").endStatement();
-        out.add("BrunelD3.trans(edgeGroup,transitionMillis)")
-                .addChained("attr('d', d3.svg.diagonal");
+        out.add("BrunelD3.transition(edgeGroup, true, transitionMillis)")
+                .addChained("attr('d', d3.line");
 
-        if (vis.coords == Coordinates.polar) {
-            out.add(".radial().projection(function(d) { return [d.y, d.x / 180 * Math.PI] }))");
-        } else {
-            out.add("())");
-        }
+//        if (vis.coords == Coordinates.polar) {
+//            out.add(".radial().projection(function(d) { return [d.y, d.x / 180 * Math.PI] }))");
+//        } else {
+//            out.add("())");
+//        }
         addAestheticsAndTooltips(details);
     }
 

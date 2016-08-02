@@ -36,7 +36,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 public class GeoMap extends D3Diagram {
-	
+
     private final GeoMapping mapping;           // Mapping of identifiers to features
 
 
@@ -93,7 +93,7 @@ public class GeoMap extends D3Diagram {
                 .onNewLine().add("return 'translate(' + q[0] + ',' + q[1] + ')'")
                 .indentLess().onNewLine().add("}");
         out.onNewLine().add("function proj(p) { var q = p ? projection(p) : null; return q || [null,null] }").ln();
-        out.add("var path = d3.geo.path().projection(projection)").endStatement();
+        out.add("var path = d3.geoPath().projection(projection)").endStatement();
 
         // Define axes if desired
         if (geo.withGraticule) {
@@ -105,9 +105,9 @@ public class GeoMap extends D3Diagram {
             else if (step < 10) step = Math.round(step * 2) / 2.0;
             else step = 10;
 
-            out.onNewLine().add("var graticule = interior.append('path').datum(d3.geo.graticule().step([", step, ",", step, "]))")
+            out.onNewLine().add("var graticule = interior.append('path').datum(d3.geoGraticule().step([", step, ",", step, "]))")
                     .addChained("attr('class', 'grid')").endStatement()
-                    .onNewLine().add("function buildAxes() { graticule.attr('d', d3.geo.path().projection(projection)) }");
+                    .onNewLine().add("function buildAxes() { graticule.attr('d', d3.geoPath().projection(projection)) }");
         }
 
     }
@@ -131,7 +131,7 @@ public class GeoMap extends D3Diagram {
             return ElementDetails.makeForDiagram(vis, ElementRepresentation.geoFeature, "polygon", "data._rows");
         }
     }
-    
+
     public void writePerChartDefinitions() {
     	out.titleComment("Projection");
     	writeProjection(out, mapping.getGeoInformation(), interaction);
@@ -191,7 +191,7 @@ public class GeoMap extends D3Diagram {
         out.indentLess().onNewLine().add("}");
     }
 
-    
+
     public void writeDefinition(ElementDetails details) {
     }
 

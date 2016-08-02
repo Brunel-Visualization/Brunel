@@ -689,13 +689,19 @@ var BrunelD3 = (function () {
     }
 
 
-    // If we have a positive timing, return a transition on the element.
-    // Otherwise just return the element
-    function transition(element, time) {
+    /**
+     * Creates a transition for a selection, if it is needed
+     * @param selection the selection to base this on
+     * @param merged if defined, merge the selection with this
+     * @param time time to animate (if <=0, no animation will be done)
+     * @returns the transition or simple selection
+     */
+    function transition(selection, merged, time) {
+        if (merged) selection = selection.merge(merged);
         if (time > 0) {
-            return element.transition().duration(time);
+            return selection.transition().duration(time);
         } else {
-            return element
+            return selection
         }
     }
 
@@ -1090,7 +1096,7 @@ var BrunelD3 = (function () {
     function makeSymbol(type, radius) {
         radius = radius || 4;
         if (type == 'star') return star(radius * 1.5, 5);
-        return d3.svg.symbol().type(type).size(radius * radius * 4)();
+        return d3.symbol().type(type).size(radius * radius * 4)();
     }
 
     // Start a network layout for the node and edge elements
@@ -1597,7 +1603,7 @@ var BrunelD3 = (function () {
         'cloudLayout': cloud,
         'select': select,
         'shorten': shorten,
-        'trans': transition,
+        'transition': transition,
         'sizedPath': sizedPath,
         'tween': transitionTween,
         'addFeatures': makeMap,

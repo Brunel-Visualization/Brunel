@@ -73,7 +73,7 @@ public class GuideBuilder extends D3ElementBuilder {
             String defY = definition(p, "y");                   // Defines Y
 
             // Define the path
-            out.add("path = d3.svg.line().interpolate('basis')")
+            out.add("path = d3.line().curve(d3.curveCatmullRom)")
                     .addChained("x(function(d) { return scale_x(", defX, ") })")
                     .addChained("y(function(d) { return scale_y(", defY, ") })")
                     .endStatement();
@@ -89,7 +89,7 @@ public class GuideBuilder extends D3ElementBuilder {
                 out.addChained("attr('role', 'img').attr('aria-label', 'reference guide')");
             out.endStatement();
 
-            out.add("BrunelD3.trans(selection,transitionMillis)")
+            out.add("BrunelD3.transition(selection, true, transitionMillis)")
                     .addChained("attr('d', path(guideData))")
                     .endStatement();
 

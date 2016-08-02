@@ -34,7 +34,7 @@ class Treemap extends D3Diagram {
         makeHierarchicalTree();
 
         // Create the d3 layout
-        out.add("var treemap = d3.layout.treemap().sticky(true)")
+        out.add("var treemap = d3.treemap().tile(d3.treemapResquarify)")
                 .addChained("size([geom.inner_width, geom.inner_height])")
                 .addChained("sort(BrunelData.diagram_Hierarchical.compareReverse)")
                 .addChained("value(function(d) { return d.value == null || d.value < 0 ? 0 : d.value })")
