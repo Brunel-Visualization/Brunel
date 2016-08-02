@@ -122,7 +122,7 @@ def start_JVM():
     brunel_core_jar = lib_dir + "/brunel-core-" + brunel_version + ".jar"
     brunel_data_jar = lib_dir + "/brunel-data-" + brunel_version + ".jar"
     gson_jar = lib_dir + "/gson-2.3.1.jar"
-    java_classpath = brunel_core_jar + ";" + brunel_data_jar + ";" + gson_jar
+    java_classpath = brunel_core_jar + os.pathsep + brunel_data_jar + os.pathsep + gson_jar
 
     #only start JVM once since it is expensive
     if (not jpype.isJVMStarted()):
