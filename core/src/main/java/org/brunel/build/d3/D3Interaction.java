@@ -299,7 +299,7 @@ public class D3Interaction {
                 .endStatement();
 
         // Add an overlay rectangle for zooming that will trap all mouse events and use them for pan/zoom
-        out.add("var zoom = d3.zoom()").endStatement();
+        out.add("var zoom = d3.zoom().scaleExtent([1/3,3])").endStatement();
 
         // Add the zoom overlay and attach behavior
         out.add("overlay.append('rect').attr('class', 'overlay')")
@@ -319,9 +319,9 @@ public class D3Interaction {
 
         // Define the zoom function
         out.add("zoom.on('zoom', function() {")
-                .indentMore().indentMore().ln()
-                .add("var t = d3.event.transform")
-                .endStatement();
+                .indentMore().indentMore().ln();
+
+        out.add("var t = BrunelD3.restrictZoom(d3.event.transform, geom, this)").endStatement();
 
         // Zoom by coordinate or projection
         if (zoomable == ZoomType.CoordinateZoom) {
