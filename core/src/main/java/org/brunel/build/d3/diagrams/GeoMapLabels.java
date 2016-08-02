@@ -105,7 +105,7 @@ public class GeoMapLabels extends D3Diagram {
                 .onNewLine().add("location:['right', 'middle'], content: function(d) {return d[2]}")
                 .indentLess().onNewLine().add("}").endStatement();
 
-        out.add("BrunelD3.label(selection, labels, labeling, 0, geom)").endStatement();
+        out.add("BrunelD3.label(merged, labels, labeling, 0, geom)").endStatement();
     }
 
     public boolean needsDiagramLabels() {

@@ -106,7 +106,8 @@ public class D3ElementBuilder {
         }
 
         // UPDATE + ENTER: Define the values that can be changed based on the data
-        out.add("BrunelD3.transition(selection.merge(added), transitionMillis)");
+        out.add("var merged = selection.merge(added)").endStatement();
+        out.add("BrunelD3.transition(merged, transitionMillis)");
 
         if (diagram == null || diagram instanceof GeoMap) {
             writeCoordinateDefinition(details);
