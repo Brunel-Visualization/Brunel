@@ -1446,21 +1446,18 @@ var BrunelD3 = (function () {
             };
         }
 
-        var selection = interior.selectAll("line.grid." + (x ? "x" : "y"));
-        var grid = selection.data(data);
-        grid.enter().append("line").attr("class", "grid " + (x ? "x" : "y"));
-        grid.exit().remove();
+        var selection = interior.selectAll("line.grid." + (x ? "x" : "y")).data(data),
+            grid = selection.enter().append("line")
+                .attr("class", "grid " + (x ? "x" : "y"))
+                .merge(selection);
 
         if (x)
-            grid.attr({
-                "y1": 0, "y2": size,
-                "x1": f, "x2": f
-            });
+            grid.attr("y1", 0).attr("y2", size).attr("x1", f).attr("x2", f);
         else
-            grid.attr({
-                "x1": 0, "x2": size,
-                "y1": f, "y2": f
-            });
+            grid.attr("x1", 0).attr("x2", size).attr("y1", f).attr("y2", f);
+
+        selection.exit().remove();
+
     }
 
     function filterTicks(scale) {
@@ -1489,7 +1486,7 @@ var BrunelD3 = (function () {
             s = params.s || s;
             zoom.translate([dx, dy]).scale(s);
         }
-        return {dx:dx, dy:dy, s:s}
+        return {dx: dx, dy: dy, s: s}
     }
 
     /**
@@ -1500,9 +1497,6 @@ var BrunelD3 = (function () {
      * @return an adjusted zoom
      */
     function restrictZoom(t, geom, target) {
-
-        if (d3.event && d3.event.sourceEvent
-            && d3.event.sourceEvent.altKey) return;                     // Alt key disables the check
 
         var D = 0.5,                                                    // Minimum fraction of screen screen
             dx = t.x, dy = t.y, s = t.k,                                // transform offsets and scale

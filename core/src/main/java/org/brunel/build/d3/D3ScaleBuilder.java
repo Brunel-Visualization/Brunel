@@ -353,7 +353,7 @@ public class D3ScaleBuilder {
             out.add(basicDefinition)
                     .add("(" + axis.scale + ").tickSizeInner(" + axis.markSize
                             + ").tickPadding(" + padding + ").tickSizeOuter(0)");
-            if (axis.isLog()) out.addChained("ticks(7, ',.g3')");
+            if (axis.isLog()) out.addChained("ticks(7, ',.3g')");
             else if (axis.tickCount != null)
                 out.addChained("ticks(").add(axis.tickCount).add(")");
             else if (axis == hAxis) {
