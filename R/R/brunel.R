@@ -117,16 +117,19 @@ display_d3_output <- function(brunel_json, visid, controlsid, width, height) {
 
 	d3js <- brunel_json$js
   	d3css <- brunel_json$css
+	version <- paste(packageVersion("brunel"), sep="")
+  	
 
     #render the HTML
 	html_values <- list(d3css=d3css, visId=visid, width=width, height=height, d3js=d3js, controlsid=controlsid, 
-		d3loc=D3_LOC, topoJsonloc=TOPO_JSON_LOC, jsloc=JS_LOC )
+		d3loc=D3_LOC, topoJsonloc=TOPO_JSON_LOC, jsloc=JS_LOC, version=version )
 	html <- template_render(d3_template_html, html_values)
 	IRdisplay::display_html(html)
 }
 
 template_render <- function(template, values) {
 	tokens <- names(values)
+	
 	for (token in tokens) {
             next_token = paste('{{', token, '}}', sep='')
 		template <- sub(next_token, values[token], template, fixed=TRUE)

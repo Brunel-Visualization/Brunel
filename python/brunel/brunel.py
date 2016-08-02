@@ -39,6 +39,9 @@ templateEnv = jin.Environment(loader=templateLoader)
 D3_TEMPLATE = templateEnv.get_template(D3_TEMPLATE_FILE)
 D3_TEMPLATE_HTML = templateEnv.get_template(D3_TEMPLATE_HTML_FILE)
 
+brunel_version = pkg_resources.get_distribution("brunel").version
+
+
 def display(brunel, data, width=800, height=600, output='d3'):
 
     csv = None
@@ -98,10 +101,12 @@ def d3_output(response, visid, controlsid, width, height):
     d3js = results["js"]
     d3css = results["css"]
     controls = results["controls"]
-    html = D3_TEMPLATE_HTML.render({'jsloc': brunel_util.JS_LOC, 'd3css': d3css, 'visId': visid, 'width': width, 'height': height, 'controlsid': controlsid})
+    html = D3_TEMPLATE_HTML.render({'jsloc': brunel_util.JS_LOC, 'd3css': d3css, 'visId': visid, 'width': width,
+                                    'height': height, 'controlsid': controlsid, 'version': brunel_version})
     # side effect pushes required D3 HTML to the client
     ipydisplay(HTML(html))
-    js = D3_TEMPLATE.render({'jsloc': brunel_util.JS_LOC, 'd3loc': brunel_util.D3_LOC, 'topojsonloc':brunel_util.TOPO_JSON_LOC, 'd3js': d3js})
+    js = D3_TEMPLATE.render({'jsloc': brunel_util.JS_LOC, 'd3loc': brunel_util.D3_LOC,
+                             'topojsonloc':brunel_util.TOPO_JSON_LOC, 'd3js': d3js, 'version': brunel_version})
     return Javascript(js)
 
 #File search given a path.  Used to find the JVM if needed
@@ -118,7 +123,6 @@ def start_JVM():
 
     #Directory containing the Brunel .jar files
     lib_dir = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), "lib")
-    brunel_version = pkg_resources.get_distribution("brunel").version
     brunel_core_jar = lib_dir + "/brunel-core-" + brunel_version + ".jar"
     brunel_data_jar = lib_dir + "/brunel-data-" + brunel_version + ".jar"
     gson_jar = lib_dir + "/gson-2.3.1.jar"
