@@ -60,7 +60,7 @@ public class D3Builder extends AbstractBuilder {
     }
 
     /**
-     * Return the required builder
+     * Return the required builder with the stated options
      */
     public static D3Builder make(BuilderOptions options) {
         return new D3Builder(options);
