@@ -73,8 +73,8 @@ class Tree extends D3Diagram {
 
         // The edges
         out.add("var edgeGroup = diagramExtras.selectAll('path').data(treeLayout.links(" + details.dataSource + "))").endStatement();
-        out.add("edgeGroup.enter().append('path').attr('class', 'edge')").endStatement();
-        out.add("BrunelD3.transition(edgeGroup, true, transitionMillis)")
+        out.add("var added = edgeGroup.enter().append('path').attr('class', 'edge')").endStatement();
+        out.add("BrunelD3.transition(edgeGroup.merge(added), transitionMillis)")
                 .addChained("attr('d', d3.line");
 
 //        if (vis.coords == Coordinates.polar) {

@@ -379,7 +379,7 @@ public class D3ScaleBuilder {
                 out.onNewLine().add("axis_bottom.tickValues(BrunelD3.filterTicks(" + hAxis.scale + "))");
             }
             out.onNewLine().add("var axis_x = axes.select('g.axis.x');");
-            out.onNewLine().add("BrunelD3.transition(axis_x, false, time).call(axis_bottom.scale(scale_x))");
+            out.onNewLine().add("BrunelD3.transition(axis_x, time).call(axis_bottom.scale(scale_x))");
             if (hAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
         }
@@ -391,7 +391,7 @@ public class D3ScaleBuilder {
             }
 
             out.onNewLine().add("var axis_y = axes.select('g.axis.y');");
-            out.onNewLine().add("BrunelD3.transition(axis_y, false, time).call(axis_left.scale(scale_y))");
+            out.onNewLine().add("BrunelD3.transition(axis_y, time).call(axis_left.scale(scale_y))");
             if (vAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
         }
@@ -506,19 +506,17 @@ public class D3ScaleBuilder {
         out.onNewLine().add("var", "scale_" + name, "= ");
 
         // No position for this dimension, so util a default [0,1] scale
-        if (fields.length == 0)  return makeEmptyZeroOneScale();
+        if (fields.length == 0) return makeEmptyZeroOneScale();
 
         // Categorical field (includes binned data)
         if (ModelUtil.combinationIsCategorical(fields, purpose.isCoord))
-            return makeCategoricalScale(fields, reverse);
-
+            return makeCategoricalScale(fields, purpose, reverse);
 
         // Determine how much we want to include zero (for size scale we always want it)
         double includeZero = getIncludeZeroFraction(fields, purpose);
         if (purpose == ScalePurpose.size) includeZero = 1.0;
 
         Field field = fields[0];
-
 
         // Build a combined scale field and force the desired transform on it for x and y dimensions
         Field scaleField = fields.length == 1 ? field : combineNumericFields(fields);
@@ -596,12 +594,13 @@ public class D3ScaleBuilder {
         return -1;
     }
 
-    private int makeCategoricalScale(Field[] fields, boolean reverse) {
+    private int makeCategoricalScale(Field[] fields, ScalePurpose purpose, boolean reverse) {
         // Combine all categories in the position after each color
         // We use all the categories in the data; we do not need the partition points
         List<Object> list = getCategories(fields);
         if (reverse) Collections.reverse(list);
-        out.add("d3.scalePoint().padding(0.5).domain([");
+        out.add(purpose.isCoord ? "d3.scalePoint().padding(0.5)" : "d3.scaleOrdinal()")
+                .addChained("domain([");
         // Write numbers as numbers, everything else becomes a string
         for (int i = 0; i < list.size(); i++) {
             Object o = list.get(i);

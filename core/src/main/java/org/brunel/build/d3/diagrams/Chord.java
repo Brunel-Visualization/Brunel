@@ -73,8 +73,8 @@ class Chord extends D3Diagram {
 
         // The arcs themselves
         out.add("var arcGroup = diagramExtras.selectAll('path').data(chord.groups)").endStatement();
-        out.add("arcGroup.enter().append('path').attr('class', 'box')").endStatement();
-        out.add("BrunelD3.transition(arcGroup, true, transitionMillis)")
+        out.add("var added = arcGroup.enter().append('path').attr('class', 'box')").endStatement();
+        out.add("BrunelD3.transition(arcGroup.merge(added), transitionMillis)")
                 .addChained("attr('d', d3.arc().innerRadius(geom.inner_radius - arc_width).outerRadius(geom.inner_radius))")
                 .addChained("attr('id', function(d, i) { return 'arc' + i; })").endStatement();
 

@@ -89,7 +89,7 @@ public class D3ElementBuilder {
                 .endStatement();
 
         // ENTER: Append representations for new data
-        out.add("var appended = selection.enter().append('" + details.representation.getMark() + "')")
+        out.add("var added = selection.enter().append('" + details.representation.getMark() + "')")
                 .addChained("attr('class', '" + Data.join(details.classes, " ") + "')")
                 .addChained("classed('selected', function(d) { return data.$selection(d) == '\u2713' })");
 
@@ -106,7 +106,7 @@ public class D3ElementBuilder {
         }
 
         // UPDATE + ENTER: Define the values that can be changed based on the data
-        out.add("BrunelD3.transition(selection, appended, transitionMillis)");
+        out.add("BrunelD3.transition(selection.merge(added), transitionMillis)");
 
         if (diagram == null || diagram instanceof GeoMap) {
             writeCoordinateDefinition(details);
@@ -143,7 +143,7 @@ public class D3ElementBuilder {
     public static void writeRemovalOnExit(ScriptWriter out) {
         // This fires when items leave the system
         // It removes the item and any associated labels
-        out.onNewLine().ln().add("BrunelD3.transition(selection.exit(), false, transitionMillis/3)");
+        out.onNewLine().ln().add("BrunelD3.transition(selection.exit(), transitionMillis/3)");
         out.addChained("style('opacity', 0.5).each( function() {")
                 .indentMore().indentMore().onNewLine()
                 .add("this.remove(); if (this.__label__) this.__label__.remove()")

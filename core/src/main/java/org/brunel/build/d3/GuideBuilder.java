@@ -84,12 +84,12 @@ public class GuideBuilder extends D3ElementBuilder {
 
             out.add("selection = main.selectAll('.element.guide" + index + "').data(guideData)").endStatement();
 
-            out.add("selection.enter().append('path').attr('class', 'element line guide guide" + index + "')");
+            out.add("var added = selection.enter().append('path').attr('class', 'element line guide guide" + index + "')");
             if (structure.chart.accessible)
                 out.addChained("attr('role', 'img').attr('aria-label', 'reference guide')");
             out.endStatement();
 
-            out.add("BrunelD3.transition(selection, true, transitionMillis)")
+            out.add("BrunelD3.transition(selection.merge(added), transitionMillis)")
                     .addChained("attr('d', path(guideData))")
                     .endStatement();
 

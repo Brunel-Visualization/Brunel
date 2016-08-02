@@ -692,12 +692,10 @@ var BrunelD3 = (function () {
     /**
      * Creates a transition for a selection, if it is needed
      * @param selection the selection to base this on
-     * @param merged if defined, merge the selection with this
      * @param time time to animate (if <=0, no animation will be done)
      * @returns the transition or simple selection
      */
-    function transition(selection, merged, time) {
-        if (merged) selection = selection.merge(merged);
+    function transition(selection, time) {
         if (time > 0) {
             return selection.transition().duration(time);
         } else {
