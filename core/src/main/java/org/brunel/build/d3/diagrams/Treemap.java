@@ -36,7 +36,8 @@ class Treemap extends D3Diagram {
         // Create the d3 layout
         out.add("var treemap = d3.treemap().tile(d3.treemapResquarify)")
                 .addChained("size([geom.inner_width, geom.inner_height])")
-                .addChained("padding(2).paddingTop(function(d) { return d.depth < 2 ? 15 : 12})")
+                .addChained("padding(function(d) { return d.depth < 3 ? 3 : 0} )")
+                .addChained("paddingTop(function(d) { return d.depth ==1 ? 15 : (d.depth == 2) ? 12 : 0})")
                 .endStatement();
 
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.rect, "polygon", "treemap(tree).descendants()");
