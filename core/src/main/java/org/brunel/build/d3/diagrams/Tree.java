@@ -36,8 +36,7 @@ class Tree extends D3Diagram {
     public ElementDetails initializeDiagram() {
         out.comment("Define tree (hierarchy) data structures");
         makeHierarchicalTree();
-        out.add("var treeLayout = d3.tree()")
-                .addChained("sort(BrunelData.diagram_Hierarchical.compare)");
+        out.add("var treeLayout = d3.tree()");
         if (vis.coords == Coordinates.polar) {
             out.addChained("size([360, geom.inner_radius-" + pad + "])")
                     .addChained("separation(function(a,b) { return (a.parent == b.parent ? 1 : 2) / a.depth }");
@@ -50,7 +49,7 @@ class Tree extends D3Diagram {
         // Do not override the polar coordinates!
         if (vis.coords != Coordinates.polar)
             out.add("elementGroup.attr('transform', 'translate(" + pad + ", " + pad + ")')").endStatement();
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "treeLayout(tree.root)");
+        return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "treeLayout(root)");
     }
 
     public void writeDefinition(ElementDetails details) {

@@ -130,7 +130,9 @@ public abstract class D3Diagram {
         String[] positionFields = vis.positionFields();
         String fieldsList = positionFields.length == 0 ? "" : ", " + quoted(positionFields);
         String sizeParam = size == null ? null : Data.quote(size.asField());
-        out.add("var tree = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, " + sizeParam + fieldsList + ")").endStatement();
+        out.add("var hierarchy = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, " + sizeParam + fieldsList + "),")
+                .onNewLine().add("tree = d3.hierarchy(hierarchy.root).sum(function(d) { return d.value })")
+                .endStatement();
         isHierarchy = true;
     }
 

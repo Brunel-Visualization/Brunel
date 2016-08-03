@@ -64,6 +64,10 @@ public class ElementStructure {
                         && (vis.fKeys.size() == 2 || vis.positionFields().length == 2);
     }
 
+    public boolean hasComplexDataStructure() {
+        return chart.diagram == Diagram.treemap || chart.diagram == Diagram.tree || chart.diagram == Diagram.bubble;
+    }
+
     /**
      * Create the Javascript that gives us the required location on a given dimension in data units
      *

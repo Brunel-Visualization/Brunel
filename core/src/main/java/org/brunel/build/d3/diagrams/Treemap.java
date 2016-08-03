@@ -36,19 +36,19 @@ class Treemap extends D3Diagram {
         // Create the d3 layout
         out.add("var treemap = d3.treemap().tile(d3.treemapResquarify)")
                 .addChained("size([geom.inner_width, geom.inner_height])")
-                .addChained("sort(BrunelData.diagram_Hierarchical.compareReverse)")
-                .addChained("value(function(d) { return d.value == null || d.value < 0 ? 0 : d.value })")
-                .addChained("padding(function(d) { if (d.depth < 2) return [14,2,2,2]; if (d.depth < 3) return [11,2,2,2];})").endStatement();
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.rect, "polygon", "treemap(tree.root)");
+                .addChained("padding(2).paddingTop(function(d) { return d.depth < 2 ? 15 : 12})")
+                .endStatement();
+
+        return ElementDetails.makeForDiagram(vis, ElementRepresentation.rect, "polygon", "treemap(tree).descendants()");
     }
 
     public void writeDefinition(ElementDetails details) {
         out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })")
-                .addChained("attr('x', function(d) { return d.x; })")
-                .addChained("attr('y', function(d) { return d.y; })")
-                .addChained("attr('width', function(d) { return d.dx; })")
-                .addChained("style('width', function(d) { return d.dx; })")
-                .addChained("attr('height', function(d) { return d.dy; })");
+                .addChained("attr('x', function(d) { return d.x0 })")
+                .addChained("attr('y', function(d) { return d.y0 })")
+                .addChained("attr('width', function(d) { return d.x1-d.x0 })")
+                .addChained("style('width', function(d) { return d.x1-d.x0 })")
+                .addChained("attr('height', function(d) { return d.y1-d.y0 })");
         addAestheticsAndTooltips(details);
 
         labelBuilder.addTreeInternalLabels();

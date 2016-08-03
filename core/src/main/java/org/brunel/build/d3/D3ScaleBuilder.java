@@ -21,6 +21,7 @@ import org.brunel.action.Param.Type;
 import org.brunel.build.d3.D3Util.DateBuilder;
 import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.color.ColorMapping;
@@ -48,6 +49,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import static org.brunel.build.d3.ScalePurpose.color;
 
 /**
  * Adds scales and axes; also guesses the right size to leave for axes
@@ -271,7 +274,12 @@ public class D3ScaleBuilder {
         return hAxis.exists() || vAxis.exists();
     }
 
-    public void writeAestheticScales(VisSingle vis) {
+    public void writeAestheticScales(ElementStructure structure) {
+        VisSingle vis = structure.vis;
+
+        // Some structures have the data within a 'data' fields instead of at the top level
+        boolean dataInside = structure.hasComplexDataStructure();
+
         Param color = getColor(vis);
         Param[] size = getSize(vis);
         Param opacity = getOpacity(vis);
@@ -280,24 +288,29 @@ public class D3ScaleBuilder {
         out.onNewLine().comment("Aesthetic Functions");
         if (color != null) {
             addColorScale(color, vis);
-            out.onNewLine().add("var color = function(d) { return scale_color(" + D3Util.writeCall(fieldById(color, vis)) + ") }").endStatement();
+            Field field = fieldById(color, vis);
+            out.onNewLine().add("var color = function(d) { return scale_color(" + D3Util.writeCall(field, dataInside) + ") }").endStatement();
         }
         if (opacity != null) {
             addOpacityScale(opacity, vis);
-            out.onNewLine().add("var opacity = function(d) { return scale_opacity(" + D3Util.writeCall(fieldById(opacity, vis)) + ") }").endStatement();
+            Field field = fieldById(opacity, vis);
+            out.onNewLine().add("var opacity = function(d) { return scale_opacity(" + D3Util.writeCall(field, dataInside) + ") }").endStatement();
         }
         if (size.length == 1) {
             // We have exactly one field and util that for the single size scale, with a root transform by default for point elements
             String defaultTransform = (vis.tElement == Element.point || vis.tElement == Element.text)
                     ? "sqrt" : "linear";
             addSizeScale("size", size[0], vis, defaultTransform);
-            out.onNewLine().add("var size = function(d) { return scale_size(" + D3Util.writeCall(fieldById(size[0], vis)) + ") }").endStatement();
+            Field field = fieldById(size[0], vis);
+            out.onNewLine().add("var size = function(d) { return scale_size(" + D3Util.writeCall(field, dataInside) + ") }").endStatement();
         } else if (size.length > 1) {
             // We have two field and util them for height and width
             addSizeScale("width", size[0], vis, "linear");
             addSizeScale("height", size[1], vis, "linear");
-            out.onNewLine().add("var width = function(d) { return scale_width(" + D3Util.writeCall(fieldById(size[0], vis)) + ") }").endStatement();
-            out.onNewLine().add("var height = function(d) { return scale_height(" + D3Util.writeCall(fieldById(size[1], vis)) + ") }").endStatement();
+            Field widthField = fieldById(size[0], vis);
+            out.onNewLine().add("var width = function(d) { return scale_width(" + D3Util.writeCall(widthField, dataInside) + ") }").endStatement();
+            Field heightField = fieldById(size[1], vis);
+            out.onNewLine().add("var height = function(d) { return scale_height(" + D3Util.writeCall(heightField, dataInside) + ") }").endStatement();
         }
     }
 
@@ -641,7 +654,7 @@ public class D3ScaleBuilder {
 
         if (purpose == ScalePurpose.x) return 0.1;               // Really do not want much empty space on color axes
         if (purpose == ScalePurpose.size) return 0.98;           // Almost always want to go to zero
-        if (purpose == ScalePurpose.color) return 0.2;           // Color
+        if (purpose == color) return 0.2;           // Color
 
         // For 'Y'
 
@@ -677,7 +690,7 @@ public class D3ScaleBuilder {
 
     private double[] getNumericPaddingFraction(ScalePurpose purpose, Coordinates coords) {
         double[] padding = new double[]{0, 0};
-        if (purpose == ScalePurpose.color || purpose == ScalePurpose.size)
+        if (purpose == color || purpose == ScalePurpose.size)
             return padding;                // None for aesthetics
         if (coords == Coordinates.polar) return padding;                               // None for polar angle
         for (VisSingle e : elements) {
@@ -766,7 +779,7 @@ public class D3ScaleBuilder {
             largeElement = true;
 
         ColorMapping palette = Palette.makeColorMapping(f, p.modifiers(), largeElement);
-        defineScaleWithDomain("color", new Field[]{f}, ScalePurpose.color, palette.values.length, "linear", palette.values, false);
+        defineScaleWithDomain("color", new Field[]{f}, color, palette.values.length, "linear", palette.values, false);
         out.addChained("range([ ").addQuoted((Object[]) palette.colors).add("])").endStatement();
     }
 
@@ -774,7 +787,7 @@ public class D3ScaleBuilder {
         double min = p.hasModifiers() ? p.firstModifier().asDouble() : 0.2;
         Field f = fieldById(p, vis);
 
-        defineScaleWithDomain("opacity", new Field[]{f}, ScalePurpose.color, 2, "linear", null, false);
+        defineScaleWithDomain("opacity", new Field[]{f}, color, 2, "linear", null, false);
         if (f.preferCategorical()) {
             int length = f.categories().length;
             double[] sizes = new double[length];

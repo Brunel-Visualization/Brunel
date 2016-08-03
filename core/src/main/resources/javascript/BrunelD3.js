@@ -400,36 +400,66 @@ var BrunelD3 = (function () {
             spans[i].setAttribute('dy', ((i - spans.length / 2.0) * 1.1 + D ) + "em");
     }
 
+    /**
+     * Shortens the word
+     * @param word the word to trim
+     * @param maxRemovals the maximum characters to remove
+     * @param level what to trim
+     */
+    function shortenWord(word, maxRemovals, level) {
+        if (maxRemovals <= 0) return word;                      // Nothing to do
+        var len = word.length;
+        if (level == 0) {
+            // Purge boring words
+            if (word == "the" || word == "of") return "";
+        } else if (level == 1) {
+            // Purge interior vowels
+            var n = len - 1;
+            while (--n && maxRemovals) {
+                if ("aeiou".indexOf(word.charAt(n)) >= 0) {
+                    word = word.substring(0, n) + word.substring(n + 1);
+                    maxRemovals--;
+                }
+            }
+        } else if (level == 2 || level == 3) {
+            // Drop second last letter
+            if (len > 4-level) return word.substring(0, 1) + word.substring(2);
+        } else if (level == 4) {
+            return "";
+        }
+
+        return word;                                            // Couldn't do anything at this level
+    }
 
     function shorten(text, len) {
-        if (!text || text.length <= len) return text;
-        if (!len) return "";
-        if (len == 1) return text.charAt(0);
+        if (!text || text.length <= len) return text;                   // Text doesn't need shortening
+        if (!len) return "";                                            // O-length requested
+        if (len == 1) return text.charAt(0);                            // 1-length requested
 
-        var result = "", i, n, parts = text.split(/[ \t\n]+/);
-        if (parts.length == len) {
-            // One letter from each word
-            for (i = 0; i < parts.length; i++) result += parts[i].charAt(0);
-        } else if (parts.length == 1) {
-            // Remove vowels first, then cut off if it still is too long
-            var t = parts[0];
-            n = t.length - 2;
-            while (n > 0 && t.length > len) {
-                if ("aeiou".indexOf(t.charAt(n)) >= 0) t = t.substring(0, n) + t.substring(n + 1);
-                n--;
+
+        var level = 0, i,
+            parts = text.split(/[^\w%]+/),                              // Split into words
+            result = parts.join(" "),                                   // Current best result
+            drop = result.length - len;                                 // characters to drop
+
+        while (drop > 0) {
+            var currentDrop = drop;
+            for (i = parts.length - 1; i >= 0; i--) {
+                var pre = parts[i], post = shortenWord(pre, drop, level);
+                if (!post.length) {
+                    // entirely eliminated, remove from search
+                    parts.splice(i, 1);
+                    drop = drop - pre.length - 1;
+                } else {
+                    // possibly shortened
+                    parts[i] = post;
+                    drop = drop + post.length - pre.length;
+                }
             }
-            return t.length <= len ? t : t.substring(0, len);
-        } else if (parts.length == 2) {
-            // Abbreviate first word to just a letter
-            result = parts[0].charAt(0) + " " + shorten(parts[1], len - 2);
-        } else {
-            // Divide up space evenly between words
-            n = Math.floor((len - (parts.length - 1)) / parts.length);     // Account for spaces between parts
-            if (n < 1) return text.substr(0, len);
-            for (i = 0; i < parts.length - 1; i++) result = result + parts[i].substr(0, n) + " ";
-            result += parts[parts.length - 1].substring(0, len - result.length);
+            if (currentDrop == drop) level++;
         }
-        return result;
+
+        return parts.join(" ");
     }
 
     // Calls the function when the target is ready
@@ -622,6 +652,7 @@ var BrunelD3 = (function () {
 
         d3Target.on('mousemove', function (d) {
             if (!d) return;
+            if (d.data && d.data.row != undefined) d = d.data;       // Complex structures embed the data a level
 
             // Offsets for scrolling
             var ox = document.documentElement.scrollLeft || document.body.scrollLeft,
@@ -757,7 +788,9 @@ var BrunelD3 = (function () {
     // 'hits' keeps track of text hit boxes to prevent heavy overlapping
     // 'geom' give the space into which the labels should fit
     function labelItem(item, labelGroup, labeling, hits, geom) {
-        var content = labeling.content(item.__data__);
+        var d = item.__data__;
+        if (d.data && d.data.row != undefined) d = d.data;  // For hierarchies and structures where the data is a layer down
+        var content = labeling.content(d);
         if (!content) return;                               // If there is no content, we are done
 
         if (!labeling.align) labeling.align = "middle";

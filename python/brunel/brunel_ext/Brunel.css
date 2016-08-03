@@ -154,7 +154,8 @@
 }
 
 .brunel .element.text {
-    text-anchor: middle
+    text-anchor: middle;
+    fill: #0b9bdb
 }
 
 .brunel .element.line, .brunel .element.path, .brunel .element.edge {

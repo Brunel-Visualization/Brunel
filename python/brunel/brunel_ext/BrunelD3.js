@@ -689,13 +689,17 @@ var BrunelD3 = (function () {
     }
 
 
-    // If we have a positive timing, return a transition on the element.
-    // Otherwise just return the element
-    function transition(element, time) {
+    /**
+     * Creates a transition for a selection, if it is needed
+     * @param selection the selection to base this on
+     * @param time time to animate (if <=0, no animation will be done)
+     * @returns the transition or simple selection
+     */
+    function transition(selection, time) {
         if (time > 0) {
-            return element.transition().duration(time);
+            return selection.transition().duration(time);
         } else {
-            return element
+            return selection
         }
     }
 
@@ -1090,7 +1094,7 @@ var BrunelD3 = (function () {
     function makeSymbol(type, radius) {
         radius = radius || 4;
         if (type == 'star') return star(radius * 1.5, 5);
-        return d3.svg.symbol().type(type).size(radius * radius * 4)();
+        return d3.symbol().type(type).size(radius * radius * 4)();
     }
 
     // Start a network layout for the node and edge elements
@@ -1442,21 +1446,18 @@ var BrunelD3 = (function () {
             };
         }
 
-        var selection = interior.selectAll("line.grid." + (x ? "x" : "y"));
-        var grid = selection.data(data);
-        grid.enter().append("line").attr("class", "grid " + (x ? "x" : "y"));
-        grid.exit().remove();
+        var selection = interior.selectAll("line.grid." + (x ? "x" : "y")).data(data),
+            grid = selection.enter().append("line")
+                .attr("class", "grid " + (x ? "x" : "y"))
+                .merge(selection);
 
         if (x)
-            grid.attr({
-                "y1": 0, "y2": size,
-                "x1": f, "x2": f
-            });
+            grid.attr("y1", 0).attr("y2", size).attr("x1", f).attr("x2", f);
         else
-            grid.attr({
-                "x1": 0, "x2": size,
-                "y1": f, "y2": f
-            });
+            grid.attr("x1", 0).attr("x2", size).attr("y1", f).attr("y2", f);
+
+        selection.exit().remove();
+
     }
 
     function filterTicks(scale) {
@@ -1465,7 +1466,7 @@ var BrunelD3 = (function () {
         if (domain.length < 3) return domain;
         var range = scale.range(),
             delta = Math.abs(range[1] - range[0]),
-            skip = Math.ceil(16 / delta);
+            skip = Math.ceil(16 * domain.length / delta);
         return skip < 2 ? domain : domain.filter(function (d, i) {
             return !(i % skip);
         })
@@ -1485,45 +1486,32 @@ var BrunelD3 = (function () {
             s = params.s || s;
             zoom.translate([dx, dy]).scale(s);
         }
-        return {dx:dx, dy:dy, s:s}
+        return {dx: dx, dy: dy, s: s}
     }
 
     /**
      * Restricts the parameters of the pan zoom so as to disallow meaningless transformations
-     * @param zoom -- the zoom to manipulate, in place
+     * @param t -- the translation
      * @param geom -- the space we have available
-     * @param maxScaleFactor -- maximum scaling we allow
+     * @param target -- the target of the zoom
+     * @return an adjusted zoom
      */
-    function restrictZoom(zoom, geom, maxScaleFactor) {
-
-        if (d3.event && d3.event.sourceEvent
-            && d3.event.sourceEvent.altKey) return;                     // Alt key disables the check
+    function restrictZoom(t, geom, target) {
 
         var D = 0.5,                                                    // Minimum fraction of screen screen
-            dx = zoom.translate()[0], dy = zoom.translate()[1],         // transform offsets
-            s = zoom.scale(),                                           // transform scale
+            dx = t.x, dy = t.y, s = t.k,                                // transform offsets and scale
             W = geom.inner_width, H = geom.inner_height,                // chart bounds
-            minW = D * W, minH = D * H;                                 // minumum number of pixels to show
-
-        maxScaleFactor = maxScaleFactor || 3;                           // Default max
-
-        // Handle the case when the scale is out of bounds
-        if (s > maxScaleFactor || s < 1 / maxScaleFactor) {
-            s = s > 1 ? maxScaleFactor : 1 / maxScaleFactor;
-            if (zoom._LC) {
-                dx += (zoom._LC[0] - (dx + s * W / 2));                 // Translate to center at the previous center
-                dy += (zoom._LC[1] - (dy + s * H / 2));
-            }
-        }
-
+            minW = D * W, minH = D * H;                                 // minimum number of pixels to show
 
         if (dx + s * W < minW) dx = minW - s * W;                       // Don't allow scrolling off the left
         if (dx > W - minW) dx = W - minW;                               // Don't allow scrolling off the right
         if (dy + s * H < minH) dy = minH - s * H;                       // Don't allow scrolling off the top
         if (dy > H - minH) dy = H - minH;                               // Don't allow scrolling off the bottom
 
-        zoom._LC = [dx + s * W / 2, dy + s * H / 2];                    // Store in case we go out of bounds again
-        zoom.scale(s).translate([dx, dy]);                              // Set the values in the zoom
+
+        var result = d3.zoomIdentity.translate(dx, dy).scale(s);
+        target.__zoom = result;                                         // Modify the zoom
+        return result;                                                  // Restricted result
     }
 
 
@@ -1597,7 +1585,7 @@ var BrunelD3 = (function () {
         'cloudLayout': cloud,
         'select': select,
         'shorten': shorten,
-        'trans': transition,
+        'transition': transition,
         'sizedPath': sizedPath,
         'tween': transitionTween,
         'addFeatures': makeMap,
