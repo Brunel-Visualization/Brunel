@@ -423,7 +423,7 @@ var BrunelD3 = (function () {
             }
         } else if (level == 2 || level == 3) {
             // Drop second last letter
-            if (len > 4-level) return word.substring(0, 1) + word.substring(2);
+            if (len > 4 - level) return word.substring(0, 1) + word.substring(2);
         } else if (level == 4) {
             return "";
         }
@@ -818,7 +818,7 @@ var BrunelD3 = (function () {
             loc.y += Number(posV.substring(0, posV.length - 2));
 
 
-        txt.style('text-anchor', labeling.align).attr('dy', labeling.dy + "em");
+        txt.style('text-anchor', labeling.align).attr('dy', (labeling.dy || "0.25") + "em");
 
         // Do not wrap if the text has been explicitly placed
         if (labeling.fit && !labeling.where) {
@@ -1603,6 +1603,51 @@ var BrunelD3 = (function () {
     }
 
 
+    /**
+     * Creates a point stream for efficent maps in D3
+     * @param projection the projeytion to base on
+     */
+    function geoStream(projection) {
+        var p, lastX, lastP;                            // Stores last positions (x value, and result point)
+        return d3.geoTransform({
+
+            lineStart: function () {
+                lastX = lastP = null;               // Reset last values
+                this.stream.lineStart();
+            },
+
+            lineEnd: function () {
+                lastX = lastP = null;               // Reset last values
+                this.stream.lineEnd();
+            },
+
+            point: function (x, y) {
+                if (y > -85) {
+                    // Away from the south pole ensure we do not wrap around the world
+                    if (lastX > 150 && x < -150) x = Math.min(180, x + 360);
+                    if (lastX < -150 && x > 150) x = Math.max(-180, x -360);
+                }
+                lastX = x;
+
+                p = projection([x, y]);             // use the defined projection
+                if (!p) return;                     // if an invalid value, ignore it
+                // If within a half pixel of the last point, ignore it
+                if (lastP && (lastP[0] - p[0]) * (lastP[0] - p[0]) + (lastP[1] - p[1]) * (lastP[1] - p[1]) < 0.7) return;
+                lastP = p;
+                this.stream.point(p);
+            }
+        });
+    }
+
+    function winkel3() {
+        function w(x, y) {
+            var a = Math.acos(Math.cos(y) * Math.cos(x / 2)), sinca = Math.abs(a) < 1e-6 ? 1 : Math.sin(a) / a;
+            return [Math.cos(y) * Math.sin(x / 2) / sinca + x / Math.PI, (Math.sin(y) * sinca + y) / 2];
+        }
+        return d3.geoProjection(w);
+    }
+
+
     // Expose these methods
     return {
         'makeData': makeDataset,
@@ -1635,6 +1680,8 @@ var BrunelD3 = (function () {
         'closest': closestItem,
         'panzoom': panzoom,
         'restrictZoom': restrictZoom,
+        'geoStream': geoStream,
+        'winkel3' : winkel3,
         'setAspect': setAspect
     }
 

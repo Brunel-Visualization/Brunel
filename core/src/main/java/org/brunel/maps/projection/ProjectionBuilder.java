@@ -24,18 +24,6 @@ import org.brunel.geom.Rect;
  */
 public class ProjectionBuilder {
 
-    /**
-     * This Javascript function defines a D3 projection to do the Winkel Tripel projection for a whole-earth projection
-     */
-    public static final String[] WinkelD3Function = new String[]{
-            "function () {",
-            "  function w(x, y) {",
-            "    var a = Math.acos(Math.cos(y) * Math.cos(x / 2)), sinca = Math.abs(a) < 1e-6 ? 1 : Math.sin(a) / a;",
-            "    return [Math.cos(y) * Math.sin(x / 2) / sinca + x / Math.PI, (Math.sin(y) * sinca + y) / 2];",
-            "  }",
-            "  return d3.geo.projection(w);",
-            "}"
-    };
 
     public static final Projection MERCATOR = new Mercator();           // Mercator projection
     public static final Projection WINKEL3 = new WinkelTripel();        // Winkel Tripel

@@ -100,13 +100,14 @@ public class D3ElementBuilder {
 
         if (diagram == null) {
             writeCoordEnter();
+            out.add("var merged = selection.merge(added)").endStatement();
         } else {
             diagram.writeDiagramEnter();
+            out.add("var merged = selection.merge(added)").endStatement();
             diagram.writePreDefinition(details);
         }
 
         // UPDATE + ENTER: Define the values that can be changed based on the data
-        out.add("var merged = selection.merge(added)").endStatement();
         out.add("BrunelD3.transition(merged, transitionMillis)");
 
         if (diagram == null || diagram instanceof GeoMap) {
@@ -267,7 +268,7 @@ public class D3ElementBuilder {
         if (structure.chart.geo != null) {
             // Wrap the locations in the projection
             for (int i = 0; i < references.length; i++)
-                references[i] = "proj(" + references[i] + ")";
+                references[i] = "projection(" + references[i] + ")";
             e.setReferences(references);
         } else if (!structure.isGraphEdge()) {
             // Just as they are
@@ -432,8 +433,8 @@ public class D3ElementBuilder {
             if (DefineLocations.isRange(x[0])) xFunction += ".mid";
             if (DefineLocations.isRange(y[0])) yFunction += ".mid";
 
-            def.x.center = GeomAttribute.makeFunction("proj([" + xFunction + "," + yFunction + "])[0]");
-            def.y.center = GeomAttribute.makeFunction("proj([" + xFunction + "," + yFunction + "])[1]");
+            def.x.center = GeomAttribute.makeFunction("projection([" + xFunction + "," + yFunction + "])[0]");
+            def.y.center = GeomAttribute.makeFunction("projection([" + xFunction + "," + yFunction + "])[1]");
         } else if (n == 2) {
             String xLow = D3Util.writeCall(x[0]);          // A call to the low field using the datum 'd'
             String xHigh = D3Util.writeCall(x[1]);         // A call to the high field using the datum 'd'
@@ -449,18 +450,18 @@ public class D3ElementBuilder {
             if (DefineLocations.isRange(y[0])) yLow += ".low";
             if (DefineLocations.isRange(y[1])) yHigh += ".high";
 
-            def.x.left = GeomAttribute.makeFunction("proj([" + xLow + "," + yLow + "])[0]");
-            def.x.right = GeomAttribute.makeFunction("proj([" + xHigh + "," + yHigh + "])[0]");
-            def.y.left = GeomAttribute.makeFunction("proj([" + xLow + "," + yLow + "])[1]");
-            def.y.right = GeomAttribute.makeFunction("proj([" + xHigh + "," + yHigh + "])[1]");
+            def.x.left = GeomAttribute.makeFunction("projection([" + xLow + "," + yLow + "])[0]");
+            def.x.right = GeomAttribute.makeFunction("projection([" + xHigh + "," + yHigh + "])[0]");
+            def.y.left = GeomAttribute.makeFunction("projection([" + xLow + "," + yLow + "])[1]");
+            def.y.right = GeomAttribute.makeFunction("projection([" + xHigh + "," + yHigh + "])[1]");
         }
     }
 
     private void setLocationsByGeoPropertiesCenter(ElementDetails e) {
         // We use the embedded centers in the geo properties to place the items
         // TODO: make this better ...
-        e.x.center = GeomAttribute.makeFunction("proj(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999])[0]");
-        e.y.center = GeomAttribute.makeFunction("proj(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999])[1]");
+        e.x.center = GeomAttribute.makeFunction("projection(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999])[0]");
+        e.y.center = GeomAttribute.makeFunction("projection(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999])[1]");
     }
 
     private GeomAttribute getSize(Field[] fields, String extent, ScalePurpose purpose, ElementDimension dim) {

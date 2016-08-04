@@ -31,7 +31,7 @@ class Mercator extends Projection {
         Point c = inverse(ext.center());
         String center = ".center([" + F.format(c.x) + ", " + F.format(c.y) + "])";
 
-        return "d3.geo.mercator()"
+        return "d3.geoMercator()"
                 + LN + translateDefinition()
                 + LN + scaleDefinition(ext)
                 + LN + center;

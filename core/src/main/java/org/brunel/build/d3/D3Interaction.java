@@ -321,16 +321,28 @@ public class D3Interaction {
         out.add("zoom.on('zoom', function() {")
                 .indentMore().indentMore().ln();
 
-        out.add("var t = BrunelD3.restrictZoom(d3.event.transform, geom, this)").endStatement();
+        // Restrict only for coordinate zooming
+        if (zoomable == ZoomType.CoordinateZoom) {
+            out.add("var t = BrunelD3.restrictZoom(d3.event.transform, geom, this)").endStatement();
+        } else {
+            out.add("var t = d3.event.transform").endStatement();
+        }
 
         // Zoom by coordinate or projection
         if (zoomable == ZoomType.CoordinateZoom) {
             if (canZoomX) out.add("scale_x = t.rescaleX(base_scales[0])").endStatement();
             if (canZoomY) out.add("scale_y = t.rescaleY(base_scales[1])").endStatement();
             out.add("build(-1)").endStatement();
+
+
         }
-//        if (zoomable == ZoomType.MapZoom)
-//            out.add("zoom.on('zoom', function() { build(-1) })").endStatement();
+
+        // Zoom the map
+        if (zoomable == ZoomType.MapZoom) {
+            out.add("base._t = t").endStatement();
+            out.add("build(-1)").endStatement();
+        }
+
 //
 //        // Zoom by graphic transform
 //        if (zoomable == ZoomType.GraphicZoom)

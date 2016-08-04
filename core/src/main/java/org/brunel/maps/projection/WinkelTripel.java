@@ -49,7 +49,7 @@ class WinkelTripel extends Projection {
         }
 
         String center = ".center([" + F.format(x) + ", " + F.format(y) + "])";
-        return "winkel3()"
+        return "BrunelD3.winkel3()"
                 + LN + translateDefinition()
                 + LN + scaleDefinition(ext)
                 + LN + center;

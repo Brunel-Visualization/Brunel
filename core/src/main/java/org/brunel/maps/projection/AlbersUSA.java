@@ -49,7 +49,7 @@ class AlbersUSA extends Projection {
 
     public String d3Definition(Rect bounds) {
         // Everything is well known, so easy to define with fixed details
-        return "d3.geo.albersUsa()"
+        return "d3.geoAlbersUsa()"
                 + LN + ".scale(Math.min(" + width + "/0.96, " + height + "/0.48))"
                 + LN + translateDefinition();
     }

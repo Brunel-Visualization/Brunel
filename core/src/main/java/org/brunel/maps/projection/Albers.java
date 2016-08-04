@@ -53,7 +53,7 @@ class Albers extends Projection {
         Point c = inverse(ext.center());
         String center = ".center([0, " + F.format(c.y) + "])";
 
-        return "d3.geo.albers()"
+        return "d3.geoAlbers()"
                 + LN + translateDefinition()
                 + LN + center
                 + LN + parallels
