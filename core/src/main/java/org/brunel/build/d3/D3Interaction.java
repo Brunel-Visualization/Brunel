@@ -35,7 +35,6 @@ import java.util.Map;
  */
 public class D3Interaction {
 
-
     public enum ZoomType {
         MapZoom,
         CoordinateZoom,
@@ -305,7 +304,7 @@ public class D3Interaction {
      */
     public void addOverlayForZoom() {
         // The group for the overlay
-        out.add("var overlay = interior.append('g').attr('class', 'element')")
+        out.add("var overlay = chart.append('g').attr('class', 'element')")
                 .addChained("attr('class', 'overlay').style('cursor','move').style('fill','none').style('pointer-events','all')")
                 .endStatement();
 
@@ -349,11 +348,11 @@ public class D3Interaction {
             out.add("build(time || -1)").endStatement();
         }
 
-//
-//        // Zoom by graphic transform
-//        if (zoomable == ZoomType.GraphicZoom)
-//            out.add("zoom.on('zoom', function() { interior.attr('transform', 'translate(' + d3.event.translate + ')' + ' scale(' + d3.event.scale + ')' ) } )").endStatement();
-
+        // Zoom by graphic transform
+        if (zoomable == ZoomType.GraphicZoom) {
+            out.add("t = t || BrunelD3.restrictZoom(d3.event.transform, geom, this)").endStatement();
+            out.add("BrunelD3.transition(interior, time || 0).attr('transform', 'translate(' + t.x + ', ' + t.y + ')' + ' scale(' + t.k + ')' )").endStatement();
+        }
         out.indentLess().indentLess().add("})").endStatement();
 
     }
