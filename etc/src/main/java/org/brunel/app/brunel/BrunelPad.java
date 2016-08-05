@@ -300,7 +300,8 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
                 .write();
 
         try {
-            writer.append("<button onclick='var f = v.charts[0].zoom, now = f(); now.x += 100; f(now, 2000)'>RIGHT</button>\n");
+            writer.append("<p>\n<button onclick='var c = v.charts[0]; c.zoom(c.zoom().translate(100, 0), 1000)'>RIGHT</button>\n");
+            writer.append("<button onclick='v.charts[0].zoom(d3.zoomIdentity, 1000)'>HOME</button>\n</p>\n");
             writer.close();
         } catch (IOException ignored) {
         }

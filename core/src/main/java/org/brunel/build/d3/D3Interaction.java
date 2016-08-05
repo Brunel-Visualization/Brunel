@@ -333,25 +333,31 @@ public class D3Interaction {
         out.add("zoom.on('zoom', function(t, time) {")
                 .indentMore().indentMore().onNewLine();
 
+        // Only restrict for coordinate charts
+        String eventBasedTransform = zoomable == ZoomType.CoordinateZoom ?
+                "BrunelD3.restrictZoom(d3.event.transform, geom, this)" : "d3.event.transform";
+
+        out.add("t = t ||", eventBasedTransform).endStatement();
+
         // Zoom by coordinate or projection
         if (zoomable == ZoomType.CoordinateZoom) {
             // Brunel code to restrict panning, only if we don't have values passed in
-            out.add("t = t || BrunelD3.restrictZoom(d3.event.transform, geom, this)").endStatement();
             if (canZoomX) applyZoomToScale(0);
             if (canZoomY) out.add("scale_y = t.rescaleY(base_scales[1])").endStatement();
             out.add("build(time || -1)").endStatement();
+            out.add("zoomNode.__zoom = t").endStatement();
         }
 
         // Zoom a map projection by setting the transform into the base projection
         if (zoomable == ZoomType.MapZoom) {
-            out.add("zoomNode.__zoom = t || d3.event.transform").endStatement();
+            out.add("zoomNode.__zoom = t").endStatement();
             out.add("build(time || -1)").endStatement();
         }
 
         // Zoom by graphic transform
         if (zoomable == ZoomType.GraphicZoom) {
-            out.add("t = t || BrunelD3.restrictZoom(d3.event.transform, geom, this)").endStatement();
-            out.add("BrunelD3.transition(interior, time || 0).attr('transform', 'translate(' + t.x + ', ' + t.y + ')' + ' scale(' + t.k + ')' )").endStatement();
+            out.add("BrunelD3.transition(interior, time || 0).attr('transform', t.toString() )").endStatement();
+            out.add("zoomNode.__zoom = t").endStatement();
         }
         out.indentLess().indentLess().add("})").endStatement();
 
