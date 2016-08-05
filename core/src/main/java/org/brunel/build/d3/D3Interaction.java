@@ -35,6 +35,7 @@ import java.util.Map;
  */
 public class D3Interaction {
 
+
     public enum ZoomType {
         MapZoom,
         CoordinateZoom,
@@ -68,6 +69,16 @@ public class D3Interaction {
             this.zoomable = ZoomType.None;
             canZoomX = canZoomY = false;
         }
+    }
+
+    public void defineChartZoomFunction() {
+        if (zoomable != D3Interaction.ZoomType.None) {
+            out.onNewLine().add("zoom: function(params, time) {").indentMore().indentMore().onNewLine()
+                    .add("if (params) zoom.on('zoom').call(zoomNode, params, time)").endStatement()
+                    .add("return d3.zoomTransform(zoomNode) || d3.zoomIdentity").endStatement();
+            out.indentLess().indentLess().onNewLine().add("},");
+        }
+
     }
 
     private boolean zoomRequested(ElementStructure[] elements) {
@@ -218,7 +229,7 @@ public class D3Interaction {
         if (!overlayEvents.isEmpty()) {
             // Start each set of overlay commands with a command to find the closest item
             for (List<String> e : overlayEvents.values()) {
-                e.add(0, "var c = BrunelD3.closest(selection, '" + snapInfo[0] + "', " + snapInfo[1] + " )");
+                e.add(0, "var c = BrunelD3.closest(merged, '" + snapInfo[0] + "', " + snapInfo[1] + " )");
             }
 
             out.add("interior.select('rect.overlay')").at(60).comment("Attach handlers to the overlay");
@@ -226,7 +237,7 @@ public class D3Interaction {
         }
 
         if (!elementEvents.isEmpty()) {
-            out.add("selection").at(60).comment("Attach handlers to the element");
+            out.add("merged").at(60).comment("Attach handlers to the element");
             addDispatchers(elementEvents);
         }
     }
@@ -302,11 +313,11 @@ public class D3Interaction {
         out.add("var zoom = d3.zoom().scaleExtent([1/3,3])").endStatement();
 
         // Add the zoom overlay and attach behavior
-        out.add("overlay.append('rect').attr('class', 'overlay')")
+        out.add("var zoomNode = overlay.append('rect').attr('class', 'overlay')")
                 .addChained("attr('width', geom.inner_rawWidth)")
                 .addChained("attr('height', geom.inner_rawHeight)");
         if (zoomable != ZoomType.None) out.addChained("call(zoom)");
-        out.endStatement();
+        out.addChained("node()").endStatement();
     }
 
     /**
@@ -318,22 +329,22 @@ public class D3Interaction {
         if (zoomable == ZoomType.None) return;
 
         // Define the zoom function
-        out.add("zoom.on('zoom', function() {")
-                .indentMore().indentMore().ln();
+        out.add("zoom.on('zoom', function(t, time) {")
+                .indentMore().indentMore().onNewLine();
 
         // Zoom by coordinate or projection
         if (zoomable == ZoomType.CoordinateZoom) {
-            // Brunel code to restrict panning
-            out.add("var t = BrunelD3.restrictZoom(d3.event.transform, geom, this)").endStatement();
+            // Brunel code to restrict panning, only if we don't have values passed in
+            out.add("t = t || BrunelD3.restrictZoom(d3.event.transform, geom, zoomNode)").endStatement();
             if (canZoomX) applyZoomToScale(0);
             if (canZoomY) out.add("scale_y = t.rescaleY(base_scales[1])").endStatement();
-            out.add("build(-1)").endStatement();
+            out.add("build(time || -1)").endStatement();
         }
 
         // Zoom a map projection by setting the transform into the base projection
         if (zoomable == ZoomType.MapZoom) {
             out.add("base._t = d3.event.transform").endStatement();
-            out.add("build(-1)").endStatement();
+            out.add("build(time || -1)").endStatement();
         }
 
 //

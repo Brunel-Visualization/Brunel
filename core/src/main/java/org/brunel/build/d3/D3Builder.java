@@ -251,7 +251,7 @@ public class D3Builder extends AbstractBuilder {
         out.add("    transitionTime = 200,").at(50).comment("Transition time for animations");
         out.add("    charts = [],").at(50).comment("The charts in the system");
         out.add("    hasData = function(d) {return d && (d.row != null || hasData(d.data))},").at(50).comment("Filters to data items");
-        out.add("    vis = d3.select('#' + visId).attr('class', 'brunel')").at(60).comment("the SVG container");
+        out.add("    vis = d3.select('#' + visId).attr('class', 'brunel');").at(60).comment("the SVG container");
     }
 
     protected void endChart(ChartStructure structure) {
@@ -295,13 +295,7 @@ public class D3Builder extends AbstractBuilder {
             out.onNewLine().add("scales: {x:scale_x, y:scale_y},");
         }
 
-        if (interaction.getZoomType() != D3Interaction.ZoomType.None) {
-            out.onNewLine().add("zoom: function(params, time) {")
-                    .continueOnNextLine().add("var v = BrunelD3.panzoom(params, zoom);")
-                    .continueOnNextLine().add("if (params) build(time > 0 ? time : 0, true);")
-                    .continueOnNextLine().add("return v;");
-            out.onNewLine().add("},");
-        }
+        interaction.defineChartZoomFunction();
 
         out.onNewLine().add("build : build")
                 .indentLess().onNewLine().add("}").endStatement();
