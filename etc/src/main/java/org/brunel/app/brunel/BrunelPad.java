@@ -30,7 +30,6 @@ import org.brunel.model.VisItem;
 import org.brunel.util.Library;
 import org.brunel.util.LocalOutputFiles;
 import org.brunel.util.PageOutput;
-import org.brunel.util.WebDisplay;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,13 +45,9 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
 
 @SuppressWarnings("serial")
 public class BrunelPad extends JFrame implements AppEventListener, Droppable {
-
-    private static final String JS_FILE = "/org/brunel/util/animation.js";
-    private static final String JS = new Scanner(WebDisplay.class.getResourceAsStream(JS_FILE), "UTF-8").useDelimiter("\\A").next();
 
     /* use '-v version' to use a minified online library version */
     public static void main(String[] args) {
