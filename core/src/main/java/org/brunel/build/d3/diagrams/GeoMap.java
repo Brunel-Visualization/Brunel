@@ -48,12 +48,11 @@ public class GeoMap extends D3Diagram {
         out.add("var base = ").indentMore();
         for (String p : projectionDescription) out.add(p.trim()).onNewLine();
         out.indentLess();
-        out.add("base._t = {x:0, y:0, k:1};").at(50).comment("zoom transform");
 
         // Define a scaled version of the projection
         out.add("function projection(p) {")
                 .indentMore().indentMore().onNewLine()
-                .add("var q = base(p), t = base._t").endStatement()
+                .add("var q = base(p), t = d3.zoomTransform(zoomNode)").endStatement()
                 .add("return q ? [t.k*q[0]+t.x, t.k*q[1]+t.y] : null").endStatement()
                 .indentLess().indentLess().add("}").endStatement();
 

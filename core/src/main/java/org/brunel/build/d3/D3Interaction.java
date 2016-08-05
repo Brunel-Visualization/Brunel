@@ -75,7 +75,7 @@ public class D3Interaction {
         if (zoomable != D3Interaction.ZoomType.None) {
             out.onNewLine().add("zoom: function(params, time) {").indentMore().indentMore().onNewLine()
                     .add("if (params) zoom.on('zoom').call(zoomNode, params, time)").endStatement()
-                    .add("return d3.zoomTransform(zoomNode) || d3.zoomIdentity").endStatement();
+                    .add("return d3.zoomTransform(zoomNode)").endStatement();
             out.indentLess().indentLess().onNewLine().add("},");
         }
 
@@ -318,6 +318,8 @@ public class D3Interaction {
                 .addChained("attr('height', geom.inner_rawHeight)");
         if (zoomable != ZoomType.None) out.addChained("call(zoom)");
         out.addChained("node()").endStatement();
+        if (zoomable != ZoomType.None) out.add("zoomNode.__zoom = d3.zoomIdentity").endStatement();
+
     }
 
     /**
@@ -335,7 +337,7 @@ public class D3Interaction {
         // Zoom by coordinate or projection
         if (zoomable == ZoomType.CoordinateZoom) {
             // Brunel code to restrict panning, only if we don't have values passed in
-            out.add("t = t || BrunelD3.restrictZoom(d3.event.transform, geom, zoomNode)").endStatement();
+            out.add("t = t || BrunelD3.restrictZoom(d3.event.transform, geom, this)").endStatement();
             if (canZoomX) applyZoomToScale(0);
             if (canZoomY) out.add("scale_y = t.rescaleY(base_scales[1])").endStatement();
             out.add("build(time || -1)").endStatement();
@@ -343,7 +345,7 @@ public class D3Interaction {
 
         // Zoom a map projection by setting the transform into the base projection
         if (zoomable == ZoomType.MapZoom) {
-            out.add("base._t = d3.event.transform").endStatement();
+            out.add("zoomNode.__zoom = t || d3.event.transform").endStatement();
             out.add("build(time || -1)").endStatement();
         }
 
