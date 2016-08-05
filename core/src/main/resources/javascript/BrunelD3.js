@@ -1530,7 +1530,6 @@ var BrunelD3 = (function () {
      * @return an adjusted zoom
      */
     function restrictZoom(t, geom, target) {
-
         var D = 0.5,                                                    // Minimum fraction of screen screen
             dx = t.x, dy = t.y, s = t.k,                                // transform offsets and scale
             W = geom.inner_width, H = geom.inner_height,                // chart bounds
@@ -1625,7 +1624,7 @@ var BrunelD3 = (function () {
                 if (y > -85) {
                     // Away from the south pole ensure we do not wrap around the world
                     if (lastX > 150 && x < -150) x = Math.min(180, x + 360);
-                    if (lastX < -150 && x > 150) x = Math.max(-180, x -360);
+                    if (lastX < -150 && x > 150) x = Math.max(-180, x - 360);
                 }
                 lastX = x;
 
@@ -1644,9 +1643,9 @@ var BrunelD3 = (function () {
             var a = Math.acos(Math.cos(y) * Math.cos(x / 2)), sinca = Math.abs(a) < 1e-6 ? 1 : Math.sin(a) / a;
             return [Math.cos(y) * Math.sin(x / 2) / sinca + x / Math.PI, (Math.sin(y) * sinca + y) / 2];
         }
+
         return d3.geoProjection(w);
     }
-
 
     // Expose these methods
     return {
@@ -1681,7 +1680,7 @@ var BrunelD3 = (function () {
         'panzoom': panzoom,
         'restrictZoom': restrictZoom,
         'geoStream': geoStream,
-        'winkel3' : winkel3,
+        'winkel3': winkel3,
         'setAspect': setAspect
     }
 

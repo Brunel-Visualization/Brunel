@@ -321,25 +321,18 @@ public class D3Interaction {
         out.add("zoom.on('zoom', function() {")
                 .indentMore().indentMore().ln();
 
-        // Restrict only for coordinate zooming
-        if (zoomable == ZoomType.CoordinateZoom) {
-            out.add("var t = BrunelD3.restrictZoom(d3.event.transform, geom, this)").endStatement();
-        } else {
-            out.add("var t = d3.event.transform").endStatement();
-        }
-
         // Zoom by coordinate or projection
         if (zoomable == ZoomType.CoordinateZoom) {
-            if (canZoomX) out.add("scale_x = t.rescaleX(base_scales[0])").endStatement();
+            // Brunel code to restrict panning
+            out.add("var t = BrunelD3.restrictZoom(d3.event.transform, geom, this)").endStatement();
+            if (canZoomX) applyZoomToScale(0);
             if (canZoomY) out.add("scale_y = t.rescaleY(base_scales[1])").endStatement();
             out.add("build(-1)").endStatement();
-
-
         }
 
-        // Zoom the map
+        // Zoom a map projection by setting the transform into the base projection
         if (zoomable == ZoomType.MapZoom) {
-            out.add("base._t = t").endStatement();
+            out.add("base._t = d3.event.transform").endStatement();
             out.add("build(-1)").endStatement();
         }
 
@@ -350,6 +343,31 @@ public class D3Interaction {
 
         out.indentLess().indentLess().add("})").endStatement();
 
+    }
+
+    /**
+     * Apply the zoom transform to the scale.
+     * This code is called during the handling of a zoom event (the transform is in the variable 't')
+     *
+     * @param dimension 0 for X, 1 for Y
+     */
+    private void applyZoomToScale(int dimension) {
+        out.add(dimension == 0 ? "scale_x" : "scale_y");
+
+        if (dimension == 0 && structure.coordinates.xCategorical) {
+            // We cannot change the domain, so we change the range instead, which we know runs from 0 to the geom extent
+            out.add(".range([t.x, t.x + t.k * geom.inner_width])");
+        } else if (dimension == 1 && structure.coordinates.yCategorical) {
+            // We cannot change the domain, so we change the range instead, which we know runs from 0 to the geom extent
+            out.add(".range([t.y, t.y + t.k * geom.inner_height])");
+        } else {
+            // D3 allows us to manipulate the domain of the NUMERIC scale using the transform's rescale method
+            // We rescale the stored original untransformed scale 'baseScales[dimension]'
+            out.add(" =", dimension == 0 ? "t.rescaleX" : "t.rescale");
+            out.add("(base_scales[" + dimension + "])");
+        }
+
+        out.endStatement();
     }
 
 }

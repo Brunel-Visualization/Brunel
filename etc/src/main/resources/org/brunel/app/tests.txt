@@ -32,10 +32,10 @@ cloud whiskey brand rating                          :: pass
 cloud whiskey name rating                           :: pass     :: Slow, but should not feel like it has hanged
 cloud baseball age Salary                           :: pass
 
-sizedBar baseball age salary                        :: pass
-sizedBar whiskey country rating / transpose         :: pass
-sizedBar whiskey age rating                         :: pass
-sizedBar cpi Date ALL                               :: pass     :: The data is regular, so the counts are similar up to the last year
+sizedBar baseball age salary  / interaction(panzoom:x)              :: pass     :: Can pan/zoom on x only
+sizedBar whiskey country rating / transpose interaction(panzoom:x)  :: pass     :: Can pan/zoom on x only
+sizedBar whiskey age rating /interaction(panzoom:x)                 :: pass     :: Can pan/zoom on x only
+sizedBar cpi Date ALL / interaction(panzoom:x)                      :: pass     :: The data is regular, so the counts are similar up to the last year
 
 multiline cpi Date food housing health transport                    :: pass
 multiline cpi Date food housing health transport / stack            :: pass ::  Note that the stacking order is 'food housing health transport'
