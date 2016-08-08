@@ -316,8 +316,6 @@ public class D3Interaction {
                 .addChained("attr('width', geom.inner_rawWidth)")
                 .addChained("attr('height', geom.inner_rawHeight)");
         if (zoomable != ZoomType.None) {
-            out.addChained("on('mousedown.home', function() { zoomNode.__h = setTimeout(function() { charts[0].zoom(d3.zoomIdentity, 1000); zoomNode.__h = null }, 1000) })");
-            out.addChained("on('mousemove', function() { if (zoomNode.__h) {  clearTimeout(zoomNode.__h); zoomNode.__h = null } })");
             out.addChained("call(zoom)");
         }
         out.addChained("node()").endStatement();

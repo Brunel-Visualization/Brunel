@@ -163,13 +163,22 @@ var BrunelD3 = (function () {
         return result;
     }
 
-    // Offset in pixels to center svg text in an svg arc, returns a large number if it does not fit
-    function centerInArc(text, arc, arcWidth) {
-        // The length around the middle of the arc
-        var arcLen = arc.getTotalLength() / 2 - arcWidth;
-        var d = (arcLen - text.getComputedTextLength()) / 2;
-        text.firstChild.setAttribute('startOffset', d > 0 ? d : 0);
-        text.firstChild.setAttribute('visibility', d < 1 ? "hidden" : "visible");
+    /**
+     * Centers the given arc within the wedge passed in
+     * @param text the text node, which must contain a textpath referencing the target wedge
+     * @param arcWidth the width fo the arc
+     */
+    function centerInArc(text, arcWidth) {
+        var textPath = text.select('textPath').node(),                      // The text path for this
+            target = d3.select(textPath.getAttribute('href')),              // Target path we're attached to
+            arcLen = target.node().getTotalLength() / 2 - arcWidth,         // Length of arc to fit into
+            textLen = textPath.getComputedTextLength();                     // Length of the text
+
+        // If we need to reduce the size, delete it if that is not possible
+        if (textLen > arcLen-4 && !addEllipses(textPath, textPath.textContent, arcLen-4))
+            textPath.setAttribute('visibility', 'hidden');
+        else
+            textPath.setAttribute('startOffset', (arcLen - textPath.getComputedTextLength()) / 2);
     }
 
     function shrink(rect, sx, sy) {
@@ -329,12 +338,18 @@ var BrunelD3 = (function () {
         return span;
     }
 
+    function trim(text, t) {
+        if (t < 0) return "";
+        if (t == 0) return text.substring(0, 1);
+        return text.substring(0, t) + "\u2026";
+    }
+
     function addEllipses(span, text, maxWidth) {
         // Binary search to fit text
-        var t, min = 0, max = text.length - 3;
+        var t, min = -1, max = text.length - 3;
         while (max - min > 1) {
             t = Math.floor((max + min) / 2);
-            span.textContent = text.substring(0, t) + "\u2026";
+            span.textContent = trim(text, t);
             if (span.getComputedTextLength() <= maxWidth)
                 min = t;
             else
@@ -343,7 +358,8 @@ var BrunelD3 = (function () {
 
         // min will work, but we do not want trailing punctuation
         while (min > 0 && " ,.;-".indexOf(text.charAt(min - 1)) > -1) min--;
-        return min > 0; // True if we have valid text
+        span.textContent = trim(text, min);
+        return min >= 0; // True if we have valid text
     }
 
     function wrapInBox(textItem, text, loc, offset) {

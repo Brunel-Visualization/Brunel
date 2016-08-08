@@ -111,7 +111,6 @@ public abstract class D3Diagram {
 
     public void writeDiagramEnter() {
         // By default, nothing is needed
-        out.endStatement();
     }
 
     public void writePerChartDefinitions() {

@@ -46,7 +46,7 @@ class Cloud extends D3Diagram {
 
     public void writeDiagramEnter() {
         // The cloud needs to set all this stuff up front
-        out.addChained("style('text-anchor', 'middle').classed('label', true)")
+        out.addChained("merged.style('text-anchor', 'middle').classed('label', true)")
                 .addChained("text(labeling.content)");
         D3LabelBuilder.addFontSizeAttribute(vis, out);
         out.endStatement();

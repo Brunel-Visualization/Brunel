@@ -102,8 +102,9 @@ public class D3ElementBuilder {
             writeCoordEnter();
             out.add("var merged = selection.merge(added)").endStatement();
         } else {
-            diagram.writeDiagramEnter();
+            out.endStatement();
             out.add("var merged = selection.merge(added)").endStatement();
+            diagram.writeDiagramEnter();
             diagram.writePreDefinition(details);
         }
 
@@ -119,7 +120,7 @@ public class D3ElementBuilder {
             diagram.writeDefinition(details);
         }
 
-        writeRemovalOnExit(out);
+        writeRemovalOnExit(out, "selection");
 
     }
 
@@ -142,10 +143,10 @@ public class D3ElementBuilder {
         Accessibility.defineElementLabelFunction(structure, out, labelBuilder);
     }
 
-    public static void writeRemovalOnExit(ScriptWriter out) {
+    public static void writeRemovalOnExit(ScriptWriter out, String selection) {
         // This fires when items leave the system
         // It removes the item and any associated labels
-        out.onNewLine().ln().add("BrunelD3.transition(selection.exit(), transitionMillis/3)");
+        out.onNewLine().ln().add("BrunelD3.transition(" + selection + ".exit(), transitionMillis/3)");
         out.addChained("style('opacity', 0.5).each( function() {")
                 .indentMore().indentMore().onNewLine()
                 .add("this.remove(); if (this.__label__) this.__label__.remove()")

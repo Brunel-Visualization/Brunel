@@ -113,8 +113,7 @@ public class GeoMapLabels extends D3Diagram {
     }
 
     public void writeDiagramEnter() {
-        out.addChained("classed('map', true)");
-        out.endStatement();
+        out.addChained("merged.classed('map', true)").endStatement();
     }
 
     private int radiusFor(LabelPoint p, int high, int low) {
