@@ -66,16 +66,17 @@ public class D3ElementBuilder {
         setGeometry(details);                           // And the coordinate definitions
 
         if (diagram == null) {
-            writeCoordinateFunctions(details);
-
-            if (details.representation == ElementRepresentation.wedge) {
-                // Deal with the case of wedges (polar intervals)
-                defineWedgePath();
-            } else if (details.isDrawnAsPath()) {
-                // Define paths needed in the element, and make data splits
-                definePathsAndSplits(details);
+            // Graph edges do not need defined coordinates
+            if (!structure.isGraphEdge()) {
+                writeCoordinateFunctions(details);
+                if (details.representation == ElementRepresentation.wedge) {
+                    // Deal with the case of wedges (polar intervals)
+                    defineWedgePath();
+                } else if (details.isDrawnAsPath()) {
+                    // Define paths needed in the element, and make data splits
+                    definePathsAndSplits(details);
+                }
             }
-
         } else {
             // Set the diagram group class for CSS
             out.add("main.attr('class',", diagram.getStyleClasses(), ")").endStatement();
@@ -100,10 +101,10 @@ public class D3ElementBuilder {
 
         if (diagram == null) {
             writeCoordEnter();
-            out.add("var merged = selection.merge(added)").endStatement();
+            out.add("merged = selection.merge(added)").endStatement();
         } else {
             out.endStatement();
-            out.add("var merged = selection.merge(added)").endStatement();
+            out.add("merged = selection.merge(added)").endStatement();
             diagram.writeDiagramEnter();
             diagram.writePreDefinition(details);
         }
@@ -329,6 +330,8 @@ public class D3ElementBuilder {
     }
 
     private void writeCoordinateDefinition(ElementDetails details) {
+
+        if (structure.isGraphEdge()) return;            // Doesn't need any
 
         // If we need reference locations, write them in first
         if (details.getRefLocation() != null) {

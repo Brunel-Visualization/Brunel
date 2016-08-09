@@ -30,28 +30,28 @@ class Network extends D3Diagram {
     private final ElementStructure edges;
     private final String nodeID, fromFieldID, toFieldID;
 
-    public Network(VisSingle vis, Dataset data, ElementStructure nodes, ElementStructure edges, D3Interaction interaction,  ScriptWriter out) {
+    public Network(VisSingle vis, Dataset data, ElementStructure nodes, ElementStructure edges, D3Interaction interaction, ScriptWriter out) {
         super(vis, data, interaction, out);
         this.nodes = nodes;
         this.edges = edges;
 
         if (vis.fKeys.size() > 0) {
-            nodeID  = vis.fKeys.get(0).asField(nodes.data);
+            nodeID = vis.fKeys.get(0).asField(nodes.data);
         } else if (vis.fY.size() > 1) {
-            nodeID  = "#values";
+            nodeID = "#values";
         } else if (vis.positionFields().length > 0) {
-            nodeID  = vis.positionFields()[0];
+            nodeID = vis.positionFields()[0];
         } else {
             throw new IllegalStateException("Networks require nodes to have a key field or position field");
         }
 
         VisSingle edgesVis = edges.vis;
         if (edgesVis.fKeys.size() > 1) {
-            fromFieldID  = edgesVis.fKeys.get(0).asField(edges.data);
-            toFieldID  = edgesVis.fKeys.get(1).asField(edges.data);
+            fromFieldID = edgesVis.fKeys.get(0).asField(edges.data);
+            toFieldID = edgesVis.fKeys.get(1).asField(edges.data);
         } else if (edgesVis.positionFields().length > 1) {
-            fromFieldID  = edgesVis.positionFields()[0];
-            toFieldID  = edgesVis.positionFields()[1];
+            fromFieldID = edgesVis.positionFields()[0];
+            toFieldID = edgesVis.positionFields()[1];
         } else {
             throw new IllegalStateException("Networks require edges to have two key fields or position fields");
         }
@@ -61,7 +61,7 @@ class Network extends D3Diagram {
         String density = "";
         if (vis.tDiagramParameters.length > 0) density = ", " + vis.tDiagramParameters[0].asDouble();
         out.onNewLine().add("if (first) ")
-                .add("BrunelD3.network(d3.forceSimulation(), graph, elements[" + nodes.index
+                .add("BrunelD3.network(graph, elements[" + nodes.index
                         + "], elements[" + edges.index + "], geom" + density + ")").endStatement();
     }
 
@@ -73,20 +73,10 @@ class Network extends D3Diagram {
         String edgeDataset = "elements[" + edges.getBaseDatasetIndex() + "].data()";
         String nodeField = quoted(nodeID);
 
-        String from = quoted(fromFieldID),to = quoted(toFieldID);
+        String from = quoted(fromFieldID), to = quoted(toFieldID);
         out.add("graph = BrunelData.diagram_Graph.make(processed,", nodeField, ",",
                 edgeDataset, ",", from, ",", to, ")").endStatement();
-        out.ln();
-        makeLayout();
-        out.ln();
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "graph.nodes");
-    }
-
-    private void makeLayout() {
-        out.comment("Initial Circle Layout")
-                .add("var h = geom.inner_width/2, v = geom.inner_height/2, a, i, N = graph.nodes.length").endStatement()
-                .add("for(i=0; i<N; i++) { a = Math.PI*2*i/N; graph.nodes[i].x = h + h*Math.cos(a)/2; graph.nodes[i].y = v + v*Math.sin(a)/2 }")
-                .ln();
     }
 
     public void writeDefinition(ElementDetails details) {

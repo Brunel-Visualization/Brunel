@@ -61,6 +61,7 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
         new BrunelPad(options).start();
     }
 
+
     private final Settings settings;
     private final ActionEditorPane actionEditor;
     private final SourcePanel sourcePanel;

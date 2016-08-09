@@ -175,7 +175,7 @@ var BrunelD3 = (function () {
             textLen = textPath.getComputedTextLength();                     // Length of the text
 
         // If we need to reduce the size, delete it if that is not possible
-        if (textLen > arcLen-4 && !addEllipses(textPath, textPath.textContent, arcLen-4))
+        if (textLen > arcLen - 4 && !addEllipses(textPath, textPath.textContent, arcLen - 4))
             textPath.setAttribute('visibility', 'hidden');
         else
             textPath.setAttribute('startOffset', (arcLen - textPath.getComputedTextLength()) / 2);
@@ -1149,54 +1149,36 @@ var BrunelD3 = (function () {
     // Start a network layout for the node and edge elements
     // The graph should already have been built within the nodeElement
     // density is a 0-1 value stating hwo packed the resulting graph should be
-    function makeNetworkLayout(layout, graph, nodes, edges, geom, density) {
-        // "D" is the desired distance we would like to have between nodes
+    function makeNetworkLayout(graph, nodes, edges, geom, density) {
+
+        density = Math.sqrt(density || 1);
         var N = graph.nodes.length, E = graph.links.length,
+            W = geom.inner_width, H = geom.inner_height,
             pad = geom.default_point_size,
-            W = geom.inner_width / 2 - pad, H = geom.inner_height / 2 - pad,
-            D = (density || 1) * 1.57 * Math.min(W, H) / Math.sqrt(N),
-            R = D * Math.max(1, D - 3) / 5 / Math.max(1, E / N);
+            left = pad, top = pad,
+            right = geom.inner_width - pad, bottom = geom.inner_height - pad,
+            D = 0.75 * density * Math.min(W, H) / Math.sqrt(N),
+            R = D * Math.max(1, D - 3) / 3 / Math.max(1, E / N) / density;
 
-        layout.nodes(graph.nodes).links(graph.links)
-            .size([W, H])
-            .linkDistance(D).charge(-R)
-            .start();
+        var mergedNodes = nodes.selection(), mergedEdges = edges.selection();
 
-        layout.on("tick", function () {
-            var minx, maxx, miny, maxy;
-            var r, cx, cy, hits = {};
-            nodes.selection()
-                .each(function (d, i) {
-                    if (i) {
-                        minx = Math.min(minx, d.x);
-                        maxx = Math.max(maxx, d.x);
-                        miny = Math.min(miny, d.y);
-                        maxy = Math.max(maxy, d.y);
-                    } else {
-                        minx = maxx = d.x;
-                        miny = maxy = d.y;
-                    }
-                })
-                .call(function () {
-                    cx = (minx + maxx) / 2;
-                    cy = (miny + maxy) / 2;
-                    r = 2 * Math.min(W / (maxx - minx), H / (maxy - miny));
-                    if (r > 1.05) r = 1.05;
-                    if (r < 0.95) r = 0.95;
-                })
+
+        function ticked() {
+
+            mergedNodes
                 .attr('cx', function (d) {
-                    return d.x = (d.x - cx) * r + geom.inner_width / 2;
+                    return d.x;
                 })
                 .attr('cy', function (d) {
-                    return d.y = (d.y - cy) * r + geom.inner_height / 2;
+                    return d.y;
                 })
                 .each(function (d) {
                         var txt = this.__label__;
                         if (!txt) return;
                         if (txt.__off__) {
                             // We have calculated the position, just need to move it
-                            txt.attr('x', txt.__off__.dx + d.px);
-                            txt.attr('y', txt.__off__.dy + d.py);
+                            txt.attr('x', txt.__off__.dx + d.x);
+                            txt.attr('y', txt.__off__.dy + d.y);
                         } else {
                             // First time placement, and then record the offset relative to the node (note no hit collision handling)
                             labelItem(this, null, txt.__labeling__, null, geom);
@@ -1208,7 +1190,8 @@ var BrunelD3 = (function () {
                     }
                 );
 
-            edges.selection()
+
+            mergedEdges
                 .attr('x1', function (d) {
                     return d.source.x
                 })
@@ -1221,8 +1204,25 @@ var BrunelD3 = (function () {
                 .attr('y2', function (d) {
                     return d.target.y
                 });
-        });
-        nodes.selection().call(layout.drag)
+
+        }
+
+        d3.forceSimulation()
+            .force("link", d3.forceLink(graph.links).distance(D))
+            .force("center", d3.forceCenter(W/2, H/2))
+            .force("charge", d3.forceManyBody().strength(-R).distanceMax(geom.inner_radius/2))
+            .force("inside", function () {
+                var i, n = graph.nodes.length, k = 1, node;
+                for (i = 0; i < n; i++) {
+                    node = graph.nodes[i];
+                    if (node.x < left) node.vx += k * (left - node.x);
+                    if (node.x > right) node.vx += k * (right - node.x);
+                    if (node.y < top) node.vy += k * (top - node.y);
+                    if (node.y > bottom) node.vy += k * (bottom - node.y);
+                }
+            })
+            .nodes(graph.nodes)
+            .on("tick", ticked);
     }
 
     // Ensures a D3 item has no cumulative matrix transform

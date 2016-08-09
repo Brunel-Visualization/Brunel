@@ -192,7 +192,7 @@ public class D3Builder extends AbstractBuilder {
         out.onNewLine().add("var original, processed,").at(40).comment("data sets passed in and then transformed")
                 .indentMore()
                 .onNewLine().add("element, data,").at(40).comment("Brunel element information and brunel data")
-                .onNewLine().add("selection;").at(40).comment("D3 selection")
+                .onNewLine().add("selection, merged;").at(40).comment("D3 selection and merged selection")
                 .indentLess();
 
         // Add data variables used throughout
@@ -473,7 +473,7 @@ public class D3Builder extends AbstractBuilder {
         out.onNewLine().add("data:").at(24).add("function() { return processed },");
         out.onNewLine().add("original:").at(24).add("function() { return original },");
         out.onNewLine().add("internal:").at(24).add("function() { return data },");
-        out.onNewLine().add("selection:").at(24).add("function() { return selection },");
+        out.onNewLine().add("selection:").at(24).add("function() { return merged },");
         out.onNewLine().add("makeData:").at(24).add("makeData,");
         out.onNewLine().add("build:").at(24).add("build,");
         out.onNewLine().add("chart:").at(24).add("function() { return charts[" + structure.chart.chartIndex + "] },");
