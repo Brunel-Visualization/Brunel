@@ -852,8 +852,8 @@ var BrunelD3 = (function () {
                     item.__label__ = null;                              // dissociate from item
                 }
 
-            } else if (style.visibility != 'hidden') {
-                if (hitsExisting(b, hits)) txt.classed("overlap", true);     // Set the style for overlapping text
+            } else {
+                txt.classed("overlap", hitsExisting(b, hits));          // Set the style for overlapping text
             }
 
 
@@ -1143,7 +1143,8 @@ var BrunelD3 = (function () {
     function makeSymbol(type, radius) {
         radius = radius || 4;
         if (type == 'star') return star(radius * 1.5, 5);
-        return d3.symbol().type(type).size(radius * radius * 4)();
+        var generator = d3['symbol' + type.charAt(0).toUpperCase() + type.slice(1)];
+        return d3.symbol().type(generator).size(radius * radius * 4)();
     }
 
     // Start a network layout for the node and edge elements
@@ -1151,14 +1152,14 @@ var BrunelD3 = (function () {
     // density is a 0-1 value stating hwo packed the resulting graph should be
     function makeNetworkLayout(graph, nodes, edges, geom, density) {
 
-        density = Math.sqrt(density || 1);
-        var N = graph.nodes.length, E = graph.links.length,
+        density = density || 1;
+        var N = graph.nodes.length,
             W = geom.inner_width, H = geom.inner_height,
             pad = geom.default_point_size,
             left = pad, top = pad,
             right = geom.inner_width - pad, bottom = geom.inner_height - pad,
-            D = 0.75 * density * Math.min(W, H) / Math.sqrt(N),
-            R = D * Math.max(1, D - 3) / 3 / Math.max(1, E / N) / density;
+            D = Math.min(W, H) / Math.sqrt(N) / Math.sqrt(density),
+            R = D * density;
 
         var mergedNodes = nodes.selection(), mergedEdges = edges.selection();
 
@@ -1210,7 +1211,7 @@ var BrunelD3 = (function () {
         d3.forceSimulation()
             .force("link", d3.forceLink(graph.links).distance(D))
             .force("center", d3.forceCenter(W/2, H/2))
-            .force("charge", d3.forceManyBody().strength(-R).distanceMax(geom.inner_radius/2))
+            .force("charge", d3.forceManyBody().distanceMax(geom.inner_radius/2).strength(-R))
             .force("inside", function () {
                 var i, n = graph.nodes.length, k = 1, node;
                 for (i = 0; i < n; i++) {
