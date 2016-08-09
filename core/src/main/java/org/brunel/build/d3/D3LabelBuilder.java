@@ -141,6 +141,28 @@ public class D3LabelBuilder {
 
     }
 
+    public int estimateLabelLength() {
+        int size = 0;
+        for (Param p : vis.itemsLabel) {
+            if (p.isField()) {
+                Field f = data.field(p.asField());
+                if (f.isDate()) size += 8;
+                else if (f.preferCategorical()) size += maxLength(f.categories()) +1;
+                else size += 6;
+            } else {
+                // Text
+                size += p.asString().length() + 1;
+            }
+        }
+        return size;
+    }
+
+    private int maxLength(Object[] categories) {
+        int max = 0;
+        for (Object o : categories) max = Math.max(max, o.toString().length());
+        return max;
+    }
+
     private boolean needsData(List<Param> items) {
         for (Param p : prettify(items, false))
             if (p.isField()) return true;

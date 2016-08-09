@@ -542,6 +542,8 @@ public class D3Builder extends AbstractBuilder {
         out.addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
                 .endStatement();
 
+        interaction.addOverlayForZoom();
+
         out.add("chart.append('rect').attr('class', 'background')")
                 .add(".attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top)")
                 .endStatement();
@@ -561,7 +563,6 @@ public class D3Builder extends AbstractBuilder {
         out.add("var gridGroup = interior.append('g').attr('class', 'grid')")
                 .endStatement();
 
-        interaction.addOverlayForZoom();
 
         if (scalesBuilder.needsAxes())
             out.add("var axes = chart.append('g').attr('class', 'axis')")

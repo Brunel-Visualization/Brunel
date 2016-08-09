@@ -26,40 +26,58 @@ import org.brunel.model.VisTypes.Coordinates;
 
 class Tree extends D3Diagram {
 
-    private final int pad;          // Amount to pad tree by
+    private enum Method {leftRight, topBottom, polar}
+
+    ;
+    private final Method method;                                    // How to draw it
+    private final int labelSize;                                    // Size to leave for labels
+    private final int pad = 10;                                     // Pad size
 
     public Tree(VisSingle vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
         super(vis, data, interaction, out);
-        this.pad = 10;
+        if (vis.coords == Coordinates.polar) method = Method.polar;
+        else if (vis.coords == Coordinates.transposed) method = Method.topBottom;
+        else method = Method.leftRight;
+
+        labelSize = labelBuilder.estimateLabelLength() * 7;
+
     }
 
     public ElementDetails initializeDiagram() {
         out.comment("Define tree (hierarchy) data structures");
         makeHierarchicalTree();
         out.add("var treeLayout = d3.tree()");
-        if (vis.coords == Coordinates.polar) {
-            out.addChained("size([360, geom.inner_radius-" + pad + "])")
-                    .addChained("separation(function(a,b) { return (a.parent == b.parent ? 1 : 2) / a.depth }");
-        } else {
-            out.addChained("size([geom.inner_width-" + 2 * pad + ", geom.inner_height-" + 2 * pad + "])");
+
+        if (method == Method.leftRight) {
+            // Trees default to top-bottom, hence the reversal of coordinates
+            out.addChained("size([geom.inner_height-" + 2 * pad + ", geom.inner_width-" + (2 * pad + labelSize) + "])");
         }
+
         out.endStatement();
         out.add("function keyFunction(d) { return d.key }").endStatement();
+
+        //        if (vis.coords == Coordinates.polar) {
+//            out.addChained("size([360, geom.inner_radius-" + pad + "])")
+//                    .addChained("separation(function(a,b) { return (a.parent == b.parent ? 1 : 2) / a.depth }");
+//        } else {
 
         // Do not override the polar coordinates!
         if (vis.coords != Coordinates.polar)
             out.add("elementGroup.attr('transform', 'translate(" + pad + ", " + pad + ")')").endStatement();
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "treeLayout(root)");
+        return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "treeLayout(tree).descendants()");
     }
 
     public void writeDefinition(ElementDetails details) {
         out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 
-        if (vis.coords == Coordinates.polar) {
-            out.addChained("attr('transform', function(d) { return 'rotate(' + (d.x - 90) + ') translate(' + d.y + ')' })");
-        } else {
-            out.addChained("attr('cx', function(d) { return d.x })")
-                    .addChained("attr('cy', function(d) { return d.y })");
+//        if (vis.coords == Coordinates.polar) {
+//            out.addChained("attr('transform', function(d) { return 'rotate(' + (d.x - 90) + ') translate(' + d.y + ')' })");
+//        } else {
+//        }
+
+        if (method == Method.leftRight) {
+            out.addChained("attr('cx', function(d) { return d.y })")
+                    .addChained("attr('cy', function(d) { return d.x })");
         }
 
         out.addChained("attr('r', " + details.overallSize.halved() + ")");
@@ -67,21 +85,21 @@ class Tree extends D3Diagram {
 
         // We add the tree edges
         // TODO: if there is an edge definition in the chart, use that instead
-        out.onNewLine().ln().comment("Add in the arcs on the outside for the groups");
-        out.add("diagramExtras.attr('class', 'diagram tree edge')").endStatement();
-
+//        out.onNewLine().ln().comment("Add in the arcs on the outside for the groups");
+//        out.add("diagramExtras.attr('class', 'diagram tree edge')").endStatement();
+//
         // The edges
-        out.add("var edgeGroup = diagramExtras.selectAll('path').data(treeLayout.links(" + details.dataSource + "))").endStatement();
-        out.add("var added = edgeGroup.enter().append('path').attr('class', 'edge')").endStatement();
-        out.add("BrunelD3.transition(edgeGroup.merge(added), transitionMillis)")
-                .addChained("attr('d', d3.line");
-
+//        out.add("var edgeGroup = diagramExtras.selectAll('path').data(treeLayout.links(" + details.dataSource + "))").endStatement();
+//        out.add("var added = edgeGroup.enter().append('path').attr('class', 'edge')").endStatement();
+//        out.add("BrunelD3.transition(edgeGroup.merge(added), transitionMillis)")
+//                .addChained("attr('d', d3.line");
+//
 //        if (vis.coords == Coordinates.polar) {
 //            out.add(".radial().projection(function(d) { return [d.y, d.x / 180 * Math.PI] }))");
 //        } else {
 //            out.add("())");
 //        }
-        addAestheticsAndTooltips(details);
+//        addAestheticsAndTooltips(details);
     }
 
     public boolean needsDiagramExtras() {
