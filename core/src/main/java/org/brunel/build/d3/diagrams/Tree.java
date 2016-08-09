@@ -124,7 +124,7 @@ class Tree extends D3Diagram {
         out.indentLess().indentLess().add("})").endStatement();
 
         labelBuilder.addTreeInternalLabelsOutsideNode(
-                method == Method.leftRight ? "bottom" : "center"
+                method == Method.leftRight || !usesSize ? "bottom" : "center"
         );
 
     }
