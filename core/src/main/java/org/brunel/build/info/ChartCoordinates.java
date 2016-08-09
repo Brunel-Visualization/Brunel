@@ -22,6 +22,7 @@ import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
 import org.brunel.model.VisSingle;
+import org.brunel.model.VisTypes;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,6 +39,7 @@ public class ChartCoordinates {
     public final String xTransform, yTransform;
     public final boolean xCategorical, yCategorical;
     public final Double[] xExtent, yExtent;                         // User-provided data overrides for the extents
+    public final boolean transposed;                                // True if transposed coordinates
 
     private final Map<VisSingle, Field[]> x = new HashMap<>();
     private final Map<VisSingle, Field[]> y = new HashMap<>();
@@ -49,11 +51,14 @@ public class ChartCoordinates {
         double xMin = Double.POSITIVE_INFINITY, yMin = Double.POSITIVE_INFINITY;
         double xMax = Double.NEGATIVE_INFINITY, yMax = Double.NEGATIVE_INFINITY;
 
+        boolean isTransposed = false;
+
         ArrayList<Field> allX = new ArrayList<>();
         ArrayList<Field> allY = new ArrayList<>();
         ArrayList<Field> allCluster = new ArrayList<>();
         for (int i = 0; i < elements.length; i++) {
             VisSingle vis = elements[i];
+            if (vis.coords == VisTypes.Coordinates.transposed) isTransposed = true;
             Field[] visXFields = getXFields(vis, elementData[i]);
             Field[] visYFields = getYFields(vis, elementData[i]);
 
@@ -99,7 +104,10 @@ public class ChartCoordinates {
             this.yTransform = yCategorical ? "linear" : chooseTransform(allYFields);
         else
             this.yTransform = yTransform;
+
+        this.transposed = isTransposed;
     }
+
 
     private double getDefinedExtent(List<Param> items, boolean min) {
         for (Param p : items)

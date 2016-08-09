@@ -346,7 +346,7 @@ public class D3Interaction {
         if (zoomable == ZoomType.CoordinateZoom) {
             // Brunel code to restrict panning, only if we don't have values passed in
             if (canZoomX) applyZoomToScale(0);
-            if (canZoomY) out.add("scale_y = t.rescaleY(base_scales[1])").endStatement();
+            if (canZoomY) applyZoomToScale(1);
             out.add("build(time || -1)").endStatement();
             out.add("zoomNode.__zoom = t").endStatement();
         }
@@ -373,18 +373,22 @@ public class D3Interaction {
      * @param dimension 0 for X, 1 for Y
      */
     private void applyZoomToScale(int dimension) {
+        // Which is the screen dimension for this scale dimension?
+        boolean isScreenX = structure.coordinates.transposed ? dimension == 1 : dimension == 0;
+        String offset = isScreenX ? "t.x" : "t.y";
+
         out.add(dimension == 0 ? "scale_x" : "scale_y");
 
         if (dimension == 0 && structure.coordinates.xCategorical) {
             // We cannot change the domain, so we change the range instead, which we know runs from 0 to the geom extent
-            out.add(".range([t.x, t.x + t.k * geom.inner_width])");
+            out.add(".range([" + offset + ", " + offset + " + t.k * geom.inner_width])");
         } else if (dimension == 1 && structure.coordinates.yCategorical) {
             // We cannot change the domain, so we change the range instead, which we know runs from 0 to the geom extent
-            out.add(".range([t.y, t.y + t.k * geom.inner_height])");
+            out.add(".range([" + offset + ", " + offset + " + + t.k * geom.inner_height])");
         } else {
             // D3 allows us to manipulate the domain of the NUMERIC scale using the transform's rescale method
             // We rescale the stored original untransformed scale 'baseScales[dimension]'
-            out.add(" =", dimension == 0 ? "t.rescaleX" : "t.rescale");
+            out.add(" =", isScreenX ? "t.rescaleX" : "t.rescaleY");
             out.add("(base_scales[" + dimension + "])");
         }
 
