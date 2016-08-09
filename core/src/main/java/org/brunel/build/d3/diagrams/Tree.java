@@ -36,7 +36,6 @@ class Tree extends D3Diagram {
     public Tree(VisSingle vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
         super(vis, data, interaction, out);
         if (vis.coords == Coordinates.polar) method = Method.polar;
-        else if (vis.coords == Coordinates.transposed) method = Method.topBottom;
         else method = Method.leftRight;
 
         labelSize = labelBuilder.estimateLabelLength() * 6;
@@ -49,7 +48,11 @@ class Tree extends D3Diagram {
         makeHierarchicalTree();
         out.add("var treeLayout = d3.tree()");
 
-        if (method == Method.leftRight) {
+        if (method == Method.polar) {
+            // Pad all around for labels
+            out.addChained("size([2*Math.PI, geom.inner_radius-" + (pad + labelSize) + "])")
+                    .addChained("separation(function(a,b) { return (a.parent == b.parent ? 1 : 2) / a.depth })");
+        } else {
             // Trees default to top-bottom, hence the reversal of coordinates
             out.addChained("size([geom.inner_height-" + 2 * pad + ", geom.inner_width-" + (2 * pad + labelSize) + "])");
         }
@@ -57,14 +60,11 @@ class Tree extends D3Diagram {
         out.endStatement();
 
         out.add("var treeNodes = treeLayout(tree).descendants()").endStatement();
-        out.add("treeNodes.forEach( function(d) { d.x += " + pad + "; d.y += " + pad + "} )").endStatement();
+
+        if (method != Method.polar)
+            out.add("treeNodes.forEach( function(d) { d.x += " + pad + "; d.y += " + pad + "} )").endStatement();
+
         out.add("function keyFunction(d) { return d.key }").endStatement();
-
-        //        if (vis.coords == Coordinates.polar) {
-//            out.addChained("size([360, geom.inner_radius-" + pad + "])")
-//                    .addChained("separation(function(a,b) { return (a.parent == b.parent ? 1 : 2) / a.depth }");
-//        } else {
-
 
         if (usesSize) {
             // Redefine size to use the node value
@@ -85,6 +85,12 @@ class Tree extends D3Diagram {
         if (method == Method.leftRight) {
             out.addChained("attr('cx', function(d) { return d.y })")
                     .addChained("attr('cy', function(d) { return d.x })");
+        } else if (method == Method.topBottom) {
+            out.addChained("attr('cx', function(d) { return d.x })")
+                    .addChained("attr('cy', function(d) { return d.y })");
+        } else if (method == Method.polar) {
+            out.addChained("attr('cx', function(d) { return d.y * Math.cos(d.x) })")
+                    .addChained("attr('cy', function(d) { return d.y * Math.sin(d.x) })");
         }
 
         out.addChained("attr('r', " + details.overallSize.halved() + ")");
@@ -99,17 +105,28 @@ class Tree extends D3Diagram {
         out.add("var added = edgeGroup.enter().append('path').attr('class', 'edge')").endStatement();
         out.add("BrunelD3.transition(edgeGroup.merge(added), transitionMillis)")
                 .addChained("attr('d', function(d) {")
-                .indentMore().indentMore().onNewLine()
-                .add("return 'M' + d.source.y + ',' + d.source.x ")
-                .continueOnNextLine().add(" + 'C' + (d.source.y + d.target.y)/2 + ',' + d.source.x")
-                .continueOnNextLine().add(" + ' ' + (d.source.y + d.target.y)/2 + ',' + d.target.x")
-                .continueOnNextLine().add(" + ' ' + d.target.y + ',' + d.target.x")
-                .endStatement()
-                .indentLess().indentLess().add("})").endStatement();
+                .indentMore().indentMore().onNewLine();
 
+        if (method == Method.polar) {
+            out.add("var r1 = d.source.y, a1 = d.source.x, r2 = d.target.y, a2 = d.target.x,")
+                    .continueOnNextLine().add("x1 = r1*Math.cos(a1), y1 = r1*Math.sin(a1), x2 = r2*Math.cos(a2), y2 = r2*Math.sin(a2),")
+                    .continueOnNextLine().add("r = (r1+r2)/2").endStatement()
+                    .add("return 'M' + x1 + ',' + y1 ")
+                    .continueOnNextLine().add(" + 'Q' + r*Math.cos(a2) + ',' + r*Math.sin(a2)")
+                    .continueOnNextLine().add(" + ' ' + x2 + ',' + y2")
+                    .endStatement();
+        } else {
+            out.add("var x1 = d.source.y, y1 = d.source.x, x2 = d.target.y, y2 = d.target.x").endStatement()
+                    .add("return 'M' + x1 + ',' + y1 ")
+                    .continueOnNextLine().add(" + 'C' + (x1+x2)/2 + ',' + y1")
+                    .continueOnNextLine().add(" + ' ' + (x1+x2)/2 + ',' + y2")
+                    .continueOnNextLine().add(" + ' ' + x2 + ',' + y2")
+                    .endStatement();
+        }
+
+        out.indentLess().indentLess().add("})").endStatement();
 
         labelBuilder.addTreeInternalLabelsBelowNode();
-
 
 //
 //        if (vis.coords == Coordinates.polar) {

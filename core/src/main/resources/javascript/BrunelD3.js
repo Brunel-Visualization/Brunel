@@ -318,7 +318,7 @@ var BrunelD3 = (function () {
             var hPad = labeling.align == 'start' ? pad : -pad;
             var vPad = labeling.inside ? -pad : pad;
 
-            // Add 3 pixels padding
+            // Add padding
             var dx = pos[0] == 'left' ? hPad : (pos[0] == 'right' ? box.width + hPad : box.width / 2);
             var dy = pos[1] == 'top' ? -vPad : (pos[1] == 'bottom' ? box.height + vPad : box.height / 2);
             return {x: box.x + dx, y: box.y + dy, box: box}
