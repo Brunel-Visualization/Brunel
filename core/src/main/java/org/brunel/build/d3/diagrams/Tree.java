@@ -71,16 +71,13 @@ class Tree extends D3Diagram {
             out.add("size = function(d) { return scale_size(d.value) }").endStatement();
         }
 
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.pointLikeCircle, "point", "treeNodes");
+        ElementRepresentation rep = method == Method.leftRight ?
+                ElementRepresentation.pointLikeCircle : ElementRepresentation.largeCircle;
+        return ElementDetails.makeForDiagram(vis, rep, "point", "treeNodes");
     }
 
     public void writeDefinition(ElementDetails details) {
         out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
-
-//        if (vis.coords == Coordinates.polar) {
-//            out.addChained("attr('transform', function(d) { return 'rotate(' + (d.x - 90) + ') translate(' + d.y + ')' })");
-//        } else {
-//        }
 
         if (method == Method.leftRight) {
             out.addChained("attr('cx', function(d) { return d.y })")
@@ -126,14 +123,10 @@ class Tree extends D3Diagram {
 
         out.indentLess().indentLess().add("})").endStatement();
 
-        labelBuilder.addTreeInternalLabelsBelowNode();
+        labelBuilder.addTreeInternalLabelsOutsideNode(
+                method == Method.leftRight ? "bottom" : "center"
+        );
 
-//
-//        if (vis.coords == Coordinates.polar) {
-//            out.add(".radial().projection(function(d) { return [d.y, d.x / 180 * Math.PI] }))");
-//        } else {
-//            out.add("())");
-//        }
     }
 
     public boolean needsDiagramExtras() {
