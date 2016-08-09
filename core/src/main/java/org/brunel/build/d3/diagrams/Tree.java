@@ -28,10 +28,10 @@ class Tree extends D3Diagram {
 
     private enum Method {leftRight, topBottom, polar}
 
-    ;
     private final Method method;                                    // How to draw it
     private final int labelSize;                                    // Size to leave for labels
     private final int pad = 10;                                     // Pad size
+    private final boolean usesSize;                                 // True is size is used
 
     public Tree(VisSingle vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
         super(vis, data, interaction, out);
@@ -39,8 +39,9 @@ class Tree extends D3Diagram {
         else if (vis.coords == Coordinates.transposed) method = Method.topBottom;
         else method = Method.leftRight;
 
-        labelSize = labelBuilder.estimateLabelLength() * 7;
+        labelSize = labelBuilder.estimateLabelLength() * 6;
 
+        usesSize = !vis.fSize.isEmpty();
     }
 
     public ElementDetails initializeDiagram() {
@@ -54,6 +55,9 @@ class Tree extends D3Diagram {
         }
 
         out.endStatement();
+
+        out.add("var treeNodes = treeLayout(tree).descendants()").endStatement();
+        out.add("treeNodes.forEach( function(d) { d.x += " + pad + "; d.y += " + pad + "} )").endStatement();
         out.add("function keyFunction(d) { return d.key }").endStatement();
 
         //        if (vis.coords == Coordinates.polar) {
@@ -61,10 +65,13 @@ class Tree extends D3Diagram {
 //                    .addChained("separation(function(a,b) { return (a.parent == b.parent ? 1 : 2) / a.depth }");
 //        } else {
 
-        // Do not override the polar coordinates!
-        if (vis.coords != Coordinates.polar)
-            out.add("elementGroup.attr('transform', 'translate(" + pad + ", " + pad + ")')").endStatement();
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "treeLayout(tree).descendants()");
+
+        if (usesSize) {
+            // Redefine size to use the node value
+            out.add("size = function(d) { return scale_size(d.value) }").endStatement();
+        }
+
+        return ElementDetails.makeForDiagram(vis, ElementRepresentation.pointLikeCircle, "point", "treeNodes");
     }
 
     public void writeDefinition(ElementDetails details) {
@@ -85,21 +92,31 @@ class Tree extends D3Diagram {
 
         // We add the tree edges
         // TODO: if there is an edge definition in the chart, use that instead
-//        out.onNewLine().ln().comment("Add in the arcs on the outside for the groups");
-//        out.add("diagramExtras.attr('class', 'diagram tree edge')").endStatement();
-//
-        // The edges
-//        out.add("var edgeGroup = diagramExtras.selectAll('path').data(treeLayout.links(" + details.dataSource + "))").endStatement();
-//        out.add("var added = edgeGroup.enter().append('path').attr('class', 'edge')").endStatement();
-//        out.add("BrunelD3.transition(edgeGroup.merge(added), transitionMillis)")
-//                .addChained("attr('d', d3.line");
+        out.onNewLine().ln().comment("Add in the arcs on the outside for the groups");
+        out.add("diagramExtras.attr('class', 'diagram tree edge')").endStatement();
+
+        out.add("var edgeGroup = diagramExtras.selectAll('path').data(tree.links())").endStatement();
+        out.add("var added = edgeGroup.enter().append('path').attr('class', 'edge')").endStatement();
+        out.add("BrunelD3.transition(edgeGroup.merge(added), transitionMillis)")
+                .addChained("attr('d', function(d) {")
+                .indentMore().indentMore().onNewLine()
+                .add("return 'M' + d.source.y + ',' + d.source.x ")
+                .continueOnNextLine().add(" + 'C' + (d.source.y + d.target.y)/2 + ',' + d.source.x")
+                .continueOnNextLine().add(" + ' ' + (d.source.y + d.target.y)/2 + ',' + d.target.x")
+                .continueOnNextLine().add(" + ' ' + d.target.y + ',' + d.target.x")
+                .endStatement()
+                .indentLess().indentLess().add("})").endStatement();
+
+
+        labelBuilder.addTreeInternalLabelsBelowNode();
+
+
 //
 //        if (vis.coords == Coordinates.polar) {
 //            out.add(".radial().projection(function(d) { return [d.y, d.x / 180 * Math.PI] }))");
 //        } else {
 //            out.add("())");
 //        }
-//        addAestheticsAndTooltips(details);
     }
 
     public boolean needsDiagramExtras() {

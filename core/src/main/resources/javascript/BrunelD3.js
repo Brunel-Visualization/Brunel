@@ -295,7 +295,7 @@ var BrunelD3 = (function () {
     // Returns an object with 'x', 'y' and 'box' that "surrounds" the text
     // hPos and vPos are optional
     function makeLoc(target, labeling, s) {
-        var datum = target.__data__, pad = labeling.pad,
+        var datum = target.__data__, pad = labeling.pad || 2,
             box, loc, method = labeling.method, pos = labeling.location;
         if (labeling.where) {
             box = target.getBBox();

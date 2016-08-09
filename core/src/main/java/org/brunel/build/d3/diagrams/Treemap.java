@@ -52,7 +52,7 @@ class Treemap extends D3Diagram {
                 .addChained("attr('height', function(d) { return d.y1-d.y0 })");
         addAestheticsAndTooltips(details);
 
-        labelBuilder.addTreeInternalLabels();
+        labelBuilder.addTreeInternalLabelsInsideNode();
     }
 
     public boolean needsDiagramLabels() {
