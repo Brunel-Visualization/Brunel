@@ -1153,13 +1153,21 @@ var BrunelD3 = (function () {
     function makeNetworkLayout(graph, nodes, edges, geom, density) {
 
         density = density || 1;
-        var N = graph.nodes.length,
+        var N = graph.nodes.length, E = graph.links.length,
             W = geom.inner_width, H = geom.inner_height,
             pad = geom.default_point_size,
             left = pad, top = pad,
             right = geom.inner_width - pad, bottom = geom.inner_height - pad,
-            D = Math.min(W, H) / Math.sqrt(N) / Math.sqrt(density),
-            R = D * density;
+            D = (density || 1) * Math.min(W, H) / Math.sqrt(N) / 2,
+            R = D * Math.max(1, D - 3) / 5 / Math.max(1, E / N);
+
+        var a, i;
+        for (i = 0; i < N; i++) {
+            a = Math.PI * 2 * i / N;
+            graph.nodes[i].x = W * (1 + Math.cos(a)) / 2;
+            graph.nodes[i].y = H + (1 + Math.sin(a)) / 2
+        }
+
 
         var mergedNodes = nodes.selection(), mergedEdges = edges.selection();
 
@@ -1210,8 +1218,8 @@ var BrunelD3 = (function () {
 
         d3.forceSimulation()
             .force("link", d3.forceLink(graph.links).distance(D))
-            .force("center", d3.forceCenter(W/2, H/2))
-            .force("charge", d3.forceManyBody().distanceMax(geom.inner_radius/2).strength(-R))
+            // .force("center", d3.forceCenter(W/2, H/2))
+            .force("charge", d3.forceManyBody().distanceMax(geom.inner_radius / 2).strength(-R))
             .force("inside", function () {
                 var i, n = graph.nodes.length, k = 1, node;
                 for (i = 0; i < n; i++) {
