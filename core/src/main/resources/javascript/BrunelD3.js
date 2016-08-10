@@ -501,9 +501,11 @@ var BrunelD3 = (function () {
             method = e.altKey ? "tog" : "sel";                          // how to select the data ...
         if (e.shiftKey) method = e.altKey ? "sub" : "add";              // ... add, subtract, toggle, select
 
-        // The selection is in terms of the processed data, but we need to propagate that
-        // back to the original data set
-        element.original().modifySelection(method, item ? item.row : null, data, element.fields.key);
+        // Get the row from the data (if necessary from embedded data in item.data)
+        var row = item ? (item.data && item.data.row != null ? item.data.row : item.row) : null;
+
+        // The selection is in terms of the processed data, but we need to propagate back to the original data set
+        element.original().modifySelection(method, row, data, element.fields.key);
 
         callWhenReady(func, target);                                    // Request a redraw after  transition done
     }
@@ -575,7 +577,11 @@ var BrunelD3 = (function () {
 
         function build() {
 
-            var k, item, scaling = Math.sqrt(ext[0] * ext[1] / totalArea / 2);
+            var k, item, scaling = Math.sqrt(ext[0] * ext[1] / totalArea / 2),
+                parent = items[0]._txt.parentNode;
+
+            // remove old scaling
+            parent.removeAttribute('transform')
 
             // Resize everything
             for (k = 0; k < items.length; k++) {
@@ -631,7 +637,7 @@ var BrunelD3 = (function () {
 
             }
 
-            transformToFill(items[0]._txt.parentNode);
+            transformToFill(parent);
 
         }
 
@@ -829,10 +835,8 @@ var BrunelD3 = (function () {
             posV = style.verticalAlign,                     // positioning
             loc = makeLoc(item, labeling, content);         // Get center point (x,y) and surrounding box (box)
 
-
         if (posV.endsWith("px"))
             loc.y += Number(posV.substring(0, posV.length - 2));
-
 
         txt.style('text-anchor', labeling.align).attr('dy', (labeling.dy || "0.25") + "em");
 
@@ -855,24 +859,31 @@ var BrunelD3 = (function () {
             } else {
                 txt.classed("overlap", hitsExisting(b, hits));          // Set the style for overlapping text
             }
-
-
         }
     }
 
 
     // Apply labeling
     function applyLabeling(element, group, labeling, time, geom) {
-        var hits = {D: labeling.granularity};                      // Keep track of hit items; not the pixel granularity
+        var hits = {D: labeling.granularity};                               // Keeps track of hit items
+
+        element.each(function (d, i) {
+            d._ix = i
+        });                          // index the items
+        var sorted = element.sort(function (a, b) {
+            return b._ix - a._ix
+        });   // sorted by reverse order
+        element.order();                                                    // restore element order
+
         if (time > 0)
-            return element.transition("labels").duration(time).tween('func', function () {
+            return sorted.transition("labels").duration(time).tween('func', function () {
                 var item = this;
                 return function () {
                     labelItem(item, group, labeling, hits, geom);
                 }
             });
         else
-            return element.each(
+            return sorted.each(
                 function () {
                     labelItem(this, group, labeling, hits, geom)
                 }
@@ -1147,10 +1158,19 @@ var BrunelD3 = (function () {
         return d3.symbol().type(generator).size(radius * radius * 4)();
     }
 
-    // Start a network layout for the node and edge elements
-    // The graph should already have been built within the nodeElement
-    // density is a 0-1 value stating hwo packed the resulting graph should be
-    function makeNetworkLayout(graph, nodes, edges, geom, density) {
+    /**
+     * Start a network layout for the node and edge elements
+     * The graph should already have been built within the nodeElement
+     * density is
+
+     * @param graph the graph structure (data)
+     * @param nodes selection for the nodes
+     * @param edges selection for the links
+     * @param zoomNode defiens the zoom factors
+     * @param geom space to lay out in
+     * @param density a positive value stating how packed the resulting graph should be (default == 1)
+     */
+    function makeNetworkLayout(graph, nodes, edges, zoomNode, geom, density) {
 
         density = density || 1;
         var N = graph.nodes.length, E = graph.links.length,
@@ -1174,26 +1194,37 @@ var BrunelD3 = (function () {
 
         function ticked() {
 
+            var t = d3.zoomTransform(zoomNode);
+
+            function scaleX(v) {
+                return t.x + t.k * v
+            }
+
+            function scaleY(v) {
+                return t.y + t.k * v
+            }
+
             mergedNodes
                 .attr('cx', function (d) {
-                    return d.x;
+                    return scaleX(d.x);
                 })
                 .attr('cy', function (d) {
-                    return d.y;
+                    return scaleY(d.y);
                 })
                 .each(function (d) {
                         var txt = this.__label__;
                         if (!txt) return;
                         if (txt.__off__) {
                             // We have calculated the position, just need to move it
-                            txt.attr('x', txt.__off__.dx + d.x);
-                            txt.attr('y', txt.__off__.dy + d.y);
+                            txt.attr('x', scaleX(txt.__off__.dx + d.x));
+                            txt.attr('y', scaleY(txt.__off__.dy + d.y));
                         } else {
-                            // First time placement, and then record the offset relative to the node (note no hit collision handling)
+                            // First time placement without hit detection
                             labelItem(this, null, txt.__labeling__, null, geom);
+                            // record unscaled relative location
                             txt.__off__ = {
-                                dx: +txt.attr('x') - d.x,
-                                dy: +txt.attr('y') - d.y
+                                dx: +txt.attr('x') / t.k + t.x - d.x,
+                                dy: +txt.attr('y') / t.k + t.y - d.y
                             }
                         }
                     }
@@ -1202,23 +1233,24 @@ var BrunelD3 = (function () {
 
             mergedEdges
                 .attr('x1', function (d) {
-                    return d.source.x
+                    return scaleX(d.source.x)
                 })
                 .attr('y1', function (d) {
-                    return d.source.y
+                    return scaleY(d.source.y)
                 })
                 .attr('x2', function (d) {
-                    return d.target.x
+                    return scaleX(d.target.x)
                 })
                 .attr('y2', function (d) {
-                    return d.target.y
+                    return scaleY(d.target.y)
                 });
 
         }
 
-        d3.forceSimulation()
+
+        var force = d3.forceSimulation()
             .force("link", d3.forceLink(graph.links).distance(D))
-            // .force("center", d3.forceCenter(W/2, H/2))
+            .force("center", d3.forceCenter(W / 2, H / 2))
             .force("charge", d3.forceManyBody().distanceMax(geom.inner_radius / 2).strength(-R))
             .force("inside", function () {
                 var i, n = graph.nodes.length, k = 1, node;
@@ -1229,9 +1261,19 @@ var BrunelD3 = (function () {
                     if (node.y < top) node.vy += k * (top - node.y);
                     if (node.y > bottom) node.vy += k * (bottom - node.y);
                 }
+            });
+
+        mergedNodes.call(d3.drag().on('drag', function (d) {
+                d.fx = d3.event.x;
+                d.fy = d3.event.y;
+                if (force.alpha() < 0.25) force.alpha(0.25).restart();
+            }).on('end', function (d) {
+                d.fx = d.fy = null;
             })
-            .nodes(graph.nodes)
-            .on("tick", ticked);
+        );
+
+
+        return force.nodes(graph.nodes).on("tick", ticked);
     }
 
     // Ensures a D3 item has no cumulative matrix transform

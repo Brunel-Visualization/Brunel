@@ -354,7 +354,7 @@ public class D3DataBuilder {
         // Only want categorical / date position fields, also aesthetic fields
         Set<String> result = new LinkedHashSet<>();
 
-        if(vis.fY.size() > 1) {
+        if (vis.fY.size() > 1) {
             // The Y fields all become "#values"
             result.add("#values");
             addIfCategorical(result, vis.fX);
@@ -405,7 +405,15 @@ public class D3DataBuilder {
         }
 
         // Check it's OK
-        if (suitableForKey(result)) return new ArrayList<>(result);
+        if (suitableForKey(result)) {
+            // Tray and remove "#selection" if we can
+            ArrayList<String> list = new ArrayList<>(result);
+            if (result.contains("#selection")) {
+                list.remove("#selection");
+                if (!suitableForKey(list)) list.add("#selection");
+            }
+            return list;
+        }
 
         // If not, we give up and just use the row
         return Collections.singletonList("#row");
@@ -425,7 +433,6 @@ public class D3DataBuilder {
             if ((field.preferCategorical() || field.isDate()) && !field.isProperty("calculated")) result.add(f);
         }
     }
-
 
     private List<String> makeSplitFields() {
         // Start with all the aesthetics

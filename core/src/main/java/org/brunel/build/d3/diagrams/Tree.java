@@ -80,14 +80,14 @@ class Tree extends D3Diagram {
         out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 
         if (method == Method.leftRight) {
-            out.addChained("attr('cx', function(d) { return d.y })")
-                    .addChained("attr('cy', function(d) { return d.x })");
+            out.addChained("attr('cx', function(d) { return scale_x(d.y) })")
+                    .addChained("attr('cy', function(d) { return scale_y(d.x) })");
         } else if (method == Method.topBottom) {
-            out.addChained("attr('cx', function(d) { return d.x })")
-                    .addChained("attr('cy', function(d) { return d.y })");
+            out.addChained("attr('cx', function(d) { return scale_x(d.x) })")
+                    .addChained("attr('cy', function(d) { return scale_y(d.y) })");
         } else if (method == Method.polar) {
-            out.addChained("attr('cx', function(d) { return d.y * Math.cos(d.x) })")
-                    .addChained("attr('cy', function(d) { return d.y * Math.sin(d.x) })");
+            out.addChained("attr('cx', function(d) { return scale_x(d.y * Math.cos(d.x)) })")
+                    .addChained("attr('cy', function(d) { return scale_y(d.y * Math.sin(d.x)) })");
         }
 
         out.addChained("attr('r', " + details.overallSize.halved() + ")");
@@ -105,15 +105,13 @@ class Tree extends D3Diagram {
                 .indentMore().indentMore().onNewLine();
 
         if (method == Method.polar) {
-            out.add("var r1 = d.source.y, a1 = d.source.x, r2 = d.target.y, a2 = d.target.x,")
-                    .continueOnNextLine().add("x1 = r1*Math.cos(a1), y1 = r1*Math.sin(a1), x2 = r2*Math.cos(a2), y2 = r2*Math.sin(a2),")
-                    .continueOnNextLine().add("r = (r1+r2)/2").endStatement()
-                    .add("return 'M' + x1 + ',' + y1 ")
-                    .continueOnNextLine().add(" + 'Q' + r*Math.cos(a2) + ',' + r*Math.sin(a2)")
-                    .continueOnNextLine().add(" + ' ' + x2 + ',' + y2")
+            out.add("var r1 = d.source.y, a1 = d.source.x, r2 = d.target.y, a2 = d.target.x, r = (r1+r2)/2").endStatement()
+                    .add("return 'M' + scale_x(r1*Math.cos(a1)) + ',' + scale_y(r1*Math.sin(a1)) ")
+                    .continueOnNextLine().add(" + 'Q' +  scale_x(r*Math.cos(a2)) + ',' + scale_y(r*Math.sin(a2))")
+                    .continueOnNextLine().add(" + ' ' +  scale_x(r2*Math.cos(a2)) + ',' + scale_y(r2*Math.sin(a2))")
                     .endStatement();
         } else {
-            out.add("var x1 = d.source.y, y1 = d.source.x, x2 = d.target.y, y2 = d.target.x").endStatement()
+            out.add("var x1 =  scale_x(d.source.y), y1 = scale_y(d.source.x), x2 = scale_x(d.target.y), y2 = scale_y(d.target.x)").endStatement()
                     .add("return 'M' + x1 + ',' + y1 ")
                     .continueOnNextLine().add(" + 'C' + (x1+x2)/2 + ',' + y1")
                     .continueOnNextLine().add(" + ' ' + (x1+x2)/2 + ',' + y2")

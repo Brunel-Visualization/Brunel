@@ -445,8 +445,17 @@ public class D3ScaleBuilder {
         writePositionScale(ScalePurpose.x, structure.coordinates.allXFields, getXRange(), elementsFillHorizontal(ScalePurpose.x), hAxis.isReversed);
         writePositionScale(ScalePurpose.inner, structure.coordinates.allXClusterFields, "[-0.5, 0.5]", elementsFillHorizontal(ScalePurpose.inner), false);
         writePositionScale(ScalePurpose.y, structure.coordinates.allYFields, getYRange(), false, vAxis.isReversed);
+        writeScaleExtras();
+    }
+
+    protected void writeScaleExtras() {
         out.onNewLine().add("var base_scales = [scale_x, scale_y];").at(50).comment("Untransformed original scales");
         writeAspect();
+    }
+
+    public void writeDiagramScales() {
+        out.onNewLine().add("var scale_x = d3.scaleLinear(), scale_y = d3.scaleLinear()").endStatement();
+        writeScaleExtras();
     }
 
     private void writeAspect() {

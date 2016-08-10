@@ -158,6 +158,8 @@ public class D3Builder extends AbstractBuilder {
                 out.titleComment("Axes");
                 scalesBuilder.writeAxes();
             }
+        } else {
+            scalesBuilder.writeDiagramScales();
         }
 
         // Attach the zoom

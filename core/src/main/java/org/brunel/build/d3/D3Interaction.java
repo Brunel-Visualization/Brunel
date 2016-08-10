@@ -21,6 +21,7 @@ import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.model.VisSingle;
+import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Interaction;
 
@@ -35,59 +36,72 @@ import java.util.Map;
  */
 public class D3Interaction {
 
-    public enum ZoomType {
-        MapZoom,
-        CoordinateZoom,
-        GraphicZoom,
-        None
-    }
+    private static final boolean[] ZOOM_ALL = new boolean[]{true, true};
+    private static final boolean[] ZOOM_NONE = new boolean[]{false, false};
 
     private final ChartStructure structure;     // Chart Structure
     private final D3ScaleBuilder scales;        // Scales for the chart
     private final ScriptWriter out;             // Write definitions here
-    private final ZoomType zoomable;            // Same for all elements
     private final boolean canZoomX, canZoomY;   // for coordinate zoom, which axes we can zoom
 
     public D3Interaction(ChartStructure structure, D3ScaleBuilder scales, ScriptWriter out) {
         this.structure = structure;
         this.scales = scales;
         this.out = out;
-        if (isSemanticZoomable(structure.elementStructure)) {
-            if (structure.geo == null) {
-                this.zoomable = ZoomType.CoordinateZoom;
-                canZoomX = checkCoordinate(structure, "x", structure.coordinates.xCategorical);
-                canZoomY = checkCoordinate(structure, "y", structure.coordinates.yCategorical);
-            } else {
-                this.zoomable = ZoomType.MapZoom;
-                canZoomX = canZoomY = true;
-            }
-        } else if (zoomRequested(structure.elementStructure)) {
-            this.zoomable = ZoomType.GraphicZoom;
-            canZoomX = canZoomY = false;
-        } else {
-            this.zoomable = ZoomType.None;
-            canZoomX = canZoomY = false;
-        }
+
+        boolean[] zoomTypes = zoomRequested(structure.elementStructure);    // user zoom requests
+        if (zoomTypes == null) zoomTypes = defaultZooms();                  // defaults if no user request
+
+        // Set the values
+        canZoomX = zoomTypes[0];
+        canZoomY = zoomTypes[1];
+
     }
 
+    private boolean[] defaultZooms() {
+        // Handle cases when there are diagrams -- the ones that do not fill the space by default are zoomable
+        if (structure.diagram == VisTypes.Diagram.network || structure.diagram == VisTypes.Diagram.map
+                || structure.diagram == VisTypes.Diagram.tree) return ZOOM_ALL;
+        else if (structure.diagram != null)
+            return ZOOM_NONE;
+
+        // we cannot zoom diagrams polar coordinates
+        if (scales.coords == Coordinates.polar) return ZOOM_NONE;
+
+        // Otherwise allow zoom for non-categorical axes
+        return new boolean[]{!structure.coordinates.xCategorical, !structure.coordinates.yCategorical};
+    }
+
+    /**
+     * We will always write the zoom function in, as it can be used even if the user did not request
+     * it to be on available interactively. This way it can be called by API.
+     */
     public void defineChartZoomFunction() {
-        if (zoomable != D3Interaction.ZoomType.None) {
-            out.onNewLine().add("zoom: function(params, time) {").indentMore().indentMore().onNewLine()
-                    .add("if (params) zoom.on('zoom').call(zoomNode, params, time)").endStatement()
-                    .add("return d3.zoomTransform(zoomNode)").endStatement();
-            out.indentLess().indentLess().onNewLine().add("},");
-        }
-
+        out.onNewLine().add("zoom: function(params, time) {").indentMore().indentMore().onNewLine()
+                .add("if (params) zoom.on('zoom').call(zoomNode, params, time)").endStatement()
+                .add("return d3.zoomTransform(zoomNode)").endStatement();
+        out.indentLess().indentLess().onNewLine().add("},");
     }
 
-    private boolean zoomRequested(ElementStructure[] elements) {
+    // Return an array stating whether x and y requested or banned
+    // null means no info -- use auto
+    private boolean[] zoomRequested(ElementStructure[] elements) {
         // Explicit requests in the code are honored. In case of multiple specs, just the first one is used
         for (ElementStructure e : elements) {
+            // "None" means we don't get any interaction
+            if (getInteractionParam(e.vis, Interaction.none) != null) return ZOOM_NONE;
+
+            // Find the panzoom request and use it
             Param param = getInteractionParam(e.vis, Interaction.panzoom);
-            if (param != null) return isNeeded(param);
-            if (getInteractionParam(e.vis, Interaction.none) != null) return false;
+            if (param != null) {
+                String s = param.hasModifiers() ? param.firstModifier().asString() : "both";
+                if (s.equals("none")) return ZOOM_NONE;
+                if (s.equals("x")) return new boolean[]{true, false};
+                if (s.equals("y")) return new boolean[]{false, true};
+                return ZOOM_ALL;
+            }
         }
-        return false;
+        return null;
     }
 
     /**
@@ -110,65 +124,16 @@ public class D3Interaction {
     }
 
     private boolean targetsElement(Param param) {
-        if (param == null) return false;                    // No interaction => no targeting
+        if (param == null) return false;                            // No interaction => no targeting
         for (Param p : param.modifiers())
-            if (p.asString().startsWith("snap")) return false;  // snap means the handler is attached to background
-        return true;                                        // No snap means we do need an element handler
-    }
-
-    /**
-     * Decide if this dimension is to be pan/zoomed
-     *
-     * @param structure        chart structure
-     * @param dimName          "x" or "y"
-     * @param dimIsCategorical if true, the dimension is categorical
-     * @return true if we want to zoom for this dimension
-     */
-    private boolean checkCoordinate(ChartStructure structure, String dimName, boolean dimIsCategorical) {
-        for (VisSingle e : structure.elements) {
-            Param param = getInteractionParam(e, Interaction.panzoom);
-            if (param != null && param.hasModifiers()) {
-                String s = param.firstModifier().asString();
-                return dimName.equalsIgnoreCase(s) || "both".equalsIgnoreCase(s);
-            }
-        }
-        return !dimIsCategorical;
+            if (p.asString().startsWith("snap")) return false;      // snap means the handler is attached to background
+        return true;                                                // No snap means we do need an element handler
     }
 
     public static Param getInteractionParam(VisSingle vis, Interaction type) {
         for (Param p : vis.tInteraction)
             if (p.asEnum(Interaction.class) == type) return p;
         return null;
-    }
-
-    public ZoomType getZoomType() {
-        return zoomable;
-    }
-
-    private boolean isSemanticZoomable(ElementStructure[] elements) {
-        // we cannot zoom diagrams (except for maps) or polar coordinates
-        if ((structure.diagram != null && structure.geo == null) || scales.coords == Coordinates.polar)
-            return false;
-
-        // Explicit requests in the code are honored. In case of multiple specs, just the first one is used
-        for (ElementStructure e : elements) {
-            Param param = getInteractionParam(e.vis, Interaction.panzoom);
-            if (param != null) return isNeeded(param);
-            if (getInteractionParam(e.vis, Interaction.none) != null) return false;
-        }
-
-        // By default, we do not zoom for all categorical data
-        if (structure.coordinates.xCategorical && structure.coordinates.yCategorical)
-            return false;
-
-        // Otherwise, we want some zooming
-        return true;
-    }
-
-    private boolean isNeeded(Param param) {
-        if (!param.hasModifiers()) return true;
-        String s = param.firstModifier().asString();
-        return !s.equals("none");
     }
 
     /**
@@ -231,7 +196,7 @@ public class D3Interaction {
                 e.add(0, "var c = BrunelD3.closest(merged, '" + snapInfo[0] + "', " + snapInfo[1] + " )");
             }
 
-            out.add("interior.select('rect.overlay')").at(60).comment("Attach handlers to the overlay");
+            out.add("chart.select('rect.overlay')").at(60).comment("Attach handlers to the overlay");
             addDispatchers(overlayEvents);
         }
 
@@ -315,13 +280,16 @@ public class D3Interaction {
         out.add("var zoomNode = overlay.append('rect').attr('class', 'overlay')")
                 .addChained("attr('width', geom.inner_rawWidth)")
                 .addChained("attr('height', geom.inner_rawHeight)");
-        if (zoomable != ZoomType.None) {
-            out.addChained("call(zoom)");
-        }
+
+        // Only attach zoom handlers if we want interactivity; otherwise zoom is only available by API
+        if (hasZoomInteractivity()) out.addChained("call(zoom)");
+
         out.addChained("node()").endStatement();
-        if (zoomable != ZoomType.None) {
-            out.add("zoomNode.__zoom = d3.zoomIdentity").endStatement();
-        }
+        out.add("zoomNode.__zoom = d3.zoomIdentity").endStatement();
+    }
+
+    public boolean hasZoomInteractivity() {
+        return canZoomX || canZoomY;
     }
 
     /**
@@ -329,38 +297,36 @@ public class D3Interaction {
      */
     public void addZoomFunctionality() {
 
-        // Check if anything to do
-        if (zoomable == ZoomType.None) return;
-
         // Define the zoom function
         out.add("zoom.on('zoom', function(t, time) {")
                 .indentMore().indentMore().onNewLine();
 
-        // Only restrict for coordinate charts
-        String eventBasedTransform = zoomable == ZoomType.CoordinateZoom ?
-                "BrunelD3.restrictZoom(d3.event.transform, geom, this)" : "d3.event.transform";
+        // If the transform is undefined, define it (and restrict the pan amount for coord charts)
+        if (structure.diagram == null)
+            out.add("t = t ||BrunelD3.restrictZoom(d3.event.transform, geom, this)");
+        else
+            out.add("t = t || d3.event.transform");
 
-        out.add("t = t ||", eventBasedTransform).endStatement();
+        out.endStatement();
 
-        // Zoom by coordinate or projection
-        if (zoomable == ZoomType.CoordinateZoom) {
-            // Brunel code to restrict panning, only if we don't have values passed in
+        // Only the map has no scales to modify ...
+        if (structure.diagram != VisTypes.Diagram.map) {
             if (canZoomX) applyZoomToScale(0);
             if (canZoomY) applyZoomToScale(1);
-            out.add("build(time || -1)").endStatement();
-            out.add("zoomNode.__zoom = t").endStatement();
         }
 
-        // Zoom a map projection by setting the transform into the base projection
-        if (zoomable == ZoomType.MapZoom) {
-            out.add("zoomNode.__zoom = t").endStatement();
-            out.add("build(time || -1)").endStatement();
-        }
+        out.add("zoomNode.__zoom = t").endStatement();
 
-        // Zoom by graphic transform
-        if (zoomable == ZoomType.GraphicZoom) {
-            out.add("BrunelD3.transition(interior, time || 0).attr('transform', t.toString() )").endStatement();
-            out.add("zoomNode.__zoom = t").endStatement();
+        if (structure.diagram == VisTypes.Diagram.network) {
+            // A network has a defined simulation, which we need to prod if not running
+            out.comment("If the simulation has stopped, run one pass to use the scale");
+            out.add("if (simulation && simulation.alpha() < simulation.alphaMin()) simulation.on('tick')()").endStatement();
+        } else if (structure.diagram == VisTypes.Diagram.cloud) {
+            // A cloud just gets the container transformed
+            out.add("interior.attr('transform', d3.zoomTransform(zoomNode))").endStatement();
+        } else {
+            // rebuild the chart
+            out.add("build(time || -1)").endStatement();
         }
         out.indentLess().indentLess().add("})").endStatement();
 
@@ -379,10 +345,13 @@ public class D3Interaction {
 
         out.add(dimension == 0 ? "scale_x" : "scale_y");
 
-        if (dimension == 0 && structure.coordinates.xCategorical) {
+        boolean xCategorical = structure.diagram == null && structure.coordinates.xCategorical;
+        boolean yCategorical = structure.diagram == null && structure.coordinates.yCategorical;
+
+        if (dimension == 0 && xCategorical) {
             // We cannot change the domain, so we change the range instead, which we know runs from 0 to the geom extent
             out.add(".range([" + offset + ", " + offset + " + t.k * geom.inner_width])");
-        } else if (dimension == 1 && structure.coordinates.yCategorical) {
+        } else if (dimension == 1 && yCategorical) {
             // We cannot change the domain, so we change the range instead, which we know runs from 0 to the geom extent
             out.add(".range([" + offset + ", " + offset + " + + t.k * geom.inner_height])");
         } else {

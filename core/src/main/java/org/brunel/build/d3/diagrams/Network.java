@@ -60,20 +60,18 @@ class Network extends D3Diagram {
     public void writeBuildCommands() {
         String density = "";
         if (vis.tDiagramParameters.length > 0) density = ", " + vis.tDiagramParameters[0].asDouble();
-        out.onNewLine().add("if (first) ")
-                .add("BrunelD3.network(graph, elements[" + nodes.index
-                        + "], elements[" + edges.index + "], geom" + density + ")").endStatement();
+        out.onNewLine().add("if (!simulation) ")
+                .add("simulation = BrunelD3.network(graph, elements[" + nodes.index
+                        + "], elements[" + edges.index + "], zoomNode, geom" + density + ")").endStatement();
     }
 
     public void writePerChartDefinitions() {
-        out.add("var graph;").at(50).comment("Graph used for nodes and links");
+        out.add("var graph, simulation;").at(50).comment("Node/edge graph and force simulation");
     }
 
     public ElementDetails initializeDiagram() {
         String edgeDataset = "elements[" + edges.getBaseDatasetIndex() + "].data()";
-        String nodeField = quoted(nodeID);
-
-        String from = quoted(fromFieldID), to = quoted(toFieldID);
+        String nodeField = quoted(nodeID), from = quoted(fromFieldID), to = quoted(toFieldID);
         out.add("graph = BrunelData.diagram_Graph.make(processed,", nodeField, ",",
                 edgeDataset, ",", from, ",", to, ")").endStatement();
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "graph.nodes");

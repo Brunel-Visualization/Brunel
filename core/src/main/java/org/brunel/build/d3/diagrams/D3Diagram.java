@@ -93,10 +93,6 @@ public abstract class D3Diagram {
         return false;
     }
 
-    public D3Interaction.ZoomType getZoomType() {
-        return interaction.getZoomType();
-    }
-
     public void preBuildDefinitions() {
         // By default, do nothing
     }

@@ -45,11 +45,11 @@ class Treemap extends D3Diagram {
 
     public void writeDefinition(ElementDetails details) {
         out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })")
-                .addChained("attr('x', function(d) { return d.x0 })")
-                .addChained("attr('y', function(d) { return d.y0 })")
-                .addChained("attr('width', function(d) { return d.x1-d.x0 })")
-                .addChained("style('width', function(d) { return d.x1-d.x0 })")
-                .addChained("attr('height', function(d) { return d.y1-d.y0 })");
+                .addChained("attr('x', function(d) { return scale_x(d.x0) })")
+                .addChained("attr('y', function(d) { return scale_y(d.y0) })")
+                .addChained("attr('width', function(d) { return scale_x(d.x1) - scale_x(d.x0) })")
+                .addChained("style('width', function(d) { return scale_x(d.x1) - scale_x(d.x0) })")
+                .addChained("attr('height', function(d) { return scale_y(d.y1) - scale_y(d.y0) })");
         addAestheticsAndTooltips(details);
 
         labelBuilder.addTreeInternalLabelsInsideNode();
@@ -60,7 +60,8 @@ class Treemap extends D3Diagram {
     }
 
     public String getRowKey() {
-        return "d.key == null ?  data._key(d.row) : d.key";
+        // We know we are ina  hierarchy, so the data is referred to by "d.data"
+        return "d.data.key == null ?  data._key(d.data.row) : d.data.key";
     }
 
 }
