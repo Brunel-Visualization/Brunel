@@ -13,7 +13,7 @@
 # limitations under the License.
 
 #JS locations passed to HTML template are read from env variable if present.  Defaults otherwise.
-D3_LOC <- "//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min"
+D3_LOC <- "//cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min"
 TOPO_JSON_LOC <- "//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min"
 JS_LOC <- "/nbextensions/brunel_ext"
 BRUNEL_CONFIG <- trimws(Sys.getenv("BRUNEL_CONFIG"))
