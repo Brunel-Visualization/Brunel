@@ -24,8 +24,12 @@
     stroke: none;
 }
 
-.brunel .grid *, .brunel .axis * {
+.brunel .brunel .axis * {
     shape-rendering:crispEdges
+}
+
+.brunel .grid {
+    pointer-events: none;
 }
 
 .brunel .title {

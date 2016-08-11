@@ -81,6 +81,14 @@ Both <code>rectangular</code> and <code>transpose</code> support the <code>aspec
 the aspect ratio of the data on the axes (x:y).  A value of <code>1.0</code> or <code>square</code> results in
 equal spacing of data on both axes.
 </p>
+<p>
+    In addition, <code>rectangular</code> and <code>transpose</code> support the <code>square</code> parameter which
+    forces the physical space for the chart to be square. The chart is positioned at the upper left of any space
+    allocated for it, with the space inside the axes guaranteed to be square. You can use a combination of setting
+    <code>square</code> with <code>aspect</code> and setting the X and Y ranges explicitly. In case of conflict,
+    the <code>square</code> and <code>aspect</code> settigns will be honored and the ranges will be expanded to suit
+    the other settings.
+</p>
 
 <p>
 Currently, polar is poorly supported; stacked polar bars (pie charts) work, and you can set the size on them to

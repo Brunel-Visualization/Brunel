@@ -133,6 +133,11 @@ events in special ways. A new page in the documentation describes the API.
 `interaction(panzoom)` can now take options `x`, `y`, `xy`, `auto` as well as `none` which allow
  detailed control of how panning and zooming operate
 
+ Panning and zooming now work for diagrams as well as charts based on scales; the zooming keeps
+ fonts and point sizes fixed (not a simple graphical zoom) so zooming in will show better labels
+ and make features clearer when applicable.
+
+
 ## Notebooks
 
 R Notebooks (IRkernel) no longer require use of a web service.  Simply install Brunel Visualization directly into R and enjoy.

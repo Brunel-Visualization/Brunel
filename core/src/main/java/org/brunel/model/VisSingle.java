@@ -32,6 +32,7 @@ import org.brunel.model.style.StyleSheet;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -683,18 +684,16 @@ public class VisSingle extends VisItem implements Cloneable {
         Collections.addAll(itemsTooltip, items);
     }
 
-    public void transpose(Param aspect) {
+    public void transpose(Param[] aspect) {
         coords = Coordinates.transposed;
-        if (aspect != null) {
-            this.fCoords = aspect.asList();
-        }
+        if (aspect.length > 0)
+            this.fCoords = Arrays.asList(aspect);
     }
 
-    public void rectangular(Param aspect) {
+    public void rectangular(Param[] aspect) {
         coords = Coordinates.regular;
-        if (aspect != null) {
-            this.fCoords = aspect.asList();
-        }
+        if (aspect.length > 0)
+            this.fCoords = Arrays.asList(aspect);
     }
 
     public void using(Param type) {

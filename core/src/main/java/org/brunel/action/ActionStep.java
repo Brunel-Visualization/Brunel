@@ -130,10 +130,10 @@ public class ActionStep {
                 item.interaction(parameters);
                 return item;
             } else if (name.equals("transpose")) {
-                item.transpose(oneParam());
+                item.transpose(parameters);
                 return item;
             } else if (name.equals("rectangular")) {
-                item.rectangular(oneParam());
+                item.rectangular(parameters);
                 return item;
             } else if (name.equals("polar")) {
                 item.polar();
