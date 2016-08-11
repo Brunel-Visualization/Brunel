@@ -17,8 +17,9 @@
 // A closure for the utilities needed to build Brunel items for D3
 var BrunelD3 = (function () {
 
-    //Ensure topojson is loaded under AMD.  Unclear why this is needed for topojson, but not d3.
+    //Ensure d3/topojson  loaded under AMD.  
     if (typeof topojson === 'undefined' && typeof require === 'function') topojson = require('topojson');
+    if (typeof d3 === 'undefined' && typeof require === 'function') d3 = require('d3');
 
     var tooltip, lastTime, lastTimeDescr;
     // Return geometries for the given target given the desired margins
