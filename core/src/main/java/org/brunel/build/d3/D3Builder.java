@@ -138,10 +138,11 @@ public class D3Builder extends AbstractBuilder {
                 .indentLess();
 
         // Transpose if needed
+        if (forceSquare(structure.elements)) out.add("geom.makeSquare()").endStatement();
         if (scalesBuilder.coords == Coordinates.transposed) out.add("geom.transpose()").endStatement();
 
-        // Now build the main groups
-        out.titleComment("Define groups for the chart parts");
+            // Now build the main groups
+            out.titleComment("Define groups for the chart parts");
         writeMainGroups(structure);
         for (D3ElementBuilder builder : elementBuilders) builder.writePerChartDefinitions();
 
@@ -165,6 +166,15 @@ public class D3Builder extends AbstractBuilder {
         // Attach the zoom
         interaction.addZoomFunctionality();
 
+    }
+
+    private boolean forceSquare(VisSingle[] elements) {
+        for (VisSingle e : elements) {
+            for (Param p : e.fCoords) {
+                if (p.asString().equals("square")) return true;
+            }
+        }
+        return false;
     }
 
     private void createBuilders(ChartStructure structure, double[] chartMargins) {
@@ -564,7 +574,6 @@ public class D3Builder extends AbstractBuilder {
                 .endStatement();
         out.add("var gridGroup = interior.append('g').attr('class', 'grid')")
                 .endStatement();
-
 
         if (scalesBuilder.needsAxes())
             out.add("var axes = chart.append('g').attr('class', 'axis')")

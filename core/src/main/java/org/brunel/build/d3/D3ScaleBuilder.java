@@ -498,16 +498,13 @@ public class D3ScaleBuilder {
     private Double getAspect() {
         //Find Param with "aspect" and return its value
         for (VisSingle e : elements) {
-            if (e.fCoords != null) {
                 for (Param p : e.fCoords) {
                     if (p.asString().equals("aspect")) {
                         Param m = p.firstModifier();
-
                         //Use "square" for 1.0 aspect ratio
                         if (m.asString().equals("square")) return 1.0;
                         else return m.asDouble();
                     }
-                }
             }
         }
         return null;

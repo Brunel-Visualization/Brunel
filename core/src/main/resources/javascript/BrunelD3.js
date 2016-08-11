@@ -46,17 +46,31 @@ var BrunelD3 = (function () {
 
             // Allow the inner coords to be transposed
             'transpose': function () {
-                var t = this['inner_width'];
-                this['inner_width'] = this['inner_height'];
-                this['inner_height'] = t;
+                var t = this.inner_width;
+                this.inner_width = this.inner_height;
+                this.inner_height = t;
+            },
+
+            'makeSquare': function () {
+                var d = this.inner_width - this.inner_height;           // excess width
+                if (d > 0) {
+                    // Reduce the width
+                    this.inner_width -= d;
+                    this.inner_right -= d;
+                    this.chart_right -= d;
+                    this.inner_rawWidth -= d;
+                } else {
+                    // Reduce the height
+                    this.inner_height += d;
+                    this.inner_bottom += d;
+                    this.chart_bottom += d;
+                    this.inner_rawHeight += d;
+                }
             }
         };
-        g.margin_top = g.chart_top + g.inner_top;
-        g.margin_left = g.chart_left + g.inner_left;
-        g.margin_bottom = h - g.chart_bottom + g.inner_bottom;
-        g.margin_right = w - g.chart_right + g.inner_right;
-        g.inner_width = g.outer_width - g.margin_left - g.margin_right;
-        g.inner_height = g.outer_height - g.margin_top - g.margin_bottom;
+
+        g.inner_width = w - (g.chart_left + g.inner_left) - (w - g.chart_right + g.inner_right);
+        g.inner_height = h - (g.chart_top + g.inner_top) - (h - g.chart_bottom + g.inner_bottom);
         g.inner_rawWidth = g.inner_width;
         g.inner_rawHeight = g.inner_height;
         g.inner_radius = Math.min(g.inner_width, g.inner_height) / 2;

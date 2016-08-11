@@ -105,6 +105,7 @@ public class VisSingle extends VisItem implements Cloneable {
         tInteraction = Collections.EMPTY_LIST;
         fY = Collections.EMPTY_LIST;
         fColor = Collections.EMPTY_LIST;
+        fCoords = Collections.EMPTY_LIST;
         fKeys = Collections.EMPTY_LIST;
         fOpacity = Collections.EMPTY_LIST;
         fSize = Collections.EMPTY_LIST;
