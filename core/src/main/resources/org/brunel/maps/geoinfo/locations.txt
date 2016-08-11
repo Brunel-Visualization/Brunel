@@ -128,7 +128,7 @@ Fortaleza|-3.71722|-38.54306|95|4|Americas|Brazil|LatinAmerica-Caribbean|SouthAm
 Lucknow|26.83928|80.92313|95|4|Asia|India|SouthAsia|SouthernAsia|World
 Surabaya|-7.24917|112.75083|95|4|Asia|EastAsia-Pacific|Indonesia|South-EasternAsia|World
 İzmir|38.41273|27.13838|95|4|Asia|Europe-CentralAsia|Turkey|WesternAsia|World
-City of London|51.51279|-0.09184|109|2|Europe|Europe-CentralAsia|Europe-Russia|NorthernEurope|UnitedKingdom|UnitedKingdom_x|World
+London|51.51279|-0.09184|109|2|Europe|Europe-CentralAsia|Europe-Russia|NorthernEurope|UnitedKingdom|UnitedKingdom_x|World
 Amman|31.95522|35.94503|87|5|Asia|Jordan|MiddleEast-NorthAfrica|WesternAsia|World
 Bamako|12.65|-8.0|87|5|Africa|Mali|Sub-SaharanAfrica|WesternAfrica|World
 Belgrade|44.80401|20.46513|87|5|Europe|Europe-CentralAsia|Europe-Russia|RepublicofSerbia|RepublicofSerbia_x|SouthernEurope|World
@@ -370,7 +370,6 @@ Zarqa|32.07275|36.08796|81|4|Asia|Jordan|MiddleEast-NorthAfrica|WesternAsia|Worl
 Gujrānwāla|32.16167|74.18831|88|3|Asia|Pakistan|SouthAsia|SouthernAsia|World
 Hyderabad|25.39242|68.37366|88|3|Asia|Pakistan|SouthAsia|SouthernAsia|World
 Multān|30.19556|71.47528|88|3|Asia|Pakistan|SouthAsia|SouthernAsia|World
-The Bronx|40.84985|-73.86641|88|3|Americas|MiddleAtlantic|NorthAmerica|NorthernAmerica|USA48|UnitedStatesofAmerica|World
 Āgra|27.18333|78.01667|88|3|Asia|India|SouthAsia|SouthernAsia|World
 Panamá|8.9936|-79.51973|73|5|Americas|CentralAmerica|LatinAmerica-Caribbean|NorthAmerica|Panama|World
 San Juan|18.46633|-66.10572|73|5|Americas|Caribbean|LatinAmerica-Caribbean|NorthAmerica|World
