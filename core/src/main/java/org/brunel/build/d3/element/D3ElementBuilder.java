@@ -295,7 +295,7 @@ public class D3ElementBuilder {
             }
         }
         if (vis.tUsing == Using.interpolate) {
-            out.add(".interpolate('basis')");
+            out.add(".curve(d3.curveCatmullRom)");
         }
         out.endStatement();
         constructSplitPath();
@@ -620,9 +620,7 @@ public class D3ElementBuilder {
         out.addChained("attr('x', function(d) { return this.r.x })")
                 .addChained("attr('y', function(d) { return this.r.y })")
                 .addChained("attr('width', function(d) { return this.r.w })")
-                .addChained("attr('height', function(d) { return this.r.h })")
-                .addChained("style('width', function(d) { return this.r.w })")
-                .addChained("style('height', function(d) { return this.r.h })");
+                .addChained("attr('height', function(d) { return this.r.h })");
     }
 
     private boolean allShowExtent(Field[] fields) {
