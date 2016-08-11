@@ -344,7 +344,7 @@ public class D3ElementBuilder {
         else if (details.isDrawnAsPath()) {
             // Annoyingly, D3 adds a comma before L commands for geo maps, which is illegal and Firefox chokes on it
             if (vis.tDiagram == Diagram.map)
-                out.addChained("attr('d', function(d) { return path(d).replace(/,L/g, 'L') })");
+                out.addChained("attr('d', function(d) { return path(d).replace(/,L/g, 'L').replace(/,Z/g, 'Z') })");
             else
                 out.addChained("attr('d', path)");
         } else if (details.representation == ElementRepresentation.rect)
