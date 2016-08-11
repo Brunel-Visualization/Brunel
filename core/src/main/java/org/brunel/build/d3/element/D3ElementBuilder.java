@@ -341,9 +341,13 @@ public class D3ElementBuilder {
 
         if (details.requiresSplitting())
             out.addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
-        else if (details.isDrawnAsPath())
-            out.addChained("attr('d', path)");                              // Simple path -- just util it
-        else if (details.representation == ElementRepresentation.rect)
+        else if (details.isDrawnAsPath()) {
+            // Annoyingly, D3 adds a comma before L commands for geo maps, which is illegal and Firefox chokes on it
+            if (vis.tDiagram == Diagram.map)
+                out.addChained("attr('d', function(d) { return path(d).replace(/,L/g, 'L') })");
+            else
+                out.addChained("attr('d', path)");
+        } else if (details.representation == ElementRepresentation.rect)
             defineRect(details);
         else if (details.representation == ElementRepresentation.segment) {
             out.addChained("attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)");
