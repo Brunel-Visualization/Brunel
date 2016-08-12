@@ -1692,7 +1692,7 @@ var BrunelD3 = (function () {
         var p, lastX, lastP;                            // Stores last positions (x value, and result point)
         return d3.geoTransform({
 
-            lineStart: function () {
+            lineStart: function () {    
                 lastX = lastP = null;               // Reset last values
                 this.stream.lineStart();
             },
