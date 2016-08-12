@@ -158,3 +158,182 @@ R Notebooks (IRkernel) no longer require use of a web service.  Simply install B
    unrestricted pan and zoom.
 
  * Chord charts clip text that does not fit into the labels rather than simply dropping it
+
+
+
+
+
+
+
+# 1.2 Release Notes
+
+## Maps
+
+Maps has undergone a major set of improvements, mostly internal, but the following
+changes should be noted:
+
+ * Instead of GeoJSON files, we are now using the more efficient topoJSON format.
+   (https://github.com/mbostock/topojson/wiki). This makes maps download speed much
+   faster
+
+ * The `map` command now accepts an option parameter for the level of detail of the
+   map polygons. The possible values are `high`, `medium`, and `low` with medium being
+   the default. In general, `medium` assumes a 800x800 pixel display space with about
+   10x zooming still looking good. `low` assumes a smaller space with very little
+   zooming (but the zooming is way faster!) and `high` is as much detail as we have
+   available.
+
+ * We have improved the name look up routines so they now accept a much wider
+   choice of names for a country, including non-english names.
+
+ * Axes for maps are supported and generate a graticule for the map. The number of
+   divisions is dynamically calculated
+
+ * Look has improved
+
+## Labels
+
+ * Labels are now automatically thinned so they are not shown all on top of each other.   This is dynamic, so as you zoom in, more labels will be shown if now possible
+
+## Notebooks
+
+Some of the changes in version 1.2 may cause graphs in existing notebooks to not appear immediately. If this happens try executing all cells, then reloading the browser page.  There may be other issues when upgrading.  More information and work-arounds are in [this git issue](https://github.com/Brunel-Visualization/Brunel/issues/98)
+
+* Python:  Added support for pandas DataFrame index.  If the index has a label, it can be referenced in the Brunel as a field.
+* Toree:  Update to magic now requires Toree dev8 or later
+
+## Miscellaneous
+
+* `filter()` may now  contain default values for each field.  See "Interactivity" section in online documentation for examples.
+*  Added new action to add graph titles and footnotes:  `title("A Title")`.  See "Titles, Guides and Style" section in online docs.
+*  Animated entrances in new `effect()` command.  See "Interactivity" section of online docs.
+
+## Integrators
+
+* Note that a new JS file is required:  `//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js`
+
+
+
+
+
+
+
+# 1.1 Release Notes
+
+# Java version
+
+Although informally true before, the official version of Java supported is Java 7.
+Java 8 should also work fine, but primary testing will done on 1.7
+
+
+# Minor Improvements
+Axes on Smaller charts show fewer ticks, reducing overlapping.
+
+Summmarization has been permitted for the x axis, so we can write `x(income) color(region) mean(income)` for example.
+
+Fit and smooth operations now work for categorical data, both on the X and Y dimensions.
+Categories are treated as ordered, and those category orders are used in the calculations.
+
+# Support for lists of items
+
+If a field has string values separated by commas, these values will be autoconverted
+into an internal list object. This will not change functionality significantly,
+but it allows the use of a new summary operator `each(x)` which splits up the list
+into multiple rows. As an example:
+
+Raw data
+
+        A   B
+        0   a,b,c
+        0   a,c
+        1   a,c,b
+
+Transformed by `each(B)`
+
+        A   B
+        0   a
+        0   b
+        0   c
+        0   a
+        0   c
+        1   a
+        1   c
+        1   b
+
+Transformed and summarized using the Brunel `x(B) y(#count) each(B)`
+
+        B   #count
+        a   3
+        b   2
+        c   3
+
+# Notebooks
+
+Added support for Python 2 Notebooks.
+
+
+
+
+
+
+# 1.0 Release Notes
+
+## Maps
+
+Brunel now supports maps, using an intelligent matching feature and an online atlas of world regions.
+maps can be specified by name by requesting a given map in the `map` command, or Brunel will find a suitable
+set of maps for a given data column.
+
+By specifying a `key` field, that field is matched against Brunel's database of known regions and is used
+to generate maps. Key features of mapping are:
+
+ * Maps can have multiple layers, each specified as an element using the `+` notation
+ * Key names can be used to create maps, or explicit latitude/longitude can be defined
+ * By default, Brunel chooses which set of features will make a suitable map based on the key data
+ * Brunel chooses a suitable projection based on the regions to be displayed
+ * Maps elements default to polygonal features, but specifying `point` or `text` converts the element to
+   one of that type, with all the usual features
+ * By adding the additional element `map(labels)` maps are automatically labeled with suitable labels
+   taking into account the scaling of the map.
+
+The region and name data that back the map feature are courtesy of the public domain data sets found in the
+Natural Earth repository (Free vector and raster map data @ naturalearthdata.com).
+
+## Networks
+
+The `edge` element is now more fully supported, as is the `network` diagram. This allows the creation of node
+and link diagrams, by default using D3's force layout method. These diagrams:
+
+ * Animate as they are laid out
+ * Allow node dragging using force-directed updates
+ * Use point elements for the nodes, allowing color, size and labeling as usual for such an element
+ * Use edge elements for the links, allowing color and size to be used
+
+Two dataset are usually required, one for the nodes and one for the edges. However, a single data set can be used
+for the edges if there is little no extra data for the nodes. The nodes can be generated form the edges by combining
+them as you would a series, for example: `edge key(a,b) + y(a,b) label(#values)` will generate a labeled graph from
+a single dataset consisting only of edges from column _a_ to column _b_.
+
+## Spark/Scala Notebooks
+
+This release adds support for Scala/Spark Jupyter Notebooks using the Apachee Toree kernel.  See the notes in the [spark-kernel](https://github.com/Brunel-Visualization/Brunel/tree/master/spark-kernel) project for details.
+
+## Other New Features
+
+ * Improved axis options. `axis(...)` now takes options `x`, `y`, `none` or both `x` and `y` as options.
+   Options `x` and `y` can take optional parameters that are numeric (to hint at the number of ticks
+   desired for a numeric axis) or string (to give a title to an axis, with the empty string '' suppressing titles)
+ * Improved the algorithm for shortening labels (using `label(field:N)` where _N_ is the desired text length)
+ * Clustering is now allowed; specifying two _x_ dimensions where the first is categorical will place the
+   second dimensions within the first as a clustered X axis
+
+## Fixes
+
+ * Improved labeling for diagrams ensures labels are not "lost" when diagram structure animates
+ * Labels in transposed charts work as expected
+ * Some defects with tooltip locations resolved
+
+## Future
+
+ The use of `:: data` in notebooks is deprecated; it continues to be supported in 1.0, but will go away
+ in the next version. The language command `data(...)` should be used instead.
