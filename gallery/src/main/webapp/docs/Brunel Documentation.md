@@ -221,6 +221,12 @@ Both `rectangular` and `transpose` support the `aspect` parameter which controls
 the data on the axes (x:y). A value of `1.0` or `square` results in equal spacing of data on both
 axes.
 
+In addition, `rectangular` and `transpose` support the `square` parameter which forces the physical
+space for the chart to be square. The chart is positioned at the upper left of any space allocated
+for it, with the space inside the axes guaranteed to be square. You can use a combination of setting `square`
+with `aspect` and setting the X and Y ranges explicitly. In case of conflict, the `square` and `aspect`
+settigns will be honored and the ranges will be expanded to suit the other settings.
+
 Currently, polar is poorly supported; stacked polar bars (pie charts) work, and you can set the size
 on them to do a Rose Diagram (a pie chart with different radii for each wedge). Little else works.
 

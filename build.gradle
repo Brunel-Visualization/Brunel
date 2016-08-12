@@ -89,7 +89,6 @@ task brunelJavadoc(type: Javadoc) {
     def doccing = [project(':core'), project(':data'), project(':etc'), project(':service')]
     source doccing.collect { project -> project.sourceSets.main.allJava }
     classpath = files(doccing.collect { project -> project.sourceSets.main.compileClasspath })
-    maxMemory = 1024
     destinationDir = new File(projectDir, 'out/javadocs')
     options.encoding = "UTF-8"
 }
