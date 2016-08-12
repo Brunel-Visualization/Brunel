@@ -181,20 +181,23 @@ public class VisSingle extends VisItem implements Cloneable {
      * @param dataReference defines the data to read
      * @return this
      */
-    public void data(Param dataReference) {
+    public VisSingle data(Param dataReference) {
         // Replaces all previous data statements
         dataset = null;
         fData = dataReference;
+        return this;
     }
 
-    public void filter(Param... fieldNames) {
+    public VisSingle filter(Param... fieldNames) {
         if (fFilter.isEmpty()) fFilter = new ArrayList<>(fieldNames.length);
         Collections.addAll(fFilter, fieldNames);
+        return this;
     }
 
-    public void animate(Param... params) {
+    public VisSingle animate(Param... params) {
         if (fAnimate.isEmpty()) fAnimate = new ArrayList<>(params.length);
         Collections.addAll(fAnimate, params);
+        return this;
     }
 
     /**
@@ -216,9 +219,10 @@ public class VisSingle extends VisItem implements Cloneable {
      *
      * @param params guide definitions
      */
-    public void guide(Param... params) {
+    public VisSingle guide(Param... params) {
         if (tGuides.isEmpty()) tGuides = new ArrayList<>();
         Collections.addAll(tGuides, params);
+        return this;
     }
 
     public void key(Param... fieldNames) {
