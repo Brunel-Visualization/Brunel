@@ -86,8 +86,8 @@ public class D3Builder extends AbstractBuilder {
         String pattern = "\t<script src=\"%s\" charset=\"utf-8\"></script>\n";
 
         String base = COPYRIGHT_COMMENTS +
-                String.format(pattern, options.locD3)
-                + String.format(pattern, options.locTopoJson);
+                String.format(pattern,  BuilderOptions.fullLocation(options.locD3))
+                + String.format(pattern, BuilderOptions.fullLocation(options.locTopoJson));
 
         if (getControls().isNeeded()) {
             base = base + String.format(pattern, "http://code.jquery.com/jquery-1.10.2.js")
