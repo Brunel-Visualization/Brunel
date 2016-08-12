@@ -1269,10 +1269,13 @@ include:
  * **elements** -- An array of elements contained in the chart (see above)
  * **scales** -- If defined, gives the coordinate scales as a structure `{x, y}`. These are standard d3
 scales, configured by Brunel.
- * **zoom(params, time)** -- A function that, if called with no parameters, will return an object `{ dx, dy, s }`
-giving a 3 item array with x and y offsets, and the zoom scale. The same object can be passed in as
-the first argument to set the pan-zoom. The time is an optional parameter determining the speed at
-which the zoom is animated (zero means instant).
+ * **zoom(params, time)** -- A function that, if called with no parameters, will return the zoom
+transform for the chart. It can be passe the same type of object to set the current transform, with
+an optional time parameter which indicates the time in milliseconds the zoom should be animated. The
+zoom trasnform is a `d3.zoomTransform` code> described in
+https://github.com/d3/d3-zoom/blob/master/README.md#zoomTransform. It has methods like `scale` and `translate`
+that craete new modified transforms. For example, to reset the zoom on the first chart and then
+scale by a factor of two, use this: `vis.charts[0].zoom(d3.zoomIdentity.scale(2))`
 
 
 ### Examples of Use

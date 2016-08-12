@@ -296,8 +296,8 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
                 .write();
 
         try {
-            writer.append("<p>\n<button onclick='var c = v.charts[0]; c.zoom(c.zoom().translate(100, 0), 1000)'>RIGHT</button>\n");
-            writer.append("<button onclick='v.charts[0].zoom(d3.zoomIdentity, 1000)'>HOME</button>\n</p>\n");
+//            writer.append("<p>\n<button onclick='var c = v.charts[0]; c.zoom(c.zoom().translate(100, 0), 1000)'>RIGHT</button>\n");
+//            writer.append("<button onclick='v.charts[0].zoom(d3.zoomIdentity, 1000)'>HOME</button>\n</p>\n");
             writer.close();
         } catch (IOException ignored) {
         }
@@ -333,7 +333,7 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
                 "var width = Math.abs(range[range.length-1] - range[0]); ",
                 "var desiredGap = 20;",
                 "var desiredRange = desiredGap * nCats;",
-                "chart.zoom( {x:0, y:0, k:desiredRange/width});"
+                "chart.zoom(d3.zoomIdentity.scale(desiredRange/width));"
         };
     }
 
