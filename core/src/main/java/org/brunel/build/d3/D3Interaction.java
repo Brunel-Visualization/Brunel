@@ -111,7 +111,8 @@ public class D3Interaction {
      * @return true if any handler will need to be attached to the element
      */
     public boolean hasElementInteraction(ElementStructure structure) {
-        if (!structure.vis.itemsTooltip.isEmpty()) return true;         // tooltips require a handler
+        if (!structure.vis.itemsTooltip.isEmpty()) return true;                 // tooltips require a handler
+        if (structure.chart.diagram == VisTypes.Diagram.network) return true;   // networks are draggable
 
         for (Param p : structure.vis.tInteraction) {
             String s = p.asString();
