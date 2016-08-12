@@ -14,8 +14,8 @@
   ~ limitations under the License.
   -->
 
-<link rel="stylesheet" type="text/css" href="/nbextensions/brunel_ext/Brunel.css">
-<link rel="stylesheet" type="text/css" href="/nbextensions/brunel_ext/sumoselect/sumoselect.css">
+<link rel="stylesheet" type="text/css" href="{{jsloc}}/brunel.{{version}}.css">
+<link rel="stylesheet" type="text/css" href="{{jsloc}}/sumoselect.css">
 <style>
     {{d3css}}
 </style>
@@ -29,33 +29,38 @@
         paths: {
             'd3': '{{d3loc}}',
             'topojson': '{{topoJsonloc}}',
-            'BrunelD3': '{{jsloc}}/BrunelD3',
-            'BrunelData': '{{jsloc}}/BrunelData',
-            'BrunelEventHandlers': '{{jsloc}}/BrunelEventHandlers',
-            'BrunelJQueryControlFactory': '{{jsloc}}/BrunelJQueryControlFactory',
-            'SumoSelect': '{{jsloc}}/sumoselect/jquery.sumoselect.min'
+            'brunel' : '{{jsloc}}/brunel.{{version}}.min',
+            'brunelControls' : '{{jsloc}}/brunel.controls.{{version}}.min'
         },
         shim: {
-            'BrunelD3': {
-                exports: 'BrunelD3',
-                deps: ['d3', 'topojson']
-            },
-            'BrunelData': {
-                exports: 'BrunelData'
-            },
-            'BrunelEventHandlers': {
-                exports: 'BrunelEventHandlers'
-            },
-            'BrunelJQueryControlFactory': {
-                exports: 'BrunelJQueryControlFactory'
-            }
-        }
+            'brunel' : {
+                 exports: 'BrunelD3',
+                 deps: ['d3', 'topojson'],
+                 init: function() {
+                    return {
+                      BrunelD3 : BrunelD3,
+                      BrunelData : BrunelData
+                   }
+                 }
+             },
+            'brunelControls' : {
+                 exports: 'BrunelEventHandlers',
+                 init: function() {
+                    return {
+                      BrunelEventHandlers: BrunelEventHandlers,
+                      BrunelJQueryControlFactory: BrunelJQueryControlFactory
+                   }
+                 }
+             }
+
+         }
 
     });
 
-    require(["d3"], function (d3) {
-        require(["BrunelD3", "BrunelData", "BrunelEventHandlers", "BrunelJQueryControlFactory", "SumoSelect"], function (BrunelD3, BrunelData, BrunelEventHandlers, BrunelJQueryControlFactory, SumoSelect) {
+    require(["d3"], function(d3) {
+        require(["brunel", "brunelControls"], function(brunel, brunelControls) {
             {{d3js}}
         });
     });
+
 </script>

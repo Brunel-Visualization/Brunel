@@ -71,7 +71,7 @@ test.finalizedBy ':service:cargoStopLocal'
 //task build(dependsOn: [copyWebFiles, test]) {
 //}
 
-task build(dependsOn: [copyWebFiles, copyJarFiles]) {
+task build(dependsOn: [copyJarFiles]) {
 }
 
 defaultTasks 'build', 'makeNotebooks'
