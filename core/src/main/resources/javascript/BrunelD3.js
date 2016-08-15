@@ -17,7 +17,7 @@
 // A closure for the utilities needed to build Brunel items for D3
 var BrunelD3 = (function () {
 
-    //Ensure d3/topojson  loaded under AMD.  
+    //Ensure d3/topojson  loaded under AMD.
     if (typeof topojson === 'undefined' && typeof require === 'function') topojson = require('topojson');
     if (typeof d3 === 'undefined' && typeof require === 'function') d3 = require('d3');
 
@@ -100,6 +100,9 @@ var BrunelD3 = (function () {
 
     // Add a color legend
     function colorLegend(target, title, scale, ticks, dateFormat) {
+
+        target.attr('class', 'legend').append('text').attr('x', 0).attr('y', 0)
+            .style('text-anchor', 'end').attr('dy', '0.85em').text(title).attr('class', 'title');
 
         var legend = target.selectAll('legend').data(ticks).enter().append('g').attr('class', 'swatch')
             .attr('transform', function (d, i) {
@@ -1692,7 +1695,7 @@ var BrunelD3 = (function () {
         var p, lastX, lastP;                            // Stores last positions (x value, and result point)
         return d3.geoTransform({
 
-            lineStart: function () {    
+            lineStart: function () {
                 lastX = lastP = null;               // Reset last values
                 this.stream.lineStart();
             },
