@@ -36,7 +36,6 @@ import org.brunel.data.util.DateUnit;
 import org.brunel.data.util.Range;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Axes;
-import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 import org.brunel.model.VisTypes.Legends;
@@ -48,8 +47,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import static org.brunel.model.VisTypes.Coordinates.coords;
 
 /**
  * Adds scales and axes; also guesses the right size to leave for axes
@@ -524,8 +521,8 @@ public class D3ScaleBuilder {
         }
 
         // We util a nice scale only for rectangular coordinates
-        boolean nice = (name.equals("x") || name.equals("y")) && coords != Coordinates.polar;
-        double[] padding = getNumericPaddingFraction(purpose, coords);
+        boolean nice = (name.equals("x") || name.equals("y")) && !coordinates.isPolar();
+        double[] padding = getNumericPaddingFraction(purpose, coordinates);
 
         // Areas and line should fill the horizontal dimension, as should any binned field
         if (scaleField.isBinned() || purpose == ScalePurpose.x && elementsFillHorizontal(ScalePurpose.x)) {
@@ -635,11 +632,11 @@ public class D3ScaleBuilder {
         return combined;
     }
 
-    private double[] getNumericPaddingFraction(ScalePurpose purpose, Coordinates coords) {
+    private double[] getNumericPaddingFraction(ScalePurpose purpose, ChartCoordinates coords) {
         double[] padding = new double[]{0, 0};
         if (purpose == ScalePurpose.color || purpose == ScalePurpose.size)
             return padding;                // None for aesthetics
-        if (coords == Coordinates.polar) return padding;                               // None for polar angle
+        if (coords.isPolar()) return padding;                               // None for polar angle
         for (VisSingle e : elements) {
             boolean noBottomYPadding = e.tElement == Element.bar || e.tElement == Element.area || e.tElement == Element.line;
             if (e.tElement == Element.text) {
