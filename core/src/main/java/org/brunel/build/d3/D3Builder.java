@@ -22,6 +22,7 @@ import org.brunel.build.controls.Controls;
 import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.titles.ChartTitleBuilder;
 import org.brunel.build.data.DataTransformParameters;
+import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.Accessibility;
@@ -30,7 +31,6 @@ import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Element;
 
 import java.util.ArrayList;
@@ -138,7 +138,7 @@ public class D3Builder extends AbstractBuilder {
                 .indentLess();
 
         // Transpose if needed
-        if (scalesBuilder.coords == Coordinates.transposed) out.add("geom.transpose()").endStatement();
+        if (structure.coordinates.isTransposed()) out.add("geom.transpose()").endStatement();
 
         // Now build the main groups
         out.titleComment("Define groups for the chart parts");
@@ -420,7 +420,7 @@ public class D3Builder extends AbstractBuilder {
     }
 
     private void addElementGroups(D3ElementBuilder builder, ElementStructure structure) {
-        String elementTransform = makeElementTransform(scalesBuilder.coords);
+        String elementTransform = makeElementTransform(structure.chart.coordinates);
         out.add("var elementGroup = interior.append('g').attr('class', 'element" + structure.elementID() + "')");
         Accessibility.addElementInformation(structure, out);
         if (elementTransform != null) out.addChained(elementTransform);
@@ -507,10 +507,10 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}").endStatement();
     }
 
-    private String makeElementTransform(Coordinates coords) {
-        if (coords == Coordinates.transposed)
+    private String makeElementTransform(ChartCoordinates coords) {
+        if (coords.isTransposed())
             return "attr('transform','matrix(0,1,1,0,0,0)')";
-        else if (coords == Coordinates.polar)
+        else if (coords.isPolar())
             return makeTranslateTransform("geom.inner_width/2", "geom.inner_height/2");
         else
             return null;

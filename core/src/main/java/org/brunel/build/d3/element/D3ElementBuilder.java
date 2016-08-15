@@ -430,8 +430,8 @@ public class D3ElementBuilder {
             if (DefineLocations.isRange(x[0])) xFunction += ".mid";
             if (DefineLocations.isRange(y[0])) yFunction += ".mid";
 
-            def.x.center = GeomAttribute.makeFunction("proj([" + xFunction + "," + yFunction + "])[0]");
-            def.y.center = GeomAttribute.makeFunction("proj([" + xFunction + "," + yFunction + "])[1]");
+            def.x.center = GeomAttribute.makeFunction("projection([" + xFunction + "," + yFunction + "])[0]");
+            def.y.center = GeomAttribute.makeFunction("projection([" + xFunction + "," + yFunction + "])[1]");
         } else if (n == 2) {
             String xLow = D3Util.writeCall(x[0]);          // A call to the low field using the datum 'd'
             String xHigh = D3Util.writeCall(x[1]);         // A call to the high field using the datum 'd'
@@ -447,10 +447,10 @@ public class D3ElementBuilder {
             if (DefineLocations.isRange(y[0])) yLow += ".low";
             if (DefineLocations.isRange(y[1])) yHigh += ".high";
 
-            def.x.left = GeomAttribute.makeFunction("proj([" + xLow + "," + yLow + "])[0]");
-            def.x.right = GeomAttribute.makeFunction("proj([" + xHigh + "," + yHigh + "])[0]");
-            def.y.left = GeomAttribute.makeFunction("proj([" + xLow + "," + yLow + "])[1]");
-            def.y.right = GeomAttribute.makeFunction("proj([" + xHigh + "," + yHigh + "])[1]");
+            def.x.left = GeomAttribute.makeFunction("projection([" + xLow + "," + yLow + "])[0]");
+            def.x.right = GeomAttribute.makeFunction("projection([" + xHigh + "," + yHigh + "])[0]");
+            def.y.left = GeomAttribute.makeFunction("projection([" + xLow + "," + yLow + "])[1]");
+            def.y.right = GeomAttribute.makeFunction("projection([" + xHigh + "," + yHigh + "])[1]");
         }
     }
 

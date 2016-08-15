@@ -40,7 +40,6 @@ public class AxisDetails {
     public final String title;                         // Title for the axis
     public final String scale;                         // Name for the scale to use for this axis
     public final boolean hasGrid;                      // true if gridlines are desired
-    public final boolean isReversed;				   // Whether to reverse (flip) the min/max
     public final StyleTarget styleTarget;              // style to target the axis
     public boolean rotatedTicks;                       // If true, ticks are to be rotated
     public Object[] tickValues;                        // If non-null, ony show these ticks
@@ -61,12 +60,11 @@ public class AxisDetails {
     private AxisTitleBuilder titleBuilder;              // builds the title for this axis
 
     /* Constructs the axis for the given fields */
-    public AxisDetails(String dimension, Field[] definedFields, boolean categorical, String userTitle, int tickCount, boolean grid, boolean isReversed) {
+    public AxisDetails(String dimension, Field[] definedFields, boolean categorical, String userTitle, int tickCount, boolean grid) {
         this.scale = "scale_" + dimension;
         this.fields = definedFields;
         this.categorical = categorical;
         this.tickCount = tickCount < 100 ? tickCount : null;
-        this.isReversed = isReversed;
 
         if (userTitle != null)
             this.title = (userTitle.isEmpty() ? null : userTitle);

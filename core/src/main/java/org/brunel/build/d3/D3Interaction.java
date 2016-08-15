@@ -21,7 +21,6 @@ import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Interaction;
 
 import java.util.ArrayList;
@@ -137,7 +136,7 @@ public class D3Interaction {
 
     private boolean isSemanticZoomable(ElementStructure[] elements) {
         // we cannot zoom diagrams (except for maps) or polar coordinates
-        if ((structure.diagram != null && structure.geo == null) || scales.coords == Coordinates.polar)
+        if ((structure.diagram != null && structure.geo == null) || structure.coordinates.isPolar())
             return false;
 
         // Explicit requests in the code are honored. In case of multiple specs, just the first one is used
@@ -329,7 +328,7 @@ public class D3Interaction {
         out.add("zoom");
 
         if (canZoomX && !structure.coordinates.xCategorical) {
-            if (scales.coords == Coordinates.transposed) {
+            if (structure.coordinates.isTransposed()) {
                 out.add(".y(scale_x)");
             } else {
                 out.add(".x(scale_x)");
@@ -337,7 +336,7 @@ public class D3Interaction {
         }
 
         if (canZoomY && !structure.coordinates.yCategorical) {
-            if (scales.coords == Coordinates.transposed) {
+            if (structure.coordinates.isTransposed()) {
                 out.add(".x(scale_y)");
             } else {
                 out.add(".y(scale_y)");

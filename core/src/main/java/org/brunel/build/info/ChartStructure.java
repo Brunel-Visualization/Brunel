@@ -54,9 +54,9 @@ public class ChartStructure {
         this.outer = outer;
         this.innerChartIndex = innerChartIndex;
         this.visIdentifier = visIdentifier;
-        this.coordinates = new ChartCoordinates(elements, data);
         this.elementStructure = new ElementStructure[elements.length];
         this.diagram = findDiagram();
+        this.coordinates = new ChartCoordinates(elements, data, diagram);
         this.sourceIndex = findSourceElement(elements);
         this.geo = makeGeo(elements, data);
 

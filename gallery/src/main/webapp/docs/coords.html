@@ -31,12 +31,14 @@
 <p>
     <code>x</code> and <code>y</code> work as you would expect when there is only one of each.
     Note that <b>Brunel</b> will choose a suitable scale transform (<i>linear</i>, <i>root</i> or <i>log</i>)) for you
-    unless you explicitly request a different transform:
+    unless you explicitly request a different transform. On addition to the above transforms, the transform <i>reverse</i>
+    can be used either alone or in combination with another transform to reverse the order of the scale.
 </p>
 
 <p class="examples"><a onClick="showAction(this.text)">x(density) y(population)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">x(density) y(population:linear)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">x(density:root) y(population:root)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(density:root:reverse) y(population:root)</a></p>
 
 <p>
     Multiple fields specified for <code>x</code> provide clustering of dimensions within the X axis.

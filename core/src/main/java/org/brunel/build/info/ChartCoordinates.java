@@ -22,8 +22,10 @@ import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
 import org.brunel.model.VisSingle;
+import org.brunel.model.VisTypes;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -34,15 +36,19 @@ import java.util.Map;
  */
 public class ChartCoordinates {
 
+    public final VisTypes.Coordinates coords;
     public final Field[] allXFields, allYFields, allXClusterFields;
     public final String xTransform, yTransform;
     public final boolean xCategorical, yCategorical;
     public final Double[] xExtent, yExtent;                         // User-provided data overrides for the extents
+    public final boolean xReversed, yReversed;
 
     private final Map<VisSingle, Field[]> x = new HashMap<>();
     private final Map<VisSingle, Field[]> y = new HashMap<>();
 
-    public ChartCoordinates(VisSingle[] elements, Dataset[] elementData) {
+    public ChartCoordinates(VisSingle[] elements, Dataset[] elementData, VisTypes.Diagram diagram) {
+
+        this.coords = makeCombinedCoords(elements, diagram);
 
         String xTransform = null, yTransform = null;                // If defined by the VisSingle
 
@@ -99,6 +105,52 @@ public class ChartCoordinates {
             this.yTransform = yCategorical ? "linear" : chooseTransform(allYFields);
         else
             this.yTransform = yTransform;
+
+        // Basic assumptions for reversing -- Don't on the horizontal, do on the vertical if categorical
+        // Ensures numeric on Y reads bottom-up, while categorical reads top-down
+        boolean reverseX = isTransposed() ? xCategorical : false;
+        boolean reverseY = isTransposed() ? false : yCategorical;
+
+        if (needsReverse(elements, true)) reverseX = !reverseX;
+        if (needsReverse(elements, false)) reverseY = !reverseY;
+
+        xReversed = reverseX;
+        yReversed = reverseY;
+    }
+
+    private boolean needsReverse(VisSingle[] elements, boolean forX) {
+        for (VisSingle element : elements) {
+            // Which params to look through -- X or Y?
+            List<Param> pp = forX ? element.fX : (element.fRange == null ? element.fY : Arrays.asList(element.fRange));
+
+            // Look for 'reverse'
+            for (Param p : pp)
+                for (Param m : p.modifiers()) if (m.asString().equals("reverse")) return true;
+        }
+
+        return false;
+
+    }
+
+    public boolean isPolar() {
+        return coords == VisTypes.Coordinates.polar;
+    }
+
+    public boolean isTransposed() {
+        return coords == VisTypes.Coordinates.transposed;
+    }
+
+    private VisTypes.Coordinates makeCombinedCoords(VisSingle[] elements, VisTypes.Diagram diagram) {
+        // For diagrams, we set the coords to polar for the chord chart and clouds, and centered for networks
+        if (diagram == VisTypes.Diagram.chord || diagram == VisTypes.Diagram.cloud)
+            return VisTypes.Coordinates.polar;
+
+        // The rule here is that we return the one with the highest ordinal value;
+        // that will correspond to the most "unusual". In practice this means that
+        // you need only define 'polar' or 'transpose' in one chart
+        VisTypes.Coordinates result = elements[0].coords;
+        for (VisSingle e : elements) if (e.coords.compareTo(result) > 0) result = e.coords;
+        return result;
     }
 
     private double getDefinedExtent(List<Param> items, boolean min) {
@@ -138,19 +190,19 @@ public class ChartCoordinates {
         } else if (vis.fY.size() > 1) {
             // Handle series
             if (vis.stacked)
-                return data.fieldArray(new String[] {"#values$lower", "#values$upper"});
+                return data.fieldArray(new String[]{"#values$lower", "#values$upper"});
             else
-                return data.fieldArray(new String[] {"#values"});
+                return data.fieldArray(new String[]{"#values"});
         }
 
         // We have a single Y field
         String s = vis.fY.get(0).asField();
         if (vis.stacked) {
             // Stacked has been handled by adding two new fields, so add them
-            return data.fieldArray(new String[] {s + "$lower", s + "$upper"});
+            return data.fieldArray(new String[]{s + "$lower", s + "$upper"});
         } else {
             // Simple case, a single y field
-            return data.fieldArray(new String[] {s});
+            return data.fieldArray(new String[]{s});
         }
     }
 
