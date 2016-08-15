@@ -168,7 +168,8 @@ mapping between the data used for one or more fields and an extent on a chart.
 ### Basic Use of `x` and `y`
 `x` and `y` work as you would expect when there is only one of each. Note that **Brunel** will choose
 a suitable scale transform ( _linear_, _root_ or _log_)) for you unless you explicitly request a
-different transform:
+different transform. On addition to the above transforms, the transform _reverse_ can be used either
+alone or in combination with another transform to reverse the order of the scale.
 
 <!-- examples -->
 
@@ -177,6 +178,8 @@ different transform:
     x(density) y(population:linear)
 
     x(density:root) y(population:root)
+
+    x(density:root:reverse) y(population:root)
 
 Multiple fields specified for `x` provide clustering of dimensions within the X axis.
 
@@ -387,8 +390,14 @@ For more control, you can specify one or more colors (or palettes) that are comb
 produces a set of colors for category data, and for numeric data defines a scale. You can also add
 in runs of asterisks to mute the colors more than normal, or `=` to remove default muting for area
 elements. The standard syntax for a list of colors is `[color1,color2,...,colorN]`, but we also
-allow `color1-color2-...-colorN` as a simpler style, especially for divergent color scales. Here are
-some examples for a numeric field
+allow `color1-color2-...-colorN` as a simpler style, especially for divergent color scales.
+
+By default, when you ask for a divergent palette (2 colors) a scale is created that runs through a
+neutral color in the middle. This usually produces a more easily interpretable color scale, but the
+method can be defeated by specifying a three color scale and using the special middle color `none`,
+which will then create a simple color interpolation from the lower to the upper value:
+
+Here are some examples for a numeric field:
 
 <!-- examples -->
 
@@ -399,6 +408,8 @@ some examples for a numeric field
     x(winter) y(summer) color(winter:[white, black, yellow]) style('size:200%')
 
     x(winter) y(summer) color(winter:[magenta, lime]) style('size:200%')
+
+    x(winter) y(summer) color(winter:[magenta, none, lime]) style('size:200%')
 
     x(winter) y(summer) color(winter:[magenta, lime, **]) style('size:200%')
 
@@ -994,16 +1005,14 @@ The axes command controls which axes are displayed. Legal values are `none, x, y
 
     bar x(region) y(#count) axes(y)
 
-In addition, the `x` and `y` options can take string and/or numeric parameters, including an option
-to ask for a grid or to reverse the axis. The numbers give a hint as to the number of ticks desired
-on a numeric axis; the string sets the title for the axis(an empty string suppresses the axis
-title). Adding a `grid` option displays a grid for the tickas on that axis.
+In addition, the `x` and `y` options can take string and/or numeric parameters. The numbers give a
+hint as to the number of ticks desired on a numeric axis; the string sets the title for the axis(an
+empty string suppresses the axis title). Adding a `grid` option displays a grid for the tickas on
+that axis.
 
 <!-- examples -->
 
     bar x(region) y(#count) axes(x:'Geo Area')
-
-    bar x(region) y(#count) axes(x:'Geo Area':reverse)
 
     bar x(region) y(#count) axes(y:2:'Numbers', x:10)
 
