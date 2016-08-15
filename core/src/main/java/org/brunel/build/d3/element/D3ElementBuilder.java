@@ -91,8 +91,7 @@ public class D3ElementBuilder {
 
         // ENTER: Append representations for new data
         out.add("var added = selection.enter().append('" + details.representation.getMark() + "')")
-                .addChained("attr('class', '" + Data.join(details.classes, " ") + "')")
-                .addChained("classed('selected', function(d) { return data.$selection(d) == '\u2713' })");
+                .addChained("attr('class', '" + Data.join(details.classes, " ") + "')");
 
         if (!interaction.hasElementInteraction(structure))
             out.addChained("style('pointer-events', 'none')");
@@ -108,6 +107,11 @@ public class D3ElementBuilder {
             diagram.writeDiagramEnter();
             diagram.writePreDefinition(details);
         }
+
+        // Set class to selected for selected data
+        out.add("merged.filter(hasData).classed('selected', function(d) { return data.$selection(d) == '\u2713' })")
+                .endStatement();
+
 
         // UPDATE + ENTER: Define the values that can be changed based on the data
         out.add("BrunelD3.transition(merged, transitionMillis)");
