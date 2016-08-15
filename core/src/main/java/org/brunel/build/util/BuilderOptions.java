@@ -31,8 +31,8 @@ public class BuilderOptions {
     public boolean accessibleContent = false;                   // If true, generate accessible content
     public String locJavaScript = "https://brunelvis.org/js";   // The location of the javascript libraries
     public String locMaps = "https://brunelvis.org/geo";        // The location of the mapping resources
-    public String locD3 = "//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min";  //Location of D3
-    public String locTopoJson = "//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min";  //Location of D3's TopoJson support
+    public String locD3 = "//cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min";            //Location of D3 in require-friendly pattern
+    public String locTopoJson = "//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min";  //Location of D3's TopoJson support in require friendly pattern
     public String version = "2.0";                              // Which online version to use
 
     public static BuilderOptions make(String[] args) {
@@ -68,6 +68,10 @@ public class BuilderOptions {
         }
 
         return options;
+    }
+    
+    public static String fullLocation(String requireLocation ) {
+    	return "https:" + requireLocation + ".js";
     }
 
     /**

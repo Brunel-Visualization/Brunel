@@ -22,7 +22,6 @@ import org.brunel.build.controls.Controls;
 import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.titles.ChartTitleBuilder;
 import org.brunel.build.data.DataTransformParameters;
-import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.Accessibility;
@@ -31,6 +30,7 @@ import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
+import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Element;
 
 import java.util.ArrayList;
@@ -86,8 +86,8 @@ public class D3Builder extends AbstractBuilder {
         String pattern = "\t<script src=\"%s\" charset=\"utf-8\"></script>\n";
 
         String base = COPYRIGHT_COMMENTS +
-                String.format(pattern, "http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js")
-                + String.format(pattern, "http://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js");
+                String.format(pattern,  BuilderOptions.fullLocation(options.locD3))
+                + String.format(pattern, BuilderOptions.fullLocation(options.locTopoJson));
 
         if (getControls().isNeeded()) {
             base = base + String.format(pattern, "http://code.jquery.com/jquery-1.10.2.js")
@@ -138,10 +138,11 @@ public class D3Builder extends AbstractBuilder {
                 .indentLess();
 
         // Transpose if needed
-        if (structure.coordinates.isTransposed()) out.add("geom.transpose()").endStatement();
+        if (forceSquare(structure.elements)) out.add("geom.makeSquare()").endStatement();
+        if (scalesBuilder.coords == Coordinates.transposed) out.add("geom.transpose()").endStatement();
 
-        // Now build the main groups
-        out.titleComment("Define groups for the chart parts");
+            // Now build the main groups
+            out.titleComment("Define groups for the chart parts");
         writeMainGroups(structure);
         for (D3ElementBuilder builder : elementBuilders) builder.writePerChartDefinitions();
 
@@ -151,15 +152,29 @@ public class D3Builder extends AbstractBuilder {
         // Diagrams do not need scales; everything else does
         if (structure.diagram == null) {
             out.titleComment("Scales");
-            scalesBuilder.writeCoordinateScales(interaction);
+            scalesBuilder.writeCoordinateScales();
 
             // Define the Axes
             if (scalesBuilder.needsAxes()) {
                 out.titleComment("Axes");
                 scalesBuilder.writeAxes();
             }
+        } else {
+            scalesBuilder.writeDiagramScales();
         }
 
+        // Attach the zoom
+        interaction.addZoomFunctionality();
+
+    }
+
+    private boolean forceSquare(VisSingle[] elements) {
+        for (VisSingle e : elements) {
+            for (Param p : e.fCoords) {
+                if (p.asString().equals("square")) return true;
+            }
+        }
+        return false;
     }
 
     private void createBuilders(ChartStructure structure, double[] chartMargins) {
@@ -189,7 +204,7 @@ public class D3Builder extends AbstractBuilder {
         out.onNewLine().add("var original, processed,").at(40).comment("data sets passed in and then transformed")
                 .indentMore()
                 .onNewLine().add("element, data,").at(40).comment("Brunel element information and brunel data")
-                .onNewLine().add("selection;").at(40).comment("D3 selection")
+                .onNewLine().add("selection, merged;").at(40).comment("D3 selection and merged selection")
                 .indentLess();
 
         // Add data variables used throughout
@@ -201,7 +216,7 @@ public class D3Builder extends AbstractBuilder {
         D3DataBuilder dataBuilder = new D3DataBuilder(vis, out, structure.data, datasetIndex);
         dataBuilder.writeDataManipulation(createResultFields(vis));
 
-        scalesBuilder.writeAestheticScales(vis);
+        scalesBuilder.writeAestheticScales(structure);
         scalesBuilder.writeLegends(vis);
 
         elementBuilder.preBuildDefinitions();
@@ -247,17 +262,12 @@ public class D3Builder extends AbstractBuilder {
         out.add("    post = function(d, i) { return d },").at(50).comment("Default post-process does nothing");
         out.add("    transitionTime = 200,").at(50).comment("Transition time for animations");
         out.add("    charts = [],").at(50).comment("The charts in the system");
-        out.add("    hasData = function(d) {return d && (d.row != null)},").at(50).comment("Filters to data items");
-        out.add("    vis = d3.select('#' + visId).attr('class', 'brunel')").at(60).comment("the SVG container");
+        out.add("    hasData = function(d) {return d && (d.row != null || hasData(d.data))},").at(50).comment("Filters to data items");
+        out.add("    vis = d3.select('#' + visId).attr('class', 'brunel');").at(60).comment("the SVG container");
     }
 
     protected void endChart(ChartStructure structure) {
         out.onNewLine().add("function build(time, noData) {").indentMore();
-
-        // This is a bit of hack to get around d3 support for catgeroical scales.
-        // we cannot simply set the zooming, so we have to add this work around at the
-        // start of the build
-        interaction.addCategoricalScaleAdjustment();
 
         out.onNewLine().add("var first = elements[0].data() == null").endStatement();
         out.add("if (first) time = 0;").comment("No transition for first call");
@@ -297,13 +307,7 @@ public class D3Builder extends AbstractBuilder {
             out.onNewLine().add("scales: {x:scale_x, y:scale_y},");
         }
 
-        if (interaction.getZoomType() != D3Interaction.ZoomType.None) {
-            out.onNewLine().add("zoom: function(params, time) {")
-                    .continueOnNextLine().add("var v = BrunelD3.panzoom(params, zoom);")
-                    .continueOnNextLine().add("if (params) build(time > 0 ? time : 0, true);")
-                    .continueOnNextLine().add("return v;");
-            out.onNewLine().add("},");
-        }
+        interaction.defineChartZoomFunction();
 
         out.onNewLine().add("build : build")
                 .indentLess().onNewLine().add("}").endStatement();
@@ -420,7 +424,7 @@ public class D3Builder extends AbstractBuilder {
     }
 
     private void addElementGroups(D3ElementBuilder builder, ElementStructure structure) {
-        String elementTransform = makeElementTransform(structure.chart.coordinates);
+        String elementTransform = makeElementTransform(scalesBuilder.coords);
         out.add("var elementGroup = interior.append('g').attr('class', 'element" + structure.elementID() + "')");
         Accessibility.addElementInformation(structure, out);
         if (elementTransform != null) out.addChained(elementTransform);
@@ -481,7 +485,7 @@ public class D3Builder extends AbstractBuilder {
         out.onNewLine().add("data:").at(24).add("function() { return processed },");
         out.onNewLine().add("original:").at(24).add("function() { return original },");
         out.onNewLine().add("internal:").at(24).add("function() { return data },");
-        out.onNewLine().add("selection:").at(24).add("function() { return selection },");
+        out.onNewLine().add("selection:").at(24).add("function() { return merged },");
         out.onNewLine().add("makeData:").at(24).add("makeData,");
         out.onNewLine().add("build:").at(24).add("build,");
         out.onNewLine().add("chart:").at(24).add("function() { return charts[" + structure.chart.chartIndex + "] },");
@@ -507,10 +511,10 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}").endStatement();
     }
 
-    private String makeElementTransform(ChartCoordinates coords) {
-        if (coords.isTransposed())
+    private String makeElementTransform(Coordinates coords) {
+        if (coords == Coordinates.transposed)
             return "attr('transform','matrix(0,1,1,0,0,0)')";
-        else if (coords.isPolar())
+        else if (coords == Coordinates.polar)
             return makeTranslateTransform("geom.inner_width/2", "geom.inner_height/2");
         else
             return null;
@@ -550,6 +554,8 @@ public class D3Builder extends AbstractBuilder {
         out.addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
                 .endStatement();
 
+        interaction.addOverlayForZoom();
+
         out.add("chart.append('rect').attr('class', 'background')")
                 .add(".attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top)")
                 .endStatement();
@@ -568,8 +574,6 @@ public class D3Builder extends AbstractBuilder {
                 .endStatement();
         out.add("var gridGroup = interior.append('g').attr('class', 'grid')")
                 .endStatement();
-
-        interaction.addPrerequisites();
 
         if (scalesBuilder.needsAxes())
             out.add("var axes = chart.append('g').attr('class', 'axis')")

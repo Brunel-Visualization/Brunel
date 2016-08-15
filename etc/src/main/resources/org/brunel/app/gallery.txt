@@ -6,7 +6,7 @@
                 Data is from March 2015.
 #brunel         data('sample:BGG Top 2000 Games.csv')
                 bubble color(rating) size(voters) sort(rating) label(title) tooltip(title, #all)
-                legends(none) style('* {font-size: 7pt}')
+                legends(none) style('* {font-size: 7pt}') interaction(panzoom)
 
 
 #id             bggtreemap

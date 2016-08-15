@@ -21,6 +21,7 @@ import inspect
 import fnmatch
 import jpype
 import sys
+import pkg_resources
 
 import brunel.brunel_util as brunel_util
 import jinja2 as jin
@@ -38,8 +39,8 @@ templateEnv = jin.Environment(loader=templateLoader)
 D3_TEMPLATE = templateEnv.get_template(D3_TEMPLATE_FILE)
 D3_TEMPLATE_HTML = templateEnv.get_template(D3_TEMPLATE_HTML_FILE)
 
-#Directory containing the Brunel .jar files
-lib_dir = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), "lib")
+brunel_version = pkg_resources.get_distribution("brunel").version
+
 
 def display(brunel, data, width=800, height=600, output='d3'):
 
@@ -100,10 +101,12 @@ def d3_output(response, visid, controlsid, width, height):
     d3js = results["js"]
     d3css = results["css"]
     controls = results["controls"]
-    html = D3_TEMPLATE_HTML.render({'jsloc': brunel_util.JS_LOC, 'd3css': d3css, 'visId': visid, 'width': width, 'height': height, 'controlsid': controlsid})
+    html = D3_TEMPLATE_HTML.render({'jsloc': brunel_util.JS_LOC, 'd3css': d3css, 'visId': visid, 'width': width,
+                                    'height': height, 'controlsid': controlsid, 'version': brunel_version})
     # side effect pushes required D3 HTML to the client
     ipydisplay(HTML(html))
-    js = D3_TEMPLATE.render({'jsloc': brunel_util.JS_LOC, 'd3loc': brunel_util.D3_LOC, 'topojsonloc':brunel_util.TOPO_JSON_LOC, 'd3js': d3js})
+    js = D3_TEMPLATE.render({'jsloc': brunel_util.JS_LOC, 'd3loc': brunel_util.D3_LOC,
+                             'topojsonloc':brunel_util.TOPO_JSON_LOC, 'd3js': d3js, 'version': brunel_version})
     return Javascript(js)
 
 #File search given a path.  Used to find the JVM if needed
@@ -118,10 +121,17 @@ def find_file(pattern, path):
 #Start the JVM using jpype
 def start_JVM():
 
+    #Directory containing the Brunel .jar files
+    lib_dir = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), "lib")
+    brunel_core_jar = lib_dir + "/brunel-core-" + brunel_version + ".jar"
+    brunel_data_jar = lib_dir + "/brunel-data-" + brunel_version + ".jar"
+    gson_jar = lib_dir + "/gson-2.3.1.jar"
+    java_classpath = brunel_core_jar + os.pathsep + brunel_data_jar + os.pathsep + gson_jar
+
     #only start JVM once since it is expensive
     if (not jpype.isJVMStarted()):
         #Use Brunel .jar files
-        lib_ext = "-Djava.ext.dirs=" + lib_dir
+        java_cp_option = "-Djava.class.path=" + java_classpath
 
         # headless execution of java is needed due to
         # calls to AWT.  See git issue #70
@@ -130,10 +140,10 @@ def start_JVM():
         try:
             #First use explicit path if provided
             if brunel_util.JVM_PATH != "":
-                jpype.startJVM(brunel_util.JVM_PATH, headless, lib_ext)
+                jpype.startJVM(brunel_util.JVM_PATH, headless, java_cp_option)
             else:
                 # Try jpype's default way
-                jpype.startJVM(jpype.getDefaultJVMPath(), headless, lib_ext)
+                jpype.startJVM(jpype.getDefaultJVMPath(), headless, java_cp_option)
         except:
             #jpype could not find JVM (this happens currently for IBM JDK)
             #Try to find the JVM starting from JAVA_HOME either as a .dll or a .so
@@ -146,7 +156,7 @@ def start_JVM():
                     "set before starting IPython.  If it still fails, try to manually set the JVM using:  "
                     "brunel.brunel_util.JVM_PATH=[path]. Where 'path' is the location of the JVM file (not "
                     "directory). Typically this is the full path to 'jvm.dll' on Windows or 'libjvm.so' on Unix ")
-            jpype.startJVM(jvms[0], headless, lib_ext)
+            jpype.startJVM(jvms[0], headless, java_cp_option)
 
 
 #Take the JVM startup hit once

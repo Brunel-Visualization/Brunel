@@ -54,13 +54,13 @@ public class D3LabelBuilder {
         if (vis.itemsLabel.isEmpty()) return;
         // Networks are updated on ticks., so just attach once -- no transitions
         if (vis.tDiagram == Diagram.network) {
-            out.add("BrunelD3.label(selection, labels, labeling, 0, geom)").endStatement();
+            out.add("BrunelD3.label(merged, labels, labeling, 0, geom)").endStatement();
             return;
         }
 
         // Text elements define labeling as the main item; they do not need labels attached, which is what this does
         if (vis.tElement != Element.text)
-            out.add("BrunelD3.label(selection, labels, labeling, transitionMillis, geom)").endStatement();
+            out.add("BrunelD3.label(merged, labels, labeling, transitionMillis, geom)").endStatement();
     }
 
     public static void addFontSizeAttribute(VisSingle vis, ScriptWriter out) {
@@ -79,7 +79,7 @@ public class D3LabelBuilder {
         if (vis.itemsTooltip.isEmpty()) return;
         out.onNewLine().ln();
         defineLabeling(prettify(vis.itemsTooltip, true), details.representation.getTooltipTextMethod(), true, true, null, 0, 0);
-        out.add("BrunelD3.addTooltip(selection, tooltipLabeling, geom)").endStatement();
+        out.add("BrunelD3.addTooltip(merged, tooltipLabeling, geom)").endStatement();
     }
 
     /**
@@ -139,6 +139,28 @@ public class D3LabelBuilder {
 
         out.indentLess().onNewLine().add("}").endStatement();
 
+    }
+
+    public int estimateLabelLength() {
+        int size = 0;
+        for (Param p : vis.itemsLabel) {
+            if (p.isField()) {
+                Field f = data.field(p.asField());
+                if (f.isDate()) size += 8;
+                else if (f.preferCategorical()) size += maxLength(f.categories()) +1;
+                else size += 6;
+            } else {
+                // Text
+                size += p.asString().length() + 1;
+            }
+        }
+        return size;
+    }
+
+    private int maxLength(Object[] categories) {
+        int max = 0;
+        for (Object o : categories) max = Math.max(max, o.toString().length());
+        return max;
     }
 
     private boolean needsData(List<Param> items) {
@@ -235,14 +257,28 @@ public class D3LabelBuilder {
     }
 
     /* Call to add labels for internal nodes of trees and treemaps */
-    public void addTreeInternalLabels() {
-        out.add("diagramLabels.attr('class', 'axis diagram treemap hierarchy')").endStatement();
-        out.add("var treeLabeling = { method:'inner-left', fit:true, dy:0.8,");
-        out.indentMore().onNewLine().add("content:  function(d) { return d.innerNodeName }, align:'start', ");
-        out.indentMore().onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth }, ");
-        out.indentMore().onNewLine().add("where :   function(box) { return {'x': box.x + 2, 'y': box.y, 'box': box} }").indentLess();
-        out.add("}").endStatement();
-        out.add("BrunelD3.label(selection, diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
+    public void addTreeInternalLabelsInsideNode() {
+        out.add("diagramLabels.attr('class', 'axis diagram treemap hierarchy')").endStatement()
+                .add("var treeLabeling = { method:'inner-left', fit:true, dy:0.83, align:'start', ")
+                .indentMore()
+                .onNewLine().add("content:  function(d) { return d.data.innerNodeName },")
+                .onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height }, ")
+                .onNewLine().add("where :   function(box) { return {'x': box.x + 2, 'y': box.y, 'box': box} }")
+                .indentLess().onNewLine().add("}").endStatement();
+        out.add("BrunelD3.label(merged.filter(function(d) {return d.height}), diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
     }
+
+    /* Call to add labels for internal nodes of trees and treemaps */
+    public void addTreeInternalLabelsOutsideNode(String vertical) {
+        String dy = vertical.equals("bottom") ? "0.75" : "0.25";
+        out.add("diagramLabels.attr('class', 'axis diagram tree hierarchy')").endStatement()
+                .add("var treeLabeling = { location:['center', '" + vertical + "'], fit:false, dy:" + dy + ", align:'middle', granularity:1, ")
+                .indentMore()
+                .onNewLine().add("content:  function(d) { return d.data.innerNodeName },")
+                .onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height } ")
+                .indentLess().onNewLine().add("}").endStatement();
+        out.add("BrunelD3.label(merged.filter(function(d) {return d.height}), diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
+    }
+
 
 }

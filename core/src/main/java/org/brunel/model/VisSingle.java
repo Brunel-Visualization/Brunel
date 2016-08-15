@@ -32,6 +32,7 @@ import org.brunel.model.style.StyleSheet;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -105,6 +106,7 @@ public class VisSingle extends VisItem implements Cloneable {
         tInteraction = Collections.EMPTY_LIST;
         fY = Collections.EMPTY_LIST;
         fColor = Collections.EMPTY_LIST;
+        fCoords = Collections.EMPTY_LIST;
         fKeys = Collections.EMPTY_LIST;
         fOpacity = Collections.EMPTY_LIST;
         fSize = Collections.EMPTY_LIST;
@@ -179,20 +181,23 @@ public class VisSingle extends VisItem implements Cloneable {
      * @param dataReference defines the data to read
      * @return this
      */
-    public void data(Param dataReference) {
+    public VisSingle data(Param dataReference) {
         // Replaces all previous data statements
         dataset = null;
         fData = dataReference;
+        return this;
     }
 
-    public void filter(Param... fieldNames) {
+    public VisSingle filter(Param... fieldNames) {
         if (fFilter.isEmpty()) fFilter = new ArrayList<>(fieldNames.length);
         Collections.addAll(fFilter, fieldNames);
+        return this;
     }
 
-    public void animate(Param... params) {
+    public VisSingle animate(Param... params) {
         if (fAnimate.isEmpty()) fAnimate = new ArrayList<>(params.length);
         Collections.addAll(fAnimate, params);
+        return this;
     }
 
     /**
@@ -214,9 +219,10 @@ public class VisSingle extends VisItem implements Cloneable {
      *
      * @param params guide definitions
      */
-    public void guide(Param... params) {
+    public VisSingle guide(Param... params) {
         if (tGuides.isEmpty()) tGuides = new ArrayList<>();
         Collections.addAll(tGuides, params);
+        return this;
     }
 
     public void key(Param... fieldNames) {
@@ -682,18 +688,16 @@ public class VisSingle extends VisItem implements Cloneable {
         Collections.addAll(itemsTooltip, items);
     }
 
-    public void transpose(Param aspect) {
+    public void transpose(Param[] aspect) {
         coords = Coordinates.transposed;
-        if (aspect != null) {
-            this.fCoords = aspect.asList();
-        }
+        if (aspect.length > 0)
+            this.fCoords = Arrays.asList(aspect);
     }
 
-    public void rectangular(Param aspect) {
+    public void rectangular(Param[] aspect) {
         coords = Coordinates.regular;
-        if (aspect != null) {
-            this.fCoords = aspect.asList();
-        }
+        if (aspect.length > 0)
+            this.fCoords = Arrays.asList(aspect);
     }
 
     public void using(Param type) {

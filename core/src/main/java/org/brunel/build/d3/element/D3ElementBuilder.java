@@ -66,16 +66,17 @@ public class D3ElementBuilder {
         setGeometry(details);                           // And the coordinate definitions
 
         if (diagram == null) {
-            writeCoordinateFunctions(details);
-
-            if (details.representation == ElementRepresentation.wedge) {
-                // Deal with the case of wedges (polar intervals)
-                defineWedgePath();
-            } else if (details.isDrawnAsPath()) {
-                // Define paths needed in the element, and make data splits
-                definePathsAndSplits(details);
+            // Graph edges do not need defined coordinates
+            if (!structure.isGraphEdge()) {
+                writeCoordinateFunctions(details);
+                if (details.representation == ElementRepresentation.wedge) {
+                    // Deal with the case of wedges (polar intervals)
+                    defineWedgePath();
+                } else if (details.isDrawnAsPath()) {
+                    // Define paths needed in the element, and make data splits
+                    definePathsAndSplits(details);
+                }
             }
-
         } else {
             // Set the diagram group class for CSS
             out.add("main.attr('class',", diagram.getStyleClasses(), ")").endStatement();
@@ -84,15 +85,15 @@ public class D3ElementBuilder {
         // define the labeling structure to be used later
         defineLabeling(details);
 
-        // Set the values of things known to this element
+        // Define the main selection
         out.add("selection = main.selectAll('.element').data(" + details.dataSource + ",", getKeyFunction(), ")")
+                .endStatement();
+
+        // ENTER: Append representations for new data
+        out.add("var added = selection.enter().append('" + details.representation.getMark() + "')")
+                .addChained("attr('class', '" + Data.join(details.classes, " ") + "')")
                 .addChained("classed('selected', function(d) { return data.$selection(d) == '\u2713' })");
 
-        out.endStatement();
-
-        // Define what happens when data is added ('enter')
-        out.add("selection.enter().append('" + details.representation.getMark() + "')");
-        out.add(".attr('class', '" + Data.join(details.classes, " ") + "')");
         if (!interaction.hasElementInteraction(structure))
             out.addChained("style('pointer-events', 'none')");
 
@@ -100,12 +101,16 @@ public class D3ElementBuilder {
 
         if (diagram == null) {
             writeCoordEnter();
+            out.add("merged = selection.merge(added)").endStatement();
         } else {
+            out.endStatement();
+            out.add("merged = selection.merge(added)").endStatement();
             diagram.writeDiagramEnter();
             diagram.writePreDefinition(details);
         }
 
-        out.add("BrunelD3.trans(selection,transitionMillis)");
+        // UPDATE + ENTER: Define the values that can be changed based on the data
+        out.add("BrunelD3.transition(merged, transitionMillis)");
 
         if (diagram == null || diagram instanceof GeoMap) {
             writeCoordinateDefinition(details);
@@ -116,7 +121,7 @@ public class D3ElementBuilder {
             diagram.writeDefinition(details);
         }
 
-        writeRemovalOnExit(out);
+        writeRemovalOnExit(out, "selection");
 
     }
 
@@ -139,10 +144,10 @@ public class D3ElementBuilder {
         Accessibility.defineElementLabelFunction(structure, out, labelBuilder);
     }
 
-    public static void writeRemovalOnExit(ScriptWriter out) {
+    public static void writeRemovalOnExit(ScriptWriter out, String selection) {
         // This fires when items leave the system
         // It removes the item and any associated labels
-        out.onNewLine().ln().add("BrunelD3.trans(selection.exit(),transitionMillis/3)");
+        out.onNewLine().ln().add("BrunelD3.transition(" + selection + ".exit(), transitionMillis/3)");
         out.addChained("style('opacity', 0.5).each( function() {")
                 .indentMore().indentMore().onNewLine()
                 .add("this.remove(); if (this.__label__) this.__label__.remove()")
@@ -265,7 +270,7 @@ public class D3ElementBuilder {
         if (structure.chart.geo != null) {
             // Wrap the locations in the projection
             for (int i = 0; i < references.length; i++)
-                references[i] = "proj(" + references[i] + ")";
+                references[i] = "projection(" + references[i] + ")";
             e.setReferences(references);
         } else if (!structure.isGraphEdge()) {
             // Just as they are
@@ -277,7 +282,7 @@ public class D3ElementBuilder {
 
         // Now actual paths
         if (vis.tElement == Element.area) {
-            out.add("var path = d3.svg.area().x(x).y1(y2).y0(y1)");
+            out.add("var path = d3.area().x(x).y1(y2).y0(y1)");
         } else if (vis.tElement.producesSingleShape) {
             // Choose the top line if there is a range (say for stacking)
             String yDef = elementDef.y.right == null ? "y" : "y2";
@@ -286,18 +291,18 @@ public class D3ElementBuilder {
                 GeomAttribute size = elementDef.y.size != null ? elementDef.y.size : elementDef.overallSize;
                 out.addChained("r( function(d) { return " + size.definition() + "})");
             } else {
-                out.add("var path = d3.svg.line().x(x).y(" + yDef + ")");
+                out.add("var path = d3.line().x(x).y(" + yDef + ")");
             }
         }
         if (vis.tUsing == Using.interpolate) {
-            out.add(".interpolate('basis')");
+            out.add(".curve(d3.curveCatmullRom)");
         }
         out.endStatement();
         constructSplitPath();
     }
 
     private void defineWedgePath() {
-        out.add("var path = d3.svg.arc().innerRadius(0)");
+        out.add("var path = d3.arc().innerRadius(0)");
         if (vis.fSize.isEmpty())
             out.addChained("outerRadius(geom.inner_radius)");
         else
@@ -326,6 +331,8 @@ public class D3ElementBuilder {
 
     private void writeCoordinateDefinition(ElementDetails details) {
 
+        if (structure.isGraphEdge()) return;            // Doesn't need any
+
         // If we need reference locations, write them in first
         if (details.getRefLocation() != null) {
             out.addChained("each(function(d) { this.r = " + details.getRefLocation().definition() + "})");
@@ -334,9 +341,13 @@ public class D3ElementBuilder {
 
         if (details.requiresSplitting())
             out.addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
-        else if (details.isDrawnAsPath())
-            out.addChained("attr('d', path)");                              // Simple path -- just util it
-        else if (details.representation == ElementRepresentation.rect)
+        else if (details.isDrawnAsPath()) {
+            // Annoyingly, D3 adds a comma before L commands for geo maps, which is illegal and Firefox chokes on it
+            if (vis.tDiagram == Diagram.map)
+                out.addChained("attr('d', function(d) { return path(d).replace(/,L/g, 'L').replace(/,Z/g, 'Z') })");
+            else
+                out.addChained("attr('d', path)");
+        } else if (details.representation == ElementRepresentation.rect)
             defineRect(details);
         else if (details.representation == ElementRepresentation.segment) {
             out.addChained("attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)");
@@ -457,8 +468,8 @@ public class D3ElementBuilder {
     private void setLocationsByGeoPropertiesCenter(ElementDetails e) {
         // We use the embedded centers in the geo properties to place the items
         // TODO: make this better ...
-        e.x.center = GeomAttribute.makeFunction("proj(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999])[0]");
-        e.y.center = GeomAttribute.makeFunction("proj(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999])[1]");
+        e.x.center = GeomAttribute.makeFunction("projection(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999])[0]");
+        e.y.center = GeomAttribute.makeFunction("projection(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999])[1]");
     }
 
     private GeomAttribute getSize(Field[] fields, String extent, ScalePurpose purpose, ElementDimension dim) {
@@ -609,9 +620,7 @@ public class D3ElementBuilder {
         out.addChained("attr('x', function(d) { return this.r.x })")
                 .addChained("attr('y', function(d) { return this.r.y })")
                 .addChained("attr('width', function(d) { return this.r.w })")
-                .addChained("attr('height', function(d) { return this.r.h })")
-                .addChained("style('width', function(d) { return this.r.w })")
-                .addChained("style('height', function(d) { return this.r.h })");
+                .addChained("attr('height', function(d) { return this.r.h })");
     }
 
     private boolean allShowExtent(Field[] fields) {

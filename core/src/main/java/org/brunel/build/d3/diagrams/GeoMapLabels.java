@@ -36,7 +36,7 @@ public class GeoMapLabels extends D3Diagram {
 
     private final ChartStructure structure;
 
-    public GeoMapLabels(VisSingle vis, Dataset data, ChartStructure structure, D3Interaction interaction,  ScriptWriter out) {
+    public GeoMapLabels(VisSingle vis, Dataset data, ChartStructure structure, D3Interaction interaction, ScriptWriter out) {
         super(vis, data, interaction, out);
         this.structure = structure;
     }
@@ -73,7 +73,7 @@ public class GeoMapLabels extends D3Diagram {
             if (!first) out.add(", ");
             String s = "[" + F.format(p.x) + "," + F.format(p.y) + ","
                     + Data.quote(p.label) + "," + radiusFor(p, popHigh, popLow)
-                    + "," + (5-p.importance) + "]";
+                    + "," + (5 - p.importance) + "]";
             if (out.currentColumn() + s.length() > 120)
                 out.onNewLine();
             out.add(s);
@@ -86,26 +86,29 @@ public class GeoMapLabels extends D3Diagram {
         return maxPoints < all.size() ? all.subList(0, maxPoints) : all;
     }
 
-
     public ElementDetails initializeDiagram() {
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.symbol, "point", "geo_labels");
     }
 
     public void writeDefinition(ElementDetails details) {
-        out.addChained("attr('d', function(d) { return BrunelD3.symbol(['star','square','circle','circle','circle'][d[4]], d[3]*geom.default_point_size/14)})")
+        out.addChained("attr('d', function(d) { return BrunelD3.symbol(d[4] == 0 ? 'star' : (d[4] == 1 ? 'square' : 'circle'), d[3]*geom.default_point_size/14)})")
                 .addChained("attr('class', function(d) { return 'element mark L' + d[4] })");
-        out.addChained("attr('transform', projectTransform)");
-        out.endStatement();
+        out.addChained("attr('transform', function(d) {")
+                .indentMore().indentMore().onNewLine()
+                .add("var p = projection(d)").endStatement()
+                .add("return p && 'translate(' + p[0] + ', ' + p[1] + ')'")
+                .indentLess().indentLess().onNewLine().add("} )")
+                .endStatement();
 
-        // Labels
         out.add("labels.classed('map', true)").endStatement();
 
+        // Labels
         out.add("var labeling = {").indentMore()
                 .onNewLine().add("method:'box', pad:3, inside:false, align:'start', granularity:2,")
                 .onNewLine().add("location:['right', 'middle'], content: function(d) {return d[2]}")
                 .indentLess().onNewLine().add("}").endStatement();
 
-        out.add("BrunelD3.label(selection, labels, labeling, 0, geom)").endStatement();
+        out.add("BrunelD3.label(merged, labels, labeling, 0, geom)").endStatement();
     }
 
     public boolean needsDiagramLabels() {
@@ -113,8 +116,7 @@ public class GeoMapLabels extends D3Diagram {
     }
 
     public void writeDiagramEnter() {
-        out.addChained("classed('map', true)");
-        out.endStatement();
+        out.add("merged.classed('map', true)").endStatement();
     }
 
     private int radiusFor(LabelPoint p, int high, int low) {

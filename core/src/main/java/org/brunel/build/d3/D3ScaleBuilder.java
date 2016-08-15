@@ -21,6 +21,7 @@ import org.brunel.action.Param.Type;
 import org.brunel.build.d3.D3Util.DateBuilder;
 import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.color.ColorMapping;
@@ -36,6 +37,7 @@ import org.brunel.data.util.DateUnit;
 import org.brunel.data.util.Range;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Axes;
+import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 import org.brunel.model.VisTypes.Legends;
@@ -47,6 +49,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import static org.brunel.build.d3.ScalePurpose.color;
 
 /**
  * Adds scales and axes; also guesses the right size to leave for axes
@@ -62,6 +66,7 @@ public class D3ScaleBuilder {
 
     private static final double MIN_SIZE_FACTOR = 0.001;
 
+    final Coordinates coords;                       // Combined coordinate system derived from all elements
     private final Field colorLegendField;           // Field to use for the color legend
     private final AxisDetails hAxis, vAxis;         // Details for each axis
     private final double[] marginTLBR;              // Margins between the coordinate area and the chart space
@@ -73,6 +78,7 @@ public class D3ScaleBuilder {
         this.structure = structure;
         this.elements = structure.elements;
         this.out = out;
+        this.coords = makeCombinedCoords();
         AxisSpec[] axes = makeCombinedAxes();
 
         // Create the position needed
@@ -83,16 +89,16 @@ public class D3ScaleBuilder {
         // Set the axis information for each dimension
         AxisDetails xAxis, yAxis;
         if (axes[0] != null) {
-            xAxis = new AxisDetails("x", coords.allXFields, coords.xCategorical, axes[0].name, axes[0].ticks, axes[0].grid);
+            xAxis = new AxisDetails("x", coords.allXFields, coords.xCategorical, axes[0].name, axes[0].ticks, axes[0].grid, axes[0].reverse);
         } else
-            xAxis = new AxisDetails("x", new Field[0], coords.xCategorical, null, 9999, false);
+            xAxis = new AxisDetails("x", new Field[0], coords.xCategorical, null, 9999, false, false);
         if (axes[1] != null)
-            yAxis = new AxisDetails("y", coords.allYFields, coords.yCategorical, axes[1].name, axes[1].ticks, axes[1].grid);
+            yAxis = new AxisDetails("y", coords.allYFields, coords.yCategorical, axes[1].name, axes[1].ticks, axes[1].grid, axes[1].reverse);
         else
-            yAxis = new AxisDetails("y", new Field[0], coords.yCategorical, null, 9999, false);
+            yAxis = new AxisDetails("y", new Field[0], coords.yCategorical, null, 9999, false, false);
 
         // Map the dimension to the physical location on screen
-        if (coords.isTransposed()) {
+        if (this.coords == Coordinates.transposed) {
             hAxis = yAxis;
             vAxis = xAxis;
         } else {
@@ -132,6 +138,19 @@ public class D3ScaleBuilder {
         hAxis.setAdditionalHAxisOffset(v);
     }
 
+    private Coordinates makeCombinedCoords() {
+        // For diagrams, we set the coords to polar for the chord chart and clouds, and centered for networks
+        if (structure.diagram == Diagram.chord || structure.diagram == Diagram.cloud)
+            return Coordinates.polar;
+
+        // The rule here is that we return the one with the highest ordinal value;
+        // that will correspond to the most "unusual". In practice this means that
+        // you need only define 'polar' or 'transpose' in one chart
+        Coordinates result = elements[0].coords;
+        for (VisSingle e : elements) if (e.coords.compareTo(result) > 0) result = e.coords;
+
+        return result;
+    }
 
     // Return array for X and Y dimensions
     private AxisSpec[] makeCombinedAxes() {
@@ -163,7 +182,7 @@ public class D3ScaleBuilder {
         }
 
         // If auto, check for the coordinate system / diagram / nesting to determine what is wanted
-        if (auto) if (structure.coordinates.isPolar() || structure.diagram != null || structure.nested())
+        if (auto) if (coords == Coordinates.polar || structure.diagram != null || structure.nested())
             return new AxisSpec[2];
         else
             return new AxisSpec[]{AxisSpec.DEFAULT, AxisSpec.DEFAULT};
@@ -190,7 +209,7 @@ public class D3ScaleBuilder {
 
     private int legendWidth() {
         if (!needsLegends()) return 0;
-        AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical(), null, 9999, false);
+        AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical(), null, 9999, false, false);
         legendAxis.setTextDetails(structure, false);
         int spaceNeededForTicks = 32 + legendAxis.maxCategoryWidth();
         int spaceNeededForTitle = colorLegendField.label.length() * 7;                // Assume 7 pixels per character
@@ -255,7 +274,12 @@ public class D3ScaleBuilder {
         return hAxis.exists() || vAxis.exists();
     }
 
-    public void writeAestheticScales(VisSingle vis) {
+    public void writeAestheticScales(ElementStructure structure) {
+        VisSingle vis = structure.vis;
+
+        // Some structures have the data within a 'data' fields instead of at the top level
+        boolean dataInside = structure.hasComplexDataStructure();
+
         Param color = getColor(vis);
         Param[] size = getSize(vis);
         Param opacity = getOpacity(vis);
@@ -264,24 +288,29 @@ public class D3ScaleBuilder {
         out.onNewLine().comment("Aesthetic Functions");
         if (color != null) {
             addColorScale(color, vis);
-            out.onNewLine().add("var color = function(d) { return scale_color(" + D3Util.writeCall(fieldById(color, vis)) + ") }").endStatement();
+            Field field = fieldById(color, vis);
+            out.onNewLine().add("var color = function(d) { return scale_color(" + D3Util.writeCall(field, dataInside) + ") }").endStatement();
         }
         if (opacity != null) {
             addOpacityScale(opacity, vis);
-            out.onNewLine().add("var opacity = function(d) { return scale_opacity(" + D3Util.writeCall(fieldById(opacity, vis)) + ") }").endStatement();
+            Field field = fieldById(opacity, vis);
+            out.onNewLine().add("var opacity = function(d) { return scale_opacity(" + D3Util.writeCall(field, dataInside) + ") }").endStatement();
         }
         if (size.length == 1) {
             // We have exactly one field and util that for the single size scale, with a root transform by default for point elements
             String defaultTransform = (vis.tElement == Element.point || vis.tElement == Element.text)
                     ? "sqrt" : "linear";
             addSizeScale("size", size[0], vis, defaultTransform);
-            out.onNewLine().add("var size = function(d) { return scale_size(" + D3Util.writeCall(fieldById(size[0], vis)) + ") }").endStatement();
+            Field field = fieldById(size[0], vis);
+            out.onNewLine().add("var size = function(d) { return scale_size(" + D3Util.writeCall(field, dataInside) + ") }").endStatement();
         } else if (size.length > 1) {
             // We have two field and util them for height and width
             addSizeScale("width", size[0], vis, "linear");
             addSizeScale("height", size[1], vis, "linear");
-            out.onNewLine().add("var width = function(d) { return scale_width(" + D3Util.writeCall(fieldById(size[0], vis)) + ") }").endStatement();
-            out.onNewLine().add("var height = function(d) { return scale_height(" + D3Util.writeCall(fieldById(size[1], vis)) + ") }").endStatement();
+            Field widthField = fieldById(size[0], vis);
+            out.onNewLine().add("var width = function(d) { return scale_width(" + D3Util.writeCall(widthField, dataInside) + ") }").endStatement();
+            Field heightField = fieldById(size[1], vis);
+            out.onNewLine().add("var height = function(d) { return scale_height(" + D3Util.writeCall(heightField, dataInside) + ") }").endStatement();
         }
     }
 
@@ -319,18 +348,25 @@ public class D3ScaleBuilder {
 
         // Define the axes themselves and the method to build (and re-build) them
         out.onNewLine().ln();
-        defineAxis("var axis_bottom = d3.svg.axis()", this.hAxis, true);
-        defineAxis("var axis_left = d3.svg.axis().orient('left')", this.vAxis, false);
+        defineAxis("var axis_bottom = d3.axisBottom", this.hAxis, true);
+        defineAxis("var axis_left = d3.axisLeft", this.vAxis, false);
         defineAxesBuild();
     }
 
+    /**
+     * Defines an axis
+     *
+     * @param basicDefinition start of the line to generate
+     * @param axis            axis information
+     * @param horizontal      if the axis is horizontal
+     */
     private void defineAxis(String basicDefinition, AxisDetails axis, boolean horizontal) {
         if (axis.exists()) {
             int padding = horizontal ? axis.tickPadding.top : axis.tickPadding.right;
             out.add(basicDefinition)
-                    .addChained("scale(" + axis.scale + ").innerTickSize(" + axis.markSize
-                            + ").tickPadding(" + padding + ").outerTickSize(0)");
-            if (axis.isLog()) out.addChained("ticks(7, ',.g3')");
+                    .add("(" + axis.scale + ").tickSizeInner(" + axis.markSize
+                            + ").tickPadding(" + padding + ").tickSizeOuter(0)");
+            if (axis.isLog()) out.addChained("ticks(7, ',.3g')");
             else if (axis.tickCount != null)
                 out.addChained("ticks(").add(axis.tickCount).add(")");
             else if (axis == hAxis) {
@@ -356,7 +392,7 @@ public class D3ScaleBuilder {
                 out.onNewLine().add("axis_bottom.tickValues(BrunelD3.filterTicks(" + hAxis.scale + "))");
             }
             out.onNewLine().add("var axis_x = axes.select('g.axis.x');");
-            out.onNewLine().add("BrunelD3.trans(axis_x, time).call(axis_bottom)");
+            out.onNewLine().add("BrunelD3.transition(axis_x, time).call(axis_bottom.scale(" + hAxis.scale + "))");
             if (hAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
         }
@@ -368,7 +404,7 @@ public class D3ScaleBuilder {
             }
 
             out.onNewLine().add("var axis_y = axes.select('g.axis.y');");
-            out.onNewLine().add("BrunelD3.trans(axis_y, time).call(axis_left)");
+            out.onNewLine().add("BrunelD3.transition(axis_y, time).call(axis_left.scale(" + vAxis.scale + "))");
             if (vAxis.rotatedTicks) addRotateTicks();
             out.endStatement();
         }
@@ -405,13 +441,21 @@ public class D3ScaleBuilder {
 
     }
 
-    public void writeCoordinateScales(D3Interaction interaction) {
-        ChartCoordinates coords = structure.coordinates;
-        writePositionScale(ScalePurpose.x, coords.allXFields, getXRange(), elementsFillHorizontal(ScalePurpose.x), coords.xReversed);
-        writePositionScale(ScalePurpose.inner, coords.allXClusterFields, "[-0.5, 0.5]", elementsFillHorizontal(ScalePurpose.inner), coords.xReversed);
-        writePositionScale(ScalePurpose.y, coords.allYFields, getYRange(), false, coords.yReversed);
+    public void writeCoordinateScales() {
+        writePositionScale(ScalePurpose.x, structure.coordinates.allXFields, getXRange(), elementsFillHorizontal(ScalePurpose.x), hAxis.isReversed);
+        writePositionScale(ScalePurpose.inner, structure.coordinates.allXClusterFields, "[-0.5, 0.5]", elementsFillHorizontal(ScalePurpose.inner), false);
+        writePositionScale(ScalePurpose.y, structure.coordinates.allYFields, getYRange(), false, vAxis.isReversed);
+        writeScaleExtras();
+    }
+
+    protected void writeScaleExtras() {
+        out.onNewLine().add("var base_scales = [scale_x, scale_y];").at(50).comment("Untransformed original scales");
         writeAspect();
-        interaction.addScaleInteractivity();
+    }
+
+    public void writeDiagramScales() {
+        out.onNewLine().add("var scale_x = d3.scaleLinear(), scale_y = d3.scaleLinear()").endStatement();
+        writeScaleExtras();
     }
 
     private void writeAspect() {
@@ -425,86 +469,73 @@ public class D3ScaleBuilder {
     }
 
     private void writePositionScale(ScalePurpose purpose, Field[] fields, String range, boolean fillToEdge, boolean reverse) {
-        int categories = scaleWithDomain(purpose.name(), fields, purpose, 2, "linear", null, reverse);
-
-        if (fields.length == 0) {
-            out.addChained("range(" + range + ")");
-        } else if (categories > 0) {
-            // Lines and areas should go all the way to the edge
-            if (fillToEdge)
-                out.addChained("rangePoints(" + range + ", 0)");
-            else
-                out.addChained("rangePoints(" + range + ", 1)");
-        } else {
-            out.addChained("range(" + range + ")");
-        }
+        int categories = defineScaleWithDomain(purpose.name(), fields, purpose, 2, "linear", null, reverse);
+        out.addChained("range(" + range + ")");
+        if (categories > 0 && fillToEdge)
+            out.add(".padding(0)");
         out.endStatement();
     }
 
     private String getXRange() {
-        if (structure.coordinates.isPolar()) return "[0, geom.inner_radius]";
-        if (structure.coordinates.isTransposed()) return "[geom.inner_width, 0]";
-        return "[0, geom.inner_width]";
+        if (coords == Coordinates.polar) return "[0, geom.inner_radius]";
+
+        boolean reversed = coords == Coordinates.transposed && structure.coordinates.xCategorical;
+        if (reverseRange(structure.coordinates.allXFields)) reversed = !reversed;
+        return reversed ? "[geom.inner_width,0]" : "[0, geom.inner_width]";
     }
 
     private String getYRange() {
-        if (structure.coordinates.isPolar()) return "[0, Math.PI*2]";
-        if (structure.coordinates.isTransposed()) return "[0, geom.inner_height]";
-        return "[geom.inner_height, 0]";
+        if (coords == Coordinates.polar) return "[0, Math.PI*2]";
+
+        boolean reversed = false;
+        // If we are on the vertical axis and all the position  are numeric, but the lowest at the start, not the end
+        // This means that vertical numeric axes run bottom-to-top, as expected.
+        if (coords != Coordinates.transposed) reversed = !structure.coordinates.yCategorical;
+        if (reverseRange(structure.coordinates.allYFields)) reversed = !reversed;
+        return reversed ? "[geom.inner_height,0]" : "[0, geom.inner_height]";
     }
 
     private Double getAspect() {
         //Find Param with "aspect" and return its value
         for (VisSingle e : elements) {
-            if (e.fCoords != null) {
                 for (Param p : e.fCoords) {
                     if (p.asString().equals("aspect")) {
                         Param m = p.firstModifier();
-
                         //Use "square" for 1.0 aspect ratio
                         if (m.asString().equals("square")) return 1.0;
                         else return m.asDouble();
                     }
-                }
             }
         }
         return null;
     }
 
-    private int scaleWithDomain(String name, Field[] fields, ScalePurpose purpose, int numericDomainDivs, String defaultTransform, Object[] partitionPoints,
-                                boolean reverse) {
+    private boolean reverseRange(Field[] fields) {
+        if (fields.length == 0) return false;
+        // Ranking causes us to reverse the order
+        for (Field f : fields)
+            if (!"rank".equals(f.strProperty("summary")))
+                return false;
+        return true;
+    }
+
+    private int defineScaleWithDomain(String name, Field[] fields, ScalePurpose purpose, int numericDomainDivs,
+                                      String defaultTransform, Object[] partitionPoints, boolean reverse) {
 
         out.onNewLine().add("var", "scale_" + name, "= ");
 
         // No position for this dimension, so util a default [0,1] scale
-        if (fields.length == 0) {
-            out.add("d3.scale.linear().domain([0,1])");
-            return -1;
-        }
-
-        Field field = fields[0];
+        if (fields.length == 0) return makeEmptyZeroOneScale();
 
         // Categorical field (includes binned data)
-        if (ModelUtil.combinationIsCategorical(fields, purpose.isCoord)) {
-            // Combine all categories in the position after each color
-            // We use all the categories in the data; we do not need the partition points
-            List<Object> list = getCategories(fields);
-            if (reverse) Collections.reverse(list);
-            out.add("d3.scale.ordinal()").addChained("domain([");
-            // Write numbers as numbers, everything else becomes a string
-            for (int i = 0; i < list.size(); i++) {
-                Object o = list.get(i);
-                if (i>0) out.add(", ");
-                if (o instanceof Number) out.add(Data.format(o, false));
-                else out.add(Data.quote(o.toString()));
-            }
-            out.add("])");
-            return list.size();
-        }
+        if (ModelUtil.combinationIsCategorical(fields, purpose.isCoord))
+            return makeCategoricalScale(fields, purpose, reverse);
 
         // Determine how much we want to include zero (for size scale we always want it)
         double includeZero = getIncludeZeroFraction(fields, purpose);
         if (purpose == ScalePurpose.size) includeZero = 1.0;
+
+        Field field = fields[0];
 
         // Build a combined scale field and force the desired transform on it for x and y dimensions
         Field scaleField = fields.length == 1 ? field : combineNumericFields(fields);
@@ -521,8 +552,8 @@ public class D3ScaleBuilder {
         }
 
         // We util a nice scale only for rectangular coordinates
-        boolean nice = (name.equals("x") || name.equals("y")) && !coordinates.isPolar();
-        double[] padding = getNumericPaddingFraction(purpose, coordinates);
+        boolean nice = (name.equals("x") || name.equals("y")) && coords != Coordinates.polar;
+        double[] padding = getNumericPaddingFraction(purpose, coords);
 
         // Areas and line should fill the horizontal dimension, as should any binned field
         if (scaleField.isBinned() || purpose == ScalePurpose.x && elementsFillHorizontal(ScalePurpose.x)) {
@@ -551,7 +582,7 @@ public class D3ScaleBuilder {
                     v = partitionPoints[i];
                 divs[i] = dateBuilder.make(Data.asDate(v), dateFormat, true);
             }
-            out.add("d3.time.scale()");
+            out.add("d3.scaleTime()");
         } else {
             // If requested to have a specific transform, util that. Otherwise util the one the field suggests.
             // Some scales (like for an area size) have a default transform (e.g. root) and we
@@ -562,14 +593,8 @@ public class D3ScaleBuilder {
 
             // Size must not get a transform as it will seriously distort things
             if (purpose == ScalePurpose.size) transform = defaultTransform;
-            else if (transform == null) {
-                // We are free to choose -- the user did not specify
-                transform = (String) scaleField.property("transform");
-                if (transform == null) transform = "linear";
-                if (transform.equals("linear")) transform = defaultTransform;
-            }
-            if (transform.equals("root")) transform = "sqrt";                   // D3 uses this name
-            out.add("d3.scale." + transform + "()");
+            transform = makeD3ScaleName(defaultTransform, scaleField, transform);
+            out.add("d3." + transform + "()");
             for (int i = 0; i < divs.length; i++) {
                 if (partitionPoints == null)
                     divs[i] = min + (max - min) * i / (numericDomainDivs - 1);
@@ -588,6 +613,43 @@ public class D3ScaleBuilder {
         return -1;
     }
 
+    private int makeCategoricalScale(Field[] fields, ScalePurpose purpose, boolean reverse) {
+        // Combine all categories in the position after each color
+        // We use all the categories in the data; we do not need the partition points
+        List<Object> list = getCategories(fields);
+        if (reverse) Collections.reverse(list);
+        out.add(purpose.isCoord ? "d3.scalePoint().padding(0.5)" : "d3.scaleOrdinal()")
+                .addChained("domain([");
+        // Write numbers as numbers, everything else becomes a string
+        for (int i = 0; i < list.size(); i++) {
+            Object o = list.get(i);
+            if (i > 0) out.add(", ");
+            if (o instanceof Number) out.add(Data.format(o, false));
+            else out.add(Data.quote(o.toString()));
+        }
+        out.add("])");
+        return list.size();
+    }
+
+    private int makeEmptyZeroOneScale() {
+        out.add("d3.scaleLinear().domain([0,1])");
+        return -1;
+    }
+
+    // Create the D3 scale name
+    private String makeD3ScaleName(String defaultTransform, Field scaleField, String transform) {
+        if (transform == null) {
+            // We are free to choose -- the user did not specify
+            transform = (String) scaleField.property("transform");
+            if (transform == null) transform = "linear";
+            if (transform.equals("linear")) transform = defaultTransform;
+        }
+        if (transform.equals("root") || transform.equals("sqrt")) return "scaleSqrt";
+        if (transform.equals("log")) return "scaleLog";
+        if (transform.equals("linear")) return "scaleLinear";
+        throw new IllegalStateException("Unknown scale type: " + transform);
+    }
+
     public List<Object> getCategories(Field[] ff) {
         Set<Object> all = new LinkedHashSet<>();
         for (Field f : ff) if (f.preferCategorical()) Collections.addAll(all, f.categories());
@@ -598,7 +660,7 @@ public class D3ScaleBuilder {
 
         if (purpose == ScalePurpose.x) return 0.1;               // Really do not want much empty space on color axes
         if (purpose == ScalePurpose.size) return 0.98;           // Almost always want to go to zero
-        if (purpose == ScalePurpose.color) return 0.2;           // Color
+        if (purpose == color) return 0.2;           // Color
 
         // For 'Y'
 
@@ -632,11 +694,11 @@ public class D3ScaleBuilder {
         return combined;
     }
 
-    private double[] getNumericPaddingFraction(ScalePurpose purpose, ChartCoordinates coords) {
+    private double[] getNumericPaddingFraction(ScalePurpose purpose, Coordinates coords) {
         double[] padding = new double[]{0, 0};
-        if (purpose == ScalePurpose.color || purpose == ScalePurpose.size)
+        if (purpose == color || purpose == ScalePurpose.size)
             return padding;                // None for aesthetics
-        if (coords.isPolar()) return padding;                               // None for polar angle
+        if (coords == Coordinates.polar) return padding;                               // None for polar angle
         for (VisSingle e : elements) {
             boolean noBottomYPadding = e.tElement == Element.bar || e.tElement == Element.area || e.tElement == Element.line;
             if (e.tElement == Element.text) {
@@ -723,7 +785,7 @@ public class D3ScaleBuilder {
             largeElement = true;
 
         ColorMapping palette = Palette.makeColorMapping(f, p.modifiers(), largeElement);
-        scaleWithDomain("color", new Field[]{f}, ScalePurpose.color, palette.values.length, "linear", palette.values, false);
+        defineScaleWithDomain("color", new Field[]{f}, color, palette.values.length, "linear", palette.values, false);
         out.addChained("range([ ").addQuoted((Object[]) palette.colors).add("])").endStatement();
     }
 
@@ -731,7 +793,7 @@ public class D3ScaleBuilder {
         double min = p.hasModifiers() ? p.firstModifier().asDouble() : 0.2;
         Field f = fieldById(p, vis);
 
-        scaleWithDomain("opacity", new Field[]{f}, ScalePurpose.color, 2, "linear", null, false);
+        defineScaleWithDomain("opacity", new Field[]{f}, color, 2, "linear", null, false);
         if (f.preferCategorical()) {
             int length = f.categories().length;
             double[] sizes = new double[length];
@@ -758,7 +820,7 @@ public class D3ScaleBuilder {
 
         Field f = fieldById(p, vis);
         Object[] divisions = f.isNumeric() ? null : f.categories();
-        scaleWithDomain(name, new Field[]{f}, ScalePurpose.size, sizes.length, defaultTransform, divisions, false);
+        defineScaleWithDomain(name, new Field[]{f}, ScalePurpose.size, sizes.length, defaultTransform, divisions, false);
         out.addChained("range([ ").add(Data.join(sizes)).add("])").endStatement();
     }
 
@@ -798,17 +860,20 @@ public class D3ScaleBuilder {
         final int ticks;
         final String name;
         final boolean grid;
+        final boolean reverse;
 
         private AxisSpec() {
             ticks = 9999;
             name = null;
             grid = false;
+            reverse = false;
         }
 
-        public AxisSpec(int ticks, String name, boolean grid) {
+        public AxisSpec(int ticks, String name, boolean grid, boolean reverse) {
             this.ticks = ticks;
             this.name = name;
             this.grid = grid;
+            this.reverse = reverse;
         }
 
         public AxisSpec merge(Param[] params) {
@@ -816,15 +881,15 @@ public class D3ScaleBuilder {
             for (Param p : params) {
                 if (p.type() == Type.number) {
                     int newTicks = Math.min((int) p.asDouble(), result.ticks);
-                    result = new AxisSpec(newTicks, result.name, result.grid);
+                    result = new AxisSpec(newTicks, result.name, result.grid, result.reverse);
                 } else if (p.type() == Type.string) {
                     String newTitle = p.asString();
-                    result = new AxisSpec(result.ticks, newTitle, result.grid);
+                    result = new AxisSpec(result.ticks, newTitle, result.grid, result.reverse);
                 } else if (p.type() == Type.option) {
                     if ("grid".equals(p.asString()))
-                        result = new AxisSpec(result.ticks, result.name, true);
+                        result = new AxisSpec(result.ticks, result.name, true, result.reverse);
                     else if ("reverse".equals(p.asString()))
-                        result = new AxisSpec(result.ticks, result.name, result.grid);
+                        result = new AxisSpec(result.ticks, result.name, result.grid, true);
                 }
             }
             return result;

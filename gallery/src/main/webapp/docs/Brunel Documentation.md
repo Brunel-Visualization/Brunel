@@ -221,6 +221,12 @@ Both `rectangular` and `transpose` support the `aspect` parameter which controls
 the data on the axes (x:y). A value of `1.0` or `square` results in equal spacing of data on both
 axes.
 
+In addition, `rectangular` and `transpose` support the `square` parameter which forces the physical
+space for the chart to be square. The chart is positioned at the upper left of any space allocated
+for it, with the space inside the axes guaranteed to be square. You can use a combination of setting `square`
+with `aspect` and setting the X and Y ranges explicitly. In case of conflict, the `square` and `aspect`
+settigns will be honored and the ranges will be expanded to suit the other settings.
+
 Currently, polar is poorly supported; stacked polar bars (pie charts) work, and you can set the size
 on them to do a Rose Diagram (a pie chart with different radii for each wedge). Little else works.
 
@@ -1263,10 +1269,13 @@ include:
  * **elements** -- An array of elements contained in the chart (see above)
  * **scales** -- If defined, gives the coordinate scales as a structure `{x, y}`. These are standard d3
 scales, configured by Brunel.
- * **zoom(params, time)** -- A function that, if called with no parameters, will return an object `{ dx, dy, s }`
-giving a 3 item array with x and y offsets, and the zoom scale. The same object can be passed in as
-the first argument to set the pan-zoom. The time is an optional parameter determining the speed at
-which the zoom is animated (zero means instant).
+ * **zoom(params, time)** -- A function that, if called with no parameters, will return the zoom
+transform for the chart. It can be passe the same type of object to set the current transform, with
+an optional time parameter which indicates the time in milliseconds the zoom should be animated. The
+zoom trasnform is a `d3.zoomTransform` code> described in
+https://github.com/d3/d3-zoom/blob/master/README.md#zoomTransform. It has methods like `scale` and `translate`
+that craete new modified transforms. For example, to reset the zoom on the first chart and then
+scale by a factor of two, use this: `vis.charts[0].zoom(d3.zoomIdentity.scale(2))`
 
 
 ### Examples of Use

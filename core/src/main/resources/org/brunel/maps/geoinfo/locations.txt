@@ -34,6 +34,7 @@ Xi’an|34.25833|108.92861|107|4|Asia|China|EastAsia-Pacific|EasternAsia|World
 Ankara|39.91987|32.85427|99|5|Asia|Europe-CentralAsia|Turkey|WesternAsia|World
 Berlin|52.52437|13.41053|99|5|Europe|Europe-CentralAsia|Europe-Russia|Germany|WesternEurope|World
 Singapore|1.28967|103.85007|99|5|Asia|EastAsia-Pacific|South-EasternAsia|World
+New York City|40.71427|-74.00597|110|3|Americas|MiddleAtlantic|NorthAmerica|NorthernAmerica|USA48|UnitedStatesofAmerica|World
 Hangzhou|30.29365|120.16142|106|4|Asia|China|EastAsia-Pacific|EasternAsia|World
 Harbin|45.75|126.65|106|4|Asia|China|EastAsia-Pacific|EasternAsia|World
 Lahore|31.54972|74.34361|106|4|Asia|Pakistan|SouthAsia|SouthernAsia|World
@@ -127,7 +128,7 @@ Fortaleza|-3.71722|-38.54306|95|4|Americas|Brazil|LatinAmerica-Caribbean|SouthAm
 Lucknow|26.83928|80.92313|95|4|Asia|India|SouthAsia|SouthernAsia|World
 Surabaya|-7.24917|112.75083|95|4|Asia|EastAsia-Pacific|Indonesia|South-EasternAsia|World
 İzmir|38.41273|27.13838|95|4|Asia|Europe-CentralAsia|Turkey|WesternAsia|World
-City of London|51.51279|-0.09184|109|2|Europe|Europe-CentralAsia|Europe-Russia|NorthernEurope|UnitedKingdom|UnitedKingdom_x|World
+London|51.51279|-0.09184|109|2|Europe|Europe-CentralAsia|Europe-Russia|NorthernEurope|UnitedKingdom|UnitedKingdom_x|World
 Amman|31.95522|35.94503|87|5|Asia|Jordan|MiddleEast-NorthAfrica|WesternAsia|World
 Bamako|12.65|-8.0|87|5|Africa|Mali|Sub-SaharanAfrica|WesternAfrica|World
 Belgrade|44.80401|20.46513|87|5|Europe|Europe-CentralAsia|Europe-Russia|RepublicofSerbia|RepublicofSerbia_x|SouthernEurope|World
@@ -247,7 +248,6 @@ Nizhniy Novgorod|56.32867|44.00205|87|4|EasternEurope-Russia|Europe-CentralAsia|
 Semarang|-6.99306|110.42083|87|4|Asia|EastAsia-Pacific|Indonesia|South-EasternAsia|World
 Shiraz|29.61031|52.53113|87|4|Asia|Iran|MiddleEast-NorthAfrica|SouthernAsia|World
 Suwon-si|37.29111|127.00889|87|4|Asia|EastAsia-Pacific|EasternAsia|SouthKorea|World
-Borough of Queens|40.68149|-73.83652|94|3|Americas|MiddleAtlantic|NorthAmerica|NorthernAmerica|USA48|UnitedStatesofAmerica|World
 Brooklyn|40.6501|-73.94958|94|3|Americas|MiddleAtlantic|NorthAmerica|NorthernAmerica|USA48|UnitedStatesofAmerica|World
 Nagpur|21.14631|79.08491|94|3|Asia|India|SouthAsia|SouthernAsia|World
 Athens|37.97945|23.71622|79|5|Europe|Europe-CentralAsia|Europe-Russia|Greece|SouthernEurope|World
@@ -338,7 +338,6 @@ Valencia|39.46975|-0.37739|82|4|Europe|Europe-CentralAsia|Europe-Russia|Southern
 Voronezh|51.67204|39.1843|82|4|EasternEurope-Russia|Europe-CentralAsia|Europe-Russia|Russia|World
 Manhattan|40.78343|-73.96625|89|3|Americas|MiddleAtlantic|NorthAmerica|NorthernAmerica|USA48|UnitedStatesofAmerica|World
 Philadelphia|39.95233|-75.16379|89|3|Americas|MiddleAtlantic|NorthAmerica|NorthernAmerica|USA48|UnitedStatesofAmerica|World
-New York City|40.71427|-74.00597|110|0|Americas|MiddleAtlantic|NorthAmerica|NorthernAmerica|USA48|UnitedStatesofAmerica|World
 Bratislava|48.14816|17.10674|74|5|EasternEurope|EasternEurope-Russia|Europe|Europe-CentralAsia|Europe-Russia|Slovakia|World
 Antalya|36.90812|30.69556|81|4|Asia|Europe-CentralAsia|Turkey|WesternAsia|World
 Austin|30.26715|-97.74306|81|4|Americas|NorthAmerica|NorthernAmerica|USA48|UnitedStatesofAmerica|WestSouthCentral|World
@@ -371,7 +370,6 @@ Zarqa|32.07275|36.08796|81|4|Asia|Jordan|MiddleEast-NorthAfrica|WesternAsia|Worl
 Gujrānwāla|32.16167|74.18831|88|3|Asia|Pakistan|SouthAsia|SouthernAsia|World
 Hyderabad|25.39242|68.37366|88|3|Asia|Pakistan|SouthAsia|SouthernAsia|World
 Multān|30.19556|71.47528|88|3|Asia|Pakistan|SouthAsia|SouthernAsia|World
-The Bronx|40.84985|-73.86641|88|3|Americas|MiddleAtlantic|NorthAmerica|NorthernAmerica|USA48|UnitedStatesofAmerica|World
 Āgra|27.18333|78.01667|88|3|Asia|India|SouthAsia|SouthernAsia|World
 Panamá|8.9936|-79.51973|73|5|Americas|CentralAmerica|LatinAmerica-Caribbean|NorthAmerica|Panama|World
 San Juan|18.46633|-66.10572|73|5|Americas|Caribbean|LatinAmerica-Caribbean|NorthAmerica|World

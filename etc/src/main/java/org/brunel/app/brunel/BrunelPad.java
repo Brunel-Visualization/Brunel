@@ -30,7 +30,6 @@ import org.brunel.model.VisItem;
 import org.brunel.util.Library;
 import org.brunel.util.LocalOutputFiles;
 import org.brunel.util.PageOutput;
-import org.brunel.util.WebDisplay;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,13 +45,9 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
 
 @SuppressWarnings("serial")
 public class BrunelPad extends JFrame implements AppEventListener, Droppable {
-
-    private static final String JS_FILE = "/org/brunel/util/animation.js";
-    private static final String JS = new Scanner(WebDisplay.class.getResourceAsStream(JS_FILE), "UTF-8").useDelimiter("\\A").next();
 
     /* use '-v version' to use a minified online library version */
     public static void main(String[] args) {
@@ -65,6 +60,7 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
 
         new BrunelPad(options).start();
     }
+
 
     private final Settings settings;
     private final ActionEditorPane actionEditor;
@@ -296,9 +292,12 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
         new PageOutput(builder, writer)
                 .pageTitle("Brunel: " + shortForm(a))
                 .addTitles("<h2 style='text-align:center'>" + a + "</h2>")
+//                .addExecutionScript(zoomChartForFixedBars())
                 .write();
 
         try {
+//            writer.append("<p>\n<button onclick='var c = v.charts[0]; c.zoom(c.zoom().translate(100, 0), 1000)'>RIGHT</button>\n");
+//            writer.append("<button onclick='v.charts[0].zoom(d3.zoomIdentity, 1000)'>HOME</button>\n</p>\n");
             writer.close();
         } catch (IOException ignored) {
         }
@@ -326,6 +325,16 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
         if (source.strProperty("uri") != null) settings.putString("last-source", source.strProperty("uri"));
         setTitle(source.name());
         updateVis();
+    }
+
+    public String[] zoomChartForFixedBars() {
+        return new String[] {
+                "var chart = v.charts[0], scx = chart.scales.x, range = scx.range(), nCats = scx.domain().length;",
+                "var width = Math.abs(range[range.length-1] - range[0]); ",
+                "var desiredGap = 20;",
+                "var desiredRange = desiredGap * nCats;",
+                "chart.zoom(d3.zoomIdentity.scale(desiredRange/width));"
+        };
     }
 
 }

@@ -32,7 +32,7 @@ class Cloud extends D3Diagram {
 
     public ElementDetails initializeDiagram() {
         out.comment("Build the cloud layout");
-        out.add("var cloud = BrunelD3.cloudLayout(processed, [geom.inner_width, geom.inner_height])").endStatement();
+        out.add("var cloud = BrunelD3.cloudLayout(processed, [geom.inner_width, geom.inner_height], zoomNode)").endStatement();
         out.add("function keyFunction(d) { return d.key }").endStatement();
         // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.text, "text", "data._rows");
@@ -46,7 +46,7 @@ class Cloud extends D3Diagram {
 
     public void writeDiagramEnter() {
         // The cloud needs to set all this stuff up front
-        out.addChained("style('text-anchor', 'middle').classed('label', true)")
+        out.add("merged.style('text-anchor', 'middle').classed('label', true)")
                 .addChained("text(labeling.content)");
         D3LabelBuilder.addFontSizeAttribute(vis, out);
         out.endStatement();

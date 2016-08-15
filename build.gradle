@@ -111,11 +111,8 @@ task brunelGeoFiles(type: Copy) {
     into 'out'
 }
 
-task build(dependsOn: [project(':core').brunelJar, project(':etc').brunelJar, project(':data').brunelJar, 'scala:uploadArchives',
-                       project(':service').brunelJar, 'spark-kernel:uploadArchives', brunelJS, brunelJavadoc, brunelSyntaxDoc, brunelGeoFiles ]) {
-}
 
-task makeMinified(type: JavaExec, dependsOn: build) {
+task makeMinified(type: JavaExec) {
     print new File(".").absolutePath
     classpath configurations.minification
     main = 'com.google.javascript.jscomp.CommandLineRunner'
@@ -135,7 +132,7 @@ task makeCSS(type: Copy) {
     rename('Brunel.css', 'brunel.' + version + '.css')
 }
 
-task makeMinifiedControls(type: JavaExec, dependsOn: build) {
+task makeMinifiedControls(type: JavaExec) {
     print new File(".").absolutePath
     classpath configurations.minification
     main = 'com.google.javascript.jscomp.CommandLineRunner'
@@ -147,6 +144,17 @@ task makeMinifiedControls(type: JavaExec, dependsOn: build) {
     closureArgs << "out/javascript/BrunelEventHandlers.js"
     closureArgs << "out/javascript/BrunelJQueryControlFactory.js"
     args closureArgs
+}
+
+task makePythonJS (type: Copy, dependsOn: [makeMinified, makeMinifiedControls, makeCSS]) {
+    description 'Copy minified JS for jupyter installation'
+    from('out/javascript')
+    into('python/brunel/brunel_ext')
+    include ('brunel*.' + version + '*', 'sumoselect.css' )
+}
+
+task build(dependsOn: [project(':core').brunelJar, project(':etc').brunelJar, project(':data').brunelJar, makePythonJS, 'scala:uploadArchives',
+                       project(':service').brunelJar, 'spark-kernel:uploadArchives', brunelJS, brunelJavadoc, brunelSyntaxDoc, brunelGeoFiles ]) {
 }
 
 task makeZip(type: Zip, dependsOn: [build, makeMinified, makeMinifiedControls, makeCSS]) {
@@ -166,4 +174,5 @@ task makeArchives(dependsOn: [makeZip, makeTar]) {
     description 'Create both .zip and compressed tar of the contents of the build output (/out)'
 
 }
+
 

@@ -33,22 +33,21 @@ class Bubble extends D3Diagram {
         out.comment("Define bubble (hierarchy) data structures");
 
         makeHierarchicalTree();
-        out.add("var pack = d3.layout.pack().size([geom.inner_width, geom.inner_height])")
-                .addChained("value(function(d) { return d.value == null || d.value < 0 ? 0 : d.value })")
-                .addChained("sort(BrunelData.diagram_Hierarchical.compare)").endStatement();
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.spaceFillingCircle, "point", "pack(tree.root)");
+
+        out.add("var pack = d3.pack().size([geom.inner_width, geom.inner_height])").endStatement();
+        return ElementDetails.makeForDiagram(vis, ElementRepresentation.spaceFillingCircle, "point", "pack(tree).descendants()");
     }
 
     public void writeDefinition(ElementDetails details) {
         // Simple circles, with classes defined for CSS
         out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })")
-                .addChained("attr('cx', function(d) { return d.x; })")
-                .addChained("attr('cy', function(d) { return d.y; })")
-                .addChained("attr('r', function(d) { return d.r; })");
+                .addChained("attr('cx', function(d) { return scale_x(d.x) })")
+                .addChained("attr('cy', function(d) { return scale_y(d.y) })")
+                .addChained("attr('r', function(d) { return scale_x(d.r) - scale_x(0) })");
         addAestheticsAndTooltips(details);
     }
 
     public String getRowKey() {
-        return "d.key || data._key(d.row)";
+        return "d.data.key == null ? data._key(d.data.row) : d.data.key";
     }
 }

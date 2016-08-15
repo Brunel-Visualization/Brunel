@@ -26,7 +26,6 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
-import org.brunel.maps.projection.ProjectionBuilder;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Element;
 
@@ -35,65 +34,29 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import static org.brunel.model.VisTypes.Element.point;
+
 public class GeoMap extends D3Diagram {
-	
+
     private final GeoMapping mapping;           // Mapping of identifiers to features
 
+    private static void writeProjection(ScriptWriter out, GeoInformation geo) {
 
-    private static void writeProjection(ScriptWriter out, GeoInformation geo, D3Interaction interaction) {
-
-        // Calculate a suitable projection
         String[] projectionDescription = geo.d3Definition().split("\n");
-        out.add("var ");
-        out.indentMore();
-
-        // Define Winkel Tripel function if needed
-        if (projectionDescription[0].contains("winkel3")) {
-            String[] strings = ProjectionBuilder.WinkelD3Function;
-            out.add("winkel3 =", strings[0]);
-            out.indentMore();
-            for (int i = 1; i < strings.length; i++)
-                out.onNewLine().add(strings[i]);
-            out.add(",").onNewLine();
-            out.indentLess();
-
-        }
 
         // Define the projection
-        out.add("projection =", projectionDescription[0].trim());
-        out.indentMore();
-        for (int i = 1; i < projectionDescription.length; i++)
-            out.onNewLine().add(projectionDescription[i].trim());
+        out.add("var base = ").indentMore();
+        for (String p : projectionDescription) out.add(p.trim()).onNewLine();
+        out.indentLess();
 
+        // Define a scaled version of the projection
+        out.add("function projection(p) {")
+                .indentMore().indentMore().onNewLine()
+                .add("var q = base(p), t = d3.zoomTransform(zoomNode)").endStatement()
+                .add("return q ? [t.k*q[0]+t.x, t.k*q[1]+t.y] : null").endStatement()
+                .indentLess().indentLess().add("}").endStatement();
 
-        // Always add pan/zoom for now -- should check to see if turned off
-        if (interaction.getZoomType() == D3Interaction.ZoomType.MapZoom) {
-            out.add(",").onNewLine();
-            out.indentLess();
-	        out.add("zoom = d3.behavior.zoom()")
-	                .addChained("scale(projection.scale()).translate(projection.translate())")
-	                .addChained("on('zoom', function() {").onNewLine();
-	        out.indentMore();
-	        out.add("projection.translate(zoom.translate()).scale(zoom.scale())").endStatement();
-	        out.add("updateAll(0)").endStatement();
-	        out.indentLess().add("})");
-	        out.endStatement();
-	        out.indentLess();
-	        out.add("vis.call(zoom)").endStatement();
-        }
-        else {
-        	out.endStatement();
-        	out.indentLess().indentLess();
-        }
-        // Define a 'safe' version of projection which sends failed projection points off the screen
-        // This occurs for the albersUSA projection ...
-        out.add("function projectTransform(p) {").indentMore()
-                .onNewLine().add("var q = projection(p)").endStatement()
-                .onNewLine().add("if (!q) q = [-9e9,9e9]").endStatement()
-                .onNewLine().add("return 'translate(' + q[0] + ',' + q[1] + ')'")
-                .indentLess().onNewLine().add("}");
-        out.onNewLine().add("function proj(p) { var q = p ? projection(p) : null; return q || [null,null] }").ln();
-        out.add("var path = d3.geo.path().projection(projection)").endStatement();
+        out.add("var path = d3.geoPath().projection(BrunelD3.geoStream(projection))").endStatement();
 
         // Define axes if desired
         if (geo.withGraticule) {
@@ -105,13 +68,12 @@ public class GeoMap extends D3Diagram {
             else if (step < 10) step = Math.round(step * 2) / 2.0;
             else step = 10;
 
-            out.onNewLine().add("var graticule = interior.append('path').datum(d3.geo.graticule().step([", step, ",", step, "]))")
+            out.onNewLine().add("var graticule = interior.append('path').datum(d3.geoGraticule().step([", step, ",", step, "]))")
                     .addChained("attr('class', 'grid')").endStatement()
-                    .onNewLine().add("function buildAxes() { graticule.attr('d', d3.geo.path().projection(projection)) }");
+                    .onNewLine().add("function buildAxes() { graticule.attr('d', d3.geoPath().projection(projection)) }");
         }
 
     }
-
 
     public GeoMap(VisSingle vis, Dataset data, GeoMapping geo, D3Interaction interaction, ScriptWriter out) {
         super(vis, data, interaction, out);
@@ -124,20 +86,19 @@ public class GeoMap extends D3Diagram {
         out.indentLess().comment("Read in the feature data and call build again when done");
         writeFeatureHookup(mapping, GeoInformation.getIDField(vis));
 
-        if (vis.tElement == Element.point || vis.tElement == Element.text) {
+        if (vis.tElement == point || vis.tElement == Element.text) {
             return ElementDetails.makeForCoordinates(vis, ModelUtil.getElementSymbol(vis));
         } else {
             // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
             return ElementDetails.makeForDiagram(vis, ElementRepresentation.geoFeature, "polygon", "data._rows");
         }
     }
-    
+
     public void writePerChartDefinitions() {
-    	out.titleComment("Projection");
-    	writeProjection(out, mapping.getGeoInformation(), interaction);
+        out.titleComment("Projection");
+        writeProjection(out, mapping.getGeoInformation());
 
     }
-
 
     private void writeFeatureHookup(GeoMapping mapping, String idField) {
         if (mapping.fileCount() == 0) throw new IllegalStateException("No suitable map found");
@@ -191,13 +152,11 @@ public class GeoMap extends D3Diagram {
         out.indentLess().onNewLine().add("}");
     }
 
-    
     public void writeDefinition(ElementDetails details) {
     }
 
-
     public void writePreDefinition(ElementDetails details) {
-        out.add("selection.classed('nondata', function(d) {return !d || d.row == null})").endStatement();
+        out.add("merged.classed('nondata', function(d) {return !d || d.row == null})").endStatement();
     }
 
 }
