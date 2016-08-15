@@ -15,11 +15,11 @@ Continued support for the prior project 'spark-kernel' will be included for a li
 Issue the following magic
 
 ```
-%AddJar -magic https://brunelvis.org/jar/spark-kernel-brunel-all-1.2.jar
+%AddJar -magic https://brunelvis.org/jar/spark-kernel-brunel-all-2.0.jar
 ```
 
 Notes:
-* Brunel version 1.2 requires Toree "dev8" or higher.  Version 1.1 is still available for earlier Toree versions.
+* Brunel version 2.0 requires Toree "dev8" or higher.  Version 1.1 is still available for earlier spark-kernel versions.
 * If you are upgrading to a new version of Brunel and the graphs do not appear, try executing the cell, then save the notebook, then reload the page in the browser.
 
 
