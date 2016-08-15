@@ -19,6 +19,11 @@ all people, rather than merely compliant.
 High-contrast views can be mostly achieved by use of a custom-designed style sheet. This is
 not an area we have addressed in this release.
 
+## X and Y coordinates reverse
+
+You can reverse the X and Y dimension scales by adding a `reverse` option to the definition:
+
+    x(summer) y(winter:reverse)
 
 ## Axes
 

@@ -341,7 +341,7 @@ public class D3Interaction {
      */
     private void applyZoomToScale(int dimension) {
         // Which is the screen dimension for this scale dimension?
-        boolean isScreenX = structure.coordinates.transposed ? dimension == 1 : dimension == 0;
+        boolean isScreenX = structure.coordinates.isTransposed() ? dimension == 1 : dimension == 0;
         String offset = isScreenX ? "t.x" : "t.y";
 
         out.add(dimension == 0 ? "scale_x" : "scale_y");

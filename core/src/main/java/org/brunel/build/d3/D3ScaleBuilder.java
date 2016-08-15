@@ -89,13 +89,13 @@ public class D3ScaleBuilder {
         // Set the axis information for each dimension
         AxisDetails xAxis, yAxis;
         if (axes[0] != null) {
-            xAxis = new AxisDetails("x", coords.allXFields, coords.xCategorical, axes[0].name, axes[0].ticks, axes[0].grid, axes[0].reverse);
+            xAxis = new AxisDetails("x", coords.allXFields, coords.xCategorical, axes[0].name, axes[0].ticks, axes[0].grid);
         } else
-            xAxis = new AxisDetails("x", new Field[0], coords.xCategorical, null, 9999, false, false);
+            xAxis = new AxisDetails("x", new Field[0], coords.xCategorical, null, 9999, false);
         if (axes[1] != null)
-            yAxis = new AxisDetails("y", coords.allYFields, coords.yCategorical, axes[1].name, axes[1].ticks, axes[1].grid, axes[1].reverse);
+            yAxis = new AxisDetails("y", coords.allYFields, coords.yCategorical, axes[1].name, axes[1].ticks, axes[1].grid);
         else
-            yAxis = new AxisDetails("y", new Field[0], coords.yCategorical, null, 9999, false, false);
+            yAxis = new AxisDetails("y", new Field[0], coords.yCategorical, null, 9999, false);
 
         // Map the dimension to the physical location on screen
         if (this.coords == Coordinates.transposed) {
@@ -209,7 +209,7 @@ public class D3ScaleBuilder {
 
     private int legendWidth() {
         if (!needsLegends()) return 0;
-        AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical(), null, 9999, false, false);
+        AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical(), null, 9999, false);
         legendAxis.setTextDetails(structure, false);
         int spaceNeededForTicks = 32 + legendAxis.maxCategoryWidth();
         int spaceNeededForTitle = colorLegendField.label.length() * 7;                // Assume 7 pixels per character
@@ -442,9 +442,10 @@ public class D3ScaleBuilder {
     }
 
     public void writeCoordinateScales() {
-        writePositionScale(ScalePurpose.x, structure.coordinates.allXFields, getXRange(), elementsFillHorizontal(ScalePurpose.x), hAxis.isReversed);
-        writePositionScale(ScalePurpose.inner, structure.coordinates.allXClusterFields, "[-0.5, 0.5]", elementsFillHorizontal(ScalePurpose.inner), false);
-        writePositionScale(ScalePurpose.y, structure.coordinates.allYFields, getYRange(), false, vAxis.isReversed);
+        ChartCoordinates coordinates = structure.coordinates;
+        writePositionScale(ScalePurpose.x, coordinates.allXFields, getXRange(), elementsFillHorizontal(ScalePurpose.x), coordinates.xReversed);
+        writePositionScale(ScalePurpose.inner, coordinates.allXClusterFields, "[-0.5, 0.5]", elementsFillHorizontal(ScalePurpose.inner), coordinates.xReversed);
+        writePositionScale(ScalePurpose.y, coordinates.allYFields, getYRange(), false, coordinates.yReversed);
         writeScaleExtras();
     }
 
@@ -477,22 +478,15 @@ public class D3ScaleBuilder {
     }
 
     private String getXRange() {
-        if (coords == Coordinates.polar) return "[0, geom.inner_radius]";
-
-        boolean reversed = coords == Coordinates.transposed && structure.coordinates.xCategorical;
-        if (reverseRange(structure.coordinates.allXFields)) reversed = !reversed;
-        return reversed ? "[geom.inner_width,0]" : "[0, geom.inner_width]";
+        if (structure.coordinates.isPolar()) return "[0, geom.inner_radius]";
+        if (structure.coordinates.isTransposed()) return "[geom.inner_width, 0]";
+        return "[0, geom.inner_width]";
     }
 
     private String getYRange() {
-        if (coords == Coordinates.polar) return "[0, Math.PI*2]";
-
-        boolean reversed = false;
-        // If we are on the vertical axis and all the position  are numeric, but the lowest at the start, not the end
-        // This means that vertical numeric axes run bottom-to-top, as expected.
-        if (coords != Coordinates.transposed) reversed = !structure.coordinates.yCategorical;
-        if (reverseRange(structure.coordinates.allYFields)) reversed = !reversed;
-        return reversed ? "[geom.inner_height,0]" : "[0, geom.inner_height]";
+        if (structure.coordinates.isPolar()) return "[0, Math.PI*2]";
+        if (structure.coordinates.isTransposed()) return "[0, geom.inner_height]";
+        return "[geom.inner_height, 0]";
     }
 
     private Double getAspect() {
@@ -508,15 +502,6 @@ public class D3ScaleBuilder {
             }
         }
         return null;
-    }
-
-    private boolean reverseRange(Field[] fields) {
-        if (fields.length == 0) return false;
-        // Ranking causes us to reverse the order
-        for (Field f : fields)
-            if (!"rank".equals(f.strProperty("summary")))
-                return false;
-        return true;
     }
 
     private int defineScaleWithDomain(String name, Field[] fields, ScalePurpose purpose, int numericDomainDivs,
