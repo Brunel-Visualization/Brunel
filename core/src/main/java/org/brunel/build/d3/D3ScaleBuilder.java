@@ -770,7 +770,8 @@ public class D3ScaleBuilder {
             largeElement = true;
 
         ColorMapping palette = Palette.makeColorMapping(f, p.modifiers(), largeElement);
-        defineScaleWithDomain("color", new Field[]{f}, color, palette.values.length, "linear", palette.values, false);
+        int categories = defineScaleWithDomain("color", new Field[]{f}, color, palette.values.length, "linear", palette.values, false);
+        if (categories <= 0) out.addChained("interpolate(d3.interpolateHcl)");   // Interpolate for numeric only
         out.addChained("range([ ").addQuoted((Object[]) palette.colors).add("])").endStatement();
     }
 

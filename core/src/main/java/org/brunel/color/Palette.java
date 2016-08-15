@@ -51,6 +51,9 @@ public class Palette {
     private static final Palette nominal19;                         // 19 of the 22 Kelly colors
     private static final Map<String, String> COLORS_BY_NAME;        // Colors by name
 
+    private static final Palette emptyPalette = new Palette("empty", Collections.EMPTY_LIST, false);
+
+
     static {
         COLORS_BY_NAME = new HashMap<>();
         Scanner scanner = new Scanner(Palette.class.getResourceAsStream("/org/brunel/color/colors.txt")).useDelimiter("\n");
@@ -179,6 +182,7 @@ public class Palette {
     }
 
     private static Palette makeNamedPalette(String name) {
+        if (name.equals("none") || name.isEmpty()) return emptyPalette;
         if (name.equalsIgnoreCase("nominal") || name.equalsIgnoreCase("ordinal")
                 || name.equalsIgnoreCase("nominal19") || name.equalsIgnoreCase("kelly"))
             return nominal19;
@@ -210,7 +214,8 @@ public class Palette {
     private static Palette makeSingleHue(String c) {
         Color base = Color.decode(c);
         float[] hsv = Color.RGBtoHSB(base.getRed(), base.getGreen(), base.getBlue(), new float[3]);
-        int n = 5;
+        int n = 10
+                ;
         List<String> colors = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
             float r = i / (n - 1.0f);
@@ -250,7 +255,7 @@ public class Palette {
             if (i < low - 1) {
                 colors[i] = lower.items[low - 1 - i];
             } else if (i == low - 1) {
-                colors[i] = mid(lower.items[0], upper.items[0], 0.05);
+                colors[i] = mid(lower.items[0], upper.items[0], 0.5);
             } else {
                 colors[i] = upper.items[i - low];
             }

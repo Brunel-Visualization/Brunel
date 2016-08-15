@@ -79,17 +79,26 @@ You can explicitly request the type of mapping you want to use, as shown below:
     a set of colors for category data, and for numeric data defines a scale.  You can also add in runs of asterisks
     to mute the colors more than normal, or `=` to remove default muting for area elements. The standard syntax for a
     list of colors is `[color1,color2, ... ,colorN]`, but we also allow `color1-color2-...-colorN` as a simpler style,
-    especially for divergent color scales. Here are some examples for a numeric field
+    especially for divergent color scales.
+</p>
+<p>
+    By default, when you ask for a divergent palette (2 colors) a scale is created that runs through a neutral
+    color in the middle. This usually produces a more easily interpretable color scale, but the method can be defeated
+    by specifying a three color scale and using the special middle color `none`, which will then create a simple
+    color interpolation from the lower to the upper value:
+</p>
+<p>
+    Here are some examples for a numeric field:
 </p>
 <p class="examples"><a onClick="showAction(this.text)">color(winter:black-yellow) x(winter) y(summer) style("size:200%")</a></p>
 <p class="examples"><a onClick="showAction(this.text)">color(winter:[black,yellow]) x(winter) y(summer) style("size:200%")</a></p>
 <p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) color(winter:[white, black, yellow]) style('size:200%')</a></p>
 <p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) color(winter:[magenta, lime]) style('size:200%')</a>
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) color(winter:[magenta, none, lime]) style('size:200%')</a>
 </p>
 <p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) color(winter:[magenta, lime, **]) style('size:200%')</a>
 </p>
 <p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) color(winter:[black, nominal]) style('size:200%')</a>
-
 </p>
 And here are some examples for a categorical field
 </p>
