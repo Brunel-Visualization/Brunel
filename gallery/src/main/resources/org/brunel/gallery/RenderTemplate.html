@@ -27,7 +27,8 @@
 <link href="../metisMenu/metisMenu.min.css" rel="stylesheet">
 <!-- link href="../startbootstrap-sb-admin/css/timeline.css" rel="stylesheet"-->
 <link href="../startbootstrap-sb-admin/css/sb-admin-2.css" rel="stylesheet">
-<link href="../font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+<!-- link href="../font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css"-->
+<link href="https://code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.css" rel="stylesheet" type="text/css">
 <link rel="stylesheet" href="../dropzone/dropzone.min.css">
 <!--link rel="stylesheet" href="../css/brunelapp.css"-->
 
@@ -80,6 +81,10 @@
 		a:hover {
 		    text-decoration: underline;
 		}
+		
+		.ui-icon {
+		    background-image: url(../css/ui-icons_337ab7_256x240.png);
+		}
 
     </style>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js" charset="utf-8"></script>
@@ -105,7 +110,7 @@
  			<ul class="nav navbar-top-links navbar-right">
  				<li class="dropdown">
  				 	<a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                        Gallery  <i class="fa fa-caret-down"></i>
+                        Gallery  <span style="float:right" class="ui-icon ui-icon-triangle-1-s"></span>
                     </a>
                     <div class="dropdown-menu"">
                     	<div  id="gallery_dropdown" style="overflow-y: scroll; max-height: 600px;">
@@ -119,7 +124,7 @@
  				</li>
  				<li class="dropdown">
  				 	<a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                        Cookbook  <i class="fa fa-caret-down"></i>
+                        Cookbook   <span style="float:right" class="ui-icon ui-icon-triangle-1-s"></span>
                     </a>
                     <div class="dropdown-menu" id="cookbook_dropdown" style="width:900px">
 
@@ -157,7 +162,7 @@
 	                <div class="sidebar-nav navbar-collapse">
 	                   <ul class="nav" id="side-menu">
                         <li>
-                            <a href="#"><i class="fa fa-database fa-fw"></i> Data<span class="fa arrow"></span></a>
+                            <a href="#"> <span style="float:left" class="ui-icon 	ui-icon-document"></span> Data <span style="float:right" class="ui-icon 	ui-icon-carat-1-s"></span></a>
                             <ul class="nav nav-second-level" style="padding: 5px">
                             <li>
                                 <div class="input-group" >
@@ -181,11 +186,11 @@
                             <!-- /.nav-second-level -->
                         </li>
                         <li>
-                            <a href="#" data-target="#setTitleModal"  data-toggle="modal" onclick="setModalTitleAndDescription()"><i class="fa fa-pencil fa-fw"></i> Title</a>
+                            <a href="#" data-target="#setTitleModal"  data-toggle="modal" onclick="setModalTitleAndDescription()"><span style="float:left" class="ui-icon 	ui-icon-pencil"></span>  Title</a>
 
                         </li>
                          <li>
-      	                     <a href="#" ><i class="fa fa-expand fa-fw"></i> Size<span class="fa arrow"></span></a>
+      	                     <a href="#" ><span style="float:left" class="ui-icon 		ui-icon-arrow-2-se-nw"></span> Size<span style="float:right" class="ui-icon 	ui-icon-carat-1-s"></span></a>
                         	 <ul class="nav nav-second-level">
                         	 	<li><a>Predefined:
 	                        	 	<select id="predefined_size" class="form-control input-sm" style="display:inline;width:60%" onchange="setSize(true)" >
@@ -208,7 +213,7 @@
                              </ul>
                         </li>
                          <li>
-                            <a href="#" ><i class="fa fa-cloud-upload fa-fw"></i> Deploy<span class="fa arrow"></span></a>
+                            <a href="#" ><span style="float:left" class="ui-icon 	ui-icon-arrowstop-1-n"></span> Deploy<span style="float:right" class="ui-icon 	ui-icon-carat-1-s"></span></a>
                             <ul class="nav nav-second-level">
                             	<li><a href="#" data-target="#embedModal" data-toggle="modal" onclick="setEmbedUrl()">URL</a></li>
                             	<li><a href="#" data-target="#embedModal" data-toggle="modal" onclick="setEmbedHtml()">Web Page</a></li>
@@ -219,7 +224,7 @@
                         </li>
 
                         <li>
-      	                     <a href="#" ><i class="fa fa-external-link fa-fw"></i> Reference<span class="fa arrow"></span></a>
+      	                     <a href="#" ><span style="float:left" class="ui-icon 	ui-icon-extlink"></span> Reference<span style="float:right" class="ui-icon 	ui-icon-carat-1-s"></span></a>
                         	 <ul class="nav nav-second-level">
                             	<li> <a href="http://brunel.mybluemix.net/docs" target="_blank">Brunel Language Tutorial</a></li>
                             	<li> <a href="http://www.brunelvis.org/" target="_blank">Brunel Blog</a></li>
@@ -229,7 +234,7 @@
                              </ul>
                         </li>
                          <li>
-      	                     <a href="#" ><i class="fa fa-gavel fa-fw"></i> Legal<span class="fa arrow"></span></a>
+      	                     <a href="#" ><span style="float:left" class="ui-icon 	 ui-icon-suitcase"></span> Legal<span style="float:right" class="ui-icon 	ui-icon-carat-1-s"></span></a>
                         	 <ul class="nav nav-second-level">
                         	    <li>
 								<small>The "Try Brunel Visualization" Web Application provides an Experimental Service governed by the terms below: </small>
