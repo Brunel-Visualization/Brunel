@@ -7,7 +7,7 @@ Brunel defines a highly succinct and novel language that produces interactive da
 * Articles and notes on Brunel can be found in the `brunelvis.org <http://www.brunelvis.org>`_ blog.  Videos are available on `YouTube <https://www.youtube.com/channel/UClXE1IhLQs6NpdMd0X8jALA>`_.
 * Details about the language can be found in the `Brunel Language Tutorial <http://brunel.mybluemix.net/docs>`_
 * Examples can be found in the `Brunel Visualization Gallery  <https://github.com/Brunel-Visualization/Brunel/wiki>`_ and the `Brunel Visualization Cookbook <https://github.com/Brunel-Visualization/Brunel/wiki/Brunel-Visualization-Cookbook>`_.
-* See the `1.2 Release Notes <https://github.com/Brunel-Visualization/Brunel/blob/master/1.2%20Release%20Notes.md>`_ for new features and changes.
+* See the `Release Change Log <https://github.com/Brunel-Visualization/Brunel/blob/master/CHANGELOG.md>`_ for new features and changes.
 
 
 Please report any issues on our `Github  <https://github.com/Brunel-Visualization/Brunel>`_
