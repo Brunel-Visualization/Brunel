@@ -790,11 +790,11 @@ var BrunelD3 = (function () {
             ymin = D * Math.round(y / D), ymax = y + box.height;
 
         // Does it hit an existing location
-        for (i = xmin; i <= xmax; i++) for (j = ymin; j <= ymax; j++)
+        for (i = xmin; i <= xmax; i+=D) for (j = ymin; j <= ymax; j+=D)
             if (hits[i * 10000 + j]) return true;
 
         // No! so we must update those locations before returning the fact it misses
-        for (i = xmin; i <= xmax; i++) for (j = ymin; j <= ymax; j++)
+        for (i = xmin; i <= xmax; i+=D) for (j = ymin; j <= ymax; j+=D)
             hits[i * 10000 + j] = true;
 
         return false;

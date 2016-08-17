@@ -28,6 +28,7 @@ import org.brunel.model.VisSingle;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Collections;
 import java.util.List;
 
 public class GeoMapLabels extends D3Diagram {
@@ -35,6 +36,7 @@ public class GeoMapLabels extends D3Diagram {
     private final NumberFormat F = new DecimalFormat("#.####");
 
     private final ChartStructure structure;
+    private int pointCount;                                     // Number of points we have created
 
     public GeoMapLabels(VisSingle vis, Dataset data, ChartStructure structure, D3Interaction interaction, ScriptWriter out) {
         super(vis, data, interaction, out);
@@ -46,7 +48,7 @@ public class GeoMapLabels extends D3Diagram {
     }
 
     public void preBuildDefinitions() {
-        List<LabelPoint> all = structure.geo.getLabelsWithinScaleBounds();
+        List<LabelPoint> all = structure.geo.getLabelsForFiles();
 
         int maxPoints = 40;
         if (vis.tDiagramParameters[0].modifiers().length > 0) {
@@ -69,11 +71,16 @@ public class GeoMapLabels extends D3Diagram {
         out.add("var geo_labels = [").indentMore();
         boolean first = true;
 
+        Collections.reverse(points);
+
+        this.pointCount = points.size();
+
         for (LabelPoint p : points) {
             if (!first) out.add(", ");
+            // The level (importance) is in the range 1..4
             String s = "[" + F.format(p.x) + "," + F.format(p.y) + ","
                     + Data.quote(p.label) + "," + radiusFor(p, popHigh, popLow)
-                    + "," + (5 - p.importance) + "]";
+                    + "," + Math.min(6 - p.importance, 4) + "]";
             if (out.currentColumn() + s.length() > 120)
                 out.onNewLine();
             out.add(s);
@@ -102,10 +109,13 @@ public class GeoMapLabels extends D3Diagram {
 
         out.add("labels.classed('map', true)").endStatement();
 
+        int granularity = (int) Math.ceil(Math.sqrt(pointCount / 10.0));
+
         // Labels
         out.add("var labeling = {").indentMore()
-                .onNewLine().add("method:'box', pad:3, inside:false, align:'start', granularity:2,")
-                .onNewLine().add("location:['right', 'middle'], content: function(d) {return d[2]}")
+                .onNewLine().add("method:'box', pad:3, inside:false, align:'start', granularity:" + granularity + ",")
+                .onNewLine().add("location:['right', 'middle'], content: function(d) {return d[2]},")
+                .onNewLine().add("cssClass:function(d) {return 'label L' + d[4]}")
                 .indentLess().onNewLine().add("}").endStatement();
 
         out.add("BrunelD3.label(merged, labels, labeling, 0, geom)").endStatement();

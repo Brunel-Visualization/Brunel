@@ -78,14 +78,16 @@ public class GeoInformation {
         return f.numProperty(KEY_GEO_NAMES);
     }
 
-    public List<LabelPoint> getLabelsWithinScaleBounds() {
+    public List<LabelPoint> getLabelsForFiles() {
 
         // USe a set to ensure points are not duplicated
         Set<LabelPoint> points = new HashSet<>();
 
         for (GeoMapping g : geo.values()) {
             for (GeoFile f : g.files) {
-                for (LabelPoint p : f.pts) if (hull.bounds.contains(p)) points.add(p);
+                for (LabelPoint p : f.pts) if (hull.bounds.contains(p)) {
+                    points.add(p);
+                }
             }
         }
 
@@ -258,7 +260,7 @@ public class GeoInformation {
             return makeForPoints(positionHull, diagramParameters);
         return null;
     }
-    
+
     /**
      * For a set of features, returns the mapping to use for them
      *
