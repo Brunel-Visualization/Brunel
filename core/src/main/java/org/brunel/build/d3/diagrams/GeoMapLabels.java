@@ -95,8 +95,8 @@ public class GeoMapLabels extends D3Diagram {
                 .addChained("attr('class', function(d) { return 'element mark L' + d[4] })");
         out.addChained("attr('transform', function(d) {")
                 .indentMore().indentMore().onNewLine()
-                .add("var p = projection(d)").endStatement()
-                .add("return p && 'translate(' + p[0] + ', ' + p[1] + ')'")
+                .add("var p = projection(d) || [9e6,9e6]").endStatement()
+                .add("return 'translate(' + p[0] + ', ' + p[1] + ')'")
                 .indentLess().indentLess().onNewLine().add("} )")
                 .endStatement();
 
