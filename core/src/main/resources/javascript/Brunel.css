@@ -25,7 +25,7 @@
 }
 
 .brunel .brunel .axis * {
-    shape-rendering:crispEdges
+    shape-rendering: crispEdges
 }
 
 .brunel .grid {
@@ -132,13 +132,13 @@
 }
 
 .brunel .overlap {
-    visibility:hidden;
+    visibility: hidden;
 }
 
 .brunel .header {
     fill: #0b9bdb;
     font-size: 18px;
-    font-weight:bold;
+    font-weight: bold;
     stroke: none;
     pointer-events: none;
 }
@@ -146,12 +146,11 @@
 .brunel .footer {
     fill: #888888;
     font-size: 12px;
-    font-weight:normal;
-    label-location:right;
+    font-weight: normal;
+    label-location: right;
     stroke: none;
     pointer-events: none;
 }
-
 
 .brunel .labels text {
     text-shadow: 1px 1px 5px white, -1px -1px 5px white, -1px 1px 5px white, 1px -1px 5px white
@@ -171,7 +170,7 @@
 .brunel path.element.guide {
     stroke-width: 1px;
     stroke: lightGray;
-    stroke-dasharray:10 5
+    stroke-dasharray: 10 5
 }
 
 .brunel .element.bar, .brunel .element.polygon, .brunel .element.area, .brunel .element.line.filled, .brunel .element.path.filled {
@@ -238,7 +237,7 @@
 
 .brunel .mark.L4 {
     stroke: #a0a0a0;
-    fill:white;
+    fill: white;
 }
 
 .brunel .label.L1 {
@@ -353,6 +352,24 @@ div.brunel.tooltip.below:after {
     cursor: move;
     fill: none;
     pointer-events: all;
+}
+
+.brunel .crosshairs * {
+    pointer-events: none;
+}
+
+.brunel .crosshairs line {
+    stroke: red;
+    stroke-dasharray: 8 4;
+}
+
+.brunel .crosshairs circle {
+    stroke: red;
+    fill: none;
+}
+
+.brunel .crosshairs text {
+    fill: red;
 }
 
 .ui-slider {

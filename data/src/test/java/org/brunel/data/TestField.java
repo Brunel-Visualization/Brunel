@@ -297,6 +297,7 @@ public class TestField {
         assertEquals("123,456", f.valueFormatted(0));
         assertEquals("234,567", f.valueFormatted(1));
         assertEquals("345,678", f.valueFormatted(2));
+        assertEquals("8", f.format(7.9));
 
         f = Fields.makeColumnField("a", "label", new Object[]{0.0});
         f = Data.toNumeric(f);

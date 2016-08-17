@@ -1487,18 +1487,13 @@ var BrunelD3 = (function () {
         if (g.empty()) {
             g = group.append("g").attr("class", "crosshairs");
 
-            function style(line, colName, dashing) {
-                line.style(colName, "red").style("pointer-events", "none").style("stroke-dasharray", dashing || "none");
-            }
-
             // 4 lines, a central circle, and text tags
             for (i = 0; i < 4; i++)
-                style(g.append("line").attr("class", "dim" + Math.floor(i / 2) + " part" + i), "stroke", "8 4");
-            style(g.append("circle").style("fill", "none"), "stroke");
-            style(g.append("text").attr("class", "dim0").attr("dy", "-0.3em"), "fill");
-            style(g.append("text").attr("class", "dim1").attr("dy", "-0.3em"), "fill");
+                g.append("line").attr("class", "dim" + Math.floor(i / 2) + " part" + i);
+            g.append("circle").style("fill", "none");
+            g.append("text").attr("class", "dim0").attr("dy", "-0.3em");
+            g.append("text").attr("class", "dim1").attr("dy", "-0.3em");
         }
-
 
         if (!item) {
             g.style("visibility", "hidden");
@@ -1518,6 +1513,26 @@ var BrunelD3 = (function () {
             px = box.x + box.width / 2;
             py = box.y + box.height / 2;
         }
+
+        //Add an inverse to categorical scales
+        function addInvertFunction(scale) {
+            scale.invert = function (v) {
+                // Binary search for closest point
+                var values = scale.domain(), low = 0, high = values.length - 1, t;
+                while (high - low > 1) {
+                    t = Math.floor((low + high) / 2);
+                    if (scale(values[t]) > v)
+                        high = t;
+                    else
+                        low = t;
+                }
+                // return whichever is the nearest of low and high (which are on either side of the value)
+                return v - scale(values[low]) < scale(values[high]) - v ? values[low] : values[high];
+            }
+        }
+
+        if (!scales.x.invert) addInvertFunction(scales.x);
+        if (!scales.y.invert) addInvertFunction(scales.y);
 
         var x = scales.x.invert(px),
             y = scales.y.invert(py),

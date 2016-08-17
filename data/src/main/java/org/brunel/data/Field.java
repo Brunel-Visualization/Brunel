@@ -235,6 +235,7 @@ public class Field extends Informative implements Comparable<Field> {
         }
         if (isProperty("list"))
             return ((ItemsList) v).toString((DateFormat) property("dateFormat"));
+
         return v.toString();
     }
 

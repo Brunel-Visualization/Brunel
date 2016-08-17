@@ -38,6 +38,7 @@ public class D3Interaction {
 
     private static final boolean[] ZOOM_ALL = new boolean[]{true, true};
     private static final boolean[] ZOOM_NONE = new boolean[]{false, false};
+    public static final String DEFAULT_SNAP_DISTANCE = "geom.inner_radius/4";
 
     private final ChartStructure structure;     // Chart Structure
     private final D3ScaleBuilder scales;        // Scales for the chart
@@ -172,6 +173,11 @@ public class D3Interaction {
                     if (eventName.equals("mouseover") || eventName.equals("mousemove"))
                         addFunctionDefinition("mouseout",
                                 "BrunelD3.select(null, this, element, updateAll)", elementEvents);
+
+                    // And we want a click on the main space to select nothing
+                    if (eventName.equals("click"))
+                        addFunctionDefinition("click", "BrunelD3.select(null, this, element, updateAll)", overlayEvents);
+
                 }
             } else if (type == Interaction.call) {
                 // One of call, call:func, call:func:mouseXXX, call:func:snap, call:func:snap:ZZ
@@ -187,6 +193,11 @@ public class D3Interaction {
                     addFunctionDefinition(eventName, functionName + "(d, this, element)", elementEvents);
                     if (eventName.equals("mouseover") || eventName.equals("mousemove"))
                         addFunctionDefinition("mouseout", functionName + "(null, this, element)", elementEvents);
+
+                    // And we want a click on the main space to select nothing
+                    if (eventName.equals("click"))
+                        addFunctionDefinition("click", functionName + "(null, c.target, element, 'xy')", overlayEvents);
+
                 }
             }
         }
@@ -194,7 +205,10 @@ public class D3Interaction {
         if (!overlayEvents.isEmpty()) {
             // Start each set of overlay commands with a command to find the closest item
             for (List<String> e : overlayEvents.values()) {
-                e.add(0, "var c = BrunelD3.closest(merged, '" + snapInfo[0] + "', " + snapInfo[1] + " )");
+                if (snapInfo == null)
+                    e.add(0, "var c = BrunelD3.closest(merged, 'xy', " + DEFAULT_SNAP_DISTANCE + " )");
+                else
+                    e.add(0, "var c = BrunelD3.closest(merged, '" + snapInfo[0] + "', " + snapInfo[1] + " )");
             }
 
             out.add("chart.select('rect.overlay')").at(60).comment("Attach handlers to the overlay");
@@ -260,7 +274,7 @@ public class D3Interaction {
         }
 
         if (snapFunction != null)
-            return new String[]{snapFunction, "geom.inner_radius/4"};   // Default to a quarter the space allowed on screen
+            return new String[]{snapFunction, DEFAULT_SNAP_DISTANCE};   // Default to a quarter the space allowed on screen
         else
             return null;                                    // No snap
     }
