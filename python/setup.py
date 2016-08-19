@@ -36,7 +36,7 @@ if sys.version_info < (3,0):
 
 setup(
     name='brunel',
-    version='2.0',
+    version='2.0.0.dev3',
     packages=['brunel'],
     install_requires= ['pandas', 'jinja2', 'ipython', 'jupyter-pip', jpype_name],
     package_data= {

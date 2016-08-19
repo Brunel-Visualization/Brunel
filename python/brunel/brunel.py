@@ -39,8 +39,9 @@ templateEnv = jin.Environment(loader=templateLoader)
 D3_TEMPLATE = templateEnv.get_template(D3_TEMPLATE_FILE)
 D3_TEMPLATE_HTML = templateEnv.get_template(D3_TEMPLATE_HTML_FILE)
 
-brunel_version = pkg_resources.get_distribution("brunel").version
-
+#Main version number x.x is used for JS file versions
+brunel_raw_version = pkg_resources.get_distribution("brunel").version.split(".")
+brunel_version = brunel_raw_version[0] + "." + brunel_raw_version[1]
 
 def display(brunel, data, width=800, height=600, output='d3'):
 
