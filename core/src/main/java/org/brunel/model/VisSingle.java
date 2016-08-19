@@ -434,13 +434,13 @@ public class VisSingle extends VisItem implements Cloneable {
         for (String f : used) if (!f.equals("#all")) replacement.add(f);
         boolean containsAll = replacement.size() != used.length;
 
-        boolean addSeriesSplit = false;
-        boolean convertYsToRange = false;
+        boolean addSeriesSplit = false;                     // Do we need to make a split on series?
+        boolean convertYsToRange = false;                   // Are the Y's to be ranges
         if (fY.size() > 1) {
             if (tElement == Element.edge)
                 convertYsToRange = true;
-            else if (tDiagram != Diagram.network) {
-                // Networks with 2 Y's are using them for IDs, so do not split
+            else if (tDiagram == null) {
+                // Diagrams do not create splits
                 addSeriesSplit = true;
                 for (String s : aestheticFields()) if (s.equals("#series")) addSeriesSplit = false;
             }

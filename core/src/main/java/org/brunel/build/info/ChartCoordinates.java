@@ -187,8 +187,8 @@ public class ChartCoordinates {
                     data.field(vis.fRange[1].asField(data))};
         } else if (vis.fY.isEmpty()) {
             return new Field[0];
-        } else if (vis.fY.size() > 1) {
-            // Handle series
+        } else if (vis.fY.size() > 1 && data.field("#values") != null) {
+            // Handle series when they have been used
             if (vis.stacked)
                 return data.fieldArray(new String[]{"#values$lower", "#values$upper"});
             else
@@ -207,6 +207,7 @@ public class ChartCoordinates {
     }
 
     private String getDefinedXTransform(VisSingle v) {
+        if (v.tDiagram != null) return "linear";                         // Diagrams are always linear
         for (Param p : v.fX)
             if (p.isField() && p.hasModifiers()) {
                 String type = extractTransform(p);
@@ -224,6 +225,7 @@ public class ChartCoordinates {
     }
 
     private String getDefinedYTransform(VisSingle v) {
+        if (v.tDiagram != null) return "linear";                         // Diagrams are always linear
         for (Param p : v.fY)
             if (p.isField() && p.hasModifiers()) {
                 String s = extractTransform(p);

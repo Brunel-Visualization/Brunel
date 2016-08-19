@@ -28,7 +28,6 @@ import org.brunel.model.VisSingle;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.Collections;
 import java.util.List;
 
 public class GeoMapLabels extends D3Diagram {
@@ -36,7 +35,6 @@ public class GeoMapLabels extends D3Diagram {
     private final NumberFormat F = new DecimalFormat("#.####");
 
     private final ChartStructure structure;
-    private int pointCount;                                     // Number of points we have created
 
     public GeoMapLabels(VisSingle vis, Dataset data, ChartStructure structure, D3Interaction interaction, ScriptWriter out) {
         super(vis, data, interaction, out);
@@ -71,16 +69,11 @@ public class GeoMapLabels extends D3Diagram {
         out.add("var geo_labels = [").indentMore();
         boolean first = true;
 
-        Collections.reverse(points);
-
-        this.pointCount = points.size();
-
         for (LabelPoint p : points) {
             if (!first) out.add(", ");
-            // The level (importance) is in the range 1..4
             String s = "[" + F.format(p.x) + "," + F.format(p.y) + ","
                     + Data.quote(p.label) + "," + radiusFor(p, popHigh, popLow)
-                    + "," + Math.min(6 - p.importance, 4) + "]";
+                    + "," + (5 - p.importance) + "]";
             if (out.currentColumn() + s.length() > 120)
                 out.onNewLine();
             out.add(s);
@@ -102,20 +95,17 @@ public class GeoMapLabels extends D3Diagram {
                 .addChained("attr('class', function(d) { return 'element mark L' + d[4] })");
         out.addChained("attr('transform', function(d) {")
                 .indentMore().indentMore().onNewLine()
-                .add("var p = projection(d) || [9e6,9e6]").endStatement()
-                .add("return 'translate(' + p[0] + ', ' + p[1] + ')'")
+                .add("var p = projection(d)").endStatement()
+                .add("return p && 'translate(' + p[0] + ', ' + p[1] + ')'")
                 .indentLess().indentLess().onNewLine().add("} )")
                 .endStatement();
 
         out.add("labels.classed('map', true)").endStatement();
 
-        int granularity = (int) Math.ceil(Math.sqrt(pointCount / 10.0));
-
         // Labels
         out.add("var labeling = {").indentMore()
-                .onNewLine().add("method:'box', pad:3, inside:false, align:'start', granularity:" + granularity + ",")
-                .onNewLine().add("location:['right', 'middle'], content: function(d) {return d[2]},")
-                .onNewLine().add("cssClass:function(d) {return 'label L' + d[4]}")
+                .onNewLine().add("method:'box', pad:3, inside:false, align:'start', granularity:2,")
+                .onNewLine().add("location:['right', 'middle'], content: function(d) {return d[2]}")
                 .indentLess().onNewLine().add("}").endStatement();
 
         out.add("BrunelD3.label(merged, labels, labeling, 0, geom)").endStatement();

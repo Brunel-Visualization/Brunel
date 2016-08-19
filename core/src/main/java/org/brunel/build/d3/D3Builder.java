@@ -28,6 +28,7 @@ import org.brunel.build.util.Accessibility;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
+import org.brunel.data.Dataset;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Coordinates;
@@ -86,7 +87,7 @@ public class D3Builder extends AbstractBuilder {
         String pattern = "\t<script src=\"%s\" charset=\"utf-8\"></script>\n";
 
         String base = COPYRIGHT_COMMENTS +
-                String.format(pattern,  BuilderOptions.fullLocation(options.locD3))
+                String.format(pattern, BuilderOptions.fullLocation(options.locD3))
                 + String.format(pattern, BuilderOptions.fullLocation(options.locTopoJson));
 
         if (getControls().isNeeded()) {
@@ -141,8 +142,8 @@ public class D3Builder extends AbstractBuilder {
         if (forceSquare(structure.elements)) out.add("geom.makeSquare()").endStatement();
         if (scalesBuilder.coords == Coordinates.transposed) out.add("geom.transpose()").endStatement();
 
-            // Now build the main groups
-            out.titleComment("Define groups for the chart parts");
+        // Now build the main groups
+        out.titleComment("Define groups for the chart parts");
         writeMainGroups(structure);
         for (D3ElementBuilder builder : elementBuilders) builder.writePerChartDefinitions();
 
@@ -181,7 +182,8 @@ public class D3Builder extends AbstractBuilder {
         // Define scales
         double chartWidth = visWidth - chartMargins[1] - chartMargins[3];
         double chartHeight = visHeight - chartMargins[0] - chartMargins[2];
-        this.scalesBuilder = new D3ScaleBuilder(structure, chartWidth, chartHeight, out);
+        structure.setExtent((int) chartWidth, (int) chartHeight);
+        this.scalesBuilder = new D3ScaleBuilder(structure, out);
 
         interaction = new D3Interaction(structure, scalesBuilder, out);
 
@@ -214,7 +216,7 @@ public class D3Builder extends AbstractBuilder {
         int datasetIndex = structure.getBaseDatasetIndex();
         VisSingle vis = structure.vis;
         D3DataBuilder dataBuilder = new D3DataBuilder(vis, out, structure.data, datasetIndex);
-        dataBuilder.writeDataManipulation(createResultFields(vis));
+        dataBuilder.writeDataManipulation(createResultFields(vis, structure.data));
 
         scalesBuilder.writeAestheticScales(structure);
         scalesBuilder.writeLegends(vis);
@@ -442,9 +444,9 @@ public class D3Builder extends AbstractBuilder {
     /*
         Builds a mapping from the fields we will use in the built data object to an indexing 0,1,2,3, ...
      */
-    private Map<String, Integer> createResultFields(VisSingle vis) {
+    private Map<String, Integer> createResultFields(VisSingle vis, Dataset data) {
         LinkedHashSet<String> needed = new LinkedHashSet<>();
-        if (vis.fY.size() > 1) {
+        if (vis.fY.size() > 1 && data.field("#series") != null) {
             // A series needs special handling -- Y's are different in output than input
             if (vis.stacked) {
                 // Stacked series chart needs lower and upper values
@@ -628,7 +630,7 @@ public class D3Builder extends AbstractBuilder {
             }
             // Apply stacking to the data
             stackCommand += "; " + Data.join(vis.fX) + "; " + Data.join(vis.aestheticFields()) + "; " + vis.tElement.producesSingleShape;
-        } else if (vis.tElement == Element.line || vis.tElement == Element.area) {
+        } else if (isLineSortedByX(vis)) {
             // If we have stacked, we do not need to do anything as it sorts the data. Otherwise ...
             // d3 needs the data sorted by 'x' order for lines and paths
             // If we have defined 'x' order, that takes precedence
@@ -642,6 +644,11 @@ public class D3Builder extends AbstractBuilder {
         // Replace the stack and sort commands with updated versions
         return new DataTransformParameters(params.constantsCommand, params.filterCommand, params.eachCommand, params.transformCommand, params.summaryCommand,
                 stackCommand, params.sortCommand, sortRows, params.seriesCommand, params.usedCommand);
+    }
+
+    private boolean isLineSortedByX(VisSingle vis) {
+        // Must have an X coordinate to sort by!
+        return !vis.fX.isEmpty() && (vis.tElement == Element.line || vis.tElement == Element.area);
     }
 
 }

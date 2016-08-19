@@ -74,7 +74,7 @@ public class D3ScaleBuilder {
     private final VisSingle[] elements;             // The elements that define the scales used
     private final ScriptWriter out;                 // Write definitions to here
 
-    public D3ScaleBuilder(ChartStructure structure, double chartWidth, double chartHeight, ScriptWriter out) {
+    public D3ScaleBuilder(ChartStructure structure, ScriptWriter out) {
         this.structure = structure;
         this.elements = structure.elements;
         this.out = out;
@@ -119,8 +119,8 @@ public class D3ScaleBuilder {
             layout the vertical axis based on that, then layout the horizontal
          */
 
-        vAxis.layoutVertically(chartHeight - hAxis.estimatedSimpleSizeWhenHorizontal());
-        hAxis.layoutHorizontally(chartWidth - vAxis.size - legendWidth, elementsFillHorizontal(ScalePurpose.x));
+        vAxis.layoutVertically(structure.chartHeight - hAxis.estimatedSimpleSizeWhenHorizontal());
+        hAxis.layoutHorizontally(structure.chartWidth - vAxis.size - legendWidth, elementsFillHorizontal(ScalePurpose.x));
 
         // Set the margins
         int marginTop = vAxis.topGutter;                                    // Only the vAxis needs space here
@@ -343,7 +343,6 @@ public class D3ScaleBuilder {
             out.endStatement();
             groupUtil.defineVerticalAxisClipPath();
 
-
             // Add the title if necessary
             vAxis.writeTitle("axes.select('g.axis.y')", out);
 
@@ -363,7 +362,7 @@ public class D3ScaleBuilder {
      * @param axis            axis information
      * @param horizontal      if the axis is horizontal
      */
-    private void defineAxis(String basicDefinition, AxisDetails axis, boolean horizontal) {
+    public void defineAxis(String basicDefinition, AxisDetails axis, boolean horizontal) {
         if (axis.exists()) {
             int padding = horizontal ? axis.tickPadding.top : axis.tickPadding.right;
             out.add(basicDefinition)
@@ -495,22 +494,35 @@ public class D3ScaleBuilder {
     private Double getAspect() {
         //Find Param with "aspect" and return its value
         for (VisSingle e : elements) {
-                for (Param p : e.fCoords) {
-                    if (p.asString().equals("aspect")) {
-                        Param m = p.firstModifier();
-                        //Use "square" for 1.0 aspect ratio
-                        if (m.asString().equals("square")) return 1.0;
-                        else return m.asDouble();
-                    }
+            for (Param p : e.fCoords) {
+                if (p.asString().equals("aspect")) {
+                    Param m = p.firstModifier();
+                    //Use "square" for 1.0 aspect ratio
+                    if (m.asString().equals("square")) return 1.0;
+                    else return m.asDouble();
+                }
             }
         }
         return null;
     }
 
-    private int defineScaleWithDomain(String name, Field[] fields, ScalePurpose purpose, int numericDomainDivs,
-                                      String defaultTransform, Object[] partitionPoints, boolean reverse) {
+    /**
+     * Defines a scale,a dding the domain info but not the range
+     * @param name if not null, define a new variable for the scale, otehrwise assume it has been done
+     * @param fields one or more fields for this scale
+     * @param purpose the purpose influences how we make the scale
+     * @param numericDomainDivs desired number of numeric ticks
+     * @param defaultTransform linear, log, root
+     * @param partitionPoints if defined, use these explicit partitions
+     * @param reverse do we wnt to reverse the scale
+     * @return number of categories in scale, or -1 if not categorical
+     */
+    public int defineScaleWithDomain(String name, Field[] fields, ScalePurpose purpose, int numericDomainDivs,
+                                     String defaultTransform, Object[] partitionPoints, boolean reverse) {
+        boolean isX = purpose == ScalePurpose.x, isY = purpose == ScalePurpose.y;
 
-        out.onNewLine().add("var", "scale_" + name, "= ");
+        if (name != null)
+            out.onNewLine().add("var scale_" + name, "= ");
 
         // No position for this dimension, so util a default [0,1] scale
         if (fields.length == 0) return makeEmptyZeroOneScale();
@@ -528,23 +540,22 @@ public class D3ScaleBuilder {
         // Build a combined scale field and force the desired transform on it for x and y dimensions
         Field scaleField = fields.length == 1 ? field : combineNumericFields(fields);
         ChartCoordinates coordinates = structure.coordinates;
-        if (name.equals("x")) {
+        if (isX) {
             // We need to copy it as we are modifying it
             if (scaleField == field) scaleField = field.rename(field.name, field.label);
             scaleField.set("transform", coordinates.xTransform);
-        }
-        if (name.equals("y")) {
+        } else if (isY) {
             // We need to copy it as we are modifying it
             if (scaleField == field) scaleField = field.rename(field.name, field.label);
             scaleField.set("transform", coordinates.yTransform);
         }
 
         // We util a nice scale only for rectangular coordinates
-        boolean nice = (name.equals("x") || name.equals("y")) && coords != Coordinates.polar;
+        boolean nice = purpose.isCoord && coords != Coordinates.polar;
         double[] padding = getNumericPaddingFraction(purpose, coords);
 
         // Areas and line should fill the horizontal dimension, as should any binned field
-        if (scaleField.isBinned() || purpose == ScalePurpose.x && elementsFillHorizontal(ScalePurpose.x)) {
+        if (scaleField.isBinned() || isX && elementsFillHorizontal(ScalePurpose.x)) {
             nice = false;
             padding = new double[]{0, 0};
             includeZero = 0;
@@ -554,7 +565,7 @@ public class D3ScaleBuilder {
         double min = detail.min;
         double max = detail.max;
 
-        Double[] extent = name.equals("x") ? coordinates.xExtent : coordinates.yExtent;
+        Double[] extent = isX ? coordinates.xExtent : coordinates.yExtent;
         if (extent != null && extent[0] != null) min = extent[0];
         if (extent != null && extent[1] != null) max = extent[1];
 
@@ -576,11 +587,21 @@ public class D3ScaleBuilder {
             // Some scales (like for an area size) have a default transform (e.g. root) and we
             // util that if the field wants a linear scale.
             String transform = null;
-            if (name.equals("x")) transform = coordinates.xTransform;
-            if (name.equals("y")) transform = coordinates.yTransform;
+            if (isX) transform = coordinates.xTransform;
+            if (isY) transform = coordinates.yTransform;
 
             // Size must not get a transform as it will seriously distort things
             if (purpose == ScalePurpose.size) transform = defaultTransform;
+
+            // Parallel axes get their transform defined
+            if (purpose == ScalePurpose.parallel) {
+                if (defaultTransform == null) {
+                    defaultTransform = "linear";
+                } else {
+                    transform = defaultTransform;
+                }
+            }
+
             transform = makeD3ScaleName(defaultTransform, scaleField, transform);
             out.add("d3." + transform + "()");
             for (int i = 0; i < divs.length; i++) {

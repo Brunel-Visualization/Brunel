@@ -45,6 +45,7 @@ public class ChartStructure {
     public boolean accessible;                              // If true, generate accessible content
 
     public final Dataset[] baseDataSets;
+    public int chartHeight, chartWidth;                     // Pixel expanse of chart (set during building)
 
     public ChartStructure(int chartIndex, VisSingle[] elements, Dataset[] data, Dataset[] dataSets,
                           ChartStructure outer, Integer innerChartIndex, String visIdentifier) {
@@ -67,6 +68,11 @@ public class ChartStructure {
             elementStructure[i] = new ElementStructure(this, i, vis, data[i], geoMapping, isDependent);
         }
 
+    }
+
+    public void setExtent(int chartWidth, int chartHeight) {
+        this.chartWidth = chartWidth;
+        this.chartHeight = chartHeight;
     }
 
     public static String makeChartID(int index) {

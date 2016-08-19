@@ -21,6 +21,7 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
+import org.brunel.model.VisTypes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -270,7 +271,8 @@ public class DataBuilder {
     private String makeSeriesCommand() {
         // Only have a series for 2+ y fields
 
-        if (vis.fY.size() < 2) return "";
+        if (vis.fY.size() < 2) return "";                               // Not needed
+        if (vis.tDiagram == VisTypes.Diagram.parallel) return "";       // Not used for parallel axes
         /*
             The command is of the form:
                     y1, y2, y3; a1, a2
