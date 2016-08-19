@@ -167,6 +167,11 @@
     fill: none;
 }
 
+.brunel .parallel path {
+    stroke-linecap:butt;
+    stroke-linejoin:round;
+}
+
 .brunel path.element.guide {
     stroke-width: 1px;
     stroke: lightGray;

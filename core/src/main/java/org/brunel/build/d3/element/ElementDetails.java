@@ -47,7 +47,8 @@ public class ElementDetails {
      * @param dataSource   the javascript name of the element's data
      */
     public static ElementDetails makeForDiagram(VisSingle vis, ElementRepresentation representation, String elementClass, String dataSource) {
-        return new ElementDetails(vis, representation, elementClass, dataSource, representation != ElementRepresentation.segment);
+        boolean filled = representation != ElementRepresentation.segment && representation != ElementRepresentation.generalPath;
+        return new ElementDetails(vis, representation, elementClass, dataSource, filled);
     }
 
     public final String dataSource;                     // Where the data for d3 lives

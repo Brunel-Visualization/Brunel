@@ -108,8 +108,9 @@ public class D3ElementBuilder {
             diagram.writePreDefinition(details);
         }
 
-        // Set class to selected for selected data
+        // Set class to selected for selected data and raise selected items to the top
         out.add("merged.filter(hasData).classed('selected', function(d) { return data.$selection(d) == '\u2713' })")
+                .addChained("filter(function(d) { return data.$selection(d) == '\u2713' }).raise()")
                 .endStatement();
 
 
@@ -124,6 +125,7 @@ public class D3ElementBuilder {
         } else {
             diagram.writeDefinition(details);
         }
+
 
         writeRemovalOnExit(out, "selection");
 

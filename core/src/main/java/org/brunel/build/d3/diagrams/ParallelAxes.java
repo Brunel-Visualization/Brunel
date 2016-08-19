@@ -20,6 +20,7 @@ import org.brunel.action.Param;
 import org.brunel.build.d3.AxisDetails;
 import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3ScaleBuilder;
+import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.ScalePurpose;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
@@ -49,7 +50,7 @@ class ParallelAxes extends D3Diagram {
 
     public ParallelAxes(VisSingle vis, Dataset data, D3Interaction interaction, ElementStructure structure, ScriptWriter out) {
         super(vis, data, interaction, out);
-        fields = vis.getDataset().fieldArray(vis.positionFields());
+        fields = data.fieldArray(vis.positionFields());
         builder = new D3ScaleBuilder(structure.chart, out);
         axes = makeAxisDetails(structure.chart, fields);
 
@@ -62,9 +63,8 @@ class ParallelAxes extends D3Diagram {
         AxisDetails[] axes = new AxisDetails[fields.length];
         for (int i = 0; i < fields.length; i++) {
             Field f = fields[i];
-            String name = "dim" + (i + 1);
             // Create the Axis details and lay out in vertical space
-            AxisDetails details = new AxisDetails(name, new Field[]{f}, f.preferCategorical(), null, 9999, false);
+            AxisDetails details = new AxisDetails("y" + i, new Field[]{f}, f.preferCategorical(), null, 9999, false);
             details.setTextDetails(chart, false);
             details.layoutVertically(chart.chartHeight);
             axes[i] = details;
@@ -77,7 +77,7 @@ class ParallelAxes extends D3Diagram {
         // One time only, create the axes
         out.add("if (!axes.length) {").indentMore().onNewLine();
         writeAxesCreation();
-        out.onNewLine().onNewLine().add("}").onNewLine();
+        out.indentLess().onNewLine().add("}").onNewLine();
 
         // Write the calls to display the axes
         writeAxesCalls();
@@ -110,8 +110,7 @@ class ParallelAxes extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details) {
-//        out.addChained("attr('x', function(d) { return x(d,0) }).attr('width',function(d) { return x(d,1) -x(d,0) } )")
-//                .addChained("attr('y', y).attr('height', h)");
+        out.addChained("attr('d', path)");
         addAestheticsAndTooltips(details);
     }
 
@@ -126,12 +125,23 @@ class ParallelAxes extends D3Diagram {
 
         out.comment("Define the individual scales");
         for (int i = 0; i < fields.length; i++) {
-            out.add("var scale_dim" + (i + 1) + " = ");
+            out.add("var scale_y" + i + " = ");
             builder.defineScaleWithDomain(null, new Field[]{fields[i]}, ScalePurpose.parallel, 2, getTransform(fields[i]), null, isReversed(fields[i]));
             out.addChained("range(rangeVertical)");
             out.endStatement();
+            out.add("function y" + i + "(d) { return scale_y" + i + "(" + D3Util.writeCall(fields[i]) + ") }").ln();
+
         }
         out.add("var axes = [];").at(50).comment("array of all axes");
+
+        out.add("function path(d) {").indentMore().ln();
+        out.add("var p = d3.path()").endStatement();
+        for (int i = 0; i < fields.length; i++) {
+            out.add(i == 0 ? "p.moveTo(" : "p.lineTo(");
+            out.add("scale_x(" + i + "), y" + i + "(d))").endStatement();
+        }
+        out.add("return p");
+        out.indentLess().add("}").endStatement();
 
     }
 
