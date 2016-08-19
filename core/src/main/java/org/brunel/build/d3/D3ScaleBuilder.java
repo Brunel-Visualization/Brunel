@@ -508,13 +508,14 @@ public class D3ScaleBuilder {
 
     /**
      * Defines a scale,a dding the domain info but not the range
-     * @param name if not null, define a new variable for the scale, otehrwise assume it has been done
-     * @param fields one or more fields for this scale
-     * @param purpose the purpose influences how we make the scale
+     *
+     * @param name              if not null, define a new variable for the scale, otehrwise assume it has been done
+     * @param fields            one or more fields for this scale
+     * @param purpose           the purpose influences how we make the scale
      * @param numericDomainDivs desired number of numeric ticks
-     * @param defaultTransform linear, log, root
-     * @param partitionPoints if defined, use these explicit partitions
-     * @param reverse do we wnt to reverse the scale
+     * @param defaultTransform  linear, log, root
+     * @param partitionPoints   if defined, use these explicit partitions
+     * @param reverse           do we wnt to reverse the scale
      * @return number of categories in scale, or -1 if not categorical
      */
     public int defineScaleWithDomain(String name, Field[] fields, ScalePurpose purpose, int numericDomainDivs,
@@ -627,8 +628,11 @@ public class D3ScaleBuilder {
         // We use all the categories in the data; we do not need the partition points
         List<Object> list = getCategories(fields);
         if (reverse) Collections.reverse(list);
-        out.add(purpose.isCoord ? "d3.scalePoint().padding(0.5)" : "d3.scaleOrdinal()")
-                .addChained("domain([");
+        if (purpose == ScalePurpose.parallel)
+            out.add("d3.scalePoint()");
+        else
+            out.add(purpose.isCoord ? "d3.scalePoint().padding(0.5)" : "d3.scaleOrdinal()");
+        out.addChained("domain([");
         // Write numbers as numbers, everything else becomes a string
         for (int i = 0; i < list.size(); i++) {
             Object o = list.get(i);
