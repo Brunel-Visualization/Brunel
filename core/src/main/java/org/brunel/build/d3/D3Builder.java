@@ -566,7 +566,7 @@ public class D3Builder extends AbstractBuilder {
                 .addChained(axesTransform);
 
         // Nested charts do not need additional clipping
-        if (!structure.nested()) groupUtil.addClipPathReference(out);
+        if (!structure.nested()) groupUtil.addClipPathReference("inner");
 
         out.endStatement();
         out.add("interior.append('rect').attr('class', 'inner')")

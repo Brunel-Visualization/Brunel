@@ -52,8 +52,8 @@ public class SVGGroupUtility {
             Accessibility.writeLabelAttribute(title, out);
     }
 
-    public void addClipPathReference(ScriptWriter out) {
-        out.addChained("attr('clip-path', 'url(#" + clipID() + ")')");
+    public void addClipPathReference(String part) {
+        out.addChained("attr('clip-path', 'url(#" + clipID(part) + ")')");
     }
 
     /**
@@ -67,22 +67,33 @@ public class SVGGroupUtility {
 
     public void defineInnerClipPath() {
         // Make the clip path for this: we expand by a pixel to avoid ugly cut-offs right at the edge
-        out.add("vis.append('clipPath').attr('id', '" + clipID() + "').append('rect')")
-                .addChained("attr('x', -1).attr('y', -1)")
-                .addChained("attr('width', geom.inner_rawWidth+2).attr('height', geom.inner_rawHeight+2)")
+        out.add("vis.append('clipPath').attr('id', '" + clipID("inner") + "').append('rect')")
+                .addChained("attr('x', 0).attr('y', 0)")
+                .addChained("attr('width', geom.inner_rawWidth+1).attr('height', geom.inner_rawHeight+1)")
                 .endStatement();
     }
 
     public void defineHorizontalAxisClipPath() {
         // we add a cut-out for the Y axis
-        out.add("vis.append('clipPath').attr('id', '" + clipID() + "').append('polyline')")
-                .addChained("attr('points', '-1,-1 -5,5, -1000,5, -100,1000, 10000,1000 10000,-1')")
+        out.add("vis.append('clipPath').attr('id', '" + clipID("haxis") + "').append('polyline')")
+                .addChained("attr('points', '-1,-1000, -1,-1 -5,5, -1000,5, -100,1000, 10000,1000 10000,-1000')")
                 .endStatement();
     }
 
+    public void defineVerticalAxisClipPath() {
+        // we add a cut-out for the Y axis
+        out.add("vis.append('clipPath').attr('id', '" + clipID("vaxis") + "').append('polyline')")
+                .addChained("attr('points', '-1000,-10000, 10000,-10000, "
+                        + "10000,' + (geom.inner_rawHeight+1) + ', "
+                        + "-1,' + (geom.inner_rawHeight+1) + ', "
+                        + "-1,' + (geom.inner_rawHeight+5) + ', "
+                        + "-1000,' + (geom.inner_rawHeight+5) )")
+                        .endStatement();
+    }
+
     // returns an id that is unique to the chart and the visualization
-    private String clipID() {
-        return "clip_" + structure.visIdentifier + "_" + className;
+    private String clipID(String part) {
+        return "clip_" + part + "_" + structure.visIdentifier + "_" + className;
     }
 
 }

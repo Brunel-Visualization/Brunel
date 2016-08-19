@@ -327,7 +327,7 @@ public class D3ScaleBuilder {
             SVGGroupUtility groupUtil = new SVGGroupUtility(structure, "x_axis", out);
             out.onNewLine().add("axes.append('g').attr('class', 'x axis')")
                     .addChained("attr('transform','translate(0,' + geom.inner_rawHeight + ')')");
-            groupUtil.addClipPathReference(out);
+            groupUtil.addClipPathReference("haxis");
             groupUtil.addAccessibleTitle("Horizontal Axis");
             out.endStatement();
             groupUtil.defineHorizontalAxisClipPath();
@@ -338,8 +338,11 @@ public class D3ScaleBuilder {
         if (vAxis.exists()) {
             SVGGroupUtility groupUtil = new SVGGroupUtility(structure, "y_axis", out);
             out.onNewLine().add("axes.append('g').attr('class', 'y axis')");
+            groupUtil.addClipPathReference("vaxis");
             groupUtil.addAccessibleTitle("Vertical Axis");
             out.endStatement();
+            groupUtil.defineVerticalAxisClipPath();
+
 
             // Add the title if necessary
             vAxis.writeTitle("axes.select('g.axis.y')", out);
