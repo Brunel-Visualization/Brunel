@@ -826,7 +826,7 @@ public class D3ScaleBuilder {
     private void addSizeScale(String name, Param p, VisSingle vis, String defaultTransform) {
 
         Object[] sizes;
-        if (p.modifiers().length > 0) {
+        if (p.hasModifiers()) {
             sizes = getSizes(p.modifiers()[0].asList());
         } else {
             sizes = new Object[]{MIN_SIZE_FACTOR, 1.0};

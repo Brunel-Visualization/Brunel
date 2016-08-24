@@ -124,8 +124,7 @@ public class ChartCoordinates {
             List<Param> pp = forX ? element.fX : (element.fRange == null ? element.fY : Arrays.asList(element.fRange));
 
             // Look for 'reverse'
-            for (Param p : pp)
-                for (Param m : p.modifiers()) if (m.asString().equals("reverse")) return true;
+            for (Param p : pp) if (p.hasModifierOption("reverse")) return true;
         }
 
         return false;
@@ -217,10 +216,9 @@ public class ChartCoordinates {
     }
 
     private String extractTransform(Param p) {
-        for (Param q : p.modifiers()) {
-            String type = q.asString();
-            if (type.equals("log") || type.equals("linear") || type.equals("root")) return type;
-        }
+        if (p.hasModifierOption("log")) return "log";
+        if (p.hasModifierOption("linear")) return "linear";
+        if (p.hasModifierOption("root")) return "root";
         return null;
     }
 

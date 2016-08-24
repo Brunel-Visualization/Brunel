@@ -152,6 +152,18 @@ public class Param implements Comparable<Param> {
         return modifiers.length > 0;
     }
 
+    /**
+     * Returns true if any of the option modifiers matches the name passed in.
+     * Note that options are caseless, so we use caseless comparison
+     *
+     * @param optionName option name to look for
+     * @return true if found, else false
+     */
+    public boolean hasModifierOption(String optionName) {
+        for (Param p : modifiers) if (p.asString().equalsIgnoreCase(optionName)) return true;
+        return false;
+    }
+
     public int hashCode() {
         return 31 * content.hashCode() + type.hashCode();
     }

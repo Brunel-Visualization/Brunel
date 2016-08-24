@@ -47,16 +47,19 @@ class ParallelAxes extends D3Diagram {
 
     private final AxisDetails[] axes;           // Details of the axes
     private final Padding padding;              // Space around the edges
+    private final double smoothness;            // 0 == linear, 1 is very smooth
 
     public ParallelAxes(VisSingle vis, Dataset data, D3Interaction interaction, ElementStructure structure, ScriptWriter out) {
         super(vis, data, interaction, out);
         fields = data.fieldArray(vis.positionFields());
         builder = new D3ScaleBuilder(structure.chart, out);
         axes = makeAxisDetails(structure.chart, fields);
-
         padding = ModelUtil.getPadding(vis, StyleTarget.makeElementTarget(null), 6);
         padding.left += axes[0].size;
         padding.bottom += 15;       // For the bottom "axis" of titles
+
+        // Get the smoothness from the parameter
+        smoothness = vis.tDiagramParameters.length == 0 ? 0 : vis.tDiagramParameters[0].asDouble();
     }
 
     private static AxisDetails[] makeAxisDetails(ChartStructure chart, Field[] fields) {
@@ -70,7 +73,6 @@ class ParallelAxes extends D3Diagram {
             axes[i] = details;
         }
         return axes;
-
     }
 
     public ElementDetails initializeDiagram() {
@@ -123,26 +125,48 @@ class ParallelAxes extends D3Diagram {
                 .addChained("domain([0,", fields.length - 1, "])")
                 .endStatement();
 
-        out.comment("Define the individual scales");
+        out.add("var yF = []").at(50).comment("y functions for each axis");
         for (int i = 0; i < fields.length; i++) {
             out.add("var scale_y" + i + " = ");
             builder.defineScaleWithDomain(null, new Field[]{fields[i]}, ScalePurpose.parallel, 2, getTransform(fields[i]), null, isReversed(fields[i]));
             out.addChained("range(rangeVertical)");
             out.endStatement();
-            out.add("function y" + i + "(d) { return scale_y" + i + "(" + D3Util.writeCall(fields[i]) + ") }").ln();
+            out.add("yF[" + i + "] = function(d) { return scale_y" + i + "(" + D3Util.writeCall(fields[i]) + ") }").ln();
 
         }
         out.add("var axes = [];").at(50).comment("array of all axes");
 
         out.add("function path(d) {").indentMore().ln();
         out.add("var p = d3.path()").endStatement();
-        for (int i = 0; i < fields.length; i++) {
-            out.add(i == 0 ? "p.moveTo(" : "p.lineTo(");
-            out.add("scale_x(" + i + "), y" + i + "(d))").endStatement();
-        }
+        if (smoothness == 0 ) defineLinearPath();
+        else defineSmoothPath(smoothness);
         out.add("return p");
         out.indentLess().add("}").endStatement();
 
+    }
+
+    private void defineLinearPath() {
+        for (int i = 0; i < fields.length; i++) {
+            if (i == 0) out.add("p.moveTo(");
+            else out.add("p.lineTo(");
+            out.add("scale_x(" + i + "), y" + i + "(d))").endStatement();
+        }
+    }
+
+    /**
+     * The parameter passed in helps define how smooth the path is
+     *
+     * @param r xero-one parameter where 0 is linear and 1 is a flat curve
+     */
+    private void defineSmoothPath(double r) {
+        out.add("var xa = scale_x(0), ya = yF[0](d), xb, yb, i, xm, ym, r = ", r/2).endStatement();
+        out.add("p.moveTo(xa, ya)").endStatement();
+        out.add("for (i=1; i<yF.length; i++) {").indentMore().onNewLine()
+                .add("xb = scale_x(i), yb = yF[i](d)").endStatement()
+                .add("xm = d3.interpolateNumber(xa, xb), ym = d3.interpolateNumber(ya, yb)").endStatement()
+                .add("p.bezierCurveTo(xm(r), ym(0), xm(1-r), ym(1), xb, yb)").endStatement()
+                .add("xa = xb; ya = yb").endStatement()
+                .indentLess().onNewLine().add("}");
     }
 
     private String getTransform(Field field) {
@@ -174,17 +198,6 @@ class ParallelAxes extends D3Diagram {
     }
 
     private boolean requestsReverse(Field field, Param p) {
-        if (p.asField().equals(field.name))
-            for (Param q : p.modifiers())
-                if (q.asString().equals("reverse")) return true;
-        return false;
-    }
-
-    public void writeDiagramEnter() {
-//        // The cloud needs to set all this stuff up front
-//        out.add("merged.style('text-anchor', 'middle').classed('label', true)")
-//                .addChained("text(labeling.content)");
-//        D3LabelBuilder.addFontSizeAttribute(vis, out);
-//        out.endStatement();
+        return p.asField().equals(field.name) && p.hasModifierOption("reverse");
     }
 }
