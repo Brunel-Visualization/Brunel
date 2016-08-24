@@ -619,7 +619,8 @@ public class D3ScaleBuilder {
             divs = l.toArray();
         }
 
-        out.addChained("domain([").add(Data.join(divs)).add("])");
+        String domain = Data.join(divs);
+        out.add(".domain([").add(domain).add("])");
         return -1;
     }
 
@@ -679,7 +680,7 @@ public class D3ScaleBuilder {
 
         // If any position are  counts or sums, always include zero
         for (Field f : fields)
-            if (f.name.equals("#count") || "sum".equals(f.strProperty("summary"))) return 1.0;
+            if (f.name.equals("#count") || "sum" .equals(f.strProperty("summary"))) return 1.0;
 
         int nBarArea = 0;       // Count elements that are bars or areas
         for (VisSingle e : elements)
@@ -900,9 +901,9 @@ public class D3ScaleBuilder {
                     String newTitle = p.asString();
                     result = new AxisSpec(result.ticks, newTitle, result.grid, result.reverse);
                 } else if (p.type() == Type.option) {
-                    if ("grid".equals(p.asString()))
+                    if ("grid" .equals(p.asString()))
                         result = new AxisSpec(result.ticks, result.name, true, result.reverse);
-                    else if ("reverse".equals(p.asString()))
+                    else if ("reverse" .equals(p.asString()))
                         result = new AxisSpec(result.ticks, result.name, result.grid, true);
                 }
             }

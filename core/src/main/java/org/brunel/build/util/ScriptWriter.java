@@ -49,9 +49,9 @@ public class ScriptWriter {
     }
 
     public ScriptWriter addChained(Object... items) {
-        if (options.readableJavascript)
+        if (options.readableJavascript) {
             return indentMore().onNewLine().add(".").add(items).indentLess();
-        else
+        } else
             return add(".").add(items);
     }
 

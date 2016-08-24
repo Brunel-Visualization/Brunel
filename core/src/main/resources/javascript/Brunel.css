@@ -168,8 +168,8 @@
 }
 
 .brunel .parallel path {
-    stroke-linecap:butt;
-    stroke-linejoin:round;
+    stroke-linecap: butt;
+    stroke-linejoin: round;
 }
 
 .brunel path.element.guide {
@@ -278,6 +278,10 @@
     box-sizing: border-box;
     padding-top: 5px;
     padding-bottom: 5px
+}
+
+.brunel .parallel.axis .tick text {
+    font-size: 6pt
 }
 
 .brunel .control-label {

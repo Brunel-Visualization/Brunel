@@ -29,6 +29,7 @@ import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.Padding;
 import org.brunel.build.util.ScriptWriter;
+import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
@@ -76,39 +77,24 @@ class ParallelAxes extends D3Diagram {
     }
 
     public ElementDetails initializeDiagram() {
-        // One time only, create the axes
-        out.add("if (!axes.length) {").indentMore().onNewLine();
-        writeAxesCreation();
-        out.indentLess().onNewLine().add("}").onNewLine();
+
+        out.add("var axes = interior.selectAll('g.parallel.axis').data(parallel)").endStatement();
+        out.add("var builtAxes = axes.enter().append('g')")
+                .addChained("attr('class', function(d,i) { return 'parallel axis dim' + (i+1) })")
+                .addChained("attr('transform', function(d,i) { return 'translate(' + scale_x(i) + ',0)' })")
+                .addChained("each(function(d) {").indentMore().indentMore()
+                .add("d3.select(this).append('text').attr('class', 'axis title').text(d.label)")
+                .addChained("attr('x', 0).attr('y', geom.inner_height).attr('dy', '-0.3em').style('text-anchor', 'middle')")
+                .indentLess().indentLess().add("})").endStatement();
+
 
         // Write the calls to display the axes
-        writeAxesCalls();
 
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.generalPath, "path", "data._rows");
-    }
-
-    private void writeAxesCreation() {
-
-        int N = fields.length;
-
-        for (int i = 0; i < N; i++) {
-            String name = "dim" + (i + 1);
-
-            out.onNewLine().add("interior.append('g').attr('class', 'axis " + name + "')")
-                    .addChained("attr('transform','translate(' + scale_x(" + i + ") + ',0)')");
-            out.endStatement();
-
-            builder.defineAxis("axes[" + i + "] = d3.axisLeft", axes[i], false);
-        }
-
-    }
-
-    private void writeAxesCalls() {
-
-        out.add("BrunelD3.transition(interior.selectAll('g.axis'), transitionMillis)")
-                .addChained("each(function(d,i) { d3.select(this).call(axes[i].scale(axes[i].scale())) })")
+        out.add("BrunelD3.transition(axes.merge(builtAxes), transitionMillis)")
+                .addChained("each(function(d,i) { d3.select(this).call(d.axis.scale(d.scale)); })")
                 .endStatement();
 
+        return ElementDetails.makeForDiagram(vis, ElementRepresentation.generalPath, "path", "data._rows");
     }
 
     public void writeDefinition(ElementDetails details) {
@@ -125,48 +111,55 @@ class ParallelAxes extends D3Diagram {
                 .addChained("domain([0,", fields.length - 1, "])")
                 .endStatement();
 
-        out.add("var yF = []").at(50).comment("y functions for each axis");
+        out.onNewLine().ln().comment("Define data structures for parallel axes");
+
+        out.add("var parallel = [").onNewLine().indentMore();
         for (int i = 0; i < fields.length; i++) {
-            out.add("var scale_y" + i + " = ");
-            builder.defineScaleWithDomain(null, new Field[]{fields[i]}, ScalePurpose.parallel, 2, getTransform(fields[i]), null, isReversed(fields[i]));
-            out.addChained("range(rangeVertical)");
-            out.endStatement();
-            out.add("yF[" + i + "] = function(d) { return scale_y" + i + "(" + D3Util.writeCall(fields[i]) + ") }").ln();
-
+            Field f = fields[i];
+            if (i > 0) out.add(",").onNewLine();
+            out.add("{").indentMore()
+                    .onNewLine().add("label : " + Data.quote(f.label) + ",")
+                    .onNewLine().add("scale : ");
+            builder.defineScaleWithDomain(null, new Field[]{f}, ScalePurpose.parallel, 2, getTransform(f), null, isReversed(f));
+            if (out.currentColumn() > 60)
+                out.addChained("range(rangeVertical),");
+            else
+                out.add(".range(rangeVertical),");
+            out.onNewLine().add("y : function(d) { return this.scale(" + D3Util.writeCall(f) + ") },");
+            out.onNewLine().add("axis : d3.axisLeft()");
+            out.onNewLine().indentLess().add("}");
         }
-        out.add("var axes = [];").at(50).comment("array of all axes");
+        out.indentLess().add("]").endStatement();
 
-        out.add("function path(d) {").indentMore().ln();
+        out.onNewLine().ln().add("function path(d) {").indentMore().ln();
         out.add("var p = d3.path()").endStatement();
-        if (smoothness == 0 ) defineLinearPath();
+        if (smoothness == 0) defineLinearPath();
         else defineSmoothPath(smoothness);
         out.add("return p");
-        out.indentLess().add("}").endStatement();
+        out.indentLess().onNewLine().add("}").endStatement();
 
     }
 
     private void defineLinearPath() {
-        for (int i = 0; i < fields.length; i++) {
-            if (i == 0) out.add("p.moveTo(");
-            else out.add("p.lineTo(");
-            out.add("scale_x(" + i + "), y" + i + "(d))").endStatement();
-        }
+        out.add("parallel.forEach(function(dim, i) {").indentMore().indentMore().onNewLine()
+                .add("if (i) p.lineTo(scale_x(i), dim.y(d))").endStatement()
+                .add("else   p.moveTo(scale_x(i), dim.y(d))").endStatement()
+                .indentLess().indentLess().add("} )").endStatement();
     }
 
     /**
      * The parameter passed in helps define how smooth the path is
      *
-     * @param r xero-one parameter where 0 is linear and 1 is a flat curve
+     * @param r zero-one parameter where 0 is linear and 1 is a flat curve
      */
     private void defineSmoothPath(double r) {
-        out.add("var xa = scale_x(0), ya = yF[0](d), xb, yb, i, xm, ym, r = ", r/2).endStatement();
-        out.add("p.moveTo(xa, ya)").endStatement();
-        out.add("for (i=1; i<yF.length; i++) {").indentMore().onNewLine()
-                .add("xb = scale_x(i), yb = yF[i](d)").endStatement()
-                .add("xm = d3.interpolateNumber(xa, xb), ym = d3.interpolateNumber(ya, yb)").endStatement()
-                .add("p.bezierCurveTo(xm(r), ym(0), xm(1-r), ym(1), xb, yb)").endStatement()
+        out.add("var xa, ya, xb, yb, i, xm, ym, r = ", r / 2).endStatement();
+        out.add("parallel.forEach(function(dim, i) {").indentMore().indentMore().onNewLine()
+                .add("xb = scale_x(i), yb = parallel[i].y(d)").endStatement()
+                .add("if (i) p.bezierCurveTo(xa +(xb-xa)*r, ya, xb +(xa-xb)*r, yb, xb, yb)").endStatement()
+                .add("else   p.moveTo(xb, yb)").endStatement()
                 .add("xa = xb; ya = yb").endStatement()
-                .indentLess().onNewLine().add("}");
+                .indentLess().indentLess().add("} )").endStatement();
     }
 
     private String getTransform(Field field) {
