@@ -273,6 +273,7 @@ public class DataBuilder {
 
         if (vis.fY.size() < 2) return "";                               // Not needed
         if (vis.tDiagram == VisTypes.Diagram.parallel) return "";       // Not used for parallel axes
+        if (vis.tDiagram == VisTypes.Diagram.table) return "";          // Not used for tables
         /*
             The command is of the form:
                     y1, y2, y3; a1, a2
