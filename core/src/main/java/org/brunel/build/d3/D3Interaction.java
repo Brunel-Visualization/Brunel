@@ -63,6 +63,10 @@ public class D3Interaction {
         // Handle cases when there are diagrams -- the ones that do not fill the space by default are zoomable
         if (structure.diagram == VisTypes.Diagram.network || structure.diagram == VisTypes.Diagram.map
                 || structure.diagram == VisTypes.Diagram.tree) return ZOOM_ALL;
+
+        // Parallel coordinates gets special zooming -- just the "Y"
+        if (structure.diagram == VisTypes.Diagram.parallel) return new boolean[]{false, true};
+
         else if (structure.diagram != null)
             return ZOOM_NONE;
 
@@ -281,15 +285,22 @@ public class D3Interaction {
 
     /**
      * Set up the overlay group and shapes for trapping events for zooming.
+     *
+     * @param diagram the diagram the chart uses
      */
-    public void addOverlayForZoom() {
+    public void addOverlayForZoom(VisTypes.Diagram diagram) {
         // The group for the overlay
         out.add("var overlay = chart.append('g').attr('class', 'element')")
                 .addChained("attr('class', 'overlay').style('cursor','move').style('fill','none').style('pointer-events','all')")
                 .endStatement();
 
+        String extent;
+        if (diagram == VisTypes.Diagram.map) extent = "1/5,5";
+        if (diagram == VisTypes.Diagram.parallel) extent = "1/2,10";
+        else extent = "1/3,3";
+
         // Add an overlay rectangle for zooming that will trap all mouse events and use them for pan/zoom
-        out.add("var zoom = d3.zoom().scaleExtent([1/3,3])").endStatement();
+        out.add("var zoom = d3.zoom().scaleExtent([" + extent + "])").endStatement();
 
         // Add the zoom overlay and attach behavior
         out.add("var zoomNode = overlay.append('rect').attr('class', 'overlay')")
@@ -324,8 +335,14 @@ public class D3Interaction {
 
         out.endStatement();
 
-        // Only the map has no scales to modify ...
-        if (structure.diagram != VisTypes.Diagram.map) {
+        if (structure.diagram == VisTypes.Diagram.parallel) {           // Very special handling
+            out.add("var index = Math.round(d3.mouse(zoomNode)[0] * (parallel.length-1) / geom.inner_width)")
+                    .endStatement();
+            out.add("var p = parallel[index]").endStatement();
+            out.add("p._scale = p._scale || p.scale").endStatement();
+            out.add("if (p.numeric) p.scale = t.rescaleY(p._scale)").endStatement();
+            out.add("else           p.scale.range([t.y, t.y + t.k * geom.inner_height])").endStatement();
+        } else if (structure.diagram != VisTypes.Diagram.map) {         // The map has no scales to modify ...
             if (canZoomX) applyZoomToScale(0);
             if (canZoomY) applyZoomToScale(1);
         }
@@ -368,7 +385,7 @@ public class D3Interaction {
             out.add(".range([" + offset + ", " + offset + " + t.k * geom.inner_width])");
         } else if (dimension == 1 && yCategorical) {
             // We cannot change the domain, so we change the range instead, which we know runs from 0 to the geom extent
-            out.add(".range([" + offset + ", " + offset + " + + t.k * geom.inner_height])");
+            out.add(".range([" + offset + ", " + offset + " + t.k * geom.inner_height])");
         } else {
             // D3 allows us to manipulate the domain of the NUMERIC scale using the transform's rescale method
             // We rescale the stored original untransformed scale 'baseScales[dimension]'

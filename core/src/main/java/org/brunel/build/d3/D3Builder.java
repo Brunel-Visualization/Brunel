@@ -31,6 +31,7 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
+import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Element;
 
@@ -150,8 +151,8 @@ public class D3Builder extends AbstractBuilder {
         title.writeContent("chart", out);
         sub.writeContent("chart", out);
 
-        // Diagrams do not need scales; everything else does
         if (structure.diagram == null) {
+            // Scales and axes
             out.titleComment("Scales");
             scalesBuilder.writeCoordinateScales();
 
@@ -160,7 +161,8 @@ public class D3Builder extends AbstractBuilder {
                 out.titleComment("Axes");
                 scalesBuilder.writeAxes();
             }
-        } else {
+        } else if (structure.diagram != VisTypes.Diagram.parallel){
+            // Parallel coordinates handles it differently
             scalesBuilder.writeDiagramScales();
         }
 
@@ -556,7 +558,7 @@ public class D3Builder extends AbstractBuilder {
         out.addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
                 .endStatement();
 
-        interaction.addOverlayForZoom();
+        interaction.addOverlayForZoom(structure.elements[0].tDiagram);
 
         out.add("chart.append('rect').attr('class', 'background')")
                 .add(".attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top)")

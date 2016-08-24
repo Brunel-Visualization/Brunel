@@ -102,6 +102,11 @@ class ParallelCoordinates extends D3Diagram {
         addAestheticsAndTooltips(details);
     }
 
+    public void writePerChartDefinitions() {
+        out.add("var parallel;").at(50).comment("Structure to store parallel axes");
+    }
+
+
     public void preBuildDefinitions() {
         out.add("var rangeVertical = [geom.inner_height -", padding.vertical() + ", " + padding.top + "];")
                 .at(50).comment("vertical range");
@@ -113,7 +118,7 @@ class ParallelCoordinates extends D3Diagram {
 
         out.onNewLine().ln().comment("Define data structures for parallel axes");
 
-        out.add("var parallel = [").onNewLine().indentMore();
+        out.add("parallel = [").onNewLine().indentMore();
         for (int i = 0; i < fields.length; i++) {
             Field f = fields[i];
             if (i > 0) out.add(",").onNewLine();
@@ -128,7 +133,7 @@ class ParallelCoordinates extends D3Diagram {
             String positionExpression = D3Util.writeCall(f);
             if (f.isBinned()) positionExpression += ".mid";                                     // Midpoint of bins
             out.onNewLine().add("y : function(d) { return this.scale(" + positionExpression + ") },");
-            out.onNewLine().add("axis : d3.axisLeft()");
+            out.onNewLine().add("axis : d3.axisLeft(), numeric: " + f.isNumeric());
             out.onNewLine().indentLess().add("}");
         }
         out.indentLess().add("]").endStatement();
