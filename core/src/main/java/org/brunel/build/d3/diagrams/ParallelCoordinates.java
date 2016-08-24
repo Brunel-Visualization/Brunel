@@ -39,7 +39,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-class ParallelAxes extends D3Diagram {
+class ParallelCoordinates extends D3Diagram {
 
     private final Set<String> TRANSFORMS = new HashSet<>(Arrays.asList("linear", "log", "root"));
 
@@ -50,7 +50,7 @@ class ParallelAxes extends D3Diagram {
     private final Padding padding;              // Space around the edges
     private final double smoothness;            // 0 == linear, 1 is very smooth
 
-    public ParallelAxes(VisSingle vis, Dataset data, D3Interaction interaction, ElementStructure structure, ScriptWriter out) {
+    public ParallelCoordinates(VisSingle vis, Dataset data, D3Interaction interaction, ElementStructure structure, ScriptWriter out) {
         super(vis, data, interaction, out);
         fields = data.fieldArray(vis.positionFields());
         builder = new D3ScaleBuilder(structure.chart, out);
@@ -103,7 +103,7 @@ class ParallelAxes extends D3Diagram {
     }
 
     public void preBuildDefinitions() {
-        out.add("var rangeVertical = [", padding.top, ", geom.inner_height -", padding.vertical() + "];")
+        out.add("var rangeVertical = [geom.inner_height -", padding.vertical() + ", " + padding.top + "];")
                 .at(50).comment("vertical range");
 
         out.add("var scale_x = d3.scaleLinear().range(["
@@ -125,7 +125,9 @@ class ParallelAxes extends D3Diagram {
                 out.addChained("range(rangeVertical),");
             else
                 out.add(".range(rangeVertical),");
-            out.onNewLine().add("y : function(d) { return this.scale(" + D3Util.writeCall(f) + ") },");
+            String positionExpression = D3Util.writeCall(f);
+            if (f.isBinned()) positionExpression += ".mid";                                     // Midpoint of bins
+            out.onNewLine().add("y : function(d) { return this.scale(" + positionExpression + ") },");
             out.onNewLine().add("axis : d3.axisLeft()");
             out.onNewLine().indentLess().add("}");
         }

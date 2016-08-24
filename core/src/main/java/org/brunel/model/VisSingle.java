@@ -271,7 +271,7 @@ public class VisSingle extends VisItem implements Cloneable {
         if (tDiagram != null && stacked) error = addError(error, "diagrams cannot be stacked");
 
         Dataset dataset = getDataset();
-        if (fX.size() > 1 && tElement != Element.edge) {
+        if (tDiagram == null && fX.size() > 1 && tElement != Element.edge) {
             Field x = dataset.field(fX.get(0).asField(dataset));
             if (!x.preferCategorical()) {
                 boolean isBinned = false;
