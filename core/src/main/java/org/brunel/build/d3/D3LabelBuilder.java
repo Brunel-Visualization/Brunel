@@ -102,7 +102,7 @@ public class D3LabelBuilder {
 
         if (textMethod.equals("geo")) {
             // We define a function to extract the coordinates from the geo, and project them
-            String func = "function(box,text,d) {var p = projection([d.geo_properties.c, d.geo_properties.d]); return {box:box, x:p[0], y:p[1]}}";
+            String func = "function(box,text,d) {var p = project_center(d.geo_properties); return {box:box, x:p[0], y:p[1]}}";
             out.onNewLine().add("where:", func, ",");
         } else {
             HashSet<String> parts = new HashSet<>(Arrays.asList(textMethod.split("-")));

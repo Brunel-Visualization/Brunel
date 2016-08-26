@@ -55,6 +55,8 @@ public class GeoMap extends D3Diagram {
                 .add("var q = base(p), t = d3.zoomTransform(zoomNode)").endStatement()
                 .add("return q ? [t.k*q[0]+t.x, t.k*q[1]+t.y] : null").endStatement()
                 .indentLess().indentLess().add("}").endStatement();
+        out.add("function project_center(v) { return (v ? projection([v.c, v.d]) : null) || [-9e6, -9e6] }")
+                .endStatement();
 
         out.add("var path = d3.geoPath().projection(BrunelD3.geoStream(projection))").endStatement();
 

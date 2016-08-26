@@ -36,6 +36,8 @@ import org.brunel.model.VisTypes.Element;
 import org.brunel.model.VisTypes.Using;
 import org.brunel.model.style.StyleTarget;
 
+import static org.brunel.build.d3.element.ElementRepresentation.symbol;
+
 public class D3ElementBuilder {
 
     private static final String BAR_SPACING = "0.9";            // Spacing between categorical bars
@@ -112,7 +114,6 @@ public class D3ElementBuilder {
         out.add("merged.filter(hasData).classed('selected', function(d) { return data.$selection(d) == '\u2713' })")
                 .addChained("filter(function(d) { return data.$selection(d) == '\u2713' }).raise()")
                 .endStatement();
-
 
         // UPDATE + ENTER: Define the values that can be changed based on the data
         out.add("BrunelD3.transition(merged, transitionMillis)");
@@ -359,10 +360,12 @@ public class D3ElementBuilder {
             out.addChained("attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)");
         } else if (details.representation == ElementRepresentation.text)
             defineText(details, vis);
+        else if (details.representation == symbol)
+            defineSymbol(details, vis, out);
         else if (details.representation == ElementRepresentation.pointLikeCircle
                 || details.representation == ElementRepresentation.spaceFillingCircle
                 || details.representation == ElementRepresentation.largeCircle)
-            defineCircle(details);
+            defineCircle(details, out);
     }
 
     protected void writeCoordinateLabelingAndAesthetics(ElementDetails details, boolean filterToDataOnly) {
@@ -410,11 +413,45 @@ public class D3ElementBuilder {
         D3LabelBuilder.addFontSizeAttribute(vis, out);
     }
 
-    private void defineCircle(ElementDetails elementDef) {
+    private static void defineCircle(ElementDetails elementDef, ScriptWriter out) {
         // If the center is not defined, this has been placed using a translation transform
-        if (elementDef.x.center != null) out.addChained("attr('cx'," + elementDef.x.center + ")");
-        if (elementDef.y.center != null) out.addChained("attr('cy'," + elementDef.y.center + ")");
+        if (centerDefined(elementDef)) {
+            out.addChained("attr('cx'," + elementDef.x.center + ")")
+                    .addChained("attr('cy'," + elementDef.y.center + ")");
+        }
         out.addChained("attr('r'," + elementDef.overallSize.halved() + ")");
+    }
+
+    private static boolean centerDefined(ElementDetails elementDef) {
+        return elementDef.x.center != null && elementDef.y.center != null;
+    }
+
+    public static void definePointLikeMark(ElementDetails elementDef, VisSingle single, ScriptWriter out) {
+        if (elementDef.representation == symbol) defineSymbol(elementDef, single, out);
+        else defineCircle(elementDef, out);
+    }
+
+    private static void defineSymbol(ElementDetails elementDef, VisSingle vis, ScriptWriter out) {
+        // If the center is not defined, this has been placed using a translation transform already
+        if (centerDefined(elementDef)) {
+            // Add a translate to place it in the right location
+            out.addChained("attr('transform', function(d) { return 'translate(' + "
+                    + elementDef.x.center.definition() + " + ', ' + "
+                    + elementDef.y.center.definition() + " + ')' })");
+
+            String symbolName = ModelUtil.getElementSymbol(vis);
+            symbolName = Data.quote(symbolName == null ? "circle" : symbolName);
+
+            GeomAttribute size = elementDef.overallSize.halved();
+            if (size.isFunc()) {
+                // The size changes, so we must call the function
+                out.addChained("attr('d', function(d) { return BrunelD3.symbol(" + symbolName + ", " +
+                        size.definition() + ") })");
+            } else {
+                // Fixed symbol -- no function needed
+                out.addChained("attr('d', BrunelD3.symbol(" + symbolName + ", " + size + "))");
+            }
+        }
     }
 
     private String getSymbol() {
@@ -474,8 +511,8 @@ public class D3ElementBuilder {
     private void setLocationsByGeoPropertiesCenter(ElementDetails e) {
         // We use the embedded centers in the geo properties to place the items
         // TODO: make this better ...
-        e.x.center = GeomAttribute.makeFunction("projection(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999])[0]");
-        e.y.center = GeomAttribute.makeFunction("projection(d.geo_properties ? [d.geo_properties.c, d.geo_properties.d]: [-999,-999])[1]");
+        e.x.center = GeomAttribute.makeFunction("project_center(d.geo_properties)[0]");
+        e.y.center = GeomAttribute.makeFunction("project_center(d.geo_properties)[1]");
     }
 
     private GeomAttribute getSize(Field[] fields, String extent, ScalePurpose purpose, ElementDimension dim) {

@@ -38,7 +38,7 @@ import org.brunel.model.VisTypes;
     symbol("path", "right", false),                     // A symbol drawn as path, but behaves like a small circle
     wedge("path", "wedge", false);                      // A pie chart wedge gets a special labeling location
 
-    static ElementRepresentation makeForCoordinateElement(VisTypes.Element element, String symbol, VisSingle vis) {
+    static ElementRepresentation makeForCoordinateElement(VisTypes.Element element, String symbolName, VisSingle vis) {
         VisTypes.Coordinates coords = vis.coords;
         if (element == VisTypes.Element.bar && coords == VisTypes.Coordinates.polar)
             return wedge;
@@ -56,10 +56,12 @@ import org.brunel.model.VisTypes;
             return text;
         else if (element == VisTypes.Element.bar)
             return rect;
-        else if ("rect".equals(symbol))
+        else if ("rect".equals(symbolName))
             return rect;
-        else
+        else if (symbolName == null || symbolName.equals("circle"))
             return pointLikeCircle;
+        else
+            return symbol;
     }
 
     private final String mark;                   // The graphic element this represents
@@ -87,7 +89,7 @@ import org.brunel.model.VisTypes;
     }
 
     public boolean isDrawnAsPath() {
-        return mark.equals("path");
+        return mark.equals("path") && this != symbol;
     }
 
     public boolean textFitsShape() {

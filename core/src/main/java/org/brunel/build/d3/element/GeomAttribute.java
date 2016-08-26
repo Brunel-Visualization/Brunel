@@ -40,6 +40,10 @@ public class GeomAttribute {
         return new GeomAttribute(def, false);
     }
 
+    public String call() {
+        return call(def);
+    }
+
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -50,8 +54,8 @@ public class GeomAttribute {
 
     }
 
-    public String halved() {
-        return new GeomAttribute(def + " / 2", func).toString();
+    public GeomAttribute halved() {
+        return new GeomAttribute(def + " / 2", func);
     }
 
     public int hashCode() {

@@ -4,7 +4,7 @@ DISTRIBUTED
 google-gson	2.3.1		APL 2.0
 Dropzone.js	4.0.1		MIT
 SumoSelect	2.0.2		MIT
-d3.js		3.5.5		BSD
+d3.js		4.2.1		BSD
 Jquery		1.10.2		MIT
 jquery-ui	1.11.4		MIT
 httr		1.0.0		MIT + file LICENSE
