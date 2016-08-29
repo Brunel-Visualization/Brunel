@@ -230,6 +230,8 @@ public class D3DataBuilder {
             if (params.summaryCommand.isEmpty()) writeTransform("reduce", params.usedCommand);
             writeTransform("series", params.seriesCommand);
         }
+        writeTransform("setRowCount", params.rowCountCommand);
+
         writeTransform("sort", params.sortCommand);
 
         writeTransform("stack", params.stackCommand);               // Stack must come after all else

@@ -23,6 +23,7 @@ import org.brunel.data.modify.ConvertSeries;
 import org.brunel.data.modify.DataOperation;
 import org.brunel.data.modify.Each;
 import org.brunel.data.modify.Filter;
+import org.brunel.data.modify.SetRowCount;
 import org.brunel.data.modify.Sort;
 import org.brunel.data.modify.Stack;
 import org.brunel.data.modify.Summarize;
@@ -232,6 +233,16 @@ public class Dataset extends Informative implements Serializable {
      */
     public Dataset series(String command) {
         return ConvertSeries.transform(this, command);
+    }
+
+    /**
+     * Replicate and/or merge rows until we have the desired number
+     *
+     * @param command the form is "field:count"
+     * @return converted data set
+     */
+    public Dataset setRowCount(String command) {
+        return SetRowCount.transform(this, command);
     }
 
     /**

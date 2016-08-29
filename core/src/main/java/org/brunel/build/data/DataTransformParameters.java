@@ -60,6 +60,11 @@ public class DataTransformParameters {
      * Command to transform to a series
      */
     public final String seriesCommand;
+
+    /**
+     * Command to set the number of rows to a fixed number
+     */
+    public final String rowCountCommand;
     /**
      * Command to retain only used fields
      */
@@ -68,8 +73,10 @@ public class DataTransformParameters {
     /**
      * Initialize all the relevant parameters
      */
-    public DataTransformParameters(String constantsCommand, String filterCommand, String eachCommand, String binCommand, String summaryCommand,
-                                   String stackCommand, String sortCommand, String sortRowsCommand, String seriesCommand, String usedCommand) {
+    public DataTransformParameters(String constantsCommand, String filterCommand, String eachCommand,
+                                   String binCommand, String summaryCommand, String stackCommand,
+                                   String sortCommand, String sortRowsCommand, String seriesCommand,
+                                   String rowCountCommand, String usedCommand) {
         this.constantsCommand = constantsCommand;
         this.filterCommand = filterCommand;
         this.eachCommand = eachCommand;
@@ -79,6 +86,7 @@ public class DataTransformParameters {
         this.sortCommand = sortCommand;
         this.sortRowsCommand = sortRowsCommand;
         this.seriesCommand = seriesCommand;
+        this.rowCountCommand = rowCountCommand;
         this.usedCommand = usedCommand;
     }
 

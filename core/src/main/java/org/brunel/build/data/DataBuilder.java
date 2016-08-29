@@ -75,11 +75,12 @@ public class DataBuilder {
         String summaryCommand = buildSummaryCommands();
         String sortCommand = makeFieldCommands();
         String seriesYFields = makeSeriesCommand();
+        String setRowCountCommand = makeSetRowCountCommand();
         String usedFields = required();
 
         DataTransformParameters params = new DataTransformParameters(constantsCommand,
                 filterCommand, eachCommand, binCommand, summaryCommand, "", sortCommand, "", seriesYFields,
-                usedFields);
+                setRowCountCommand, usedFields);
 
         // Call the engine to see if it has any special needs
         if (modifier != null) params = modifier.modifyParameters(params, vis);
@@ -91,6 +92,7 @@ public class DataBuilder {
         data = data.transform(params.transformCommand);                                 // bin, rank, ... on data
         data = data.summarize(params.summaryCommand);                                   // summarize data
         data = data.series(params.seriesCommand);                                       // convert series
+        data = data.setRowCount(params.rowCountCommand);                                // set the number of rows
         data = data.sort(params.sortCommand);                                           // sort data
         data = data.sortRows(params.sortRowsCommand);                                   // sort rows only
         data = data.stack(params.stackCommand);                                         // stack data
@@ -253,6 +255,29 @@ public class DataBuilder {
         }
 
         return Data.join(commands, "; ");
+    }
+
+    private String makeSetRowCountCommand() {
+
+        String field = null;
+        int count = 100;                                                    // Default to 100 rows
+
+        for (Entry<Param, String> e : vis.fTransform.entrySet()) {
+            if (!e.getValue().equals("rows")) continue;
+            Param p = e.getKey();
+
+            // We default to using the count field
+            if (p.isField()) {
+                field = p.asField();
+                p = p.firstModifier();
+            }
+            else {
+                field = "#count";
+            }
+            if (p != null) count = (int) p.asDouble();
+        }
+
+        return field == null ? "" : field + "," + count;
     }
 
     private String makeEachCommands() {

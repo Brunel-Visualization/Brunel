@@ -60,6 +60,7 @@ outer transform FIELD+
 each transform FIELD+
 top transform FIELD+
 bottom transform FIELD+
+rows transform - FIELD NUMBER
 
 ## Data summary operations
 count data FIELD+

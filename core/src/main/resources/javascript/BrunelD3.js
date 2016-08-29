@@ -556,27 +556,42 @@ var BrunelD3 = (function () {
      */
     function gridLayout(tree, extent, rows, columns, aspect) {
 
-        var i, leaves = tree.leaves();
+        var i, j, r, c, p, d, leaves = tree.leaves();
 
         // Calculate the RELATIVE aspect
         var dims = makeGoodDimensions(leaves.length, rows, columns, extent[1] / extent[0] / aspect);
         rows = dims[0];
-        columns = dims[1];
 
-        var offsetAlreadyInColumn = false;
-        var r = 0, c = -1;
+        var rowColumn = [];                         // The next free column for this row
+        var rowParent = [];                         // Parent of the last item shown on the row
+
+        function score(v, parent) {
+            if (!rowColumn[v]) return -10;                              // fill empty rows first
+            return rowColumn[v] + (parent == rowParent[i] ? 0 : 1);
+        }
+
+
         for (i = 0; i < leaves.length; i++) {
-            r++;
-            if (!(i % rows)) {
-                r = 0;
-                offsetAlreadyInColumn = false;
+            p = leaves[i].parent;
+
+            // The best row to put this in is the leftermost, breaking ties by being near a parent
+            r = 0;
+            for (j = 1; j < rows; j++)
+                if (score(j, p) < score(r, p)) r = j;
+
+            c = rowColumn[r] || 0;
+
+            // If that would put us beside a cell with a different parent, move to the right
+            if (c && (rowParent[r] != p
+                    || rowColumn[r - 1] == c && rowParent[r - 1] != p
+                    || rowColumn[r + 1] == c && rowParent[r + 1] != p
+                ))
                 c++;
-            }
-            if (!offsetAlreadyInColumn && i > 0 && leaves[i].parent != leaves[i - 1].parent) {
-                // Different parent, so offset to show the hierarchy
-                c++;
-                offsetAlreadyInColumn = true;
-            }
+
+            rowParent[r] = p;
+            rowColumn[r] = c + 1;
+
+            // Place item
             leaves[i].x = c;
             leaves[i].y = (r + 0.5) * extent[1] / rows;
         }
