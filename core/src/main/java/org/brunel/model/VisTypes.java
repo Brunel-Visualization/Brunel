@@ -41,7 +41,7 @@ public class VisTypes {
     /* Our diagram layouts; each may have an option default element to use */
     public enum Diagram {
         bubble(Element.point), chord(Element.edge), cloud(Element.text), tree(Element.point),
-        table(Element.text), parallel(Element.line), treemap(Element.bar), network(Element.point), map(Element.polygon);
+        grid(Element.point), table(Element.text), parallel(Element.line), treemap(Element.bar), network(Element.point), map(Element.polygon);
 
         public final Element defaultElement;
 

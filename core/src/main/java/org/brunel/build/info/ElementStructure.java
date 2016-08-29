@@ -65,7 +65,8 @@ public class ElementStructure {
     }
 
     public boolean hasComplexDataStructure() {
-        return chart.diagram == Diagram.treemap || chart.diagram == Diagram.tree || chart.diagram == Diagram.bubble;
+        return chart.diagram == Diagram.treemap ||chart.diagram == Diagram.grid
+                || chart.diagram == Diagram.tree || chart.diagram == Diagram.bubble;
     }
 
     /**
@@ -87,5 +88,4 @@ public class ElementStructure {
             references[i] = idToPointName + D3Util.writeCall(keys[i]) + ")";
         return references;
     }
-
 }

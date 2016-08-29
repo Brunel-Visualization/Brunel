@@ -529,6 +529,70 @@ var BrunelD3 = (function () {
     }
 
 
+    /**
+     * Find a good grid size for the layout
+     * @param n number of items
+     * @param r number of rows (may be falsey)
+     * @param c number of columns (may be falsey)
+     * @param aspect size ratio for rows :: columns
+     */
+    function makeGoodDimensions(n, r, c, aspect) {
+        if (r)
+            return c ? [r, c] : [r, c || Math.ceil(n / r)];         // We know the rows, calculate columns if necessary
+        else if (c)
+            return [Math.ceil(n / c), c];                           // We knows the columns, calculate the rows
+
+        r = Math.round(Math.sqrt(n * aspect));
+        return [r, Math.ceil(n / r)];
+    }
+
+    /**
+     * Layout data in a grid
+     * @param tree hierarchical layout from d3
+     * @param extent display size
+     * @param rows desired rows (may be falsey)
+     * @param columns desired columns (may be falsey)
+     * @param aspect the desired aspect ratio of each cell (y:x)
+     */
+    function gridLayout(tree, extent, rows, columns, aspect) {
+
+        var i, leaves = tree.leaves();
+
+        // Calculate the RELATIVE aspect
+        var dims = makeGoodDimensions(leaves.length, rows, columns, extent[1] / extent[0] / aspect);
+        rows = dims[0];
+        columns = dims[1];
+
+        var offsetAlreadyInColumn = false;
+        var r = 0, c = -1;
+        for (i = 0; i < leaves.length; i++) {
+            r++;
+            if (!(i % rows)) {
+                r = 0;
+                offsetAlreadyInColumn = false;
+                c++;
+            }
+            if (!offsetAlreadyInColumn && i > 0 && leaves[i].parent != leaves[i - 1].parent) {
+                // Different parent, so offset to show the hierarchy
+                c++;
+                offsetAlreadyInColumn = true;
+            }
+            leaves[i].x = c;
+            leaves[i].y = (r + 0.5) * extent[1] / rows;
+        }
+
+        c++;
+
+        var radius = Math.min(extent[0] / c, extent[1] / rows);
+
+        // Rescale x space
+        for (i = 0; i < leaves.length; i++) {
+            leaves[i].x = (leaves[i].x + 0.5) * extent[0] / c;
+            leaves[i].r = radius;
+        }
+    }
+
+
     // Cloud layout -- pass in the dataset, the extent as [width, height]
     function cloud(data, ext) {
         // Delta is the distance between locations as we step along the spiral to place items
@@ -599,7 +663,7 @@ var BrunelD3 = (function () {
                 parent = items[0]._txt.parentNode;
 
             // remove old scaling
-            parent.removeAttribute('transform')
+            parent.removeAttribute('transform');
 
             // Resize everything
             for (k = 0; k < items.length; k++) {
@@ -1180,12 +1244,12 @@ var BrunelD3 = (function () {
         return p + "Z";
     }
 
-    var personShape = [['M', 0.075, -22.262],
+    var personShape = [['M', 0.075, -32.262],
         ['c', 4.162, 0, 7.538, -3.376, 7.538, -7.539],
         ['c', 0, -4.166, -3.376, -7.541, -7.538, -7.541],
         ['c', -4.166, 0, -7.539, 3.376, -7.539, 7.541],
-        ['C', -7.613, -25.638, -5.24, -22.262, 0.075, -22.262],
-        ['M', 7.914, -19.874],
+        ['C', -7.613, -35.638, -5.24, -32.262, 0.075, -32.262],
+        ['M', 7.914, -29.874],
         ['c', 5.333, 0, 9.702, 4.327, 9.702, 9.657],
         ['v', 23.384],
         ['c', 0, 1.821, -1.433, 3.298, -3.257, 3.298],
@@ -1218,7 +1282,7 @@ var BrunelD3 = (function () {
             p += a[0];
             for (j = 1; j < a.length; j++) {
                 if (j > 1) p += ',';
-                p += r * a[j]/45;
+                p += r * a[j] / 45;
             }
         }
         return p;
@@ -1823,6 +1887,7 @@ var BrunelD3 = (function () {
         'label': applyLabeling,
         'undoTransform': undoTransform,
         'cloudLayout': cloud,
+        'gridLayout': gridLayout,
         'select': select,
         'shorten': shorten,
         'transition': transition,

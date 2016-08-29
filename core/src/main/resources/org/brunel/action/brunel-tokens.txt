@@ -21,6 +21,7 @@ chord diagram
 cloud diagram
 pack diagram
 tree diagram
+grid diagram - rows columns aspect
 treemap diagram
 table diagram
 parallel diagram - NUMBER
