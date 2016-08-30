@@ -161,22 +161,22 @@ public class D3Interaction {
                 if (snapInfo != null) {
                     // We want a snap overlay event that will call select -- all snap events are overlays
                     // Also add corresponding mouse out event
-                    addFunctionDefinition("mousemove",
+                    addFunctionDefinition("mousemove.snap",
                             "BrunelD3.select(c.item, c.target, element, updateAll)", overlayEvents);
-                    addFunctionDefinition("mouseout",
+                    addFunctionDefinition("mouseout.snap",
                             "BrunelD3.select(null, c.target, element, updateAll)", overlayEvents);
                 } else {
                     // We want an event handler on the element -- Also add corresponding mouse out event
                     String eventName = p.hasModifiers() ? p.firstModifier().asString() : "click";
-                    addFunctionDefinition(eventName,
+                    addFunctionDefinition(eventName +".interact",
                             "BrunelD3.select(d, this, element, updateAll)", elementEvents);
                     if (eventName.equals("mouseover") || eventName.equals("mousemove"))
-                        addFunctionDefinition("mouseout",
+                        addFunctionDefinition("mouseout.interact",
                                 "BrunelD3.select(null, this, element, updateAll)", elementEvents);
 
                     // And we want a click on the main space to select nothing
                     if (eventName.equals("click"))
-                        addFunctionDefinition("click", "BrunelD3.select(null, this, element, updateAll)", overlayEvents);
+                        addFunctionDefinition("click.interact", "BrunelD3.select(null, this, element, updateAll)", overlayEvents);
 
                 }
             } else if (type == Interaction.call) {
@@ -185,18 +185,18 @@ public class D3Interaction {
                 if (functionName.isEmpty()) functionName = "BrunelD3.crosshairs";
                 if (snapInfo != null) {
                     // We want a snap overlay event that will call a custom function -- all snap events are overlays
-                    addFunctionDefinition("mousemove", functionName + "(c.item, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
-                    addFunctionDefinition("mouseout", functionName + "(null, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
+                    addFunctionDefinition("mousemove.user", functionName + "(c.item, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
+                    addFunctionDefinition("mouseout.user", functionName + "(null, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
                 } else {
                     // We want an event handler on the element
                     String eventName = p.modifiers().length > 1 ? p.modifiers()[1].toString() : "click";
-                    addFunctionDefinition(eventName, functionName + "(d, this, element)", elementEvents);
+                    addFunctionDefinition(eventName + ".user", functionName + "(d, this, element)", elementEvents);
                     if (eventName.equals("mouseover") || eventName.equals("mousemove"))
-                        addFunctionDefinition("mouseout", functionName + "(null, this, element)", elementEvents);
+                        addFunctionDefinition("mouseout.user", functionName + "(null, this, element)", elementEvents);
 
                     // And we want a click on the main space to select nothing
                     if (eventName.equals("click"))
-                        addFunctionDefinition("click", functionName + "(null, c.target, element, 'xy')", overlayEvents);
+                        addFunctionDefinition("click.user", functionName + "(null, c.target, element, 'xy')", overlayEvents);
 
                 }
             }
