@@ -582,6 +582,10 @@ public class D3ScaleBuilder {
             // Size must not get a transform as it will seriously distort things
             if (purpose == ScalePurpose.size) transform = defaultTransform;
             transform = makeD3ScaleName(defaultTransform, scaleField, transform);
+
+            // Add small amount to top end to avoid ticks missing due to round-off error
+            max += (max-min) * 1e-7;
+
             out.add("d3." + transform + "()");
             for (int i = 0; i < divs.length; i++) {
                 if (partitionPoints == null)
