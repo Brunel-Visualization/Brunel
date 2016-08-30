@@ -186,9 +186,10 @@
     var v = new BrunelVis('visualization');
     v.build(table1);
 
+    // Pans on the X dimension bya  given number of pixels
     function panBy(amount) {
-	    var z = v.charts[0].zoom();
-	    v.charts[0].zoom( { dx: z.dx+amount }, 3000);
+	    var chart = v.charts[0];
+	    chart.zoom(chart.zoom().translate(amount, 0), 3000);
     }
 
     /// ....

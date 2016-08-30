@@ -759,21 +759,6 @@ attributes to the fields used for filtering.
     water:6-65)
 
 
-### Filter
-The `filter` command is an interaction command which will create one or more interactive controls
-(sliders, check boxes,...) beside the visualization and allow dynamic filtering using those items.
-As is true for all interactivity, the filtering happens client-side and sorting and summarization
-happen afterwards and so will respect the filtered data. Default filter values may be provided as
-attributes to the fields used for filtering.
-
-<!-- examples -->
-
-    x(population) y(violent_crimes) color(dem_rep) size(water:600%) filter(presidential_choice, water)
-
-    x(population) y(violent_crimes) color(dem_rep) size(water:600%) filter(Region:[Pacific, South],
-    water:6-65)
-
-
 ### Animation
 The `animate` command will create an interactive control that animates over the values of a
 continuous field. The button will pause or continue the animation and it will automatically loop
@@ -1348,9 +1333,10 @@ The above example places a circle around the target of the mouse event
         var v = new BrunelVis('visualization');
         v.build(table1);
     
+        // Pans on the X dimension bya  given number of pixels
         function panBy(amount) {
-    	    var z = v.charts[0].zoom();
-    	    v.charts[0].zoom( { dx: z.dx+amount }, 3000);
+    	    var chart = v.charts[0];
+    	    chart.zoom(chart.zoom().translate(amount, 0), 3000);
         }
     
         /// ....
