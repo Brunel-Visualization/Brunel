@@ -532,18 +532,12 @@ var BrunelD3 = (function () {
     /**
      * Find a good grid size for the layout
      * @param n number of items
-     * @param r number of rows (may be falsey)
      * @param c number of columns (may be falsey)
      * @param aspect size ratio for rows :: columns
      */
-    function makeGoodDimensions(n, r, c, aspect) {
-        if (r)
-            return c ? [r, c] : [r, c || Math.ceil(n / r)];         // We know the rows, calculate columns if necessary
-        else if (c)
-            return [Math.ceil(n / c), c];                           // We knows the columns, calculate the rows
-
-        r = Math.round(Math.sqrt(n * aspect));
-        return [r, Math.ceil(n / r)];
+    function chooseRows(n, c, aspect) {
+        if (c) return Math.ceil(n / c);                         // We know the columns, calculate the rows
+        else return Math.round(Math.sqrt(n * aspect));          // Make them fit appropriately
     }
 
     /**
@@ -556,14 +550,13 @@ var BrunelD3 = (function () {
      */
     function gridLayout(tree, extent, rows, columns, aspect) {
 
-        var i, j, r, c, p, d, leaves = tree.leaves();
+        var i, j, r, c, p, leaves = tree.leaves(),
+            rowColumn = [],                         // The next free column for this row
+            rowParent = [];                         // Parent of the last item shown on the row
 
-        // Calculate the RELATIVE aspect
-        var dims = makeGoodDimensions(leaves.length, rows, columns, extent[1] / extent[0] / aspect);
-        rows = dims[0];
 
-        var rowColumn = [];                         // The next free column for this row
-        var rowParent = [];                         // Parent of the last item shown on the row
+        // Calculate the bets number of rows using the relative aspect
+        rows = rows || chooseRows(leaves.length, columns, extent[1] / extent[0] / aspect);
 
         function score(v, parent) {
             if (!rowColumn[v]) return -10;                              // fill empty rows first
@@ -572,14 +565,13 @@ var BrunelD3 = (function () {
 
 
         for (i = 0; i < leaves.length; i++) {
-            p = leaves[i].parent;
+            p = leaves[i].parent;                                   // The parent for this node
 
-            // The best row to put this in is the leftermost, breaking ties by being near a parent
-            r = 0;
+            r = 0;                                                  // Choose best row
             for (j = 1; j < rows; j++)
                 if (score(j, p) < score(r, p)) r = j;
 
-            c = rowColumn[r] || 0;
+            c = rowColumn[r] || 0;                                  // current column position
 
             // If that would put us beside a cell with a different parent, move to the right
             if (c && (rowParent[r] != p
@@ -600,7 +592,7 @@ var BrunelD3 = (function () {
 
         var radius = Math.min(extent[0] / c, extent[1] / rows);
 
-        // Rescale x space
+        // Rescale x space and set the radius
         for (i = 0; i < leaves.length; i++) {
             leaves[i].x = (leaves[i].x + 0.5) * extent[0] / c;
             leaves[i].r = radius;
