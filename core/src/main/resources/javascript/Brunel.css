@@ -28,9 +28,6 @@
     shape-rendering: crispEdges
 }
 
-.brunel .grid {
-    pointer-events: none;
-}
 
 .brunel .title {
     font-weight: bold;
@@ -63,7 +60,8 @@
 .brunel .grid {
     fill: none;
     stroke: #aaaaaa;
-    opacity: 0.5
+    opacity: 0.5;
+    pointer-events: none
 }
 
 .brunel .legend.title {

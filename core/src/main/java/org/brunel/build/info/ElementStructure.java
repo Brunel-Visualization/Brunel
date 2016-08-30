@@ -65,7 +65,7 @@ public class ElementStructure {
     }
 
     public boolean hasComplexDataStructure() {
-        return chart.diagram == Diagram.treemap ||chart.diagram == Diagram.grid
+        return chart.diagram == Diagram.treemap ||chart.diagram == Diagram.gridded
                 || chart.diagram == Diagram.tree || chart.diagram == Diagram.bubble;
     }
 

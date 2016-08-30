@@ -42,7 +42,7 @@ public abstract class D3Diagram {
         if (vis.tDiagram == Diagram.cloud) return new Cloud(vis, data, interaction, out);
         if (vis.tDiagram == Diagram.tree) return new Tree(vis, data, interaction, out);
         if (vis.tDiagram == Diagram.parallel) return new ParallelCoordinates(vis, data, interaction, structure, out);
-        if (vis.tDiagram == Diagram.grid) return new Grid(vis, data, interaction, out);
+        if (vis.tDiagram == Diagram.gridded) return new Grid(vis, data, interaction, out);
         if (vis.tDiagram == Diagram.table) return new Table(vis, data, interaction, out);
         if (vis.tDiagram == Diagram.treemap) return new Treemap(vis, data, interaction, out);
         if (vis.tDiagram == Diagram.network)
