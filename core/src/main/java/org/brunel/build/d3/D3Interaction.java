@@ -293,8 +293,8 @@ public class D3Interaction {
 
         // Add the zoom overlay and attach behavior
         out.add("var zoomNode = overlay.append('rect').attr('class', 'overlay')")
-                .addChained("attr('width', geom.inner_rawWidth)")
-                .addChained("attr('height', geom.inner_rawHeight)");
+                .addChained("attr('x', geom.inner_left).attr('y', geom.inner_top)")
+                .addChained("attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)");
 
         // Only attach zoom handlers if we want interactivity; otherwise zoom is only available by API
         if (hasZoomInteractivity()) out.addChained("call(zoom)");
