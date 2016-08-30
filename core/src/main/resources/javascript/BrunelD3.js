@@ -1490,7 +1490,6 @@ var BrunelD3 = (function () {
             // 4 lines, a central circle, and text tags
             for (i = 0; i < 4; i++)
                 g.append("line").attr("class", "dim" + Math.floor(i / 2) + " part" + i);
-            g.append("circle").style("fill", "none");
             g.append("text").attr("class", "dim0").attr("dy", "-0.3em");
             g.append("text").attr("class", "dim1").attr("dy", "-0.3em");
         }

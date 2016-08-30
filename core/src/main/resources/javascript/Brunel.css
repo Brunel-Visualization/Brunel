@@ -22,6 +22,7 @@
 .brunel .inner, .brunel .background {
     fill: none;
     stroke: none;
+    pointer-events: none;
 }
 
 .brunel .brunel .axis * {
