@@ -60,7 +60,7 @@ class Treemap extends D3Diagram {
     }
 
     public String getRowKey() {
-        // We know we are ina  hierarchy, so the data is referred to by "d.data"
+        // We know we are in a hierarchy, so the data is referred to by "d.data"
         return "d.data.key == null ?  data._key(d.data.row) : d.data.key";
     }
 

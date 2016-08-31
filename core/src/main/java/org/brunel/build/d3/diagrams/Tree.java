@@ -17,6 +17,7 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.d3.D3Interaction;
+import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
@@ -64,7 +65,6 @@ class Tree extends D3Diagram {
         if (method != Method.polar)
             out.add("treeNodes.forEach( function(d) { d.x += " + pad + "; d.y += " + pad + "} )").endStatement();
 
-        out.add("function keyFunction(d) { return d.key }").endStatement();
 
         if (usesSize) {
             // Redefine size to use the node value
@@ -98,7 +98,9 @@ class Tree extends D3Diagram {
         out.onNewLine().ln().comment("Add in the arcs on the outside for the groups");
         out.add("diagramExtras.attr('class', 'diagram tree edge')").endStatement();
 
-        out.add("var edgeGroup = diagramExtras.selectAll('path').data(tree.links())").endStatement();
+        out.add("function edgeKey(d) { return d.source.data.key + '|' + d.target.data.key }").ln();
+        out.add("var edgeGroup = diagramExtras.selectAll('path').data(tree.links(), edgeKey)")
+                .endStatement();
         out.add("var added = edgeGroup.enter().append('path').attr('class', 'edge')").endStatement();
         out.add("BrunelD3.transition(edgeGroup.merge(added), transitionMillis)")
                 .addChained("attr('d', function(d) {")
@@ -121,6 +123,8 @@ class Tree extends D3Diagram {
 
         out.indentLess().indentLess().add("})").endStatement();
 
+        D3ElementBuilder.writeRemovalOnExit(out, "edgeGroup");
+
         labelBuilder.addTreeInternalLabelsOutsideNode(
                 method == Method.leftRight || !usesSize ? "bottom" : "center"
         );
@@ -134,4 +138,10 @@ class Tree extends D3Diagram {
     public boolean needsDiagramLabels() {
         return true;
     }
+
+    public String getRowKey() {
+        // We know we are in a hierarchy, so the data is referred to by "d.data"
+        return "d.data.key == null ?  data._key(d.data.row) : d.data.key";
+    }
+
 }

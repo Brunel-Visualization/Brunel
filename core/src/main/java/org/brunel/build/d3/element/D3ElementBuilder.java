@@ -320,7 +320,9 @@ public class D3ElementBuilder {
 
     /* The key function ensure we have object constancy when animating */
     private String getKeyFunction() {
-        String content = diagram != null ? diagram.getRowKey() : "d.key";
+        String content;
+        if (diagram != null) content = diagram.getRowKey();
+        else content = "d.key";
         return "function(d) { return " + content + "}";
     }
 

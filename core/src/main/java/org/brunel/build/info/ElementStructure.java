@@ -58,14 +58,9 @@ public class ElementStructure {
     }
 
     public boolean isGraphEdge() {
-        return
-                (chart.diagram == Diagram.network || chart.diagram == Diagram.tree)
+        return (chart.diagram == Diagram.network || chart.diagram == Diagram.tree)
                         && vis.tElement == Element.edge
                         && (vis.fKeys.size() == 2 || vis.positionFields().length == 2);
-    }
-
-    public boolean hasComplexDataStructure() {
-        return chart.diagram == Diagram.treemap || chart.diagram == Diagram.tree || chart.diagram == Diagram.bubble;
     }
 
     /**

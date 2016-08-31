@@ -883,21 +883,23 @@ var BrunelD3 = (function () {
 
     // Apply labeling
     function applyLabeling(element, group, labeling, time, geom) {
-        var hits = {D: labeling.granularity};                               // Keeps track of hit items
+        function makeHits() { return {D: labeling.granularity} }            // Keeps track of hit items
+        var hits = makeHits();                                              // Hit items for one pass
 
-        element.each(function (d, i) {
+        element.each(function (d, i) {                                      // index in order
             d._ix = i
-        });                          // index the items
-        var sorted = element.sort(function (a, b) {
+        });
+        var sorted = element.sort(function (a, b) {                         // sorted by reverse order
             return b._ix - a._ix
-        });   // sorted by reverse order
+        });
         element.order();                                                    // restore element order
 
         if (time > 0)
             return sorted.transition("labels").duration(time).tween('func', function () {
                 var item = this;
-                return function () {
-                    labelItem(item, group, labeling, hits, geom);
+                return function (d, i) {
+                    if (!i) hits = makeHits();                              // Every time we start a pass
+                    labelItem(item, group, labeling, hits, geom);           // label each item
                 }
             });
         else
