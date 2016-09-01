@@ -33,7 +33,7 @@ class Chord extends D3Diagram {
         super(vis, data, interaction, out);
     }
 
-    public String getRowKey() {
+    public String getRowKeyFunction() {
         return "d.source.index + '|' + d.target.index";
     }
 

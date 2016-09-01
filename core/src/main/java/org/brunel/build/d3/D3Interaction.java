@@ -118,7 +118,9 @@ public class D3Interaction {
         for (Param p : structure.vis.tInteraction) {
             String s = p.asString();
             // Only these types create element event handlers
-            if (s.equals(Interaction.select.name()) || s.equals(Interaction.call.name())) {
+            if (s.equals(Interaction.select.name())
+                    || s.equals(Interaction.call.name())
+                    || s.equals(Interaction.collapse.name())) {
                 if (targetsElement(p)) return true;
             }
         }
@@ -156,7 +158,9 @@ public class D3Interaction {
 
         for (Param p : interactions) {
             Interaction type = p.asEnum(Interaction.class);
-            if (type == Interaction.select) {
+            if (type == Interaction.collapse) {
+                addFunctionDefinition("dblclick.collapse", " if (d.data.key) {collapseState[d.data.key] = !collapseState[d.data.key]; build(500)} ", elementEvents);
+            } else if (type == Interaction.select) {
                 // One of select, select:mouseXXX, select:snap, select:snap:ZZ
                 if (snapInfo != null) {
                     // We want a snap overlay event that will call select -- all snap events are overlays
@@ -168,7 +172,7 @@ public class D3Interaction {
                 } else {
                     // We want an event handler on the element -- Also add corresponding mouse out event
                     String eventName = p.hasModifiers() ? p.firstModifier().asString() : "click";
-                    addFunctionDefinition(eventName +".interact",
+                    addFunctionDefinition(eventName + ".interact",
                             "BrunelD3.select(d, this, element, updateAll)", elementEvents);
                     if (eventName.equals("mouseover") || eventName.equals("mousemove"))
                         addFunctionDefinition("mouseout.interact",

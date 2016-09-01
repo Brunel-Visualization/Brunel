@@ -43,12 +43,19 @@ class Treemap extends D3Diagram {
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.rect, "polygon", "treemap(tree).descendants()");
     }
 
+    public void writeDiagramEnter() {
+        out.add("added.filter(function(d) { return d.parent })")       // Only if it has a parent
+                .addChained("attr('x', function(d) { return scale_x((d.parent.x0+d.parent.x1)/2) })")
+                .addChained("attr('y', function(d) { return scale_y((d.parent.y0+d.parent.y1)/2) })")
+                .addChained("attr('width', 0).attr('height', 0)")
+                .endStatement();
+    }
+
     public void writeDefinition(ElementDetails details) {
-        out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })")
-                .addChained("attr('x', function(d) { return scale_x(d.x0) })")
+        writeHierarchicalClass();
+        out.addChained("attr('x', function(d) { return scale_x(d.x0) })")
                 .addChained("attr('y', function(d) { return scale_y(d.y0) })")
                 .addChained("attr('width', function(d) { return scale_x(d.x1) - scale_x(d.x0) })")
-                .addChained("style('width', function(d) { return scale_x(d.x1) - scale_x(d.x0) })")
                 .addChained("attr('height', function(d) { return scale_y(d.y1) - scale_y(d.y0) })");
         addAestheticsAndTooltips(details);
 
@@ -57,11 +64,6 @@ class Treemap extends D3Diagram {
 
     public boolean needsDiagramLabels() {
         return true;
-    }
-
-    public String getRowKey() {
-        // We know we are in a hierarchy, so the data is referred to by "d.data"
-        return "d.data.key == null ?  data._key(d.data.row) : d.data.key";
     }
 
 }

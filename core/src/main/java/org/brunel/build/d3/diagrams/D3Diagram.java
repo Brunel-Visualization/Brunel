@@ -74,8 +74,8 @@ public abstract class D3Diagram {
 
     }
 
-    public String getRowKey() {
-        return "d.key";
+    public String getRowKeyFunction() {
+        return vis.tDiagram.isHierarchical ? "nodeKey" : "function(d) { return d.key }";
     }
 
     public String getStyleClasses() {
@@ -111,7 +111,9 @@ public abstract class D3Diagram {
     }
 
     public void writePerChartDefinitions() {
-        // By Default, do nothing
+       if (vis.tDiagram.isHierarchical) {
+           out.add("var tree, collapseState = {};").at(50).comment("Collapse state maps node IDs to true/false");
+       }
     }
 
     public void writePreDefinition(ElementDetails details) {
@@ -144,8 +146,10 @@ public abstract class D3Diagram {
                 .onNewLine().add("tree = d3.hierarchy(hierarchy.root).sum(function(d) { return d.value })")
                 .endStatement();
 
-        if (pruneValue != null) out.add("BrunelD3.prune(tree, " + pruneValue + ")").endStatement();
-
+        // The collapseState map contains a map of keys to true / false for user-specified collapsing
+        out.add("BrunelD3.prune(tree, collapseState, " + pruneValue + ")").endStatement();
+        out.add("function nodeKey(d) { return d.data.key == null ? data._key(d.data.row) : d.data.key }").endStatement();
+        out.add("function edgeKey(d) { return nodeKey(d.source) + '|' + nodeKey(d.target) }").endStatement();
         isHierarchy = true;
     }
 
@@ -163,6 +167,13 @@ public abstract class D3Diagram {
         for (String s : items) p.add(Data.quote(s));
         return Data.join(p);
     }
+
+    // Define the class based on hierarchy
+    protected void writeHierarchicalClass() {
+        out.addChained("attr('class', function(d) { return (d.collapsed ? 'collapsed ' : '') "
+                + "+ (d.data.key ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
+    }
+
 
 }
 

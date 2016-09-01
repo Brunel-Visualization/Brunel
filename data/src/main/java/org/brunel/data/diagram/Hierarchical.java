@@ -59,7 +59,7 @@ public class Hierarchical {
     private Hierarchical(Dataset data, String sizeFieldName, String[] fieldNames) {
         Field size = sizeFieldName == null ? null : data.field(sizeFieldName);
         Field[] fields = toFields(data, fieldNames);
-        root = makeInternalNode("");
+        root = makeInternalNode("*");
         makeNodesUsingCollections(data, size, fields);
         replaceCollections(root, null);
     }

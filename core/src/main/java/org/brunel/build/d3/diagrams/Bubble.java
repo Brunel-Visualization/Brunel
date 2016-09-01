@@ -38,16 +38,20 @@ class Bubble extends D3Diagram {
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.spaceFillingCircle, "point", "pack(tree).descendants()");
     }
 
+    public void writeDiagramEnter() {
+        out.add("added.filter(function(d) { return d.parent })")       // Only if it has a parent
+                .addChained("attr('cx', function(d) { return scale_x(d.parent.x) })")
+                .addChained("attr('cy', function(d) { return scale_y(d.parent.y) })")
+                .addChained("attr('r', 0)");
+        out.endStatement();
+    }
+
     public void writeDefinition(ElementDetails details) {
-        // Simple circles, with classes defined for CSS
-        out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })")
-                .addChained("attr('cx', function(d) { return scale_x(d.x) })")
+        writeHierarchicalClass();
+        out.addChained("attr('cx', function(d) { return scale_x(d.x) })")
                 .addChained("attr('cy', function(d) { return scale_y(d.y) })")
                 .addChained("attr('r', function(d) { return scale_x(d.r) - scale_x(0) })");
         addAestheticsAndTooltips(details);
     }
 
-    public String getRowKey() {
-        return "d.data.key == null ? data._key(d.data.row) : d.data.key";
-    }
 }

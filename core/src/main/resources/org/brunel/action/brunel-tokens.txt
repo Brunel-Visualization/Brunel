@@ -16,12 +16,12 @@ path element
 polygon element
 
 ## Diagrams
-bubble diagram
+bubble diagram - prune
 chord diagram
 cloud diagram
 pack diagram
 tree diagram - prune
-treemap diagram
+treemap diagram - prune
 network diagram - NUMBER
 map diagram - STRING+ labels low medium high
 
@@ -90,7 +90,7 @@ legends other auto none all color size
 at other NUMBER+
 style other STRING
 effect other enter
-interaction other + select panzoom filter auto call none
+interaction other + select collapse panzoom filter auto call none
 title other STRING+ FIELD+ NUMBER+
 
 ## Combination actions

@@ -265,7 +265,7 @@ public class D3LabelBuilder {
                 .onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height }, ")
                 .onNewLine().add("where :   function(box) { return {'x': box.x + 2, 'y': box.y, 'box': box} }")
                 .indentLess().onNewLine().add("}").endStatement();
-        out.add("BrunelD3.label(merged.filter(function(d) {return d.height}), diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
+        out.add("BrunelD3.label(merged.filter(function(d) {return d.data.key}), diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
     }
 
     /* Call to add labels for internal nodes of trees and treemaps */
