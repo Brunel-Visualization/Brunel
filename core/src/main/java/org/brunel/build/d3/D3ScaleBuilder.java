@@ -278,7 +278,7 @@ public class D3ScaleBuilder {
         VisSingle vis = structure.vis;
 
         // Some structures have the data within a 'data' fields instead of at the top level
-        boolean dataInside = structure.chart.diagram.isHierarchical;
+        boolean dataInside = structure.hasHierarchicalData();
 
         Param color = getColor(vis);
         Param[] size = getSize(vis);

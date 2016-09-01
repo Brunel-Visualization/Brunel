@@ -57,6 +57,10 @@ public class ElementStructure {
         return "" + (index + 1);
     }
 
+    public boolean hasHierarchicalData() {
+        return chart.diagram != null && chart.diagram.isHierarchical;
+    }
+
     public boolean isGraphEdge() {
         return (chart.diagram == Diagram.network || chart.diagram == Diagram.tree)
                         && vis.tElement == Element.edge
