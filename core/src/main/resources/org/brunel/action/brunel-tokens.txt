@@ -20,7 +20,7 @@ bubble diagram
 chord diagram
 cloud diagram
 pack diagram
-tree diagram
+tree diagram - prune
 treemap diagram
 network diagram - NUMBER
 map diagram - STRING+ labels low medium high

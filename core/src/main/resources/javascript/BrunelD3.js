@@ -528,6 +528,40 @@ var BrunelD3 = (function () {
         callWhenReady(func, target);                                    // Request a redraw after  transition done
     }
 
+    /**
+     * Take a d3 tree structure and prune it to the given size
+     * @param tree the root of the tree, a d3 Node
+     * @param N desired maximum node count
+     */
+    function pruneTreeToSize(tree, N) {
+        if (N < 1) N = 1;                                               // Just in case
+        var n = tree.descendants().length;                              // Current size of tree
+        while (n > N) {
+            var i, j, items = [];                                       // Collect nodes with height = 1
+            tree.each(function (v) {
+                if (v.height == 1) items.push(v);
+            });
+            items.sort(function (a, b) {                                // Smallest weights first
+                return a.value - b.value
+            });
+
+            for (i = 0; i < items.length && n > N; i++) {               // Remove each
+                n -= items[i].children.length;                          // This many fewer
+                items[i].children = undefined;                          // remove the children
+                items[i].collapsed = true;                              // We collapsed this much
+            }
+
+            tree.eachAfter(function (v) {                               // set new values of height
+                var children = v.children;
+                if (children)
+                    for (j = 0; j < children.length; j++)
+                        v.height = Math.min(v.height, children[j].height + 1);
+                else
+                    v.height = 0;
+            })
+        }
+    }
+
 
     // Cloud layout -- pass in the dataset, the extent as [width, height]
     function cloud(data, ext) {
@@ -790,11 +824,11 @@ var BrunelD3 = (function () {
             ymin = D * Math.round(y / D), ymax = y + box.height;
 
         // Does it hit an existing location
-        for (i = xmin; i <= xmax; i+=D) for (j = ymin; j <= ymax; j+=D)
+        for (i = xmin; i <= xmax; i += D) for (j = ymin; j <= ymax; j += D)
             if (hits[i * 10000 + j]) return true;
 
         // No! so we must update those locations before returning the fact it misses
-        for (i = xmin; i <= xmax; i+=D) for (j = ymin; j <= ymax; j+=D)
+        for (i = xmin; i <= xmax; i += D) for (j = ymin; j <= ymax; j += D)
             hits[i * 10000 + j] = true;
 
         return false;
@@ -883,7 +917,9 @@ var BrunelD3 = (function () {
 
     // Apply labeling
     function applyLabeling(element, group, labeling, time, geom) {
-        function makeHits() { return {D: labeling.granularity} }            // Keeps track of hit items
+        function makeHits() {
+            return {D: labeling.granularity}
+        }            // Keeps track of hit items
         var hits = makeHits();                                              // Hit items for one pass
 
         element.each(function (d, i) {                                      // index in order
@@ -1762,6 +1798,7 @@ var BrunelD3 = (function () {
         'label': applyLabeling,
         'undoTransform': undoTransform,
         'cloudLayout': cloud,
+        'prune': pruneTreeToSize,
         'select': select,
         'shorten': shorten,
         'transition': transition,

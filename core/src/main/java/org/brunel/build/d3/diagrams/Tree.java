@@ -38,9 +38,7 @@ class Tree extends D3Diagram {
         super(vis, data, interaction, out);
         if (vis.coords == Coordinates.polar) method = Method.polar;
         else method = Method.leftRight;
-
         labelSize = labelBuilder.estimateLabelLength() * 6;
-
         usesSize = !vis.fSize.isEmpty();
     }
 
@@ -65,7 +63,6 @@ class Tree extends D3Diagram {
         if (method != Method.polar)
             out.add("treeNodes.forEach( function(d) { d.x += " + pad + "; d.y += " + pad + "} )").endStatement();
 
-
         if (usesSize) {
             // Redefine size to use the node value
             out.add("size = function(d) { return scale_size(d.value) }").endStatement();
@@ -77,7 +74,8 @@ class Tree extends D3Diagram {
     }
 
     public void writeDefinition(ElementDetails details) {
-        out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
+        out.addChained("attr('class', function(d) { return (d.collapsed ? 'collapsed ' : '') "
+                + "+ (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 
         if (method == Method.leftRight) {
             out.addChained("attr('cx', function(d) { return scale_x(d.y) })")
