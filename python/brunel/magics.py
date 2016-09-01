@@ -38,6 +38,7 @@ class BrunelMagics(Magics):
         height = 400
         width = 500
         output = 'd3'
+        online_js = False
 
         parts = line.split('::')
         action = parts[0].strip()
@@ -56,10 +57,11 @@ class BrunelMagics(Magics):
             width = self.find_term('width', extras, width)
             height = self.find_term('height', extras, height)
             output = self.find_term('output', extras, output)
+            online_js = self.find_term('online_js', extras, online_js)
 
         if data is None and len(datasets_in_brunel) == 0:
             data = self.best_match(self.get_vars(action), list(datas.values()))
-        return brunel.display(action, data, width, height, output)
+        return brunel.display(action, data, width, height, output, online_js)
 
     def cache_data(self, datasets_in_brunel, dataframes):
         for data_name in datasets_in_brunel:
