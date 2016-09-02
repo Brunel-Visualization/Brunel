@@ -1,3 +1,7 @@
+# 2.1 Release Notes
+
+_To be added_
+
 # 2.0 Release Notes
 
 ## Accessibility

@@ -19,7 +19,7 @@ Issue the following magic
 ```
 
 Notes:
-* Brunel version 2.0 requires Toree "dev8" or higher.  Version 1.1 is still available for earlier spark-kernel versions.
+* Brunel version 2.0+ requires Toree "dev8" or higher.  Version 1.1 is still available for earlier spark-kernel versions.
 * If you are upgrading to a new version of Brunel and the graphs do not appear, try executing the cell, then save the notebook, then reload the page in the browser.
 
 
