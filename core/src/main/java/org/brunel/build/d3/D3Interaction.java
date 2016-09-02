@@ -59,7 +59,8 @@ public class D3Interaction {
         // Set the values
         canZoomX = zoomTypes[0];
         canZoomY = zoomTypes[1];
-        usesCollapse = structure.diagram != null && structure.diagram.isHierarchical
+        VisTypes.Diagram diagram = structure.diagram;
+        usesCollapse = diagram != null && diagram.isHierarchical && diagram != VisTypes.Diagram.gridded
                 && !banned(Interaction.collapse);
     }
 

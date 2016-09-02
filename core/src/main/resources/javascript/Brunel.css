@@ -225,7 +225,7 @@
 .brunel text.diagram.gridded.title {
     text-shadow: none;
     opacity:0.6;
-    font-size: 18px;
+    font-size: 14px;
 }
 
 .brunel .element.polygon.nondata {

@@ -222,6 +222,12 @@
     stroke: white;
 }
 
+.brunel text.diagram.gridded.title {
+    text-shadow: none;
+    opacity:0.6;
+    font-size: 18px;
+}
+
 .brunel .element.polygon.nondata {
     fill: #e0e0e0;
     stroke: #c0c0c0

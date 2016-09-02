@@ -603,6 +603,15 @@ var BrunelD3 = (function () {
     }
 
     /**
+     * Return tue if they are both non-null and different
+     * @param a
+     * @param b
+     */
+    function differ(a, b) {
+        return a && b && a != b;
+    }
+
+    /**
      * Layout data in a grid
      * @param tree hierarchical layout from d3
      * @param extent display size
@@ -612,7 +621,7 @@ var BrunelD3 = (function () {
      * @return an array of {x,y, label} objects to give major labels
      */
     function gridLayout(tree, extent, rows, columns, aspect) {
-        extent[1] -= 20;                                // leave room for labels
+        extent[1] -= 10;                                // leave room for labels
 
         var i, j, r, p,
             maxCol = 0,                                 // Furthest column used
@@ -629,11 +638,10 @@ var BrunelD3 = (function () {
         for (i = 0; i < leaves.length; i++) {
             p = leaves[i].parent;                                       // The parent for this node
 
-            for (j = 0; j < rows; j++) {
+            for (j = rows - 1; j >= 0; j--) {
                 // When the cell above or to the left has a different parent
                 // we must put an empty space in this cell
-                if (rowParent[j] && rowParent[j] != p
-                    || rowColumn[j - 1] >= rowColumn[j] + 1 && p != rowParent[j - 1]) {
+                if (differ(rowParent[j], p)) {
                     rowParent[j] = null;
                     rowColumn[j]++;
                 }
@@ -657,20 +665,27 @@ var BrunelD3 = (function () {
             leaves[i].r = radius;
         }
 
-        var x, y, n, labels = [];                           // The labels for the areas
+        var low, x, y, m, n, labels = [];                           // The labels for the areas
         var halfHeight = extent[1] / rows / 2;              // Half a height
         tree.each(function (v) {
             if (!v.depth || v.height != 1) return;          // Label for one above leaves only (and not root)
             n = v.children.length;
 
-            x = y = 0;                                      // Find the label point
+            low = -9e9;                                 // Low point for the items with this parent
             for (i = 0; i < n; i++) {
-                x += v.children[i].x;
-                y = Math.max(y, v.children[i].y + halfHeight);
+                y = v.children[i].y;
+                if (y > low) {
+                    low = y;
+                    x = m = 0;                          // reset the average for the x's
+                }
+                if (y == low) {
+                    x += v.children[i].x;
+                    m++;
+                }
             }
 
             labels.push({
-                label: v.data.key.substring(2).replace('|', ' '), x: x / n, y: y
+                label: v.data.key.substring(2).replace('|', ' '), x: x / m, y: low + halfHeight
             });
         });
 

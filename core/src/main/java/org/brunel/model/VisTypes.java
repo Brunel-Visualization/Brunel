@@ -42,7 +42,7 @@ public class VisTypes {
     public enum Diagram {
         bubble(Element.point, true), chord(Element.edge, false), cloud(Element.text, false), tree(Element.point, true),
         treemap(Element.bar, true), network(Element.point, false), map(Element.polygon, false),
-        parallel(Element.bar, true), table(Element.point, false),gridded(Element.point, true);
+        parallel(Element.bar, false), table(Element.point, false), gridded(Element.point, true);
 
         public final Element defaultElement;
         public final boolean isHierarchical;

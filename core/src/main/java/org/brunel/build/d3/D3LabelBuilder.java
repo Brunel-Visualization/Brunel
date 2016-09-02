@@ -291,7 +291,7 @@ public class D3LabelBuilder {
                 .endStatement();
 
         out.add("BrunelD3.transition(gridLabelAdd.merge(gridLabelSel))")
-                .addChained("attr('x', function(d) { return d.x } ).attr('y', function(d) { return d.y } )")
+                .addChained("attr('x', function(d) { return scale_x(d.x) } ).attr('y', function(d) { return scale_y(d.y) } )")
                 .endStatement();
     }
 
