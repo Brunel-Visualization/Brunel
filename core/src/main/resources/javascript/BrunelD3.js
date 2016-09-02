@@ -533,7 +533,6 @@ var BrunelD3 = (function () {
         item.children = undefined;                          // remove the children
         item.collapsed = true;                              // We collapsed this much
         item.value /= 10;                                   // Shrink appearance
-        console.log(item.data.key + " -> " + item.value);
         if (state) state[item.data.key] = true;             // We collapsed it
         return n;
     }
@@ -589,8 +588,6 @@ var BrunelD3 = (function () {
             fixTreeHeights(tree);
         }
 
-        tree.eachAfter(function(v) {console.log(v.data.key + ": " + v.value)});
-
     }
 
 
@@ -612,56 +609,72 @@ var BrunelD3 = (function () {
      * @param rows desired rows (may be falsey)
      * @param columns desired columns (may be falsey)
      * @param aspect the desired aspect ratio of each cell (y:x)
+     * @return an array of {x,y, label} objects to give major labels
      */
     function gridLayout(tree, extent, rows, columns, aspect) {
+        extent[1] -= 20;                                // leave room for labels
 
-        var i, j, r, c, p, leaves = tree.leaves(),
-            rowColumn = [],                         // The next free column for this row
-            rowParent = [];                         // Parent of the last item shown on the row
+        var i, j, r, p,
+            maxCol = 0,                                 // Furthest column used
+            leaves = tree.leaves(),                     // we only use the tree leaves
+            rowColumn = [],                             // The next free column for this row
+            rowParent = [];                             // Parent of the last item shown on the row
 
 
-        // Calculate the bets number of rows using the relative aspect
+        // Calculate the best number of rows using the relative aspect
         rows = rows || chooseRows(leaves.length, columns, extent[1] / extent[0] / aspect);
 
-        function score(v, parent) {
-            if (!rowColumn[v]) return -10;                              // fill empty rows first
-            return rowColumn[v] + (parent == rowParent[i] ? 0 : 1);
-        }
-
+        for (j = 0; j < rows; j++) rowColumn[j] = 0;                    // All rows will start in column zero
 
         for (i = 0; i < leaves.length; i++) {
-            p = leaves[i].parent;                                   // The parent for this node
+            p = leaves[i].parent;                                       // The parent for this node
 
-            r = 0;                                                  // Choose best row
+            for (j = 0; j < rows; j++) {
+                // When the cell above or to the left has a different parent
+                // we must put an empty space in this cell
+                if (rowParent[j] && rowParent[j] != p
+                    || rowColumn[j - 1] >= rowColumn[j] + 1 && p != rowParent[j - 1]) {
+                    rowParent[j] = null;
+                    rowColumn[j]++;
+                }
+            }
+
+            r = 0;                                                      // Choose row with least left position
             for (j = 1; j < rows; j++)
-                if (score(j, p) < score(r, p)) r = j;
-
-            c = rowColumn[r] || 0;                                  // current column position
-
-            // If that would put us beside a cell with a different parent, move to the right
-            if (c && (rowParent[r] != p
-                    || rowColumn[r - 1] == c && rowParent[r - 1] != p
-                    || rowColumn[r + 1] == c && rowParent[r + 1] != p
-                ))
-                c++;
-
+                if (rowColumn[j] < rowColumn[r]) r = j;
             rowParent[r] = p;
-            rowColumn[r] = c + 1;
-
-            // Place item
-            leaves[i].x = c;
+            maxCol = Math.max(leaves[i].x = rowColumn[r]++, maxCol);   // Set the x and increment the counter
             leaves[i].y = (r + 0.5) * extent[1] / rows;
         }
 
-        c++;
+        maxCol++;
 
-        var radius = Math.min(extent[0] / c, extent[1] / rows);
+        var radius = Math.min(extent[0] / maxCol, extent[1] / rows);
 
         // Rescale x space and set the radius
         for (i = 0; i < leaves.length; i++) {
-            leaves[i].x = (leaves[i].x + 0.5) * extent[0] / c;
+            leaves[i].x = (leaves[i].x + 0.5) * extent[0] / maxCol;
             leaves[i].r = radius;
         }
+
+        var x, y, n, labels = [];                           // The labels for the areas
+        var halfHeight = extent[1] / rows / 2;              // Half a height
+        tree.each(function (v) {
+            if (!v.depth || v.height != 1) return;          // Label for one above leaves only (and not root)
+            n = v.children.length;
+
+            x = y = 0;                                      // Find the label point
+            for (i = 0; i < n; i++) {
+                x += v.children[i].x;
+                y = Math.max(y, v.children[i].y + halfHeight);
+            }
+
+            labels.push({
+                label: v.data.key.substring(2).replace('|', ' '), x: x / n, y: y
+            });
+        });
+
+        return labels;
     }
 
 

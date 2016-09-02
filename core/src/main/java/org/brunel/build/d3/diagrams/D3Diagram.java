@@ -152,7 +152,7 @@ public abstract class D3Diagram {
         // The collapseState map contains a map of keys to true / false for user-specified collapsing
         out.add("BrunelD3.prune(tree, collapseState, " + pruneValue + ")").endStatement();
         out.add("function nodeKey(d) { return d.data.key == null ? data._key(d.data.row) : d.data.key }").endStatement();
-        out.add("function edgeKey(d) { return nodeKey(d.source) + '|' + nodeKey(d.target) }").endStatement();
+        out.add("function edgeKey(d) { return nodeKey(d.source) + '%' + nodeKey(d.target) }").endStatement();
         isHierarchy = true;
     }
 

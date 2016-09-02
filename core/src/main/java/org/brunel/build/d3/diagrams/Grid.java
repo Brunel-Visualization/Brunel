@@ -46,12 +46,16 @@ class Grid extends Bubble {
         }
     }
 
+    public void writeDiagramEnter() {
+        // Nothing
+    }
+
     public ElementDetails initializeDiagram() {
         out.comment("Define hierarchy and grid data structures");
 
         makeHierarchicalTree();
 
-        out.add("BrunelD3.gridLayout(tree, [geom.inner_width, geom.inner_height], "
+        out.add("var gridLabels = BrunelD3.gridLayout(tree, [geom.inner_width, geom.inner_height], "
                 + rows + ", " + columns+ ", " + aspect + ")").endStatement();
 
         ElementRepresentation representation = ModelUtil.getElementSymbol(vis) == null
@@ -74,9 +78,10 @@ class Grid extends Bubble {
 
         D3ElementBuilder.definePointLikeMark(details, vis, out);
         addAestheticsAndTooltips(details);
+        labelBuilder.addGridLabels();
     }
 
-    public String getRowKey() {
-        return "d.data.key == null ? data._key(d.data.row) : d.data.key";
+    public boolean needsDiagramExtras() {
+        return true;
     }
 }

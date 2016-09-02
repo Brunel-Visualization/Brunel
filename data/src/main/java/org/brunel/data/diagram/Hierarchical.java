@@ -101,7 +101,7 @@ public class Hierarchical {
             // Internal node
             current.children = array.toArray(new Node[array.size()]);
             current.temp = null;
-            current.key = parentKey == null ? current.innerNodeName : parentKey + "-" + current.innerNodeName;
+            current.key = parentKey == null ? current.innerNodeName : parentKey + "|" + current.innerNodeName;
             for (Node child : array) replaceCollections(child, current.key);
         }
     }

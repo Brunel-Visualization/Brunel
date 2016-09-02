@@ -41,7 +41,8 @@ public class VisTypes {
     /* Our diagram layouts; each may have an option default element to use */
     public enum Diagram {
         bubble(Element.point, true), chord(Element.edge, false), cloud(Element.text, false), tree(Element.point, true),
-        treemap(Element.bar, true), network(Element.point, false), map(Element.polygon, false), gridded(Element.point, false);
+        treemap(Element.bar, true), network(Element.point, false), map(Element.polygon, false),
+        parallel(Element.bar, true), table(Element.point, false),gridded(Element.point, true);
 
         public final Element defaultElement;
         public final boolean isHierarchical;
@@ -50,7 +51,6 @@ public class VisTypes {
             this.defaultElement = defaultElement;
             this.isHierarchical = isHierarchical;
         }
-
     }
 
     /* Element types */

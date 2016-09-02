@@ -111,9 +111,6 @@ public class GeoMapLabels extends D3Diagram {
         out.add("BrunelD3.label(merged, labels, labeling, 0, geom)").endStatement();
     }
 
-    public boolean needsDiagramLabels() {
-        return false;
-    }
 
     public void writeDiagramEnter() {
         out.add("merged.classed('map', true)").endStatement();

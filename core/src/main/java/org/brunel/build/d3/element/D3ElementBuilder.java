@@ -457,10 +457,10 @@ public class D3ElementBuilder {
     private String getSymbol() {
         String result = ModelUtil.getElementSymbol(vis);
         if (result != null) return result;
-        if (structure.chart.geo != null) return "point";             // Geo charts default to circles
+        if (structure.chart.geo != null) return "circle";             // Geo charts default to circles
         // We default to a rectangle if all the scales are categorical or binned, otherwise we return a point
         boolean cat = allShowExtent(structure.chart.coordinates.allXFields) && allShowExtent(structure.chart.coordinates.allYFields);
-        return cat ? "rect" : "point";
+        return cat ? "rect" : "circle";
     }
 
     private void setLocationsByProjection(ElementDetails def, Field[] x, Field[] y) {

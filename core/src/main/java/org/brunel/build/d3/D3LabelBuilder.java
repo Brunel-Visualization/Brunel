@@ -147,7 +147,7 @@ public class D3LabelBuilder {
             if (p.isField()) {
                 Field f = data.field(p.asField());
                 if (f.isDate()) size += 8;
-                else if (f.preferCategorical()) size += maxLength(f.categories()) +1;
+                else if (f.preferCategorical()) size += maxLength(f.categories()) + 1;
                 else size += 6;
             } else {
                 // Text
@@ -280,5 +280,19 @@ public class D3LabelBuilder {
         out.add("BrunelD3.label(merged.filter(function(d) {return d.data.innerNodeName}), diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
     }
 
+    /* Call to add labels for the rough centers to a grid layout */
+    public void addGridLabels() {
+
+        out.add("var gridLabelSel = diagramExtras.selectAll('text.title').data(gridLabels, function(d) { return d.label })")
+                .endStatement();
+
+        out.add("var gridLabelAdd = gridLabelSel.enter().append('text').attr('class', 'diagram gridded hierarchy title')")
+                .addChained("text(function(d) { return d.label }).attr('dy', '0.3em').style('text-anchor', 'middle')")
+                .endStatement();
+
+        out.add("BrunelD3.transition(gridLabelAdd.merge(gridLabelSel))")
+                .addChained("attr('x', function(d) { return d.x } ).attr('y', function(d) { return d.y } )")
+                .endStatement();
+    }
 
 }
