@@ -26,6 +26,7 @@ import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
+import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 
@@ -76,8 +77,8 @@ public abstract class D3Diagram {
 
     }
 
-    public String getRowKey() {
-        return "d.key";
+    public String getRowKeyFunction() {
+        return vis.tDiagram.isHierarchical ? "nodeKey" : "function(d) { return d.key }";
     }
 
     public String getStyleClasses() {
@@ -113,7 +114,9 @@ public abstract class D3Diagram {
     }
 
     public void writePerChartDefinitions() {
-        // By Default, do nothing
+       if (vis.tDiagram.isHierarchical) {
+           out.add("var tree, collapseState = {};").at(50).comment("Collapse state maps node IDs to true/false");
+       }
     }
 
     public void writePreDefinition(ElementDetails details) {
@@ -125,13 +128,41 @@ public abstract class D3Diagram {
     }
 
     void makeHierarchicalTree() {
+        Integer prune = findPruneParameter(vis.tDiagramParameters);
+        String pruneValue;
+        if (prune == null) pruneValue = null;
+        else if (prune < 1) {
+            if (vis.coords == VisTypes.Coordinates.polar)
+                pruneValue = "geom.inner_width * geom.inner_height / 1000";
+            else if (vis.coords == VisTypes.Coordinates.transposed)
+                pruneValue = "geom.inner_width / 10";
+            else
+                pruneValue = "geom.inner_height / 10";
+        } else {
+            pruneValue = prune.toString();
+        }
+
         String[] positionFields = vis.positionFields();
         String fieldsList = positionFields.length == 0 ? "" : ", " + quoted(positionFields);
         String sizeParam = size == null ? null : Data.quote(size.asField());
         out.add("var hierarchy = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, " + sizeParam + fieldsList + "),")
                 .onNewLine().add("tree = d3.hierarchy(hierarchy.root).sum(function(d) { return d.value })")
                 .endStatement();
+
+        // The collapseState map contains a map of keys to true / false for user-specified collapsing
+        out.add("BrunelD3.prune(tree, collapseState, " + pruneValue + ")").endStatement();
+        out.add("function nodeKey(d) { return d.data.key == null ? data._key(d.data.row) : d.data.key }").endStatement();
+        out.add("function edgeKey(d) { return nodeKey(d.source) + '|' + nodeKey(d.target) }").endStatement();
         isHierarchy = true;
+    }
+
+    private Integer findPruneParameter(Param[] params) {
+        for (Param p : params)
+            if (p.asString().equals("prune")) {
+                if (p.hasModifiers()) return p.firstModifier().asInteger();
+                else return -1;
+            }
+        return null;
     }
 
     protected String quoted(String... items) {
@@ -139,6 +170,13 @@ public abstract class D3Diagram {
         for (String s : items) p.add(Data.quote(s));
         return Data.join(p);
     }
+
+    // Define the class based on hierarchy
+    protected void writeHierarchicalClass() {
+        out.addChained("attr('class', function(d) { return (d.collapsed ? 'collapsed ' : '') "
+                + "+ (d.data.key ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
+    }
+
 
 }
 

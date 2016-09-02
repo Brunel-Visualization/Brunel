@@ -43,7 +43,7 @@ D3_TEMPLATE_HTML = templateEnv.get_template(D3_TEMPLATE_HTML_FILE)
 brunel_raw_version = pkg_resources.get_distribution("brunel").version.split(".")
 brunel_version = brunel_raw_version[0] + "." + brunel_raw_version[1]
 
-def display(brunel, data, width=800, height=600, output='d3'):
+def display(brunel, data, width=800, height=600, output='d3', online_js=False):
 
     csv = None
     if data is not None:
@@ -56,7 +56,7 @@ def display(brunel, data, width=800, height=600, output='d3'):
     # D3 is currently the only supported renderer
     if output == 'd3':
         result = brunel_jpype_call(csv, brunel, width, height, visid, controlsid)
-        return d3_output(result, visid, controlsid, width, height)
+        return d3_output(result, visid, controlsid, width, height, online_js)
     else:
         raise ValueError("Valid Output Choices Are:   d3")
 
@@ -97,16 +97,21 @@ def cacheData(data_key, data):
     brunel_util_java.D3Integration.cacheData(data_key, data)
 
 # D3 response should contain the D3 JS and D3 CSS
-def d3_output(response, visid, controlsid, width, height):
+def d3_output(response, visid, controlsid, width, height, online_js):
     results = json.loads(response)
     d3js = results["js"]
     d3css = results["css"]
-    controls = results["controls"]
-    html = D3_TEMPLATE_HTML.render({'jsloc': brunel_util.JS_LOC, 'd3css': d3css, 'visId': visid, 'width': width,
+    jsloc = brunel_util.JS_LOC
+
+    #Forces online loading of JS from brunelvis.
+    if online_js:
+        jsloc = "https://brunelvis.org/js"
+
+    html = D3_TEMPLATE_HTML.render({'jsloc': jsloc, 'd3css': d3css, 'visId': visid, 'width': width,
                                     'height': height, 'controlsid': controlsid, 'version': brunel_version})
     # side effect pushes required D3 HTML to the client
     ipydisplay(HTML(html))
-    js = D3_TEMPLATE.render({'jsloc': brunel_util.JS_LOC, 'd3loc': brunel_util.D3_LOC,
+    js = D3_TEMPLATE.render({'jsloc': jsloc, 'd3loc': brunel_util.D3_LOC,
                              'topojsonloc':brunel_util.TOPO_JSON_LOC, 'd3js': d3js, 'version': brunel_version})
     return Javascript(js)
 

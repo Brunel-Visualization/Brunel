@@ -41,8 +41,8 @@ public class GeoMapLabels extends D3Diagram {
         this.structure = structure;
     }
 
-    public String getRowKey() {
-        return "d[2]";
+    public String getRowKeyFunction() {
+        return "function(d) { return d[2] }";
     }
 
     public void preBuildDefinitions() {

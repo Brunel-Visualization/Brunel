@@ -69,7 +69,7 @@ public class BuilderOptions {
 
         return options;
     }
-    
+
     public static String fullLocation(String requireLocation ) {
     	return "https:" + requireLocation + ".js";
     }

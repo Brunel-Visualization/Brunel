@@ -22,6 +22,7 @@
 .brunel .inner, .brunel .background {
     fill: none;
     stroke: none;
+    pointer-events: none;
 }
 
 .brunel .brunel .axis * {
@@ -267,6 +268,13 @@
     fill: #a0a0a0;
     text-shadow: none;
     font-size: 7pt;
+}
+
+.brunel .element.collapsed {
+    fill-opacity:0.2;
+    stroke-opacity:1;
+    stroke-width:1px;
+    stroke-dasharray:4 2;
 }
 
 .brunel .horizontal-box {

@@ -30,6 +30,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.brunel.model.VisTypes.Interaction.call;
+
 /**
  * sc
  * Handles adding interactivity to charts
@@ -44,6 +46,7 @@ public class D3Interaction {
     private final D3ScaleBuilder scales;        // Scales for the chart
     private final ScriptWriter out;             // Write definitions here
     private final boolean canZoomX, canZoomY;   // for coordinate zoom, which axes we can zoom
+    private final boolean usesCollapse;         // true if we have a collapse handler
 
     public D3Interaction(ChartStructure structure, D3ScaleBuilder scales, ScriptWriter out) {
         this.structure = structure;
@@ -56,7 +59,24 @@ public class D3Interaction {
         // Set the values
         canZoomX = zoomTypes[0];
         canZoomY = zoomTypes[1];
+        usesCollapse = structure.diagram != null && structure.diagram.isHierarchical
+                && !banned(Interaction.collapse);
+    }
 
+    private boolean banned(Interaction type) {
+        for (ElementStructure e : structure.elementStructure) {
+            // If the parameter exists, it is only banned if it is specified as "none"
+            Param param = getInteractionParam(e.vis, type);
+            if (param != null)
+                return param.hasModifiers() && param.firstModifier().asString().equals("none");
+        }
+
+        // Otherwise a "none" wins
+        for (ElementStructure e : structure.elementStructure)
+            if (getInteractionParam(e.vis, Interaction.none) != null) return true;
+
+        // If no information, it is not banned
+        return false;
     }
 
     private boolean[] defaultZooms() {
@@ -118,11 +138,14 @@ public class D3Interaction {
     public boolean hasElementInteraction(ElementStructure structure) {
         if (!structure.vis.itemsTooltip.isEmpty()) return true;                 // tooltips require a handler
         if (structure.chart.diagram == VisTypes.Diagram.network) return true;   // networks are draggable
+        if (usesCollapse) return true;                                          // if we need collapse, need a handler
 
         for (Param p : structure.vis.tInteraction) {
             String s = p.asString();
             // Only these types create element event handlers
-            if (s.equals(Interaction.select.name()) || s.equals(Interaction.call.name())) {
+            if (s.equals(Interaction.select.name())
+                    || s.equals(call.name())
+                    || s.equals(Interaction.collapse.name())) {
                 if (targetsElement(p)) return true;
             }
         }
@@ -165,46 +188,50 @@ public class D3Interaction {
                 if (snapInfo != null) {
                     // We want a snap overlay event that will call select -- all snap events are overlays
                     // Also add corresponding mouse out event
-                    addFunctionDefinition("mousemove",
+                    addFunctionDefinition("mousemove.snap",
                             "BrunelD3.select(c.item, c.target, element, updateAll)", overlayEvents);
-                    addFunctionDefinition("mouseout",
+                    addFunctionDefinition("mouseout.snap",
                             "BrunelD3.select(null, c.target, element, updateAll)", overlayEvents);
                 } else {
                     // We want an event handler on the element -- Also add corresponding mouse out event
                     String eventName = p.hasModifiers() ? p.firstModifier().asString() : "click";
-                    addFunctionDefinition(eventName,
+                    addFunctionDefinition(eventName + ".interact",
                             "BrunelD3.select(d, this, element, updateAll)", elementEvents);
                     if (eventName.equals("mouseover") || eventName.equals("mousemove"))
-                        addFunctionDefinition("mouseout",
+                        addFunctionDefinition("mouseout.interact",
                                 "BrunelD3.select(null, this, element, updateAll)", elementEvents);
 
                     // And we want a click on the main space to select nothing
                     if (eventName.equals("click"))
-                        addFunctionDefinition("click", "BrunelD3.select(null, this, element, updateAll)", overlayEvents);
+                        addFunctionDefinition("click.interact", "BrunelD3.select(null, this, element, updateAll)", overlayEvents);
 
                 }
-            } else if (type == Interaction.call) {
+            } else if (type == call) {
                 // One of call, call:func, call:func:mouseXXX, call:func:snap, call:func:snap:ZZ
                 String functionName = p.hasModifiers() ? p.firstModifier().asString() : "BrunelD3.crosshairs";
                 if (functionName.isEmpty()) functionName = "BrunelD3.crosshairs";
                 if (snapInfo != null) {
                     // We want a snap overlay event that will call a custom function -- all snap events are overlays
-                    addFunctionDefinition("mousemove", functionName + "(c.item, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
-                    addFunctionDefinition("mouseout", functionName + "(null, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
+                    addFunctionDefinition("mousemove.user", functionName + "(c.item, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
+                    addFunctionDefinition("mouseout.user", functionName + "(null, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
                 } else {
                     // We want an event handler on the element
                     String eventName = p.modifiers().length > 1 ? p.modifiers()[1].toString() : "click";
-                    addFunctionDefinition(eventName, functionName + "(d, this, element)", elementEvents);
+                    addFunctionDefinition(eventName + ".user", functionName + "(d, this, element)", elementEvents);
                     if (eventName.equals("mouseover") || eventName.equals("mousemove"))
-                        addFunctionDefinition("mouseout", functionName + "(null, this, element)", elementEvents);
+                        addFunctionDefinition("mouseout.user", functionName + "(null, this, element)", elementEvents);
 
                     // And we want a click on the main space to select nothing
                     if (eventName.equals("click"))
-                        addFunctionDefinition("click", functionName + "(null, c.target, element, 'xy')", overlayEvents);
+                        addFunctionDefinition("click.user", functionName + "(null, c.target, element, 'xy')", overlayEvents);
 
                 }
             }
         }
+
+        if (usesCollapse)
+            addFunctionDefinition("dblclick.collapse", " if (d.data.key) {collapseState[d.data.key] = !collapseState[d.data.key]; build(500)} ",
+                    elementEvents);
 
         if (!overlayEvents.isEmpty()) {
             // Start each set of overlay commands with a command to find the closest item
@@ -304,8 +331,8 @@ public class D3Interaction {
 
         // Add the zoom overlay and attach behavior
         out.add("var zoomNode = overlay.append('rect').attr('class', 'overlay')")
-                .addChained("attr('width', geom.inner_rawWidth)")
-                .addChained("attr('height', geom.inner_rawHeight)");
+                .addChained("attr('x', geom.inner_left).attr('y', geom.inner_top)")
+                .addChained("attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)");
 
         // Only attach zoom handlers if we want interactivity; otherwise zoom is only available by API
         if (hasZoomInteractivity()) out.addChained("call(zoom)");

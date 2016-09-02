@@ -67,7 +67,10 @@ d3_template_html <-  readLines(system.file("templates", "D3_Template.html", pack
 #' width the width in pixels for the resulting visualization
 #' height the heigh in pixels for the resulting visualization
 
-brunel <- function(brunel, data=NULL, width=800, height=600) {
+brunel <- function(brunel, data=NULL, width=800, height=600, online_js=FALSE) {
+
+ 	ONLINE_JS <<- FALSE
+	if (online_js==TRUE) ONLINE_JS <<- TRUE
 	load_java()
     cache_data(brunel)
 	visid <-  paste("vis", uuid::UUIDgenerate(), sep='')
@@ -119,10 +122,13 @@ display_d3_output <- function(brunel_json, visid, controlsid, width, height) {
   	d3css <- brunel_json$css
 	version <- paste(packageVersion("brunel"), sep="")
   	
-
+	#If requested, force using online JS files
+    jsloc <- JS_LOC
+    if (ONLINE_JS == TRUE) jsloc <- "https://brunelvis.org/js"
+    
     #render the HTML
 	html_values <- list(d3css=d3css, visId=visid, width=width, height=height, d3js=d3js, controlsid=controlsid, 
-		d3loc=D3_LOC, topoJsonloc=TOPO_JSON_LOC, jsloc=JS_LOC, version=version )
+		d3loc=D3_LOC, topoJsonloc=TOPO_JSON_LOC, jsloc=jsloc, version=version )
 	html <- template_render(d3_template_html, html_values)
 	IRdisplay::display_html(html)
 }

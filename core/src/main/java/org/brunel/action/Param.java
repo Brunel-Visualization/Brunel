@@ -118,6 +118,11 @@ public class Param implements Comparable<Param> {
         return asField(null);
     }
 
+    public int asInteger() {
+        if (type == Type.number) return ((Number) content).intValue();
+        else return Integer.parseInt(content.toString());
+    }
+
     /**
      * Return the content as a list
      * If the parameter is not a list, it returns this item wrapped in a list

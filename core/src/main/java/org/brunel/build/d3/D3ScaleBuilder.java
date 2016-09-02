@@ -278,7 +278,7 @@ public class D3ScaleBuilder {
         VisSingle vis = structure.vis;
 
         // Some structures have the data within a 'data' fields instead of at the top level
-        boolean dataInside = structure.hasComplexDataStructure();
+        boolean dataInside = structure.hasHierarchicalData();
 
         Param color = getColor(vis);
         Param[] size = getSize(vis);
@@ -604,6 +604,10 @@ public class D3ScaleBuilder {
             }
 
             transform = makeD3ScaleName(defaultTransform, scaleField, transform);
+
+            // Add small amount to top end to avoid ticks missing due to round-off error
+            max += (max-min) * 1e-7;
+
             out.add("d3." + transform + "()");
             for (int i = 0; i < divs.length; i++) {
                 if (partitionPoints == null)

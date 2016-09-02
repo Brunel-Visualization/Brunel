@@ -114,7 +114,7 @@ class DefineLocations {
         } else {
 
             // If defined, this is the cluster field on the X dimension
-            Field cluster = fields.length > 1 ? fields[1] : null;
+            Field cluster = dimName.equals("x") && structure.isClustered() ? fields[1] : null;
 
             String dataFunction = D3Util.writeCall(main);          // A call to that field using the datum 'd'
 

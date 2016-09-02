@@ -57,16 +57,19 @@ public class ElementStructure {
         return "" + (index + 1);
     }
 
-    public boolean isGraphEdge() {
-        return
-                (chart.diagram == Diagram.network || chart.diagram == Diagram.tree)
-                        && vis.tElement == Element.edge
-                        && (vis.fKeys.size() == 2 || vis.positionFields().length == 2);
+    public boolean hasHierarchicalData() {
+        return chart.diagram != null && chart.diagram.isHierarchical;
     }
 
-    public boolean hasComplexDataStructure() {
-        return chart.diagram == Diagram.treemap ||chart.diagram == Diagram.gridded
-                || chart.diagram == Diagram.tree || chart.diagram == Diagram.bubble;
+    public boolean isClustered() {
+        // We are clustered when we are a coordinate chart with 2+ X dimensions
+        return chart.diagram == null && vis.fX.size() > 1;
+    }
+
+    public boolean isGraphEdge() {
+        return (chart.diagram == Diagram.network || chart.diagram == Diagram.tree)
+                && vis.tElement == Element.edge
+                && (vis.fKeys.size() == 2 || vis.positionFields().length == 2);
     }
 
     /**

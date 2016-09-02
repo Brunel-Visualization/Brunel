@@ -40,13 +40,15 @@ public class VisTypes {
 
     /* Our diagram layouts; each may have an option default element to use */
     public enum Diagram {
-        bubble(Element.point), chord(Element.edge), cloud(Element.text), tree(Element.point),
-        gridded(Element.point), table(Element.text), parallel(Element.line), treemap(Element.bar), network(Element.point), map(Element.polygon);
+        bubble(Element.point, true), chord(Element.edge, false), cloud(Element.text, false), tree(Element.point, true),
+        treemap(Element.bar, true), network(Element.point, false), map(Element.polygon, false), gridded(Element.point, false);
 
         public final Element defaultElement;
+        public final boolean isHierarchical;
 
-        Diagram(Element defaultElement) {
+        Diagram(Element defaultElement, boolean isHierarchical) {
             this.defaultElement = defaultElement;
+            this.isHierarchical = isHierarchical;
         }
 
     }
@@ -77,6 +79,7 @@ public class VisTypes {
         select,                     // Select items using mouse
         panzoom,                    // Allow panning and zooming using the mouse
         filter,                     // Apply filtering to the data
+        collapse,                   // Collapse trees using the mouse
         call,                       // A custom call to user code
         auto,                       // automatic interaction behavior
         none                        // turn off interactivity

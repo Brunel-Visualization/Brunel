@@ -408,7 +408,7 @@ public class D3DataBuilder {
 
         // Check it's OK
         if (suitableForKey(result)) {
-            // Tray and remove "#selection" if we can
+            // Try and remove "#selection" if we can
             ArrayList<String> list = new ArrayList<>(result);
             if (result.contains("#selection")) {
                 list.remove("#selection");

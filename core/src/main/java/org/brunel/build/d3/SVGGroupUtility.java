@@ -93,7 +93,9 @@ public class SVGGroupUtility {
 
     // returns an id that is unique to the chart and the visualization
     private String clipID(String part) {
-        return "clip_" + part + "_" + structure.visIdentifier + "_" + className;
+        return "clip_" + structure.visIdentifier
+                + "_chart" + (structure.chartIndex+1)
+                + "_" + part;
     }
 
 }

@@ -17,6 +17,7 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.d3.D3Interaction;
+import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.util.ScriptWriter;
@@ -37,9 +38,7 @@ class Tree extends D3Diagram {
         super(vis, data, interaction, out);
         if (vis.coords == Coordinates.polar) method = Method.polar;
         else method = Method.leftRight;
-
         labelSize = labelBuilder.estimateLabelLength() * 6;
-
         usesSize = !vis.fSize.isEmpty();
     }
 
@@ -64,8 +63,6 @@ class Tree extends D3Diagram {
         if (method != Method.polar)
             out.add("treeNodes.forEach( function(d) { d.x += " + pad + "; d.y += " + pad + "} )").endStatement();
 
-        out.add("function keyFunction(d) { return d.key }").endStatement();
-
         if (usesSize) {
             // Redefine size to use the node value
             out.add("size = function(d) { return scale_size(d.value) }").endStatement();
@@ -76,19 +73,16 @@ class Tree extends D3Diagram {
         return ElementDetails.makeForDiagram(vis, rep, "point", "treeNodes");
     }
 
-    public void writeDefinition(ElementDetails details) {
-        out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
+    public void writeDiagramEnter() {
+        out.add("added.filter(function(d) { return d.parent })");       // Only if it has a parent
+        writeNodePlacement("d.parent");                                 // place it at parent position
+        out.endStatement();
+    }
 
-        if (method == Method.leftRight) {
-            out.addChained("attr('cx', function(d) { return scale_x(d.y) })")
-                    .addChained("attr('cy', function(d) { return scale_y(d.x) })");
-        } else if (method == Method.topBottom) {
-            out.addChained("attr('cx', function(d) { return scale_x(d.x) })")
-                    .addChained("attr('cy', function(d) { return scale_y(d.y) })");
-        } else if (method == Method.polar) {
-            out.addChained("attr('cx', function(d) { return scale_x(d.y * Math.cos(d.x)) })")
-                    .addChained("attr('cy', function(d) { return scale_y(d.y * Math.sin(d.x)) })");
-        }
+    public void writeDefinition(ElementDetails details) {
+        writeHierarchicalClass();
+
+        writeNodePlacement("d");
 
         out.addChained("attr('r', " + details.overallSize.halved() + ")");
         addAestheticsAndTooltips(details);
@@ -98,33 +92,58 @@ class Tree extends D3Diagram {
         out.onNewLine().ln().comment("Add in the arcs on the outside for the groups");
         out.add("diagramExtras.attr('class', 'diagram tree edge')").endStatement();
 
-        out.add("var edgeGroup = diagramExtras.selectAll('path').data(tree.links())").endStatement();
-        out.add("var added = edgeGroup.enter().append('path').attr('class', 'edge')").endStatement();
-        out.add("BrunelD3.transition(edgeGroup.merge(added), transitionMillis)")
-                .addChained("attr('d', function(d) {")
+        out.add("var edgeGroup = diagramExtras.selectAll('path').data(tree.links(), edgeKey)")
+                .endStatement();
+        out.add("var added = edgeGroup.enter().append('path').attr('class', 'edge')");
+        writeEdgePlacement(true);
+
+        out.add("BrunelD3.transition(edgeGroup.merge(added), transitionMillis)");
+        writeEdgePlacement(false);
+
+        D3ElementBuilder.writeRemovalOnExit(out, "edgeGroup");
+
+        labelBuilder.addTreeInternalLabelsOutsideNode(
+                method == Method.leftRight || !usesSize ? "bottom" : "center"
+        );
+
+    }
+
+
+    private void writeEdgePlacement(boolean grow) {
+        String target = grow ? "source" : "target";
+
+        out.addChained("attr('d', function(d) {")
                 .indentMore().indentMore().onNewLine();
 
         if (method == Method.polar) {
-            out.add("var r1 = d.source.y, a1 = d.source.x, r2 = d.target.y, a2 = d.target.x, r = (r1+r2)/2").endStatement()
+            out.add("var r1 = d.source.y, a1 = d.source.x, r2 = d." + target + ".y, a2 = d." + target + ".x, r = (r1+r2)/2").endStatement()
                     .add("return 'M' + scale_x(r1*Math.cos(a1)) + ',' + scale_y(r1*Math.sin(a1)) ")
                     .continueOnNextLine().add(" + 'Q' +  scale_x(r*Math.cos(a2)) + ',' + scale_y(r*Math.sin(a2))")
                     .continueOnNextLine().add(" + ' ' +  scale_x(r2*Math.cos(a2)) + ',' + scale_y(r2*Math.sin(a2))")
                     .endStatement();
         } else {
-            out.add("var x1 =  scale_x(d.source.y), y1 = scale_y(d.source.x), x2 = scale_x(d.target.y), y2 = scale_y(d.target.x)").endStatement()
+            out.add("var x1 =  scale_x(d.source.y), y1 = scale_y(d.source.x), x2 = scale_x(d." + target + ".y), y2 = scale_y(d." + target + ".x)").endStatement()
                     .add("return 'M' + x1 + ',' + y1 ")
                     .continueOnNextLine().add(" + 'C' + (x1+x2)/2 + ',' + y1")
                     .continueOnNextLine().add(" + ' ' + (x1+x2)/2 + ',' + y2")
                     .continueOnNextLine().add(" + ' ' + x2 + ',' + y2")
                     .endStatement();
         }
-
         out.indentLess().indentLess().add("})").endStatement();
 
-        labelBuilder.addTreeInternalLabelsOutsideNode(
-                method == Method.leftRight || !usesSize ? "bottom" : "center"
-        );
+    }
 
+    private void writeNodePlacement(String d) {
+        if (method == Method.leftRight) {
+            out.addChained("attr('cx', function(d) { return scale_x(" + d + ".y) })")
+                    .addChained("attr('cy', function(d) { return scale_y(" + d + ".x) })");
+        } else if (method == Method.topBottom) {
+            out.addChained("attr('cx', function(d) { return scale_x(" + d + ".x) })")
+                    .addChained("attr('cy', function(d) { return scale_y(" + d + ".y) })");
+        } else if (method == Method.polar) {
+            out.addChained("attr('cx', function(d) { return scale_x(" + d + ".y * Math.cos(" + d + ".x)) })")
+                    .addChained("attr('cy', function(d) { return scale_y(" + d + ".y * Math.sin(" + d + ".x)) })");
+        }
     }
 
     public boolean needsDiagramExtras() {
@@ -134,4 +153,5 @@ class Tree extends D3Diagram {
     public boolean needsDiagramLabels() {
         return true;
     }
+
 }
