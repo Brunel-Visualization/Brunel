@@ -82,8 +82,8 @@
 }
 
 .brunel .hierarchy, .brunel .hierarchy tspan {
-    fill: white;
-    stroke-width: 0;
+    fill: #875608;
+    stroke: none;
 }
 
 .brunel .hierarchy .L0, .brunel .hierarchy .L0 tspan {

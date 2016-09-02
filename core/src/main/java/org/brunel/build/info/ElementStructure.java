@@ -61,10 +61,15 @@ public class ElementStructure {
         return chart.diagram != null && chart.diagram.isHierarchical;
     }
 
+    public boolean isClustered() {
+        // We are clustered when we are a coordinate chart with 2+ X dimensions
+        return chart.diagram == null && vis.fX.size() > 1;
+    }
+
     public boolean isGraphEdge() {
         return (chart.diagram == Diagram.network || chart.diagram == Diagram.tree)
-                        && vis.tElement == Element.edge
-                        && (vis.fKeys.size() == 2 || vis.positionFields().length == 2);
+                && vis.tElement == Element.edge
+                && (vis.fKeys.size() == 2 || vis.positionFields().length == 2);
     }
 
     /**

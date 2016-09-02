@@ -268,9 +268,7 @@ public class DataBuilder {
     }
 
     private String makeSeriesCommand() {
-        // Only have a series for 2+ y fields
-
-        if (vis.fY.size() < 2) return "";
+        if (!needsSeries()) return "";
         /*
             The command is of the form:
                     y1, y2, y3; a1, a2
@@ -291,6 +289,12 @@ public class DataBuilder {
         }
         b.append(";").append(Data.join(keep));
         return b.toString();
+    }
+
+    private boolean needsSeries() {
+        for (String s: vis.usedFields(false))
+            if (s.equals("#series") || s.equals("#values")) return true;
+        return false;
     }
 
     /*

@@ -249,7 +249,7 @@ public class D3ElementBuilder {
             // Just use the default point size
         } else {
             // Must define cluster size before anything else, as other things use it
-            if (x.length > 1) {
+            if (structure.isClustered()) {
                 e.x.clusterSize = getSize(x, "geom.inner_width", ScalePurpose.x, e.x);
                 e.x.size = getSize(x, "geom.inner_width", ScalePurpose.inner, e.x);
             } else {

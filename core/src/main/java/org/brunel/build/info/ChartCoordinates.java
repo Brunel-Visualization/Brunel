@@ -60,23 +60,29 @@ public class ChartCoordinates {
         ArrayList<Field> allCluster = new ArrayList<>();
         for (int i = 0; i < elements.length; i++) {
             VisSingle vis = elements[i];
-            Field[] visXFields = getXFields(vis, elementData[i]);
-            Field[] visYFields = getYFields(vis, elementData[i]);
+            if (vis.tDiagram == null) {
+                Field[] visXFields = getXFields(vis, elementData[i]);
+                Field[] visYFields = getYFields(vis, elementData[i]);
 
-            if (xTransform == null) xTransform = getDefinedXTransform(vis);
-            if (yTransform == null) yTransform = getDefinedYTransform(vis);
+                if (xTransform == null) xTransform = getDefinedXTransform(vis);
+                if (yTransform == null) yTransform = getDefinedYTransform(vis);
 
-            x.put(vis, visXFields);
-            y.put(vis, visYFields);
+                x.put(vis, visXFields);
+                y.put(vis, visYFields);
 
-            xMin = Math.min(xMin, getDefinedExtent(vis.fX, true));
-            yMin = Math.min(yMin, getDefinedExtent(vis.fY, true));
-            xMax = Math.max(xMax, getDefinedExtent(vis.fX, false));
-            yMax = Math.max(yMax, getDefinedExtent(vis.fY, false));
+                xMin = Math.min(xMin, getDefinedExtent(vis.fX, true));
+                yMin = Math.min(yMin, getDefinedExtent(vis.fY, true));
+                xMax = Math.max(xMax, getDefinedExtent(vis.fX, false));
+                yMax = Math.max(yMax, getDefinedExtent(vis.fY, false));
 
-            if (visXFields.length > 0) allX.add(visXFields[0]);             // Only first X field (rest are clustered)
-            if (visXFields.length > 1) allCluster.add(visXFields[1]);       // Add the clustered X field
-            Collections.addAll(allY, visYFields);                           // All Y fields (used in ranges)
+                if (visXFields.length > 0)
+                    allX.add(visXFields[0]);             // Only first X field (rest are clustered)
+                if (visXFields.length > 1) allCluster.add(visXFields[1]);       // Add the clustered X field
+                Collections.addAll(allY, visYFields);                           // All Y fields (used in ranges)
+            } else {
+                x.put(vis, new Field[0]);
+                y.put(vis,  new Field[0]);
+            }
         }
 
         if (Double.isInfinite(xMin) && Double.isInfinite(xMax))

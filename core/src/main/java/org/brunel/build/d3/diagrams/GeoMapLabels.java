@@ -44,7 +44,7 @@ public class GeoMapLabels extends D3Diagram {
     }
 
     public String getRowKeyFunction() {
-        return "d[2]";
+        return "function(d) { return d[2] }";
     }
 
     public void preBuildDefinitions() {

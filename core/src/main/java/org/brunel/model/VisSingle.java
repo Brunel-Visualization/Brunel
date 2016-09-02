@@ -434,17 +434,8 @@ public class VisSingle extends VisItem implements Cloneable {
         for (String f : used) if (!f.equals("#all")) replacement.add(f);
         boolean containsAll = replacement.size() != used.length;
 
-        boolean addSeriesSplit = false;
-        boolean convertYsToRange = false;
-        if (fY.size() > 1) {
-            if (tElement == Element.edge)
-                convertYsToRange = true;
-            else if (tDiagram != Diagram.network) {
-                // Networks with 2 Y's are using them for IDs, so do not split
-                addSeriesSplit = true;
-                for (String s : aestheticFields()) if (s.equals("#series")) addSeriesSplit = false;
-            }
-        }
+        boolean addSeriesSplit = requiresSplitForSeries();
+        boolean convertYsToRange = requireYFieldsAsRange();
 
         // See if we need to add a Y field to stack with
         boolean addY = stacked && fY.isEmpty() && fRange == null;
@@ -505,6 +496,22 @@ public class VisSingle extends VisItem implements Cloneable {
 
         result.makeUsedFields();
         return result;
+    }
+
+    // Returns true if we convert 2+ Y fields to a range (the additional fields are likely to be ignored)
+    private boolean requireYFieldsAsRange() {
+        // Only for edge elements
+        return fY.size() > 1 && tElement == Element.edge;
+    }
+
+    // Returns true if we need to add the #series artificial field as a split field
+    private boolean requiresSplitForSeries() {
+        if (fY.size() < 2) return false;                    // No series => no split
+        if (tElement == Element.edge) return false;         // Edges use multiple Y fields naturally
+        if (tDiagram != null) return false;                 // Diagrams do not require splitting
+        for (String s : aestheticFields())                  // If already included as an aesthetic, no need to add again
+            if (s.equals("#series")) return false;
+        return true;
     }
 
     private void ensureCanonical(List<Param> list, String reason) {

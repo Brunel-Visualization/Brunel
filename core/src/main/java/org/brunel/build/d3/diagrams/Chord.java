@@ -34,7 +34,7 @@ class Chord extends D3Diagram {
     }
 
     public String getRowKeyFunction() {
-        return "d.source.index + '|' + d.target.index";
+        return "function(d) { return d.source.index + '|' + d.target.index }";
     }
 
     public ElementDetails initializeDiagram() {
