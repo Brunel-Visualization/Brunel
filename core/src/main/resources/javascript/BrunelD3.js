@@ -565,7 +565,11 @@ var BrunelD3 = (function () {
      * @param N desired maximum node count
      */
     function pruneTreeToSize(tree, userStates, reduceSizes, N) {
-        var list = tree.descendants(), n = list.length;          // Current size of tree
+        var list = tree.descendants(),      // Number of items
+            n = list.length,                // Current size of tree
+            tot = tree.value;               // total tree value
+
+
 
         // Remove the ones the user marked as to be collapsed
         tree.each(function (v) {
@@ -591,6 +595,23 @@ var BrunelD3 = (function () {
                 n -= collapseNode(items[i], userStates);
 
             fixTreeHeights(tree, reduceSizes);
+        }
+
+        if (reduceSizes) {
+            var nCollapsed = [];                                        // Counts for collapsed
+            tree.each(function (v) {
+                if (v.collapsed)
+                    nCollapsed[v.depth] = (nCollapsed[v.depth] || 0) + 1;
+            });
+            tree.eachAfter(function (v) {
+                if (v.children) {
+                    v.value = 0;
+                    for (i=0; i<v.children.length; i++) v.value += v.children[i].value;
+                }
+                if (v.collapsed) {
+                    v.value = Math.min(v.value, tree.value / nCollapsed[v.depth]) / 10;
+                }
+            });
         }
 
     }
