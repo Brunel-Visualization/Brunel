@@ -82,7 +82,7 @@ public class Hierarchical {
                 Map<Object, Node> map = (Map<Object, Node>) current.temp;
                 List<Node> children = (List<Node>) current.children;
                 Object v = field.value(row);
-                current = map.get(v);
+                if (v != null) current = map.get(v);
                 if (current == null) {
                     current = makeInternalNode(field.valueFormatted(row));
                     children.add(current);                  // add to ordered list

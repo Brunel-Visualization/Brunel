@@ -566,10 +566,7 @@ var BrunelD3 = (function () {
      */
     function pruneTreeToSize(tree, userStates, reduceSizes, N) {
         var list = tree.descendants(),      // Number of items
-            n = list.length,                // Current size of tree
-            tot = tree.value;               // total tree value
-
-
+            n = list.length;                // Current size of tree
 
         // Remove the ones the user marked as to be collapsed
         tree.each(function (v) {

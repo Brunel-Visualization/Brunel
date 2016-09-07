@@ -21,7 +21,6 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -213,13 +212,15 @@ public class DataBuilder {
     private String makeFilterCommands() {
         List<String> commands = new ArrayList<>();
 
-        // All position fields must be valid -- filter if not
-        String[] pos = vis.positionFields();
-        for (String s : pos) {
-            Field f = vis.getDataset().field(s);
-            if (f == null) continue;        // May have been added as a constant -- no need to filter
-            if (f.numProperty("valid") < f.rowCount())
-                commands.add(s + " valid");
+        // All position fields must be valid for coordinate charts-- filter if not
+        if (vis.tDiagram == null) {
+            String[] pos = vis.positionFields();
+            for (String s : pos) {
+                Field f = vis.getDataset().field(s);
+                if (f == null) continue;        // May have been added as a constant -- no need to filter
+                if (f.numProperty("valid") < f.rowCount())
+                    commands.add(s + " valid");
+            }
         }
 
         for (Entry<Param, String> e : vis.fTransform.entrySet()) {
@@ -270,8 +271,7 @@ public class DataBuilder {
             if (p.isField()) {
                 field = p.asField();
                 p = p.firstModifier();
-            }
-            else {
+            } else {
                 field = "#count";
             }
             if (p != null) count = (int) p.asDouble();
@@ -318,7 +318,7 @@ public class DataBuilder {
     }
 
     private boolean needsSeries() {
-        for (String s: vis.usedFields(false))
+        for (String s : vis.usedFields(false))
             if (s.equals("#series") || s.equals("#values")) return true;
         return false;
     }
