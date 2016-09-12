@@ -47,6 +47,7 @@ public class D3Interaction {
     private final ScriptWriter out;             // Write definitions here
     private final boolean canZoomX, canZoomY;   // for coordinate zoom, which axes we can zoom
     private final boolean usesCollapse;         // true if we have a collapse handler
+    private final boolean usesExpand;           // true if we have an expand handler
 
     public D3Interaction(ChartStructure structure, D3ScaleBuilder scales, ScriptWriter out) {
         this.structure = structure;
@@ -62,6 +63,8 @@ public class D3Interaction {
         VisTypes.Diagram diagram = structure.diagram;
         usesCollapse = diagram != null && diagram.isHierarchical && diagram != VisTypes.Diagram.gridded
                 && !banned(Interaction.collapse);
+
+        usesExpand = expandRequested(structure.elementStructure);
     }
 
     private boolean banned(Interaction type) {
@@ -128,6 +131,18 @@ public class D3Interaction {
             }
         }
         return null;
+    }
+
+    // Return true if we want node expand to fill functionality
+    private boolean expandRequested(ElementStructure[] elements) {
+        // Explicit requests in the code are honored. In case of multiple specs, just the first one is used
+        for (ElementStructure e : elements)
+            if (getInteractionParam(e.vis, Interaction.expand) != null) return true;
+
+        for (ElementStructure e : elements)
+            if (getInteractionParam(e.vis, Interaction.none) != null) return false;
+
+        return false;
     }
 
     /**

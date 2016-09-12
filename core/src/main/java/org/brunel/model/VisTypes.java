@@ -80,6 +80,7 @@ public class VisTypes {
         panzoom,                    // Allow panning and zooming using the mouse
         filter,                     // Apply filtering to the data
         collapse,                   // Collapse trees using the mouse
+        expand,                     // Expand subtrees using the mouse
         call,                       // A custom call to user code
         auto,                       // automatic interaction behavior
         none                        // turn off interactivity
