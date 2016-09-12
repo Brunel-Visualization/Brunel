@@ -61,11 +61,30 @@ public class D3Interaction {
         canZoomX = zoomTypes[0];
         canZoomY = zoomTypes[1];
         VisTypes.Diagram diagram = structure.diagram;
-        usesCollapse = diagram != null && diagram.isHierarchical && diagram != VisTypes.Diagram.gridded
+        usesExpand = expandRequested(structure.elementStructure);
+
+        usesCollapse = diagram != null && !usesExpand
+                && diagram.isHierarchical && diagram != VisTypes.Diagram.gridded
                 && !banned(Interaction.collapse);
 
-        usesExpand = expandRequested(structure.elementStructure);
     }
+
+    /**
+     * Returns true if we need to prune trees to collapse some nodes
+     * @return T/F
+     */
+    public boolean needsHierarchyPrune() {
+        return usesCollapse;
+    }
+
+    /**
+     * Returns true if we need to search a tree to find a node to expand out to
+     * @return T/F
+     */
+    public boolean needsHierarchySearch() {
+        return usesExpand;
+    }
+
 
     private boolean banned(Interaction type) {
         for (ElementStructure e : structure.elementStructure) {
@@ -154,7 +173,7 @@ public class D3Interaction {
     public boolean hasElementInteraction(ElementStructure structure) {
         if (!structure.vis.itemsTooltip.isEmpty()) return true;                 // tooltips require a handler
         if (structure.chart.diagram == VisTypes.Diagram.network) return true;   // networks are draggable
-        if (usesCollapse) return true;                                          // if we need collapse, need a handler
+        if (usesCollapse || usesExpand) return true;                            // if we need tree interactivity, need a handler
 
         for (Param p : structure.vis.tInteraction) {
             String s = p.asString();
@@ -245,8 +264,13 @@ public class D3Interaction {
             }
         }
 
+        if (usesExpand)
+            addFunctionDefinition("dblclick.collapse",
+                    "if (d.data.key) {if (d3.event.shiftKey) expandState.pop(); else expandState.push(d.data.key); build(500)} ",
+                    elementEvents);
         if (usesCollapse)
-            addFunctionDefinition("dblclick.collapse", " if (d.data.key) {collapseState[d.data.key] = !collapseState[d.data.key]; build(500)} ",
+            addFunctionDefinition("dblclick.collapse",
+                    "if (d.data.key) {collapseState[d.data.key] = !collapseState[d.data.key]; build(500)} ",
                     elementEvents);
 
         if (!overlayEvents.isEmpty()) {

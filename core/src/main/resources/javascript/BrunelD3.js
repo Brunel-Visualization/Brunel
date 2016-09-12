@@ -1031,7 +1031,7 @@ var BrunelD3 = (function () {
             txt.__labeling__ = labeling;
         }
 
-        if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
+        if (labeling.cssClass) txt.attr('class', labeling.cssClass(item.__data__));
         else txt.classed('label', true);
         txt.classed("selected", item.classList.contains("selected"));           // Copy selection status to label
 

@@ -56,6 +56,21 @@ public class Hierarchical {
         return compare(b, a);
     }
 
+
+    public Node find(Object name) {
+        return findNamedNode(root, name);
+    }
+
+    private Node findNamedNode(Node node, Object name) {
+        if (name.equals(node.key)) return node;
+        if (node.children == null) return null;
+        for (Node n : (Node[])node.children) {
+            Node hit = findNamedNode(n, name);
+            if (hit != null) return hit;
+         }
+        return null;
+    }
+
     private Hierarchical(Dataset data, String sizeFieldName, String[] fieldNames) {
         Field size = sizeFieldName == null ? null : data.field(sizeFieldName);
         Field[] fields = toFields(data, fieldNames);
