@@ -26,6 +26,7 @@ import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Interaction;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -163,10 +164,10 @@ public class D3Interaction {
 
     /**
      * This attaches event handlers to the element for click-selection
-     *
-     * @param interactions the defined interactivity
      */
-    public void addHandlers(List<Param> interactions) {
+    public void addHandlers(ElementStructure structure) {
+
+        Collection<Param> interactions = structure.vis.tInteraction;
 
         // A map from the event names to a set of commands to write for each event
         // One map for the element, the other for 'snap' events, which go on the overlay
@@ -188,14 +189,16 @@ public class D3Interaction {
                             "BrunelD3.select(c.item, c.target, element, updateAll)", overlayEvents);
                     addFunctionDefinition("mouseout.snap",
                             "BrunelD3.select(null, c.target, element, updateAll)", overlayEvents);
+
+                    if (hasElementInteraction(structure)) {
+                        // We are adding a handler for the element, which means it will steal the even for the background
+                        // So we must add that handler to the element also
+
+                        addSelectEvent(elementEvents, Param.makeOption("select").addModifiers(Param.makeString("mouseover")));
+                    }
+
                 } else {
-                    // We want an event handler on the element -- Also add corresponding mouse out event
-                    String eventName = p.hasModifiers() ? p.firstModifier().asString() : "click";
-                    addFunctionDefinition(eventName + ".interact",
-                            "BrunelD3.select(d, this, element, updateAll)", elementEvents);
-                    if (eventName.equals("mouseover") || eventName.equals("mousemove"))
-                        addFunctionDefinition("mouseout.interact",
-                                "BrunelD3.select(null, this, element, updateAll)", elementEvents);
+                    String eventName = addSelectEvent(elementEvents, p);
 
                     // And we want a click on the main space to select nothing
                     if (eventName.equals("click"))
@@ -210,12 +213,17 @@ public class D3Interaction {
                     // We want a snap overlay event that will call a custom function -- all snap events are overlays
                     addFunctionDefinition("mousemove.user", functionName + "(c.item, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
                     addFunctionDefinition("mouseout.user", functionName + "(null, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
+
+                    if (hasElementInteraction(structure)) {
+                        // We are adding a handler for the element, which means it will steal the even for the background
+                        // So we must add that handler to the element also
+                        Param p1 = Param.makeOption("call").addModifiers(Param.makeOption(functionName), Param.makeOption("mouseover"));
+                        addEvent(elementEvents, p1, functionName);
+                    }
+
                 } else {
                     // We want an event handler on the element
-                    String eventName = p.modifiers().length > 1 ? p.modifiers()[1].toString() : "click";
-                    addFunctionDefinition(eventName + ".user", functionName + "(d, this, element)", elementEvents);
-                    if (eventName.equals("mouseover") || eventName.equals("mousemove"))
-                        addFunctionDefinition("mouseout.user", functionName + "(null, this, element)", elementEvents);
+                    String eventName = addEvent(elementEvents, p, functionName);
 
                     // And we want a click on the main space to select nothing
                     if (eventName.equals("click"))
@@ -246,6 +254,25 @@ public class D3Interaction {
             out.add("merged").at(60).comment("Attach handlers to the element");
             addDispatchers(elementEvents);
         }
+    }
+
+    private String addSelectEvent(LinkedHashMap<String, List<String>> elementEvents, Param p) {
+        // We want an event handler on the element -- Also add corresponding mouse out event
+        String eventName = p.hasModifiers() ? p.firstModifier().asString() : "click";
+        addFunctionDefinition(eventName + ".interact",
+                "BrunelD3.select(d, this, element, updateAll)", elementEvents);
+        if (eventName.equals("mouseover") || eventName.equals("mousemove"))
+            addFunctionDefinition("mouseout.interact",
+                    "BrunelD3.select(null, this, element, updateAll)", elementEvents);
+        return eventName;
+    }
+
+    private String addEvent(LinkedHashMap<String, List<String>> elementEvents, Param p, String functionName) {
+        String eventName = p.modifiers().length > 1 ? p.modifiers()[1].toString() : "click";
+        addFunctionDefinition(eventName + ".user", functionName + "(d, this, element)", elementEvents);
+        if (eventName.equals("mouseover") || eventName.equals("mousemove"))
+            addFunctionDefinition("mouseout.user", functionName + "(null, this, element)", elementEvents);
+        return eventName;
     }
 
     /**
