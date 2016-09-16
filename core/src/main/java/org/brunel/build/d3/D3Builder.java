@@ -230,7 +230,7 @@ public class D3Builder extends AbstractBuilder {
 
         out.add("function build(transitionMillis) {").ln().indentMore();
         elementBuilder.generate(structure.index);
-        interaction.addHandlers(vis.tInteraction);
+        interaction.addHandlers(structure);
 
         // If a chart is nested within us, build its facets
         Integer index = structure.chart.innerChartIndex;

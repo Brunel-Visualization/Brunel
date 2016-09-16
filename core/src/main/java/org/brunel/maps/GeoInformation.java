@@ -98,6 +98,7 @@ public class GeoInformation {
 
     private final Map<VisSingle, GeoMapping> geo;            // Geographic mappings, one per geo element
     private final VisSingle[] elements;
+    private final ChartCoordinates positionFields;
     private final Poly hull;                                        // Convex hull for the points
     private final boolean needsExpansion;
     private final Projection projection;
@@ -105,6 +106,7 @@ public class GeoInformation {
 
     public GeoInformation(VisSingle[] elements, Dataset[] datas, ChartCoordinates positionFields) {
         this.elements = elements;
+        this.positionFields = positionFields;
         Poly positionHull = getPositionPoints(positionFields);
         this.geo = makeGeoMappings(datas, positionHull, this);
         this.withGraticule = includesAxes(elements);
@@ -116,7 +118,8 @@ public class GeoInformation {
             this.hull = withoutReferenceMaps;
             this.needsExpansion = true;
         }
-        this.projection = ProjectionBuilder.makeProjection(adjustForUS());
+
+        this.projection = ProjectionBuilder.makeProjection(getProjectionBounds());
     }
 
     private boolean includesAxes(VisSingle[] elements) {
@@ -132,12 +135,23 @@ public class GeoInformation {
         return required;
     }
 
-    private Rect adjustForUS() {
+    private Rect getProjectionBounds() {
+
+
+
+
+
+
         Rect hawaii = new Rect(-181, -154, 18, 30);
         Rect alaskanIslandsA = new Rect(-181, -165, 50, 55);
         Rect alaskanIslandsB = new Rect(170, 181, 50, 55);
 
         Rect bounds = hull.bounds;
+
+        if (positionFields.xExtent != null)
+            bounds = new Rect(positionFields.xExtent[0], positionFields.xExtent[1], bounds.top, bounds.bottom);
+        if (positionFields.yExtent != null)
+            bounds = new Rect(bounds.left, bounds.right, positionFields.yExtent[0], positionFields.yExtent[1]);
 
         // Do the points wrap around the globe, but only because of alaskan islands?
         if (bounds.left < -179 && bounds.right > 179) {
@@ -169,7 +183,7 @@ public class GeoInformation {
     }
 
     public String d3Definition() {
-        Rect rect = adjustForUS();
+        Rect rect = getProjectionBounds();
         if (needsExpansion) rect = rect.expand(0.1);
         return projection.d3Definition(rect);
     }

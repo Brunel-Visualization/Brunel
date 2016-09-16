@@ -93,8 +93,8 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - simple    / data('raw:x;France;Argentina;brazil') map x(x) color(x) label(x) legends(none)  :: pass
 - simple    / data('raw:x;USA;Canada;Mexico') map x(x) color(x) label(x) legends(none) :: pass
 
-- simple    / map + data('raw:x,y;10,50;100,0') x(x) y(y) label(x, y) :: pass
-- simple    / map + data('raw:n,x,y;London,-0.12,51.5;Paris,2.3,48.8') x(x) y(y) label(n) + map(labels:200) :: pass
+- simple    / map + data('raw:x,y;10,50;100,0') x(x) y(y) axes(x,y) label(x, y) :: pass
+- simple    / map + data('raw:n,x,y;London,-0.12,51.5;Paris,2.3,48.8') x(x) y(y) label(n) axes(x,y) + map(labels:200) :: pass
 - simple    / map + data('raw:n,x,y,s;Tokyo,139.7,35.7,8.3;Yokohama,139.6,35.4,3.5;Osaka-shi,135.5,34.7,2.6;Sapporo,141.3,43,1.8') x(x) y(y) size(s:300) label(n) :: pass
 - simple    / map('uk','france','spain','germany') + map(labels) :: pass
 
