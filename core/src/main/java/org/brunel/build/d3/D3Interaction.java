@@ -338,9 +338,10 @@ public class D3Interaction {
      */
     public void addOverlayForZoom() {
         // The group for the overlay
-        out.add("var overlay = chart.append('g').attr('class', 'element')")
-                .addChained("attr('class', 'overlay').style('cursor','move').style('fill','none').style('pointer-events','all')")
-                .endStatement();
+        out.add("var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay')");
+
+
+        out.endStatement();
 
         // Add an overlay rectangle for zooming that will trap all mouse events and use them for pan/zoom
         out.add("var zoom = d3.zoom().scaleExtent([1/3,3])").endStatement();
@@ -350,8 +351,14 @@ public class D3Interaction {
                 .addChained("attr('x', geom.inner_left).attr('y', geom.inner_top)")
                 .addChained("attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)");
 
+        // Set cursor style for pan/zoom
+
         // Only attach zoom handlers if we want interactivity; otherwise zoom is only available by API
-        if (hasZoomInteractivity()) out.addChained("call(zoom)");
+        if (hasZoomInteractivity()) {
+            out.addChained("style('cursor', 'move').call(zoom)");
+        } else {
+            out.addChained("style('cursor', 'default')");
+        }
 
         out.addChained("node()").endStatement();
         out.add("zoomNode.__zoom = d3.zoomIdentity").endStatement();
