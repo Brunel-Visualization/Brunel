@@ -151,6 +151,8 @@ public abstract class D3Diagram {
         if (interaction.needsHierarchySearch())
             out.add("var targetNode = expandState.length ? hierarchy.find(expandState[expandState.length-1]) : hierarchy.root")
                     .endStatement();
+        else
+            out.add("var targetNode = hierarchy.root").endStatement();
 
         out.add("tree = d3.hierarchy(targetNode).sum(function(d) { return d.value })")
                 .endStatement();
