@@ -31,19 +31,11 @@ import java.util.Map;
  */
 public class Hierarchical {
 
-    /**
-     * Create a hierarchy by stratifying the fields
-     *
-     * @param data      data set to use
-     * @param sizeField determines the "size" of a node -- its weight
-     * @param fields    the fields to use to stratify, in the desired order
-     * @return hierarchical structure
-     */
     public static Hierarchical makeByNestingFields(Dataset data, String sizeField, String... fields) {
         return new Hierarchical(data, sizeField, fields);
     }
 
-    public final Node root;                                             // Root node
+    public final Node root;
 
     // Used by javascript
     public static int compare(Node a, Node b) {
@@ -59,7 +51,7 @@ public class Hierarchical {
     private Hierarchical(Dataset data, String sizeFieldName, String[] fieldNames) {
         Field size = sizeFieldName == null ? null : data.field(sizeFieldName);
         Field[] fields = toFields(data, fieldNames);
-        root = makeInternalNode("*");
+        root = makeInternalNode("");
         makeNodesUsingCollections(data, size, fields);
         replaceCollections(root, null);
     }
@@ -85,12 +77,11 @@ public class Hierarchical {
                 current = map.get(v);
                 if (current == null) {
                     current = makeInternalNode(field.valueFormatted(row));
-                    children.add(current);                  // add to ordered list
-                    map.put(v, current);                    // add to map
+                    children.add(current);        // add to ordered list
+                    map.put(v, current);                                 // add to map
                 }
             }
-            Node node = new Node(row, d, null, null);
-            ((List<Node>) current.children).add(node);
+            ((List<Node>) current.children).add(new Node(row, d, null, null));
         }
     }
 

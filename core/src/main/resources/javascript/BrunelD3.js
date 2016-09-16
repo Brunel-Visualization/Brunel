@@ -528,71 +528,6 @@ var BrunelD3 = (function () {
         callWhenReady(func, target);                                    // Request a redraw after  transition done
     }
 
-    function collapseNode(item, state) {
-        var n = item.children.length;                       // This many fewer
-        item.children = undefined;                          // remove the children
-        item.collapsed = true;                              // We collapsed this much
-        item.value /= 10;                                   // Shrink appearance
-        console.log(item.data.key + " -> " + item.value);
-        if (state) state[item.data.key] = true;             // We collapsed it
-        return n;
-    }
-
-    function fixTreeHeights(tree) {
-        var j;
-        tree.eachAfter(function (v) {                               // set new values of height
-            var children = v.children;
-            if (children) {
-                v.value = 0;
-                for (j = 0; j < children.length; j++) {
-                    v.height = Math.min(v.height, children[j].height + 1);
-                    v.value += children[j].value;
-                }
-            }
-            else
-                v.height = 0;
-        });
-    }
-
-    /**
-     * Take a d3 tree structure and prune it to the given size
-     * @param tree the root of the tree, a d3 Node
-     * @param userStates a map from node keys to T/F overriding the collapse behavior
-     * @param N desired maximum node count
-     */
-    function pruneTreeToSize(tree, userStates, N) {
-        var list = tree.descendants(), n = list.length;          // Current size of tree
-
-        // Remove the ones the user marked as to be collapsed
-        tree.each(function (v) {
-            if (userStates[v.data.key]) n -= collapseNode(v);
-        });
-        fixTreeHeights(tree);
-
-
-        while (n > N && N > 0) {
-            var i, items = [];                                          // Collect nodes with height = 1
-            tree.each(function (v) {
-                // Do not add it if marked as NOT collapsed
-                if (v.depth && v.height == 1 && userStates[v.data.key] == null) items.push(v);
-            });
-
-            if (items.length == 0) break;                               // Quit if nothing left to do
-
-            items.sort(function (a, b) {                                // Smallest weights first
-                return a.value - b.value
-            });
-
-            for (i = 0; i < items.length && n > N; i++)                 // Remove each
-                n -= collapseNode(items[i], userStates);
-
-            fixTreeHeights(tree);
-        }
-
-        tree.eachAfter(function(v) {console.log(v.data.key + ": " + v.value)});
-
-    }
-
 
     // Cloud layout -- pass in the dataset, the extent as [width, height]
     function cloud(data, ext) {
@@ -855,11 +790,11 @@ var BrunelD3 = (function () {
             ymin = D * Math.round(y / D), ymax = y + box.height;
 
         // Does it hit an existing location
-        for (i = xmin; i <= xmax; i += D) for (j = ymin; j <= ymax; j += D)
+        for (i = xmin; i <= xmax; i+=D) for (j = ymin; j <= ymax; j+=D)
             if (hits[i * 10000 + j]) return true;
 
         // No! so we must update those locations before returning the fact it misses
-        for (i = xmin; i <= xmax; i += D) for (j = ymin; j <= ymax; j += D)
+        for (i = xmin; i <= xmax; i+=D) for (j = ymin; j <= ymax; j+=D)
             hits[i * 10000 + j] = true;
 
         return false;
@@ -948,26 +883,21 @@ var BrunelD3 = (function () {
 
     // Apply labeling
     function applyLabeling(element, group, labeling, time, geom) {
-        function makeHits() {                                               // Keeps track of hit items
-            return {D: labeling.granularity}
-        }
+        var hits = {D: labeling.granularity};                               // Keeps track of hit items
 
-        var hits = makeHits();                               // Hit items for one pass
-
-        element.each(function (d, i) {                                      // index in order
+        element.each(function (d, i) {
             d._ix = i
-        });
-        var sorted = element.sort(function (a, b) {                         // sorted by reverse order
+        });                          // index the items
+        var sorted = element.sort(function (a, b) {
             return b._ix - a._ix
-        });
+        });   // sorted by reverse order
         element.order();                                                    // restore element order
 
         if (time > 0)
-            return sorted.transition("labels").duration(time).tween('func', function (d, i) {
+            return sorted.transition("labels").duration(time).tween('func', function () {
                 var item = this;
                 return function () {
-                    if (!i) hits = makeHits();                              // Every time we start a pass
-                    labelItem(item, group, labeling, hits, geom);           // label each item
+                    labelItem(item, group, labeling, hits, geom);
                 }
             });
         else
@@ -1830,7 +1760,6 @@ var BrunelD3 = (function () {
         'label': applyLabeling,
         'undoTransform': undoTransform,
         'cloudLayout': cloud,
-        'prune': pruneTreeToSize,
         'select': select,
         'shorten': shorten,
         'transition': transition,
