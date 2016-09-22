@@ -84,7 +84,7 @@ brunel <- function(brunel, data=NULL, width=800, height=600, online_js=FALSE) {
 to_csv <- function(data) {
     if (is.null(data)) return(NULL)
 	tc <- textConnection("out", "w") 
-	write.csv(data, tc, row.names =FALSE)	
+	write.csv(data, tc, row.names =FALSE, na="", quote=TRUE)	
 	#collapse the CSV to a single string so it aligns with the Java method parameter
 	str <- paste(out, collapse='\n')
 	close(tc)
