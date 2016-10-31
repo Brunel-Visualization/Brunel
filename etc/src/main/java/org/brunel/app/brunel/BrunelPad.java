@@ -93,14 +93,20 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
     }
 
     public void handleEvent(String tag, Object source, Object item) {
-        if (tag.equals("select fields"))
-            showFields((Field[]) item);
-        else if (tag.equals("select source"))
-            useSource((Dataset) item);
-        else if (tag.equals("error"))
-            error((Throwable) item);
-        else if (tag.equals("define action"))
-            setAction((String) item);
+        switch (tag) {
+            case "select fields":
+                showFields((Field[]) item);
+                break;
+            case "select source":
+                useSource((Dataset) item);
+                break;
+            case "error":
+                error((Throwable) item);
+                break;
+            case "define action":
+                setAction((String) item);
+                break;
+        }
     }
 
     public boolean handleFile(File file) {
