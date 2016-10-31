@@ -1,9 +1,9 @@
 Package: brunel
 Title: Brunel visualization rendering for the IRkernel for Jupyter
-Version: 2.1
+Version: 2.2
 Authors@R: person("Dan", "Rope", email = "drope@us.ibm.com", role = c("aut", "cre"))
 Description: Brunel visualization rendering for the IRkernel for Jupyter
 Depends: R (>= 3.2.1)
 Imports: rJava, uuid, jsonlite
-License: Apache License, Version 2.0 
+License: Apache License, Version 2.0
 LazyData: true

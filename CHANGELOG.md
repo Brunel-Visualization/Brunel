@@ -1,6 +1,11 @@
-# 2.1 Release Notes
+# 2.2 Release Notes
 
-_To be added_
+# Rows
+
+# Trees
+
+# Symbols
+
 
 # 2.0 Release Notes
 
