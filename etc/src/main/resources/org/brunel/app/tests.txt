@@ -6,7 +6,6 @@ colorScatter	:: x($1) y($2) color($3)                                    :: fiel
 line	        :: line x($1) y($2) color($3)                               :: field, field, categorical
 cloud           :: x($1) cloud size($2) color($2) sort($2) mean($2)         :: categorical, numeric
 multiline       :: line x($1) y($2) color(#series) mean($2)                 :: field, multiple
-tree            :: tree x($2) size($1:200%) color($1) sort($2)              :: numeric, multiCategorical
 treemap         :: treemap x($2) size(#count) label($1) list($1:50)         :: field, categorical
 sizedBar	    :: bar x($1) y(#count) size($2:100) color($2:blue) mean($2) sort(#count)
                 :: categorical, field
@@ -94,20 +93,14 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - simple    / data('raw:x;USA;Canada;Mexico') map x(x) color(x) label(x) legends(none) :: pass
 
 - simple    / map + data('raw:x,y;10,50;100,0') x(x) y(y) label(x, y) :: pass
-- simple    / map + data('raw:n,x,y;London,-0.12,51.5;Paris,2.3,48.8') x(x) y(y) label(n) + map(labels:200) :: pass
-- simple    / map + data('raw:n,x,y,s;Tokyo,139.7,35.7,8.3;Yokohama,139.6,35.4,3.5;Osaka-shi,135.5,34.7,2.6;Sapporo,141.3,43,1.8') x(x) y(y) size(s:300) label(n) :: pass
+- simple    / map + data('raw:n,x,y;London,-0.12,51.5;Paris,2.3,48.8') x(x) y(y) axes(x, y) label(n) + map(labels:200) :: pass
+- simple    / map + data('raw:n,x,y,s;Tokyo,139.7,35.7,8.3;Yokohama,139.6,35.4,3.5;Osaka-shi,135.5,34.7,2.6;Sapporo,141.3,43,1.8') axes(x, y) x(x) y(y) size(s:300) label(n) :: pass
 - simple    / map('uk','france','spain','germany') + map(labels) :: pass
 
 - cpi       / x(food) y(housing) color(DATE) + line  x(food) y(housing) fit(housing) :: pass
 - whiskey   / bubble color(#count) size(#count) sort(#count) label(brand:1) | bubble color(#count) size(#count) sort(#count:ascending) label(brand:1) :: pass :: Two different sort orders
 - simple    / x(#row) y('reds') color(#row:reds) axes(y) legends(none) + x(#row) y('red') color(#row:red) legends(none) + x(#row) y('blues-reds') color(#row:[blues, reds]) legends(none) + x(#row) y('blue-red') color(#row:[blue, red]) legends(none) + x(#row) y('blue-none-red') color(#row:[blue, none, red]) legends(none)  + x(#row) y('blue-black-red') color(#row:[blue, black, red]) legends(none) + x(#row) y('nominal') color(#row:nominal)  legends(none) :: pass
 - simple    / data('raw:A,B;a,b;a,c;a,d;b,c;a,e;e,f;g,h;m,n;n,o') edge key(A, B) + network y(A, B) color(#values) label(#values) legends(none) style('fill-opacity:1;size:20px') :: pass
-
-tree whiskey #count category country :: pass
-tree whiskey #count category rating / transpose :: pass
-tree whiskey #count category rating age / polar :: pass
-tree whiskey #count category rating age / polar tree(prune) :: pass
-
 
 - simple    / data('raw:x;"a,b";"a";"a,c,b";"a,b";"a,b";"a,b,c"') bar x(x) y(#count) color(x) | bar x(x) y(#count) color(x) each(x) | bubble color(x) size(#count) label(x) | bubble color(x) size(#count) label(x) each(x) :: pass
 - baseball  / x(PutOutRate) y(AssistRate) style('.axis.y .tick text{fill:red;padding-right:10px}') style('.axis.x .tick text{fill:blue;font-size:1cm; padding:2mm} .axis .tick line{size:-5mm} ') style('.axis .title {label-location:left;font-size:20px}') style('.axis .title {label-location:left;font-size:20px;font-style:italic;padding-left:1in}') style('.header {fill:red;font-size:40px;padding-bottom:50px;label-location:right}') title('Ugly Style test') :: pass

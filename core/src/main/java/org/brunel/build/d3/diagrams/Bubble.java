@@ -54,6 +54,7 @@ class Bubble extends D3Diagram {
 
     public void writeDefinition(ElementDetails details) {
         writeHierarchicalClass();
+        out.addChained("filter(function(d) { return d.depth })");
         out.addChained("attr('cx', function(d) { return scale_x(d.x) })")
                 .addChained("attr('cy', function(d) { return scale_y(d.y) })")
                 .addChained("attr('r', function(d) { return scale_x(d.r) - scale_x(0) })");
