@@ -532,20 +532,24 @@ var BrunelD3 = (function () {
         var n = item.children.length;                       // This many fewer
         item.children = undefined;                          // remove the children
         item.collapsed = true;                              // We collapsed this much
-        item.value /= 10;                                   // Shrink appearance
-        if (state) state[item.data.key] = true;             // We collapsed it
+        state[item.data.key] = true;                        // We collapsed it
         return n;
     }
 
-    function fixTreeHeights(tree) {
+    /**
+     * Fixes up tree heights, and also may reduce sizes
+     * @param tree
+     * @param reduceSizes
+     */
+    function fixTreeHeights(tree, reduceSizes) {
         var j;
         tree.eachAfter(function (v) {                               // set new values of height
             var children = v.children;
             if (children) {
-                v.value = 0;
+                if (reduceSizes) v.value = 0;
                 for (j = 0; j < children.length; j++) {
                     v.height = Math.min(v.height, children[j].height + 1);
-                    v.value += children[j].value;
+                    if (reduceSizes) v.value += children[j].value;
                 }
             }
             else
@@ -557,16 +561,18 @@ var BrunelD3 = (function () {
      * Take a d3 tree structure and prune it to the given size
      * @param tree the root of the tree, a d3 Node
      * @param userStates a map from node keys to T/F overriding the collapse behavior
+     * @param reduceSizes if true, adjust values when we prune
      * @param N desired maximum node count
      */
-    function pruneTreeToSize(tree, userStates, N) {
-        var list = tree.descendants(), n = list.length;          // Current size of tree
+    function pruneTreeToSize(tree, userStates, reduceSizes, N) {
+        var list = tree.descendants(),      // Number of items
+            n = list.length;                // Current size of tree
 
         // Remove the ones the user marked as to be collapsed
         tree.each(function (v) {
-            if (userStates[v.data.key]) n -= collapseNode(v);
+            if (userStates[v.data.key]) n -= collapseNode(v, userStates);
         });
-        fixTreeHeights(tree);
+        fixTreeHeights(tree, reduceSizes);
 
 
         while (n > N && N > 0) {
@@ -585,7 +591,24 @@ var BrunelD3 = (function () {
             for (i = 0; i < items.length && n > N; i++)                 // Remove each
                 n -= collapseNode(items[i], userStates);
 
-            fixTreeHeights(tree);
+            fixTreeHeights(tree, reduceSizes);
+        }
+
+        if (reduceSizes) {
+            var nCollapsed = [];                                        // Counts for collapsed
+            tree.each(function (v) {
+                if (v.collapsed)
+                    nCollapsed[v.depth] = (nCollapsed[v.depth] || 0) + 1;
+            });
+            tree.eachAfter(function (v) {
+                if (v.children) {
+                    v.value = 0;
+                    for (i=0; i<v.children.length; i++) v.value += v.children[i].value;
+                }
+                if (v.collapsed) {
+                    v.value = Math.min(v.value, tree.value / nCollapsed[v.depth]) / 10;
+                }
+            });
         }
 
     }
@@ -1008,7 +1031,7 @@ var BrunelD3 = (function () {
             txt.__labeling__ = labeling;
         }
 
-        if (labeling.cssClass) txt.classed(labeling.cssClass(item.__data__), true);
+        if (labeling.cssClass) txt.attr('class', labeling.cssClass(item.__data__));
         else txt.classed('label', true);
         txt.classed("selected", item.classList.contains("selected"));           // Copy selection status to label
 

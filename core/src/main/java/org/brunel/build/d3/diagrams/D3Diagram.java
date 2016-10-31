@@ -26,6 +26,7 @@ import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
+import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 
@@ -113,9 +114,9 @@ public abstract class D3Diagram {
     }
 
     public void writePerChartDefinitions() {
-       if (vis.tDiagram.isHierarchical) {
-           out.add("var tree, collapseState = {};").at(50).comment("Collapse state maps node IDs to true/false");
-       }
+        if (vis.tDiagram.isHierarchical) {
+            out.add("var tree, expandState = [], collapseState = {};").at(50).comment("collapse state maps node IDs to true/false");
+        }
     }
 
     public void writePreDefinition(ElementDetails details) {
@@ -127,17 +128,53 @@ public abstract class D3Diagram {
     }
 
     void makeHierarchicalTree() {
+        Integer prune = findPruneParameter(vis.tDiagramParameters);
+        String pruneValue;
+        if (prune == null) pruneValue = null;
+        else if (prune < 1) {
+            if (vis.coords == VisTypes.Coordinates.polar)
+                pruneValue = "geom.inner_width * geom.inner_height / 1000";
+            else if (vis.coords == VisTypes.Coordinates.transposed)
+                pruneValue = "geom.inner_width / 10";
+            else
+                pruneValue = "geom.inner_height / 10";
+        } else {
+            pruneValue = prune.toString();
+        }
+
         String[] positionFields = vis.positionFields();
         String fieldsList = positionFields.length == 0 ? "" : ", " + quoted(positionFields);
         String sizeParam = size == null ? null : Data.quote(size.asField());
-        out.add("var hierarchy = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, " + sizeParam + fieldsList + "),")
-                .onNewLine().add("tree = d3.hierarchy(hierarchy.root).sum(function(d) { return d.value })")
+        out.add("var first = (!tree), hierarchy = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, " + sizeParam + fieldsList + ")")
                 .endStatement();
 
+        if (interaction.needsHierarchySearch())
+            out.add("var targetNode = expandState.length ? hierarchy.find(expandState[expandState.length-1]) : hierarchy.root")
+                    .endStatement();
+        else
+            out.add("var targetNode = hierarchy.root").endStatement();
+
+        out.add("tree = d3.hierarchy(targetNode).sum(function(d) { return d.value })")
+                .endStatement();
+
+        boolean reduceSizes = vis.tDiagram == Diagram.bubble || vis.tDiagram == Diagram.treemap;
+
         // The collapseState map contains a map of keys to true / false for user-specified collapsing
+
+        if (interaction.needsHierarchyPrune())
+            out.add("BrunelD3.prune(tree, collapseState, " + reduceSizes + ", first ? " + pruneValue + ": null)").endStatement();
         out.add("function nodeKey(d) { return d.data.key == null ? data._key(d.data.row) : d.data.key }").endStatement();
         out.add("function edgeKey(d) { return nodeKey(d.source) + '%' + nodeKey(d.target) }").endStatement();
         isHierarchy = true;
+    }
+
+    private Integer findPruneParameter(Param[] params) {
+        for (Param p : params)
+            if (p.asString().equals("prune")) {
+                if (p.hasModifiers()) return p.firstModifier().asInteger();
+                else return -1;
+            }
+        return null;
     }
 
     protected String quoted(String... items) {

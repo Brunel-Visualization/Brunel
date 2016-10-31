@@ -84,7 +84,7 @@ brunel <- function(brunel, data=NULL, width=800, height=600, online_js=FALSE) {
 to_csv <- function(data) {
     if (is.null(data)) return(NULL)
 	tc <- textConnection("out", "w") 
-	write.csv(data, tc, row.names =FALSE)	
+	write.csv(data, tc, row.names =FALSE, na="", quote=TRUE)	
 	#collapse the CSV to a single string so it aligns with the Java method parameter
 	str <- paste(out, collapse='\n')
 	close(tc)
@@ -130,6 +130,7 @@ display_d3_output <- function(brunel_json, visid, controlsid, width, height) {
 	html_values <- list(d3css=d3css, visId=visid, width=width, height=height, d3js=d3js, controlsid=controlsid, 
 		d3loc=D3_LOC, topoJsonloc=TOPO_JSON_LOC, jsloc=jsloc, version=version )
 	html <- template_render(d3_template_html, html_values)
+	
 	IRdisplay::display_html(html)
 }
 

@@ -93,14 +93,20 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
     }
 
     public void handleEvent(String tag, Object source, Object item) {
-        if (tag.equals("select fields"))
-            showFields((Field[]) item);
-        else if (tag.equals("select source"))
-            useSource((Dataset) item);
-        else if (tag.equals("error"))
-            error((Throwable) item);
-        else if (tag.equals("define action"))
-            setAction((String) item);
+        switch (tag) {
+            case "select fields":
+                showFields((Field[]) item);
+                break;
+            case "select source":
+                useSource((Dataset) item);
+                break;
+            case "error":
+                error((Throwable) item);
+                break;
+            case "define action":
+                setAction((String) item);
+                break;
+        }
     }
 
     public boolean handleFile(File file) {
@@ -292,7 +298,7 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
         new PageOutput(builder, writer)
                 .pageTitle("Brunel: " + shortForm(a))
                 .addTitles("<h2 style='text-align:center'>" + a + "</h2>")
-//                .addExecutionScript(zoomChartForFixedBars())
+                .addExecutionScript(handleSelection())
                 .write();
 
         try {
@@ -326,6 +332,19 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
         setTitle(source.name());
         updateVis();
     }
+
+    public String[] handleSelection() {
+        return new String[] {
+                "var selected = [1, 3];",
+                "function modifySelection(data) {",
+                "\tvar i, field = data.field('#selection');",
+                "\tfor (i=0; i<selected.length; i++) { field.setValue(1, selected[i]) }",
+                "\treturn data;",
+                "}",
+                "v.dataPostProcess(modifySelection);"
+        };
+    }
+
 
     public String[] zoomChartForFixedBars() {
         return new String[] {

@@ -26,6 +26,7 @@ import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Interaction;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,7 @@ public class D3Interaction {
     private final ScriptWriter out;             // Write definitions here
     private final boolean canZoomX, canZoomY;   // for coordinate zoom, which axes we can zoom
     private final boolean usesCollapse;         // true if we have a collapse handler
+    private final boolean usesExpand;           // true if we have an expand handler
 
     public D3Interaction(ChartStructure structure, D3ScaleBuilder scales, ScriptWriter out) {
         this.structure = structure;
@@ -60,9 +62,30 @@ public class D3Interaction {
         canZoomX = zoomTypes[0];
         canZoomY = zoomTypes[1];
         VisTypes.Diagram diagram = structure.diagram;
-        usesCollapse = diagram != null && diagram.isHierarchical && diagram != VisTypes.Diagram.gridded
+        usesExpand = expandRequested(structure.elementStructure);
+
+        usesCollapse = diagram != null && !usesExpand
+                && diagram.isHierarchical && diagram != VisTypes.Diagram.gridded
                 && !banned(Interaction.collapse);
+
     }
+
+    /**
+     * Returns true if we need to prune trees to collapse some nodes
+     * @return T/F
+     */
+    public boolean needsHierarchyPrune() {
+        return usesCollapse;
+    }
+
+    /**
+     * Returns true if we need to search a tree to find a node to expand out to
+     * @return T/F
+     */
+    public boolean needsHierarchySearch() {
+        return usesExpand;
+    }
+
 
     private boolean banned(Interaction type) {
         for (ElementStructure e : structure.elementStructure) {
@@ -130,6 +153,18 @@ public class D3Interaction {
         return null;
     }
 
+    // Return true if we want node expand to fill functionality
+    private boolean expandRequested(ElementStructure[] elements) {
+        // Explicit requests in the code are honored. In case of multiple specs, just the first one is used
+        for (ElementStructure e : elements)
+            if (getInteractionParam(e.vis, Interaction.expand) != null) return true;
+
+        for (ElementStructure e : elements)
+            if (getInteractionParam(e.vis, Interaction.none) != null) return false;
+
+        return false;
+    }
+
     /**
      * Returns true if the element has any mouse events to be attached to it
      *
@@ -139,7 +174,7 @@ public class D3Interaction {
     public boolean hasElementInteraction(ElementStructure structure) {
         if (!structure.vis.itemsTooltip.isEmpty()) return true;                 // tooltips require a handler
         if (structure.chart.diagram == VisTypes.Diagram.network) return true;   // networks are draggable
-        if (usesCollapse) return true;                                          // if we need collapse, need a handler
+        if (usesCollapse || usesExpand) return true;                            // if we need tree interactivity, need a handler
 
         for (Param p : structure.vis.tInteraction) {
             String s = p.asString();
@@ -168,10 +203,10 @@ public class D3Interaction {
 
     /**
      * This attaches event handlers to the element for click-selection
-     *
-     * @param interactions the defined interactivity
      */
-    public void addHandlers(List<Param> interactions) {
+    public void addHandlers(ElementStructure structure) {
+
+        Collection<Param> interactions = structure.vis.tInteraction;
 
         // A map from the event names to a set of commands to write for each event
         // One map for the element, the other for 'snap' events, which go on the overlay
@@ -193,14 +228,16 @@ public class D3Interaction {
                             "BrunelD3.select(c.item, c.target, element, updateAll)", overlayEvents);
                     addFunctionDefinition("mouseout.snap",
                             "BrunelD3.select(null, c.target, element, updateAll)", overlayEvents);
+
+                    if (hasElementInteraction(structure)) {
+                        // We are adding a handler for the element, which means it will steal the even for the background
+                        // So we must add that handler to the element also
+
+                        addSelectEvent(elementEvents, Param.makeOption("select").addModifiers(Param.makeString("mouseover")));
+                    }
+
                 } else {
-                    // We want an event handler on the element -- Also add corresponding mouse out event
-                    String eventName = p.hasModifiers() ? p.firstModifier().asString() : "click";
-                    addFunctionDefinition(eventName + ".interact",
-                            "BrunelD3.select(d, this, element, updateAll)", elementEvents);
-                    if (eventName.equals("mouseover") || eventName.equals("mousemove"))
-                        addFunctionDefinition("mouseout.interact",
-                                "BrunelD3.select(null, this, element, updateAll)", elementEvents);
+                    String eventName = addSelectEvent(elementEvents, p);
 
                     // And we want a click on the main space to select nothing
                     if (eventName.equals("click"))
@@ -215,12 +252,17 @@ public class D3Interaction {
                     // We want a snap overlay event that will call a custom function -- all snap events are overlays
                     addFunctionDefinition("mousemove.user", functionName + "(c.item, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
                     addFunctionDefinition("mouseout.user", functionName + "(null, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
+
+                    if (hasElementInteraction(structure)) {
+                        // We are adding a handler for the element, which means it will steal the even for the background
+                        // So we must add that handler to the element also
+                        Param p1 = Param.makeOption("call").addModifiers(Param.makeOption(functionName), Param.makeOption("mouseover"));
+                        addEvent(elementEvents, p1, functionName);
+                    }
+
                 } else {
                     // We want an event handler on the element
-                    String eventName = p.modifiers().length > 1 ? p.modifiers()[1].toString() : "click";
-                    addFunctionDefinition(eventName + ".user", functionName + "(d, this, element)", elementEvents);
-                    if (eventName.equals("mouseover") || eventName.equals("mousemove"))
-                        addFunctionDefinition("mouseout.user", functionName + "(null, this, element)", elementEvents);
+                    String eventName = addEvent(elementEvents, p, functionName);
 
                     // And we want a click on the main space to select nothing
                     if (eventName.equals("click"))
@@ -230,8 +272,13 @@ public class D3Interaction {
             }
         }
 
+        if (usesExpand)
+            addFunctionDefinition("dblclick.collapse",
+                    "if (d.data.key) {if (d3.event.shiftKey) expandState.pop(); else expandState.push(d.data.key); build(500)} ",
+                    elementEvents);
         if (usesCollapse)
-            addFunctionDefinition("dblclick.collapse", " if (d.data.key) {collapseState[d.data.key] = !collapseState[d.data.key]; build(500)} ",
+            addFunctionDefinition("dblclick.collapse",
+                    "if (d.data.key) {collapseState[d.data.key] = !collapseState[d.data.key]; build(500)} ",
                     elementEvents);
 
         if (!overlayEvents.isEmpty()) {
@@ -251,6 +298,25 @@ public class D3Interaction {
             out.add("merged").at(60).comment("Attach handlers to the element");
             addDispatchers(elementEvents);
         }
+    }
+
+    private String addSelectEvent(LinkedHashMap<String, List<String>> elementEvents, Param p) {
+        // We want an event handler on the element -- Also add corresponding mouse out event
+        String eventName = p.hasModifiers() ? p.firstModifier().asString() : "click";
+        addFunctionDefinition(eventName + ".interact",
+                "BrunelD3.select(d, this, element, updateAll)", elementEvents);
+        if (eventName.equals("mouseover") || eventName.equals("mousemove"))
+            addFunctionDefinition("mouseout.interact",
+                    "BrunelD3.select(null, this, element, updateAll)", elementEvents);
+        return eventName;
+    }
+
+    private String addEvent(LinkedHashMap<String, List<String>> elementEvents, Param p, String functionName) {
+        String eventName = p.modifiers().length > 1 ? p.modifiers()[1].toString() : "click";
+        addFunctionDefinition(eventName + ".user", functionName + "(d, this, element)", elementEvents);
+        if (eventName.equals("mouseover") || eventName.equals("mousemove"))
+            addFunctionDefinition("mouseout.user", functionName + "(null, this, element)", elementEvents);
+        return eventName;
     }
 
     /**
@@ -318,9 +384,10 @@ public class D3Interaction {
      */
     public void addOverlayForZoom(VisTypes.Diagram diagram) {
         // The group for the overlay
-        out.add("var overlay = chart.append('g').attr('class', 'element')")
-                .addChained("attr('class', 'overlay').style('cursor','move').style('fill','none').style('pointer-events','all')")
-                .endStatement();
+        out.add("var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay')");
+
+
+        out.endStatement();
 
         String extent;
         if (diagram == VisTypes.Diagram.map) extent = "1/5,5";
@@ -335,8 +402,14 @@ public class D3Interaction {
                 .addChained("attr('x', geom.inner_left).attr('y', geom.inner_top)")
                 .addChained("attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)");
 
+        // Set cursor style for pan/zoom
+
         // Only attach zoom handlers if we want interactivity; otherwise zoom is only available by API
-        if (hasZoomInteractivity()) out.addChained("call(zoom)");
+        if (hasZoomInteractivity()) {
+            out.addChained("style('cursor', 'move').call(zoom)");
+        } else {
+            out.addChained("style('cursor', 'default')");
+        }
 
         out.addChained("node()").endStatement();
         out.add("zoomNode.__zoom = d3.zoomIdentity").endStatement();
