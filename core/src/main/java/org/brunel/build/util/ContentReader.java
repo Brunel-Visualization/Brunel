@@ -18,15 +18,15 @@ package org.brunel.build.util;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URLConnection;
 
 public class ContentReader {
     public static String readContentFromUrl(URI uri) throws IOException {
         //TODO:  Centrally handle security
     	try {
     		//Setting User-Agent avoids receiving an http 403 error.
-    	    HttpURLConnection httpcon = (HttpURLConnection) uri.toURL().openConnection();
+    	    URLConnection httpcon = uri.toURL().openConnection();
     	    httpcon.addRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11");
 
     	    return readContent(httpcon.getInputStream());

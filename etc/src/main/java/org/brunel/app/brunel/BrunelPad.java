@@ -298,7 +298,7 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
         new PageOutput(builder, writer)
                 .pageTitle("Brunel: " + shortForm(a))
                 .addTitles("<h2 style='text-align:center'>" + a + "</h2>")
-                .addExecutionScript(handleSelection())
+//                .addExecutionScript(handleSelection())
                 .write();
 
         try {
@@ -333,27 +333,27 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
         updateVis();
     }
 
-    public String[] handleSelection() {
-        return new String[] {
-                "var selected = [1, 3];",
-                "function modifySelection(data) {",
-                "\tvar i, field = data.field('#selection');",
-                "\tfor (i=0; i<selected.length; i++) { field.setValue(1, selected[i]) }",
-                "\treturn data;",
-                "}",
-                "v.dataPostProcess(modifySelection);"
-        };
-    }
-
-
-    public String[] zoomChartForFixedBars() {
-        return new String[] {
-                "var chart = v.charts[0], scx = chart.scales.x, range = scx.range(), nCats = scx.domain().length;",
-                "var width = Math.abs(range[range.length-1] - range[0]); ",
-                "var desiredGap = 20;",
-                "var desiredRange = desiredGap * nCats;",
-                "chart.zoom(d3.zoomIdentity.scale(desiredRange/width));"
-        };
-    }
+//    public String[] handleSelection() {
+//        return new String[] {
+//                "var selected = [1, 3];",
+//                "function modifySelection(data) {",
+//                "\tvar i, field = data.field('#selection');",
+//                "\tfor (i=0; i<selected.length; i++) { field.setValue(1, selected[i]) }",
+//                "\treturn data;",
+//                "}",
+//                "v.dataPostProcess(modifySelection);"
+//        };
+//    }
+//
+//
+//    public String[] zoomChartForFixedBars() {
+//        return new String[] {
+//                "var chart = v.charts[0], scx = chart.scales.x, range = scx.range(), nCats = scx.domain().length;",
+//                "var width = Math.abs(range[range.length-1] - range[0]); ",
+//                "var desiredGap = 20;",
+//                "var desiredRange = desiredGap * nCats;",
+//                "chart.zoom(d3.zoomIdentity.scale(desiredRange/width));"
+//        };
+//    }
 
 }
