@@ -25,6 +25,9 @@ import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Defines how to display an element
  */
@@ -35,18 +38,18 @@ public class ElementStructure {
     public final Dataset original;
     public final Dataset data;
     public final GeoMapping geo;
-    public final boolean dependent;
 
     public ElementDetails details;
+    public List<Dependency> dependencies;
 
-    public ElementStructure(ChartStructure chartStructure, int elementIndex, VisSingle vis, Dataset data, GeoMapping geo, boolean dependent) {
+    public ElementStructure(ChartStructure chartStructure, int elementIndex, VisSingle vis, Dataset data, GeoMapping geo) {
         this.chart = chartStructure;
         this.index = elementIndex;
         this.vis = vis;
         this.data = data;
         this.geo = geo;
-        this.dependent = dependent;
         this.original = vis.getDataset();
+        this.dependencies = new ArrayList<>();
     }
 
     public int getBaseDatasetIndex() {
@@ -66,6 +69,20 @@ public class ElementStructure {
         return chart.diagram == null && vis.fX.size() > 1;
     }
 
+    // returns true of we depend on another element
+    public boolean isDependent() {
+        return getDependencyBase() != null;
+    }
+
+    // rReturns the element we depend on
+    public ElementStructure getDependencyBase() {
+        for (Dependency dependency : dependencies) {
+            if (dependency.dependent == this) return dependency.base;
+        }
+        return null;
+    }
+
+
     public boolean isGraphEdge() {
         return (chart.diagram == Diagram.network || chart.diagram == Diagram.tree)
                 && vis.tElement == Element.edge
@@ -80,12 +97,12 @@ public class ElementStructure {
      * @return javascript fragment
      */
     public String keyedLocation(String dimName, Field key) {
-        String idToPointName = "elements[" + chart.sourceIndex + "].internal()._idToPoint(";
+        String idToPointName = "elements[" + getDependencyBase().index + "].internal()._idToPoint(";
         return idToPointName + D3Util.writeCall(key) + ")." + dimName;
     }
 
     public String[] makeReferences(Field[] keys) {
-        String idToPointName = "elements[" + chart.sourceIndex + "].internal()._idToPoint(";
+        String idToPointName = "elements[" + getDependencyBase().index + "].internal()._idToPoint(";
         String[] references = new String[keys.length];
         for (int i = 0; i < references.length; i++)
             references[i] = idToPointName + D3Util.writeCall(keys[i]) + ")";

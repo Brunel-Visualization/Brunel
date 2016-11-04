@@ -31,136 +31,150 @@ import java.util.Comparator;
  */
 public class ChartStructure {
 
-    public final int sourceIndex;
+	public final ChartCoordinates coordinates;
+	public final int chartIndex;                            // 0-based chart index
+	public final VisSingle[] elements;
+	public final GeoInformation geo;
+	public final Diagram diagram;
+	public final ElementStructure[] elementStructure;
+	public final ChartStructure outer;                      // If non-null, the enclosing element for a nested chart
+	public final Integer innerChartIndex;                   // If non-null, the index of the chart we enclose
+	public final String visIdentifier;                      // Identifier for the overall vis (the SVG ID)
+	public boolean accessible;                              // If true, generate accessible content
 
-    public final ChartCoordinates coordinates;
-    public final int chartIndex;                            // 0-based chart index
-    public final VisSingle[] elements;
-    public final GeoInformation geo;
-    public final Diagram diagram;
-    public final ElementStructure[] elementStructure;
-    public final ChartStructure outer;                      // If non-null, the enclosing element for a nested chart
-    public final Integer innerChartIndex;                   // If non-null, the index of the chart we enclose
-    public final String visIdentifier;                      // Identifier for the overall vis (the SVG ID)
-    public boolean accessible;                              // If true, generate accessible content
+	public final Dataset[] baseDataSets;
+	public int chartHeight, chartWidth;                     // Pixel expanse of chart (set during building)
 
-    public final Dataset[] baseDataSets;
-    public int chartHeight, chartWidth;                     // Pixel expanse of chart (set during building)
+	public ChartStructure(int chartIndex, VisSingle[] elements, Dataset[] data, Dataset[] dataSets,
+						  ChartStructure outer, Integer innerChartIndex, String visIdentifier) {
+		this.baseDataSets = dataSets;
+		this.chartIndex = chartIndex;
+		this.elements = elements;
+		this.outer = outer;
+		this.innerChartIndex = innerChartIndex;
+		this.visIdentifier = visIdentifier;
+		this.elementStructure = new ElementStructure[elements.length];
+		this.diagram = findDiagram();
+		this.coordinates = new ChartCoordinates(elements, data, diagram);
+		this.geo = makeGeo(elements, data);
 
-    public ChartStructure(int chartIndex, VisSingle[] elements, Dataset[] data, Dataset[] dataSets,
-                          ChartStructure outer, Integer innerChartIndex, String visIdentifier) {
-        this.baseDataSets = dataSets;
-        this.chartIndex = chartIndex;
-        this.elements = elements;
-        this.outer = outer;
-        this.innerChartIndex = innerChartIndex;
-        this.visIdentifier = visIdentifier;
-        this.elementStructure = new ElementStructure[elements.length];
-        this.diagram = findDiagram();
-        this.coordinates = new ChartCoordinates(elements, data, diagram);
-        this.sourceIndex = findSourceElement(elements);
-        this.geo = makeGeo(elements, data);
+		// Define the elements
+		for (int i = 0; i < elements.length; i++) {
+			GeoMapping geoMapping = geo == null ? null : geo.getGeo(elements[i]);
+			elementStructure[i] = new ElementStructure(this, i, elements[i], data[i], geoMapping);
+		}
 
-        for (int i = 0; i < elements.length; i++) {
-            VisSingle vis = elements[i];
-            boolean isDependent = sourceIndex >= 0 && vis.tDiagram == null && vis.positionFields().length == 0;
-            GeoMapping geoMapping = geo == null ? null : geo.getGeo(vis);
-            elementStructure[i] = new ElementStructure(this, i, vis, data[i], geoMapping, isDependent);
-        }
+		// Define any dependencies between the elements
+		int sourceIndex = findSourceElement(elements);                      // A source for dependencies
 
-    }
+		if (sourceIndex >= 0) {
+			for (ElementStructure structure : this.elementStructure) {
+				VisSingle vis = structure.vis;
+				if (vis.positionFields().length == 0 && vis.tDiagram != null && !vis.fKeys.isEmpty()) {
+					// No position or diagram, and we do have keys to link us to the source
+					// Check we do not depend on ourselves!
+					if (structure != elementStructure[sourceIndex]) {
+						Dependency dependency = new Dependency( elementStructure[sourceIndex], structure);
+						dependency.attach();
+					}
+				}
 
-    public void setExtent(int chartWidth, int chartHeight) {
-        this.chartWidth = chartWidth;
-        this.chartHeight = chartHeight;
-    }
+			}
+		}
 
-    public static String makeChartID(int index) {
-        return "" + (index + 1);
-    }
+	}
 
-    public boolean hasMultipleElements() {
-        return elements.length > 1;
-    }
+	public void setExtent(int chartWidth, int chartHeight) {
+		this.chartWidth = chartWidth;
+		this.chartHeight = chartHeight;
+	}
 
-    public boolean nested() {
-        return outer != null;
-    }
+	public static String makeChartID(int index) {
+		return "" + (index + 1);
+	}
 
-    private Diagram findDiagram() {
-        // Any diagram make the chart all diagram. Mixing diagrams and non-diagrams will
-        // likely be useless at best, but we will not throw an error for it
-        for (VisSingle e : elements) if (e.tDiagram != null) return e.tDiagram;
-        return null;
-    }
+	public boolean hasMultipleElements() {
+		return elements.length > 1;
+	}
 
-    private int findSourceElement(VisSingle[] elements) {
-        int candidate = -1;
-        for (int i = 0; i < elements.length; i++) {
-            VisSingle vis = elements[i];
-            if (vis.fKeys.size() == 1) {
-                // A source must have one key only
-                if (candidate < 0) {
-                    candidate = i;
-                } else {
-                    // If there are multiple elements with one key, we need to pick the better one
-                    // Diagrams are always better sources, otherwise the one that defines positions is better.
-                    if (vis.tDiagram != null) return i;
-                    if (vis.positionFields().length > elements[candidate].positionFields().length) {
-                        candidate = i;
-                    }
-                }
-            }
-        }
-        return candidate;
-    }
+	public boolean nested() {
+		return outer != null;
+	}
 
-    public GeoInformation makeGeo(VisSingle[] elements, Dataset[] data) {
-        // If any element specifies a map, we make the map information for all to share
-        for (VisSingle vis : elements)
-            if (vis.tDiagram == Diagram.map)
-                return new GeoInformation(elements, data, coordinates);
-        return null;
-    }
+	private Diagram findDiagram() {
+		// Any diagram make the chart all diagram. Mixing diagrams and non-diagrams will
+		// likely be useless at best, but we will not throw an error for it
+		for (VisSingle e : elements) if (e.tDiagram != null) return e.tDiagram;
+		return null;
+	}
 
-    public Integer[] elementBuildOrder() {
-        // Start with the default order
-        Integer[] order = new Integer[elements.length];
-        for (int i = 0; i < order.length; i++) order[i] = i;
+	private int findSourceElement(VisSingle[] elements) {
+		int candidate = -1;
+		for (int i = 0; i < elements.length; i++) {
+			VisSingle vis = elements[i];
+			if (vis.fKeys.size() == 1) {
+				// A source must have one key only
+				if (candidate < 0) {
+					candidate = i;
+				} else {
+					// If there are multiple elements with one key, we need to pick the better one
+					// Diagrams are always better sources, otherwise the one that defines positions is better.
+					if (vis.tDiagram != null) return i;
+					if (vis.positionFields().length > elements[candidate].positionFields().length) {
+						candidate = i;
+					}
+				}
+			}
+		}
+		return candidate;
+	}
 
-        Arrays.sort(order, new Comparator<Integer>() {
-            public int compare(Integer a, Integer b) {
-                VisSingle aa = elements[a], bb = elements[b];
+	public GeoInformation makeGeo(VisSingle[] elements, Dataset[] data) {
+		// If any element specifies a map, we make the map information for all to share
+		for (VisSingle vis : elements)
+			if (vis.tDiagram == Diagram.map)
+				return new GeoInformation(elements, data, coordinates);
+		return null;
+	}
 
-                // Diagrams go first
-                if (aa.tDiagram != null && bb.tDiagram == null) return -1;
-                if (aa.tDiagram == null && bb.tDiagram != null) return 1;
+	public Integer[] elementBuildOrder() {
+		// Start with the default order
+		Integer[] order = new Integer[elements.length];
+		for (int i = 0; i < order.length; i++) order[i] = i;
 
-                // Edges go last
-                if (aa.tElement == Element.edge && bb.tElement != Element.edge) return 1;
-                if (aa.tElement != Element.edge && bb.tElement == Element.edge) return -1;
+		Arrays.sort(order, new Comparator<Integer>() {
+			public int compare(Integer a, Integer b) {
+				VisSingle aa = elements[a], bb = elements[b];
 
-                // Otherwise the more keys you have, the later you are built
-                return aa.fKeys.size() - bb.fKeys.size();
-            }
-        });
+				// Diagrams go first
+				if (aa.tDiagram != null && bb.tDiagram == null) return -1;
+				if (aa.tDiagram == null && bb.tDiagram != null) return 1;
 
-        return order;
-    }
+				// Edges go last
+				if (aa.tElement == Element.edge && bb.tElement != Element.edge) return 1;
+				if (aa.tElement != Element.edge && bb.tElement == Element.edge) return -1;
 
-    public int getBaseDatasetIndex(Dataset dataset) {
-        for (int i = 0; i < baseDataSets.length; i++)
-            if (dataset == baseDataSets[i]) return i;
-        throw new IllegalStateException("Could not find data set in array of datasets");
-    }
+				// Otherwise the more keys you have, the later you are built
+				return aa.fKeys.size() - bb.fKeys.size();
+			}
+		});
 
-    public String chartID() {
-        return makeChartID(chartIndex);
-    }
+		return order;
+	}
 
-    public ElementStructure getEdge() {
-        for (ElementStructure e : elementStructure) if (e.isGraphEdge()) return e;
-        throw new IllegalStateException("Networks were requested, but no suitable edge elements were defined");
-    }
+	public int getBaseDatasetIndex(Dataset dataset) {
+		for (int i = 0; i < baseDataSets.length; i++)
+			if (dataset == baseDataSets[i]) return i;
+		throw new IllegalStateException("Could not find data set in array of datasets");
+	}
+
+	public String chartID() {
+		return makeChartID(chartIndex);
+	}
+
+	public ElementStructure getEdge() {
+		for (ElementStructure e : elementStructure) if (e.isGraphEdge()) return e;
+		throw new IllegalStateException("Networks were requested, but no suitable edge elements were defined");
+	}
 
 }

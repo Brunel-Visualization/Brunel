@@ -235,7 +235,7 @@ public class D3ElementBuilder {
         Field[] keys = new Field[vis.fKeys.size()];
         for (int i = 0; i < keys.length; i++) keys[i] = structure.data.field(vis.fKeys.get(i).asField());
 
-        if (structure.dependent) {
+        if (structure.isDependent()) {
             defineReferenceFunctions(e, keys);
             DefineLocations.setDependentLocations(structure, e);
         }
@@ -473,7 +473,7 @@ public class D3ElementBuilder {
         }
 
         // Already defined
-        if (structure.dependent) return;
+        if (structure.isDependent()) return;
 
         if (n == 0) {
             def.x.center = GeomAttribute.makeConstant("null");

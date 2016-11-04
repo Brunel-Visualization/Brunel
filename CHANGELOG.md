@@ -1,8 +1,15 @@
 # 2.2 Release Notes
 
-# Rows
+## Trees and Hierarchies
 
-# Trees
+### Specifying a Hierarchical structure
+
+Using positions --
+Using keys --
+
+## Rows
+
+## Symbols
 
 # Symbols
 

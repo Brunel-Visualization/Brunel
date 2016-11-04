@@ -80,7 +80,7 @@ class DefineLocations {
         }
 
         // No need -- they have been defined already
-        if (structure.dependent) return;
+        if (structure.isDependent()) return;
 
         if (fields.length == 0) {
             // There are no fields -- we have a notional [0,1] extent, so use the center of that
