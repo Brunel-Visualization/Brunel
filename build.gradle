@@ -1,3 +1,5 @@
+import com.sun.org.apache.xalan.internal.xsltc.compiler.Copy
+
 /*
  * Copyright (c) 2015 IBM Corporation and others.
  *
@@ -79,6 +81,7 @@ repositories {
 configurations {
     minification
 }
+
 dependencies {
     minification 'com.google.javascript:closure-compiler:r2388'
 }

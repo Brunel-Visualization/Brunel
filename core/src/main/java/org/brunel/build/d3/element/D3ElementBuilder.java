@@ -343,7 +343,7 @@ public class D3ElementBuilder {
         // If we need reference locations, write them in first
         if (details.getRefLocation() != null) {
             out.addChained("each(function(d) { this.r = " + details.getRefLocation().definition() + "})");
-            out.addChained("style('visibility', function() { return validReference(this.e) ? 'visible' : 'hidden'})");
+            out.addChained("style('visibility', function() { return validReference(this.r) ? 'visible' : 'hidden'})");
         }
 
         if (details.requiresSplitting())
