@@ -70,7 +70,7 @@ public class ChartStructure {
 		if (sourceIndex >= 0) {
 			for (ElementStructure structure : this.elementStructure) {
 				VisSingle vis = structure.vis;
-				if (vis.positionFields().length == 0 && vis.tDiagram != null && !vis.fKeys.isEmpty()) {
+				if (vis.positionFields().length == 0 && vis.tDiagram == null && !vis.fKeys.isEmpty()) {
 					// No position or diagram, and we do have keys to link us to the source
 					// Check we do not depend on ourselves!
 					if (structure != elementStructure[sourceIndex]) {

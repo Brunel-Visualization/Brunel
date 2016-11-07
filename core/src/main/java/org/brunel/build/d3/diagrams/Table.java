@@ -20,13 +20,13 @@ import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.Padding;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
-import org.brunel.model.VisSingle;
 import org.brunel.model.style.StyleTarget;
 
 class Table extends D3Diagram {
@@ -36,8 +36,8 @@ class Table extends D3Diagram {
     private final Padding padding;              // Padding for labels
     private final Field[] fields;               // The fields we are showing
 
-    public Table(VisSingle vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
-        super(vis, data, interaction, out);
+    public Table(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
+        super(structure, data, interaction, out);
         fields = data.fieldArray(vis.positionFields());
         padding = ModelUtil.getPadding(vis, StyleTarget.makeElementTarget(null), 2);
         padding.top += 15;       // For the titles

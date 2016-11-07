@@ -20,13 +20,14 @@ import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
 
 class Cloud extends D3Diagram {
 
-    public Cloud(VisSingle vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
+    public Cloud(ElementStructure vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
         super(vis, data, interaction, out);
     }
 

@@ -30,10 +30,10 @@ class Network extends D3Diagram {
     private final ElementStructure edges;
     private final String nodeID, fromFieldID, toFieldID;
 
-    public Network(VisSingle vis, Dataset data, ElementStructure nodes, ElementStructure edges, D3Interaction interaction, ScriptWriter out) {
-        super(vis, data, interaction, out);
-        this.nodes = nodes;
-        this.edges = edges;
+    public Network(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
+        super(structure, data, interaction, out);
+        this.nodes = structure;
+        this.edges = structure.findDependentEdges();
 
         if (vis.fKeys.size() > 0) {
             nodeID = vis.fKeys.get(0).asField(nodes.data);

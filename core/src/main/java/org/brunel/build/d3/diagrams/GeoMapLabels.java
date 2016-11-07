@@ -19,12 +19,11 @@ package org.brunel.build.d3.diagrams;
 import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
-import org.brunel.build.info.ChartStructure;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.maps.LabelPoint;
-import org.brunel.model.VisSingle;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -34,11 +33,8 @@ public class GeoMapLabels extends D3Diagram {
 
     private final NumberFormat F = new DecimalFormat("#.####");
 
-    private final ChartStructure structure;
-
-    public GeoMapLabels(VisSingle vis, Dataset data, ChartStructure structure, D3Interaction interaction, ScriptWriter out) {
+    public GeoMapLabels(ElementStructure vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
         super(vis, data, interaction, out);
-        this.structure = structure;
     }
 
     public String getRowKeyFunction() {
@@ -46,7 +42,7 @@ public class GeoMapLabels extends D3Diagram {
     }
 
     public void preBuildDefinitions() {
-        List<LabelPoint> all = structure.geo.getLabelsForFiles();
+        List<LabelPoint> all = structure.chart.geo.getLabelsForFiles();
 
         int maxPoints = 40;
         if (vis.tDiagramParameters[0].modifiers().length > 0) {

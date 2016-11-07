@@ -22,18 +22,18 @@ import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.d3.element.GeomAttribute;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
-import org.brunel.model.VisSingle;
 
 class Grid extends Bubble {
 
     private int rows = 0, columns = 0;                  // size of the grid (0 -> "choose for me")
     private double aspect = 1;                          // desired aspect ratio of the grid cells
 
-    Grid(VisSingle vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
-        super(vis, data, interaction, out);
+    Grid(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
+        super(structure, data, interaction, out);
 
         for (Param p : vis.tDiagramParameters) {
             String s = p.asString();

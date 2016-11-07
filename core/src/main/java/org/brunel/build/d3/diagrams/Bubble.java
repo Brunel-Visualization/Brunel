@@ -21,15 +21,15 @@ import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.d3.element.GeomAttribute;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
-import org.brunel.model.VisSingle;
 
 class Bubble extends D3Diagram {
 
-    public Bubble(VisSingle vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
-        super(vis, data, interaction, out);
+    public Bubble(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
+        super(structure, data, interaction, out);
     }
 
     public ElementDetails initializeDiagram() {

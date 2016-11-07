@@ -20,6 +20,7 @@ import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
@@ -29,7 +30,7 @@ import org.brunel.model.style.StyleTarget;
 
 class Chord extends D3Diagram {
 
-    public Chord(VisSingle vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
+    public Chord(ElementStructure vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
         super(vis, data, interaction, out);
     }
 

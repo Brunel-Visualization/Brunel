@@ -32,7 +32,6 @@ import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
-import org.brunel.model.VisSingle;
 import org.brunel.model.style.StyleTarget;
 
 import java.util.Arrays;
@@ -50,8 +49,8 @@ class ParallelCoordinates extends D3Diagram {
     private final Padding padding;              // Space around the edges
     private final double smoothness;            // 0 == linear, 1 is very smooth
 
-    public ParallelCoordinates(VisSingle vis, Dataset data, D3Interaction interaction, ElementStructure structure, ScriptWriter out) {
-        super(vis, data, interaction, out);
+    public ParallelCoordinates(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
+        super(structure, data, interaction, out);
         fields = data.fieldArray(vis.positionFields());
         builder = new D3ScaleBuilder(structure.chart, out);
         axes = makeAxisDetails(structure.chart, fields);

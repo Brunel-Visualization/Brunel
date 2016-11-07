@@ -52,6 +52,15 @@ public class ElementStructure {
         this.dependencies = new ArrayList<>();
     }
 
+    // Find a dependent structure on us -- edges for our nodes
+    public ElementStructure findDependentEdges() {
+        for (Dependency dependency : dependencies) {
+            // Needs two keys
+            if (dependency.base == this && dependency.dependent.vis.fKeys.size() > 1) return dependency.dependent;
+        }
+        return null;
+    }
+
     public int getBaseDatasetIndex() {
         return chart.getBaseDatasetIndex(original);
     }

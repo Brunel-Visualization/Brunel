@@ -20,9 +20,9 @@ import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
-import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Coordinates;
 
 class Tree extends D3Diagram {
@@ -34,8 +34,8 @@ class Tree extends D3Diagram {
     private final int pad = 10;                                     // Pad size
     private final boolean usesSize;                                 // True is size is used
 
-    public Tree(VisSingle vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
-        super(vis, data, interaction, out);
+    public Tree(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
+        super(structure, data, interaction, out);
         if (vis.coords == Coordinates.polar) method = Method.polar;
         else method = Method.leftRight;
         labelSize = labelBuilder.estimateLabelLength() * 6;

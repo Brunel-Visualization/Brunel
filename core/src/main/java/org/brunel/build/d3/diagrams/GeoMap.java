@@ -20,6 +20,7 @@ import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
@@ -77,7 +78,7 @@ public class GeoMap extends D3Diagram {
 
     }
 
-    public GeoMap(VisSingle vis, Dataset data, GeoMapping geo, D3Interaction interaction, ScriptWriter out) {
+    public GeoMap(ElementStructure vis, Dataset data, GeoMapping geo, D3Interaction interaction, ScriptWriter out) {
         super(vis, data, interaction, out);
         this.mapping = geo;
         if (mapping == null)
