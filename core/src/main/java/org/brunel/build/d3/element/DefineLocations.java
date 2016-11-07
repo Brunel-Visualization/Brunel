@@ -72,7 +72,7 @@ class DefineLocations {
     static void setLocations(ElementRepresentation rep, ElementStructure structure, ElementDimension dim, String dimName, Field[] fields, boolean categorical) {
         String scaleName = "scale_" + dimName;
 
-        if (structure.isGraphEdge()) {
+        if (structure.isNetworkEdge()) {
             // These are edges in a network layout; we just need left and right
             dim.left = GeomAttribute.makeFunction("d.source." + dimName);
             dim.right = GeomAttribute.makeFunction("d.target." + dimName);

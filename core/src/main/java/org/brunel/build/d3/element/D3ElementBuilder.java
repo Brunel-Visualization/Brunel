@@ -69,7 +69,7 @@ public class D3ElementBuilder {
 
         if (diagram == null) {
             // Graph edges do not need defined coordinates
-            if (!structure.isGraphEdge()) {
+            if (!structure.isNetworkEdge()) {
                 writeCoordinateFunctions(details);
                 if (details.representation == ElementRepresentation.wedge) {
                     // Deal with the case of wedges (polar intervals)
@@ -217,7 +217,7 @@ public class D3ElementBuilder {
 
     protected ElementDetails makeDetails() {
         // When we create diagrams this has the side effect of writing the data calls needed
-        if (structure.isGraphEdge()) {
+        if (structure.isNetworkEdge()) {
             out.onNewLine().comment("Defining graph edge element");
             return ElementDetails.makeForDiagram(vis, ElementRepresentation.segment, "edge", "graph.links");
         } else if (diagram == null) {
@@ -279,7 +279,7 @@ public class D3ElementBuilder {
             for (int i = 0; i < references.length; i++)
                 references[i] = "projection(" + references[i] + ")";
             e.setReferences(references);
-        } else if (!structure.isGraphEdge()) {
+        } else if (!structure.isNetworkEdge()) {
             // Just as they are
             e.setReferences(references);
         }
@@ -338,7 +338,7 @@ public class D3ElementBuilder {
 
     private void writeCoordinateDefinition(ElementDetails details) {
 
-        if (structure.isGraphEdge()) return;            // Doesn't need any
+        if (structure.isNetworkEdge()) return;            // Doesn't need any
 
         // If we need reference locations, write them in first
         if (details.getRefLocation() != null) {
@@ -468,7 +468,7 @@ public class D3ElementBuilder {
         int n = x.length;
         if (y.length != n)
             throw new IllegalStateException("X and Y dimensions do not match in geographic maps");
-        if (structure.isGraphEdge()) {
+        if (structure.isNetworkEdge()) {
             throw new IllegalStateException("Cannot handle edged dependencies in geographic maps");
         }
 

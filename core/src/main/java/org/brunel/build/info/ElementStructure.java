@@ -92,23 +92,10 @@ public class ElementStructure {
     }
 
 
-    public boolean isGraphEdge() {
-        return (chart.diagram == Diagram.network || chart.diagram == Diagram.tree)
-                && vis.tElement == Element.edge
-                && (vis.fKeys.size() == 2 || vis.positionFields().length == 2);
+    public boolean isNetworkEdge() {
+        return chart.diagram == Diagram.network && vis.tElement == Element.edge && isDependent();
     }
 
-    /**
-     * Create the Javascript that gives us the required location on a given dimension in data units
-     *
-     * @param dimName "x" or "y"
-     * @param key     field to use for a key
-     * @return javascript fragment
-     */
-    public String keyedLocation(String dimName, Field key) {
-        String idToPointName = "elements[" + getDependencyBase().index + "].internal()._idToPoint(";
-        return idToPointName + D3Util.writeCall(key) + ")." + dimName;
-    }
 
     public String[] makeReferences(Field[] keys) {
         String idToPointName = "elements[" + getDependencyBase().index + "].internal()._idToPoint(";

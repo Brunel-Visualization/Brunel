@@ -22,8 +22,10 @@ import org.brunel.data.Field;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * An hierarchical diagram shows a tree-like display of nodes (and possibly links)
@@ -34,6 +36,12 @@ public class Hierarchical {
     public static Hierarchical makeByNestingFields(Dataset data, String sizeField, String... fields) {
         return new Hierarchical(data, sizeField, fields);
     }
+
+    public static Hierarchical makeByEdges(Dataset data, String nodeField, Dataset edgeData, String fromField, String toField) {
+        return new Hierarchical(data, nodeField, edgeData, fromField, toField);
+    }
+
+
 
     public final Node root;
 
@@ -47,7 +55,6 @@ public class Hierarchical {
     public static int compareReverse(Node a, Node b) {
         return compare(b, a);
     }
-
 
     public Node find(Object name) {
         return findNamedNode(root, name);
@@ -70,6 +77,16 @@ public class Hierarchical {
         makeNodesUsingCollections(data, size, fields);
         replaceCollections(root, null);
     }
+
+    public Hierarchical(Dataset data, String nodeField, Dataset edges, String fromField, String toField) {
+        Field id = data.field(nodeField);
+        Field from = edges.field(fromField);
+        Field to = edges.field(toField);
+        root = makeNodesUsingEdges(id, from, to);
+        replaceCollections(root, null);
+
+    }
+
 
     private Node makeInternalNode(String label) {
         Node node = new Node(null, 0, label, new ArrayList<Node>());
@@ -99,6 +116,39 @@ public class Hierarchical {
             ((List<Node>) current.children).add(new Node(row, d, null, null));
         }
     }
+
+    @SuppressWarnings("unchecked")
+	private Node makeNodesUsingEdges(Field id, Field from, Field to) {
+		// Build the nodes
+        int N = id.rowCount();
+		Set<Node> unparented = new HashSet<>();
+		Map<Object, Node> byID = new HashMap<>();						// Map from ID to node
+		for (int i=0; i<N; i++) {
+			Node node = new Node(i, 0, null, new ArrayList<>());
+			unparented.add(node);
+			byID.put(id.value(i), node);
+		}
+
+		// Connect up the edges
+		int M = from.rowCount();
+		for (int i=0; i<M; i++) {
+			Node a = byID.get(from.value(i));
+			Node b = byID.get(to.value(i));
+			if (a != null && b != null) {
+				((List<Node>) a.children).add(b);
+				unparented.remove(b);
+			}
+        }
+
+		// Return the single root node if it exists
+		if (unparented.size() == 1) return new ArrayList<>(unparented).get(0);
+
+		// Otherwise build a fake node to contain all the roots
+		Node root = makeInternalNode("");
+		for (Node n : unparented) ((List<Node>) root.children).add(n);
+		return root;
+	}
+
 
     @SuppressWarnings("unchecked")
     private void replaceCollections(Node current, Object parentKey) {
