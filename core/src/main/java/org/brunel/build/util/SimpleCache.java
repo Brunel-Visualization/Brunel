@@ -47,6 +47,13 @@ public class SimpleCache implements DatasetCache {
         estimatedMemoryUse += dataset.expectedSize();
     }
 
+    @Override
+    public synchronized void remove(String key) {
+        Dataset previous = map.remove(key);
+        if (previous != null) estimatedMemoryUse -= previous.expectedSize();
+    }
+
+
     private class MapCache extends LinkedHashMap<String, Dataset> {
         protected boolean removeEldestEntry(Map.Entry<String, Dataset> eldest) {
             synchronized (SimpleCache.this) {
