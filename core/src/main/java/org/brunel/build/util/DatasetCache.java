@@ -42,4 +42,5 @@ public interface DatasetCache {
      */
     void store(String key, Dataset dataset);
 
+    void remove(String key);
 }
