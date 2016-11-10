@@ -24,16 +24,39 @@ import org.junit.Test;
 
 public class TestHierarchical {
 
-    private static final String csv = Data.join(new String[]{
-            "A,B,C,D",
-            "a,x,1,4",
-            "b,x,2,3",
-            "c,y,1,2",
-            "c,x,2,1",
-            "c,y,5,1",
-    }, "\n");
+	private static final String tree = Data.join(new String[]{
+			"A,B,C,D",
+			"a,x,1,4",
+			"b,x,2,3",
+			"c,y,1,2",
+			"c,x,2,1",
+			"c,y,5,1",
+	}, "\n");
 
-    private static final Dataset simple = Dataset.make(CSV.read(csv));
+	private static final String nodes = Data.join(new String[]{
+			"A", "a", "b", "c", "d"
+	}, "\n");
+
+	private static final String edge1 = Data.join(new String[]{
+			"A,B", "a,b", "a,c", "c,d"
+	}, "\n");
+
+	private static final String edge2 = Data.join(new String[]{
+			"A,B", "a,b", "a,c"
+	}, "\n");
+
+	private static final String edge3 = Data.join(new String[]{
+			"A,B", "a,b", "a,c", "c,d", "d,a"
+	}, "\n");
+
+
+
+	private static final Dataset treeFieldData = Dataset.make(CSV.read(tree));
+
+	private static final Dataset nodeData = Dataset.make(CSV.read(nodes));
+	private static final Dataset edge1Data = Dataset.make(CSV.read(edge1));
+	private static final Dataset edge2Data = Dataset.make(CSV.read(edge2));
+	private static final Dataset edge3Data = Dataset.make(CSV.read(edge3));
 
 //    @Test
 //    public void testPreservesKeys() {
@@ -59,42 +82,76 @@ public class TestHierarchical {
 //        assertEquals(5, group_c[2].key);
 //    }
 
+	@Test
+	public void testOneLevel() {
+		Node data = Hierarchical.makeByNestingFields(treeFieldData, "D", "A").root;
+		Assert.assertEquals("((0-4) (1-3) (2-2 3-1 4-1))", dumpTree(data));
 
-    @Test
-    public void testOneLevel() {
-        Node data = Hierarchical.makeByNestingFields(simple, "D", "A").root;
-        Assert.assertEquals("((0-4) (1-3) (2-2 3-1 4-1))", dumpTree(data));
+		data = Hierarchical.makeByNestingFields(treeFieldData, "D", "B").root;
+		Assert.assertEquals("((0-4 1-3 3-1) (2-2 4-1))", dumpTree(data));
+	}
 
-        data = Hierarchical.makeByNestingFields(simple, "D", "B").root;
-        Assert.assertEquals("((0-4 1-3 3-1) (2-2 4-1))", dumpTree(data));
-    }
+	@Test
+	public void testTwoLevels() {
+		Node data = Hierarchical.makeByNestingFields(treeFieldData, "D", "A", "B").root;
+		Assert.assertEquals("(((0-4)) ((1-3)) ((2-2 4-1) (3-1)))", dumpTree(data));
+	}
 
-    @Test
-    public void testTwoLevels() {
-        Node data = Hierarchical.makeByNestingFields(simple, "D", "A", "B").root;
-        Assert.assertEquals("(((0-4)) ((1-3)) ((2-2 4-1) (3-1)))", dumpTree(data));
-    }
+	@Test
+	public void testZeroLevel() {
+		Node data = Hierarchical.makeByNestingFields(treeFieldData, "D").root;
+		Assert.assertEquals("(0-4 1-3 2-2 3-1 4-1)", dumpTree(data));
+	}
 
-    @Test
-    public void testZeroLevel() {
-        Node data = Hierarchical.makeByNestingFields(simple, "D").root;
-        Assert.assertEquals("(0-4 1-3 2-2 3-1 4-1)", dumpTree(data));
-    }
+	@Test
+	public void testTreeWithSingleRoot() {
+		Node data = Hierarchical.makeByEdges(nodeData, "A", edge1Data, "A", "B").root;
+		Assert.assertEquals("0(1 2(3))", dumpTree2(data));
+	}
 
-    // recursive output of the tree
-    private String dumpTree(Node node) {
-        String s = "";
-        if (node.row != null || node.value > 0) s += node.row + "-" + Data.format(node.value, false);
-        Node[] children = (Node[]) node.children;
-        if (children != null) {
-            s += "(";
-            for (Node n : children) {
-                if (n != children[0]) s += " ";
-                s += dumpTree(n);
-            }
-            s += ")";
-        }
-        return s;
-    }
+	@Test
+	public void testTreeWithTwoRoots() {
+		Node data = Hierarchical.makeByEdges(nodeData, "A", edge2Data, "A", "B").root;
+		Assert.assertEquals("?(0(1 2) 3)", dumpTree2(data));
+	}
+
+	@Test
+	public void testBadTreeNoRoots() {
+		// Give up -- bad result
+		Node data = Hierarchical.makeByEdges(nodeData, "A", edge3Data, "A", "B").root;
+		Assert.assertEquals("?", dumpTree2(data));
+	}
+
+
+	// recursive output of the tree
+	private String dumpTree(Node node) {
+		String s = "";
+		if (node.row != null || node.value > 0) s += node.row + "-" + Data.format(node.value, false);
+		Node[] children = (Node[]) node.children;
+		if (children != null) {
+			s += "(";
+			for (Node n : children) {
+				if (n != children[0]) s += " ";
+				s += dumpTree(n);
+			}
+			s += ")";
+		}
+		return s;
+	}
+
+	// recursive output of the tree
+	private String dumpTree2(Node node) {
+		String s = "" + (node.row == null ? "?" : node.row);
+		Node[] children = (Node[]) node.children;
+		if (children != null && children.length > 0 ) {
+			s+= "(";
+			for (Node n : children) {
+				if (n != children[0]) s += " ";
+				s += dumpTree2(n);
+			}
+			s += ")";
+		}
+		return s;
+	}
 
 }
