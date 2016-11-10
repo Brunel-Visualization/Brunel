@@ -32,76 +32,75 @@ import java.util.List;
  * Defines how to display an element
  */
 public class ElementStructure {
-    public final ChartStructure chart;
-    public final int index;
-    public final VisSingle vis;
-    public final Dataset original;
-    public final Dataset data;
-    public final GeoMapping geo;
+	public final ChartStructure chart;
+	public final int index;
+	public final VisSingle vis;
+	public final Dataset original;
+	public final Dataset data;
+	public final GeoMapping geo;
 
-    public ElementDetails details;
-    public List<Dependency> dependencies;
+	public ElementDetails details;
+	public List<Dependency> dependencies;
 
-    public ElementStructure(ChartStructure chartStructure, int elementIndex, VisSingle vis, Dataset data, GeoMapping geo) {
-        this.chart = chartStructure;
-        this.index = elementIndex;
-        this.vis = vis;
-        this.data = data;
-        this.geo = geo;
-        this.original = vis.getDataset();
-        this.dependencies = new ArrayList<>();
-    }
+	public ElementStructure(ChartStructure chartStructure, int elementIndex, VisSingle vis, Dataset data, GeoMapping geo) {
+		this.chart = chartStructure;
+		this.index = elementIndex;
+		this.vis = vis;
+		this.data = data;
+		this.geo = geo;
+		this.original = vis.getDataset();
+		this.dependencies = new ArrayList<>();
+	}
 
-    // Find a dependent structure on us -- edges for our nodes
-    public ElementStructure findDependentEdges() {
-        for (Dependency dependency : dependencies) {
-            // Needs two keys
-            if (dependency.base == this && dependency.dependent.vis.fKeys.size() > 1) return dependency.dependent;
-        }
-        return null;
-    }
+	// Find a dependent structure on us -- edges for our nodes
+	public ElementStructure findDependentEdges() {
+		for (Dependency dependency : dependencies) {
+			// Needs two keys
+			if (dependency.base == this && dependency.dependent.vis.fKeys.size() > 1) return dependency.dependent;
+		}
+		return null;
+	}
 
-    public int getBaseDatasetIndex() {
-        return chart.getBaseDatasetIndex(original);
-    }
+	public int getBaseDatasetIndex() {
+		return chart.getBaseDatasetIndex(original);
+	}
 
-    public String elementID() {
-        return "" + (index + 1);
-    }
+	public String elementID() {
+		return "" + (index + 1);
+	}
 
-    public boolean hasHierarchicalData() {
-        return chart.diagram != null && chart.diagram.isHierarchical;
-    }
+	public boolean hasHierarchicalData() {
+		return chart.diagram != null && chart.diagram.isHierarchical;
+	}
 
-    public boolean isClustered() {
-        // We are clustered when we are a coordinate chart with 2+ X dimensions
-        return chart.diagram == null && vis.fX.size() > 1;
-    }
+	public boolean isClustered() {
+		// We are clustered when we are a coordinate chart with 2+ X dimensions
+		return chart.diagram == null && vis.fX.size() > 1;
+	}
 
-    // returns true of we depend on another element
-    public boolean isDependent() {
-        return getDependencyBase() != null;
-    }
+	// returns true of we depend on another element
+	public boolean isDependent() {
+		return getDependencyBase() != null;
+	}
 
-    // rReturns the element we depend on
-    public ElementStructure getDependencyBase() {
-        for (Dependency dependency : dependencies) {
-            if (dependency.dependent == this) return dependency.base;
-        }
-        return null;
-    }
+	// rReturns the element we depend on
+	public ElementStructure getDependencyBase() {
+		for (Dependency dependency : dependencies) {
+			if (dependency.dependent == this) return dependency.base;
+		}
+		return null;
+	}
 
+	public boolean isNetworkEdge() {
+		return (chart.diagram == Diagram.network || chart.diagram == Diagram.tree)
+				&& vis.tElement == Element.edge && isDependent();
+	}
 
-    public boolean isNetworkEdge() {
-        return chart.diagram == Diagram.network && vis.tElement == Element.edge && isDependent();
-    }
-
-
-    public String[] makeReferences(Field[] keys) {
-        String idToPointName = "elements[" + getDependencyBase().index + "].internal()._idToPoint(";
-        String[] references = new String[keys.length];
-        for (int i = 0; i < references.length; i++)
-            references[i] = idToPointName + D3Util.writeCall(keys[i]) + ")";
-        return references;
-    }
+	public String[] makeReferences(Field[] keys) {
+		String idToPointName = "elements[" + getDependencyBase().index + "].internal()._idToPoint(";
+		String[] references = new String[keys.length];
+		for (int i = 0; i < references.length; i++)
+			references[i] = idToPointName + D3Util.writeCall(keys[i]) + ")";
+		return references;
+	}
 }
