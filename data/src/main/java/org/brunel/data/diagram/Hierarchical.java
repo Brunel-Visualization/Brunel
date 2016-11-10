@@ -85,7 +85,7 @@ public class Hierarchical {
 	 */
 	private Hierarchical(Node root) {
 		this.root = root;
-		replaceCollections(root, null);
+		replaceCollections(root, null, new HashSet<Node>());
 	}
 
 	private static Node makeInternalNode(String label) {
@@ -137,7 +137,8 @@ public class Hierarchical {
 		for (int i = 0; i < M; i++) {
 			Node a = byID.get(from.value(i));
 			Node b = byID.get(to.value(i));
-			if (a != null && b != null) {
+			// Very important we do not add if it already has a parent -- cycles are a disaster
+			if (a != null && b != null && unparented.contains(b)) {
 				((List<Node>) a.children).add(b);
 				unparented.remove(b);
 			}
@@ -155,14 +156,15 @@ public class Hierarchical {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void replaceCollections(Node current, Object parentKey) {
+	private void replaceCollections(Node current, Object parentKey, Set<Node> processed) {
+		if (!processed.add(current)) return;			// Do not do this twice, in case the data was not actually a tree
 		List<Node> array = ((List<Node>) current.children);
 		if (array != null) {
 			// Internal node
 			current.children = array.toArray(new Node[array.size()]);
 			current.temp = null;
 			current.key = parentKey == null ? current.innerNodeName : parentKey + "|" + current.innerNodeName;
-			for (Node child : array) replaceCollections(child, current.key);
+			for (Node child : array) replaceCollections(child, current.key, processed);
 		}
 	}
 
