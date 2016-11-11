@@ -42,9 +42,14 @@ class Tree extends D3Diagram {
         usesSize = !vis.fSize.isEmpty();
     }
 
-    public ElementDetails initializeDiagram() {
+	public void writePerChartDefinitions() {
+		super.writePerChartDefinitions();
+		out.add("var hierarchy;").at(50).comment("The tree with links");
+	}
+
+	public ElementDetails initializeDiagram() {
         out.comment("Define tree (hierarchy) data structures");
-        makeHierarchicalTree();
+        makeHierarchicalTree(true);
         out.add("var treeLayout = d3.tree()");
 
         if (method == Method.polar) {

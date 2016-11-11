@@ -35,7 +35,7 @@ class Bubble extends D3Diagram {
     public ElementDetails initializeDiagram() {
         out.comment("Define bubble (hierarchy) data structures");
 
-        makeHierarchicalTree();
+        makeHierarchicalTree(false);
 
         out.add("var pack = d3.pack().size([geom.inner_width, geom.inner_height])").endStatement();
 

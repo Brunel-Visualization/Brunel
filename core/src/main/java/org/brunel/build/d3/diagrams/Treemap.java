@@ -31,7 +31,7 @@ class Treemap extends D3Diagram {
 
     public ElementDetails initializeDiagram() {
         out.comment("Define treemap (hierarchy) data structures");
-        makeHierarchicalTree();
+        makeHierarchicalTree(false);
 
         // Create the d3 layout
         out.add("var treemap = d3.treemap().tile(d3.treemapResquarify)")

@@ -34,22 +34,26 @@ import java.util.Set;
 public class Hierarchical {
 
 	public static Hierarchical makeByNestingFields(Dataset data, String sizeField, String... fieldNames) {
+		Hierarchical result = new Hierarchical();
 		Field size = sizeField == null ? null : data.field(sizeField);
 		Field[] fields = toFields(data, fieldNames);
-		Node root = makeInternalNode("");
-		makeNodesUsingFields(root, data, size, fields);
-		return new Hierarchical(root);
+		result.makeNodesUsingFields(data, size, fields);
+		result.fixChildren();
+		return result;
 	}
 
 	public static Hierarchical makeByEdges(Dataset data, String nodeField, Dataset edges, String fromField, String toField) {
+		Hierarchical result = new Hierarchical();
 		Field id = data.field(nodeField);
 		Field from = edges.field(fromField);
 		Field to = edges.field(toField);
-		Node root = makeNodesUsingEdges(id, from, to);
-		return new Hierarchical(root);
+		result.makeNodesUsingEdges(id, from, to);
+		result.fixChildren();
+		return result;
 	}
 
-	public final Node root;
+	public Node root;
+	public Edge[] links;
 
 	// Used by javascript
 	public static int compare(Node a, Node b) {
@@ -76,15 +80,7 @@ public class Hierarchical {
 		return null;
 	}
 
-	/**
-	 * Define the hierarchy.
-	 * This is called by builders that build the root, using collections to store the children for each node.
-	 * This replaces those children with arrays so as to work with the needed APIs for D3 to use
-	 *
-	 * @param root the hierarchy root
-	 */
-	private Hierarchical(Node root) {
-		this.root = root;
+	private void fixChildren() {
 		replaceCollections(root, null, new HashSet<Node>());
 	}
 
@@ -95,7 +91,9 @@ public class Hierarchical {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static void makeNodesUsingFields(Node root, Dataset data, Field size, Field[] fields) {
+	private void makeNodesUsingFields(Dataset data, Field size, Field[] fields) {
+		this.root = makeInternalNode("");            // General root node
+
 		for (int row = 0; row < data.rowCount(); row++) {
 			// Only use this if size is not NaN and is greater than zero
 			Double d = size == null ? 1 : Data.asNumeric(size.value(row));
@@ -119,7 +117,7 @@ public class Hierarchical {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static Node makeNodesUsingEdges(Field id, Field from, Field to) {
+	private void makeNodesUsingEdges(Field id, Field from, Field to) {
 		// Build the nodes
 		int N = id.rowCount();
 		Set<Node> unparented = new HashSet<>();
@@ -133,6 +131,7 @@ public class Hierarchical {
 		}
 
 		// Connect up the edges
+		List<Edge> validEdges = new ArrayList<>();
 		int M = from.rowCount();
 		for (int i = 0; i < M; i++) {
 			Node a = byID.get(from.value(i));
@@ -141,23 +140,27 @@ public class Hierarchical {
 			if (a != null && b != null && unparented.contains(b)) {
 				((List<Node>) a.children).add(b);
 				unparented.remove(b);
+				validEdges.add(new Edge(a, b, i));
 			}
 		}
+		this.links = validEdges.toArray(new Edge[validEdges.size()]);
 
 		// Return the single root node if it exists
-		if (unparented.size() == 1) return new ArrayList<>(unparented).get(0);
-
-		// Otherwise build a fake node to contain all the roots
-		Node root = makeInternalNode("");
-		for (Node n : all)
-			if (unparented.contains(n))
-				((List<Node>) (root.children)).add(n);
-		return root;
+		if (unparented.size() == 1) {
+			this.root = new ArrayList<>(unparented).get(0);
+		} else {
+			// Otherwise build a fake node to contain all the roots
+			this.root = makeInternalNode("");
+			for (Node n : all)
+				if (unparented.contains(n))
+					((List<Node>) (root.children)).add(n);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
 	private void replaceCollections(Node current, Object parentKey, Set<Node> processed) {
-		if (!processed.add(current)) return;			// Do not do this twice, in case the data was not actually a tree
+		if (!processed.add(current))
+			return;            // Do not do this twice, in case the data was not actually a tree
 		List<Node> array = ((List<Node>) current.children);
 		if (array != null) {
 			// Internal node

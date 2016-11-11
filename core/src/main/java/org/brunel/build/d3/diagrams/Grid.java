@@ -53,7 +53,7 @@ class Grid extends Bubble {
     public ElementDetails initializeDiagram() {
         out.comment("Define hierarchy and grid data structures");
 
-        makeHierarchicalTree();
+        makeHierarchicalTree(false);
 
         out.add("var gridLabels = BrunelD3.gridLayout(tree, [geom.inner_width, geom.inner_height], "
                 + rows + ", " + columns+ ", " + aspect + ")").endStatement();

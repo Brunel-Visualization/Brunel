@@ -129,7 +129,7 @@ public abstract class D3Diagram {
 		D3ElementBuilder.writeAesthetics(details, true, vis, out, labelBuilder);
 	}
 
-	void makeHierarchicalTree() {
+	void makeHierarchicalTree(boolean definedHierarchy) {
 		Integer prune = findPruneParameter(vis.tDiagramParameters);
 		String pruneValue;
 		if (prune == null) pruneValue = null;
@@ -151,7 +151,15 @@ public abstract class D3Diagram {
 			// and nesting categories of one field within the field at the next level up.
 			String fieldsList = positionFields.length == 0 ? "" : quoted(positionFields);
 			String sizeParam = size == null ? null : Data.quote(size.asField());
-			out.add("var first = (!tree), hierarchy = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, "
+			out.add("var first = (!tree)");
+			if (definedHierarchy) {
+				// Already defined so set the value on a new line
+				out.endStatement();
+			} else {
+				// not defined, so add to definition list
+				out.add(", ");
+			}
+			out.add("hierarchy = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, "
 					+ sizeParam + ", " + fieldsList + ")")
 					.endStatement();
 		} else {
