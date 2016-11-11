@@ -80,4 +80,23 @@ public class GalleryCache implements DatasetCache {
 		}
 	}
 
+	@Override
+	public void remove(String key) {
+		try {
+			Session ogSession = GridConnection.getObjectGrid().getSession();
+			ObjectMap map = ogSession.getMap(GridConnection.MAP_NAME);
+			map = ogSession.getMap(GridConnection.MAP_NAME);
+			Dataset d = (Dataset) map.get(key);
+			if (d != null)
+				map.remove(key);
+			
+		} catch (UndefinedMapException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ObjectGridException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
+	}
+
 }
