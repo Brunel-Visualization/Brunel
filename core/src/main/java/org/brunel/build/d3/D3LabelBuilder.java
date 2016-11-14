@@ -91,7 +91,7 @@ public class D3LabelBuilder {
      * @param fitsShape            true if the text is to fit inside the shape (if the shape wants it)
      * @param alignment            left | right | center
      * @param padding              numeric amount
-     * @param hitDetectGranularity if >0, the pixel level granularity to use for hit detection. If zero, none will be done
+     * @param hitDetectGranularity if strictly positive, the pixel level granularity to use for hit detection. If zero, none will be done
      */
     public void defineLabeling(List<Param> items, String textMethod, boolean forTooltip, boolean fitsShape, String alignment, double padding, int hitDetectGranularity) {
         if (vis.tElement != Element.text && items.isEmpty()) return;

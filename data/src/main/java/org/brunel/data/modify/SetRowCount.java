@@ -25,7 +25,7 @@ import org.brunel.data.Fields;
  * The command may be "", which means no operation.
  * Otherwise, it is of the format "field:count". The field must be numeric, otherwise it is an error
  * It is used as the "size" by which the rows are divided out. It is very commonly just #count
- * The end result will be a Dataset with exactly the requested number of rows (which should be > 0)
+ * The end result will be a Dataset with exactly the requested number of rows (which should be greater than 0)
  */
 public class SetRowCount extends DataOperation {
 
