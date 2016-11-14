@@ -149,7 +149,7 @@ public abstract class D3Diagram {
 		if (positionFields.length != 0 || vis.fKeys.isEmpty()) {
 			// Positions have been defined using fields, so we create a hierarchy by treating them as categories
 			// and nesting categories of one field within the field at the next level up.
-			String fieldsList = positionFields.length == 0 ? "" : quoted(positionFields);
+			String fieldsList = positionFields.length == 0 ? "" : ", " + quoted(positionFields);
 			String sizeParam = size == null ? null : Data.quote(size.asField());
 			out.add("var first = (!tree)");
 			if (definedHierarchy) {
@@ -160,7 +160,7 @@ public abstract class D3Diagram {
 				out.add(", ");
 			}
 			out.add("hierarchy = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, "
-					+ sizeParam + ", " + fieldsList + ")")
+					+ sizeParam  + fieldsList + ")")
 					.endStatement();
 		} else {
 			// We have no positions, so we must find a dependent element with keys that define edges building the hierarchy
