@@ -88,6 +88,10 @@
     visibility: hidden;
 }
 
+.brunel .hierarchy.tree .L0, .brunel .hierarchy.tree .L0 tspan {
+    visibility: visible;
+}
+
 .brunel .hierarchy .L1, .brunel .hierarchy .L1 tspan {
     fill: #f9ecb7;
 }

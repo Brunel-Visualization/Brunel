@@ -22,9 +22,11 @@ import org.brunel.build.d3.element.EdgeBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
+import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisTypes.Coordinates;
+import org.brunel.model.style.StyleTarget;
 
 class Tree extends D3Diagram {
 
@@ -32,7 +34,7 @@ class Tree extends D3Diagram {
 
 	private final Method method;                                    // How to draw it
 	private final int labelSize;                                    // Size to leave for labels
-	private final int pad = 10;                                     // Pad size
+	private final int pad;                                     		// Pad size
 	private final boolean usesSize;                                 // True is size is used
 
 	public Tree(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
@@ -41,6 +43,11 @@ class Tree extends D3Diagram {
 		else method = Method.leftRight;
 		labelSize = labelBuilder.estimateLabelLength() * 6;
 		usesSize = !vis.fSize.isEmpty();
+
+		StyleTarget target = StyleTarget.makeElementTarget("point", "element");
+		ModelUtil.Size size = ModelUtil.getSize(vis, target, "size");
+		pad = size == null ? 10 : (int) size.value(10) / 2 +3;
+
 	}
 
 	public void writePerChartDefinitions() {
