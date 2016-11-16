@@ -198,7 +198,6 @@ public abstract class D3Diagram {
 		if (interaction.needsHierarchyPrune())
 			out.add("BrunelD3.prune(tree, collapseState, " + reduceSizes + ", first ? " + pruneValue + ": null)").endStatement();
 		out.add("function nodeKey(d) { return d.data.key == null ? data._key(d.data.row) : d.data.key }").endStatement();
-		out.add("function edgeKey(d) { return nodeKey(d.source) + '%' + nodeKey(d.target) }").endStatement();
 		isHierarchy = true;
 	}
 
@@ -231,7 +230,7 @@ public abstract class D3Diagram {
 	// Define the class based on hierarchy
 	protected void writeHierarchicalClass() {
 		out.addChained("attr('class', function(d) { return (d.collapsed ? 'collapsed ' : '') "
-				+ "+ (d.data.key ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
+				+ "+ (d.data.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 	}
 
 }

@@ -163,10 +163,13 @@ public class Hierarchical {
 	private void replaceCollections(Node current, Object parentKey, Set<Node> processed) {
 		if (!processed.add(current))
 			return;            // Do not do this twice, in case the data was not actually a tree
+
+		current.temp = null;	// Free temp memory
+
+
 		List<Node> array = ((List<Node>) current.children);
 		if (array != null) {
-			current.children = array.toArray(new Node[array.size()]);
-			current.temp = null;
+			current.children = array.isEmpty() ? null : array.toArray(new Node[array.size()]);
 			if (current.key == null)
 				current.key = parentKey == null ? current.innerNodeName : parentKey + "|" + current.innerNodeName;
 			for (Node child : array) replaceCollections(child, current.key, processed);

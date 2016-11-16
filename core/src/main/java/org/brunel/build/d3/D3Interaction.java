@@ -277,11 +277,11 @@ public class D3Interaction {
 		String buildString = "charts[" + structure.chart.chartIndex + "].build(500)";
 		if (usesExpand && !structure.isDependentEdge())
 			addFunctionDefinition("dblclick.collapse",
-					"if (d.data.children && d.data.children.length) {if (d3.event.shiftKey) expandState.pop(); else expandState.push(d.data.key); " + buildString + "} ",
+					"if (d.data.children) {if (d3.event.shiftKey) expandState.pop(); else expandState.push(d.data.key); " + buildString + "} ",
 					elementEvents);
 		if (usesCollapse && !structure.isDependentEdge())
 			addFunctionDefinition("dblclick.collapse",
-					"if (d.data.children && d.data.children.length) {collapseState[d.data.key] = !collapseState[d.data.key]; " + buildString + "} ",
+					"if (d.data.children) {collapseState[d.data.key] = !collapseState[d.data.key]; " + buildString + "} ",
 					elementEvents);
 
 		if (!overlayEvents.isEmpty()) {

@@ -101,7 +101,7 @@ class Tree extends D3Diagram {
 		if (structure.findDependentEdges() == null) {
 			out.onNewLine().ln().comment("Add in the arcs on the outside for the groups");
 			out.add("diagramExtras.attr('class', 'diagram tree edge')").endStatement();
-
+			out.add("function edgeKey(d) { return nodeKey(d.source) + '%' + nodeKey(d.target) }").endStatement();
 			out.add("var edgeGroup = diagramExtras.selectAll('path').data(tree.links(), edgeKey)")
 					.endStatement();
 
