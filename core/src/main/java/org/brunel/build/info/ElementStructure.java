@@ -78,6 +78,7 @@ public class ElementStructure {
 		return chart.diagram == null && vis.fX.size() > 1;
 	}
 
+
 	// returns true of we depend on another element
 	public boolean isDependent() {
 		return getDependencyBase() != null;
@@ -92,8 +93,11 @@ public class ElementStructure {
 	}
 
 	public boolean isNetworkEdge() {
-		return (chart.diagram == Diagram.network || chart.diagram == Diagram.tree)
-				&& vis.tElement == Element.edge && isDependent();
+		return chart.diagram == Diagram.network && isDependentEdge();
+	}
+
+	public boolean isDependentEdge() {
+		return vis.tElement == Element.edge && isDependent();
 	}
 
 	public String[] makeReferences(Field[] keys) {

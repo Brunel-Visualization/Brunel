@@ -28,6 +28,7 @@ import org.brunel.model.VisTypes;
     largeCircle("circle", "center", false),             // A circle with text centered, but not clipped
 
     segment("line", "box", false),                      // A line segment. Text is drawn centrally, but not clipped
+    curvedPath("path", "box", false),                   // A line segment displayed as a curved path
     text("text", "box", true),                          // Text -- should not be labelled usually
     rect("rect", "box", true),                          // A rectangle with  text clipped to a box
 

@@ -277,8 +277,8 @@ public class D3ScaleBuilder {
     public void writeAestheticScales(ElementStructure structure) {
         VisSingle vis = structure.vis;
 
-        // Some structures have the data within a 'data' fields instead of at the top level
-        boolean dataInside = structure.hasHierarchicalData();
+        // Some node structures have the data within a 'data' fields instead of at the top level
+        boolean dataInside = structure.hasHierarchicalData() && !structure.isDependent();
 
         Param color = getColor(vis);
         Param[] size = getSize(vis);

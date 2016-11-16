@@ -172,9 +172,4 @@ public class ChartStructure {
 		return makeChartID(chartIndex);
 	}
 
-	public ElementStructure getEdge() {
-		for (ElementStructure e : elementStructure) if (e.isNetworkEdge()) return e;
-		throw new IllegalStateException("Networks were requested, but no suitable edge elements were defined");
-	}
-
 }

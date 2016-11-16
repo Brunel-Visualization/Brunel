@@ -28,7 +28,6 @@ import org.brunel.build.util.Accessibility;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
-import org.brunel.data.Dataset;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
@@ -216,12 +215,11 @@ public class D3Builder extends AbstractBuilder {
 
         // Data transforms
         int datasetIndex = structure.getBaseDatasetIndex();
-        VisSingle vis = structure.vis;
-        D3DataBuilder dataBuilder = new D3DataBuilder(vis, out, structure.data, datasetIndex);
-        dataBuilder.writeDataManipulation(createResultFields(vis, structure.data));
+        D3DataBuilder dataBuilder = new D3DataBuilder(structure, out, datasetIndex);
+        dataBuilder.writeDataManipulation(createResultFields(structure));
 
         scalesBuilder.writeAestheticScales(structure);
-        scalesBuilder.writeLegends(vis);
+        scalesBuilder.writeLegends(structure.vis);
 
         elementBuilder.preBuildDefinitions();
 
@@ -245,7 +243,7 @@ public class D3Builder extends AbstractBuilder {
         out.indentLess().onNewLine().add("}").ln().ln();
 
         // Expose the methods and variables we want the user to have access to
-        addElementExports(vis, dataBuilder, structure);
+        addElementExports(structure.vis, dataBuilder, structure);
 
         out.indentLess().onNewLine().add("}()").endStatement().ln();
     }
@@ -446,9 +444,10 @@ public class D3Builder extends AbstractBuilder {
     /*
         Builds a mapping from the fields we will use in the built data object to an indexing 0,1,2,3, ...
      */
-    private Map<String, Integer> createResultFields(VisSingle vis, Dataset data) {
+    private Map<String, Integer> createResultFields(ElementStructure structure) {
+        VisSingle vis = structure.vis;
         LinkedHashSet<String> needed = new LinkedHashSet<>();
-        if (vis.fY.size() > 1 && data.field("#series") != null) {
+        if (vis.fY.size() > 1 && structure.data.field("#series") != null) {
             // A series needs special handling -- Y's are different in output than input
             if (vis.stacked) {
                 // Stacked series chart needs lower and upper values
