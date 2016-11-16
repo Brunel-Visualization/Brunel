@@ -45,7 +45,7 @@ class Tree extends D3Diagram {
 
 	public void writePerChartDefinitions() {
 		super.writePerChartDefinitions();
-		out.add("var hierarchy;").at(50).comment("The tree with links");
+		out.add("var graph;").at(50).comment("The tree with links");
 	}
 
 

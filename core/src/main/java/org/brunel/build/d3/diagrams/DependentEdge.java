@@ -32,7 +32,7 @@ class DependentEdge extends D3Diagram {
 
 	public ElementDetails initializeDiagram() {
 		if (structure.chart.diagram.isHierarchical)
-			return ElementDetails.makeForDiagram(vis, ElementRepresentation.curvedPath, "edge", "hierarchy.links");
+			return ElementDetails.makeForDiagram(vis, ElementRepresentation.curvedPath, "edge", "graph.links");
 		else
 			return ElementDetails.makeForDiagram(vis, ElementRepresentation.segment, "edge", "graph.links");
 	}

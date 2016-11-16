@@ -159,7 +159,7 @@ public abstract class D3Diagram {
 			String fieldsList = positionFields.length == 0 ? "" : ", " + quoted(positionFields);
 			String sizeParam = size == null ? null : Data.quote(size.asField());
 			defineOrDeclareHierarchy(definedHierarchy);
-			out.add("hierarchy = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, "
+			out.add("graph = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, "
 					+ sizeParam + fieldsList + ")")
 					.endStatement();
 		} else {
@@ -175,7 +175,7 @@ public abstract class D3Diagram {
 			String edge2Field = Data.quote(edges.vis.fKeys.get(1).asField());
 
 			defineOrDeclareHierarchy(definedHierarchy);
-			out.add("hierarchy = BrunelData.diagram_Hierarchical.makeByEdges(processed, "
+			out.add("graph = BrunelData.diagram_Hierarchical.makeByEdges(processed, "
 					+ nodeIDField + ", elements[" + edges.index + "].data(), " +
 					edge1Field + ", " + edge2Field + ")")
 					.endStatement();
@@ -183,10 +183,10 @@ public abstract class D3Diagram {
 		}
 
 		if (interaction.needsHierarchySearch())
-			out.add("var targetNode = expandState.length ? hierarchy.find(expandState[expandState.length-1]) : hierarchy.root")
+			out.add("var targetNode = expandState.length ? graph.find(expandState[expandState.length-1]) : graph.root")
 					.endStatement();
 		else
-			out.add("var targetNode = hierarchy.root").endStatement();
+			out.add("var targetNode = graph.root").endStatement();
 
 		out.add("tree = d3.hierarchy(targetNode).sum(function(d) { return d.value })")
 				.endStatement();
