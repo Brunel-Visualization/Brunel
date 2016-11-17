@@ -106,7 +106,7 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 tree whiskey #count category country / css(rating) :: pass
 tree whiskey #count category rating / transpose :: pass
 tree whiskey #count category rating age / polar tree(prune) :: pass
-- simple    / data('raw:ID,PARENT;a,b;a,c;a,d;b,e;b,f;f,g') edge color(parent) key(id, parent) + data('raw:ID;a;b;c;d;e;f;g') tree color(id) key(id) label(id) style('size:500%; symbol:person; label-location:bottom') :: pass
+- simple    / data('raw:ID,PARENT;a,b;a,c;a,d;b,e;b,f;f,g') edge css(#row) color(parent) key(id, parent) + data('raw:ID;a;b;c;d;e;f;g') tree color(id) key(id) label(id) size(#row) style('size:50px; symbol:person; label-location:bottom') :: pass
 
 
 
