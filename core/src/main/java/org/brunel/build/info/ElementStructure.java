@@ -22,7 +22,6 @@ import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.maps.GeoMapping;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 
 import java.util.ArrayList;
@@ -78,6 +77,7 @@ public class ElementStructure {
 		return chart.diagram == null && vis.fX.size() > 1;
 	}
 
+
 	// returns true of we depend on another element
 	public boolean isDependent() {
 		return getDependencyBase() != null;
@@ -91,9 +91,8 @@ public class ElementStructure {
 		return null;
 	}
 
-	public boolean isNetworkEdge() {
-		return (chart.diagram == Diagram.network || chart.diagram == Diagram.tree)
-				&& vis.tElement == Element.edge && isDependent();
+	public boolean isDependentEdge() {
+		return vis.tElement == Element.edge && isDependent();
 	}
 
 	public String[] makeReferences(Field[] keys) {

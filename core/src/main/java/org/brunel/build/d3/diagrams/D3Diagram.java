@@ -37,7 +37,14 @@ public abstract class D3Diagram {
 	public static D3Diagram make(ElementStructure structure, D3Interaction interaction, ScriptWriter out) {
 		VisSingle vis = structure.vis;
 		Dataset data = structure.data;
-		if (vis.tDiagram == null) return null;
+
+		if (vis.tDiagram == null) {
+			// The edges defined for a graph or network are treated as an implicit diagram
+			if (structure.chart.diagram != null && structure.isDependentEdge())
+				return new DependentEdge(structure, data, interaction, out);
+			else return null;
+
+		}
 		if (vis.tDiagram == Diagram.bubble) return new Bubble(structure, data, interaction, out);
 		if (vis.tDiagram == Diagram.chord) return new Chord(structure, data, interaction, out);
 		if (vis.tDiagram == Diagram.cloud) return new Cloud(structure, data, interaction, out);
@@ -116,7 +123,7 @@ public abstract class D3Diagram {
 	}
 
 	public void writePerChartDefinitions() {
-		if (vis.tDiagram.isHierarchical) {
+		if (vis.tDiagram != null && vis.tDiagram.isHierarchical) {
 			out.add("var tree, expandState = [], collapseState = {};").at(50).comment("collapse state maps node IDs to true/false");
 		}
 	}
@@ -151,16 +158,9 @@ public abstract class D3Diagram {
 			// and nesting categories of one field within the field at the next level up.
 			String fieldsList = positionFields.length == 0 ? "" : ", " + quoted(positionFields);
 			String sizeParam = size == null ? null : Data.quote(size.asField());
-			out.add("var first = (!tree)");
-			if (definedHierarchy) {
-				// Already defined so set the value on a new line
-				out.endStatement();
-			} else {
-				// not defined, so add to definition list
-				out.add(", ");
-			}
-			out.add("hierarchy = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, "
-					+ sizeParam  + fieldsList + ")")
+			defineOrDeclareHierarchy(definedHierarchy);
+			out.add("graph = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, "
+					+ sizeParam + fieldsList + ")")
 					.endStatement();
 		} else {
 			// We have no positions, so we must find a dependent element with keys that define edges building the hierarchy
@@ -174,7 +174,8 @@ public abstract class D3Diagram {
 			String edge1Field = Data.quote(edges.vis.fKeys.get(0).asField());
 			String edge2Field = Data.quote(edges.vis.fKeys.get(1).asField());
 
-			out.add("var first = (!tree), hierarchy = BrunelData.diagram_Hierarchical.makeByEdges(processed, "
+			defineOrDeclareHierarchy(definedHierarchy);
+			out.add("graph = BrunelData.diagram_Hierarchical.makeByEdges(processed, "
 					+ nodeIDField + ", elements[" + edges.index + "].data(), " +
 					edge1Field + ", " + edge2Field + ")")
 					.endStatement();
@@ -182,10 +183,10 @@ public abstract class D3Diagram {
 		}
 
 		if (interaction.needsHierarchySearch())
-			out.add("var targetNode = expandState.length ? hierarchy.find(expandState[expandState.length-1]) : hierarchy.root")
+			out.add("var targetNode = expandState.length ? graph.find(expandState[expandState.length-1]) : graph.root")
 					.endStatement();
 		else
-			out.add("var targetNode = hierarchy.root").endStatement();
+			out.add("var targetNode = graph.root").endStatement();
 
 		out.add("tree = d3.hierarchy(targetNode).sum(function(d) { return d.value })")
 				.endStatement();
@@ -197,8 +198,18 @@ public abstract class D3Diagram {
 		if (interaction.needsHierarchyPrune())
 			out.add("BrunelD3.prune(tree, collapseState, " + reduceSizes + ", first ? " + pruneValue + ": null)").endStatement();
 		out.add("function nodeKey(d) { return d.data.key == null ? data._key(d.data.row) : d.data.key }").endStatement();
-		out.add("function edgeKey(d) { return nodeKey(d.source) + '%' + nodeKey(d.target) }").endStatement();
 		isHierarchy = true;
+	}
+
+	private void defineOrDeclareHierarchy(boolean definedHierarchy) {
+		out.add("var first = (!tree)");
+		if (definedHierarchy) {
+			// Already defined so set the value on a new line
+			out.endStatement();
+		} else {
+			// not defined, so add to definition list
+			out.add(", ");
+		}
 	}
 
 	private Integer findPruneParameter(Param[] params) {
@@ -219,7 +230,7 @@ public abstract class D3Diagram {
 	// Define the class based on hierarchy
 	protected void writeHierarchicalClass() {
 		out.addChained("attr('class', function(d) { return (d.collapsed ? 'collapsed ' : '') "
-				+ "+ (d.data.key ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
+				+ "+ (d.data.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 	}
 
 }

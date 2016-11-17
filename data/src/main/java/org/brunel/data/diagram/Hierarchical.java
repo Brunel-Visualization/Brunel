@@ -124,10 +124,12 @@ public class Hierarchical {
 		List<Node> all = new ArrayList<>();
 		Map<Object, Node> byID = new HashMap<>();                        // Map from ID to node
 		for (int i = 0; i < N; i++) {
+			Object key = id.value(i);
 			Node node = new Node(i, 0, null, new ArrayList<>());
+			node.key = key;
 			unparented.add(node);
 			all.add(node);
-			byID.put(id.value(i), node);
+			byID.put(key, node);
 		}
 
 		// Connect up the edges
@@ -161,12 +163,15 @@ public class Hierarchical {
 	private void replaceCollections(Node current, Object parentKey, Set<Node> processed) {
 		if (!processed.add(current))
 			return;            // Do not do this twice, in case the data was not actually a tree
+
+		current.temp = null;	// Free temp memory
+
+
 		List<Node> array = ((List<Node>) current.children);
 		if (array != null) {
-			// Internal node
-			current.children = array.toArray(new Node[array.size()]);
-			current.temp = null;
-			current.key = parentKey == null ? current.innerNodeName : parentKey + "|" + current.innerNodeName;
+			current.children = array.isEmpty() ? null : array.toArray(new Node[array.size()]);
+			if (current.key == null)
+				current.key = parentKey == null ? current.innerNodeName : parentKey + "|" + current.innerNodeName;
 			for (Node child : array) replaceCollections(child, current.key, processed);
 		}
 	}
