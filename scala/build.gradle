@@ -36,12 +36,12 @@ uploadArchives {
 
 dependencies {
     testCompile 'junit:junit:4.11'
-    testCompile 'org.scalatest:scalatest_2.10:2.2.4'
-    compile 'org.scala-lang:scala-library:2.10.6'
-    compile 'org.apache.spark:spark-sql_2.10:1.5.2'
+    testCompile 'org.scalatest:scalatest_2.11:2.2.6'
+    compile 'org.scala-lang:scala-library:2.11.8'
+    compile 'org.apache.spark:spark-sql_2.11:2.0.1'
     compile project(':data')
     compile project(':core')
 }
 
 version = project(":core").version
-archivesBaseName = 'spark-1.5_scala-2.10_brunel'
+archivesBaseName = 'spark-1.5_scala-2.11_brunel'

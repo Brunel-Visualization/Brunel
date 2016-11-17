@@ -17,7 +17,7 @@
 package com.ibm.spark.magic.brunel
 
 import com.ibm.spark.kernel.api.Kernel
-import org.apache.spark.repl.SparkIMain
+//import org.apache.spark.repl.SparkIMain
 
 package object brunel {
 
@@ -31,9 +31,9 @@ package object brunel {
     _the_kernel
   }
 
-  def sparkIMain: SparkIMain = {
-    val sparkIMainMethod = getKernel.interpreter.getClass.getMethod("sparkIMain")
-    val sparkIMain = sparkIMainMethod.invoke(getKernel.interpreter).asInstanceOf[org.apache.spark.repl.SparkIMain]
-    sparkIMain
-  }
+//  def sparkIMain: SparkIMain = {
+//    val sparkIMainMethod = getKernel.interpreter.getClass.getMethod("sparkIMain")
+//    val sparkIMain = sparkIMainMethod.invoke(getKernel.interpreter).asInstanceOf[org.apache.spark.repl.SparkIMain]
+//    sparkIMain
+//  }
 }

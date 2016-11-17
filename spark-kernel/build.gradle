@@ -40,7 +40,7 @@ configurations {
 dependencies {
     compile name: 'kernel-assembly-0.1.5-SNAPSHOT'
     compile name: 'toree-assembly-0.1.0.dev8-incubating-SNAPSHOT'
-    compile 'org.apache.spark:spark-repl_2.10:1.5.2'
+    compile 'org.apache.spark:spark-repl_2.11:2.0.1'
     compile project(':data')
     compile project(':core')
     compile project(':scala')
