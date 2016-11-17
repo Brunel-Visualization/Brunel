@@ -45,6 +45,7 @@ color aesthetic FIELD+ NUMBER+ STRING+
 size aesthetic FIELD+ NUMBER+ STRING+
 opacity aesthetic FIELD
 split aesthetic FIELD+
+css aesthetic FIELD+
 key aesthetic FIELD+
 sort aesthetic FIELD+
 filter aesthetic FIELD+

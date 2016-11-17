@@ -49,7 +49,7 @@ public class VisSingle extends VisItem implements Cloneable {
     public Param[] bounds;                 // If defined, bounds
     public Coordinates coords;             // Coordinate util
     public List<Param> fCoords;               // Coordinate Parameters
-    public List<Param> fColor, fSize, fOpacity;  // Aesthetics
+    public List<Param> fColor, fSize, fOpacity, fCSS;  // Aesthetics
     public List<Param> fFilter;            // Fields for filtering
     public List<Param> fAnimate;           // Fields for animating
     public List<Param> fSort;              // Fields used to sort the data
@@ -109,6 +109,7 @@ public class VisSingle extends VisItem implements Cloneable {
         fCoords = Collections.EMPTY_LIST;
         fKeys = Collections.EMPTY_LIST;
         fOpacity = Collections.EMPTY_LIST;
+        fCSS = Collections.EMPTY_LIST;
         fSize = Collections.EMPTY_LIST;
         fSort = Collections.EMPTY_LIST;
         fFilter = Collections.EMPTY_LIST;
@@ -342,7 +343,7 @@ public class VisSingle extends VisItem implements Cloneable {
 
         // Aesthetic Fields
         Set<String> nonPosFields = new LinkedHashSet<>();
-        addFieldNames(nonPosFields, true, fColor, fSize, fOpacity, fSplits);
+        addFieldNames(nonPosFields, true, fColor, fSize, fOpacity, fCSS, fSplits);
 
         // Move the selection to the end -- it is always the least important
         if (nonPosFields.remove("#selection")) nonPosFields.add("#selection");
@@ -415,6 +416,7 @@ public class VisSingle extends VisItem implements Cloneable {
         ensureCanonical(fColor, "color");
         ensureCanonical(fSize, "size");
         ensureCanonical(fOpacity, "opacity");
+        ensureCanonical(fCSS, "class");
         ensureCanonical(fFilter, "filter");
         ensureCanonical(fAnimate, "animate");
         ensureCanonical(fSort, "sort");
@@ -477,6 +479,7 @@ public class VisSingle extends VisItem implements Cloneable {
             result.fColor = replaceAllField(result.fColor, replacement);
             result.fSize = replaceAllField(result.fSize, replacement);
             result.fOpacity = replaceAllField(result.fOpacity, replacement);
+            result.fCSS = replaceAllField(result.fCSS, replacement);
             result.fFilter = replaceAllField(result.fFilter, replacement);
             result.fAnimate = replaceAllField(result.fAnimate, replacement);
             result.fSort = replaceAllField(result.fSort, replacement);
@@ -649,6 +652,11 @@ public class VisSingle extends VisItem implements Cloneable {
     public void opacity(Param... fieldNames) {
         if (fOpacity.isEmpty()) fOpacity = new ArrayList<>(fieldNames.length);
         Collections.addAll(fOpacity, fieldNames);
+    }
+
+    public void css(Param... fieldNames) {
+        if (fCSS.isEmpty()) fCSS = new ArrayList<>(fieldNames.length);
+        Collections.addAll(fCSS, fieldNames);
     }
 
     public void sort(Param... fieldNames) {
