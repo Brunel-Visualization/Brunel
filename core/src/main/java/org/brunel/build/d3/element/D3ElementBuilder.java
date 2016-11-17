@@ -367,11 +367,20 @@ public class D3ElementBuilder {
 		boolean showsColor = !vis.fColor.isEmpty();
 		boolean showsStrokeSize = details.isStroked() && !vis.fSize.isEmpty();
 		boolean showsOpacity = !vis.fOpacity.isEmpty();
+		boolean showsCSS = !vis.fCSS.isEmpty();
 
-		if (filterToDataOnly && (showsColor || showsOpacity || showsStrokeSize)) {
+		if (filterToDataOnly && (showsColor || showsOpacity || showsStrokeSize || showsCSS)) {
 			// Filter only to show the data based items
 			out.addChained("filter(hasData)").at(50).comment("following only performed for data items");
 		}
+
+		int n = vis.fCSS.size();
+		for (int i = 0; i < n; i++) {
+			String suffix = n>1 ? "_" + (n+1) : "";						// Only need suffixes for multiples
+			String base = Data.join(details.classes, " ") + " ";
+			out.addChained("attr('class', function(d) { return " + Data.quote(base) + " + css" + suffix + "(d) } )");
+		}
+
 
 		// Define colors using the color function
 		if (showsColor) {

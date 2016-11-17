@@ -11,8 +11,14 @@ Using keys --
 
 ## Symbols
 
-# Symbols
+## CSS aesthetic
 
+    Syntax: css(field:prefix:[names|numbers])
+
+    prefix is a string for the class prefix
+    -- if not set, use "brunel_class_"
+
+    if 'names' is specified it uses the names from the field, otherwise uses numbers
 
 # 2.0 Release Notes
 

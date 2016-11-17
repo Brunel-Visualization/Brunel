@@ -297,6 +297,10 @@
     padding-bottom: 5px
 }
 
+.brunel .brunel_class_2 {
+    stroke-dasharray:2 2;
+}
+
 .brunel .parallel.axis .tick text {
     font-size: 6pt
 }

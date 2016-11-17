@@ -103,10 +103,10 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - simple    / x(#row) y('reds') color(#row:reds) axes(y) legends(none) + x(#row) y('red') color(#row:red) legends(none) + x(#row) y('blues-reds') color(#row:[blues, reds]) legends(none) + x(#row) y('blue-red') color(#row:[blue, red]) legends(none) + x(#row) y('blue-none-red') color(#row:[blue, none, red]) legends(none)  + x(#row) y('blue-black-red') color(#row:[blue, black, red]) legends(none) + x(#row) y('nominal') color(#row:nominal)  legends(none) :: pass
 - simple    / data('raw:A,B;a,b;a,c;a,d;b,c;a,e;e,f;g,h;m,n;n,o') edge key(A, B) + data('raw:A;a;b;c;d;e;f;g;h;n;o') network key(A) color(A) label(A) legends(none) style('fill-opacity:1;size:20px') :: pass
 
-tree whiskey #count category country :: pass
+tree whiskey #count category country / css(rating) :: pass
 tree whiskey #count category rating / transpose :: pass
 tree whiskey #count category rating age / polar tree(prune) :: pass
-- simple    / data('raw:ID,PARENT;a,b;a,c;a,d;b,e;b,f;f,g') edge color(parent) key(id, parent) + data('raw:ID;a;b;c;d;e;f;g') tree color(id) key(id) label(id) style('size:500%; symbol:person; label-location:bottom') :: fail :: should show a person symbol
+- simple    / data('raw:ID,PARENT;a,b;a,c;a,d;b,e;b,f;f,g') edge color(parent) key(id, parent) + data('raw:ID;a;b;c;d;e;f;g') tree color(id) key(id) label(id) style('size:500%; symbol:person; label-location:bottom') :: pass
 
 
 
