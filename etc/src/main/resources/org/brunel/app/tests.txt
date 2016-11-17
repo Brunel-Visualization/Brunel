@@ -113,7 +113,7 @@ tree whiskey #count category rating age / polar tree(prune) :: pass
 - simple    / data('raw:x;"a,b";"a";"a,c,b";"a,b";"a,b";"a,b,c"') bar x(x) y(#count) color(x) | bar x(x) y(#count) color(x) each(x) | bubble color(x) size(#count) label(x) | bubble color(x) size(#count) label(x) each(x) :: pass
 - baseball  / x(PutOutRate) y(AssistRate) style('.axis.y .tick text{fill:red;padding-right:10px}') style('.axis.x .tick text{fill:blue;font-size:1cm; padding:2mm} .axis .tick line{size:-5mm} ') style('.axis .title {label-location:left;font-size:20px}') style('.axis .title {label-location:left;font-size:20px;font-style:italic;padding-left:1in}') style('.header {fill:red;font-size:40px;padding-bottom:50px;label-location:right}') title('Ugly Style test') :: pass
 colorScatter whiskey Rating Price Category / y(Price:linear) rectangular(aspect:1.0, square)         :: pass     :: Data aspect ratio should be square, and chart interior should be also
-- baseball   / y(PutOutRate) x(AssistRate) key(#row) label(#row) top(#row:20) + data("raw:A,B;0,1;1,2;2,3;3,4;3,5;3,6") key(A,B) edge:: pass :: Some random links for early rows
+- baseball   / y(PutOutRate) x(AssistRate) key(#row) label(#row) top(#row:20) + data("raw:A,B;0,1;1,2;2,3;3,4;3,5;3,6") key(A,B) css(A) edge:: pass :: Some random links for early rows, with css styled items
 
 #### Note
 
