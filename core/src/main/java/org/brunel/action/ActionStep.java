@@ -78,6 +78,9 @@ public class ActionStep {
             } else if (name.equals("opacity")) {
                 item.opacity(parameters);
                 return item;
+            } else if (name.equals("css")) {
+                item.css(parameters);
+                return item;
             } else if (name.equals("size")) {
                 item.size(parameters);
                 return item;

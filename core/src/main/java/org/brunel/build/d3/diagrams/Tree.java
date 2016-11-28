@@ -21,10 +21,14 @@ import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.EdgeBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
+import org.brunel.build.d3.element.GeomAttribute;
 import org.brunel.build.info.ElementStructure;
+import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
+import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisTypes.Coordinates;
+import org.brunel.model.style.StyleTarget;
 
 class Tree extends D3Diagram {
 
@@ -32,7 +36,7 @@ class Tree extends D3Diagram {
 
 	private final Method method;                                    // How to draw it
 	private final int labelSize;                                    // Size to leave for labels
-	private final int pad = 10;                                     // Pad size
+	private final int pad;                                            // Pad size
 	private final boolean usesSize;                                 // True is size is used
 
 	public Tree(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
@@ -41,14 +45,16 @@ class Tree extends D3Diagram {
 		else method = Method.leftRight;
 		labelSize = labelBuilder.estimateLabelLength() * 6;
 		usesSize = !vis.fSize.isEmpty();
+
+		StyleTarget target = StyleTarget.makeElementTarget("point", "element");
+		ModelUtil.Size size = ModelUtil.getSize(vis, target, "size");
+		pad = size == null ? 10 : (int) size.value(10) / 2 + 3;
 	}
 
 	public void writePerChartDefinitions() {
 		super.writePerChartDefinitions();
 		out.add("var graph;").at(50).comment("The tree with links");
 	}
-
-
 
 	public ElementDetails initializeDiagram() {
 		out.comment("Define tree (hierarchy) data structures");
@@ -73,26 +79,32 @@ class Tree extends D3Diagram {
 		String padAdjust = method == Method.polar ? "" : "d.x += " + pad + "; d.y += " + pad + "; ";
 		out.add("treeNodes.forEach( function(d) { " + padAdjust + " d.data.x=d.x; d.data.y=d.y } )").endStatement();
 
-		if (usesSize) {
-			// Redefine size to use the node value
+		if (usesSize && vis.positionFields().length != 0) {
+			// Redefine size to use the node value for the "fields" tree case
 			out.add("size = function(d) { return scale_size(d.value) }").endStatement();
 		}
 
-		ElementRepresentation rep = method == Method.leftRight ?
-				ElementRepresentation.pointLikeCircle : ElementRepresentation.largeCircle;
+		ElementRepresentation rep;
+		if (ModelUtil.getElementSymbol(vis) != null)
+			rep = ElementRepresentation.symbol;
+		else if (method == Method.leftRight)
+			rep = ElementRepresentation.pointLikeCircle;
+		else
+			rep = ElementRepresentation.largeCircle;
+
 		return ElementDetails.makeForDiagram(vis, rep, "point", "treeNodes");
 	}
 
 	public void writeDiagramEnter() {
 		out.add("added.filter(function(d) { return d.parent })");       // Only if it has a parent
-		writeNodePlacement("d.parent");                                 // place it at parent position
+		writeNodePlacement(structure.details, "d.parent");              // place it at parent position
 		out.endStatement();
 	}
 
 	public void writeDefinition(ElementDetails details) {
 		writeHierarchicalClass();
 
-		writeNodePlacement("d");
+		writeNodePlacement(details, "d");
 
 		out.addChained("attr('r', " + details.overallSize.halved() + ")");
 		addAestheticsAndTooltips(details);
@@ -115,17 +127,44 @@ class Tree extends D3Diagram {
 
 	}
 
+	private void writeNodePlacement(ElementDetails details, String d) {
 
-	private void writeNodePlacement(String d) {
+		String cx, cy;            // Functions defining the locations of node centers
 		if (method == Method.leftRight) {
-			out.addChained("attr('cx', function(d) { return scale_x(" + d + ".y) })")
-					.addChained("attr('cy', function(d) { return scale_y(" + d + ".x) })");
+			cx = "scale_x(" + d + ".y)";
+			cy = "scale_y(" + d + ".x)";
 		} else if (method == Method.topBottom) {
-			out.addChained("attr('cx', function(d) { return scale_x(" + d + ".x) })")
-					.addChained("attr('cy', function(d) { return scale_y(" + d + ".y) })");
-		} else if (method == Method.polar) {
-			out.addChained("attr('cx', function(d) { return scale_x(" + d + ".y * Math.cos(" + d + ".x)) })")
-					.addChained("attr('cy', function(d) { return scale_y(" + d + ".y * Math.sin(" + d + ".x)) })");
+			cx = "scale_x(" + d + ".x)";
+			cy = "scale_y(" + d + ".y)";
+		} else {
+			cx = "scale_x(" + d + ".y * Math.cos(" + d + ".x))";
+			cy = "scale_y(" + d + ".y * Math.sin(" + d + ".x))";
+		}
+
+		String symbolName = ModelUtil.getElementSymbol(vis);
+		if (symbolName != null) {
+			// Add a translate to place it in the right location
+			out.addChained("attr('transform', function(d) { return 'translate(' + "
+					+ cx + " + ', ' + " + cy + " + ')' })");
+
+			symbolName = Data.quote(symbolName);
+
+			if (details == null) {
+				out.addChained("attr('d', BrunelD3.symbol(" + symbolName + ", 10))");
+			} else {
+				GeomAttribute size = details.overallSize.halved();
+				if (size.isFunc()) {
+					// The size changes, so we must call the function
+					out.addChained("attr('d', function(d) { return BrunelD3.symbol(" + symbolName + ", " +
+							size.definition() + ") })");
+				} else {
+					// Fixed symbol -- no function needed
+					out.addChained("attr('d', BrunelD3.symbol(" + symbolName + ", " + size + "))");
+				}
+			}
+		} else {
+			out.addChained("attr('cx', function(d) { return " + cx + " })")
+					.addChained("attr('cy', function(d) { return " + cy + " })");
 		}
 	}
 

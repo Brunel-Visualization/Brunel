@@ -510,6 +510,7 @@ public class D3Builder extends AbstractBuilder {
         writeFieldName("color", vis.fColor);
         writeFieldName("size", vis.fSize);
         writeFieldName("opacity", vis.fOpacity);
+        writeFieldName("class", vis.fCSS);
         out.onNewLine().indentLess().add("}");
         out.indentLess().onNewLine().add("}").endStatement();
     }

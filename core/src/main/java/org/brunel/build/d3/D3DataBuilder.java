@@ -447,6 +447,7 @@ public class D3DataBuilder {
 		for (Param p : vis.fSplits) splitters.add(p.asField());
 		for (Param p : vis.fColor) splitters.add(p.asField());
 		for (Param p : vis.fOpacity) splitters.add(p.asField());
+		for (Param p : vis.fCSS) splitters.add(p.asField());
 
 		// We handle sized areas specially -- don't split using the size for them
 		if (vis.tElement != Element.line && vis.tElement != Element.path) {
