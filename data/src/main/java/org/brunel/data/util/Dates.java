@@ -32,85 +32,91 @@ import java.util.TimeZone;
 @JSTranslation(ignore = true)
 public class Dates {
 
-    // Keep 100 known mappings
-    private static final Map<String, Date> parsed = new LinkedHashMap<String, Date>() {
-        protected boolean removeEldestEntry(Map.Entry<String, Date> eldest) {
-            return size() > 1000;
-        }
-    };
+	// Keep 100 known mappings
+	private static final Map<String, Date> parsed = new LinkedHashMap<String, Date>() {
+		protected boolean removeEldestEntry(Map.Entry<String, Date> eldest) {
+			return size() > 1000;
+		}
+	};
 
-    private static final List<SimpleDateFormat> dateFormats;
-    private static final SimpleDateFormat[] outputFormats;
+	private static final List<SimpleDateFormat> dateFormats;
+	private static final SimpleDateFormat[] outputFormats;
 
-    public static Object getPattern(DateFormat dateFormat) {
-        return outputFormats[dateFormat.ordinal()].toPattern();
-    }
+	public static Object getPattern(DateFormat dateFormat) {
+		synchronized (outputFormats) {
+			return outputFormats[dateFormat.ordinal()].toPattern();
+		}
+	}
 
-    public static String format(Date date, DateFormat dateFormat) {
-        return outputFormats[dateFormat.ordinal()].format(date);
-    }
+	public static String format(Date date, DateFormat dateFormat) {
+		synchronized (outputFormats) {
+			return outputFormats[dateFormat.ordinal()].format(date);
+		}
+	}
 
-    public static Date parse(Object c) {
-        if (c == null || c instanceof Date) return (Date) c;
-        if (c instanceof Number) return new Date(Math.round(((Number) c).doubleValue() * Data.MILLIS_PER_DAY));
-        String s = c.toString().trim();
-        if (s.isEmpty()) return null;
-        if (parsed.containsKey(s)) return parsed.get(s);
+	public static Date parse(Object c) {
+		synchronized (dateFormats) {
+			if (c == null || c instanceof Date) return (Date) c;
+			if (c instanceof Number) return new Date(Math.round(((Number) c).doubleValue() * Data.MILLIS_PER_DAY));
+			String s = c.toString().trim();
+			if (s.isEmpty()) return null;
+			if (parsed.containsKey(s)) return parsed.get(s);
 
-        Date result = null;
-        for (SimpleDateFormat f : dateFormats)
-            try {
-                result = f.parse(s);
-                break;
-            } catch (ParseException ignored) {
-                // Unsuccessful; keep trying
-            }
-        parsed.put(s, result);
-        return result;
-    }
+			Date result = null;
+			for (SimpleDateFormat f : dateFormats)
+				try {
+					result = f.parse(s);
+					break;
+				} catch (ParseException ignored) {
+					// Unsuccessful; keep trying
+				}
+			parsed.put(s, result);
+			return result;
+		}
+	}
 
-    static {
-        outputFormats = new SimpleDateFormat[]{
-                new SimpleDateFormat("HH:mm:ss"),            // seconds
-                new SimpleDateFormat("HH:mm"),                // hours and minutes
-                new SimpleDateFormat("MMM d HH:mm"),        // day and hour
-                new SimpleDateFormat("MMM d, yyyy"),        // full date
-                new SimpleDateFormat("MMM yyyy"),            // months
-                new SimpleDateFormat("yyyy")                // years
-        };
+	static {
+		outputFormats = new SimpleDateFormat[]{
+				new SimpleDateFormat("HH:mm:ss"),            // seconds
+				new SimpleDateFormat("HH:mm"),                // hours and minutes
+				new SimpleDateFormat("MMM d HH:mm"),        // day and hour
+				new SimpleDateFormat("MMM d, yyyy"),        // full date
+				new SimpleDateFormat("MMM yyyy"),            // months
+				new SimpleDateFormat("yyyy")                // years
+		};
 
-        dateFormats = new LinkedList<>();
-        dateFormats.add(new SimpleDateFormat("y-M-d'T'H:m:s.SSS", Locale.US));
-        dateFormats.add(new SimpleDateFormat("y-M-d'T'H:m:s", Locale.US));
-        dateFormats.add(new SimpleDateFormat("y-M-d'T'H:m", Locale.US));
-        dateFormats.add(new SimpleDateFormat("MMM d, yyyy H:m:s", Locale.US));
-        dateFormats.add(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US));
-        dateFormats.add(new SimpleDateFormat("y-MM-dd", Locale.US));
-        dateFormats.add(new SimpleDateFormat("d-MMM-y", Locale.US));
-        dateFormats.add(new SimpleDateFormat("MMM d, yyyy", Locale.US));
-        dateFormats.add(new SimpleDateFormat("M/d/y H:m:s", Locale.US));
-        dateFormats.add(new SimpleDateFormat("d/M/y H:m:s", Locale.US));
-        dateFormats.add(new SimpleDateFormat("M-d-y H:m:s", Locale.US));
-        dateFormats.add(new SimpleDateFormat("M/d/y H:m", Locale.US));
-        dateFormats.add(new SimpleDateFormat("d-M-y H:m:s", Locale.US));
-        dateFormats.add(new SimpleDateFormat("d/M/y H:m", Locale.US));
-        dateFormats.add(new SimpleDateFormat("M-d-y H:m", Locale.US));
-        dateFormats.add(new SimpleDateFormat("d-M-y H:m", Locale.US));
-        dateFormats.add(new SimpleDateFormat("M/d/y", Locale.US));
-        dateFormats.add(new SimpleDateFormat("d/M/y", Locale.US));
-        dateFormats.add(new SimpleDateFormat("MMM-y", Locale.US));
-        dateFormats.add(new SimpleDateFormat("MMM d", Locale.US));
-        dateFormats.add(new SimpleDateFormat("d-M-y", Locale.US));
-        dateFormats.add(new SimpleDateFormat("M/d", Locale.US));
-        dateFormats.add(new SimpleDateFormat("HH:mm:ss.SSS", Locale.US));
-        dateFormats.add(new SimpleDateFormat("H:m:s", Locale.US));
-        dateFormats.add(new SimpleDateFormat("H:m", Locale.US));
+		dateFormats = new LinkedList<>();
+		dateFormats.add(new SimpleDateFormat("y-M-d'T'H:m:s.SSS", Locale.US));
+		dateFormats.add(new SimpleDateFormat("y-M-d'T'H:m:s", Locale.US));
+		dateFormats.add(new SimpleDateFormat("y-M-d'T'H:m", Locale.US));
+		dateFormats.add(new SimpleDateFormat("MMM d, yyyy H:m:s", Locale.US));
+		dateFormats.add(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US));
+		dateFormats.add(new SimpleDateFormat("y-MM-dd", Locale.US));
+		dateFormats.add(new SimpleDateFormat("d-MMM-y", Locale.US));
+		dateFormats.add(new SimpleDateFormat("MMM d, yyyy", Locale.US));
+		dateFormats.add(new SimpleDateFormat("M/d/y H:m:s", Locale.US));
+		dateFormats.add(new SimpleDateFormat("d/M/y H:m:s", Locale.US));
+		dateFormats.add(new SimpleDateFormat("M-d-y H:m:s", Locale.US));
+		dateFormats.add(new SimpleDateFormat("M/d/y H:m", Locale.US));
+		dateFormats.add(new SimpleDateFormat("d-M-y H:m:s", Locale.US));
+		dateFormats.add(new SimpleDateFormat("d/M/y H:m", Locale.US));
+		dateFormats.add(new SimpleDateFormat("M-d-y H:m", Locale.US));
+		dateFormats.add(new SimpleDateFormat("d-M-y H:m", Locale.US));
+		dateFormats.add(new SimpleDateFormat("M/d/y", Locale.US));
+		dateFormats.add(new SimpleDateFormat("d/M/y", Locale.US));
+		dateFormats.add(new SimpleDateFormat("MMM-y", Locale.US));
+		dateFormats.add(new SimpleDateFormat("MMM d", Locale.US));
+		dateFormats.add(new SimpleDateFormat("d-M-y", Locale.US));
+		dateFormats.add(new SimpleDateFormat("M/d", Locale.US));
+		dateFormats.add(new SimpleDateFormat("HH:mm:ss.SSS", Locale.US));
+		dateFormats.add(new SimpleDateFormat("H:m:s", Locale.US));
+		dateFormats.add(new SimpleDateFormat("H:m", Locale.US));
 
-        for (SimpleDateFormat df : outputFormats)
-            df.setTimeZone(TimeZone.getTimeZone("UTC"));
+		for (SimpleDateFormat df : outputFormats)
+			df.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-        for (SimpleDateFormat format : dateFormats)
-            format.setTimeZone(TimeZone.getTimeZone("UTC"));
-    }
+		for (SimpleDateFormat format : dateFormats)
+			format.setTimeZone(TimeZone.getTimeZone("UTC"));
+	}
 
 }

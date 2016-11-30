@@ -18,7 +18,6 @@ package org.brunel.data;
 
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.DateUnit;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Date;
