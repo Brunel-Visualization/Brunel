@@ -566,7 +566,8 @@ public class D3Builder extends AbstractBuilder {
 
         String axesTransform = makeTranslateTransform("geom.inner_left", "geom.inner_top");
 
-        out.add("var interior = chart.append('g').attr('class', 'interior')")
+        // Note we write the initial zoom level of "None" in here
+        out.add("var interior = chart.append('g').attr('class', 'interior zoomNone')")
                 .addChained(axesTransform);
 
         // Nested charts do not need additional clipping

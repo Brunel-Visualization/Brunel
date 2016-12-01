@@ -603,7 +603,7 @@ var BrunelD3 = (function () {
             tree.eachAfter(function (v) {
                 if (v.children) {
                     v.value = 0;
-                    for (i=0; i<v.children.length; i++) v.value += v.children[i].value;
+                    for (i = 0; i < v.children.length; i++) v.value += v.children[i].value;
                 }
                 if (v.collapsed) {
                     v.value = Math.min(v.value, tree.value / nCollapsed[v.depth]) / 10;
@@ -1877,7 +1877,7 @@ var BrunelD3 = (function () {
         return {dx: dx, dy: dy, s: s}
     }
 
-    /**
+    /**1
      * Restricts the parameters of the pan zoom so as to disallow meaningless transformations
      * @param t -- the translation
      * @param geom -- the space we have available
@@ -1993,6 +1993,7 @@ var BrunelD3 = (function () {
         });
     }
 
+    // The winkel tripel projection; suitable for dispalying the whole world
     function winkel3() {
         function w(x, y) {
             var a = Math.acos(Math.cos(y) * Math.cos(x / 2)), sinca = Math.abs(a) < 1e-6 ? 1 : Math.sin(a) / a;
@@ -2000,6 +2001,19 @@ var BrunelD3 = (function () {
         }
 
         return d3.geoProjection(w);
+    }
+
+    /**
+     * Returns a string representation of a zoom ratio suitable for use as a class label
+     * @param v a value to use
+     */
+    function zoomLabel(v) {
+        var pre = (v > 1) ? "zoomIn zoomIn" : "zoomOut zoomOut";           // zoom direction
+        v = Math.round(v > 1 ? v : 1 / v);          // Ensure v >=1
+        if (v == 1) return "zoomNone";              // Flat
+        if (v <= 5) return pre + v;                 // In1, In2, In3, In4, In5 and similar for out
+        if (v <= 10) return pre + "High";           // zoom levels 6-10
+        return pre + "Extreme";                     // extreme zoom levels
     }
 
     // Expose these methods
@@ -2036,6 +2050,7 @@ var BrunelD3 = (function () {
         'closest': closestItem,
         'panzoom': panzoom,
         'restrictZoom': restrictZoom,
+        'zoomLabel': zoomLabel,
         'geoStream': geoStream,
         'winkel3': winkel3,
         'setAspect': setAspect

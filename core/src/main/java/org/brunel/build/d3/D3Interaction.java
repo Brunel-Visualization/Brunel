@@ -426,6 +426,7 @@ public class D3Interaction {
 
 	/**
 	 * Set up the overlay group and shapes for trapping events for zooming.
+	 * @param structure
 	 */
 	public void addZoomFunctionality() {
 
@@ -434,32 +435,36 @@ public class D3Interaction {
 				.indentMore().indentMore().onNewLine();
 
 		// If the transform is undefined, define it (and restrict the pan amount for coord charts)
-		if (structure.diagram == null)
+		if (this.structure.diagram == null)
 			out.add("t = t ||BrunelD3.restrictZoom(d3.event.transform, geom, this)");
 		else
 			out.add("t = t || d3.event.transform");
 
 		out.endStatement();
 
-		if (structure.diagram == VisTypes.Diagram.parallel) {           // Very special handling
+		if (this.structure.diagram == VisTypes.Diagram.parallel) {           // Very special handling
 			out.add("var index = Math.round(d3.mouse(zoomNode)[0] * (parallel.length-1) / geom.inner_width)")
 					.endStatement();
 			out.add("var p = parallel[index]").endStatement();
 			out.add("p._scale = p._scale || p.scale").endStatement();
 			out.add("if (p.numeric) p.scale = t.rescaleY(p._scale)").endStatement();
 			out.add("else           p.scale.range([t.y, t.y + t.k * geom.inner_height])").endStatement();
-		} else if (structure.diagram != VisTypes.Diagram.map) {         // The map has no scales to modify ...
+		} else if (this.structure.diagram != VisTypes.Diagram.map) {         // The map has no scales to modify ...
 			if (canZoomX) applyZoomToScale(0);
 			if (canZoomY) applyZoomToScale(1);
 		}
 
 		out.add("zoomNode.__zoom = t").endStatement();
 
-		if (structure.diagram == VisTypes.Diagram.network) {
+		// Set the zoom level on the interior
+		out.add("interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));" ).endStatement();
+
+
+		if (this.structure.diagram == VisTypes.Diagram.network) {
 			// A network has a defined simulation, which we need to prod if not running
 			out.comment("If the simulation has stopped, run one pass to use the scale");
 			out.add("if (simulation && simulation.alpha() < simulation.alphaMin()) simulation.on('tick')()").endStatement();
-		} else if (structure.diagram == VisTypes.Diagram.cloud) {
+		} else if (this.structure.diagram == VisTypes.Diagram.cloud) {
 			// A cloud just gets the container transformed
 			out.add("interior.attr('transform', d3.zoomTransform(zoomNode))").endStatement();
 		} else {

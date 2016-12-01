@@ -20,6 +20,25 @@ Using keys --
 
     if 'names' is specified it uses the names from the field, otherwise uses numbers
 
+## Zoom
+
+zoom levels are now added to the "interior" group for each chart, allowing it to be used for CSS
+selection purposes. The classes added are (for various degrees of zoom):
+
+ * `zoomOut zoomOutExtreme`       (more than a factor of 10)
+ * `zoomOut zoomOutHigh`          (more than a factor of 5)
+ * `zoomOut zoomOut5`
+ * `zoomOut zoomOut4`
+ * `zoomOut zoomOut3`
+ * `zoomOut zoomOut2`
+ * `zoomNone`
+ * `zoomIn zoomIn2`
+ * `zoomIn zoomIn3`
+ * `zoomIn zoomIn4`
+ * `zoomIn zoomIn5`
+ * `zoomIn zoomInHigh`            (more than a factor of 5)
+ * `zoomIn zoomInExtreme`         (more than a factor of 10)
+
 # 2.0 Release Notes
 
 ## Accessibility
