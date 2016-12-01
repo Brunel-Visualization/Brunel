@@ -558,7 +558,7 @@ public class D3Builder extends AbstractBuilder {
         out.addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
                 .endStatement();
 
-        interaction.addOverlayForZoom(structure.elements[0].tDiagram);
+        interaction.addOverlayForZoom(structure.diagram);
 
         out.add("chart.append('rect').attr('class', 'background')")
                 .add(".attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top)")

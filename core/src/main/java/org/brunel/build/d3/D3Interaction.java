@@ -392,9 +392,12 @@ public class D3Interaction {
 		out.endStatement();
 
 		String extent;
-		if (diagram == VisTypes.Diagram.map) extent = "1/5,5";
-		if (diagram == VisTypes.Diagram.parallel) extent = "1/2,10";
-		else extent = "1/3,3";
+		if (diagram == VisTypes.Diagram.map)
+			extent = "1/5,5";
+		else if (diagram == VisTypes.Diagram.parallel ||
+				diagram == VisTypes.Diagram.tree || diagram == VisTypes.Diagram.network) extent = "1/2,10";
+		else
+			extent = "1/3,3";
 
 		// Add an overlay rectangle for zooming that will trap all mouse events and use them for pan/zoom
 		out.add("var zoom = d3.zoom().scaleExtent([" + extent + "])").endStatement();
