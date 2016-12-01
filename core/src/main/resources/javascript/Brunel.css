@@ -278,14 +278,6 @@
     font-size: 7pt;
 }
 
-.brunel .element.collapsed {
-    fill-opacity:0.2;
-    stroke: black;
-    stroke-opacity:1;
-    stroke-width:1px;
-    stroke-dasharray:4 2;
-}
-
 .brunel .horizontal-box {
     -moz-box-orient: horizontal;
     -moz-box-align: stretch;
