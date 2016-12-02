@@ -42,12 +42,13 @@ public class Hierarchical {
 		return result;
 	}
 
-	public static Hierarchical makeByEdges(Dataset data, String nodeField, Dataset edges, String fromField, String toField) {
+	public static Hierarchical makeByEdges(Dataset data, String nodeField, String nodeSizeField, Dataset edges, String fromField, String toField) {
 		Hierarchical result = new Hierarchical();
 		Field id = data.field(nodeField);
 		Field from = edges.field(fromField);
 		Field to = edges.field(toField);
-		result.makeNodesUsingEdges(id, from, to);
+		Field size = nodeSizeField == null ? null : data.field(nodeSizeField);
+		result.makeNodesUsingEdges(id, size, from, to);
 		result.fixChildren();
 		return result;
 	}
@@ -112,12 +113,14 @@ public class Hierarchical {
 					map.put(v, current);                                 // add to map
 				}
 			}
-			((List<Node>) current.children).add(new Node(row, d, null, null));
+			Node child = new Node(row, d, null, null);
+			((List<Node>) current.children).add(child);
+			child.parent = current;
 		}
 	}
 
 	@SuppressWarnings("unchecked")
-	private void makeNodesUsingEdges(Field id, Field from, Field to) {
+	private void makeNodesUsingEdges(Field id, Field size, Field from, Field to) {
 		// Build the nodes
 		int N = id.rowCount();
 		Set<Node> unparented = new HashSet<>();
@@ -125,7 +128,8 @@ public class Hierarchical {
 		Map<Object, Node> byID = new HashMap<>();                        // Map from ID to node
 		for (int i = 0; i < N; i++) {
 			Object key = id.value(i);
-			Node node = new Node(i, 0, null, new ArrayList<>());
+			Double d = size == null ? 1 : Data.asNumeric(size.value(i));
+			Node node = new Node(i, d, null, new ArrayList<>());
 			node.key = key;
 			unparented.add(node);
 			all.add(node);

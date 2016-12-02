@@ -31,16 +31,19 @@ class DependentEdge extends D3Diagram {
 	}
 
 	public ElementDetails initializeDiagram() {
+
+		String validatedEdges = "graph.links.filter(function(e) { return !isNaN(e.source.x + e.target.x) })";
 		if (structure.chart.diagram.isHierarchical)
-			return ElementDetails.makeForDiagram(vis, ElementRepresentation.curvedPath, "edge", "graph.links");
+			return ElementDetails.makeForDiagram(vis, ElementRepresentation.curvedPath, "edge", validatedEdges);
 		else
-			return ElementDetails.makeForDiagram(vis, ElementRepresentation.segment, "edge", "graph.links");
+			return ElementDetails.makeForDiagram(vis, ElementRepresentation.segment, "edge", validatedEdges);
 	}
 
 	public void writeDefinition(ElementDetails details) {
 		new EdgeBuilder(out, structure.chart.coordinates.isPolar()).defineLocation();
 		addAestheticsAndTooltips(details);
 	}
+
 
 	public String getStyleClasses() {
 		return "'diagram hierarchy edge'";

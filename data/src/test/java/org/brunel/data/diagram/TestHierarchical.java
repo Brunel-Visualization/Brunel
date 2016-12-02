@@ -105,20 +105,20 @@ public class TestHierarchical {
 
 	@Test
 	public void testTreeWithSingleRoot() {
-		Node data = Hierarchical.makeByEdges(nodeData, "A", edge1Data, "A", "B").root;
+		Node data = Hierarchical.makeByEdges(nodeData, "A", null, edge1Data, "A", "B").root;
 		Assert.assertEquals("0(1 2(3))", dumpTree2(data));
 	}
 
 	@Test
 	public void testTreeWithTwoRoots() {
-		Node data = Hierarchical.makeByEdges(nodeData, "A", edge2Data, "A", "B").root;
+		Node data = Hierarchical.makeByEdges(nodeData, "A", null, edge2Data, "A", "B").root;
 		Assert.assertEquals("?(0(1 2) 3)", dumpTree2(data));
 	}
 
 	@Test
 	public void testBadTreeNoRoots() {
 		// Give up -- bad result
-		Node data = Hierarchical.makeByEdges(nodeData, "A", edge3Data, "A", "B").root;
+		Node data = Hierarchical.makeByEdges(nodeData, "A", null, edge3Data, "A", "B").root;
 		Assert.assertEquals("?", dumpTree2(data));
 	}
 

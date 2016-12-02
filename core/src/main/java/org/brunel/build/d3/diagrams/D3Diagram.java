@@ -139,7 +139,8 @@ public abstract class D3Diagram {
 	void makeHierarchicalTree(boolean definedHierarchy) {
 		Integer prune = findPruneParameter(vis.tDiagramParameters);
 		String pruneValue;
-		if (prune == null) pruneValue = null;
+		if (prune == null)
+			pruneValue = null;
 		else if (prune < 1) {
 			if (vis.coords == VisTypes.Coordinates.polar)
 				pruneValue = "geom.inner_width * geom.inner_height / 1000";
@@ -152,12 +153,12 @@ public abstract class D3Diagram {
 		}
 
 		String[] positionFields = vis.positionFields();
+		String sizeParam = size == null ? null : Data.quote(size.asField());
 
 		if (positionFields.length != 0 || vis.fKeys.isEmpty()) {
 			// Positions have been defined using fields, so we create a hierarchy by treating them as categories
 			// and nesting categories of one field within the field at the next level up.
 			String fieldsList = positionFields.length == 0 ? "" : ", " + quoted(positionFields);
-			String sizeParam = size == null ? null : Data.quote(size.asField());
 			defineOrDeclareHierarchy(definedHierarchy);
 			out.add("graph = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, "
 					+ sizeParam + fieldsList + ")")
@@ -176,7 +177,7 @@ public abstract class D3Diagram {
 
 			defineOrDeclareHierarchy(definedHierarchy);
 			out.add("graph = BrunelData.diagram_Hierarchical.makeByEdges(processed, "
-					+ nodeIDField + ", elements[" + edges.index + "].data(), " +
+					+ nodeIDField + ", " + sizeParam + ", elements[" + edges.index + "].data(), " +
 					edge1Field + ", " + edge2Field + ")")
 					.endStatement();
 
@@ -195,8 +196,12 @@ public abstract class D3Diagram {
 
 		// The collapseState map contains a map of keys to true / false for user-specified collapsing
 
-		if (interaction.needsHierarchyPrune())
-			out.add("BrunelD3.prune(tree, collapseState, " + reduceSizes + ", first ? " + pruneValue + ": null)").endStatement();
+		if (interaction.needsHierarchyPrune()) {
+			if (pruneValue == null)
+				out.add("BrunelD3.prune(tree, collapseState, " + reduceSizes + ")").endStatement();
+			else
+				out.add("BrunelD3.prune(tree, collapseState, " + reduceSizes + ", first ? " + pruneValue + ": null)").endStatement();
+		}
 		out.add("function nodeKey(d) { return d.data.key == null ? data._key(d.data.row) : d.data.key }").endStatement();
 		isHierarchy = true;
 	}

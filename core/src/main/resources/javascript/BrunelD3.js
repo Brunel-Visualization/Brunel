@@ -529,11 +529,9 @@ var BrunelD3 = (function () {
     }
 
     function collapseNode(item, state) {
-        var n = item.children.length;                       // This many fewer
         item.children = undefined;                          // remove the children
-        item.collapsed = true;                              // We collapsed this much
-        state[item.data.key] = true;                        // We collapsed it
-        return n;
+        item.collapsed = true;                              // Mark the item
+        state[item.data.key] = true;                        // Add to permanent list
     }
 
     /**
@@ -565,20 +563,21 @@ var BrunelD3 = (function () {
      * @param N desired maximum node count
      */
     function pruneTreeToSize(tree, userStates, reduceSizes, N) {
-        var list = tree.descendants(),      // Number of items
-            n = list.length;                // Current size of tree
 
         // Remove the ones the user marked as to be collapsed
         tree.each(function (v) {
-            if (userStates[v.data.key]) n -= collapseNode(v, userStates);
+            if (userStates[v.data.key]) collapseNode(v, userStates);
         });
         fixTreeHeights(tree, reduceSizes);
 
+        var n = tree.descendants().length;          // current length
 
-        while (n > N && N > 0) {
+        while (n > N && N > 2) {                    // No more trimming if an invalid lenght (or we are done!)
             var i, items = [];                                          // Collect nodes with height = 1
             tree.each(function (v) {
-                // Do not add it if marked as NOT collapsed
+                // Mark for deletion if
+                // (i) not the root (zero depth) and is one above a leaf (unit height)
+                // (ii) it has been already marked for collapse
                 if (v.depth && v.height == 1 && userStates[v.data.key] == null) items.push(v);
             });
 
@@ -588,9 +587,11 @@ var BrunelD3 = (function () {
                 return a.value - b.value
             });
 
-            for (i = 0; i < items.length && n > N; i++)                 // Remove each
-                n -= collapseNode(items[i], userStates);
-
+            for (i = 0; i < items.length && n > N; i++) {              // Remove each
+                var below = items[i].descendants().length - 1;
+                collapseNode(items[i], userStates);
+                n -= below;
+            }
             fixTreeHeights(tree, reduceSizes);
         }
 

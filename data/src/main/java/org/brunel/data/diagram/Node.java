@@ -26,6 +26,7 @@ public class Node {
     public Object key;                              // Key name for transitions
 
     public final String innerNodeName;              // Name for a non-leaf node
+    public Node parent;                             // Parent node
     public Object children;                         // Initially a List, then an array
     public Object temp;                             // Temporary storage for building
 
