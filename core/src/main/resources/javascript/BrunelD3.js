@@ -2044,7 +2044,7 @@ var BrunelD3 = (function () {
             }
         }
 
-        copy(brunelTree.root, null);
+        copy(brunelTree.root, {x:undefined, y:undefined});
     }
 
 
