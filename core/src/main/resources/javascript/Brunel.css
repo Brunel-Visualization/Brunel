@@ -86,6 +86,7 @@
 
 .brunel .hierarchy .L0, .brunel .hierarchy .L0 tspan {
     visibility: hidden;
+    fill: #d3870d;
 }
 
 .brunel .hierarchy.tree .L0, .brunel .hierarchy.tree .L0 tspan {
@@ -156,7 +157,8 @@
 }
 
 .brunel .labels text {
-    text-shadow: 1px 1px 5px white, -1px -1px 5px white, -1px 1px 5px white, 1px -1px 5px white
+    text-shadow: 0px 0px 4px white
+
 }
 
 .brunel .element.text {

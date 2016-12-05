@@ -2017,6 +2017,37 @@ var BrunelD3 = (function () {
         return pre + "Extreme";                     // extreme zoom levels
     }
 
+
+    /**
+     * Copies information from the d3 layout to the brunel nodes
+     * @param d3tree d3 tree, a subset of the Brunel tree -- ach node contains a Brunel node as 'data'
+     * @param brunelTree the full brunel tree
+     * @param pad amount ot pad nodes by
+     */
+    function copyTreeLayoutInfo(d3tree, brunelTree, pad) {
+
+        // Pad first
+        d3tree.forEach(function (d) {
+            d.data.x = d.x += pad;
+            d.data.y = d.y += pad
+        });
+
+        function copy(node, pos) {
+            if (!node.x) {
+                node.x = pos.x;
+                node.y = pos.y;
+            }
+            if (node.children) {
+                node.children.forEach(function (c) {
+                    copy(c, node);
+                });
+            }
+        }
+
+        copy(brunelTree.root, null);
+    }
+
+
     // Expose these methods
     return {
         'makeData': makeDataset,
@@ -2054,7 +2085,8 @@ var BrunelD3 = (function () {
         'zoomLabel': zoomLabel,
         'geoStream': geoStream,
         'winkel3': winkel3,
-        'setAspect': setAspect
+        'setAspect': setAspect,
+        'copyTreeLayoutInfo' : copyTreeLayoutInfo
     }
 
 })
