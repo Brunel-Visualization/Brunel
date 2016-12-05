@@ -77,7 +77,7 @@ class Tree extends D3Diagram {
 		// Run through the tree nodes and copy the locations to the underlying data structure.
 		// When not polar, also pad the items
 
-		out.add("BrunelD3.copyTreeLayoutInfo(treeNodes, graph, " + (method == Method.polar ? "" : pad) + ")")
+		out.add("BrunelD3.copyTreeLayoutInfo(treeNodes, graph, " + (method == Method.polar ? "0" : pad) + ")")
 				.endStatement();
 
 		if (usesSize && vis.positionFields().length != 0) {
