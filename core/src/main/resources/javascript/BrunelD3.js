@@ -2044,7 +2044,14 @@ var BrunelD3 = (function () {
             }
         }
 
-        copy(brunelTree.root, {x:undefined, y:undefined});
+        // Children with no position (collapsed) are located at parents
+        copy(brunelTree.root, {x: undefined, y: undefined});
+
+        // remove links we cannot place anywhere (root links when we have expanded a subtree so top is invisible)
+        if (brunelTree.links)
+            brunelTree.links = brunelTree.links.filter(function (d) {
+                return !isNaN(d.source.x + d.target.x)
+            });
     }
 
 
@@ -2086,7 +2093,7 @@ var BrunelD3 = (function () {
         'geoStream': geoStream,
         'winkel3': winkel3,
         'setAspect': setAspect,
-        'copyTreeLayoutInfo' : copyTreeLayoutInfo
+        'copyTreeLayoutInfo': copyTreeLayoutInfo
     }
 
 })
