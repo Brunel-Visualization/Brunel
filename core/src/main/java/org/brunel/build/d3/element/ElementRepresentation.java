@@ -85,7 +85,7 @@ import org.brunel.model.VisTypes;
 
     public String getTooltipTextMethod() {
         if (this == area) return "poly";
-        if (isDrawnAsPath() && this != symbol) return getDefaultTextMethod();
+        if (isDrawnAsPath() || this == segment) return getDefaultTextMethod();
         return "top";
     }
 
