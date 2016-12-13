@@ -525,7 +525,7 @@ var BrunelD3 = (function () {
         // The selection is in terms of the processed data, but we need to propagate back to the original data set
         element.original().modifySelection(method, row, data, element.fields.key);
 
-        callWhenReady(func, target);                                    // Request a redraw after  transition done
+        if (func) callWhenReady(func, target);                          // Request a redraw after transition done
     }
 
     function collapseNode(item, state) {
@@ -1034,7 +1034,7 @@ var BrunelD3 = (function () {
 
         if (labeling.cssClass) txt.attr('class', labeling.cssClass(item.__data__));
         else txt.classed('label', true);
-        txt.classed("selected", item.classList.contains("selected"));           // Copy selection status to label
+        txt.classed("selected", item.classList && item.classList.contains("selected"));           // Copy selection status to label
 
         var textNode = txt.node(),                          // SVG node
             style = getComputedStyle(textNode),             // SVG style

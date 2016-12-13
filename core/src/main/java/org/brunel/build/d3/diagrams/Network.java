@@ -26,60 +26,60 @@ import org.brunel.model.VisSingle;
 
 class Network extends D3Diagram {
 
-    private final ElementStructure nodes;
-    private final ElementStructure edges;
-    private final String nodeID, fromFieldID, toFieldID;
+	private final ElementStructure nodes;
+	private final ElementStructure edges;
+	private final String nodeID, fromFieldID, toFieldID;
 
-    public Network(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
-        super(structure, data, interaction, out);
-        this.nodes = structure;
-        this.edges = structure.findDependentEdges();
+	public Network(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
+		super(structure, data, interaction, out);
+		this.nodes = structure;
+		this.edges = structure.findDependentEdges();
 
-        if (vis.fKeys.size() > 0) {
-            nodeID = vis.fKeys.get(0).asField(nodes.data);
-        } else if (vis.fY.size() > 1) {
-            nodeID = "#values";
-        } else if (vis.positionFields().length > 0) {
-            nodeID = vis.positionFields()[0];
-        } else {
-            throw new IllegalStateException("Networks require nodes to have a key field or position field");
-        }
+		if (vis.fKeys.size() > 0) {
+			nodeID = vis.fKeys.get(0).asField(nodes.data);
+		} else if (vis.fY.size() > 1) {
+			nodeID = "#values";
+		} else if (vis.positionFields().length > 0) {
+			nodeID = vis.positionFields()[0];
+		} else {
+			throw new IllegalStateException("Networks require nodes to have a key field or position field");
+		}
 
-        VisSingle edgesVis = edges.vis;
-        if (edgesVis.fKeys.size() > 1) {
-            fromFieldID = edgesVis.fKeys.get(0).asField(edges.data);
-            toFieldID = edgesVis.fKeys.get(1).asField(edges.data);
-        } else if (edgesVis.positionFields().length > 1) {
-            fromFieldID = edgesVis.positionFields()[0];
-            toFieldID = edgesVis.positionFields()[1];
-        } else {
-            throw new IllegalStateException("Networks require edges to have two key fields or position fields");
-        }
-    }
+		VisSingle edgesVis = edges.vis;
+		if (edgesVis.fKeys.size() > 1) {
+			fromFieldID = edgesVis.fKeys.get(0).asField(edges.data);
+			toFieldID = edgesVis.fKeys.get(1).asField(edges.data);
+		} else if (edgesVis.positionFields().length > 1) {
+			fromFieldID = edgesVis.positionFields()[0];
+			toFieldID = edgesVis.positionFields()[1];
+		} else {
+			throw new IllegalStateException("Networks require edges to have two key fields or position fields");
+		}
+	}
 
-    public void writeBuildCommands() {
-        String density = "";
-        if (vis.tDiagramParameters.length > 0) density = ", " + vis.tDiagramParameters[0].asDouble();
-        out.onNewLine().add("if (!simulation) ")
-                .add("simulation = BrunelD3.network(graph, elements[" + nodes.index
-                        + "], elements[" + edges.index + "], zoomNode, geom" + density + ")").endStatement();
-    }
+	public void writeBuildCommands() {
+		String density = "";
+		if (vis.tDiagramParameters.length > 0) density = ", " + vis.tDiagramParameters[0].asDouble();
+		out.onNewLine().add("if (simulation) simulation.stop()").endStatement()
+				.add("simulation = BrunelD3.network(graph, elements[" + nodes.index
+						+ "], elements[" + edges.index + "], zoomNode, geom" + density + ")").endStatement();
+	}
 
-    public void writePerChartDefinitions() {
-        out.add("var graph, simulation;").at(50).comment("Node/edge graph and force simulation");
-    }
+	public void writePerChartDefinitions() {
+		out.add("var graph, simulation;").at(50).comment("Node/edge graph and force simulation");
+	}
 
-    public ElementDetails initializeDiagram() {
-        String edgeDataset = "elements[" + edges.getBaseDatasetIndex() + "].data()";
-        String nodeField = quoted(nodeID), from = quoted(fromFieldID), to = quoted(toFieldID);
-        out.add("graph = BrunelData.diagram_Graph.make(processed,", nodeField, ",",
-                edgeDataset, ",", from, ",", to, ")").endStatement();
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "graph.nodes");
-    }
+	public ElementDetails initializeDiagram() {
+		String edgeDataset = "elements[" + edges.getBaseDatasetIndex() + "].data()";
+		String nodeField = quoted(nodeID), from = quoted(fromFieldID), to = quoted(toFieldID);
+		out.add("graph = BrunelData.diagram_Graph.make(processed,", nodeField, ",",
+				edgeDataset, ",", from, ",", to, ")").endStatement();
+		return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "graph.nodes");
+	}
 
-    public void writeDefinition(ElementDetails details) {
-        out.addChained("attr('r',", details.overallSize, ")");
-        addAestheticsAndTooltips(details);
-    }
+	public void writeDefinition(ElementDetails details) {
+		out.addChained("attr('r',", details.overallSize, ")");
+		addAestheticsAndTooltips(details);
+	}
 
 }
