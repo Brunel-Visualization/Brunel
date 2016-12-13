@@ -2,6 +2,10 @@
 
 ## Trees and Hierarchies
 
+### interactivity
+interaction(expand)
+interaction(collapse)
+
 ### Specifying a Hierarchical structure
 
 Using positions --
