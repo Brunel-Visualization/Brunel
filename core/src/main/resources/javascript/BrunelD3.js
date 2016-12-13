@@ -1034,6 +1034,7 @@ var BrunelD3 = (function () {
 
         if (labeling.cssClass) txt.attr('class', labeling.cssClass(item.__data__));
         else txt.classed('label', true);
+        
         txt.classed("selected", item.classList && item.classList.contains("selected"));           // Copy selection status to label
 
         var textNode = txt.node(),                          // SVG node
