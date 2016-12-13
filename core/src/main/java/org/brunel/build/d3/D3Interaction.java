@@ -277,7 +277,7 @@ public class D3Interaction {
 		String buildString = "charts[" + structure.chart.chartIndex + "].build(500)";
 		if (usesExpand && !structure.isDependentEdge())
 			addFunctionDefinition("dblclick.collapse",
-					"if (d.data.children) {if (d3.event.shiftKey) expandState.pop(); else expandState.push(d.data.key); " + buildString + "} ",
+					"if (d3.event.shiftKey || !d.parent) expandState.pop(); else if (d.data.children) expandState.push(d.data.key); " + buildString,
 					elementEvents);
 		if (usesCollapse && !structure.isDependentEdge())
 			addFunctionDefinition("dblclick.collapse",
@@ -426,7 +426,6 @@ public class D3Interaction {
 
 	/**
 	 * Set up the overlay group and shapes for trapping events for zooming.
-	 * @param structure
 	 */
 	public void addZoomFunctionality() {
 
