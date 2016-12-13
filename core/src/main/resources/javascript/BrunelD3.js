@@ -1034,7 +1034,7 @@ var BrunelD3 = (function () {
 
         if (labeling.cssClass) txt.attr('class', labeling.cssClass(item.__data__));
         else txt.classed('label', true);
-        
+
         txt.classed("selected", item.classList && item.classList.contains("selected"));           // Copy selection status to label
 
         var textNode = txt.node(),                          // SVG node
@@ -1456,11 +1456,13 @@ var BrunelD3 = (function () {
             D = (density || 1) * Math.min(W, H) / Math.sqrt(N) / 2,
             R = D * Math.max(1, D - 3) / 5 / Math.max(1, E / N);
 
-        var a, i;
+        var a, i, nd;
         for (i = 0; i < N; i++) {
+            // If the positions have already been defined, do not redefine them
             a = Math.PI * 2 * i / N;
-            graph.nodes[i].x = W * (1 + Math.cos(a)) / 2;
-            graph.nodes[i].y = H + (1 + Math.sin(a)) / 2
+            nd = graph.nodes[i];
+            nd.x = nd.x ||  W * (1 + Math.cos(a)) / 2;
+            nd.y = nd.y || H + (1 + Math.sin(a)) / 2
         }
 
 
