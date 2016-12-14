@@ -54,10 +54,10 @@ public class Smooth extends Fit {
     public Object get(Object value) {
         Double at = vx(value);
         if (at == null) return null;
-        return reverseY(eval(at, this.window));
+        return reverseY(calc(at, this.window));
     }
 
-    private double eval(double at, double h) {
+    private double calc(double at, double h) {
         int low = search(at - h, x);                   // low end of window
         int high = search(at + h, x);                  // high end of window
 
@@ -72,7 +72,7 @@ public class Smooth extends Fit {
         }
         // If we have no data points, double the window size and try again
         // But if that would cause the window to be 10x bigger than requested, give up and use the mean
-        if (sw < 1e-4) return h < window * 10 ? eval(at, h * 2) : my;
+        if (sw < 1e-4) return h < window * 10 ? calc(at, h * 2) : my;
         return sy / sw;
     }
 
