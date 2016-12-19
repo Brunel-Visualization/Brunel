@@ -92,7 +92,7 @@ public class CSV {
                     line.add(saveMemory(building, common, wasQuoted));
                     building = null;
                     wasQuoted = false;
-                } else {
+                } else if (c != ' ') {
                     if (building == null)
                         building = "";
                     building += c;
