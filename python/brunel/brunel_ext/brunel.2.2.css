@@ -80,12 +80,17 @@
 }
 
 .brunel .hierarchy, .brunel .hierarchy tspan {
-    fill: #875608;
-    stroke: none;
+    fill: white;
+    stroke-width: 0;
 }
 
 .brunel .hierarchy .L0, .brunel .hierarchy .L0 tspan {
     visibility: hidden;
+    fill: #d3870d;
+}
+
+.brunel .hierarchy.tree .L0, .brunel .hierarchy.tree .L0 tspan {
+    visibility: visible;
 }
 
 .brunel .hierarchy .L1, .brunel .hierarchy .L1 tspan {
@@ -152,7 +157,8 @@
 }
 
 .brunel .labels text {
-    text-shadow: 1px 1px 5px white, -1px -1px 5px white, -1px 1px 5px white, 1px -1px 5px white
+    text-shadow: 0px 0px 4px white
+
 }
 
 .brunel .element.text {
@@ -233,6 +239,12 @@
     stroke: #c0c0c0
 }
 
+.brunel .collapsed {
+    stroke: black;
+    stroke-dasharray: 4 4;
+    fill-opacity:0.25;
+}
+
 .brunel .mark.L1 {
     fill: #707070;
 }
@@ -274,14 +286,6 @@
     font-size: 7pt;
 }
 
-.brunel .element.collapsed {
-    fill-opacity:0.2;
-    stroke: black;
-    stroke-opacity:1;
-    stroke-width:1px;
-    stroke-dasharray:4 2;
-}
-
 .brunel .horizontal-box {
     -moz-box-orient: horizontal;
     -moz-box-align: stretch;
@@ -291,6 +295,10 @@
     box-sizing: border-box;
     padding-top: 5px;
     padding-bottom: 5px
+}
+
+.brunel .brunel_class_2 {
+    stroke-dasharray:2 2;
 }
 
 .brunel .parallel.axis .tick text {
