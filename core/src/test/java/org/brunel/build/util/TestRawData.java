@@ -32,8 +32,19 @@ public class TestRawData {
         assertEquals(2, a.rowCount());
         assertEquals("hey there", a.field("b").value(1));
 
-        Dataset b = DataCache.get("raw:a,b;1,hello;2,hey%there");
+        Dataset b = DataCache.get("raw:a,b;1,hello;2,hi%there");
         assertEquals(2, b.rowCount());
-        assertEquals("hey%there", b.field("b").value(1));
+        assertEquals("hi%there", b.field("b").value(1));
+
+        Dataset c = DataCache.get("raw:a,b;1, hello;2, hello");
+        assertEquals(2, c.rowCount());
+        assertEquals("hello", c.field("b").value(0));
+        assertEquals("hello", c.field("b").value(1));
+
+        Dataset d = DataCache.get("raw:a,b;1,\" hello\";2,\"hello \"");
+        assertEquals(2, d.rowCount());
+        assertEquals(" hello", d.field("b").value(0));
+        assertEquals("hello ", d.field("b").value(1));
+
     }
 }
