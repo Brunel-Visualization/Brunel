@@ -77,17 +77,19 @@ var BrunelJQueryControlFactory = (function () {
 		    		}
 		    	}). appendTo(rangeSlider);
 	    }
+	    
+
+		if (!low) low = min;
+		if (!high) high = max;
 
 	    var lowValue = $('<div />')
 	        .appendTo(rangeSlider)
 	        .addClass(valueLeftStyle);
-	    lowValue.html(field.format(min));
+	    lowValue.html(field.format(low));
 		var highValue = $('<div />')
         	.addClass(valueStyle);
-		highValue.html(field.format(max));
+		highValue.html(field.format(high));
 
-		if (!low) low = min;
-		if (!high) high = max;
 
 	    var slider = $('<div />', {
 	    		id: sliderId
@@ -96,6 +98,7 @@ var BrunelJQueryControlFactory = (function () {
 	            range: true,
 	            min: min,
 	            max: max,
+	            step: Math.abs(max-min)/200,    
 	            values:[low, high],
 	            slide: function( event, ui ) {
 	                lowValue.html(field.format(ui.values[0]));
