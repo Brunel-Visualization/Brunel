@@ -458,7 +458,7 @@ public class VisSingle extends VisItem implements Cloneable {
             result.fY = Collections.emptyList();
         }
 
-        // Set the default element
+        // Set the default element, if not otherwise set
         if (tElement == null) {
             if (tDiagram != null) {
                 // Diagrams know what they like
@@ -466,7 +466,8 @@ public class VisSingle extends VisItem implements Cloneable {
             } else if (!tGuides.isEmpty()) {
                 // Guides are paths
                 result.tElement = Element.path;
-            } else if (stacked) {
+            } else if (stacked || fRange != null) {
+                // Bars work if we want to show a range
                 // Bars work well for stacking usually
                 result.tElement = Element.bar;
             } else {
