@@ -288,8 +288,11 @@ public class D3Builder extends AbstractBuilder {
         if (order.length > 1) {
             out.add("{").indentMore();
             for (int i : order)
-                out.onNewLine().add("elements[" + i + "].makeData();");
+                out.onNewLine().add("elements[" + i + "].makeData()").endStatement();
             out.indentLess().onNewLine().add("}").ln();
+            if (structure.diagram == VisTypes.Diagram.network) {
+				out.onNewLine().add("graph = null").endStatement();
+			}
         } else {
             out.add("elements[0].makeData()").endStatement();
         }

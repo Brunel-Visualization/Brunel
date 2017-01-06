@@ -1461,7 +1461,7 @@ var BrunelD3 = (function () {
             // If the positions have already been defined, do not redefine them
             a = Math.PI * 2 * i / N;
             nd = graph.nodes[i];
-            nd.x = nd.x ||  W * (1 + Math.cos(a)) / 2;
+            nd.x = nd.x || W * (1 + Math.cos(a)) / 2;
             nd.y = nd.y || H + (1 + Math.sin(a)) / 2
         }
 
@@ -1529,8 +1529,8 @@ var BrunelD3 = (function () {
             .force("link", d3.forceLink(graph.links).distance(D))
             .force("center", d3.forceCenter(W / 2, H / 2))
             .force("charge", d3.forceManyBody().distanceMax(geom.inner_radius / 2).strength(-R))
-            .force("inside", function () {
-                var i, n = graph.nodes.length, k = 1, node;
+            .force("inside", function (a) {
+                var i, n = graph.nodes.length, k = a * a, node;
                 for (i = 0; i < n; i++) {
                     node = graph.nodes[i];
                     if (node.x < left) node.vx += k * (left - node.x);
