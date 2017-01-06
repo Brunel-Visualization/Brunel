@@ -38,7 +38,7 @@ var BrunelD3 = (function () {
             y = 0;
         }
 
-        if (!w) w  = target.getAttribute("width");
+        if (!w) w = target.getAttribute("width");
         if (!h) h = target.getAttribute("height");
 
         var g = {
