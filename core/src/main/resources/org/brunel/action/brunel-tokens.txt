@@ -76,6 +76,7 @@ unique data FIELD+
 valid data FIELD+
 list data FIELD+
 stddev data FIELD+
+stderr data FIELD+
 skew data FIELD+
 kurtosis data FIELD+
 valid data FIELD+

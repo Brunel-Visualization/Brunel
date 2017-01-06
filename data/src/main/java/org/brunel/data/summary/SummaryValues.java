@@ -101,6 +101,13 @@ public final class SummaryValues {
 
         if (summary.equals("iqr")) return makeRange(m, f, "q1", "q3");
 
+        if (summary.equals("stderr")) {
+         	Double s = f.numProperty("stddev");
+         	Double multiplier = 1.0;
+         	if (m.option != null) multiplier = Double.parseDouble(m.option);
+         	if (s != null && mean != null) return Range.make(mean -s * multiplier, mean +s * multiplier, m.getDateFormat());
+         }
+        
         if (summary.equals("sum")) {
             if (mean == null) return null;
             return mean * f.numProperty("valid");

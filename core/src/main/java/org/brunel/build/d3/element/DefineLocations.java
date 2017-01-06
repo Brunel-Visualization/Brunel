@@ -40,7 +40,7 @@ class DefineLocations {
     static boolean isRange(Field field) {
         if (field.isBinned() && field.isNumeric()) return true;
         String s = field.strProperty("summary");
-        return s != null && (s.equals("iqr") || s.equals("range"));
+        return s != null && (s.equals("iqr") || s.equals("range") || s.equals("stderr"));
     }
 
     static void setDependentLocations(ElementStructure structure, ElementDetails details) {
