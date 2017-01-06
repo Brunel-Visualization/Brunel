@@ -42,7 +42,7 @@ public class FilterControl {
      * @param modifier the modifier Param for the filter field which is expected to contain default values.
      * @return built Filter description
      */
-    public static FilterControl makeForFilterField(Dataset data, String fieldID, Param modifier) {
+    public static FilterControl makeForFilterField(Dataset data, int datasetIndex, String fieldID, Param modifier) {
         Field field = data.field(fieldID);
         if (field.preferCategorical()) {
         	String[] selectedCategories = null;
@@ -60,7 +60,7 @@ public class FilterControl {
 	        		
 	        	}
         	}
-            return new FilterControl(data.name(), fieldID, field.label, field.categories(), null, null, null, null, selectedCategories, false, null, null);
+            return new FilterControl(datasetIndex, fieldID, field.label, field.categories(), null, null, null, null, selectedCategories, false, null, null);
         }
         else {
         	Double low = null;
@@ -80,13 +80,13 @@ public class FilterControl {
 
         	}
         	
-            return new FilterControl(data.name(), fieldID, field.label, null, field.min(), field.max(), low, high, null, false, null, null);
+            return new FilterControl(datasetIndex, fieldID, field.label, null, field.min(), field.max(), low, high, null, false, null, null);
 
         }
 
     }
     
-    public static FilterControl makeForAnimation (Dataset data, List<Param> p) {
+    public static FilterControl makeForAnimation (Dataset data, int datasetIndex, List<Param> p) {
     	
     	
     	String fieldId = null;
@@ -108,7 +108,7 @@ public class FilterControl {
     	}
     	
     	if (fieldId == null) return null;
-        return new FilterControl(data.name(), fieldId, field.label, null, field.min(), field.max(), null, null, null, true, animateSpeed, animateFrames);
+        return new FilterControl(datasetIndex, fieldId, field.label, null, field.min(), field.max(), null, null, null, true, animateSpeed, animateFrames);
 
     }
     
@@ -120,6 +120,7 @@ public class FilterControl {
     		if (f.selectedCategories != null) {
         		JsonObject aFilter = new JsonObject();
     			aFilter.addProperty("filter_type", "category");
+    			aFilter.addProperty("datasetIndex", f.datasetIndex);
     			JsonArray jarray = new JsonArray();
     			for (Object o:f.selectedCategories) {
     				jarray.add(new JsonPrimitive(o.toString()));
@@ -131,6 +132,7 @@ public class FilterControl {
     		else if (f.lowValue != null) {
         		JsonObject aFilter = new JsonObject();
     			aFilter.addProperty("filter_type", "range");
+    			aFilter.addProperty("datasetIndex", f.datasetIndex);
     			JsonObject range = new JsonObject();
     			range.addProperty("min", f.lowValue);
     			Double high = f.highValue == null ? f.max : f.highValue;
@@ -146,7 +148,7 @@ public class FilterControl {
     
 
 
-    public final String data;
+    public final int datasetIndex;
     public final String id;
     public final String label;
     public final Object[] categories;
@@ -160,9 +162,9 @@ public class FilterControl {
     public final boolean animate;
     
 
-    private FilterControl(String data, String id, String label, Object[] categories, Double min, Double max,
+    private FilterControl(int dataIndex, String id, String label, Object[] categories, Double min, Double max,
     		Double lowValue, Double highValue, Object[] selectedCategories, boolean animate, Double animateSpeed, Double animateFrames) {
-        this.data = data;
+        this.datasetIndex = dataIndex;
         this.id = id;
         this.label = label;
         this.categories = categories;

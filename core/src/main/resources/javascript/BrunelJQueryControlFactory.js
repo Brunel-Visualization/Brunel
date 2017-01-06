@@ -27,6 +27,7 @@ var BrunelJQueryControlFactory = (function () {
 
 	/**
 	 * visid:  HTML tag containing the visualization
+	 * datasetIndex the index number of the data set that contains the field in the visualization instance
 	 * fieldid:  The id for the field within the data object
 	 * fieldLabel:  The display label for the field
 	 * low:   The default low value for the slider
@@ -36,7 +37,7 @@ var BrunelJQueryControlFactory = (function () {
 	 * animateFrames:  The desired number of animation frames
 	 * animateSpeed:  The desired animation speed
 	 */
-	function makeRangeSlider(visid, fieldid, fieldLabel, low, high, field, animate, animateFrames, animateSpeed ) {
+	function makeRangeSlider(visid, datasetIndex, fieldid, fieldLabel, low, high, field, animate, animateFrames, animateSpeed ) {
 
 		if (animateSpeed == null) animateSpeed = 500;
 		if (animateFrames == null) animateFrames = 4;
@@ -108,7 +109,8 @@ var BrunelJQueryControlFactory = (function () {
 	            	//Publishes a filter event with min/max values from slider
 	            	var filter = {
 	            		"filter" : {"min":ui.values[0], "max":ui.values[1]},
-						"filter_type": "range"
+						"filter_type": "range",
+						"datasetIndex" : datasetIndex
 					};
 	                $.publish('filter.' + visid, [fieldid, filter],0.9*animateSpeed);
 	            }
@@ -175,11 +177,12 @@ var BrunelJQueryControlFactory = (function () {
 
 	/**Create a categorical filter.  Currently using SumoSelect.
 	 * visid:  The id for the visualization
+	 * datasetIndex: the index number of the data set that contains the field in the visualization instance
 	 * fieldid:  The field id in the data source
 	 * fieldLabel:  The display value for the field
 	 * categories:  The set of unique categories for the field
 	 */
-	function makeCategoryFilter(visid, fieldid, fieldLabel, categories, selectedCategories) {
+	function makeCategoryFilter(visid, datasetIndex, fieldid, fieldLabel, categories, selectedCategories) {
 
 		var select = $('<select />', { multiple:"multiple"}).addClass("select-filter");
 		var id = select.uniqueId().attr('id');
@@ -204,7 +207,8 @@ var BrunelJQueryControlFactory = (function () {
 			 });
          	 var filter = {
             		"filter" : selected,
-				 "filter_type": "category"
+					"filter_type": "category",
+					"datasetIndex": datasetIndex
 			 };
              $.publish('filter.' + visid, [fieldid, filter]);
 		});

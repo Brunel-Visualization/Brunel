@@ -184,7 +184,11 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
     private void buildElement(ElementStructure structure) {
         try {
             // Note that controls need the ORIGINAL dataset; the one passed in has been transformed
-            controls.buildControls(structure.vis, structure.vis.getDataset());
+        	
+        	//The index of the dataset containing the field to filter
+        	int datasetIndex = structure.chart.getBaseDatasetIndex(structure.vis.getDataset());
+        	
+            controls.buildControls(structure.vis, structure.vis.getDataset(), datasetIndex);
             defineElement(structure);
             if (structure.vis.styles != null) {
                 StyleSheet styles = structure.vis.styles.replaceClass("currentElement", "element" + structure.elementID());

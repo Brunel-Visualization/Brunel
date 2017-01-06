@@ -50,6 +50,7 @@ function BrunelEventHandlers (brunel) {
     		"aFieldId" : {
     			"filter" : {"min":0, "max":10}  //or array of selected categories
     			"filter_type" : 'range',        //or 'category'
+    			"datasetIndex" : 0              //Index of the dataset containing the field in the brunel instance
     		}
         }
 
@@ -61,19 +62,25 @@ function BrunelEventHandlers (brunel) {
 		//All filter values for the given visualization are by field id and whether the field's type.
         var filterState = defaultFilter;
 
-        function makeFilterStatement () {
+        function makeFilterStatement (data) {
 
         	var filterStatement = "";
         	for (var field in filterState) {
-        		if (filterState[field].filter_type === 'range') {
-        			filterStatement += makeRangeFilter(field, filterState[field].filter);
+        		
+        		//Only filter on fields known to be in the particular dataset
+        		if (data === brunel.data(null,filterState[field].datasetIndex)) {
+	        		if (filterState[field].filter_type === 'range') {
+	        			filterStatement += makeRangeFilter(field, filterState[field].filter);
+	        		}
+	        		else if (filterState[field].filter_type === 'category') {
+	        			filterStatement += makeCategoryFilter(field, filterState[field].filter);
+	        		}
+	        		filterStatement += ";";
+	        		console.log("Appended Filter Statement for dataset (" + filterState[field].datasetIndex + "): " + filterStatement )
         		}
-        		else if (filterState[field].filter_type === 'category') {
-        			filterStatement += makeCategoryFilter(field, filterState[field].filter);
-        		}
-        		filterStatement += ";";
 
 			}
+        	       	
         	return filterStatement.substring(0,filterStatement.length-1);
         }
 
@@ -121,7 +128,7 @@ function BrunelEventHandlers (brunel) {
 	function addDataProcess() {
 		
 		brunel.dataPreProcess(function (data) {
-			return data.filter(filterHandler.makeFilterStatement())
+			return data.filter(filterHandler.makeFilterStatement(data))
 		});
 	}
 	

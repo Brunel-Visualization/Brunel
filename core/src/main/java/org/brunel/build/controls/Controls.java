@@ -43,11 +43,11 @@ public class Controls {
         this.filters = new ArrayList<>();
     }
 
-    public void buildControls(VisSingle vis, Dataset data) {
+    public void buildControls(VisSingle vis, Dataset data, int datasetIndex) {
         for (Param f : vis.fFilter) {
-            filters.add(FilterControl.makeForFilterField(data, f.asField(data), f.firstModifier()));
+            filters.add(FilterControl.makeForFilterField(data, datasetIndex, f.asField(data), f.firstModifier()));
         }
-        FilterControl animationControl = FilterControl.makeForAnimation(data, vis.fAnimate);
+        FilterControl animationControl = FilterControl.makeForAnimation(data, datasetIndex, vis.fAnimate);
         if (animationControl != null) filters.add(animationControl);
     }
 
@@ -96,19 +96,18 @@ public class Controls {
             Double animateSpeed = filter.animateSpeed;
             Double animateFrames = filter.animateFrames;
             boolean animate = filter.animate;
-            
-            
+            int datasetIndex = filter.datasetIndex;
 
             //Range filter
             if (categories == null) {
-                out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_range_slider(", out.quote(options.visIdentifier), ",",
+                out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_range_slider(", out.quote(options.visIdentifier),",",datasetIndex, ",",
                         out.quote(fieldId), ",", out.quote(label), ",", low, ",", high, ",",
-                        visInstance, ".data().field(", out.quote(fieldId), "),", animate, "," , animateFrames, ",", animateSpeed, "))").endStatement();
+                        visInstance, ".data(null,",datasetIndex,").field(", out.quote(fieldId), "),", animate, "," , animateFrames, ",", animateSpeed, "))").endStatement();
             }
 
             //Category filter
             else {
-                out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_category_filter(", out.quote(options.visIdentifier), ",",
+                out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_category_filter(", out.quote(options.visIdentifier), ",",datasetIndex,",",
                         out.quote(fieldId), ",", out.quote(label), ",", gson.toJson(categories), ",", gson.toJson(selectedCategories), "))").endStatement();
             }
 
