@@ -38,6 +38,9 @@ var BrunelD3 = (function () {
             y = 0;
         }
 
+        if (!w) w  = target.getAttribute("width");
+        if (!h) h = target.getAttribute("height");
+
         var g = {
             chart_top: y + h * chart_top, chart_bottom: y + h * chart_bottom,
             chart_left: x + w * chart_left, chart_right: x + w * chart_right,
@@ -1453,8 +1456,9 @@ var BrunelD3 = (function () {
             pad = geom.default_point_size,
             left = pad, top = pad,
             right = geom.inner_width - pad, bottom = geom.inner_height - pad,
-            D = (density || 1) * Math.min(W, H) / Math.sqrt(N) / 2,
+            D = density * Math.min(W, H) / Math.sqrt(N) / 2,
             R = D * Math.max(1, D - 3) / 5 / Math.max(1, E / N);
+        R = Math.min(R, D * 6);
 
         var a, i, nd;
         for (i = 0; i < N; i++) {
@@ -1529,14 +1533,14 @@ var BrunelD3 = (function () {
             .force("link", d3.forceLink(graph.links).distance(D))
             .force("center", d3.forceCenter(W / 2, H / 2))
             .force("charge", d3.forceManyBody().distanceMax(geom.inner_radius / 2).strength(-R))
-            .force("inside", function (a) {
-                var i, n = graph.nodes.length, k = a * a, node;
+            .force("inside", function () {
+                var i, n = graph.nodes.length, node;
                 for (i = 0; i < n; i++) {
                     node = graph.nodes[i];
-                    if (node.x < left) node.vx += k * (left - node.x);
-                    if (node.x > right) node.vx += k * (right - node.x);
-                    if (node.y < top) node.vy += k * (top - node.y);
-                    if (node.y > bottom) node.vy += k * (bottom - node.y);
+                    if (node.x < left) node.vx += left - node.x;
+                    if (node.x > right) node.vx += right - node.x;
+                    if (node.y < top) node.vy += top - node.y;
+                    if (node.y > bottom) node.vy += bottom - node.y;
                 }
             });
 
