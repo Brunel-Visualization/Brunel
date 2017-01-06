@@ -169,12 +169,12 @@
     <li><b>range</b>: Distance between min and max values</li>
     <li><b>q1</b>, <b>q3</b>: Lower and Upper quartiles</li>
     <li><b>iqr</b>:Distance between q1 and q3 -- the interquartile range</li>
-    <li><b>stddev</b>, <b>variance</b>, <b>skew</b>,<b>kurtosis</b>: statistical measure for the group</li>
+    <li><b>stddev</b>, <b>stderr</b>, <b>variance</b>, <b>skew</b>,<b>kurtosis</b>: statistical measure for the group</li>
     <li><b>fit</b>: Performs a regression on the x values of the chart and returns the predicted y value</li>
     <li><b>smooth</b>: Smooths the values using an adaptive kernel. If an optional value is provided, it will define the
         percent of the data to include near each point when smoothing</li>
 </ul>
-<p>Note that <code>iqr</code> and <code>range</code> produce a range -- two values. If used with 'y' the result is
+<p>Note that <code>iqr</code>, <code>stderr</code> and <code>range</code> produce a range -- two values. If used with 'y' the result is
     the
     distance between them, but if used with 'yrange' it will generate the actual range. See the examples below for
     how
@@ -194,7 +194,8 @@
 
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) yrange(summer) range(summer) sort(summer)</a>
 </p>
-
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) yrange(summer) stderr(summer) sort(summer)</a>
+</p>
 <p class="examples"><a onClick="showAction(this.text)">area x(region) yrange(dem_rep) iqr(dem_rep) + line x(region)
     y(dem_rep) median(dem_rep)</a></p>
 
