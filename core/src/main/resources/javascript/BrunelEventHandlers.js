@@ -76,7 +76,7 @@ function BrunelEventHandlers (brunel) {
 	        			filterStatement += makeCategoryFilter(field, filterState[field].filter);
 	        		}
 	        		filterStatement += ";";
-	        		console.log("Appended Filter Statement for dataset (" + filterState[field].datasetIndex + "): " + filterStatement )
+//	        		console.log("Appended Filter Statement for dataset (" + filterState[field].datasetIndex + "): " + filterStatement )
         		}
 
 			}
