@@ -91,6 +91,11 @@ var BrunelJQueryControlFactory = (function () {
         	.addClass(valueStyle);
 		highValue.html(field.format(high));
 
+		//The default step is 1 which means there are no steps for a data range of 1.0 or less
+		//In this case, we choose a step based on the scale Brunel creates for the field
+		//We are not doing this always because it would make the filter too coarse by default.
+		//A better solution is needed.
+		var step = ( max-min > 2.0) ? 1 : (max-min)/scale.length;
 
 	    var slider = $('<div />', {
 	    		id: sliderId
@@ -99,7 +104,7 @@ var BrunelJQueryControlFactory = (function () {
 	            range: true,
 	            min: min,
 	            max: max,
-	            step: Math.abs(max-min)/200,    
+	            step: step,
 	            values:[low, high],
 	            slide: function( event, ui ) {
 	                lowValue.html(field.format(ui.values[0]));
@@ -165,8 +170,9 @@ var BrunelJQueryControlFactory = (function () {
 
 		runAnimation (function() {
 			if (animations[visid].index < scale.length-1) {
-		 		$("#" + sliderId).slider('values',0,scale[animations[visid].index]);
-		 		$("#" + sliderId).slider('values',1,scale[animations[visid].index+1]);
+				$("#" + sliderId).slider({
+					values: [ scale[animations[visid].index], scale[animations[visid].index+1] ]
+				})
 		 		animations[visid].index++;
 			}
 			else {
