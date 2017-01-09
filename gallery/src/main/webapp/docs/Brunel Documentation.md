@@ -38,7 +38,6 @@ This document is available both as a simple file, and also as an online guide. T
 allows you to click on the Brunel examples and see them in operation on a sample data set. You can
 also edit the commands and hit return to modify the syntax.
 
-
 ### Some Brunel Examples
 <!-- examples -->
 
