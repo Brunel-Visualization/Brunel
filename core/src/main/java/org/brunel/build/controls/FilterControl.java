@@ -129,12 +129,13 @@ public class FilterControl {
         		jobj.add(f.id, aFilter);
 
     		}
-    		else if (f.lowValue != null) {
+    		else  {
         		JsonObject aFilter = new JsonObject();
     			aFilter.addProperty("filter_type", "range");
     			aFilter.addProperty("datasetIndex", f.datasetIndex);
     			JsonObject range = new JsonObject();
-    			range.addProperty("min", f.lowValue);
+    			Double low = f.lowValue == null ? f.min : f.lowValue;
+    			range.addProperty("min", low);
     			Double high = f.highValue == null ? f.max : f.highValue;
     			range.addProperty("max", high);
     			aFilter.add("filter", range);
