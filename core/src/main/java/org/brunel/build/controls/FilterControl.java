@@ -117,12 +117,13 @@ public class FilterControl {
     	JsonObject jobj = new JsonObject();
     	
     	for (FilterControl f : filterControls) {
-    		if (f.selectedCategories != null) {
+    		if (f.categories != null) {
         		JsonObject aFilter = new JsonObject();
     			aFilter.addProperty("filter_type", "category");
     			aFilter.addProperty("datasetIndex", f.datasetIndex);
     			JsonArray jarray = new JsonArray();
-    			for (Object o:f.selectedCategories) {
+    			Object[] cats = f.selectedCategories != null ? f.selectedCategories : f.categories;
+				for (Object o:cats) {    			
     				jarray.add(new JsonPrimitive(o.toString()));
     			}
     			aFilter.add("filter", jarray);
