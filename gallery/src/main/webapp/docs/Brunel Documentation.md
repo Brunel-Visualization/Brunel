@@ -33,12 +33,10 @@ single graphical representation. To combine "elements", we use the composition o
 together different elements. These operators allow side-by-side charts, overlaid elements and nested
 elements.
 
-
 ### How This Guide is Organized
 This document is available both as a simple file, and also as an online guide. The online version
 allows you to click on the Brunel examples and see them in operation on a sample data set. You can
 also edit the commands and hit return to modify the syntax.
-
 
 ### Some Brunel Examples
 <!-- examples -->
@@ -644,14 +642,14 @@ total.
  * **range** : Distance between min and max values
  * **q1**, **q3** : Lower and Upper quartiles
  * **iqr** :Distance between q1 and q3 -- the interquartile range
- * **stddev**, **variance**, **skew**, **kurtosis** : statistical measure for the group
+ * **stddev**, **stderr**, **variance**, **skew**, **kurtosis** : statistical measure for the group
  * **fit** : Performs a regression on the x values of the chart and returns the predicted y value
  * **smooth** : Smooths the values using an adaptive kernel. If an optional value is provided, it will
 define the percent of the data to include near each point when smoothing
 
-Note that `iqr` and `range` produce a range -- two values. If used with 'y' the result is the
-distance between them, but if used with 'yrange' it will generate the actual range. See the examples
-below for how this works
+Note that `iqr`, `stderr` and `range` produce a range -- two values. If used with 'y' the result is
+the distance between them, but if used with 'yrange' it will generate the actual range. See the
+examples below for how this works
 
 <!-- examples -->
 
@@ -664,6 +662,8 @@ below for how this works
     bar x(region) y(summer) range(summer) sort(summer)
 
     bar x(region) yrange(summer) range(summer) sort(summer)
+
+    bar x(region) yrange(summer) stderr(summer:2) sort(summer)
 
     area x(region) yrange(dem_rep) iqr(dem_rep) + line x(region) y(dem_rep) median(dem_rep)
 
@@ -893,7 +893,7 @@ of the fields used to define the connections.
 
 <!-- examples -->
 
-    edge key(state, region) + network y(state, region) label(#values) legends(none)
+    tree(prune) x(region, state) label(state) legends(none)
 
     data('sample:sample_edges.csv') edge key(From, To) opacity(Weight) + data('sample:sample_nodes.csv')
     network key(Node) size(Count:200%) color(Location) label(Node)
