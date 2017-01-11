@@ -19,16 +19,16 @@
 <p>
     Brunel maps provide geographic features that can be referenced by the name of the geography.  The geography to display is chosen automatically based on the
     requested content including a suitable map projection. <P>
-    
-    The region and name data that back the map feature are courtesy of the public domain data sets found in the Natural Earth repository (Free vector 
+
+    The region and name data that back the map feature are courtesy of the public domain data sets found in the Natural Earth repository (Free vector
     and raster map data @ naturalearthdata.com).<P>
-    
+
     <code>map</code> can match a geographic location either to the values in a field or to named geographic regions.  Named
     geographic locations are supplied directly to the <code>map</code> action.  Geographic matches based on the contents of a field (like names of US states)
-    are done by providing the field name containing the geographic names to <code>x</code>.  Labels that are specific to the chosen geography can be requested 
-    using the <code>labels</code> parameter on <code>map</code>; whereas labels that are present in the data can use the <code>label</code> action with 
+    are done by providing the field name containing the geographic names to <code>x</code>.  Labels that are specific to the chosen geography can be requested
+    using the <code>labels</code> parameter on <code>map</code>; whereas labels that are present in the data can use the <code>label</code> action with
     the data field containing the labels.<P>
-    
+
     Additional overlays (<code>+</code>) can be provided using longitude and latitude values for <code>x</code> and <code>y</code>.
 </p>
 
@@ -41,23 +41,50 @@
 
 <H1>Networks</H1>
 <p>
-    A graph network can be specified by overlaying (<code>+</code>) <code>edge</code> and <code>network</code>.<P>
-    
-    Networks typically (but not always) require one data source for the nodes and a separate data source for the connections.  The nodes data should contain unique
-    names for each node and the edges data should contain two fields that define which nodes are connected to each other.  An overlay (<code>+</code>) between
-    an <code>edge</code> and a <code>network</code> is used to draw the nodes and edges.  The <code>key</code> action indicates the fields that are used across
-    the <code>edge</code> and <code>network</code> defining the network visualization.<P>
-    
-    A network can be created from a single data source by indicating the connection fields in the <code>key</code> for the <code>edge</code>
-    and <code>y</code> for the <code>network</code>.  The <code>#values</code> field is generated and contains the contents of the fields
-    used to define the connections.<P>
-    
-
+    A graph network can be specified by overlaying (<code>+</code>) <code>edge</code> and <code>network</code>.<p>
+</p><p>
+    Networks require one data source for the nodes and a separate data source for the connections.  The nodes data should contain unique
+    identifiers for each node and the edges data should contain two fields that define which nodes are connected to each other.
+</p><p>
+    When specifying a network you specify the nodes and edges as two different elements, overlaid using the <code>+</code> operator.
+    Note that the order of the elements determines drawing order as usual, but it is legal to specify the network element first or
+    the edge (links) element first.
+</p><p>
+    For the node element, this is drawn as a point element (the type of the element is ignored, if specified) and can have all the usual
+    aesthetics such as color, size, labels. It must have <code>key(...)</code> statement that defines one field as the key identifier
+    that uniquely determines the node. The edge element must have two keys, a "from" and a "to" field which are used to search for the node
+    with the same key and attach the ends to. If either a "from" or "to" identifier is not found in the node identifiers, then the edge is
+    silently dropped from the display.
+</p><p>
+    An optional numeric parameter to <code>network</code> controls the balance between attractive and repulsive forces in the layout;
+    when the value is higher than unity, nodes are forced further apart; lower than unity and they are more clustered.
+</p><p>
+    Networks have two interactions defined by default, panning and zooming and the ability to drag nodes around. When nodes are dragged
+    the graph will modify the layout to adapt to the new configuration.
 </p>
-<p class="examples"><a onClick="showAction(this.text)"> tree(prune) x(region, state) label(state) legends(none)</a></p>
-<p class="examples"><a onClick="showAction(this.text)">data('sample:sample_edges.csv')  edge key(From, To) opacity(Weight) + data('sample:sample_nodes.csv')  network key(Node) size(Count:200%) color(Location) label(Node)
-</a></p>
+<p class="examples"><a onClick="showAction(this.text)">data('sample:LesMis-Connections.csv') edge key(A, B)  + data('sample:LesMis-Characters.csv')  network key(ID)  color(Main) label(Name:3) style("label-location:bottom") tooltip(name)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">data('sample:LesMis-Connections.csv') edge key(A, B)  + data('sample:LesMis-Characters.csv')  network(1.5) key(ID)  color(Main) label(Name:3) style("label-location:bottom") tooltip(name)</a></p>
 
+<H1>Trees</H1>
+<p>
+    A tree assumes the data has a hierarchical structure (much like a bubble chart or a treemap) and so can be used whenever the data
+    support that structure. Thus we can take a hierarchical display such as a treemap and simply change the diagram from
+    <code>treemap</code> to <code>tree</code> to get the desired tree. In this formulation, the levels for the tree are the levels
+    of the fields used in the position coordinates; only the leaf nodes are "real" nodes which can be colored, labeled etc.
+    The internal nodes are simply categories in data, and so cannot be modified away from their default view.
+</p>
+<p class="examples"><a onClick="showAction(this.text)">data("sample:US States.csv") treemap x(region, presidential_choice) color(income) mean(income) size(population) sum(population)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">data("sample:US States.csv") tree x(region, presidential_choice) color(income) mean(income) size(population) sum(population)</a></p>
 
-
+<p>
+    Alternatively, a tree can be defined with two data sets for nodes and links, exactly like a network. If the data is not actually
+    a tree, extra nodes are dropped to make it so. Thus the example for a network above can be directly changed to be a tree,
+    although the resulting display makes little sense -- trees should be reserved for hierarchical data.
+</p>
+<p class="examples"><a onClick="showAction(this.text)">data('sample:LesMis-Connections.csv') edge key(A, B)  + data('sample:LesMis-Characters.csv')  tree key(ID)  color(Main) label(Name:3) style("label-location:bottom") tooltip(name) </a></p>
+<p class="examples"><a onClick="showAction(this.text)">data("sample:US States.csv") tree x(region, presidential_choice) color(income) mean(income) size(population) sum(population)</a></p>
+<p>
+    For trees, the default interactivity is pan and zoom as usual, but we also add the ability to double-click on a node to hide
+    or unhide the subtree coming out of it.
+</p>
 

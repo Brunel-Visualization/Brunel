@@ -33,10 +33,12 @@ single graphical representation. To combine "elements", we use the composition o
 together different elements. These operators allow side-by-side charts, overlaid elements and nested
 elements.
 
+
 ### How This Guide is Organized
 This document is available both as a simple file, and also as an online guide. The online version
 allows you to click on the Brunel examples and see them in operation on a sample data set. You can
 also edit the commands and hit return to modify the syntax.
+
 
 ### Some Brunel Examples
 <!-- examples -->
@@ -497,6 +499,30 @@ way of specifying size is most suited to a point element with a rectangle type.
     x(longitude) y(latitude) size(population, density) style('symbol:rect; size:300%')
 
 
+### CSS
+This aesthetic tags a generated SVG element with a CSS class based on the field passed in. This
+field should be a categorical field, or a binned numeric one, but will work with a numeric field if
+provided. Without any parameters, elements will be tagged as having classes "brunel_class_1",
+"brunel_class_2" etc. depending on values of the field passed in, and so this can be used, in
+combination with setting css styles for these tags, to generate specific looks.
+
+The full syntax for css is: `css(field:prefix:[names|numbers])`. If "prefix" is set, it is used
+instead of "brunel_class_" in the generated name "brunel_class_N". If "names" is specified instead
+of the default "numbers" the actual value of the field is used in the class name, not just the index
+of it. Take care with this option that the field names ae valid identifiers!
+
+<!-- examples -->
+
+    data('sample:US States.csv') bubble label(abbr) size(population) css(presidential_choice)
+    style(".brunel_class_1 {stroke-width:10; stroke-opacity:1}")
+
+    data('sample:US States.csv') bubble label(abbr) size(population) css(presidential_choice:who)
+    style(".who1 {stroke-opacity:1; stroke:red;stroke-width:5}")
+
+    data('sample:US States.csv') bubble label(abbr) size(population) css(presidential_choice::names)
+    style(".Obama {stroke-opacity:1; stroke:red;stroke-width:5}")
+
+
 ### Split
 The split aesthetic does not modify the appearance of items at all -- all it does is to split up a
 single item (like an area)into multiple ones. Effectively it is used just for creating groups.
@@ -811,7 +837,7 @@ previous set of rectangles up into smaller ones so as to fill the space complete
 
 
 ### Cloud
-This ignores all positions and places the rows in a tag-cloud layout. If a label is defiend, it uses
+This ignores all positions and places the rows in a tag-cloud layout. If a label is defined, it uses
 that text, otherwise it uses the rows
 
 <!-- examples -->
@@ -881,22 +907,69 @@ Networks
 --------
 A graph network can be specified by overlaying ( `+`) `edge` and `network`.
 
-Networks typically (but not always) require one data source for the nodes and a separate data source
-for the connections. The nodes data should contain unique names for each node and the edges data
-should contain two fields that define which nodes are connected to each other. An overlay ( `+`)
-between an `edge` and a `network` is used to draw the nodes and edges. The `key` action indicates
-the fields that are used across the `edge` and `network` defining the network visualization.
+Networks require one data source for the nodes and a separate data source for the connections. The
+nodes data should contain unique identifiers for each node and the edges data should contain two
+fields that define which nodes are connected to each other.
 
-A network can be created from a single data source by indicating the connection fields in the `key`
-for the `edge` and `y` for the `network`. The `#values` field is generated and contains the contents
-of the fields used to define the connections.
+When specifying a network you specify the nodes and edges as two different elements, overlaid using
+the `+` operator. Note that the order of the elements determines drawing order as usual, but it is
+legal to specify the network element first or the edge (links) element first.
+
+For the node element, this is drawn as a point element (the type of the element is ignored, if
+specified) and can have all the usual aesthetics such as color, size, labels. It must have `key(...)`
+statement that defines one field as the key identifier that uniquely determines the node. The edge
+element must have two keys, a "from" and a "to" field which are used to search for the node with the
+same key and attach the ends to. If either a "from" or "to" identifier is not found in the node
+identifiers, then the edge is silently dropped from the display.
+
+An optional numeric parameter to `network` controls the balance between attractive and repulsive
+forces in the layout; when the value is higher than unity, nodes are forced further apart; lower
+than unity and they are more clustered.
+
+Networks have two interactions defined by default, panning and zooming and the ability to drag nodes
+around. When nodes are dragged the graph will modify the layout to adapt to the new configuration.
 
 <!-- examples -->
 
-    tree(prune) x(region, state) label(state) legends(none)
+    data('sample:LesMis-Connections.csv') edge key(A, B) + data('sample:LesMis-Characters.csv') network
+    key(ID) color(Main) label(Name:3) style("label-location:bottom") tooltip(name)
 
-    data('sample:sample_edges.csv') edge key(From, To) opacity(Weight) + data('sample:sample_nodes.csv')
-    network key(Node) size(Count:200%) color(Location) label(Node)
+    data('sample:LesMis-Connections.csv') edge key(A, B) + data('sample:LesMis-Characters.csv')
+    network(1.5) key(ID) color(Main) label(Name:3) style("label-location:bottom") tooltip(name)
+
+
+Trees
+-----
+A tree assumes the data has a hierarchical structure (much like a bubble chart or a treemap) and so
+can be used whenever the data support that structure. Thus we can take a hierarchical display such
+as a treemap and simply change the diagram from `treemap` to `tree` to get the desired tree. In this
+formulation, the levels for the tree are the levels of the fields used in the position coordinates;
+only the leaf nodes are "real" nodes which can be colored, labeled etc. The internal nodes are
+simply categories in data, and so cannot be modified away from their default view.
+
+<!-- examples -->
+
+    data("sample:US States.csv") treemap x(region, presidential_choice) color(income) mean(income)
+    size(population) sum(population)
+
+    data("sample:US States.csv") tree x(region, presidential_choice) color(income) mean(income)
+    size(population) sum(population)
+
+Alternatively, a tree can be defined with two data sets for nodes and links, exactly like a network.
+If the data is not actually a tree, extra nodes are dropped to make it so. Thus the example for a
+network above can be directly changed to be a tree, although the resulting display makes little
+sense -- trees should be reserved for hierarchical data.
+
+<!-- examples -->
+
+    data('sample:LesMis-Connections.csv') edge key(A, B) + data('sample:LesMis-Characters.csv') tree
+    key(ID) color(Main) label(Name:3) style("label-location:bottom") tooltip(name)
+
+    data("sample:US States.csv") tree x(region, presidential_choice) color(income) mean(income)
+    size(population) sum(population)
+
+For trees, the default interactivity is pan and zoom as usual, but we also add the ability to
+double-click on a node to hide or unhide the subtree coming out of it.
 
 
 
@@ -1110,6 +1183,23 @@ you to change where a label is located relative to the shape. The valid values a
 <!-- examples -->
 
     line x(state) y(summer) style('stroke:red') + line x(state) y(winter) style('stroke:blue')
+
+
+### Point Symbol Style
+If the "symbol" style is set for an element and that element is shown as a point, the requested
+symbol will be drawn instead of a circle. Valid symbols are all d3 symbols ( `circle`, `cross`, `diamond`
+, `square`, `Wye`, `triangle`) together with the following brunel extensions:
+
+`star-N` request an 'N' pointed star (N is a number > = 3). `star` defaults to a 5-pointed star.
+
+`poly-N` request an 'N' sided polygon (N is a number > = 3). `poly` defaults to a pentagram.
+
+`person` request an outline of a person as a symbol
+
+<!-- examples -->
+
+    data("sample:US States.csv") x(summer) y(winter) style("symbol:person") size(population:1000%)
+    label(abbr) style("label-location:center")
 
 
 ### Group Hierarchy for CSS

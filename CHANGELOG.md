@@ -2,27 +2,74 @@
 
 ## Trees and Hierarchies
 
+We have added a number of linked features for trees and, more generally for hierarchies.
+Previous support was limited and considered 'experimental'. The new support should be considered
+standard.
+
+### Networks
+
+An new optional numeric parameter to `network` controls the balance between attractive and repulsive
+forces in the layout; when the value is higher than unity, nodes are forced further apart; lower
+than unity and they are more clustered.
+
+Networks have two interactions defined by default, panning and zooming and the ability to drag nodes
+around. When nodes are dragged the graph will modify the layout to adapt to the new configuration.
+
+
+### Trees
+-----
+A tree assumes the data has a hierarchical structure (much like a bubble chart or a treemap) and so
+can be used whenever the data support that structure. Thus we can take a hierarchical display such
+as a treemap and simply change the diagram from `treemap` to `tree` to get the desired tree. 
+
+Alternatively, a tree can be defined with two data sets for nodes and links, exactly like a network.
+If the data is not actually a tree, extra nodes are dropped to make it so. Thus the example for a
+network above can be directly changed to be a tree, although the resulting display makes little
+sense -- trees should be reserved for hierarchical data.
+
+For trees, the default interactivity is pan and zoom as usual, but we also add the ability to
+double-click on a node to hide or unhide the subtree coming out of it.
+
+
 ### interactivity
-interaction(expand)
-interaction(collapse)
 
-### Specifying a Hierarchical structure
+To support interactivity for trees, two new interactivity options have been made available:
 
-Using positions --
-Using keys --
+`interaction(collapse)` -- when double-clicking on a node, the subtree under that node (all its descendants)
+will be hidden; you can double-click again to show it. Note that this works also for other hierarchical views
+like treemaps and bubble charts, although it is less useful
 
-## Rows
+`interaction(expand)` -- when double-clicking on a node, that node is moved to the root of the hierarchy; 
+showing ONLY descendants of that node. Double-click on it again to reverse the operation.
+Note that this works also for other hierarchical views like treemaps and bubble charts, and is quite useful!
+
 
 ## Symbols
 
+If the "symbol" style is set for an element and that element is shown as a point, the requested
+symbol will be drawn instead of a circle. Valid symbols are all d3 symbols 
+( `circle`, `cross`, `diamond`, `square`, `Wye`, `triangle`) 
+together with the following brunel extensions:
+
+`star-N` request an 'N' pointed star (N is a number > = 3). `star` defaults to a 5-pointed star.
+
+`poly-N` request an 'N' sided polygon (N is a number > = 3). `poly` defaults to a pentagram.
+
+`person` request an outline of a person as a symbol
+
+
 ## CSS aesthetic
 
-    Syntax: css(field:prefix:[names|numbers])
+This aesthetic tags a generated SVG element with a CSS class based on the field passed in. This
+field should be a categorical field, or a binned numeric one, but will work with a numeric field if
+provided. Without any parameters, elements will be tagged as having classes "brunel_class_1",
+"brunel_class_2" etc. depending on values of the field passed in, and so this can be used, in
+combination with setting css styles for these tags, to generate specific looks.
 
-    prefix is a string for the class prefix
-    -- if not set, use "brunel_class_"
-
-    if 'names' is specified it uses the names from the field, otherwise uses numbers
+The full syntax for css is: `css(field:prefix:[names|numbers])`. If "prefix" is set, it is used
+instead of "brunel_class_" in the generated name "brunel_class_N". If "names" is specified instead
+of the default "numbers" the actual value of the field is used in the class name, not just the index
+of it. Take care with this option that the field names ae valid identifiers!
 
 ## Zoom
 

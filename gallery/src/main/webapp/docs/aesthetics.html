@@ -164,6 +164,24 @@ And here are some examples for a categorical field
 <p class="examples"><a onClick="showAction(this.text)">x(longitude) y(latitude) size(population, density) style('symbol:rect; size:300%')</a></p>
 
 
+<H3>CSS</H3>
+<p>
+    This aesthetic tags a generated SVG element with a CSS class based on the field passed in. This field should be
+    a categorical field, or a binned numeric one, but will work with a numeric field if provided. Without any parameters,
+    elements will be tagged as having classes "brunel_class_1" , "brunel_class_2" etc. depending on values of the field
+    passed in, and so this can be used, in combination with setting css styles for these tags, to generate specific looks.
+</p>
+<p>
+    The full syntax for css is: <code>css(field:prefix:[names|numbers])</code>. If "prefix" is set, it is used instead
+    of "brunel_class_" in the generated name "brunel_class_N". If "names" is specified instead of the default "numbers" the
+    actual value of the field is used in the class name, not just the index of it. Take care with this option that the
+    field names ae valid identifiers!
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">data('sample:US States.csv') bubble label(abbr) size(population) css(presidential_choice) style(".brunel_class_1 {stroke-width:10; stroke-opacity:1}")</a></p>
+<p class="examples"><a onClick="showAction(this.text)">data('sample:US States.csv') bubble label(abbr) size(population) css(presidential_choice:who) style(".who1 {stroke-opacity:1; stroke:red;stroke-width:5}") </a></p>
+<p class="examples"><a onClick="showAction(this.text)">data('sample:US States.csv') bubble label(abbr) size(population) css(presidential_choice::names) style(".Obama {stroke-opacity:1; stroke:red;stroke-width:5}") </a></p>
+
 <H3>Split</H3>
 <p>
     The split aesthetic does not modify the appearance of items at all -- all it does is to split up a single item (like
