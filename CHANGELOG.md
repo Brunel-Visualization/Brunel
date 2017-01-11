@@ -58,6 +58,11 @@ together with the following brunel extensions:
 `person` request an outline of a person as a symbol
 
 
+## Statistics
+`stderr` was added to support visualizations such as error bars.  An optional parameter can be used as a multiplier as in:
+
+`bar x(country) yrange(price) stderr(price:2)`
+
 ## CSS aesthetic
 
 This aesthetic tags a generated SVG element with a CSS class based on the field passed in. This
@@ -89,6 +94,10 @@ selection purposes. The classes added are (for various degrees of zoom):
  * `zoomIn zoomIn5`
  * `zoomIn zoomInHigh`            (more than a factor of 5)
  * `zoomIn zoomInExtreme`         (more than a factor of 10)
+ 
+## Notebooks
+
+Support for Brunel in Toree notebooks using Scala now require Spark 2.0 & Scala 2.11.
 
 # 2.0 Release Notes
 
