@@ -25,7 +25,7 @@ standard.
 
 ### Networks
 
-An new optional numeric parameter to `network` controls the balance between attractive and repulsive
+A new optional numeric parameter to `network` controls the balance between attractive and repulsive
 forces in the layout; when the value is higher than unity, nodes are forced further apart; lower
 than unity and they are more clustered.
 

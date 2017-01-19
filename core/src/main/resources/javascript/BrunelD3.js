@@ -876,9 +876,11 @@ var BrunelD3 = (function () {
         var node = d3Target.node();
         if (!node) return;
 
-        var svg = node.ownerSVGElement,                          // Owning SVG
-            w = +svg.attributes.width.value, h = +svg.attributes.height.value,  // width and height
-            pt = svg.createSVGPoint();                                      // For matrix calculations
+        var svg = node.ownerSVGElement;                                         // Owning SVG
+        if (!svg) return;                                                       // Do not add tooltip if not shown
+
+        var w = +svg.attributes.width.value, h = +svg.attributes.height.value,  // width and height
+            pt = svg.createSVGPoint();                                          // For matrix calculations
 
 
         d3Target.on('mousemove', function (d) {
