@@ -1018,6 +1018,14 @@ var BrunelD3 = (function () {
     // Add a label for the selection 'item' to the group 'labelGroup', using the information in 'labeling'
     // 'hits' keeps track of text hit boxes to prevent heavy overlapping
     // 'geom' give the space into which the labels should fit
+    /**
+     * Add a label for the selection
+     * @param item          the SVG item for the element we want to label (a rect, path, etc)
+     * @param labelGroup    the group we want to add the label into
+     * @param labeling      Brunel structure defining how we want to label
+     * @param hits          A map of grid positions to use in overlap prevention (with 'D' being the gird granularity)
+     * @param geom          Overall geometric layout of the chart
+     */
     function labelItem(item, labelGroup, labeling, hits, geom) {
         var d = item.__data__;
         if (d.data && d.data.row != undefined) d = d.data;  // For hierarchies and structures where the data is a layer down
@@ -1035,7 +1043,7 @@ var BrunelD3 = (function () {
             txt.__labeling__ = labeling;
         }
 
-        if (labeling.cssClass) txt.attr('class', labeling.cssClass(item.__data__));
+        if (labeling.cssClass) txt.attr('class', labeling.cssClass(d));
         else txt.classed('label', true);
 
         txt.classed("selected", item.classList && item.classList.contains("selected"));           // Copy selection status to label
@@ -1082,6 +1090,7 @@ var BrunelD3 = (function () {
         var hits = makeHits();                               // Hit items for one pass
 
         element.each(function (d, i) {                                      // index in order
+            d._ix = i
             d._ix = i
         });
         var sorted = element.sort(function (a, b) {                         // sorted by reverse order

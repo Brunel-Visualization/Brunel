@@ -40,259 +40,280 @@ import java.util.List;
  */
 public class D3LabelBuilder {
 
-    private final VisSingle vis;
-    private final ScriptWriter out;
-    private final Dataset data;
+	private final VisSingle vis;
+	private final ScriptWriter out;
+	private final Dataset data;
 
-    public D3LabelBuilder(VisSingle vis, ScriptWriter out, Dataset data) {
-        this.vis = vis;
-        this.out = out;
-        this.data = data;
-    }
+	public D3LabelBuilder(VisSingle vis, ScriptWriter out, Dataset data) {
+		this.vis = vis;
+		this.out = out;
+		this.data = data;
+	}
 
-    public void addElementLabeling() {
-        if (vis.itemsLabel.isEmpty()) return;
-        // Networks are updated on ticks., so just attach once -- no transitions
-        if (vis.tDiagram == Diagram.network) {
-            out.add("BrunelD3.label(merged, labels, labeling, 0, geom)").endStatement();
-            return;
-        }
+	public void addElementLabeling() {
+		if (vis.itemsLabel.isEmpty()) return;
+		// Networks are updated on ticks., so just attach once -- no transitions
+		if (vis.tDiagram == Diagram.network) {
+			out.add("BrunelD3.label(merged, labels, labeling, 0, geom)").endStatement();
+			return;
+		}
 
-        // Text elements define labeling as the main item; they do not need labels attached, which is what this does
-        if (vis.tElement != Element.text)
-            out.add("BrunelD3.label(merged, labels, labeling, transitionMillis, geom)").endStatement();
-    }
+		// Text elements define labeling as the main item; they do not need labels attached, which is what this does
+		if (vis.tElement != Element.text)
+			out.add("BrunelD3.label(merged, labels, labeling, transitionMillis, geom)").endStatement();
+	}
 
-    public static void addFontSizeAttribute(VisSingle vis, ScriptWriter out) {
-        if (!vis.fSize.isEmpty()) {
-            StyleTarget target = StyleTarget.makeElementTarget("text", "label");
-            Size parts = ModelUtil.getSize(vis, target, "font-size");
-            if (parts == null) {
-                out.addChained("style('font-size', function(d) { return (100*size(d)) + '%' })");
-            } else {
-                out.addChained("style('font-size', function(d) { return (", parts.value(12), "* size(d)) +'" + parts.suffix() + "' })");
-            }
-        }
-    }
+	public static void addFontSizeAttribute(VisSingle vis, ScriptWriter out) {
+		if (!vis.fSize.isEmpty()) {
+			StyleTarget target = StyleTarget.makeElementTarget("text", "label");
+			Size parts = ModelUtil.getSize(vis, target, "font-size");
+			if (parts == null) {
+				out.addChained("style('font-size', function(d) { return (100*size(d)) + '%' })");
+			} else {
+				out.addChained("style('font-size', function(d) { return (", parts.value(12), "* size(d)) +'" + parts.suffix() + "' })");
+			}
+		}
+	}
 
-    public void addTooltips(ElementDetails details) {
-        if (vis.itemsTooltip.isEmpty()) return;
-        out.onNewLine().ln();
-        defineLabeling(prettify(vis.itemsTooltip, true), details.representation.getTooltipTextMethod(), true, true, null, 0, 0);
-        out.add("BrunelD3.addTooltip(merged, tooltipLabeling, geom)").endStatement();
-    }
+	public void addTooltips(ElementDetails details) {
+		if (vis.itemsTooltip.isEmpty()) return;
+		out.onNewLine().ln();
+		defineLabeling(prettify(vis.itemsTooltip, true), details.representation.getTooltipTextMethod(), true, true, null, 0, Collections.EMPTY_LIST, 0);
+		out.add("BrunelD3.addTooltip(merged, tooltipLabeling, geom)").endStatement();
+	}
 
-    /**
-     * Define a structure to be used to label
-     *
-     * @param items                the items to form the content
-     * @param textMethod           method for placing text relative to the object it is attached to
-     * @param forTooltip           true if this is for a tooltip
-     * @param fitsShape            true if the text is to fit inside the shape (if the shape wants it)
-     * @param alignment            left | right | center
-     * @param padding              numeric amount
-     * @param hitDetectGranularity if strictly positive, the pixel level granularity to use for hit detection. If zero, none will be done
-     */
-    public void defineLabeling(List<Param> items, String textMethod, boolean forTooltip, boolean fitsShape, String alignment, double padding, int hitDetectGranularity) {
-        if (vis.tElement != Element.text && items.isEmpty()) return;
-        String name = forTooltip ? "tooltipLabeling" : "labeling";
-        out.add("var", name, "= {").ln().indentMore();
+	/**
+	 * Define a structure to be used to label
+	 *
+	 * @param items                the items to form the content
+	 * @param textMethod           method for placing text relative to the object it is attached to
+	 * @param forTooltip           true if this is for a tooltip
+	 * @param fitsShape            true if the text is to fit inside the shape (if the shape wants it)
+	 * @param alignment            left | right | center
+	 * @param padding              numeric amount
+	 * @param cssFunctions,        list of functions to use for css class
+	 * @param hitDetectGranularity if strictly positive, the pixel level granularity to use for hit detection. If zero, none will be done
+	 */
+	public void defineLabeling(List<Param> items, String textMethod, boolean forTooltip,
+							   boolean fitsShape, String alignment, double padding,
+							   List<Param> cssFunctions, int hitDetectGranularity) {
+		if (vis.tElement != Element.text && items.isEmpty()) return;
+		String name = forTooltip ? "tooltipLabeling" : "labeling";
+		out.add("var", name, "= {").ln().indentMore();
 
-        boolean fit = true;
+		boolean fit = true;
 
-        if (textMethod.equals("geo")) {
-            // We define a function to extract the coordinates from the geo, and project them
-            String func = "function(box,text,d) {var p = project_center(d.geo_properties); return {box:box, x:p[0], y:p[1]}}";
-            out.onNewLine().add("where:", func, ",");
-        } else {
-            HashSet<String> parts = new HashSet<>(Arrays.asList(textMethod.split("-")));
-            boolean inside = isInside(parts, fitsShape);
-            String method = getMethod(parts);
-            String location = getLocation(parts);
-            String align = alignment != null ? alignment : getAlignment(parts, inside);
-            double offset = getOffset(parts, inside);
-            fit = inside && fitsShape;
-            out.onNewLine()
-                    .add("method:", Data.quote(method))
-                    .add(", location:", location)
-                    .add(", inside:", inside)
-                    .add(", align:", Data.quote(align))
-                    .add(", pad:", padding)
-                    .add(", dy:", offset, ",");
-        }
+		if (textMethod.equals("geo")) {
+			// We define a function to extract the coordinates from the geo, and project them
+			String func = "function(box,text,d) {var p = project_center(d.geo_properties); return {box:box, x:p[0], y:p[1]}}";
+			out.onNewLine().add("where:", func, ",");
+		} else {
+			HashSet<String> parts = new HashSet<>(Arrays.asList(textMethod.split("-")));
+			boolean inside = isInside(parts, fitsShape);
+			String method = getMethod(parts);
+			String location = getLocation(parts);
+			String align = alignment != null ? alignment : getAlignment(parts, inside);
+			double offset = getOffset(parts, inside);
+			fit = inside && fitsShape;
+			out.onNewLine()
+					.add("method:", Data.quote(method))
+					.add(", location:", location)
+					.add(", inside:", inside)
+					.add(", align:", Data.quote(align))
+					.add(", pad:", padding)
+					.add(", dy:", offset, ",");
+		}
 
-        out.onNewLine().add("fit:", fit, ", granularity:", hitDetectGranularity, ",");
-        if (textMethod.equals("path") || textMethod.equals("wedge"))
-            out.onNewLine().add("path: path,");
+		out.onNewLine().add("fit:", fit, ", granularity:", hitDetectGranularity, ",");
+		if (textMethod.equals("path") || textMethod.equals("wedge"))
+			out.onNewLine().add("path: path,");
 
-        // Write it out as a wrapped function
-        out.onNewLine().add("content: function(d) {").indentMore();
+		// CSS functions were defined on the element, so we use them also on the label
+		// If there is only one, it is called 'css', else they are  'css_1', 'css_2' etc.
+		if (!cssFunctions.isEmpty()) {
+			out.onNewLine().add(" cssClass: function(d) { return 'label '");
+			if (cssFunctions.size() == 1) {
+				// Easy case -- just use the label as defined
+				out.add(" + css(d)");
+			} else
+				for (int i = 0; i < cssFunctions.size(); i++) {
+					if (i > 0) out.add(" + ' '");
+					out.add(" + css_" + (i + 1) + "(d)");
+				}
+			out.add("},");
 
-        // If we need data, guard against not having any
-        if (needsData(items))
-            out.onNewLine().add("return d.row == null ? null : ");
-        else
-            out.onNewLine().add("return ");
+		}
 
-        writeContent(items, forTooltip);
-        out.indentLess().onNewLine().add("}");
+		//                 .onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height } ")
 
-        out.indentLess().onNewLine().add("}").endStatement();
+		// Write it out as a wrapped function
+		out.onNewLine().add("content: function(d) {").indentMore();
 
-    }
+		// If we need data, guard against not having any
+		if (needsData(items))
+			out.onNewLine().add("return d.row == null ? null : ");
+		else
+			out.onNewLine().add("return ");
 
-    public int estimateLabelLength() {
-        int size = 0;
-        for (Param p : vis.itemsLabel) {
-            if (p.isField()) {
-                Field f = data.field(p.asField());
-                if (f.isDate()) size += 8;
-                else if (f.preferCategorical()) size += maxLength(f.categories()) + 1;
-                else size += 6;
-            } else {
-                // Text
-                size += p.asString().length() + 1;
-            }
-        }
-        return size;
-    }
+		writeContent(items, forTooltip);
+		out.indentLess().onNewLine().add("}");
 
-    private int maxLength(Object[] categories) {
-        int max = 0;
-        for (Object o : categories) max = Math.max(max, o.toString().length());
-        return max;
-    }
+		out.indentLess().onNewLine().add("}").endStatement();
 
-    private boolean needsData(List<Param> items) {
-        for (Param p : prettify(items, false))
-            if (p.isField()) return true;
-        return false;
-    }
+	}
 
-    // How to offset the text so it fits correctly
-    private double getOffset(HashSet<String> parts, boolean inside) {
-        if (parts.contains("top")) return inside ? 0.7 : -0.25;
-        if (parts.contains("bottom")) return inside ? -0.25 : 0.7;
-        return 0.3;
+	public int estimateLabelLength() {
+		int size = 0;
+		for (Param p : vis.itemsLabel) {
+			if (p.isField()) {
+				Field f = data.field(p.asField());
+				if (f.isDate()) size += 8;
+				else if (f.preferCategorical()) size += maxLength(f.categories()) + 1;
+				else size += 6;
+			} else {
+				// Text
+				size += p.asString().length() + 1;
+			}
+		}
+		return size;
+	}
 
-    }
+	private int maxLength(Object[] categories) {
+		int max = 0;
+		for (Object o : categories) max = Math.max(max, o.toString().length());
+		return max;
+	}
 
-    // Gets the text alignment based on where to draw relative to the shape
-    private String getAlignment(HashSet<String> parts, boolean inside) {
-        if (parts.contains("left")) return inside ? "start" : "end";
-        if (parts.contains("right")) return inside ? "end" : "start";
-        return "middle";
-    }
+	private boolean needsData(List<Param> items) {
+		for (Param p : prettify(items, false))
+			if (p.isField()) return true;
+		return false;
+	}
 
-    private boolean isInside(HashSet<String> parts, boolean fitsShape) {
-        // The user request  is checked first. Then, if asked to fit, we assume inside
-        if (parts.contains("inside")) return true;
-        else if (parts.contains("outside")) return false;
-        else return fitsShape;
-    }
+	// How to offset the text so it fits correctly
+	private double getOffset(HashSet<String> parts, boolean inside) {
+		if (parts.contains("top")) return inside ? 0.7 : -0.25;
+		if (parts.contains("bottom")) return inside ? -0.25 : 0.7;
+		return 0.3;
 
-    // Returns the important function that defiens how we will find the shape
-    private String getMethod(HashSet<String> parts) {
-        for (String s : parts)
-            if (s.equals("path") || s.equals("wedge") || s.equals("area") || s.equals("poly") || s.equals("geo"))
-                return s;
-        return "box";
-    }
+	}
 
-    // returns a two part array with the horizontal and vertical method locations
-    private String getLocation(HashSet<String> parts) {
-        String h = "center", v = "center";
-        if (parts.contains("left")) h = "left";
-        if (parts.contains("right")) h = "right";
-        if (parts.contains("top")) v = "top";
-        if (parts.contains("bottom")) v = "bottom";
-        return "['" + h + "', '" + v + "']";
-    }
+	// Gets the text alignment based on where to draw relative to the shape
+	private String getAlignment(HashSet<String> parts, boolean inside) {
+		if (parts.contains("left")) return inside ? "start" : "end";
+		if (parts.contains("right")) return inside ? "end" : "start";
+		return "middle";
+	}
 
-    private List<Param> prettify(List<Param> items, boolean longForm) {
+	private boolean isInside(HashSet<String> parts, boolean fitsShape) {
+		// The user request  is checked first. Then, if asked to fit, we assume inside
+		if (parts.contains("inside")) return true;
+		else if (parts.contains("outside")) return false;
+		else return fitsShape;
+	}
 
-        // If we have nothing but field names, and at least two, we add separators
-        if (items.size() < 2) return items;    // One item does not get prettified
+	// Returns the important function that defiens how we will find the shape
+	private String getMethod(HashSet<String> parts) {
+		for (String s : parts)
+			if (s.equals("path") || s.equals("wedge") || s.equals("area") || s.equals("poly") || s.equals("geo"))
+				return s;
+		return "box";
+	}
 
-        ArrayList<Param> result = new ArrayList<>();
-        for (int i = 0; i < items.size(); i++) {
-            Param p = items.get(i);
-            if (!p.isField()) return items;            // Any non-field and we do not prettify
-            Field f = data.field(p.asField());
-            if (i > 0) result.add(Param.makeString(longForm ? "<br/>" : ", "));
-            if (longForm)
-                result.add(Param.makeString("<span class=\"title\">" + f.label + ": </span>"));
-            result.add(p);
-        }
-        return result;
-    }
+	// returns a two part array with the horizontal and vertical method locations
+	private String getLocation(HashSet<String> parts) {
+		String h = "center", v = "center";
+		if (parts.contains("left")) h = "left";
+		if (parts.contains("right")) h = "right";
+		if (parts.contains("top")) v = "top";
+		if (parts.contains("bottom")) v = "bottom";
+		return "['" + h + "', '" + v + "']";
+	}
 
-    public void writeContent(List<Param> items, boolean forTooltip) {
-        // We must have some content
-        if (items.isEmpty()) {
-            // The position fields for a diagram
-            if (vis.tDiagram != null) items = Param.makeFields(vis.positionFields());
-            if (items.isEmpty())                                                    // Default is to use the row value
-                items = Collections.singletonList(Param.makeField("#row"));
-        }
+	private List<Param> prettify(List<Param> items, boolean longForm) {
 
-        // Tooltips are in HTML format
-        boolean first = true;
-        for (Param p : prettify(items, false)) {
-            if (!first) out.add("\n\t\t\t+ ");
-            if (p.isField()) {
-                Field f = data.field(p.asField());
-                if (forTooltip) out.add("'<span class=\"field\">' + ");
-                if (p.hasModifiers()) out.add("BrunelD3.shorten(");
-                out.add("data." + D3Util.baseFieldID(f) + "_f(d)");
-                if (p.hasModifiers()) out.add(",", (int) p.firstModifier().asDouble(), ")");
-                if (forTooltip) out.add(" + '</span>'");
-            } else {
-                String o = p.asString();
-                if (forTooltip) o = o.replaceAll("\\\\n", "&#10;"); // Add a new line character
-                out.add(Data.quote(o));
-            }
-            first = false;
-        }
-    }
+		// If we have nothing but field names, and at least two, we add separators
+		if (items.size() < 2) return items;    // One item does not get prettified
 
-    /* Call to add labels for internal nodes of trees and treemaps */
-    public void addTreeInternalLabelsInsideNode() {
-        out.add("diagramLabels.attr('class', 'axis diagram treemap hierarchy')").endStatement()
-                .add("var treeLabeling = { method:'inner-left', fit:true, dy:0.83, align:'start', ")
-                .indentMore()
-                .onNewLine().add("content:  function(d) { return d.data.innerNodeName },")
-                .onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height }, ")
-                .onNewLine().add("where :   function(box) { return {'x': box.x + 2, 'y': box.y, 'box': box} }")
-                .indentLess().onNewLine().add("}").endStatement();
-        out.add("BrunelD3.label(merged.filter(function(d) {return d.data.key}), diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
-    }
+		ArrayList<Param> result = new ArrayList<>();
+		for (int i = 0; i < items.size(); i++) {
+			Param p = items.get(i);
+			if (!p.isField()) return items;            // Any non-field and we do not prettify
+			Field f = data.field(p.asField());
+			if (i > 0) result.add(Param.makeString(longForm ? "<br/>" : ", "));
+			if (longForm)
+				result.add(Param.makeString("<span class=\"title\">" + f.label + ": </span>"));
+			result.add(p);
+		}
+		return result;
+	}
 
-    /* Call to add labels for internal nodes of trees and treemaps */
-    public void addTreeInternalLabelsOutsideNode(String vertical) {
-        String dy = vertical.equals("bottom") ? "0.75" : "0.25";
-        out.add("diagramLabels.attr('class', 'axis diagram tree hierarchy')").endStatement()
-                .add("var treeLabeling = { location:['center', '" + vertical + "'], fit:false, dy:" + dy + ", align:'middle', granularity:1, ")
-                .indentMore()
-                .onNewLine().add("content:  function(d) { return d.data.innerNodeName },")
-                .onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height } ")
-                .indentLess().onNewLine().add("}").endStatement();
-        out.add("BrunelD3.label(merged.filter(function(d) {return d.data.innerNodeName}), diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
-    }
+	public void writeContent(List<Param> items, boolean forTooltip) {
+		// We must have some content
+		if (items.isEmpty()) {
+			// The position fields for a diagram
+			if (vis.tDiagram != null) items = Param.makeFields(vis.positionFields());
+			if (items.isEmpty())                                                    // Default is to use the row value
+				items = Collections.singletonList(Param.makeField("#row"));
+		}
 
-    /* Call to add labels for the rough centers to a grid layout */
-    public void addGridLabels() {
+		// Tooltips are in HTML format
+		boolean first = true;
+		for (Param p : prettify(items, false)) {
+			if (!first) out.add("\n\t\t\t+ ");
+			if (p.isField()) {
+				Field f = data.field(p.asField());
+				if (forTooltip) out.add("'<span class=\"field\">' + ");
+				if (p.hasModifiers()) out.add("BrunelD3.shorten(");
+				out.add("data." + D3Util.baseFieldID(f) + "_f(d)");
+				if (p.hasModifiers()) out.add(",", (int) p.firstModifier().asDouble(), ")");
+				if (forTooltip) out.add(" + '</span>'");
+			} else {
+				String o = p.asString();
+				if (forTooltip) o = o.replaceAll("\\\\n", "&#10;"); // Add a new line character
+				out.add(Data.quote(o));
+			}
+			first = false;
+		}
+	}
 
-        out.add("var gridLabelSel = diagramExtras.selectAll('text.title').data(gridLabels, function(d) { return d.label })")
-                .endStatement();
+	/* Call to add labels for internal nodes of trees and treemaps */
+	public void addTreeInternalLabelsInsideNode() {
+		out.add("diagramLabels.attr('class', 'axis diagram treemap hierarchy')").endStatement()
+				.add("var treeLabeling = { method:'inner-left', fit:true, dy:0.83, align:'start', ")
+				.indentMore()
+				.onNewLine().add("content:  function(d) { return d.data.innerNodeName },")
+				.onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height }, ")
+				.onNewLine().add("where :   function(box) { return {'x': box.x + 2, 'y': box.y, 'box': box} }")
+				.indentLess().onNewLine().add("}").endStatement();
+		out.add("BrunelD3.label(merged.filter(function(d) {return d.data.key}), diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
+	}
 
-        out.add("var gridLabelAdd = gridLabelSel.enter().append('text').attr('class', 'diagram gridded hierarchy title')")
-                .addChained("text(function(d) { return d.label }).attr('dy', '0.3em').style('text-anchor', 'middle')")
-                .endStatement();
+	/* Call to add labels for internal nodes of trees and treemaps */
+	public void addTreeInternalLabelsOutsideNode(String vertical) {
+		String dy = vertical.equals("bottom") ? "0.75" : "0.25";
+		out.add("diagramLabels.attr('class', 'axis diagram tree hierarchy')").endStatement()
+				.add("var treeLabeling = { location:['center', '" + vertical + "'], fit:false, dy:" + dy + ", align:'middle', granularity:1, ")
+				.indentMore()
+				.onNewLine().add("content:  function(d) { return d.data.innerNodeName },")
+				.onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height } ")
+				.indentLess().onNewLine().add("}").endStatement();
+		out.add("BrunelD3.label(merged.filter(function(d) {return d.data.innerNodeName}), diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
+	}
 
-        out.add("BrunelD3.transition(gridLabelAdd.merge(gridLabelSel))")
-                .addChained("attr('x', function(d) { return scale_x(d.x) } ).attr('y', function(d) { return scale_y(d.y) } )")
-                .endStatement();
-    }
+	/* Call to add labels for the rough centers to a grid layout */
+	public void addGridLabels() {
+
+		out.add("var gridLabelSel = diagramExtras.selectAll('text.title').data(gridLabels, function(d) { return d.label })")
+				.endStatement();
+
+		out.add("var gridLabelAdd = gridLabelSel.enter().append('text').attr('class', 'diagram gridded hierarchy title')")
+				.addChained("text(function(d) { return d.label }).attr('dy', '0.3em').style('text-anchor', 'middle')")
+				.endStatement();
+
+		out.add("BrunelD3.transition(gridLabelAdd.merge(gridLabelSel))")
+				.addChained("attr('x', function(d) { return scale_x(d.x) } ).attr('y', function(d) { return scale_y(d.y) } )")
+				.endStatement();
+	}
 
 }

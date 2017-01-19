@@ -142,7 +142,7 @@ public class D3ElementBuilder {
 		}
 
 		labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape(),
-				details.getAlignment(), details.getPadding(),
+				details.getAlignment(), details.getPadding(), vis.fCSS,
 				collisionDetectionGranularity);   // Labels
 
 		Accessibility.defineElementLabelFunction(structure, out, labelBuilder);

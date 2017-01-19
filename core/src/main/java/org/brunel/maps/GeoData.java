@@ -19,7 +19,6 @@ package org.brunel.maps;
 import org.brunel.action.Param;
 import org.brunel.data.io.CSV;
 import org.brunel.geom.Point;
-import org.brunel.geom.Poly;
 import org.brunel.util.MappedLists;
 
 import java.io.IOException;
@@ -56,6 +55,7 @@ class GeoData {
     public static String getQuality(Param[] diagramParameters) {
         for (Param p : diagramParameters)
             if (p.type() == Param.Type.option) {
+                if (p.asString().equals("full")) return "full";
                 if (p.asString().equals("medium")) return "med";
                 if (p.asString().equals("high")) return "high";
                 if (p.asString().equals("low")) return "low";
@@ -245,7 +245,7 @@ class GeoData {
         }
         return result;
     }
-    
+
     //Method is for testing only
     GeoMapping make(Object[] names, Param[] geoParameters) {
         return GeoMapping.createGeoMapping(names, GeoData.instance().makeRequiredFiles(geoParameters), this, GeoData.getQuality(geoParameters), null);

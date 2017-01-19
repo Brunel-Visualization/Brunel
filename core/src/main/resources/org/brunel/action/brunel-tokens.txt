@@ -26,7 +26,7 @@ parallel diagram - NUMBER
 tree diagram - prune
 treemap diagram - prune
 network diagram - NUMBER
-map diagram - STRING+ labels low medium high
+map diagram - STRING+ labels low medium high full
 
 ## X and Y locations
 x position FIELD+ NUMBER+ STRING+

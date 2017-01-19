@@ -1,3 +1,20 @@
+# 2.3 Release Notes
+
+## Map quality option 'full'
+
+Added the map quality option `full` to denote a map with the full natural earth data, no quantization
+except to regularize the maps. These map files are about twice as large as the `high` quality files,
+but for most purposes are very similar in appearance.
+
+## css aesthetic now also applies to labels
+
+The CSS aesthetic now also applies to labels, so you can specify styles for labels by mapping to
+a field, like so:
+
+`map css(region:'':names) key(state) label(state) style('.label.Midwest {font-size:16px;font-weight:bold}')`
+
+This will show labels for the midwest states in the designated style.
+
 # 2.2 Release Notes
 
 ## Trees and Hierarchies
