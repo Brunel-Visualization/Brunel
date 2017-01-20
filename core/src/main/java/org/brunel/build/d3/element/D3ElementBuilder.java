@@ -86,9 +86,9 @@ public class D3ElementBuilder {
 
 		// Define the placement of the items
 		out.onNewLine().ln().comment("Define selection location")
-				.onNewLine().add("function place(sel, isEntry) {").indentMore()
+				.onNewLine().add("function place(selection, isEntry) {").indentMore()
 				.onNewLine().add("if (isEntry) {").indentMore()
-				.onNewLine().add("sel");
+				.onNewLine().add("selection").onNewLine();
 
 		out.addChained("attr('class', '" + Data.join(details.classes, " ") + "')");
 
