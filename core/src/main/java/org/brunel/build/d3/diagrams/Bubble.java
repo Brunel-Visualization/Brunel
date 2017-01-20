@@ -17,6 +17,7 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.d3.D3Interaction;
+import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
@@ -51,7 +52,11 @@ class Bubble extends D3Diagram {
                 .addChained("attr('r', 0)");
     }
 
-    public void writeDiagramUpdate(ElementDetails details) {
+	public void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {
+        D3ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
+    }
+
+	public void writeDiagramUpdate(ElementDetails details) {
         writeHierarchicalClass();
         out.addChained("filter(function(d) { return d.depth })");
         out.addChained("attr('cx', function(d) { return scale_x(d.x) })")
@@ -66,7 +71,7 @@ class Bubble extends D3Diagram {
         out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 
         D3ElementBuilder.definePointLikeMark(details, vis, out);
-        addAestheticsAndTooltips(details);
+        D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
     }
 
 }

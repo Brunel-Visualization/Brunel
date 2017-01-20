@@ -17,6 +17,7 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.d3.D3Interaction;
+import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
@@ -104,7 +105,7 @@ public class GeoMapLabels extends D3Diagram {
                 .onNewLine().add("location:['right', 'middle'], content: function(d) {return d[2]}")
                 .indentLess().onNewLine().add("}").endStatement();
 
-        out.add("BrunelD3.label(merged, labels, labeling, 0, geom)").endStatement();
+        out.add("BrunelD3.label(selection, labels, labeling, 0, geom)").endStatement();
     }
 
 
@@ -112,7 +113,11 @@ public class GeoMapLabels extends D3Diagram {
         out.addChained("classed('map', true)");
     }
 
-    private int radiusFor(LabelPoint p, int high, int low) {
+	public void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {
+		// Do nothing; this diagram is nothing but labels
+	}
+
+	private int radiusFor(LabelPoint p, int high, int low) {
         return (int) (Math.round((p.pop - low) * 4.0 / (high - low) + 3));
     }
 }

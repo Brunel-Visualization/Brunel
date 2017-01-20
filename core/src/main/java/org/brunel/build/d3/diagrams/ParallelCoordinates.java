@@ -19,9 +19,11 @@ package org.brunel.build.d3.diagrams;
 import org.brunel.action.Param;
 import org.brunel.build.d3.AxisDetails;
 import org.brunel.build.d3.D3Interaction;
+import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.D3ScaleBuilder;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.ScalePurpose;
+import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ChartStructure;
@@ -98,10 +100,14 @@ class ParallelCoordinates extends D3Diagram {
 
     public void writeDiagramUpdate(ElementDetails details) {
         out.addChained("attr('d', path)");
-        addAestheticsAndTooltips(details);
+        D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
     }
 
-    public void writePerChartDefinitions() {
+	public void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {
+        D3ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
+	}
+
+	public void writePerChartDefinitions() {
         out.add("var parallel;").at(50).comment("Structure to store parallel axes");
     }
 

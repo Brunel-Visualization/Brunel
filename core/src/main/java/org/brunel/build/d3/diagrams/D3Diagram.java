@@ -19,7 +19,6 @@ package org.brunel.build.d3.diagrams;
 import org.brunel.action.Param;
 import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
-import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
@@ -120,20 +119,19 @@ public abstract class D3Diagram {
 
 	/**
 	 * This is called when
+	 *
 	 * @param details
 	 */
 	public void writeDiagramEnter(ElementDetails details) {
 		// By default, nothing is needed
 	}
 
+	public abstract void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder);
+
 	public void writePerChartDefinitions() {
 		if (vis.tDiagram != null && vis.tDiagram.isHierarchical) {
 			out.add("var tree, expandState = [], collapseState = {};").at(50).comment("collapse state maps node IDs to true/false");
 		}
-	}
-
-	void addAestheticsAndTooltips(ElementDetails details) {
-		D3ElementBuilder.writeAesthetics(details, true, vis, out, labelBuilder);
 	}
 
 	void makeHierarchicalTree(boolean definedHierarchy) {

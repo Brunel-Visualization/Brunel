@@ -17,6 +17,7 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.d3.D3Interaction;
+import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.EdgeBuilder;
 import org.brunel.build.d3.element.ElementDetails;
@@ -101,13 +102,17 @@ class Tree extends D3Diagram {
 		writeNodePlacement(structure.details, "d.parent");              // place it at parent position
 	}
 
+	public void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {
+		D3ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
+	}
+
 	public void writeDiagramUpdate(ElementDetails details) {
 		writeHierarchicalClass();
 
 		writeNodePlacement(details, "d");
 
 		out.addChained("attr('r', " + details.overallSize.halved() + ")");
-		addAestheticsAndTooltips(details);
+		D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
 
 		// If we have edges defined as an element, we use those, otherwise add the following
 		if (structure.findDependentEdges() == null) {

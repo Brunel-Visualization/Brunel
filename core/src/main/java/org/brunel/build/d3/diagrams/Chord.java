@@ -17,6 +17,7 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.d3.D3Interaction;
+import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
@@ -73,7 +74,7 @@ class Chord extends D3Diagram {
                 .addChained("attr('class', 'element " + element.name() + "')")
                 .addChained("attr('transform', svgTrans)");
 
-        addAestheticsAndTooltips(details);
+        D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
 
         // We now need to add the arcs on the outside for the groups
         out.onNewLine().ln().comment("Add in the arcs on the outside for the groups");
@@ -121,4 +122,8 @@ class Chord extends D3Diagram {
         // Ensure we have a row for each chord, based off the chord start and end points
         out.addChained("each(function(d) { d.row = chordData.index(d.target.index, d.target.subindex) })");
     }
+
+	public void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {
+        D3ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
+	}
 }

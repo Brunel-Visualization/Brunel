@@ -259,13 +259,16 @@ public class D3Builder extends AbstractBuilder {
         out.add("\"use strict\";").comment("Strict Mode");
 
         // Add commonly used definitions
-        out.add("var datasets = [],").at(50).comment("Array of datasets for the original data");
-        out.add("    pre = function(d, i) { return d },").at(50).comment("Default pre-process does nothing");
-        out.add("    post = function(d, i) { return d },").at(50).comment("Default post-process does nothing");
-        out.add("    transitionTime = 200,").at(50).comment("Transition time for animations");
-        out.add("    charts = [],").at(50).comment("The charts in the system");
-        out.add("    hasData = function(d) {return d && (d.row != null || hasData(d.data))},").at(50).comment("Filters to data items");
-        out.add("    vis = d3.select('#' + visId).attr('class', 'brunel');").at(60).comment("the SVG container");
+        out.add("var datasets = [],").at(60).comment("Array of datasets for the original data");
+        out.add("    pre = function(d, i) { return d },").at(60).comment("Default pre-process does nothing");
+        out.add("    post = function(d, i) { return d },").at(60).comment("Default post-process does nothing");
+        out.add("    transitionTime = 200,").at(60).comment("Transition time for animations");
+        out.add("    charts = [],").at(60).comment("The charts in the system");
+        out.add("    hasData = function(d) {return d && (d.row != null || hasData(d.data))},")
+                .at(60).comment("Filters to data items");
+        out.add("    vis = d3.select('#' + visId).attr('class', 'brunel'),").at(60).comment("the SVG container");
+        out.add("    isSelected = function(data) { return function(d) {return data.$selection(d)=='\u2713'} };")
+                .comment("returns a filter function identifying selected items");
     }
 
     protected void endChart(ChartStructure structure) {
@@ -558,8 +561,7 @@ public class D3Builder extends AbstractBuilder {
 
         if (hasMultipleCharts) groupUtil.addAccessibleChartInfo();
 
-        out.addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top"))
-                .endStatement();
+        out.addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top")).endStatement();
 
         interaction.addOverlayForZoom(structure.diagram);
 

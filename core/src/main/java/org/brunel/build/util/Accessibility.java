@@ -36,10 +36,10 @@ public class Accessibility {
      * @param out          writes to this
      * @param labelBuilder the element's label builder
      */
-    public static void defineElementLabelFunction(ElementStructure structure, ScriptWriter out, D3LabelBuilder labelBuilder) {
+    private static void defineElementLabelFunction(ElementStructure structure, ScriptWriter out, D3LabelBuilder labelBuilder) {
         if (!structure.chart.accessible) return;
         VisSingle vis = structure.vis;
-        out.onNewLine().add("function ariaLabel(d) { return ");
+        out.onNewLine().add("function(d) { return ");
         if (!vis.itemsTooltip.isEmpty())
             labelBuilder.writeContent(vis.itemsTooltip, false);
         else if (!vis.itemsLabel.isEmpty())
@@ -56,9 +56,11 @@ public class Accessibility {
      * @param structure the element structure
      * @param out       writes to this
      */
-    public static void useElementLabelFunction(ElementStructure structure, ScriptWriter out) {
-        if (structure.chart.accessible)
-            out.addChained("attr('role', 'img').attr('aria-label', ariaLabel)");
+    public static void addAccessibilityLabels(ElementStructure structure, ScriptWriter out, D3LabelBuilder labelBuilder) {
+        if (!structure.chart.accessible) return;
+            out.addChained("attr('role', 'img').attr('aria-label', ");
+        defineElementLabelFunction(structure, out, labelBuilder);
+		out.add(")");
     }
 
     public static String makeNumberingTitle(String name, int index) {

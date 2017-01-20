@@ -17,6 +17,8 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.d3.D3Interaction;
+import org.brunel.build.d3.D3LabelBuilder;
+import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
@@ -50,15 +52,18 @@ class Treemap extends D3Diagram {
 				.addChained("attr('width', 0).attr('height', 0)");
 	}
 
+	public void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {
+		D3ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
+		labelBuilder.addTreeInternalLabelsInsideNode();
+	}
+
 	public void writeDiagramUpdate(ElementDetails details) {
 		writeHierarchicalClass();
 		out.addChained("attr('x', function(d) { return scale_x(d.x0) })")
 				.addChained("attr('y', function(d) { return scale_y(d.y0) })")
 				.addChained("attr('width', function(d) { return scale_x(d.x1) - scale_x(d.x0) })")
 				.addChained("attr('height', function(d) { return scale_y(d.y1) - scale_y(d.y0) })");
-		addAestheticsAndTooltips(details);
-
-		labelBuilder.addTreeInternalLabelsInsideNode();
+		D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
 	}
 
 	public boolean needsDiagramLabels() {

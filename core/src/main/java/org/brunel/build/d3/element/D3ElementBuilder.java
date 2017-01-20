@@ -68,6 +68,32 @@ public class D3ElementBuilder {
 		ElementDetails details = makeDetails();         // Create the details of what the element should be
 		setGeometry(details);                           // And the coordinate definitions
 
+		defineAllElementFeatures(details);				// Features for the entire element -- paths, etc.
+		defineLabelSettings(details);					// Defines the 'labeling' settings object
+		defineInitialState(details);					// Define function to initialize element
+		defineUpdateState(details);						// Define function to update element (acts on initial+update)
+		defineLabeling(details);						// Defines the labeling  function
+
+		// Define the selections
+		out.onNewLine().comment("Create selections, set the initial state and transition updates");
+		out.add("selection = main.selectAll('.element').data(" + details.dataSource + ",", getKeyFunction(), ")")
+				.endStatement();
+		out.add("var added = selection.enter().append('" + details.representation.getMark() + "')").endStatement();
+		out.add("merged = selection.merge(added)").endStatement();
+
+		// Set initial state and selection status (which cannot be applied to a transition)
+		// Then call update and label functions which will transition to new state
+		out.add("initialState(added)").endStatement();
+		out.add("selection.filter(hasData).classed('selected', isSelected(data)).filter(isSelected(data)).raise()")
+				.endStatement();
+		out.add("updateState(BrunelD3.transition(merged, transitionMillis))").endStatement();
+		out.add("label(merged, transitionMillis)").endStatement();
+
+		// Define the function to fade out any item leaving the selection
+		writeRemovalOnExit(out, "selection");
+	}
+
+	private void defineAllElementFeatures(ElementDetails details) {
 		if (diagram == null) {
 			writeCoordinateFunctions(details);
 			if (details.representation == ElementRepresentation.wedge) {
@@ -83,61 +109,48 @@ public class D3ElementBuilder {
 			// Set the diagram group class for CSS
 			out.add("main.attr('class',", diagram.getStyleClasses(), ")").endStatement();
 		}
+	}
 
-		// Define the placement of the items
-		out.onNewLine().ln().comment("Define selection location")
-				.onNewLine().add("function place(selection, isEntry) {").indentMore()
-				.onNewLine().add("if (isEntry) {").indentMore()
+	private void defineUpdateState(ElementDetails details) {
+		// Define the update to the merged data
+		out.onNewLine().ln().comment("Define selection update operations on merged data")
+				.onNewLine().add("function updateState(selection) {").indentMore()
 				.onNewLine().add("selection").onNewLine();
+		if (diagram == null || diagram instanceof GeoMap) {
+			writeCoordinateDefinition(details);
+			writeElementAesthetics(details, true, vis, out);
+		}
+		if (diagram != null) diagram.writeDiagramUpdate(details);
 
+		out.indentLess().onNewLine().add("}").ln();
+	}
+
+	private void defineInitialState(ElementDetails details) {
+		// Define the initial placement of the items
+		out.onNewLine().ln().comment("Define selection entry operations")
+				.onNewLine().add("function initialState(selection) {").indentMore()
+				.onNewLine().add("selection").onNewLine();
 		out.addChained("attr('class', '" + Data.join(details.classes, " ") + "')");
-
 		addStylingForRoundRectangle();
 		if (diagram != null)
 			diagram.writeDiagramEnter(details);
 		if (!interaction.hasElementInteraction(structure))
 			out.addChained("style('pointer-events', 'none')");
-		Accessibility.useElementLabelFunction(structure, out);
-
-		out.indentLess().add("}").ln();
-		out.indentLess().add("}").ln().ln();
-
-		// define the labeling structure to be used later
-		defineLabeling(details);
-
-		// Define the main selection
-		out.add("selection = main.selectAll('.element').data(" + details.dataSource + ",", getKeyFunction(), ")")
-				.endStatement();
-
-		// ENTER: Append representations for new data
-		out.add("var added = selection.enter().append('" + details.representation.getMark() + "')").endStatement();
-
-		out.add("merged = selection.merge(added)").endStatement();
-
-		out.add("place(added, true)").endStatement();
-
-		// Set class to selected for selected data and raise selected items to the top
-		out.add("merged.filter(hasData).classed('selected', function(d) { return data.$selection(d) == '\u2713' })")
-				.addChained("filter(function(d) { return data.$selection(d) == '\u2713' }).raise()")
-				.endStatement();
-
-		// UPDATE + ENTER: Define the values that can be changed based on the data
-		out.add("BrunelD3.transition(merged, transitionMillis)");
-
-		if (diagram == null || diagram instanceof GeoMap) {
-			writeCoordinateDefinition(details);
-			writeCoordinateLabelingAndAesthetics(details, true);
-			if (diagram != null) diagram.writeDiagramUpdate(details);
-
-		} else {
-			diagram.writeDiagramUpdate(details);
-		}
-
-		writeRemovalOnExit(out, "selection");
-
+		Accessibility.addAccessibilityLabels(structure, out, labelBuilder);
+		out.indentLess().onNewLine().add("}").ln();
 	}
 
 	protected void defineLabeling(ElementDetails details) {
+		out.onNewLine().ln().comment("Define labeling for the selection")
+				.onNewLine().add("function label(selection, transitionMillis) {").indentMore();
+		if (diagram == null)
+			writeElementLabelsAndTooltips(details, labelBuilder);
+		else
+			diagram.writeLabelsAndTooltips(details, labelBuilder);
+		out.indentLess().onNewLine().add("}").ln();
+	}
+
+	private void defineLabelSettings(ElementDetails details) {
 		int collisionDetectionGranularity;
 		if (details.textCanOverlap()) {
 			collisionDetectionGranularity = 0;
@@ -152,8 +165,6 @@ public class D3ElementBuilder {
 		labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape(),
 				details.getAlignment(), details.getPadding(), vis.fCSS,
 				collisionDetectionGranularity);   // Labels
-
-		Accessibility.defineElementLabelFunction(structure, out, labelBuilder);
 	}
 
 	public static void writeRemovalOnExit(ScriptWriter out, String selection) {
@@ -167,7 +178,7 @@ public class D3ElementBuilder {
 				.add("})").endStatement();
 	}
 
-	protected void writeCoordinateFunctions(ElementDetails details) {
+	private void writeCoordinateFunctions(ElementDetails details) {
 
 		writeDimLocations(details.x, "x", "w");
 		writeDimLocations(details.y, "y", "h");
@@ -367,10 +378,16 @@ public class D3ElementBuilder {
 	}
 
 	protected void writeCoordinateLabelingAndAesthetics(ElementDetails details, boolean filterToDataOnly) {
-		writeAesthetics(details, filterToDataOnly, vis, out, labelBuilder);
+		writeElementAesthetics(details, filterToDataOnly, vis, out);
+		writeElementLabelsAndTooltips(details, labelBuilder);
 	}
 
-	public static void writeAesthetics(ElementDetails details, boolean filterToDataOnly, VisSingle vis, ScriptWriter out, D3LabelBuilder labelBuilder) {
+	public static void writeElementLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {
+		labelBuilder.addElementLabeling();
+		labelBuilder.addTooltips(details);
+	}
+
+	public static void writeElementAesthetics(ElementDetails details, boolean filterToDataOnly, VisSingle vis, ScriptWriter out) {
 		boolean showsColor = !vis.fColor.isEmpty();
 		boolean showsStrokeSize = details.isStroked() && !vis.fSize.isEmpty();
 		boolean showsOpacity = !vis.fOpacity.isEmpty();
@@ -405,10 +422,6 @@ public class D3ElementBuilder {
 		}
 
 		out.endStatement();
-
-		labelBuilder.addElementLabeling();
-
-		labelBuilder.addTooltips(details);
 	}
 
 	private void defineText(ElementDetails elementDef, VisSingle vis) {

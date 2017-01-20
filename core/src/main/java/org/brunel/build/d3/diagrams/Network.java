@@ -17,6 +17,8 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.d3.D3Interaction;
+import org.brunel.build.d3.D3LabelBuilder;
+import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
@@ -79,7 +81,11 @@ class Network extends D3Diagram {
 
 	public void writeDiagramUpdate(ElementDetails details) {
 		out.addChained("attr('r',", details.overallSize, ")");
-		addAestheticsAndTooltips(details);
+		D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
+	}
+
+	public void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {
+		D3ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
 	}
 
 }

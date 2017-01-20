@@ -77,7 +77,8 @@ class Grid extends Bubble {
         out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 
         D3ElementBuilder.definePointLikeMark(details, vis, out);
-        addAestheticsAndTooltips(details);
+        D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
+        D3ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
         labelBuilder.addGridLabels();
     }
 
