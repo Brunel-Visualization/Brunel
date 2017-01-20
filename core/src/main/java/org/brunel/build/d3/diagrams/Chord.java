@@ -25,7 +25,6 @@ import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
-import org.brunel.model.VisSingle;
 import org.brunel.model.style.StyleTarget;
 
 class Chord extends D3Diagram {
@@ -66,7 +65,7 @@ class Chord extends D3Diagram {
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.polygon, "edge", "chords");
     }
 
-    public void writeDefinition(ElementDetails details) {
+    public void writeDiagramUpdate(ElementDetails details) {
 
 
         // The Chords themselves are simple to create
@@ -118,8 +117,8 @@ class Chord extends D3Diagram {
         return true;
     }
 
-    public void writeDiagramEnter() {
+    public void writeDiagramEnter(ElementDetails details) {
         // Ensure we have a row for each chord, based off the chord start and end points
-        out.add("merged.each(function(d) { d.row = chordData.index(d.target.index, d.target.subindex) })").endStatement();
+        out.add("sel.each(function(d) { d.row = chordData.index(d.target.index, d.target.subindex) })").endStatement();
     }
 }

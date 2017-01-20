@@ -96,13 +96,13 @@ class Tree extends D3Diagram {
 		return ElementDetails.makeForDiagram(vis, rep, "point", "treeNodes");
 	}
 
-	public void writeDiagramEnter() {
-		out.add("added.filter(function(d) { return d.parent })");       // Only if it has a parent
+	public void writeDiagramEnter(ElementDetails details) {
+		out.add("sel.filter(function(d) { return d.parent })");       // Only if it has a parent
 		writeNodePlacement(structure.details, "d.parent");              // place it at parent position
 		out.endStatement();
 	}
 
-	public void writeDefinition(ElementDetails details) {
+	public void writeDiagramUpdate(ElementDetails details) {
 		writeHierarchicalClass();
 
 		writeNodePlacement(details, "d");

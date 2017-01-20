@@ -43,15 +43,15 @@ class Treemap extends D3Diagram {
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.rect, "polygon", "treemap(tree).descendants()");
     }
 
-    public void writeDiagramEnter() {
-        out.add("added.filter(function(d) { return d.parent })")       // Only if it has a parent
+    public void writeDiagramEnter(ElementDetails details) {
+        out.add("sel.filter(function(d) { return d.parent })")       // Only if it has a parent
                 .addChained("attr('x', function(d) { return scale_x((d.parent.x0+d.parent.x1)/2) })")
                 .addChained("attr('y', function(d) { return scale_y((d.parent.y0+d.parent.y1)/2) })")
                 .addChained("attr('width', 0).attr('height', 0)")
                 .endStatement();
     }
 
-    public void writeDefinition(ElementDetails details) {
+    public void writeDiagramUpdate(ElementDetails details) {
         writeHierarchicalClass();
         out.addChained("attr('x', function(d) { return scale_x(d.x0) })")
                 .addChained("attr('y', function(d) { return scale_y(d.y0) })")

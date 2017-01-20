@@ -38,7 +38,7 @@ class DependentEdge extends D3Diagram {
 			return ElementDetails.makeForDiagram(vis, ElementRepresentation.segment, "edge", "graph.links");
 	}
 
-	public void writeDefinition(ElementDetails details) {
+	public void writeDiagramUpdate(ElementDetails details) {
 		new EdgeBuilder(out, structure.chart.coordinates.isPolar()).defineLocation();
 		addAestheticsAndTooltips(details);
 	}

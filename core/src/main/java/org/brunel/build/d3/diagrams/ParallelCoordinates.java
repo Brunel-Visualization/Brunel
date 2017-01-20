@@ -96,7 +96,7 @@ class ParallelCoordinates extends D3Diagram {
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.generalPath, "path", "data._rows");
     }
 
-    public void writeDefinition(ElementDetails details) {
+    public void writeDiagramUpdate(ElementDetails details) {
         out.addChained("attr('d', path)");
         addAestheticsAndTooltips(details);
     }

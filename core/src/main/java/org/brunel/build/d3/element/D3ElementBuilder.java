@@ -72,15 +72,32 @@ public class D3ElementBuilder {
 			writeCoordinateFunctions(details);
 			if (details.representation == ElementRepresentation.wedge) {
 				// Deal with the case of wedges (polar intervals)
+				out.onNewLine().comment("Define the path for pie wedge shapes");
 				defineWedgePath();
 			} else if (details.isPath()) {
 				// Define paths needed in the element, and make data splits
+				out.onNewLine().comment("Define paths");
 				definePathsAndSplits(details);
 			}
 		} else {
 			// Set the diagram group class for CSS
 			out.add("main.attr('class',", diagram.getStyleClasses(), ")").endStatement();
 		}
+
+		// Define the placement of the items
+		out.onNewLine().ln().comment("Define selection location")
+				.onNewLine().add("function place(sel, isEntry) {").indentMore()
+				.onNewLine().add("if (isEntry) {").indentMore().onNewLine();
+		addStylingForRoundRectangle();
+		if (diagram != null)
+			diagram.writeDiagramEnter(details);
+		if (!interaction.hasElementInteraction(structure))
+			out.add("sel.style('pointer-events', 'none')");
+
+		out.indentLess().add("}").ln();
+		out.indentLess().add("}").ln().ln();
+
+
 
 		// define the labeling structure to be used later
 		defineLabeling(details);
@@ -91,22 +108,17 @@ public class D3ElementBuilder {
 
 		// ENTER: Append representations for new data
 		out.add("var added = selection.enter().append('" + details.representation.getMark() + "')")
-				.addChained("attr('class', '" + Data.join(details.classes, " ") + "')");
+				.addChained("attr('class', '" + Data.join(details.classes, " ") + "')")
+				.endStatement();
 
-		if (!interaction.hasElementInteraction(structure))
-			out.addChained("style('pointer-events', 'none')");
+		out.add("merged = selection.merge(added)").endStatement();
+
+		out.add("place(added, true)").endStatement();
+
+
+
 
 		Accessibility.useElementLabelFunction(structure, out);
-
-		if (diagram == null) {
-			writeCoordEnter();
-			out.add("merged = selection.merge(added)").endStatement();
-		} else {
-			out.endStatement();
-			out.add("merged = selection.merge(added)").endStatement();
-			diagram.writeDiagramEnter();
-			diagram.writePreDefinition(details);
-		}
 
 		// Set class to selected for selected data and raise selected items to the top
 		out.add("merged.filter(hasData).classed('selected', function(d) { return data.$selection(d) == '\u2713' })")
@@ -119,10 +131,10 @@ public class D3ElementBuilder {
 		if (diagram == null || diagram instanceof GeoMap) {
 			writeCoordinateDefinition(details);
 			writeCoordinateLabelingAndAesthetics(details, true);
-			if (diagram != null) diagram.writeDefinition(details);
+			if (diagram != null) diagram.writeDiagramUpdate(details);
 
 		} else {
-			diagram.writeDefinition(details);
+			diagram.writeDiagramUpdate(details);
 		}
 
 		writeRemovalOnExit(out, "selection");
@@ -305,9 +317,9 @@ public class D3ElementBuilder {
 	private void defineWedgePath() {
 		out.add("var path = d3.arc().innerRadius(0)");
 		if (vis.fSize.isEmpty())
-			out.addChained("outerRadius(geom.inner_radius)");
+			out.add(".outerRadius(geom.inner_radius)");
 		else
-			out.addChained("outerRadius(function(d) {return size(d)*geom.inner_radius})");
+			out.add(".outerRadius(function(d) { return size(d) * geom.inner_radius })");
 		if (vis.fRange == null && !vis.stacked)
 			out.addChained("startAngle(0).endAngle(y)");
 		else
@@ -321,13 +333,14 @@ public class D3ElementBuilder {
 		return "function(d) { return d.key }";
 	}
 
-	private void writeCoordEnter() {
+	private void addStylingForRoundRectangle() {
 		// Added rounded styling if needed
 		StyleTarget target = StyleTarget.makeElementTarget("rect", "element", "point");
 		Size size = ModelUtil.getSize(vis, target, "border-radius");
-		if (size != null)
-			out.addChained("attr('rx'," + size.value((double) 8) + ").attr('ry', " + size.value((double) 8) + ")").ln();
-		out.endStatement().onNewLine().ln();
+		if (size != null) {
+			out.add("sel.attr('rx'," + size.value(8.0) + ").attr('ry', " + size.value(8.0) + ")")
+					.endStatement();
+		}
 	}
 
 	private void writeCoordinateDefinition(ElementDetails details) {
@@ -376,11 +389,10 @@ public class D3ElementBuilder {
 
 		int n = vis.fCSS.size();
 		for (int i = 0; i < n; i++) {
-			String suffix = n>1 ? "_" + (n+1) : "";						// Only need suffixes for multiples
+			String suffix = n > 1 ? "_" + (n + 1) : "";                        // Only need suffixes for multiples
 			String base = Data.join(details.classes, " ") + " ";
 			out.addChained("attr('class', function(d) { return " + Data.quote(base) + " + css" + suffix + "(d) } )");
 		}
-
 
 		// Define colors using the color function
 		if (showsColor) {

@@ -81,7 +81,7 @@ class Table extends D3Diagram {
     }
 
 
-    public void writeDefinition(ElementDetails details) {
+    public void writeDiagramUpdate(ElementDetails details) {
         out.addChained("attr('x', L).attr('width', W)")
                 .addChained("attr('y', function(d,i) { return " + padding.top + " + " + fontSize + " * i }).attr('height', " + fontSize + ")");
         addAestheticsAndTooltips(details);

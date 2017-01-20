@@ -23,7 +23,6 @@ import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
-import org.brunel.model.VisSingle;
 
 class Cloud extends D3Diagram {
 
@@ -40,14 +39,14 @@ class Cloud extends D3Diagram {
 
     }
 
-    public void writeDefinition(ElementDetails details) {
+    public void writeDiagramUpdate(ElementDetails details) {
         out.addChained("each(cloud.prepare).call(cloud.build)");
         addAestheticsAndTooltips(details);
     }
 
-    public void writeDiagramEnter() {
+    public void writeDiagramEnter(ElementDetails details) {
         // The cloud needs to set all this stuff up front
-        out.add("merged.style('text-anchor', 'middle').classed('label', true)")
+        out.add("sel.style('text-anchor', 'middle').classed('label', true)")
                 .addChained("text(labeling.content)");
         D3LabelBuilder.addFontSizeAttribute(vis, out);
         out.endStatement();

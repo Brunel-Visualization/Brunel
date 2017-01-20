@@ -116,9 +116,13 @@ public abstract class D3Diagram {
 
 	public abstract ElementDetails initializeDiagram();
 
-	public abstract void writeDefinition(ElementDetails details);
+	public abstract void writeDiagramUpdate(ElementDetails details);
 
-	public void writeDiagramEnter() {
+	/**
+	 * This is called when
+	 * @param details
+	 */
+	public void writeDiagramEnter(ElementDetails details) {
 		// By default, nothing is needed
 	}
 
@@ -126,10 +130,6 @@ public abstract class D3Diagram {
 		if (vis.tDiagram != null && vis.tDiagram.isHierarchical) {
 			out.add("var tree, expandState = [], collapseState = {};").at(50).comment("collapse state maps node IDs to true/false");
 		}
-	}
-
-	public void writePreDefinition(ElementDetails details) {
-		// By Default, do nothing
 	}
 
 	void addAestheticsAndTooltips(ElementDetails details) {

@@ -86,7 +86,7 @@ public class GeoMapLabels extends D3Diagram {
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.symbol, "point", "geo_labels");
     }
 
-    public void writeDefinition(ElementDetails details) {
+    public void writeDiagramUpdate(ElementDetails details) {
         out.addChained("attr('d', function(d) { return BrunelD3.symbol(d[4] == 0 ? 'star' : (d[4] == 1 ? 'square' : 'circle'), d[3]*geom.default_point_size/14)})")
                 .addChained("attr('class', function(d) { return 'element mark L' + d[4] })");
         out.addChained("attr('transform', function(d) {")
@@ -108,8 +108,8 @@ public class GeoMapLabels extends D3Diagram {
     }
 
 
-    public void writeDiagramEnter() {
-        out.add("merged.classed('map', true)").endStatement();
+    public void writeDiagramEnter(ElementDetails details) {
+        out.add("sel.classed('map', true)").endStatement();
     }
 
     private int radiusFor(LabelPoint p, int high, int low) {

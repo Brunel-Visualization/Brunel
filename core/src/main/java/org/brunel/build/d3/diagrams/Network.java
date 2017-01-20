@@ -77,7 +77,7 @@ class Network extends D3Diagram {
 		return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "graph.nodes");
 	}
 
-	public void writeDefinition(ElementDetails details) {
+	public void writeDiagramUpdate(ElementDetails details) {
 		out.addChained("attr('r',", details.overallSize, ")");
 		addAestheticsAndTooltips(details);
 	}

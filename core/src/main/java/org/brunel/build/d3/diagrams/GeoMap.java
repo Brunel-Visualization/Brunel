@@ -27,7 +27,6 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
-import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Element;
 
 import java.util.LinkedHashMap;
@@ -155,11 +154,11 @@ public class GeoMap extends D3Diagram {
         out.indentLess().onNewLine().add("}");
     }
 
-    public void writeDefinition(ElementDetails details) {
+    public void writeDiagramEnter(ElementDetails details) {
+        out.add("sel.classed('nondata', function(d) {return !d || d.row == null})").endStatement();
     }
 
-    public void writePreDefinition(ElementDetails details) {
-        out.add("merged.classed('nondata', function(d) {return !d || d.row == null})").endStatement();
+    public void writeDiagramUpdate(ElementDetails details) {
     }
 
 }
