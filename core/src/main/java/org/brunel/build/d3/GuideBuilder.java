@@ -79,23 +79,20 @@ public class GuideBuilder extends D3ElementBuilder {
                     .endStatement();
 
             // define the labeling structure to be used later
+            defineLabelSettings(details);
             defineLabeling(details);
-
 
             out.add("selection = main.selectAll('.element.guide" + index + "').data(guideData)").endStatement();
 
             out.add("var added = selection.enter().append('path').attr('class', 'element line guide guide" + index + "')");
             if (structure.chart.accessible)
                 out.addChained("attr('role', 'img').attr('aria-label', 'reference guide')");
-            out.endStatement();
+            out.continueOnNextLine(",").add("merged = selection.merge(added)").endStatement();
 
-            out.add("BrunelD3.transition(selection.merge(added), transitionMillis)")
+            out.add("BrunelD3.transition(merged, transitionMillis)")
                     .addChained("attr('d', path(guideData))")
                     .endStatement();
-
-
-            writeCoordinateLabelingAndAesthetics(details, false);
-
+            out.add("label(merged, transitionMillis)").endStatement();
         }
 
     }

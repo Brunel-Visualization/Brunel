@@ -142,7 +142,8 @@ public class D3ElementBuilder {
 
 	protected void defineLabeling(ElementDetails details) {
 		out.onNewLine().ln().comment("Define labeling for the selection")
-				.onNewLine().add("function label(selection, transitionMillis) {").indentMore();
+				.onNewLine().add("function label(selection, transitionMillis) {")
+				.indentMore().onNewLine();
 		if (diagram == null)
 			writeElementLabelsAndTooltips(details, labelBuilder);
 		else
@@ -150,7 +151,7 @@ public class D3ElementBuilder {
 		out.indentLess().onNewLine().add("}").ln();
 	}
 
-	private void defineLabelSettings(ElementDetails details) {
+	protected void defineLabelSettings(ElementDetails details) {
 		int collisionDetectionGranularity;
 		if (details.textCanOverlap()) {
 			collisionDetectionGranularity = 0;
