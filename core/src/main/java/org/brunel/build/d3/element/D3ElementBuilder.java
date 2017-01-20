@@ -87,17 +87,20 @@ public class D3ElementBuilder {
 		// Define the placement of the items
 		out.onNewLine().ln().comment("Define selection location")
 				.onNewLine().add("function place(sel, isEntry) {").indentMore()
-				.onNewLine().add("if (isEntry) {").indentMore().onNewLine();
+				.onNewLine().add("if (isEntry) {").indentMore()
+				.onNewLine().add("sel");
+
+		out.addChained("attr('class', '" + Data.join(details.classes, " ") + "')");
+
 		addStylingForRoundRectangle();
 		if (diagram != null)
 			diagram.writeDiagramEnter(details);
 		if (!interaction.hasElementInteraction(structure))
-			out.add("sel.style('pointer-events', 'none')");
+			out.addChained("style('pointer-events', 'none')");
+		Accessibility.useElementLabelFunction(structure, out);
 
 		out.indentLess().add("}").ln();
 		out.indentLess().add("}").ln().ln();
-
-
 
 		// define the labeling structure to be used later
 		defineLabeling(details);
@@ -107,18 +110,11 @@ public class D3ElementBuilder {
 				.endStatement();
 
 		// ENTER: Append representations for new data
-		out.add("var added = selection.enter().append('" + details.representation.getMark() + "')")
-				.addChained("attr('class', '" + Data.join(details.classes, " ") + "')")
-				.endStatement();
+		out.add("var added = selection.enter().append('" + details.representation.getMark() + "')").endStatement();
 
 		out.add("merged = selection.merge(added)").endStatement();
 
 		out.add("place(added, true)").endStatement();
-
-
-
-
-		Accessibility.useElementLabelFunction(structure, out);
 
 		// Set class to selected for selected data and raise selected items to the top
 		out.add("merged.filter(hasData).classed('selected', function(d) { return data.$selection(d) == '\u2713' })")
@@ -337,10 +333,8 @@ public class D3ElementBuilder {
 		// Added rounded styling if needed
 		StyleTarget target = StyleTarget.makeElementTarget("rect", "element", "point");
 		Size size = ModelUtil.getSize(vis, target, "border-radius");
-		if (size != null) {
-			out.add("sel.attr('rx'," + size.value(8.0) + ").attr('ry', " + size.value(8.0) + ")")
-					.endStatement();
-		}
+		if (size != null)
+			out.addChained("attr('rx'," + size.value(8.0) + ").attr('ry', " + size.value(8.0) + ")");
 	}
 
 	private void writeCoordinateDefinition(ElementDetails details) {

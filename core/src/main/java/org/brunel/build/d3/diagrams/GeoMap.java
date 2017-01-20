@@ -155,7 +155,7 @@ public class GeoMap extends D3Diagram {
     }
 
     public void writeDiagramEnter(ElementDetails details) {
-        out.add("sel.classed('nondata', function(d) {return !d || d.row == null})").endStatement();
+        out.addChained("classed('nondata', function(d) {return !d || d.row == null})");
     }
 
     public void writeDiagramUpdate(ElementDetails details) {

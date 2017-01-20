@@ -97,9 +97,8 @@ class Tree extends D3Diagram {
 	}
 
 	public void writeDiagramEnter(ElementDetails details) {
-		out.add("sel.filter(function(d) { return d.parent })");       // Only if it has a parent
+		out.addChained("filter(function(d) { return d.parent })");       // Only if it has a parent
 		writeNodePlacement(structure.details, "d.parent");              // place it at parent position
-		out.endStatement();
 	}
 
 	public void writeDiagramUpdate(ElementDetails details) {

@@ -45,11 +45,10 @@ class Bubble extends D3Diagram {
     }
 
     public void writeDiagramEnter(ElementDetails details) {
-        out.add("sel.filter(function(d) { return d.parent })")       // Only if it has a parent
+        out.addChained("filter(function(d) { return d.parent })")       // Only if it has a parent
                 .addChained("attr('cx', function(d) { return scale_x(d.parent.x) })")
                 .addChained("attr('cy', function(d) { return scale_y(d.parent.y) })")
                 .addChained("attr('r', 0)");
-        out.endStatement();
     }
 
     public void writeDiagramUpdate(ElementDetails details) {

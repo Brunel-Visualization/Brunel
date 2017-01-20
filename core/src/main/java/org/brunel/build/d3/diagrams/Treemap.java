@@ -25,45 +25,44 @@ import org.brunel.data.Dataset;
 
 class Treemap extends D3Diagram {
 
-    public Treemap(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
-        super(structure, data, interaction, out);
-    }
+	public Treemap(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
+		super(structure, data, interaction, out);
+	}
 
-    public ElementDetails initializeDiagram() {
-        out.comment("Define treemap (hierarchy) data structures");
-        makeHierarchicalTree(false);
+	public ElementDetails initializeDiagram() {
+		out.comment("Define treemap (hierarchy) data structures");
+		makeHierarchicalTree(false);
 
-        // Create the d3 layout
-        out.add("var treemap = d3.treemap().tile(d3.treemapResquarify)")
-                .addChained("size([geom.inner_width, geom.inner_height])")
-                .addChained("padding(function(d) { return d.depth < 3 ? 2*d.depth : 0} )")
-                .addChained("paddingTop(function(d) { return d.depth ==1 ? 15 : (d.depth == 2) ? 12 : 0})")
-                .endStatement();
+		// Create the d3 layout
+		out.add("var treemap = d3.treemap().tile(d3.treemapResquarify)")
+				.addChained("size([geom.inner_width, geom.inner_height])")
+				.addChained("padding(function(d) { return d.depth < 3 ? 2*d.depth : 0} )")
+				.addChained("paddingTop(function(d) { return d.depth ==1 ? 15 : (d.depth == 2) ? 12 : 0})")
+				.endStatement();
 
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.rect, "polygon", "treemap(tree).descendants()");
-    }
+		return ElementDetails.makeForDiagram(vis, ElementRepresentation.rect, "polygon", "treemap(tree).descendants()");
+	}
 
-    public void writeDiagramEnter(ElementDetails details) {
-        out.add("sel.filter(function(d) { return d.parent })")       // Only if it has a parent
-                .addChained("attr('x', function(d) { return scale_x((d.parent.x0+d.parent.x1)/2) })")
-                .addChained("attr('y', function(d) { return scale_y((d.parent.y0+d.parent.y1)/2) })")
-                .addChained("attr('width', 0).attr('height', 0)")
-                .endStatement();
-    }
+	public void writeDiagramEnter(ElementDetails details) {
+		out.addChained("filter(function(d) { return d.parent })")       // Only if it has a parent
+				.addChained("attr('x', function(d) { return scale_x((d.parent.x0+d.parent.x1)/2) })")
+				.addChained("attr('y', function(d) { return scale_y((d.parent.y0+d.parent.y1)/2) })")
+				.addChained("attr('width', 0).attr('height', 0)");
+	}
 
-    public void writeDiagramUpdate(ElementDetails details) {
-        writeHierarchicalClass();
-        out.addChained("attr('x', function(d) { return scale_x(d.x0) })")
-                .addChained("attr('y', function(d) { return scale_y(d.y0) })")
-                .addChained("attr('width', function(d) { return scale_x(d.x1) - scale_x(d.x0) })")
-                .addChained("attr('height', function(d) { return scale_y(d.y1) - scale_y(d.y0) })");
-        addAestheticsAndTooltips(details);
+	public void writeDiagramUpdate(ElementDetails details) {
+		writeHierarchicalClass();
+		out.addChained("attr('x', function(d) { return scale_x(d.x0) })")
+				.addChained("attr('y', function(d) { return scale_y(d.y0) })")
+				.addChained("attr('width', function(d) { return scale_x(d.x1) - scale_x(d.x0) })")
+				.addChained("attr('height', function(d) { return scale_y(d.y1) - scale_y(d.y0) })");
+		addAestheticsAndTooltips(details);
 
-        labelBuilder.addTreeInternalLabelsInsideNode();
-    }
+		labelBuilder.addTreeInternalLabelsInsideNode();
+	}
 
-    public boolean needsDiagramLabels() {
-        return true;
-    }
+	public boolean needsDiagramLabels() {
+		return true;
+	}
 
 }

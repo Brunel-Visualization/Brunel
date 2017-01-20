@@ -119,6 +119,6 @@ class Chord extends D3Diagram {
 
     public void writeDiagramEnter(ElementDetails details) {
         // Ensure we have a row for each chord, based off the chord start and end points
-        out.add("sel.each(function(d) { d.row = chordData.index(d.target.index, d.target.subindex) })").endStatement();
+        out.addChained("each(function(d) { d.row = chordData.index(d.target.index, d.target.subindex) })");
     }
 }
