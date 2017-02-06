@@ -63,7 +63,9 @@ public class Chord {
 
 		// Step through 'A' nodes (top level children) and 'B' nodes (lower level children)
 		for (Node a : (Node[]) H.root.children) {
+			if (a.children == null) continue;			// This is when the field for 'a' is null
 			for (Node b : (Node[]) a.children) {
+				if (b.children == null) continue;		// This is when the field for 'b' is null
 				for (Node c : (Node[]) b.children) {
 
 					// 'a' and 'b' are the groups -- 'c' is a list of leaf nodes values withing the groups

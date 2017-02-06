@@ -25,6 +25,7 @@ archivesBaseName = 'brunel-data'
 task(testTranslate, dependsOn: 'classes', type: JavaExec) {
     main = 'org.brunel.translator.DoTranslate'
     classpath = configurations.runtime
+    jvmArgs = ['-Xmx2048M']
     args '-log', 'warning'
     args '-name', 'BrunelData'
     args '-out', 'build/translated/BrunelDataTest.js'
@@ -35,6 +36,7 @@ task(testTranslate, dependsOn: 'classes', type: JavaExec) {
 task(doTranslate, dependsOn: ['classes', testTranslate], type: JavaExec) {
     main = 'org.brunel.translator.DoTranslate'
     classpath = configurations.runtime
+    jvmArgs = ['-Xmx2048M']
     args '-log', 'warning'
     args '-name', 'BrunelData'
     args '-out', 'build/translated/BrunelData.js'
