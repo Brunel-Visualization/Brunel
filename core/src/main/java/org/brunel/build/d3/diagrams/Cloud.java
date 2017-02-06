@@ -31,7 +31,7 @@ class Cloud extends D3Diagram {
         super(vis, data, interaction, out);
     }
 
-    public ElementDetails initializeDiagram() {
+    public ElementDetails initializeDiagram(String symbol) {
         out.comment("Build the cloud layout");
         out.add("var cloud = BrunelD3.cloudLayout(processed, [geom.inner_width, geom.inner_height], zoomNode)").endStatement();
         out.add("function keyFunction(d) { return d.key }").endStatement();

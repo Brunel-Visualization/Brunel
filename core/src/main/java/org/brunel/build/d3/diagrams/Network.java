@@ -22,6 +22,7 @@ import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
+import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
@@ -60,18 +61,22 @@ class Network extends D3Diagram {
 	}
 
 	public void writeBuildCommands() {
+		// Determine if we want curved arcs
+		String symbol = ModelUtil.getElementSymbol(edges.vis);
+		boolean curved = symbol != null && (symbol.contains("arc") || symbol.contains("curve"));
+
 		String density = "";
 		if (vis.tDiagramParameters.length > 0) density = ", " + vis.tDiagramParameters[0].asDouble();
 		out.onNewLine().add("if (simulation) simulation.stop()").endStatement()
 				.add("simulation = BrunelD3.network(graph, elements[" + nodes.index
-						+ "], elements[" + edges.index + "], zoomNode, geom" + density + ")").endStatement();
+						+ "], elements[" + edges.index + "], zoomNode, geom, " + curved + density + ")").endStatement();
 	}
 
 	public void writePerChartDefinitions() {
 		out.add("var graph, simulation;").at(50).comment("Node/edge graph and force simulation");
 	}
 
-	public ElementDetails initializeDiagram() {
+	public ElementDetails initializeDiagram(String symbol) {
 		String edgeDataset = "elements[" + edges.getBaseDatasetIndex() + "].data()";
 		String nodeField = quoted(nodeID), from = quoted(fromFieldID), to = quoted(toFieldID);
 		out.add("graph = graph || BrunelData.diagram_Graph.make(processed,", nodeField, ",",

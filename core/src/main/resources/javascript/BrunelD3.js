@@ -79,6 +79,8 @@ var BrunelD3 = (function () {
         g.inner_rawHeight = g.inner_height;
         g.inner_radius = Math.min(g.inner_width, g.inner_height) / 2;
         g.default_point_size = Math.max(6, g.inner_radius * 0.035);
+
+
         return g;
     }
 
@@ -1457,9 +1459,10 @@ var BrunelD3 = (function () {
      * @param edges selection for the links
      * @param zoomNode defiens the zoom factors
      * @param geom space to lay out in
+     * @param curved true for curved (arc) edges
      * @param density a positive value stating how packed the resulting graph should be (default == 1)
      */
-    function makeNetworkLayout(graph, nodes, edges, zoomNode, geom, density) {
+    function makeNetworkLayout(graph, nodes, edges, zoomNode, geom, curved, density) {
 
         density = density || 1;
         var N = graph.nodes.length, E = graph.links.length,
@@ -1504,6 +1507,7 @@ var BrunelD3 = (function () {
                     return scaleY(d.y);
                 })
                 .each(function (d) {
+                        d.radius = +this.getAttribute("r") || this.getBBox().getWidth();
                         var txt = this.__label__;
                         if (!txt) return;
                         if (txt.__off__) {
@@ -1522,20 +1526,24 @@ var BrunelD3 = (function () {
                     }
                 );
 
+            mergedEdges.attr('d', function (d) {
+                var xa = scaleX(d.source.x), ya = scaleY(d.source.y),               // center of source node
+                    xb = scaleX(d.target.x), yb = scaleY(d.target.y),               // center of target node
+                    rr = Math.sqrt((xa - xb) * (xa - xb) + (ya - yb) * (ya - yb)),  // distance between nodes
+                    ra = d.source.radius || 0, rb = d.target.radius || 0,           // node radii
+                    x1 = xa + (xb - xa) * ra / rr,                                  // indented start point
+                    y1 = ya + (yb - ya) * ra / rr,
+                    x2 = xb + (xa - xb) * rb / rr,                                  // indented end point
+                    y2 = yb + (ya - yb) * rb / rr;
 
-            mergedEdges
-                .attr('x1', function (d) {
-                    return scaleX(d.source.x)
-                })
-                .attr('y1', function (d) {
-                    return scaleY(d.source.y)
-                })
-                .attr('x2', function (d) {
-                    return scaleX(d.target.x)
-                })
-                .attr('y2', function (d) {
-                    return scaleY(d.target.y)
-                });
+                // Straight line
+                if (curved) {
+                    return "M" + x1 + "," + y1 + "A" + rr + "," + rr + " 0 0,1 " + x2 + "," + y2;
+                } else {
+                    return "M" + x1 + "," + y1 + "L" + x2 + "," + y2;
+                }
+
+            });
 
         }
 

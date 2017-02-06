@@ -33,7 +33,7 @@ class Bubble extends D3Diagram {
         super(structure, data, interaction, out);
     }
 
-    public ElementDetails initializeDiagram() {
+    public ElementDetails initializeDiagram(String symbol) {
         out.comment("Define bubble (hierarchy) data structures");
 
         makeHierarchicalTree(false);

@@ -38,7 +38,7 @@ class Chord extends D3Diagram {
         return "function(d) { return d.source.index + '|' + d.target.index }";
     }
 
-    public ElementDetails initializeDiagram() {
+    public ElementDetails initializeDiagram(String symbol) {
         String f1 = vis.positionFields()[0];
         String f2 = position[1];
 

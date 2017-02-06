@@ -77,7 +77,7 @@ class ParallelCoordinates extends D3Diagram {
         return axes;
     }
 
-    public ElementDetails initializeDiagram() {
+    public ElementDetails initializeDiagram(String symbol) {
 
         out.add("var axes = interior.selectAll('g.parallel.axis').data(parallel)").endStatement();
         out.add("var builtAxes = axes.enter().append('g')")

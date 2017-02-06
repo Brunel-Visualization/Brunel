@@ -113,7 +113,7 @@ public abstract class D3Diagram {
 		// By default, do nothing
 	}
 
-	public abstract ElementDetails initializeDiagram();
+	public abstract ElementDetails initializeDiagram(String symbol);
 
 	public abstract void writeDiagramUpdate(ElementDetails details);
 

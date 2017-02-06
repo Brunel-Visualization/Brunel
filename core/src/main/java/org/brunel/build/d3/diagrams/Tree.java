@@ -57,7 +57,7 @@ class Tree extends D3Diagram {
 		out.add("var graph;").at(50).comment("The tree with links");
 	}
 
-	public ElementDetails initializeDiagram() {
+	public ElementDetails initializeDiagram(String symbol) {
 		out.comment("Define tree (hierarchy) data structures");
 		makeHierarchicalTree(true);
 		out.add("var treeLayout = d3.tree()");

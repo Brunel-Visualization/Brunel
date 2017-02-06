@@ -23,21 +23,40 @@ import org.brunel.build.d3.element.EdgeBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
+import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 
 class DependentEdge extends D3Diagram {
 
+	private final boolean arrow;    // True if we want arrows
+
 	DependentEdge(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
 		super(structure, data, interaction, out);
+		String symbol = ModelUtil.getElementSymbol(vis);
+		this.arrow = symbol == null || symbol.toLowerCase().contains("arrow");
 	}
 
-	public ElementDetails initializeDiagram() {
+	public void writePerChartDefinitions() {
+		// ensure an arrowhead is defined
+		if (arrow)
+			out.add("vis.append('svg:defs').selectAll('marker').data(['arrow']).enter()")
+					.addChained("append('svg:marker').attr('id', 'arrow')")
+					.addChained("attr('viewBox', '0 -6 10 10').attr('orient', 'auto')")
+					.addChained("attr('refX', 8).attr('refY', 0)")
+					.addChained("attr('markerWidth', 6).attr('markerHeight', 6)")
+					.addChained("attr('fill', '#888888')")
+					.addChained("append('svg:path').attr('d', 'M0,-4L8,0L0,4')")
+					.endStatement();
 
-		if (structure.chart.diagram.isHierarchical)
-			return ElementDetails.makeForDiagram(vis, ElementRepresentation.curvedPath, "edge", "graph.links");
-		else
-			return ElementDetails.makeForDiagram(vis, ElementRepresentation.segment, "edge", "graph.links");
+	}
+
+	public void writeDiagramEnter(ElementDetails details) {
+		if (arrow) out.addChained("attr('marker-end', 'url(#arrow)')");
+	}
+
+	public ElementDetails initializeDiagram(String symbol) {
+		return ElementDetails.makeForDiagram(vis, ElementRepresentation.curvedPath, "edge", "graph.links");
 	}
 
 	public void writeDiagramUpdate(ElementDetails details) {
@@ -54,7 +73,7 @@ class DependentEdge extends D3Diagram {
 	}
 
 	public String getRowKeyFunction() {
-		return  "function(d) { return d.key }";
+		return "function(d) { return d.key }";
 	}
 
 }

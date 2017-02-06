@@ -63,7 +63,7 @@ class Table extends D3Diagram {
         return fraction;
     }
 
-    public ElementDetails initializeDiagram() {
+    public ElementDetails initializeDiagram(String symbol) {
         out.onNewLine().comment("Define columns for the table");
         out.add("var L = " + padding.left + ", W = geom.inner_width - " + padding.horizontal()).endStatement();
         out.add("var columns = [").onNewLine().indentMore();

@@ -100,7 +100,7 @@ public class D3ElementBuilder {
 				// Deal with the case of wedges (polar intervals)
 				out.onNewLine().comment("Define the path for pie wedge shapes");
 				defineWedgePath();
-			} else if (details.isPath()) {
+			} else if (details.requiresSplitting()) {
 				// Define paths needed in the element, and make data splits
 				out.onNewLine().comment("Define paths");
 				definePathsAndSplits(details);
@@ -238,7 +238,7 @@ public class D3ElementBuilder {
 			return ElementDetails.makeForCoordinates(vis, getSymbol());
 		} else {
 			out.onNewLine().comment("Data structures for a", vis.tDiagram, "diagram");
-			return diagram.initializeDiagram();
+			return diagram.initializeDiagram(getSymbol());
 		}
 	}
 

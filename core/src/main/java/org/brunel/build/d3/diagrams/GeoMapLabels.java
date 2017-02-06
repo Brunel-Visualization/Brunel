@@ -83,7 +83,7 @@ public class GeoMapLabels extends D3Diagram {
         return maxPoints < all.size() ? all.subList(0, maxPoints) : all;
     }
 
-    public ElementDetails initializeDiagram() {
+    public ElementDetails initializeDiagram(String symbol) {
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.symbol, "point", "geo_labels");
     }
 

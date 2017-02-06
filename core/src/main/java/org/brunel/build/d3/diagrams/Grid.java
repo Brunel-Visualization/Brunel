@@ -50,7 +50,7 @@ class Grid extends Bubble {
         // Nothing
     }
 
-    public ElementDetails initializeDiagram() {
+    public ElementDetails initializeDiagram(String symbol) {
         out.comment("Define hierarchy and grid data structures");
 
         makeHierarchicalTree(false);
