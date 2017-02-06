@@ -47,7 +47,7 @@ public class Accessibility {
         else {
             out.add("data._key(d.row)");
         }
-        out.add("}").endStatement();
+        out.endStatement().add("}");
     }
 
     /**
