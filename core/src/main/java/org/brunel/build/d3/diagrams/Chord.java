@@ -42,16 +42,13 @@ class Chord extends D3Diagram {
         String f1 = vis.positionFields()[0];
         String f2 = position[1];
 
-        out.comment("Define chord data structures");
-        out.add("var chordData = BrunelData.diagram_Chord.make(processed,");
+        out.comment("Define chord data structures using Brunel's enhanced chord diagram builder");
+        out.add("var chords = BrunelData.diagram_Chord.make(processed,");
 
         // Always need from and to, but the size may be empty when building the chord data
         if (size == null) out.addQuoted(f1, f2);
         else out.addQuoted(f1, f2, size);
         out.add(")").endStatement();
-
-        out.add("var chord = d3.chord().padAngle(.025).sortSubgroups(d3.descending)").endStatement();
-        out.add("var chords = chord(chordData.matrix())").endStatement();
 
         // take arc path font size into account, adding a bit of padding, to define the arc width
         StyleTarget target = StyleTarget.makeElementTarget("text", "axis", "label");
@@ -63,7 +60,7 @@ class Chord extends D3Diagram {
         // Scaled size and offsets
         out.add("var R = scale_x(geom.inner_radius)-scale_x(0), svgTrans = 'translate(' + scale_x(0) + ',' + scale_y(0) + ')'").endStatement();
 
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.polygon, "edge", "chords");
+        return ElementDetails.makeForDiagram(vis, ElementRepresentation.polygon, "edge", "chords.chords");
     }
 
     public void writeDiagramUpdate(ElementDetails details) {
@@ -105,7 +102,7 @@ class Chord extends D3Diagram {
                 .add("group.attr('transform', svgTrans)").endStatement()
                 .add("return function() {").indentMore().indentMore().onNewLine()
                 .add("group.select('path').attr('d', arcPath(d))").endStatement()
-                .add("group.select('textPath').text(chordData.group(i))").endStatement()
+                .add("group.select('textPath').text(d.name)").endStatement()
                 .add("BrunelD3.centerInWedge(group.select('text'), arc_width)").endStatement()
                 .indentLess().indentLess().onNewLine().add("}")
                 .indentLess().indentLess().onNewLine().add("})").endStatement();
@@ -118,10 +115,10 @@ class Chord extends D3Diagram {
         return true;
     }
 
-    public void writeDiagramEnter(ElementDetails details) {
-        // Ensure we have a row for each chord, based off the chord start and end points
-        out.addChained("each(function(d) { d.row = chordData.index(d.target.index, d.target.subindex) })");
-    }
+//    public void writeDiagramEnter(ElementDetails details) {
+//        // Ensure we have a row for each chord, based off the chord start and end points
+//        out.addChained("each(function(d) { d.row = chordData.index(d.target.index, d.target.subindex) })");
+//    }
 
 	public void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {
         D3ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);

@@ -19,65 +19,73 @@ package org.brunel.data.diagram;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.io.CSV;
-import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static junit.framework.TestCase.assertEquals;
 
 public class TestChord {
 
-    private static final String csv = Data.join(new String[]{
-            "A,B,C,D",
-            "a,x,1,4",
-            "b,x,2,3",
-            "c,y,1,2",
-            "c,x,2,1",
-            "c,y,5,1",
-    }, "\n");
+	private static final String csv = Data.join(new String[]{
+			"A,B,C,D",
+			"a,x,1,4",
+			"b,x,2,3",
+			"c,y,1,2",
+			"c,x,2,1",
+			"c,y,5,1",
+	}, "\n");
 
-    private static final Dataset simple = Dataset.make(CSV.read(csv));
+	private static final Dataset simple = Dataset.make(CSV.read(csv));
 
-    @Test
-    public void testGroupNames() {
-        Chord data = new Chord(simple, "A", "B", null);
-        assertEquals("a", data.group(0));
-        assertEquals("b", data.group(1));
-        assertEquals("c", data.group(2));
-        assertEquals("x", data.group(3));
-        assertEquals("y", data.group(4));
+	@Test
+	public void testGroups() {
+		Chord data = new Chord(simple, "A", "B", null);
+		ChordGroup[] groups = data.groups;
 
-    }
+		// Should be 5 groups:
+		assertEquals(5, groups.length);                // No aggregation; should be one link per item in the data
 
-    @Test
-    public void testIndices() {
-        Chord data = new Chord(simple, "A", "B", null);
-        assertEquals(1, data.index(1, 3));
-        assertEquals(3, data.index(2, 3));
-        assertEquals(4, data.index(2, 4));
-        assertEquals(1, data.index(3, 1));
-        assertEquals(3, data.index(3, 2));
-        assertEquals(4, data.index(4, 2));
-    }
+		// Anti-clockwise starting at the top
+		assertEquals(325, r(groups[0].startAngle));
+		assertEquals(357, r(groups[0].endAngle));
 
-    @Test
-    public void testMatrix() {
-        double[][] data = new Chord(simple, "A", "B", null).matrix();
-        assertEquals(5, data.length);
-        // Columns:   a  b  c  x  y
-        assertEquals("0, 0, 0, 1, 0", Data.join(data[0]));      // a -> x
-        assertEquals("0, 0, 0, 1, 0", Data.join(data[1]));      // b -> x
-        assertEquals("0, 0, 0, 1, 2", Data.join(data[2]));      // c -> x, y
-        assertEquals("1, 1, 1, 0, 0", Data.join(data[3]));      // x ->
-        assertEquals("0, 0, 2, 0, 0", Data.join(data[4]));      // y ->
+		assertEquals(286, r(groups[1].startAngle));
+		assertEquals(319, r(groups[1].endAngle));
 
-        data = new Chord(simple, "A", "B", "C").matrix();
-        assertEquals(5, data.length);
-        // Columns:   a  b  c  x  y
-        assertEquals("0, 0, 0, 1, 0", Data.join(data[0]));      // a -> x
-        assertEquals("0, 0, 0, 2, 0", Data.join(data[1]));      // b -> x
-        assertEquals("0, 0, 0, 2, 6", Data.join(data[2]));      // c -> x, y
-        assertEquals("1, 2, 2, 0, 0", Data.join(data[3]));      // x ->
-        assertEquals("0, 0, 6, 0, 0", Data.join(data[4]));      // y ->
-    }
+		assertEquals(183, r(groups[2].startAngle));
+		assertEquals(280, r(groups[2].endAngle));
+
+		// Clockwise starting at the top
+		assertEquals(5, r(groups[3].startAngle));
+		assertEquals(102, r(groups[3].endAngle));
+
+		assertEquals(111, r(groups[4].startAngle));
+		assertEquals(176, r(groups[4].endAngle));
+	}
+
+	@Test
+	public void testEdges() {
+		Chord data = new Chord(simple, "A", "B", null);
+		ChordRibbon[] chords = data.chords;
+
+		// Should be 5 chords: No aggregation; should be one link per item in the data
+
+		// a -> x
+		assertEquals(0, chords[0].source.index);
+		assertEquals(0, chords[0].target.index);
+		assertEquals(0, chords[0].row);
+
+		// b -> x
+		assertEquals(1, chords[1].source.index);
+		assertEquals(0, chords[1].target.index);
+		assertEquals(1, chords[1].row);
+
+		// etc.
+	}
+
+
+	// Round radian to nearest degree
+	private int r(double v) {
+		return (int) Math.round(v * 360 / 2 / Math.PI);
+	}
 
 }
