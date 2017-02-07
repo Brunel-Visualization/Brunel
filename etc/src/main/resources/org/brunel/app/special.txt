@@ -45,4 +45,4 @@
 #width          600
 #height         600
 #description    Layout of the Sierpinski data -- a purely abstract network
-#brunel         data('sample:sierpinski.csv') edge key(a, b) + network y(a, b) color(#values) label(#values) legends(none)
+#brunel         data('sample:sierpinski.csv') edge key(a, b) + network y(a, b) key(#values) color(#values) label(#values) legends(none)
