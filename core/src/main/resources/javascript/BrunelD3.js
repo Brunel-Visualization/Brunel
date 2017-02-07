@@ -1450,6 +1450,18 @@ var BrunelD3 = (function () {
     }
 
     /**
+     * This method returns the SVG string form for a path
+     * @param p the structure returned from insetEdge definign edge endpoints
+     * @param curved if true, a curve is drawn, otherwise a straight line is
+     * @returns
+     */
+    function makeEdge(p, curved) {
+        return "M" + p.x1 + "," + p.y1 +
+            (curved ? "A" + 2 * p.d + "," + 2 * p.d + " 0 0,1 " : "L")
+            + p.x2 + "," + p.y2;
+    }
+
+    /**
      * Start a network layout for the node and edge elements
      * The graph should already have been built within the nodeElement
      * density is
@@ -1470,7 +1482,7 @@ var BrunelD3 = (function () {
             pad = geom.default_point_size,
             left = pad, top = pad,
             right = geom.inner_width - pad, bottom = geom.inner_height - pad,
-            D = density * Math.min(W, H) / Math.sqrt(N) / 2,
+            D = density * 0.75 * Math.min(W, H) / Math.sqrt(N) ,
             R = D * Math.max(1, D - 3) / 5 / Math.max(1, E / N);
         R = Math.min(R, D * 6);
 
@@ -1527,22 +1539,12 @@ var BrunelD3 = (function () {
                 );
 
             mergedEdges.attr('d', function (d) {
-                var xa = scaleX(d.source.x), ya = scaleY(d.source.y),               // center of source node
-                    xb = scaleX(d.target.x), yb = scaleY(d.target.y),               // center of target node
-                    rr = Math.sqrt((xa - xb) * (xa - xb) + (ya - yb) * (ya - yb)),  // distance between nodes
-                    ra = d.source.radius || 0, rb = d.target.radius || 0,           // node radii
-                    x1 = xa + (xb - xa) * ra / rr,                                  // indented start point
-                    y1 = ya + (yb - ya) * ra / rr,
-                    x2 = xb + (xa - xb) * rb / rr,                                  // indented end point
-                    y2 = yb + (ya - yb) * rb / rr;
+                // First we inset the edges for the radii of the sources
+                var p = insetEdge(scaleX(d.source.x), scaleY(d.source.y), d.source.radius || 0,
+                    scaleX(d.target.x), scaleY(d.target.y), d.target.radius || 0);
 
-                // Straight line
-                if (curved) {
-                    return "M" + x1 + "," + y1 + "A" + rr + "," + rr + " 0 0,1 " + x2 + "," + y2;
-                } else {
-                    return "M" + x1 + "," + y1 + "L" + x2 + "," + y2;
-                }
-
+                // Then we return the path description for a curve or a straight line
+                return makeEdge(p, curved);
             });
 
         }
@@ -1574,6 +1576,29 @@ var BrunelD3 = (function () {
 
 
         return force.nodes(graph.nodes).on("tick", ticked);
+    }
+
+    /**
+     * Insets a line segement for different sized nodes at ends
+     * @param xa start x coord
+     * @param ya start y coord
+     * @param ra start radius
+     * @param xb end x coord
+     * @param yb end y coord
+     * @param rb end radius
+     * @returns {x1, y1, x2, y2, d} -- the points and original distance between them
+     */
+    function insetEdge(xa, ya, ra, xb, yb, rb) {
+        var dx = (xa - xb), dy = (ya - yb),
+            d = Math.sqrt(dx * dx + dy * dy);       // distance between nodes
+        return {
+            x1: xa - dx * ra / d,                    // indented start point (x1,y1)
+            y1: ya - dy * ra / d,
+            x2: xb + dx * rb / d,                    // indented end point (x2, y2)
+            y2: yb + dy * rb / d,
+            d: d                                    // original distance between the points
+        };
+
     }
 
     // Ensures a D3 item has no cumulative matrix transform
@@ -2103,6 +2128,8 @@ var BrunelD3 = (function () {
         'tween': transitionTween,
         'addFeatures': makeMap,
         'symbol': makeSymbol,
+        'edge': makeEdge,
+        'insetEdge': insetEdge,
         'network': makeNetworkLayout,
         'facet': facet,
         'time': time,

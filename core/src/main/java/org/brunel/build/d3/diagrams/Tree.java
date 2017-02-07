@@ -19,7 +19,6 @@ package org.brunel.build.d3.diagrams;
 import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.D3ElementBuilder;
-import org.brunel.build.d3.element.EdgeBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.d3.element.GeomAttribute;
@@ -108,10 +107,12 @@ class Tree extends D3Diagram {
 
 	public void writeDiagramUpdate(ElementDetails details) {
 		writeHierarchicalClass();
-
 		writeNodePlacement(details, "d");
 
-		out.addChained("attr('r', " + details.overallSize.halved() + ")");
+		GeomAttribute rr = details.overallSize.halved();
+
+		GeomAttribute radiusFunction = GeomAttribute.makeFunction("d.data.radius = " + rr.definition());
+		out.addChained("attr('r', " + radiusFunction + ")");
 		D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
 
 		// If we have edges defined as an element, we use those, otherwise add the following
@@ -122,7 +123,7 @@ class Tree extends D3Diagram {
 			out.add("var edgeGroup = diagramExtras.selectAll('path').data(tree.links(), edgeKey)")
 					.endStatement();
 
-			new EdgeBuilder(out, method == Tree.Method.polar).write("edgeGroup");
+//			new EdgeBuilder(out, method == Tree.Method.polar).write("edgeGroup");
 			D3ElementBuilder.writeRemovalOnExit(out, "edgeGroup");
 
 			labelBuilder.addTreeInternalLabelsOutsideNode(

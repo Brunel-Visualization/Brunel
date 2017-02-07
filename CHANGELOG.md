@@ -15,6 +15,19 @@ a field, like so:
 
 This will show labels for the midwest states in the designated style.
 
+## Edge styling
+
+We now support curves and arrows on edges in network, tree and other charts using them.
+They can be set with a style `symbol` command to request that style. The valid symbols are given below:
+
+ * `style("symbol:straight")`   -- simple straight lines
+ * `style("symbol:arrow")`      -- straight lines with an arrow
+ * `style("symbol:curved")`     -- curved lines with no arrowheads
+ * `style("symbol:curvedArrow")`-- curved lines with arrowheads
+
+The arrowhead will always be a drawn in a neutral grey color. This is a limitation
+of current SVG technology, due to be fixed in SVG 2.0.
+
 # 2.2 Release Notes
 
 ## Trees and Hierarchies
