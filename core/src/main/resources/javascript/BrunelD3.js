@@ -1482,7 +1482,7 @@ var BrunelD3 = (function () {
             pad = geom.default_point_size,
             left = pad, top = pad,
             right = geom.inner_width - pad, bottom = geom.inner_height - pad,
-            D = density * 0.75 * Math.min(W, H) / Math.sqrt(N) ,
+            D = density * 0.75 * Math.min(W, H) / Math.sqrt(N),
             R = D * Math.max(1, D - 3) / 5 / Math.max(1, E / N);
         R = Math.min(R, D * 6);
 
@@ -1540,8 +1540,8 @@ var BrunelD3 = (function () {
 
             mergedEdges.attr('d', function (d) {
                 // First we inset the edges for the radii of the sources
-                var p = insetEdge(scaleX(d.source.x), scaleY(d.source.y), d.source.radius || 0,
-                    scaleX(d.target.x), scaleY(d.target.y), d.target.radius || 0);
+                var p = insetEdge(scaleX(d.source.x), scaleY(d.source.y), d.source,
+                    scaleX(d.target.x), scaleY(d.target.y), d.target);
 
                 // Then we return the path description for a curve or a straight line
                 return makeEdge(p, curved);
@@ -1582,15 +1582,17 @@ var BrunelD3 = (function () {
      * Insets a line segement for different sized nodes at ends
      * @param xa start x coord
      * @param ya start y coord
-     * @param ra start radius
+     * @param radiusA start object we look in for radius (in it, then in .data, then default to 5)
      * @param xb end x coord
      * @param yb end y coord
-     * @param rb end radius
+     * @param radiusB end object we look in for radius (in it, then in .data, then default to 5)
      * @returns {x1, y1, x2, y2, d} -- the points and original distance between them
      */
-    function insetEdge(xa, ya, ra, xb, yb, rb) {
+    function insetEdge(xa, ya, radiusA, xb, yb, radiusB) {
         var dx = (xa - xb), dy = (ya - yb),
-            d = Math.sqrt(dx * dx + dy * dy);       // distance between nodes
+            d = Math.sqrt(dx * dx + dy * dy),       // distance between nodes
+            ra = radiusA.radius || (radiusA.data ? radiusA.data.radius : 5) || 5,
+            rb = radiusB.radius || (radiusB.data ? radiusB.data.radius : 5) || 5;
         return {
             x1: xa - dx * ra / d,                    // indented start point (x1,y1)
             y1: ya - dy * ra / d,
@@ -1598,7 +1600,6 @@ var BrunelD3 = (function () {
             y2: yb + dy * rb / d,
             d: d                                    // original distance between the points
         };
-
     }
 
     // Ensures a D3 item has no cumulative matrix transform

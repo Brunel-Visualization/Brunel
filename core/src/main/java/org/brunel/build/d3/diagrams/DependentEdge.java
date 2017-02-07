@@ -80,22 +80,22 @@ class DependentEdge extends D3Diagram {
 	}
 
 	public void defineLocation() {
-		writeEdgePlacement("target");
+		writeEdgePlacement("target", curved, polar, out);
 	}
 
-	public void write(String groupName) {
+	public static void write(boolean curved, boolean polar, ScriptWriter out, String groupName) {
 		// Create paths for the added items, and grow the from the source
 		out.add("var added = " + "edgeGroup" + ".enter().append('path').attr('class', 'edge')");
-		writeEdgePlacement("source");
+		writeEdgePlacement("source", curved, polar, out);
 		out.endStatement();
 
 		// Create paths for all items, and transition them to the final locations
 		out.add("BrunelD3.transition(" + groupName + ".merge(added), transitionMillis)");
-		writeEdgePlacement("target");
+		writeEdgePlacement("target", curved, polar, out);
 		out.endStatement();
 	}
 
-	private void writeEdgePlacement(String target) {
+	private static void writeEdgePlacement(String target, boolean curved, boolean polar, ScriptWriter out) {
 		out.addChained("attr('d', function(d) {")
 				.indentMore().indentMore().onNewLine();
 
@@ -112,8 +112,8 @@ class DependentEdge extends D3Diagram {
 			out.continueOnNextLine().add(" +  scale_x(r2*Math.cos(a2)) + ',' + scale_y(r2*Math.sin(a2))")
 					.endStatement();
 		} else {
-			out.add("var p = BrunelD3.insetEdge(scale_x(d.source.y), scale_y(d.source.x), d.source.radius,")
-					.continueOnNextLine().add("scale_x(d.target.y), scale_y(d.target.x), d.target.radius)")
+			out.add("var p = BrunelD3.insetEdge(scale_x(d.source.y), scale_y(d.source.x), d.source,")
+					.continueOnNextLine().add("scale_x(d.target.y), scale_y(d.target.x), d.target)")
 					.endStatement()
 					.add("return 'M' + p.x1 + ',' + p.y1 + ");
 			// Add curve if requested, else just a straight line

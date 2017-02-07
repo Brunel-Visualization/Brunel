@@ -123,7 +123,7 @@ class Tree extends D3Diagram {
 			out.add("var edgeGroup = diagramExtras.selectAll('path').data(tree.links(), edgeKey)")
 					.endStatement();
 
-//			new EdgeBuilder(out, method == Tree.Method.polar).write("edgeGroup");
+			DependentEdge.write(true, structure.chart.coordinates.isPolar(), out, "edgeGroup");
 			D3ElementBuilder.writeRemovalOnExit(out, "edgeGroup");
 
 			labelBuilder.addTreeInternalLabelsOutsideNode(
