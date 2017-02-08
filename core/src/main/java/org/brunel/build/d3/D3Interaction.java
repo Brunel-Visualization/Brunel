@@ -215,15 +215,21 @@ public class D3Interaction {
 		LinkedHashMap<String, List<String>> elementEvents = new LinkedHashMap<>();
 		LinkedHashMap<String, List<String>> overlayEvents = new LinkedHashMap<>();
 
+		// We can only have one way to define snap information, so we just use the first definition
 		String[] snapInfo = null;
 		for (Param p : interactions)
 			if (snapInfo == null) snapInfo = findSnapInfo(p);
 
 		for (Param p : interactions) {
 			Interaction type = p.asEnum(Interaction.class);
-			if (type == Interaction.select) {
+
+			// Is this a snap modifier?
+			boolean isSnap =  false;
+			for (Param mod : p.modifiers()) if (mod.toString().startsWith("snap")) isSnap = true;
+
+				if (type == Interaction.select) {
 				// One of select, select:mouseXXX, select:snap, select:snap:ZZ
-				if (snapInfo != null) {
+				if (isSnap) {
 					// We want a snap overlay event that will call select -- all snap events are overlays
 					// Also add corresponding mouse out event
 					addFunctionDefinition("mousemove.snap",
@@ -250,7 +256,7 @@ public class D3Interaction {
 				// One of call, call:func, call:func:mouseXXX, call:func:snap, call:func:snap:ZZ
 				String functionName = p.hasModifiers() ? p.firstModifier().asString() : "BrunelD3.crosshairs";
 				if (functionName.isEmpty()) functionName = "BrunelD3.crosshairs";
-				if (snapInfo != null) {
+				if (isSnap) {
 					// We want a snap overlay event that will call a custom function -- all snap events are overlays
 					addFunctionDefinition("mousemove.user", functionName + "(c.item, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
 					addFunctionDefinition("mouseout.user", functionName + "(null, c.target, element, '" + snapInfo[0] + "')", overlayEvents);
