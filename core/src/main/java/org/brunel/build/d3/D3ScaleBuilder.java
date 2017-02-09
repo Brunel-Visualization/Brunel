@@ -422,13 +422,14 @@ public class D3ScaleBuilder {
 
 			out.add(basicDefinition).add("(" + axis.scale + ").ticks(" + ticks);
 			if (dateFormat != null)
-				out.add(")");								// No format needed
-			else if ("log".equals(transform))
-				out.add(", '0.0s')");						// format with no decimal places
-			else if (axis.inMillions)
-				out.add(", 's')");							// Units style formatting
+				out.add(")");                                // No format needed
+			else if ("log".equals(transform)) {
+				if (axis.inMillions) out.add(", '0.0s')");  	// format with no decimal places
+				else out.add(", ',')");
+			} else if (axis.inMillions)
+				out.add(", 's')");                            // Units style formatting
 			else
-				out.add(")");								// No formatting
+				out.add(")");                                // No formatting
 			out.endStatement();
 		}
 	}
