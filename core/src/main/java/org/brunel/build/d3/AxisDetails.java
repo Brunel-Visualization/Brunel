@@ -56,7 +56,7 @@ public class AxisDetails {
 
     private final Field[] fields;                       // Fields used in this axis
     public final boolean categorical;                  // True if the axis is categorical
-    private final boolean inMillions;                   // True if the fields values are nicely shown in millions
+    public final boolean inMillions;                   // True if the fields values are nicely shown in millions
     private AxisTitleBuilder titleBuilder;              // builds the title for this axis
 
     /* Constructs the axis for the given fields */
@@ -150,14 +150,6 @@ public class AxisDetails {
         }
         if (originalTitles.size() < titles.size()) titles = originalTitles;     // If shorter, use that
         return titles.isEmpty() ? null : Data.join(titles);
-    }
-
-    public boolean inMillions() {
-        return inMillions;
-    }
-
-    public boolean isLog() {
-        return fields.length > 0 && "log".equals(fields[0].property("transform"));
     }
 
     /**

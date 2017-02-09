@@ -407,21 +407,28 @@ public class D3ScaleBuilder {
 	 */
 	public void defineAxis(String basicDefinition, AxisDetails axis, boolean horizontal) {
 		if (axis.exists()) {
-			int padding = horizontal ? axis.tickPadding.top : axis.tickPadding.right;
-			out.add(basicDefinition)
-					.add("(" + axis.scale + ").tickSizeInner(" + axis.markSize
-							+ ").tickPadding(" + padding + ").tickSizeOuter(0)");
-			if (axis.isLog()) out.addChained("ticks(7, ',.3g')");
-			else if (axis.tickCount != null)
-				out.addChained("ticks(").add(axis.tickCount).add(")");
-			else if (axis == hAxis) {
-				// 10 ticks, unless the space is too small to allow that many
-				out.addChained("ticks(Math.min(10, Math.round(geom.inner_width / " + (1.5 * axis.maxCategoryWidth()) + ")))");
+			String transform = horizontal ? structure.coordinates.xTransform : structure.coordinates.yTransform;
+			DateFormat dateFormat = horizontal ? structure.coordinates.xDateFormat : structure.coordinates.yDateFormat;
+
+			// Do not define ticks by default
+			String ticks;
+			if (axis.tickCount != null) {
+				ticks = Integer.toString(axis.tickCount);
+			} else if (horizontal) {
+				ticks = "Math.min(10, Math.round(geom.inner_width / " + (1.5 * axis.maxCategoryWidth()) + "))";
+			} else {
+				ticks = "Math.min(10, Math.round(geom.inner_width / 20))";
 			}
 
-			if (axis.inMillions())
-				out.addChained("tickFormat(  function(x) { return BrunelData.Data.format(x/1e6) + 'M' })");
-
+			out.add(basicDefinition).add("(" + axis.scale + ").ticks(" + ticks);
+			if (dateFormat != null)
+				out.add(")");								// No format needed
+			else if ("log".equals(transform))
+				out.add(", '0.0s')");						// format with no decimal places
+			else if (axis.inMillions)
+				out.add(", 's')");							// Units style formatting
+			else
+				out.add(")");								// No formatting
 			out.endStatement();
 		}
 	}
@@ -616,6 +623,9 @@ public class D3ScaleBuilder {
 		Object[] divs = new Object[numericDomainDivs];
 		if (field.isDate()) {
 			DateFormat dateFormat = (DateFormat) field.property("dateFormat");
+			if (isX) dateFormat = coordinates.xDateFormat;
+			if (isY) dateFormat = coordinates.yDateFormat;
+
 			DateBuilder dateBuilder = new DateBuilder();
 			for (int i = 0; i < divs.length; i++) {
 				Object v;

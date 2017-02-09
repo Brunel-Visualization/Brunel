@@ -54,8 +54,8 @@
     stroke: #888888;
 }
 
-.brunel .tick .mark {
-    font-size: 12px;
+.brunel .tick text {
+    font-size: 8pt;
 }
 
 .brunel .grid {
