@@ -168,10 +168,8 @@ public class D3Builder extends AbstractBuilder {
 		// Attach the zoom
 		interaction.addZoomFunctionality();
 
-		// Symbols need to be added to the defintions
-		for (ElementStructure e : structure.elementStructure)
-			if (!e.vis.fSymbol.isEmpty()) new SymbolHandler(e, out).addDefinitions();
-
+		// Symbols need to be added to the svg definitions block
+		structure.symbols.addDefinitions(out);
 	}
 
 	private boolean forceSquare(VisSingle[] elements) {

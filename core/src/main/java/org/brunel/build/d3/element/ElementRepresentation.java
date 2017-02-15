@@ -22,79 +22,86 @@ import org.brunel.model.VisTypes;
 /**
  * Defines how we will represent a graphic element geometrically
  */
- public enum ElementRepresentation {
-    pointLikeCircle("circle", "right", false),          // A circle with text drawn to the right
-    spaceFillingCircle("circle", "box", true),          // A circle with text clipped to a box
-    largeCircle("circle", "center", false),             // A circle with text centered, but not clipped
+public enum ElementRepresentation {
+	pointLikeCircle("circle", "right", false),          // A circle with text drawn to the right
+	spaceFillingCircle("circle", "box", true),          // A circle with text clipped to a box
+	largeCircle("circle", "center", false),             // A circle with text centered, but not clipped
 
-    segment("line", "box", false),                      // A line segment. Text is drawn centrally, but not clipped
-    curvedPath("path", "box", false),                   // A line segment displayed as a curved path
-    text("text", "box", true),                          // Text -- should not be labelled usually
-    rect("rect", "box", true),                          // A rectangle with  text clipped to a box
+	segment("line", "box", false),                      // A line segment. Text is drawn centrally, but not clipped
+	curvedPath("path", "box", false),                   // A line segment displayed as a curved path
+	text("text", "box", true),                          // Text -- should not be labelled usually
+	rect("rect", "box", true),                          // A rectangle with  text clipped to a box
 
-    generalPath("path", "path", false),                 // A usually unfilled path, text drawn on that path
-    polygon("path", "poly", false),                     // A usually filled polygon, text drawn at central point
-    area("path", "area", true),                         // A usually filled path with text drawn in the middle
-    geoFeature("path", "geo", false),                   // A usually filled polygon, with predefined label location
-    symbol("path", "right", false),                     // A symbol drawn as path, but behaves like a small circle
-    wedge("path", "wedge", false);                      // A pie chart wedge gets a special labeling location
+	generalPath("path", "path", false),                 // A usually unfilled path, text drawn on that path
+	polygon("path", "poly", false),                     // A usually filled polygon, text drawn at central point
+	area("path", "area", true),                         // A usually filled path with text drawn in the middle
+	geoFeature("path", "geo", false),                   // A usually filled polygon, with predefined label location
+	symbol("path", "right", false),                     // A symbol drawn as path, but behaves like a small circle
+	wedge("path", "wedge", false);                      // A pie chart wedge gets a special labeling location
 
-    static ElementRepresentation makeForCoordinateElement(VisTypes.Element element, String symbolName, VisSingle vis) {
-        VisTypes.Coordinates coords = vis.coords;
-        if (element == VisTypes.Element.bar && coords == VisTypes.Coordinates.polar)
-            return wedge;
-        else if (element == VisTypes.Element.area)
-            return area;
-        else if (element == VisTypes.Element.line)
-            return generalPath;
-        else if (element == VisTypes.Element.path)
-            return generalPath;
-        else if (element == VisTypes.Element.polygon)
-            return polygon;
-        else if (element == VisTypes.Element.edge)
-            return segment;
-        else if (element == VisTypes.Element.text)
-            return text;
-        else if (element == VisTypes.Element.bar)
-            return rect;
-        else if ("rect".equals(symbolName))
-            return rect;
-        else if (symbolName == null || symbolName.equals("circle"))
-            return pointLikeCircle;
-        else
-            return symbol;
-    }
+	static ElementRepresentation makeForCoordinateElement(VisTypes.Element element, String symbolName, VisSingle vis) {
+		VisTypes.Coordinates coords = vis.coords;
 
-    private final String mark;                   // The graphic element this represents
-    private final String defaultTextMethod;
-    private final boolean textFitsShape;
+		// If there is a symbol aesthetic, then we need to have a symbol!
+		if (!vis.fSymbol.isEmpty())
+			return symbol;
 
-    ElementRepresentation(String mark, String textMethod, boolean textFitsShape) {
-        this.mark = mark;
-        defaultTextMethod = textMethod;
-        this.textFitsShape = textFitsShape;
-    }
+		// Bars in polar coordinates are wedges
+		if (element == VisTypes.Element.bar && coords == VisTypes.Coordinates.polar)
+			return wedge;
 
-    public String getDefaultTextMethod() {
-        return defaultTextMethod;
-    }
+		else if (element == VisTypes.Element.area)
+			return area;
+		else if (element == VisTypes.Element.line)
+			return generalPath;
+		else if (element == VisTypes.Element.path)
+			return generalPath;
+		else if (element == VisTypes.Element.polygon)
+			return polygon;
+		else if (element == VisTypes.Element.edge)
+			return segment;
+		else if (element == VisTypes.Element.text)
+			return text;
+		else if (element == VisTypes.Element.bar)
+			return rect;
+		else if ("rect".equals(symbolName))
+			return rect;
+		else if (symbolName == null || symbolName.equals("circle"))
+			return pointLikeCircle;
+		else
+			return symbol;
+	}
 
-    public String getMark() {
-        return mark;
-    }
+	private final String mark;                   // The graphic element this represents
+	private final String defaultTextMethod;
+	private final boolean textFitsShape;
 
-    public String getTooltipTextMethod() {
-        if (this == area) return "poly";
-        if (isDrawnAsPath() || this == segment) return getDefaultTextMethod();
-        return "top";
-    }
+	ElementRepresentation(String mark, String textMethod, boolean textFitsShape) {
+		this.mark = mark;
+		defaultTextMethod = textMethod;
+		this.textFitsShape = textFitsShape;
+	}
 
-    public boolean isDrawnAsPath() {
-        return mark.equals("path") && this != symbol;
-    }
+	public String getDefaultTextMethod() {
+		return defaultTextMethod;
+	}
 
-    public boolean textFitsShape() {
-        return textFitsShape;
-    }
+	public String getMark() {
+		return mark;
+	}
+
+	public String getTooltipTextMethod() {
+		if (this == area) return "poly";
+		if (isDrawnAsPath() || this == segment) return getDefaultTextMethod();
+		return "top";
+	}
+
+	public boolean isDrawnAsPath() {
+		return mark.equals("path") && this != symbol;
+	}
+
+	public boolean textFitsShape() {
+		return textFitsShape;
+	}
 }
 

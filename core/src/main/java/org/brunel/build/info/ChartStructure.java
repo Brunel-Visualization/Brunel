@@ -16,6 +16,7 @@
 
 package org.brunel.build.info;
 
+import org.brunel.build.d3.SymbolHandler;
 import org.brunel.data.Dataset;
 import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
@@ -31,17 +32,20 @@ import java.util.Comparator;
  */
 public class ChartStructure {
 
-	public final ChartCoordinates coordinates;
 	public final int chartIndex;                            // 0-based chart index
-	public final VisSingle[] elements;
-	public final GeoInformation geo;
-	public final Diagram diagram;
-	public final ElementStructure[] elementStructure;
 	public final ChartStructure outer;                      // If non-null, the enclosing element for a nested chart
 	public final Integer innerChartIndex;                   // If non-null, the index of the chart we enclose
+
+	public final ChartCoordinates coordinates;				// Coordinate system for this chart
+	public final GeoInformation geo;						// Geo information
+	public final Diagram diagram;							// Diagram for this chart
+	public final SymbolHandler symbols;						// Symbol handler for the chart
+
 	public final String visIdentifier;                      // Identifier for the overall vis (the SVG ID)
 	public boolean accessible;                              // If true, generate accessible content
 
+	public final VisSingle[] elements;
+	public final ElementStructure[] elementStructure;
 	public final Dataset[] baseDataSets;
 	public int chartHeight, chartWidth;                     // Pixel expanse of chart (set during building)
 
@@ -81,6 +85,10 @@ public class ChartStructure {
 
 			}
 		}
+
+		// This must be called when the elements have been defined. It will look for custom symbol URIs
+		// and manage naming conventions for them
+		this.symbols = new SymbolHandler(this);
 
 	}
 

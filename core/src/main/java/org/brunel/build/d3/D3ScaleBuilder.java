@@ -242,6 +242,10 @@ public class D3ScaleBuilder {
 		return vis.fColor.isEmpty() ? null : vis.fColor.get(0);
 	}
 
+	private Param getSymbol(VisSingle vis) {
+		return vis.fSymbol.isEmpty() ? null : vis.fSymbol.get(0);
+	}
+
 	// Determine if position are the same
 	private boolean same(Field a, Field b) {
 		return a.name.equals(b.name) && a.preferCategorical() == b.preferCategorical();
@@ -281,6 +285,7 @@ public class D3ScaleBuilder {
 		boolean dataInside = structure.hasHierarchicalData() && !structure.isDependent();
 
 		Param color = getColor(vis);
+		Param symbol = getSymbol(vis);
 		Param[] size = getSize(vis);
 		Param[] css = getCSSAesthetics(vis);
 		Param opacity = getOpacity(vis);
@@ -296,6 +301,11 @@ public class D3ScaleBuilder {
 			addOpacityScale(opacity, vis);
 			Field field = fieldById(opacity, vis);
 			out.onNewLine().add("var opacity = function(d) { return scale_opacity(" + D3Util.writeCall(field, dataInside) + ") }").endStatement();
+		}
+		if (symbol != null) {
+			addSymbolScale(symbol, structure);
+			Field field = fieldById(symbol, vis);
+			out.onNewLine().add("var symbolID = function(d) { return scale_symbol(" + D3Util.writeCall(field, dataInside) + ") }").endStatement();
 		}
 		for (int i = 0; i < css.length; i++) {
 			Param p = css[i];
@@ -424,7 +434,7 @@ public class D3ScaleBuilder {
 			if (dateFormat != null)
 				out.add(")");                                // No format needed
 			else if ("log".equals(transform)) {
-				if (axis.inMillions) out.add(", '0.0s')");  	// format with no decimal places
+				if (axis.inMillions) out.add(", '0.0s')");    // format with no decimal places
 				else out.add(", ',')");
 			} else if (axis.inMillions)
 				out.add(", 's')");                            // Units style formatting
@@ -860,6 +870,15 @@ public class D3ScaleBuilder {
 		int categories = defineScaleWithDomain("color", new Field[]{f}, color, palette.values.length, "linear", palette.values, false);
 		if (categories <= 0) out.addChained("interpolate(d3.interpolateHcl)");   // Interpolate for numeric only
 		out.addChained("range([ ").addQuoted((Object[]) palette.colors).add("])").endStatement();
+	}
+
+	private void addSymbolScale(Param p, ElementStructure element) {
+		Field f = fieldById(p, element.vis);                                // Find the field
+		SymbolHandler symbols = structure.symbols;                          // Handler for all symbols
+		String[] names = symbols.getNamesForElement(element);            	// List of symbol identifiers
+
+		defineScaleWithDomain("symbol", new Field[]{f}, color, names.length, "linear", null, false);
+		out.addChained("range([ ").addQuoted((Object[]) names).add("])").endStatement();
 	}
 
 	private void addOpacityScale(Param p, VisSingle vis) {
