@@ -68,11 +68,11 @@ public class D3ElementBuilder {
 		ElementDetails details = makeDetails();         // Create the details of what the element should be
 		setGeometry(details);                           // And the coordinate definitions
 
-		defineAllElementFeatures(details);				// Features for the entire element -- paths, etc.
-		defineLabelSettings(details);					// Defines the 'labeling' settings object
-		defineInitialState(details);					// Define function to initialize element
-		defineUpdateState(details);						// Define function to update element (acts on initial+update)
-		defineLabeling(details);						// Defines the labeling  function
+		defineAllElementFeatures(details);                // Features for the entire element -- paths, etc.
+		defineLabelSettings(details);                    // Defines the 'labeling' settings object
+		defineInitialState(details);                    // Define function to initialize element
+		defineUpdateState(details);                        // Define function to update element (acts on initial+update)
+		defineLabeling(details);                        // Defines the labeling  function
 
 		// Define the selections
 		out.onNewLine().comment("Create selections, set the initial state and transition updates");
@@ -235,10 +235,10 @@ public class D3ElementBuilder {
 	protected ElementDetails makeDetails() {
 		// When we create diagrams this has the side effect of writing the data calls needed
 		if (diagram == null) {
-			return ElementDetails.makeForCoordinates(vis, getSymbol());
+			return ElementDetails.makeForCoordinates(vis, getCommonSymbol());
 		} else {
 			out.onNewLine().comment("Data structures for a", vis.tDiagram, "diagram");
-			return diagram.initializeDiagram(getSymbol());
+			return diagram.initializeDiagram(getCommonSymbol());
 		}
 	}
 
@@ -365,7 +365,7 @@ public class D3ElementBuilder {
 			else
 				out.addChained("attr('d', path)");
 		} else if (details.representation == ElementRepresentation.rect)
-			defineRect(details);
+			defineRect(details, out);
 		else if (details.representation == ElementRepresentation.segment) {
 			out.addChained("attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)");
 		} else if (details.representation == ElementRepresentation.text)
@@ -454,27 +454,41 @@ public class D3ElementBuilder {
 	private static void defineSymbol(ElementDetails elementDef, VisSingle vis, ScriptWriter out) {
 		// If the center is not defined, this has been placed using a translation transform already
 		if (centerDefined(elementDef)) {
-			// Add a translate to place it in the right location
-			out.addChained("attr('transform', function(d) { return 'translate(' + "
-					+ elementDef.x.center.definition() + " + ', ' + "
-					+ elementDef.y.center.definition() + " + ')' })");
-
-			String symbolName = ModelUtil.getElementSymbol(vis);
-			symbolName = Data.quote(symbolName == null ? "circle" : symbolName);
-
-			GeomAttribute size = elementDef.overallSize.halved();
-			if (size.isFunc()) {
-				// The size changes, so we must call the function
-				out.addChained("attr('d', function(d) { return BrunelD3.symbol(" + symbolName + ", " +
-						size.definition() + ") })");
+			if (vis.fSymbol.isEmpty()) {
+				defineFixedCommonSymbol(elementDef, vis, out);
 			} else {
-				// Fixed symbol -- no function needed
-				out.addChained("attr('d', BrunelD3.symbol(" + symbolName + ", " + size + "))");
+				defineUsingSymbolAesthetic(elementDef, out);
 			}
 		}
 	}
 
-	private String getSymbol() {
+	private static void defineUsingSymbolAesthetic(ElementDetails elementDef, ScriptWriter out) {
+		out.addChained("attr('xlink:href', function(d) { return '#' + symbolID(d) })");
+		defineRect(elementDef, out);
+	}
+
+	private static void defineFixedCommonSymbol(ElementDetails elementDef, VisSingle vis, ScriptWriter out) {
+		// Add a translate to place it in the right location
+		out.addChained("attr('transform', function(d) { return 'translate(' + "
+				+ elementDef.x.center.definition() + " + ', ' + "
+				+ elementDef.y.center.definition() + " + ')' })");
+
+
+		String symbolName = ModelUtil.getElementSymbol(vis);
+		symbolName = Data.quote(symbolName == null ? "circle" : symbolName);
+
+		GeomAttribute size = elementDef.overallSize.halved();
+		if (size.isFunc()) {
+			// The size changes, so we must call the function
+			out.addChained("attr('d', function(d) { return BrunelD3.symbol(" + symbolName + ", " +
+					size.definition() + ") })");
+		} else {
+			// Fixed symbol -- no function needed
+			out.addChained("attr('d', BrunelD3.symbol(" + symbolName + ", " + size + "))");
+		}
+	}
+
+	private String getCommonSymbol() {
 		String result = ModelUtil.getElementSymbol(vis);
 		if (result != null) return result;
 		if (structure.chart.geo != null) return "circle";             // Geo charts default to circles
@@ -656,7 +670,7 @@ public class D3ElementBuilder {
 		out.add("var splits = BrunelD3.makePathSplits(" + params + ");").ln();
 	}
 
-	private void defineRect(ElementDetails details) {
+	private static void defineRect(ElementDetails details, ScriptWriter out) {
 		// Rectangles must have extents > 0 to display, so we need to write that code in
 
 		out.addChained("each(function(d) {").indentMore().indentMore().onNewLine();

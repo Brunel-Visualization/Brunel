@@ -289,7 +289,7 @@ public class D3ScaleBuilder {
 		Param[] size = getSize(vis);
 		Param[] css = getCSSAesthetics(vis);
 		Param opacity = getOpacity(vis);
-		if (color == null && opacity == null && size.length == 0 && css.length == 0) return;
+		if (color == null && opacity == null && size.length == 0 && css.length == 0 && symbol == null) return;
 
 		out.onNewLine().comment("Aesthetic Functions");
 		if (color != null) {

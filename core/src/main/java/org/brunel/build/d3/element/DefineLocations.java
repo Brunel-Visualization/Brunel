@@ -77,7 +77,7 @@ class DefineLocations {
 
         if (fields.length == 0) {
             // There are no fields -- we have a notional [0,1] extent, so use the center of that
-            if (rep == ElementRepresentation.rect) {
+            if (rep.isBoxlike()) {
                 dim.left = GeomAttribute.makeConstant(scaleName + ".range()[0]");
                 dim.right = GeomAttribute.makeConstant(scaleName + ".range()[1]");
             } else {
@@ -90,7 +90,7 @@ class DefineLocations {
         boolean useRangesFromBins = main.isBinned() && !categorical;
 
         // For the x axis, only rectangles use the ranges
-        if (dimName.equals("x") && rep != ElementRepresentation.rect) useRangesFromBins = false;
+        if (dimName.equals("x") && !rep.isBoxlike()) useRangesFromBins = false;
 
         if (defineForTwoFields(rep, dimName, fields)) {
             // The dimension contains two fields: a range
