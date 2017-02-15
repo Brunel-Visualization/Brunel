@@ -873,12 +873,26 @@ public class D3ScaleBuilder {
 	}
 
 	private void addSymbolScale(Param p, ElementStructure element) {
-		Field f = fieldById(p, element.vis);                                // Find the field
-		SymbolHandler symbols = structure.symbols;                          // Handler for all symbols
-		String[] names = symbols.getNamesForElement(element);            	// List of symbol identifiers
+		Field f = fieldById(p, element.vis);                                	// Find the field
+		String[] requestedSymbols = findStringLists(p);                        	// Find lists of symbols in the request
+		SymbolHandler symbols = structure.symbols;                          	// Handler for all symbols
+		String[] names = symbols.getNamesForElement(element, requestedSymbols);	// List of symbol identifiers
 
 		defineScaleWithDomain("symbol", new Field[]{f}, color, names.length, "linear", null, false);
 		out.addChained("range([ ").addQuoted((Object[]) names).add("])").endStatement();
+	}
+
+	private String[] findStringLists(Param p) {
+		// Search for any list of strings within the parameters
+		for (Param param : p.modifiers()) {
+			if (param.type() == Type.list) {
+				List<Param> list = param.asList();
+				String[] strings = new String[list.size()];
+				for (int i = 0; i < strings.length; i++) strings[i] = list.get(i).toString();
+				return strings;
+			}
+		}
+		return null;
 	}
 
 	private void addOpacityScale(Param p, VisSingle vis) {

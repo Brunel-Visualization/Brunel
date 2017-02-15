@@ -25,14 +25,18 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class handles loading and using symbols
  */
 public class SymbolHandler {
+
+	private static final String CIRCLE_SYMBOL_DEFINITION = "\"<symbol id='brunel_circle' viewBox='0 0 24 24'><circle cx='12' cy='12' r='11'/></symbol>\"";
 
 	private final String visID;
 	// Map the URI requested to the symbols to display (as a DOM element)
@@ -51,13 +55,31 @@ public class SymbolHandler {
 		}
 	}
 
-	public String[] getNamesForElement(ElementStructure element) {
+	public String[] getNamesForElement(ElementStructure element, String[] requested) {
 		URI uri = getSymbolURI(element);
-		Element[] e = uriToSymbols.get(uri);
-		String[] strings = new String[e.length];
-		for (int i = 0; i < strings.length; i++)
-			strings[i] = e[i].getAttribute("id");
-		return strings;
+		Element[] elements = uriToSymbols.get(uri);
+
+		if (requested != null && requested.length > 0) {
+			String prefix = getSymbolPrefix(element.index);						// The prefix to put in front
+
+			// Create a list of valid (known) symbol ids
+			Set<String> valid = new HashSet<>();
+			for (Element e : elements) valid.add(e.getAttribute("id"));
+
+			// Use the requested strings if they exist; otherwise use the default
+			String[] strings = new String[requested.length];
+			for (int i = 0; i < requested.length; i++) {
+				String id = prefix + requested[i].toLowerCase();
+				strings[i] = valid.contains(id) ? id : "brunel_circle";
+			}
+			return strings;
+		} else {
+			// Return all the ids for this element
+			String[] strings = new String[elements.length];
+			for (int i = 0; i < strings.length; i++)
+				strings[i] = elements[i].getAttribute("id");
+			return strings;
+		}
 	}
 
 	private Element[] readSymbolDefinitions(int indexNumber, URI uri) {
@@ -155,12 +177,12 @@ public class SymbolHandler {
 		// The defs element has already been written, so we need only a group for these symbols
 		out.add("vis.selectAll('defs').append('g').html(").indentMore();
 
-		String continuationText = "";                                // No continuation text for first entry
+		// always add the default circle symbol in case anything fails to work
+		out.onNewLine().add(CIRCLE_SYMBOL_DEFINITION);
 
 		for (Element[] values : uriToSymbols.values()) {
 			for (Element value : values) {
-				out.onNewLine().add(continuationText).add(nodeToQuotedText(value, t));
-				continuationText = "+ ";
+				out.onNewLine().add("+ ").add(nodeToQuotedText(value, t));
 			}
 		}
 
