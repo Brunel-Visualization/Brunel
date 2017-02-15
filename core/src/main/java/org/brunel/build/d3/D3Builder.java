@@ -168,6 +168,10 @@ public class D3Builder extends AbstractBuilder {
 		// Attach the zoom
 		interaction.addZoomFunctionality();
 
+		// Symbols need to be added to the defintions
+		for (ElementStructure e : structure.elementStructure)
+			if (!e.vis.fSymbol.isEmpty()) new SymbolHandler(e, out).addDefinitions();
+
 	}
 
 	private boolean forceSquare(VisSingle[] elements) {
@@ -269,6 +273,8 @@ public class D3Builder extends AbstractBuilder {
 		out.add("    vis = d3.select('#' + visId).attr('class', 'brunel'),").at(60).comment("the SVG container");
 		out.add("    isSelected = function(data) { return function(d) {return data.$selection(d)=='\u2713'} };")
 				.comment("returns a filter function identifying selected items");
+		out.add("vis.selectAll('defs').data(['X']).enter().append('defs');")
+				.at(6).comment("Ensure defs element is present");
 	}
 
 	protected void endChart(ChartStructure structure) {
@@ -517,6 +523,7 @@ public class D3Builder extends AbstractBuilder {
 		writeFieldName("size", vis.fSize);
 		writeFieldName("opacity", vis.fOpacity);
 		writeFieldName("class", vis.fCSS);
+		writeFieldName("symbol", vis.fSymbol);
 		out.onNewLine().indentLess().add("}");
 		out.indentLess().onNewLine().add("}").endStatement();
 	}

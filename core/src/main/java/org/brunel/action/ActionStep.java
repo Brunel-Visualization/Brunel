@@ -81,6 +81,9 @@ public class ActionStep {
             } else if (name.equals("css")) {
                 item.css(parameters);
                 return item;
+            } else if (name.equals("symbol")) {
+                item.symbol(parameters);
+                return item;
             } else if (name.equals("size")) {
                 item.size(parameters);
                 return item;

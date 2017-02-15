@@ -917,8 +917,14 @@ public class D3ScaleBuilder {
 	 * Returns css class aesthetics as an array
 	 */
 	private Param[] getCSSAesthetics(VisSingle vis) {
-		List<Param> fCSS = vis.fCSS;
-		return fCSS.toArray(new Param[fCSS.size()]);
+		return vis.fCSS.toArray(new Param[vis.fCSS.size()]);
+	}
+
+	/**
+	 * Returns css class aesthetics as an array
+	 */
+	private Param[] getSymbolAesthetics(VisSingle vis) {
+		return vis.fSymbol.toArray(new Param[vis.fSymbol.size()]);
 	}
 
 	private Object[] getSizes(List<Param> params) {
