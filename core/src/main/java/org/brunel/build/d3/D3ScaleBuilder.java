@@ -51,6 +51,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import static org.brunel.build.d3.ScalePurpose.color;
+import static org.brunel.build.d3.ScalePurpose.size;
 
 /**
  * Adds scales and axes; also guesses the right size to leave for axes
@@ -305,7 +306,7 @@ public class D3ScaleBuilder {
 		if (symbol != null) {
 			addSymbolScale(symbol, structure);
 			Field field = fieldById(symbol, vis);
-			out.onNewLine().add("var symbolID = function(d) { return scale_symbol(" + D3Util.writeCall(field, dataInside) + ") }").endStatement();
+			out.onNewLine().add("var symbolID = function(d) { var sym =" + D3Util.writeCall(field, dataInside) + "; return sym ? scale_symbol(sym) : 'brunel_circle' }").endStatement();
 		}
 		for (int i = 0; i < css.length; i++) {
 			Param p = css[i];
@@ -597,7 +598,7 @@ public class D3ScaleBuilder {
 
 		// Determine how much we want to include zero (for size scale we always want it)
 		double includeZero = getIncludeZeroFraction(fields, purpose);
-		if (purpose == ScalePurpose.size) includeZero = 1.0;
+		if (purpose == size) includeZero = 1.0;
 
 		// Build a combined scale field and force the desired transform on it for x and y dimensions
 		Field scaleField = fields.length == 1 ? field : combineNumericFields(fields);
@@ -656,7 +657,7 @@ public class D3ScaleBuilder {
 			if (isY) transform = coordinates.yTransform;
 
 			// Size must not get a transform as it will seriously distort things
-			if (purpose == ScalePurpose.size) transform = defaultTransform;
+			if (purpose == size) transform = defaultTransform;
 
 			// Parallel axes get their transform defined
 			if (purpose == ScalePurpose.parallel) {
@@ -741,7 +742,7 @@ public class D3ScaleBuilder {
 	private double getIncludeZeroFraction(Field[] fields, ScalePurpose purpose) {
 
 		if (purpose == ScalePurpose.x) return 0.1;               // Really do not want much empty space on color axes
-		if (purpose == ScalePurpose.size) return 0.98;           // Almost always want to go to zero
+		if (purpose == size) return 0.98;           // Almost always want to go to zero
 		if (purpose == color) return 0.2;           // Color
 
 		// For 'Y'
@@ -778,7 +779,7 @@ public class D3ScaleBuilder {
 
 	private double[] getNumericPaddingFraction(ScalePurpose purpose, Coordinates coords) {
 		double[] padding = new double[]{0, 0};
-		if (purpose == color || purpose == ScalePurpose.size)
+		if (purpose == color || purpose == size)
 			return padding;                // None for aesthetics
 		if (coords == Coordinates.polar) return padding;                               // None for polar angle
 		for (VisSingle e : elements) {
@@ -926,7 +927,7 @@ public class D3ScaleBuilder {
 
 		Field f = fieldById(p, vis);
 		Object[] divisions = f.isNumeric() ? null : f.categories();
-		defineScaleWithDomain(name, new Field[]{f}, ScalePurpose.size, sizes.length, defaultTransform, divisions, false);
+		defineScaleWithDomain(name, new Field[]{f}, size, sizes.length, defaultTransform, divisions, false);
 		out.addChained("range([ ").add(Data.join(sizes)).add("])").endStatement();
 	}
 
@@ -951,13 +952,6 @@ public class D3ScaleBuilder {
 	 */
 	private Param[] getCSSAesthetics(VisSingle vis) {
 		return vis.fCSS.toArray(new Param[vis.fCSS.size()]);
-	}
-
-	/**
-	 * Returns css class aesthetics as an array
-	 */
-	private Param[] getSymbolAesthetics(VisSingle vis) {
-		return vis.fSymbol.toArray(new Param[vis.fSymbol.size()]);
 	}
 
 	private Object[] getSizes(List<Param> params) {

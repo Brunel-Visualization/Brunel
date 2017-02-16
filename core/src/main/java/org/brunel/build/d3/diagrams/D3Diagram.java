@@ -20,6 +20,7 @@ import org.brunel.action.Param;
 import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.ElementDetails;
+import org.brunel.build.d3.element.GeomAttribute;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
@@ -83,6 +84,10 @@ public abstract class D3Diagram {
 		this.interaction = interaction;
 		this.labelBuilder = new D3LabelBuilder(vis, out, data);
 
+	}
+
+	public void defineCoordinateFunctions(ElementDetails details) {
+		// By default, do nothing
 	}
 
 	public String getRowKeyFunction() {
@@ -234,6 +239,39 @@ public abstract class D3Diagram {
 	protected void writeHierarchicalClass() {
 		out.addChained("attr('class', function(d) { return (d.collapsed ? 'collapsed ' : '') "
 				+ "+ (d.data.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
+	}
+
+	/**
+	 * Define coordinate functions to be used in the diagram
+	 *
+	 * @param x       the x coordinate
+	 * @param y       the x coordinate
+	 * @param r       the radius
+	 * @param details override details in here
+	 */
+	protected void defineXYR(String x, String y, String r, ElementDetails details) {
+		out.onNewLine().comment("Define Coordinate functions");
+
+		if (details.representation.isBoxlike()) {
+			// For symbols and rectangles, define the lower and upper extents for each dimension
+			out.add("function r(d) { return " + r + " }").endStatement()
+					.add("function x1(d) { return " + x + " - r(d) }").endStatement()
+					.add("function x2(d) { return " + x + " + r(d) }").endStatement()
+					.add("function y1(d) { return " + y + " - r(d) }").endStatement()
+					.add("function y2(d) { return " + y + " + r(d) }").endStatement();
+			details.x.left = GeomAttribute.makeFunction("x1(d)");
+			details.x.right = GeomAttribute.makeFunction("x2(d)");
+			details.y.left = GeomAttribute.makeFunction("y1(d)");
+			details.y.right = GeomAttribute.makeFunction("y2(d)");
+		} else {
+			// For everything else (circle-like) just the center and radius is needed
+			out.add("function x(d) { return " + x + " }").endStatement()
+					.add("function y(d) { return " + y + " }").endStatement()
+					.add("function r(d) { return " + r + " }").endStatement();
+			details.x.center = GeomAttribute.makeFunction("x(d)");
+			details.y.center = GeomAttribute.makeFunction("y(d)");
+			details.overallSize = GeomAttribute.makeFunction("r(d) * 2");
+		}
 	}
 
 }

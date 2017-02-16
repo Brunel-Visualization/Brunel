@@ -210,12 +210,12 @@ public class Field extends Informative implements Comparable<Field> {
         return (Integer) property("valid");
     }
 
-    public Object value(int index) {
-        return provider.value(index);
+    public Object value(Integer index) {
+        return index == null ? null : provider.value(index);
     }
 
     public String valueFormatted(int index) {
-        return format(provider.value(index));
+        return format(value(index));
     }
 
     public String format(Object v) {

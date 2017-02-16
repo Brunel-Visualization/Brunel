@@ -108,6 +108,7 @@ public class D3ElementBuilder {
 		} else {
 			// Set the diagram group class for CSS
 			out.add("main.attr('class',", diagram.getStyleClasses(), ")").endStatement();
+			diagram.defineCoordinateFunctions(details);
 		}
 	}
 
