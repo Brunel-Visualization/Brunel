@@ -36,7 +36,7 @@ public enum ElementRepresentation {
 	polygon("path", "poly", false),                     // A usually filled polygon, text drawn at central point
 	area("path", "area", true),                         // A usually filled path with text drawn in the middle
 	geoFeature("path", "geo", false),                   // A usually filled polygon, with predefined label location
-	symbol("use", "right", false),                      // A symbol drawn via a 'use', but behaves like a small circle
+	symbol("use", "box", false),                        // A symbol drawn via a 'use', but behaves like a large circle
 	wedge("path", "wedge", false);                      // A pie chart wedge gets a special labeling location
 
 	static ElementRepresentation makeForCoordinateElement(VisTypes.Element element, String symbolName, VisSingle vis) {
