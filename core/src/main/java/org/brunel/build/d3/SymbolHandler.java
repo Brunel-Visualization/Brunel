@@ -202,7 +202,7 @@ public class SymbolHandler {
 		try {
 			StringWriter writer = new StringWriter();
 			t.transform(new DOMSource(node), new StreamResult(writer));
-			return Data.quote(writer.toString());
+			return Data.quote(writer.toString().replaceAll("\\s+", " ").replaceAll("> <", "><"));
 		} catch (TransformerException e) {
 			throw new IllegalStateException("Internal error writing nodes as text in symbol definition writing");
 		}

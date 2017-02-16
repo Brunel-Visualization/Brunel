@@ -37,6 +37,7 @@ import org.brunel.model.VisTypes.Using;
 import org.brunel.model.style.StyleTarget;
 
 import static org.brunel.build.d3.element.ElementRepresentation.symbol;
+import static org.brunel.model.VisTypes.Diagram.map;
 import static org.brunel.model.VisTypes.Diagram.tree;
 
 public class D3ElementBuilder {
@@ -94,7 +95,10 @@ public class D3ElementBuilder {
 	}
 
 	private void defineAllElementFeatures(ElementDetails details) {
-		if (diagram == null) {
+		boolean needsCoordinateFunctions = diagram == null              	// All non-diagrams need coordinates
+				|| vis.tElement == Element.point && vis.tDiagram == map;    // Points on maps need coordinates
+
+		if (needsCoordinateFunctions) {
 			writeCoordinateFunctions(details);
 			if (details.representation == ElementRepresentation.wedge) {
 				// Deal with the case of wedges (polar intervals)
@@ -391,7 +395,7 @@ public class D3ElementBuilder {
 		boolean showsCSS = !vis.fCSS.isEmpty();
 		boolean showsSymbol = !vis.fSymbol.isEmpty();
 
-		if (filterToDataOnly && (showsColor || showsOpacity || showsStrokeSize || showsCSS|| showsSymbol)) {
+		if (filterToDataOnly && (showsColor || showsOpacity || showsStrokeSize || showsCSS || showsSymbol)) {
 			// Filter only to show the data based items
 			out.addChained("filter(hasData)").at(50).comment("following only performed for data items");
 		}
@@ -473,7 +477,6 @@ public class D3ElementBuilder {
 		out.addChained("attr('transform', function(d) { return 'translate(' + "
 				+ elementDef.x.center.definition() + " + ', ' + "
 				+ elementDef.y.center.definition() + " + ')' })");
-
 
 		String symbolName = ModelUtil.getElementSymbol(vis);
 		symbolName = Data.quote(symbolName == null ? "circle" : symbolName);
