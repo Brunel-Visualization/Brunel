@@ -1507,6 +1507,7 @@ var BrunelD3 = (function () {
 
 
         var mergedNodes = nodes.selection(), mergedEdges = edges.selection();
+        var isSymbol = mergedNodes.node().tagName == "use";
 
 
         function ticked() {
@@ -1521,32 +1522,50 @@ var BrunelD3 = (function () {
                 return t.y + t.k * v
             }
 
-            mergedNodes
-                .attr('cx', function (d) {
-                    return scaleX(d.x);
-                })
-                .attr('cy', function (d) {
-                    return scaleY(d.y);
-                })
-                .each(function (d) {
-                        d.radius = +this.getAttribute("r") || this.getBBox().getWidth();
-                        var txt = this.__label__;
-                        if (!txt) return;
-                        if (txt.__off__) {
-                            // We have calculated the position, just need to move it
-                            txt.attr('x', scaleX(txt.__off__.dx + d.x));
-                            txt.attr('y', scaleY(txt.__off__.dy + d.y));
-                        } else {
-                            // First time placement without hit detection
-                            labelItem(this, null, txt.__labeling__, null, geom);
-                            // record unscaled relative location
-                            txt.__off__ = {
-                                dx: +txt.attr('x') / t.k + t.x - d.x,
-                                dy: +txt.attr('y') / t.k + t.y - d.y
-                            }
+            if (isSymbol) {
+                // symbols need bounds like a rect
+                mergedNodes
+                    .attr('x', function (d) {
+                        return scaleX(d.x) - this.getAttribute("r");
+                    })
+                    .attr('y', function (d) {
+                        return scaleY(d.y) - this.getAttribute("r");
+                    })
+                    .attr('width', function (d) {
+                        return 2 * this.getAttribute("r");
+                    })
+                    .attr('height', function (d) {
+                        return 2 * this.getAttribute("r");
+                    })
+            } else {
+                mergedNodes
+                    .attr('cx', function (d) {
+                        return scaleX(d.x);
+                    })
+                    .attr('cy', function (d) {
+                        return scaleY(d.y);
+                    })
+            }
+
+            mergedNodes.each(function (d) {
+                    d.radius = +this.getAttribute("r") || this.getBBox().getWidth();
+                    var txt = this.__label__;
+                    if (!txt) return;
+                    if (txt.__off__) {
+                        // We have calculated the position, just need to move it
+                        txt.attr('x', scaleX(txt.__off__.dx + d.x));
+                        txt.attr('y', scaleY(txt.__off__.dy + d.y));
+                    } else {
+                        // First time placement without hit detection
+                        labelItem(this, null, txt.__labeling__, null, geom);
+                        // record unscaled relative location
+                        txt.__off__ = {
+                            dx: +txt.attr('x') / t.k + t.x - d.x,
+                            dy: +txt.attr('y') / t.k + t.y - d.y
                         }
                     }
-                );
+                }
+            );
 
             mergedEdges.attr('d', function (d) {
                 // First we inset the edges for the radii of the sources

@@ -81,12 +81,17 @@ class Network extends D3Diagram {
 		String nodeField = quoted(nodeID), from = quoted(fromFieldID), to = quoted(toFieldID);
 		out.add("graph = graph || BrunelData.diagram_Graph.make(processed,", nodeField, ",",
 				edgeDataset, ",", from, ",", to, ")").endStatement();
+
 		return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "graph.nodes");
 	}
 
-	public void writeDiagramUpdate(ElementDetails details) {
+	public void writeDiagramEnter(ElementDetails details) {
 		out.addChained("attr('r',", details.overallSize, ")");
 		D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
+	}
+
+	public void writeDiagramUpdate(ElementDetails details) {
+		// Handled by the "tick" method of layout
 	}
 
 	public void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {

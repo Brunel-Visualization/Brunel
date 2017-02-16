@@ -389,8 +389,9 @@ public class D3ElementBuilder {
 		boolean showsStrokeSize = details.isStroked() && !vis.fSize.isEmpty();
 		boolean showsOpacity = !vis.fOpacity.isEmpty();
 		boolean showsCSS = !vis.fCSS.isEmpty();
+		boolean showsSymbol = !vis.fSymbol.isEmpty();
 
-		if (filterToDataOnly && (showsColor || showsOpacity || showsStrokeSize || showsCSS)) {
+		if (filterToDataOnly && (showsColor || showsOpacity || showsStrokeSize || showsCSS|| showsSymbol)) {
 			// Filter only to show the data based items
 			out.addChained("filter(hasData)").at(50).comment("following only performed for data items");
 		}
@@ -411,6 +412,10 @@ public class D3ElementBuilder {
 		// Define line width if needed
 		if (showsStrokeSize)
 			out.addChained("style('stroke-width', size)");
+
+		// Define symbols
+		if (showsSymbol)
+			out.addChained("attr('xlink:href', function(d) { return '#' + symbolID(d) })");
 
 		// Define opacity
 		if (showsOpacity) {
