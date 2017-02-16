@@ -77,7 +77,7 @@ class DefineLocations {
 
         if (fields.length == 0) {
             // There are no fields -- we have a notional [0,1] extent, so use the center of that
-            if (rep.isBoxlike()) {
+            if (rep == ElementRepresentation.rect) {
                 dim.left = GeomAttribute.makeConstant(scaleName + ".range()[0]");
                 dim.right = GeomAttribute.makeConstant(scaleName + ".range()[1]");
             } else {

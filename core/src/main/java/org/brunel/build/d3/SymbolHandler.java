@@ -35,7 +35,10 @@ import java.util.Set;
  * This class handles loading and using symbols
  */
 public class SymbolHandler {
+	// URI to indicate that we want to define default symbols
+	private static final URI BRUNEL_SYMBOLS_URI = URI.create("internal");
 
+	// URI for the default symbols
 	private static final String CIRCLE_SYMBOL_DEFINITION = "\"<symbol id='brunel_circle' viewBox='0 0 24 24'><circle cx='12' cy='12' r='11'/></symbol>\"";
 
 	private final String visID;
@@ -60,7 +63,7 @@ public class SymbolHandler {
 		Element[] elements = uriToSymbols.get(uri);
 
 		if (requested != null && requested.length > 0) {
-			String prefix = getSymbolPrefix(element.index);						// The prefix to put in front
+			String prefix = getSymbolPrefix(element.index);                        // The prefix to put in front
 
 			// Create a list of valid (known) symbol ids
 			Set<String> valid = new HashSet<>();
@@ -154,7 +157,12 @@ public class SymbolHandler {
 		try {
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			DocumentBuilder db = dbf.newDocumentBuilder();
-			return db.parse(uri.toURL().openStream());
+
+			// Read either form the local resources OR the external site
+			if (uri == BRUNEL_SYMBOLS_URI)
+				return db.parse(SymbolHandler.class.getResourceAsStream("/org/brunel/build/d3/svg_symbols.svg"));
+			else
+				return db.parse(uri.toURL().openStream());
 		} catch (ParserConfigurationException e) {
 			throw new IllegalStateException("Internal error configuring DOM parser to read symbols: " + uri.toString(), e);
 		} catch (SAXException e) {
@@ -206,9 +214,11 @@ public class SymbolHandler {
 		if (fSymbol.isEmpty()) return null;
 
 		Param param = fSymbol.get(0);
-		if (!param.hasModifiers()) throw new IllegalStateException("Symbols currently need a URI specified");
+		if (!param.hasModifiers()) return BRUNEL_SYMBOLS_URI;					// No parameters -- use default
 		Param[] mods = param.modifiers();
-		String name = mods[mods.length - 1].asString();
+		Param lastMod = mods[mods.length - 1];
+		if (lastMod.type() == Param.Type.list) return BRUNEL_SYMBOLS_URI; 		// parameter was list -- use default
+		String name = lastMod.asString();
 		try {
 			return URI.create(name);
 		} catch (Exception e) {
