@@ -25,7 +25,6 @@ import org.brunel.build.d3.element.GeomAttribute;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.style.StyleTarget;
@@ -94,24 +93,38 @@ class Tree extends D3Diagram {
 		return ElementDetails.makeForDiagram(vis, rep, "point", "treeNodes");
 	}
 
-	public void writeDiagramEnter(ElementDetails details) {
-		out.addChained("filter(function(d) { return d.parent })");       // Only if it has a parent
-		writeNodePlacement(structure.details, "d.parent");              // place it at parent position
-	}
+//	public void writeDiagramEnter(ElementDetails details) {
+//		out.addChained("filter(function(d) { return d.parent })");       // Only if it has a parent
+//		writeNodePlacement(structure.details, "d.parent");              // place it at parent position
+//	}
 
 	public void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {
 		D3ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
 	}
 
-	public void writeDiagramUpdate(ElementDetails details) {
-		writeHierarchicalClass();
-		writeNodePlacement(details, "d");
+	public void defineCoordinateFunctions(ElementDetails details) {
+		String cx, cy;            // Functions defining the locations of node centers
+		if (method == Method.leftRight) {
+			cx = "scale_x(d.y)";
+			cy = "scale_y(d.x)";
+		} else if (method == Method.topBottom) {
+			cx = "scale_x(d.x)";
+			cy = "scale_y(d.y)";
+		} else {
+			cx = "scale_x(d.y * Math.cos(d.x))";
+			cy = "scale_y(d.y * Math.sin(d.x))";
+		}
 
 		GeomAttribute rr = details.overallSize.halved();
 
-		GeomAttribute radiusFunction = GeomAttribute.makeFunction("d.data.radius = " + rr.definition());
-		out.addChained("attr('r', " + radiusFunction + ")");
+		defineXYR(cx, cy, "d.data.radius = " + rr.definition(), details);
+	}
+
+	public void writeDiagramUpdate(ElementDetails details) {
+		writeHierarchicalClass();
+		D3ElementBuilder.definePointLikeMark(details, vis, out);
 		D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
+
 
 		// If we have edges defined as an element, we use those, otherwise add the following
 		if (structure.findDependentEdges() == null) {
@@ -129,47 +142,6 @@ class Tree extends D3Diagram {
 			);
 		}
 
-	}
-
-	private void writeNodePlacement(ElementDetails details, String d) {
-
-		String cx, cy;            // Functions defining the locations of node centers
-		if (method == Method.leftRight) {
-			cx = "scale_x(" + d + ".y)";
-			cy = "scale_y(" + d + ".x)";
-		} else if (method == Method.topBottom) {
-			cx = "scale_x(" + d + ".x)";
-			cy = "scale_y(" + d + ".y)";
-		} else {
-			cx = "scale_x(" + d + ".y * Math.cos(" + d + ".x))";
-			cy = "scale_y(" + d + ".y * Math.sin(" + d + ".x))";
-		}
-
-		String symbolName = ModelUtil.getElementSymbol(vis);
-		if (symbolName != null) {
-			// Add a translate to place it in the right location
-			out.addChained("attr('transform', function(d) { return 'translate(' + "
-					+ cx + " + ', ' + " + cy + " + ')' })");
-
-			symbolName = Data.quote(symbolName);
-
-			if (details == null) {
-				out.addChained("attr('d', BrunelD3.symbol(" + symbolName + ", 10))");
-			} else {
-				GeomAttribute size = details.overallSize.halved();
-				if (size.isFunc()) {
-					// The size changes, so we must call the function
-					out.addChained("attr('d', function(d) { return BrunelD3.symbol(" + symbolName + ", " +
-							size.definition() + ") })");
-				} else {
-					// Fixed symbol -- no function needed
-					out.addChained("attr('d', BrunelD3.symbol(" + symbolName + ", " + size + "))");
-				}
-			}
-		} else {
-			out.addChained("attr('cx', function(d) { return " + cx + " })")
-					.addChained("attr('cy', function(d) { return " + cy + " })");
-		}
 	}
 
 	public boolean needsDiagramExtras() {

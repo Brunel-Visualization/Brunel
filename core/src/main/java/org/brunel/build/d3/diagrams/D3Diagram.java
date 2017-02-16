@@ -274,7 +274,6 @@ public abstract class D3Diagram {
 		}
 
 		details.x.sizeFunction = null;
-		details.y.sizeFunction = null;
 	}
 
 }
