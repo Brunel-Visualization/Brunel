@@ -336,7 +336,17 @@ var BrunelD3 = (function () {
             else
                 loc = pathLoc(target);
         } else {
-            box = transformBox(target.getBBox(), target.getCTM());
+
+            // A target defined by a "use" has a BBox that is the symbol inside its viewport,
+            // which is no use to us, so we can just grab it from the defined values
+            if (target.x && target.height)
+                box = {
+                    x: +target.getAttribute("x"), y: +target.getAttribute("y"),
+                    width: +target.getAttribute("width"), height: +target.getAttribute("height")
+                };
+            else
+                box = target.getBBox();
+            box = transformBox(box, target.getCTM());
 
             var hPad = labeling.align == 'start' ? pad : -pad;
             var vPad = labeling.inside ? -pad : pad;

@@ -272,6 +272,9 @@ public abstract class D3Diagram {
 			details.y.center = GeomAttribute.makeFunction("y(d)");
 			details.overallSize = GeomAttribute.makeFunction("r(d) * 2");
 		}
+
+		details.x.sizeFunction = null;
+		details.y.sizeFunction = null;
 	}
 
 }

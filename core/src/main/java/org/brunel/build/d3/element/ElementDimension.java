@@ -25,7 +25,7 @@ import org.brunel.model.style.StyleTarget;
  */
 public class ElementDimension {
     public final ModelUtil.Size sizeStyle;          // The size as defined by a style
-    public final String sizeFunction;               // The size as modified by aesthetic function
+    public String sizeFunction;               // The size as modified by aesthetic function
 
     public GeomAttribute center;                    // Where the center is to be
     public GeomAttribute left;                      // Where the left is to be (right will also be defined)

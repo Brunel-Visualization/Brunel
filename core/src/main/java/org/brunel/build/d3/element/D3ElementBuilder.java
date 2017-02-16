@@ -256,8 +256,8 @@ public class D3ElementBuilder {
 		}
 
 		if (structure.chart.geo != null) {
-			e.x.size = getSize(new Field[0], "geom.default_point_size", null, e.x);
-			e.y.size = getSize(new Field[0], "geom.default_point_size", null, e.x);
+			e.x.size = getSize(new Field[0], "geom.default_point_size", null, e.x, e.representation);
+			e.y.size = getSize(new Field[0], "geom.default_point_size", null, e.x, e.representation);
 
 			// Maps with feature data do not need the geo coordinates set
 			if (vis.tDiagram != Diagram.map)
@@ -268,12 +268,12 @@ public class D3ElementBuilder {
 		} else {
 			// Must define cluster size before anything else, as other things use it
 			if (structure.isClustered()) {
-				e.x.clusterSize = getSize(x, "geom.inner_width", ScalePurpose.x, e.x);
-				e.x.size = getSize(x, "geom.inner_width", ScalePurpose.inner, e.x);
+				e.x.clusterSize = getSize(x, "geom.inner_width", ScalePurpose.x, e.x, e.representation);
+				e.x.size = getSize(x, "geom.inner_width", ScalePurpose.inner, e.x, e.representation);
 			} else {
-				e.x.size = getSize(x, "geom.inner_width", ScalePurpose.x, e.x);
+				e.x.size = getSize(x, "geom.inner_width", ScalePurpose.x, e.x, e.representation);
 			}
-			e.y.size = getSize(y, "geom.inner_height", ScalePurpose.y, e.y);
+			e.y.size = getSize(y, "geom.inner_height", ScalePurpose.y, e.y, e.representation);
 			DefineLocations.setLocations(e.representation, structure, e.x, "x", x, structure.chart.coordinates.xCategorical);
 			DefineLocations.setLocations(e.representation, structure, e.y, "y", y, structure.chart.coordinates.yCategorical);
 			if (e.representation == ElementRepresentation.area && e.y.right == null) {
@@ -377,11 +377,6 @@ public class D3ElementBuilder {
 				|| details.representation == ElementRepresentation.spaceFillingCircle
 				|| details.representation == ElementRepresentation.largeCircle)
 			defineCircle(details, out);
-	}
-
-	protected void writeCoordinateLabelingAndAesthetics(ElementDetails details, boolean filterToDataOnly) {
-		writeElementAesthetics(details, filterToDataOnly, vis, out);
-		writeElementLabelsAndTooltips(details, labelBuilder);
 	}
 
 	public static void writeElementLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {
@@ -550,14 +545,14 @@ public class D3ElementBuilder {
 		e.y.center = GeomAttribute.makeFunction("project_center(d.geo_properties)[1]");
 	}
 
-	private GeomAttribute getSize(Field[] fields, String extent, ScalePurpose purpose, ElementDimension dim) {
+	private GeomAttribute getSize(Field[] fields, String extent, ScalePurpose purpose, ElementDimension dim, ElementRepresentation rep) {
 		boolean needsFunction = dim.sizeFunction != null;
 		String baseAmount;
 		if (dim.sizeStyle != null && !dim.sizeStyle.isPercent()) {
 			// Absolute size overrides everything
 			baseAmount = "" + dim.sizeStyle.value(100);
 		} else if (fields.length == 0) {
-			if (vis.tDiagram != null) {
+			if (vis.tDiagram != null || rep == symbol) {
 				// Default point size for diagrams
 				baseAmount = "geom.default_point_size";
 			} else {
@@ -673,7 +668,6 @@ public class D3ElementBuilder {
 
 	private static void defineRect(ElementDetails details, ScriptWriter out) {
 		// Rectangles must have extents > 0 to display, so we need to write that code in
-
 		out.addChained("each(function(d) {").indentMore().indentMore().onNewLine();
 		if (details.x.defineUsingExtent()) {
 			out.add("var a =", details.x.left.call("x1"), ", b =", details.x.right.call("x2"),
