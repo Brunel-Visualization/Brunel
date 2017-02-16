@@ -23,7 +23,6 @@ import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.d3.element.GeomAttribute;
 import org.brunel.build.info.ElementStructure;
-import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 
@@ -39,10 +38,7 @@ class Bubble extends D3Diagram {
         makeHierarchicalTree(false);
 
         out.add("var pack = d3.pack().size([geom.inner_width, geom.inner_height])").endStatement();
-
-        ElementRepresentation representation = ModelUtil.getElementSymbol(vis) == null
-                ? ElementRepresentation.spaceFillingCircle : ElementRepresentation.symbol;
-        return ElementDetails.makeForDiagram(vis, representation, "point", "pack(tree).descendants()");
+		return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "pack(tree).descendants()");
     }
 
     public void writeDiagramEnter(ElementDetails details) {

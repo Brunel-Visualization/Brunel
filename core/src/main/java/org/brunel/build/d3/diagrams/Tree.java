@@ -86,9 +86,7 @@ class Tree extends D3Diagram {
 		}
 
 		ElementRepresentation rep;
-		if (ModelUtil.getElementSymbol(vis) != null)
-			rep = ElementRepresentation.symbol;
-		else if (method == Method.leftRight)
+		if (method == Method.leftRight)
 			rep = ElementRepresentation.pointLikeCircle;
 		else
 			rep = ElementRepresentation.largeCircle;

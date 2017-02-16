@@ -22,6 +22,10 @@ import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Element;
 
+import static org.brunel.build.d3.element.ElementRepresentation.largeCircle;
+import static org.brunel.build.d3.element.ElementRepresentation.pointLikeCircle;
+import static org.brunel.build.d3.element.ElementRepresentation.spaceFillingCircle;
+
 /**
  * Encapsulate information on how we want to represent different types of element
  */
@@ -47,6 +51,11 @@ public class ElementDetails {
 	 * @param dataSource   the javascript name of the element's data
 	 */
 	public static ElementDetails makeForDiagram(VisSingle vis, ElementRepresentation representation, String elementClass, String dataSource) {
+		if (representation == spaceFillingCircle || representation == largeCircle || representation == pointLikeCircle) {
+			if (!vis.fSymbol.isEmpty() || ModelUtil.getElementSymbol(vis) != null)
+				representation = ElementRepresentation.symbol;
+		}
+
 		boolean filled = representation != ElementRepresentation.segment
 				&& representation != ElementRepresentation.curvedPath
 				&& representation != ElementRepresentation.generalPath;
