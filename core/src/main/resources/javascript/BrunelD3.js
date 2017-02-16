@@ -696,7 +696,7 @@ var BrunelD3 = (function () {
 
         maxCol++;
 
-        var radius = Math.min(extent[0] / maxCol, extent[1] / rows);
+        var radius = Math.min(extent[0] / maxCol, extent[1] / rows) / 2;
 
         // Rescale x space and set the radius
         for (i = 0; i < leaves.length; i++) {
@@ -724,7 +724,7 @@ var BrunelD3 = (function () {
             }
 
             labels.push({
-                label: v.data.key.substring(2).replace('|', ' '), x: x / m, y: low + halfHeight
+                label: v.data.key.substring(1).replace('|', ' '), x: x / m, y: low + halfHeight
             });
         });
 

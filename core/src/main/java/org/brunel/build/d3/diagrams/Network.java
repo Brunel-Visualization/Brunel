@@ -77,7 +77,7 @@ class Network extends D3Diagram {
 	}
 
 	public ElementDetails initializeDiagram(String symbol) {
-		String edgeDataset = "elements[" + edges.getBaseDatasetIndex() + "].data()";
+		String edgeDataset = "elements[" + edges.index + "].data()";
 		String nodeField = quoted(nodeID), from = quoted(fromFieldID), to = quoted(toFieldID);
 		out.add("graph = graph || BrunelData.diagram_Graph.make(processed,", nodeField, ",",
 				edgeDataset, ",", from, ",", to, ")").endStatement();
