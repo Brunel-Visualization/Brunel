@@ -1,6 +1,7 @@
 package org.brunel.build.d3;
 
 import org.brunel.action.Param;
+import org.brunel.build.d3.diagrams.D3Diagram;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
@@ -302,6 +303,9 @@ public class SymbolHandler {
 	}
 
 	private URI getSymbolURI(ElementStructure structure) {
+		// Map labels use symbols internally and so we must return them here.
+		if (D3Diagram.isMapLabels(structure.vis)) return BASIC_SYMBOLS_URI;
+
 		// This collection collects all the symbols we want to be able to use
 		Set<String> requiredSymbols = new HashSet<>();
 

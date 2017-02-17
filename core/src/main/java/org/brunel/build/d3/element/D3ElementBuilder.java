@@ -653,7 +653,7 @@ public class D3ElementBuilder {
 		out.add("var splits = BrunelD3.makePathSplits(" + params + ");").ln();
 	}
 
-	private static void defineRect(ElementDetails details, ScriptWriter out) {
+	public static void defineRect(ElementDetails details, ScriptWriter out) {
 		// Rectangles must have extents > 0 to display, so we need to write that code in
 		out.addChained("each(function(d) {").indentMore().indentMore().onNewLine();
 		if (details.x.defineUsingExtent()) {

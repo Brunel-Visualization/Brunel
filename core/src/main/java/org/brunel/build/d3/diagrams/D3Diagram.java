@@ -55,13 +55,18 @@ public abstract class D3Diagram {
 		if (vis.tDiagram == Diagram.treemap) return new Treemap(structure, data, interaction, out);
 		if (vis.tDiagram == Diagram.network)
 			return new Network(structure, data, interaction, out);
-		if (vis.tDiagram == Diagram.map) {
-			if (vis.tDiagramParameters.length == 1 && vis.tDiagramParameters[0].asString().equals("labels"))
-				return new GeoMapLabels(structure, data, interaction, out);
-			else
-				return new GeoMap(structure, data, structure.geo, interaction, out);
+		if (isMapLabels(vis))
+			return new GeoMapLabels(structure, data, interaction, out);
+		else if (vis.tDiagram == Diagram.map) {
+
+			return new GeoMap(structure, data, structure.geo, interaction, out);
 		}
 		throw new IllegalStateException("Unknown diagram: " + vis.tDiagram);
+	}
+
+	// Identify a diagram that is for map labels
+	public static boolean isMapLabels(VisSingle vis) {
+		return vis.tDiagram == Diagram.map && vis.tDiagramParameters.length == 1 && vis.tDiagramParameters[0].asString().equals("labels");
 	}
 
 	final ScriptWriter out;
