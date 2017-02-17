@@ -33,7 +33,7 @@ class Bubble extends D3Diagram {
 	}
 
 	public void defineCoordinateFunctions(ElementDetails details) {
-		details.overallSize = GeomAttribute.makeConstant("");								// ensure it gets replaced
+		details.overallSize = GeomAttribute.makeConstant("");                                // ensure it gets replaced
 		defineXYR("scale_x(d.x)", "scale_y(d.y)", "scale_x(d.r) - scale_x(0)", details);
 	}
 
@@ -48,17 +48,14 @@ class Bubble extends D3Diagram {
 
 	public void writeDiagramEnter(ElementDetails details) {
 		// We place everything at its parent when it enters the system
+		out.addChained("filter(function(d) { return d.parent })")
+				.addChained("attr('x', function(d) { return scale_x(d.parent.x) })")
+				.addChained("attr('y', function(d) { return scale_y(d.parent.y) })");
+
 		if (details.representation.isBoxlike())
-			out.addChained("filter(function(d) { return d.parent })")
-					.addChained("attr('x1', function(d) { return scale_x(d.parent.x) })")
-					.addChained("attr('x2', function(d) { return scale_x(d.parent.x) })")
-					.addChained("attr('y1', function(d) { return scale_y(d.parent.y) })")
-					.addChained("attr('y2', function(d) { return scale_y(d.parent.y) })");
+			out.addChained("attr('width', 0).attr('height', 0)");
 		else
-			out.addChained("filter(function(d) { return d.parent })")
-					.addChained("attr('cx', function(d) { return scale_x(d.parent.x) })")
-					.addChained("attr('cy', function(d) { return scale_y(d.parent.y) })")
-					.addChained("attr('r', 0)");
+			out.addChained("attr('r', 0)");
 	}
 
 	public void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {

@@ -278,11 +278,10 @@ public class SymbolHandler {
 
 		// The defs element has already been written, so we need only a group for these symbols
 		out.add("vis.selectAll('defs').append('g').html(").indentMore();
-		String continuationString = "";
+		out.add("'<symbol id=\"symbol_default\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"11\"><symbol>'");
 		for (URI uri : required) {
 			for (Element value : getSymbolDefinitions(uri).values()) {
-				out.onNewLine().add(continuationString).add(nodeToQuotedText(value, t));
-				continuationString = "+ ";
+				out.onNewLine().add("+ ").add(nodeToQuotedText(value, t));
 			}
 		}
 

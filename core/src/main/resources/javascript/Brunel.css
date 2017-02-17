@@ -199,7 +199,7 @@
 
 .brunel use {
     size: 301%;
-    stroke-width:0px;
+    stroke-width:0.5px;
     shape-rendering:geometricPrecision
 }
 

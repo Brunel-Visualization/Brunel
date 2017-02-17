@@ -307,7 +307,7 @@ public class D3ScaleBuilder {
 		if (symbol != null) {
 			addSymbolScale(symbol, structure);
 			Field field = fieldById(symbol, vis);
-			out.onNewLine().add("var symbolID = function(d) { var sym =" + D3Util.writeCall(field, dataInside) + "; return sym ? scale_symbol(sym) : 'circle' }").endStatement();
+			out.onNewLine().add("var symbolID = function(d) { var sym =" + D3Util.writeCall(field, dataInside) + "; return sym ? scale_symbol(sym) : 'symbol_default' }").endStatement();
 		}
 		for (int i = 0; i < css.length; i++) {
 			Param p = css[i];

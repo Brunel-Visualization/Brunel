@@ -5,11 +5,11 @@
     </symbol>
 
     <symbol id="square" viewBox="0 0 24 24">
-        <path d="M3,3V21H21V3"/>
+        <path d="M3,3V21H21V3Z"/>
     </symbol>
 
     <symbol id="triangle" viewBox="0 0 24 24">
-        <path d="M1,21H23L12,2"/>
+        <path d="M1,21H23L12,2Z"/>
     </symbol>
 
     <symbol id="diamond" viewBox="0 0 24 24">
@@ -17,7 +17,7 @@
     </symbol>
 
     <symbol id="cross" viewBox="0 0 24 24">
-        <path d="M23,16H16V23H8V16H1V8H8V1H16V8H23V23Z"/>
+        <path d="M23,16H16V23H8V16H1V8H8V1H16V8H23V16Z"/>
     </symbol>
 
     <symbol id="pentagon" viewBox="0 0 24 24">
