@@ -3,6 +3,7 @@ package org.brunel.build.d3;
 import org.brunel.action.Param;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
+import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.w3c.dom.Document;
@@ -50,7 +51,8 @@ public class SymbolHandler {
 
 		// Search all elements for use of symbols
 		for (int i = 0; i < chart.elementStructure.length; i++) {
-			URI uri = getSymbolURI(chart.elementStructure[i]);
+			ElementStructure structure = chart.elementStructure[i];
+			URI uri = getSymbolURI(structure);
 			if (uri != null && !uriToSymbols.containsKey(uri)) {
 				// We have a valid URI that we have not processed yet, so add it to the map (indexed)
 				uriToSymbols.put(uri, readSymbolDefinitions(uriToSymbols.size(), uri));
@@ -58,12 +60,18 @@ public class SymbolHandler {
 		}
 	}
 
+	public String getBaseSymbolID(ElementStructure element) {
+		// Get the name from the styles and try to match into known items
+		String symbolName = ModelUtil.getElementSymbol(element.vis);
+		return getNamesForElement(element, new String[]{symbolName})[0];
+	}
+
 	public String[] getNamesForElement(ElementStructure element, String[] requested) {
 		URI uri = getSymbolURI(element);
 		Element[] elements = uriToSymbols.get(uri);
 
 		if (requested != null && requested.length > 0) {
-			String prefix = getSymbolPrefix(element.index);                        // The prefix to put in front
+			String prefix = getSymbolPrefix(element.index, uri);                        // The prefix to put in front
 
 			// Create a list of valid (known) symbol ids
 			Set<String> valid = new HashSet<>();
@@ -87,7 +95,7 @@ public class SymbolHandler {
 
 	private Element[] readSymbolDefinitions(int indexNumber, URI uri) {
 
-		String prefix = getSymbolPrefix(indexNumber);
+		String prefix = getSymbolPrefix(indexNumber, uri);
 
 		List<String> ids = new ArrayList<>();
 
@@ -111,8 +119,10 @@ public class SymbolHandler {
 		return symbols;
 	}
 
-	private String getSymbolPrefix(int indexNumber) {
-		return visID + "_sym" + indexNumber + "_";
+	private String getSymbolPrefix(int indexNumber, URI uri) {
+		return uri == BRUNEL_SYMBOLS_URI
+				? visID + "_sym_"
+				: visID + "_sym" + indexNumber + "_";
 	}
 
 	private int getCommonPrefixLength(List<String> ids) {
@@ -211,13 +221,18 @@ public class SymbolHandler {
 
 	private URI getSymbolURI(ElementStructure structure) {
 		List<Param> fSymbol = structure.vis.fSymbol;
-		if (fSymbol.isEmpty()) return null;
+		if (fSymbol.isEmpty()) {
+			if (ModelUtil.getElementSymbol(structure.vis) != null)
+				return BRUNEL_SYMBOLS_URI;
+			else
+				return null;
+		}
 
 		Param param = fSymbol.get(0);
-		if (!param.hasModifiers()) return BRUNEL_SYMBOLS_URI;					// No parameters -- use default
+		if (!param.hasModifiers()) return BRUNEL_SYMBOLS_URI;                    // No parameters -- use default
 		Param[] mods = param.modifiers();
 		Param lastMod = mods[mods.length - 1];
-		if (lastMod.type() == Param.Type.list) return BRUNEL_SYMBOLS_URI; 		// parameter was list -- use default
+		if (lastMod.type() == Param.Type.list) return BRUNEL_SYMBOLS_URI;        // parameter was list -- use default
 		String name = lastMod.asString();
 		try {
 			return URI.create(name);

@@ -375,9 +375,9 @@ public class D3ElementBuilder {
 			out.addChained("attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)");
 		} else if (details.representation == ElementRepresentation.text)
 			defineText(details, vis);
-		else if (details.representation == symbol)
-			defineSymbol(details, vis, out);
-		else if (details.representation == ElementRepresentation.pointLikeCircle
+		else if (details.representation == symbol) {
+			defineSymbol(details, structure, out);
+		}else if (details.representation == ElementRepresentation.pointLikeCircle
 				|| details.representation == ElementRepresentation.spaceFillingCircle
 				|| details.representation == ElementRepresentation.largeCircle)
 			defineCircle(details, out);
@@ -451,44 +451,23 @@ public class D3ElementBuilder {
 		return elementDef.x.center != null && elementDef.y.center != null;
 	}
 
-	public static void definePointLikeMark(ElementDetails elementDef, VisSingle single, ScriptWriter out) {
-		if (elementDef.representation == symbol) defineSymbol(elementDef, single, out);
-		else defineCircle(elementDef, out);
+	public static void definePointLikeMark(ElementDetails elementDef, ElementStructure structure, ScriptWriter out) {
+		if (elementDef.representation == symbol)
+			defineSymbol(elementDef, structure, out);
+		else
+			defineCircle(elementDef, out);
 	}
 
-	private static void defineSymbol(ElementDetails elementDef, VisSingle vis, ScriptWriter out) {
+	private static void defineSymbol(ElementDetails elementDef, ElementStructure structure, ScriptWriter out) {
 		// If the center is not defined, this has been placed using a translation transform already
 		if (centerDefined(elementDef)) {
-			if (vis.fSymbol.isEmpty()) {
-				defineFixedCommonSymbol(elementDef, vis, out);
+			if (structure.vis.fSymbol.isEmpty()) {
+				String symbolID = structure.chart.symbols.getBaseSymbolID(structure);
+				out.addChained("attr('xlink:href', '#" + symbolID + "')");
 			} else {
-				defineUsingSymbolAesthetic(elementDef, out);
+				out.addChained("attr('xlink:href', function(d) { return '#' + symbolID(d) })");
 			}
-		}
-	}
-
-	private static void defineUsingSymbolAesthetic(ElementDetails elementDef, ScriptWriter out) {
-		out.addChained("attr('xlink:href', function(d) { return '#' + symbolID(d) })");
-		defineRect(elementDef, out);
-	}
-
-	private static void defineFixedCommonSymbol(ElementDetails elementDef, VisSingle vis, ScriptWriter out) {
-		// Add a translate to place it in the right location
-		out.addChained("attr('transform', function(d) { return 'translate(' + "
-				+ elementDef.x.center.definition() + " + ', ' + "
-				+ elementDef.y.center.definition() + " + ')' })");
-
-		String symbolName = ModelUtil.getElementSymbol(vis);
-		symbolName = Data.quote(symbolName == null ? "circle" : symbolName);
-
-		GeomAttribute size = elementDef.overallSize.halved();
-		if (size.isFunc()) {
-			// The size changes, so we must call the function
-			out.addChained("attr('d', function(d) { return BrunelD3.symbol(" + symbolName + ", " +
-					size.definition() + ") })");
-		} else {
-			// Fixed symbol -- no function needed
-			out.addChained("attr('d', BrunelD3.symbol(" + symbolName + ", " + size + "))");
+			defineRect(elementDef, out);
 		}
 	}
 

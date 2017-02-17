@@ -20,6 +20,7 @@ import org.brunel.action.Param;
 import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
+import org.brunel.build.d3.element.GeomAttribute;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
@@ -61,16 +62,21 @@ class Grid extends Bubble {
 	}
 
 	public void defineCoordinateFunctions(ElementDetails details) {
-		// These functions define the locations (this also modifies the details)
+		// The default symbol size is 301% -- but this means it overflows the grid.
+		// So (and this is a hack) we search for that exact default (301%) and remove it
+		GeomAttribute size = details.overallSize;
+		String replace = size.definition().replace("3.01", "1");
+		details.overallSize = size.isFunc() ? GeomAttribute.makeFunction(replace)
+				: GeomAttribute.makeConstant(replace);
+
 		defineXYR("scale_x(d.x)", "scale_y(d.y)", "scale_x(d.r) - scale_x(0)", details);
 	}
-
 
 	public void writeDiagramUpdate(ElementDetails details) {
 		// Classes defined for CSS
 		out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 
-		D3ElementBuilder.definePointLikeMark(details, vis, out);
+		D3ElementBuilder.definePointLikeMark(details, structure, out);
 		D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
 		D3ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
 		labelBuilder.addGridLabels();

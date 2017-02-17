@@ -21,6 +21,7 @@ import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
+import org.brunel.build.d3.element.GeomAttribute;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
@@ -32,7 +33,7 @@ class Bubble extends D3Diagram {
 	}
 
 	public void defineCoordinateFunctions(ElementDetails details) {
-		// These functions define the locations (this also modifies the details)
+		details.overallSize = GeomAttribute.makeConstant("");								// ensure it gets replaced
 		defineXYR("scale_x(d.x)", "scale_y(d.y)", "scale_x(d.r) - scale_x(0)", details);
 	}
 
@@ -71,7 +72,7 @@ class Bubble extends D3Diagram {
 		// Classes defined for CSS
 		out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 
-		D3ElementBuilder.definePointLikeMark(details, vis, out);
+		D3ElementBuilder.definePointLikeMark(details, structure, out);
 		D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
 	}
 

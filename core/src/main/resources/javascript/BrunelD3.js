@@ -1377,87 +1377,6 @@ var BrunelD3 = (function () {
         }
     }
 
-    // A star of radius r with n points
-    function star(radius, n) {
-        var i, a, r, p = "M";
-        for (i = 0; i < 2 * n; i++) {
-            a = (i / n - 0.5) * Math.PI;
-            if (i > 0) p += "L";
-            r = radius * (i % 2 ? 0.4 : 1);
-            p += r * Math.cos(a) + ',' + r * Math.sin(a);
-        }
-        return p + "Z";
-    }
-
-    // A polygon of radius r with n points
-    function poly(r, n) {
-        var i, a, p = "M";
-        for (i = 0; i < n; i++) {
-            a = i / n * 2 * Math.PI;
-            if (i > 0) p += "L";
-            p += r * Math.sin(a) + ',' + r * -Math.cos(a);
-        }
-        return p + "Z";
-    }
-
-    var personShape = [['M', 0.075, -32.262],
-        ['c', 4.162, 0, 7.538, -3.376, 7.538, -7.539],
-        ['c', 0, -4.166, -3.376, -7.541, -7.538, -7.541],
-        ['c', -4.166, 0, -7.539, 3.376, -7.539, 7.541],
-        ['C', -7.613, -35.638, -5.24, -32.262, 0.075, -32.262],
-        ['M', 7.914, -29.874],
-        ['c', 5.333, 0, 9.702, 4.327, 9.702, 9.657],
-        ['v', 23.384],
-        ['c', 0, 1.821, -1.433, 3.298, -3.257, 3.298],
-        ['c', -1.821, 0, -3.302, -1.478, -3.302, -3.298],
-        ['v', -21.084],
-        ['h', -1.702],
-        ['v', 58.663],
-        ['c', 0, 2.446, -1.996, 4.425, -4.439, 4.425],
-        ['c', -2.446, 0, -4.425, -1.979, -4.425, -4.425],
-        ['v', -34.063],
-        ['h', -1.815],
-        ['v', 34.063],
-        ['c', 0, 2.446, -1.979, 4.425, -4.421, 4.425],
-        ['c', -2.443, 0, -4.425, -1.979, -4.425, -4.425],
-        ['c', 0, -3.614, -0.039, -58.663, -0.039, -58.663],
-        ['h', -1.68],
-        ['v', 21.084],
-        ['c', 0, 1.821, -1.478, 3.298, -3.302, 3.298],
-        ['c', -1.823, -0, -3.257, -1.478, -3.257, -3.298],
-        ['v', -23.384],
-        ['c', 0, -5.33, 4.368, -9.657, 9.705, -9.657],
-        ['H', 6.914],
-        ['Z']
-    ];
-
-    function person(r) {
-        var i, j, a, p = '';
-        for (i = 0; i < personShape.length; i++) {
-            a = personShape[i];
-            p += a[0];
-            for (j = 1; j < a.length; j++) {
-                if (j > 1) p += ',';
-                p += r * a[j] / 45;
-            }
-        }
-        return p;
-    }
-
-
-    function secondPart(txt, def) {
-        var parts = txt.split('\-');
-        return parts.length > 1 ? parts[1] : def;
-    }
-
-    function makeSymbol(type, radius) {
-        radius = radius || 4;
-        if (type.startsWith('star')) return star(radius * 1.5, secondPart(type, 5));
-        if (type.startsWith('poly')) return poly(radius * 1.5, secondPart(type, 5));
-        if (type == 'person') return person(radius);
-        var generator = d3['symbol' + type.charAt(0).toUpperCase() + type.slice(1)];
-        return d3.symbol().type(generator).size(radius * radius * 4)();
-    }
 
     /**
      * This method returns the SVG string form for a path
@@ -2157,7 +2076,6 @@ var BrunelD3 = (function () {
         'sizedPath': sizedPath,
         'tween': transitionTween,
         'addFeatures': makeMap,
-        'symbol': makeSymbol,
         'edge': makeEdge,
         'insetEdge': insetEdge,
         'network': makeNetworkLayout,

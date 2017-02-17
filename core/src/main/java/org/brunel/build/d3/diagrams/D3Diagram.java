@@ -252,13 +252,26 @@ public abstract class D3Diagram {
 	protected void defineXYR(String x, String y, String r, ElementDetails details) {
 		out.onNewLine().comment("Define Coordinate functions");
 
+		// We will substitute in our radius for the default. This is a hack depending on the name of the geom attribute
+		// function(d) { return size(d) * 3.0 * geom.default_point_size}
+
+		String def = details.overallSize.definition();
+		String newDef = def.replace("geom.default_point_size", "(" + r + ")");
+		if (def.equals(newDef)) {
+			// Replacement failed -- just use the new def
+			newDef = r;
+		}
+
+		out.add("function r(d) { return " + newDef + " }").endStatement();
+
 		if (details.representation.isBoxlike()) {
 			// For symbols and rectangles, define the lower and upper extents for each dimension
-			out.add("function r(d) { return " + r + " }").endStatement()
-					.add("function x1(d) { return " + x + " - r(d) }").endStatement()
+			out.add("function x1(d) { return " + x + " - r(d) }").endStatement()
 					.add("function x2(d) { return " + x + " + r(d) }").endStatement()
 					.add("function y1(d) { return " + y + " - r(d) }").endStatement()
 					.add("function y2(d) { return " + y + " + r(d) }").endStatement();
+
+			// Known extent locations to use
 			details.x.left = GeomAttribute.makeFunction("x1(d)");
 			details.x.right = GeomAttribute.makeFunction("x2(d)");
 			details.y.left = GeomAttribute.makeFunction("y1(d)");
@@ -266,8 +279,9 @@ public abstract class D3Diagram {
 		} else {
 			// For everything else (circle-like) just the center and radius is needed
 			out.add("function x(d) { return " + x + " }").endStatement()
-					.add("function y(d) { return " + y + " }").endStatement()
-					.add("function r(d) { return " + r + " }").endStatement();
+					.add("function y(d) { return " + y + " }").endStatement();
+
+			// Known center locations to use
 			details.x.center = GeomAttribute.makeFunction("x(d)");
 			details.y.center = GeomAttribute.makeFunction("y(d)");
 			details.overallSize = GeomAttribute.makeFunction("r(d) * 2");

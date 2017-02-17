@@ -79,11 +79,6 @@ class Tree extends D3Diagram {
 		out.add("BrunelD3.copyTreeLayoutInfo(treeNodes, graph, " + (method == Method.polar ? "0" : pad) + ")")
 				.endStatement();
 
-		if (usesSize && vis.positionFields().length != 0) {
-			// Redefine size to use the node value for the "fields" tree case
-			out.add("size = function(d) { return scale_size(d.value) }").endStatement();
-		}
-
 		ElementRepresentation rep;
 		if (method == Method.leftRight)
 			rep = ElementRepresentation.pointLikeCircle;
@@ -122,7 +117,7 @@ class Tree extends D3Diagram {
 
 	public void writeDiagramUpdate(ElementDetails details) {
 		writeHierarchicalClass();
-		D3ElementBuilder.definePointLikeMark(details, vis, out);
+		D3ElementBuilder.definePointLikeMark(details, structure, out);
 		D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
 
 

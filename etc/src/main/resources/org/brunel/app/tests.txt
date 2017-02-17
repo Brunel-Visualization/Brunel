@@ -14,7 +14,7 @@ sizedBar	    :: bar x($1) y(#count) size($2:100) color($2:blue) mean($2) sort(#c
 #### The Tests
 
 colorScatter baseball Age HomeRunRate Salary / axes(x:grid, y:grid)        :: pass
-colorScatter whiskey Rating Price Category / axes(x:grid, y:grid)          :: pass     :: Note the log Y axis
+colorScatter whiskey Rating Price Category / axes(x:grid, y:grid) symbol(Category)   :: pass     :: Note the log Y axis and symbols
 colorScatter cpi Date ALL ALL / axes(x:grid, y:grid)                       :: pass     :: Leaves margins at left and right
 colorScatter cpi Date Date ALL / axes(x:grid, y:grid)  x(Date:reverse)     :: pass     :: X-axis should be reversed
 
@@ -95,7 +95,7 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 
 - simple    / map + data('raw:x,y;10,50;100,0') x(x) y(y) axes(x,y) label(x, y) :: pass
 - simple    / map + data('raw:n,x,y;London,-0.12,51.5;Paris,2.3,48.8') x(x) y(y) label(n) axes(x,y) + map(labels:200) :: pass
-- simple    / map + data('raw:n,x,y,s;Tokyo,139.7,35.7,8.3;Yokohama,139.6,35.4,3.5;Osaka-shi,135.5,34.7,2.6;Sapporo,141.3,43,1.8') x(x) y(y) size(s:300) label(n) :: pass
+- simple    / map + data('raw:n,x,y,s;Tokyo,139.7,35.7,8.3;Yokohama,139.6,35.4,3.5;Osaka-shi,135.5,34.7,2.6;Sapporo,141.3,43,1.8') x(x) y(y) size(s:300) symbol(s) label(n) :: pass
 - simple    / map('uk','france','spain','germany') + map(labels) :: pass
 
 - cpi       / x(food) y(housing) color(DATE) + line  x(food) y(housing) fit(housing) :: pass
@@ -104,17 +104,19 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - simple    / data('raw:A,B;a,b;a,c;a,d;b,c;a,e;e,f;g,h;m,n;n,o') edge key(A, B) + data('raw:A;a;b;c;d;e;f;g;h;n;o') network key(A) color(A) label(A) legends(none) style('fill-opacity:1;size:20px') :: pass
 
 tree whiskey #count category country / css(rating) :: pass
-tree whiskey #count category rating / transpose :: pass
-tree whiskey #count category rating age / polar tree(prune) :: pass
+tree whiskey #count category rating age / polar tree(prune) symbol(category) size(#count) :: pass
 - simple    / data('raw:ID,PARENT;a,b;a,c;a,d;b,e;b,f;f,g') edge css(#row) color(parent) key(id, parent) + data('raw:ID;a;b;c;d;e;f;g') tree color(id) key(id) label(id) size(#row) style('size:50px; symbol:person; label-location:bottom') :: pass
-
+- simple    / data('raw:ID,PARENT;a,b;a,c;a,d;b,e;b,f;f,g') edge css(#row) color(parent) key(id, parent) + data('raw:ID;a;b;c;d;e;f;g') tree color(id) key(id) label(id) size(#row) symbol(#row) style('size:50px; label-location:bottom') :: pass
 
 
 - simple    / data('raw:x;"a,b";"a";"a,c,b";"a,b";"a,b";"a,b,c"') bar x(x) y(#count) color(x) | bar x(x) y(#count) color(x) each(x) | bubble color(x) size(#count) label(x) | bubble color(x) size(#count) label(x) each(x) :: pass
 - baseball  / x(PutOutRate) y(AssistRate) style('.axis.y .tick text{fill:red;padding-right:10px}') style('.axis.x .tick text{fill:blue;font-size:1cm; padding:2mm} .axis .tick line{size:-5mm} ') style('.axis .title {label-location:left;font-size:20px}') style('.axis .title {label-location:left;font-size:20px;font-style:italic;padding-left:1in}') style('.header {fill:red;font-size:40px;padding-bottom:50px;label-location:right}') title('Ugly Style test') :: pass
 colorScatter whiskey Rating Price Category / y(Price:linear) rectangular(aspect:1.0, square)         :: pass     :: Data aspect ratio should be square, and chart interior should be also
 - baseball   / y(PutOutRate) x(AssistRate) key(#row) label(#row) top(#row:20) + data("raw:A,B;0,1;1,2;2,3;3,4;3,5;3,6") key(A,B) css(A) edge:: pass :: Some random links for early rows, with css styled items
+
 colorScatter baseball slugrate Salary age / + label('guide for salary') guide(y:'x*10000000') style('stroke:red')        :: pass
+- whiskey / gridded x(country) color(rating:[black, red]) size(rating) symbol(country) :: gridded is experimental at the moment
+- whiskey / bubble x(country) color(rating:[black, red]) size(#count) symbol(country:[person, diamond, hexagon]) tooltip(#all) :: pass
 
 #### Note
 
