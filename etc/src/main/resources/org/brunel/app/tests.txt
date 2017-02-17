@@ -116,7 +116,9 @@ colorScatter whiskey Rating Price Category / y(Price:linear) rectangular(aspect:
 
 colorScatter baseball slugrate Salary age / + label('guide for salary') guide(y:'x*10000000') style('stroke:red')        :: pass
 - whiskey / gridded x(country) color(rating:[black, red]) size(rating) symbol(country) :: gridded is experimental at the moment
+- whiskey / gridded size(rating) symbol(country:[hexagon,happy,sad]) :: gridded is experimental at the moment
 - whiskey / bubble x(country) color(rating:[black, red]) size(#count) symbol(country:[person, diamond, hexagon]) tooltip(#all) :: pass
+- whiskey / gridded color(abv:blues) size(price:200%) symbol(#row:'http://brunelvis.org/test/testsym.svg':[pool, spa, beach_access]) :: pass
 
 #### Note
 

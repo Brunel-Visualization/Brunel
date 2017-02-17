@@ -25,9 +25,12 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,15 +39,55 @@ import java.util.Set;
  * This class handles loading and using symbols
  */
 public class SymbolHandler {
-	// URI to indicate that we want to define default symbols
-	private static final URI BRUNEL_SYMBOLS_URI = URI.create("internal");
 
-	// URI for the default symbols
-	private static final String CIRCLE_SYMBOL_DEFINITION = "\"<symbol id='brunel_circle' viewBox='0 0 24 24'><circle cx='12' cy='12' r='11'/></symbol>\"";
+	// Caches the last locations looked at
+	private static final Map<URI, Map<String, Element>> uriToSymbols = new LinkedHashMap<URI, Map<String, Element>>() {
+		protected boolean removeEldestEntry(Map.Entry<URI, Map<String, Element>> eldest) {
+			return size() > 10;
+		}
+	};
+
+	// URI to indicate that we want to define default symbols
+	private static final URI BASIC_SYMBOLS_URI, EXTENDED_SYMBOLS_URI;
+
+	// Store for the basic and extended symbols when we find them
+	private static final Map<String, Element> basicSymbols = new LinkedHashMap<>();
+	private static final Map<String, Element> extendedSymbols = new LinkedHashMap<>();
+
+	// Needed for this visualization
+	private final Set<URI> required = new LinkedHashSet<>();
+
+	static {
+		try {
+			BASIC_SYMBOLS_URI = SymbolHandler.class.getResource("/org/brunel/build/d3/symbols_basic.svg").toURI();
+			EXTENDED_SYMBOLS_URI = SymbolHandler.class.getResource("/org/brunel/build/d3/symbols_extended.svg").toURI();
+		} catch (URISyntaxException e) {
+			throw new IllegalStateException("Internal error -- unable to load symbols");
+		}
+	}
+
+	/**
+	 * Search through modifiers in the parameters to find any list of strings, which will be required symbol names.
+	 * For example, from "symbol(a:[circle,help,fool]:'http://a.com/symbols.svg')" we would extract circle, help, fool
+	 *
+	 * @param p parameter to search
+	 * @return found strings, or null if none found
+	 */
+	public String[] findRequiredSymbolNames(Param p) {
+		// Search for any list of strings within the parameters
+		for (Param param : p.modifiers()) {
+			if (param.type() == Param.Type.list) {
+				List<Param> list = param.asList();
+				String[] strings = new String[list.size()];
+				for (int i = 0; i < strings.length; i++) strings[i] = list.get(i).toString();
+				return strings;
+			}
+		}
+		return null;        // Didn't find any
+	}
 
 	private final String visID;
 	// Map the URI requested to the symbols to display (as a DOM element)
-	private Map<URI, Element[]> uriToSymbols = new LinkedHashMap<>();
 
 	public SymbolHandler(ChartStructure chart) {
 		visID = chart.visIdentifier;
@@ -53,49 +96,75 @@ public class SymbolHandler {
 		for (int i = 0; i < chart.elementStructure.length; i++) {
 			ElementStructure structure = chart.elementStructure[i];
 			URI uri = getSymbolURI(structure);
-			if (uri != null && !uriToSymbols.containsKey(uri)) {
-				// We have a valid URI that we have not processed yet, so add it to the map (indexed)
-				uriToSymbols.put(uri, readSymbolDefinitions(uriToSymbols.size(), uri));
-			}
+			if (uri != null) required.add(uri);
 		}
+
+		// We will need this if we have any symbols defined, so load now
+		if (!required.isEmpty()) getBasicSymbols();
 	}
 
-	public String getBaseSymbolID(ElementStructure element) {
+	/**
+	 * Return the identifier for the symbol defined in the style for this element
+	 *
+	 * @param element the element containing the style
+	 * @return string ID, or null if we couldn't find a symbol specified
+	 */
+	public String getSymbolIDForStyleDefinition(ElementStructure element) {
 		// Get the name from the styles and try to match into known items
 		String symbolName = ModelUtil.getElementSymbol(element.vis);
-		return getNamesForElement(element, new String[]{symbolName})[0];
+		if (symbolName == null) return null;
+		return getSymbolIDs(element, new String[]{symbolName})[0];
 	}
 
-	public String[] getNamesForElement(ElementStructure element, String[] requested) {
-		URI uri = getSymbolURI(element);
-		Element[] elements = uriToSymbols.get(uri);
+	/**
+	 * Get the IDs matching the requested symbols
+	 *
+	 * @param element   element to look for
+	 * @param requested the symbol names we want
+	 * @return matching list of symbols; all unfound ones will get a 'circle' instead
+	 */
+	public String[] getSymbolIDs(ElementStructure element, String[] requested) {
+		URI uri = getSymbolURI(element);                                // The URI for this element
+		Map<String, Element> elements = getSymbolDefinitions(uri);      // The symbols for this uri
 
 		if (requested != null && requested.length > 0) {
-			String prefix = getSymbolPrefix(element.index, uri);                        // The prefix to put in front
+			// We have a specific list of requests
+			String prefix = getSymbolPrefix(uri);
 
-			// Create a list of valid (known) symbol ids
-			Set<String> valid = new HashSet<>();
-			for (Element e : elements) valid.add(e.getAttribute("id"));
-
-			// Use the requested strings if they exist; otherwise use the default
 			String[] strings = new String[requested.length];
 			for (int i = 0; i < requested.length; i++) {
-				String id = prefix + requested[i].toLowerCase();
-				strings[i] = valid.contains(id) ? id : "brunel_circle";
+				String rootID = requested[i].toLowerCase();
+				strings[i] = elements.containsKey(rootID) ? prefix + rootID : prefix + "circle";    // Circle if not found
 			}
 			return strings;
 		} else {
 			// Return all the ids for this element
-			String[] strings = new String[elements.length];
+			List<String> keys = new ArrayList<>(elements.keySet());
+			String[] strings = new String[keys.size()];
 			for (int i = 0; i < strings.length; i++)
-				strings[i] = elements[i].getAttribute("id");
+				strings[i] = elements.get(keys.get(i)).getAttribute("id");
 			return strings;
 		}
 	}
 
-	private Element[] readSymbolDefinitions(int indexNumber, URI uri) {
+	private Map<String, Element> getSymbolDefinitions(URI uri) {
 
-		String prefix = getSymbolPrefix(indexNumber, uri);
+		if (uri == BASIC_SYMBOLS_URI) return getBasicSymbols();
+		if (uri == EXTENDED_SYMBOLS_URI) return getExtendedSymbols();
+
+		synchronized (uriToSymbols) {
+			Map<String, Element> map = uriToSymbols.get(uri);
+			if (map == null) map = readSymbolsFromURI(uri);
+			return map;
+		}
+	}
+
+	private Map<String, Element> readSymbolsFromURI(URI uri) {
+		Map<String, Element> map;
+		map = new LinkedHashMap<>();
+
+		// Create the map and add Elements to it, modifying their IDs
+		String prefix = getSymbolPrefix(uri);
 
 		List<String> ids = new ArrayList<>();
 
@@ -111,18 +180,37 @@ public class SymbolHandler {
 		// Strip out common prefixes and suffixes (often id's look like this: "ic_real_name_48px")
 		int p = getCommonPrefixLength(ids);
 		int q = getCommonSuffixLength(ids);
+
+		// Add Elements to the map, modifying their IDs
+
+		boolean circleDefined = false;
 		for (Element symbol : symbols) {
 			String id = symbol.getAttribute("id");
-			symbol.setAttribute("id", prefix + id.substring(p, id.length() - q).toLowerCase());
+			String rootID = id.substring(p, id.length() - q).toLowerCase();
+			if (rootID.equals("circle")) circleDefined = true;
+			String newID = prefix + rootID;
+			symbol.setAttribute("id", newID);
+			map.put(rootID, symbol);
 		}
 
-		return symbols;
+		// The circle is the default and must be defined, so ad it in form the basic set if not found
+		if (!circleDefined) {
+			map.put("circle", getBasicSymbols().get("circle"));
+		}
+
+		uriToSymbols.put(uri, map);
+		return map;
 	}
 
-	private String getSymbolPrefix(int indexNumber, URI uri) {
-		return uri == BRUNEL_SYMBOLS_URI
-				? visID + "_sym_"
-				: visID + "_sym" + indexNumber + "_";
+	/**
+	 * Return the prefix to use for symbols
+	 *
+	 * @param uri the uri to use
+	 * @return unique prefix to add to the symbol names
+	 */
+	private String getSymbolPrefix(URI uri) {
+		if (uri == BASIC_SYMBOLS_URI || uri == EXTENDED_SYMBOLS_URI) return visID + "_symbol_";
+		else return visID + "_" + uri.hashCode() + "_";
 	}
 
 	private int getCommonPrefixLength(List<String> ids) {
@@ -167,12 +255,7 @@ public class SymbolHandler {
 		try {
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			DocumentBuilder db = dbf.newDocumentBuilder();
-
-			// Read either form the local resources OR the external site
-			if (uri == BRUNEL_SYMBOLS_URI)
-				return db.parse(SymbolHandler.class.getResourceAsStream("/org/brunel/build/d3/svg_symbols.svg"));
-			else
-				return db.parse(uri.toURL().openStream());
+			return db.parse(uri.toURL().openStream());
 		} catch (ParserConfigurationException e) {
 			throw new IllegalStateException("Internal error configuring DOM parser to read symbols: " + uri.toString(), e);
 		} catch (SAXException e) {
@@ -186,7 +269,7 @@ public class SymbolHandler {
 	 * Call this to write symbol definitions into the defs element of the SVG
 	 */
 	public void addDefinitions(ScriptWriter out) {
-		if (uriToSymbols.isEmpty()) return;                        // No definitions means no work to do
+		if (required.isEmpty()) return;                        // No definitions means no work to do
 
 		Transformer t = makeTransformer();
 
@@ -194,13 +277,11 @@ public class SymbolHandler {
 
 		// The defs element has already been written, so we need only a group for these symbols
 		out.add("vis.selectAll('defs').append('g').html(").indentMore();
-
-		// always add the default circle symbol in case anything fails to work
-		out.onNewLine().add(CIRCLE_SYMBOL_DEFINITION);
-
-		for (Element[] values : uriToSymbols.values()) {
-			for (Element value : values) {
-				out.onNewLine().add("+ ").add(nodeToQuotedText(value, t));
+		String continuationString = "";
+		for (URI uri : required) {
+			for (Element value : getSymbolDefinitions(uri).values()) {
+				out.onNewLine().add(continuationString).add(nodeToQuotedText(value, t));
+				continuationString = "+ ";
 			}
 		}
 
@@ -212,7 +293,8 @@ public class SymbolHandler {
 		try {
 			StringWriter writer = new StringWriter();
 			t.transform(new DOMSource(node), new StreamResult(writer));
-			return Data.quote(writer.toString().replaceAll("\\s+", " ").replaceAll("> <", "><"));
+			String string = writer.toString();
+			return Data.quote(string.replaceAll("\\s+", " ").replaceAll("> <", "><"));
 		} catch (TransformerException e) {
 			throw new IllegalStateException("Internal error writing nodes as text in symbol definition writing");
 		}
@@ -220,25 +302,84 @@ public class SymbolHandler {
 	}
 
 	private URI getSymbolURI(ElementStructure structure) {
+		// This collection collects all the symbols we want to be able to use
+		Set<String> requiredSymbols = new HashSet<>();
+
+		// Consider the aesthetic, if any
 		List<Param> fSymbol = structure.vis.fSymbol;
-		if (fSymbol.isEmpty()) {
-			if (ModelUtil.getElementSymbol(structure.vis) != null)
-				return BRUNEL_SYMBOLS_URI;
-			else
-				return null;
+		if (!fSymbol.isEmpty()) {
+			Param param = fSymbol.get(0);
+
+			// If there is an explicit URI, we are good to go -- no need to check anything else
+			URI uri = findRequiredURI(param);
+			if (uri != null) return uri;
+
+			// Add any required names into the list
+			String[] required = findRequiredSymbolNames(param);
+			if (required != null) Collections.addAll(requiredSymbols, required);
+
+			// Always add circle in
+			requiredSymbols.add("circle");
 		}
 
-		Param param = fSymbol.get(0);
-		if (!param.hasModifiers()) return BRUNEL_SYMBOLS_URI;                    // No parameters -- use default
-		Param[] mods = param.modifiers();
-		Param lastMod = mods[mods.length - 1];
-		if (lastMod.type() == Param.Type.list) return BRUNEL_SYMBOLS_URI;        // parameter was list -- use default
-		String name = lastMod.asString();
-		try {
-			return URI.create(name);
-		} catch (Exception e) {
-			throw new IllegalStateException("'" + name + "' was a bad URI in the syntax for symbol()");
+		// Add in the one from "style('symbol:xxxx')" if there is a definition
+		String symbolFromStyle = ModelUtil.getElementSymbol(structure.vis);
+
+		// Rectangle and Circle/Point are a special symbol -- actually changes the element type and handled elsewhere
+		if (symbolFromStyle != null
+				&& !"rect".equals(symbolFromStyle)
+				&& !"circle".equals(symbolFromStyle)
+				&& !"point".equals(symbolFromStyle))
+			requiredSymbols.add(symbolFromStyle);
+
+		// Find the internal URI that contains the symbols we need
+		return getInternalURI(requiredSymbols);
+
+	}
+
+	private URI getInternalURI(Set<String> symbols) {
+		if (symbols.isEmpty()) return null;                        // Nothing needed
+
+		// See if we just need the basic set of symbols, and then try the extended set
+		if (getBasicSymbols().keySet().containsAll(symbols)) return BASIC_SYMBOLS_URI;
+		if (getExtendedSymbols().keySet().containsAll(symbols)) return EXTENDED_SYMBOLS_URI;
+
+		symbols.removeAll(getExtendedSymbols().keySet());
+		throw new IllegalArgumentException("The following requested symbols are unknown: " + symbols);
+	}
+
+	private Map<String, Element> getBasicSymbols() {
+		synchronized (basicSymbols) {
+			// Read basic symbols if that has not been done already
+			if (basicSymbols.isEmpty()) {
+				basicSymbols.putAll(readSymbolsFromURI(BASIC_SYMBOLS_URI));
+			}
+			return basicSymbols;
 		}
+	}
+
+	private Map<String, Element> getExtendedSymbols() {
+		synchronized (extendedSymbols) {
+			// Read extended AND basic symbols if that has not been done already
+			if (extendedSymbols.isEmpty()) {
+				extendedSymbols.putAll(getBasicSymbols());
+				extendedSymbols.putAll(readSymbolsFromURI(EXTENDED_SYMBOLS_URI));
+			}
+			return extendedSymbols;
+		}
+	}
+
+	private URI findRequiredURI(Param param) {
+		for (Param p : param.modifiers()) {
+			if (p.type() == Param.Type.string || p.type() == Param.Type.option) {
+				try {
+					return URI.create(p.asString());
+				} catch (Exception e) {
+					throw new IllegalStateException("'" + p.asString() + "' was a bad URI in the syntax for symbol()");
+				}
+			}
+		}
+		return null;        // None found
 	}
 
 }

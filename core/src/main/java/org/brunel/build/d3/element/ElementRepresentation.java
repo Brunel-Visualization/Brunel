@@ -66,7 +66,7 @@ public enum ElementRepresentation {
 			return rect;
 		else if ("rect".equals(symbolName))
 			return rect;
-		else if (symbolName == null || symbolName.equals("circle"))
+		else if (symbolName == null || symbolName.equals("point") || symbolName.equals("circle"))
 			return pointLikeCircle;
 		else
 			return symbol;

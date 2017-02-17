@@ -18,10 +18,19 @@ package org.brunel.build.d3;
 
 /* The purpose of a scale (inner is the inner coordinate of a clustered chart) */
 public enum ScalePurpose {
-    x(true), y(true), inner(true), parallel(true), size(false), color(false);
-    public final boolean isCoord;
+    x(true, false),                         // X coordinate is a coordinate with continuous range
+    y(true, false),                         // Y coordinate is a coordinate with continuous range
+    inner(true, false),                     // Clustered inner coordinate is a coordinate with continuous range
+    parallel(true, false),                  // Parallel axes coordinate is a coordinate with continuous range
+    sizeAesthetic(false, false),            // Size aesthetic is NOT a coordinate, but has continuous range
+    continuousAesthetic(false, false),      // Any aesthetic with continuous range (color, opacity ...)
+    nominalAesthetic(false, true);          // Any aesthetic with nominal range (symbol, css class, ...)
 
-    ScalePurpose(boolean isCoord) {
+    public final boolean isCoord;
+    public final boolean isNominal;
+
+    ScalePurpose(boolean isCoord, boolean isNominal) {
         this.isCoord = isCoord;
+        this.isNominal = isNominal;
     }
 }

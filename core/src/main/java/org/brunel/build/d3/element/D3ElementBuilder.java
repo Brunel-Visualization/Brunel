@@ -462,7 +462,7 @@ public class D3ElementBuilder {
 		// If the center is not defined, this has been placed using a translation transform already
 		if (centerDefined(elementDef)) {
 			if (structure.vis.fSymbol.isEmpty()) {
-				String symbolID = structure.chart.symbols.getBaseSymbolID(structure);
+				String symbolID = structure.chart.symbols.getSymbolIDForStyleDefinition(structure);
 				out.addChained("attr('xlink:href', '#" + symbolID + "')");
 			} else {
 				out.addChained("attr('xlink:href', function(d) { return '#' + symbolID(d) })");

@@ -50,8 +50,9 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import static org.brunel.build.d3.ScalePurpose.color;
-import static org.brunel.build.d3.ScalePurpose.size;
+import static org.brunel.build.d3.ScalePurpose.continuousAesthetic;
+import static org.brunel.build.d3.ScalePurpose.nominalAesthetic;
+import static org.brunel.build.d3.ScalePurpose.sizeAesthetic;
 
 /**
  * Adds scales and axes; also guesses the right size to leave for axes
@@ -306,7 +307,7 @@ public class D3ScaleBuilder {
 		if (symbol != null) {
 			addSymbolScale(symbol, structure);
 			Field field = fieldById(symbol, vis);
-			out.onNewLine().add("var symbolID = function(d) { var sym =" + D3Util.writeCall(field, dataInside) + "; return sym ? scale_symbol(sym) : 'brunel_circle' }").endStatement();
+			out.onNewLine().add("var symbolID = function(d) { var sym =" + D3Util.writeCall(field, dataInside) + "; return sym ? scale_symbol(sym) : 'circle' }").endStatement();
 		}
 		for (int i = 0; i < css.length; i++) {
 			Param p = css[i];
@@ -353,7 +354,7 @@ public class D3ScaleBuilder {
 
 		if (field.preferCategorical()) {
 			// Each category is mapped to 1,2,3, etc.
-			int categories = makeCategoricalScale(new Field[]{field}, ScalePurpose.color, false);
+			int categories = makeCategoricalScale(new Field[]{field}, ScalePurpose.nominalAesthetic, false);
 			String[] indices = new String[categories];
 			for (int i = 0; i < indices.length; i++) indices[i] = Data.quote(cssPrefix + (i + 1));
 			out.addChained("range(" + Arrays.toString(indices) + ")");
@@ -598,7 +599,7 @@ public class D3ScaleBuilder {
 
 		// Determine how much we want to include zero (for size scale we always want it)
 		double includeZero = getIncludeZeroFraction(fields, purpose);
-		if (purpose == size) includeZero = 1.0;
+		if (purpose == sizeAesthetic) includeZero = 1.0;
 
 		// Build a combined scale field and force the desired transform on it for x and y dimensions
 		Field scaleField = fields.length == 1 ? field : combineNumericFields(fields);
@@ -657,7 +658,7 @@ public class D3ScaleBuilder {
 			if (isY) transform = coordinates.yTransform;
 
 			// Size must not get a transform as it will seriously distort things
-			if (purpose == size) transform = defaultTransform;
+			if (purpose == sizeAesthetic) transform = defaultTransform;
 
 			// Parallel axes get their transform defined
 			if (purpose == ScalePurpose.parallel) {
@@ -670,16 +671,23 @@ public class D3ScaleBuilder {
 
 			transform = makeD3ScaleName(defaultTransform, scaleField, transform);
 
-			// Add small amount to top end to avoid ticks missing due to round-off error
 			max += (max - min) * 1e-7;
 
-			out.add("d3." + transform + "()");
-			for (int i = 0; i < divs.length; i++) {
-				if (partitionPoints == null)
-					divs[i] = min + (max - min) * i / (numericDomainDivs - 1);
-				else
-					divs[i] = partitionPoints[i];
+			// Adjust scale when we know we need quantization
+			if (purpose.isNominal && transform.equals("scaleLinear")) {
+				out.add("d3.scaleQuantize()");                            // Use quantize scale
+				divs = new Object[]{min, max};                            // And just the min and max
+			} else {
+				// Add small amount to top end to avoid ticks missing due to round-off error
+				for (int i = 0; i < divs.length; i++) {
+					if (partitionPoints == null)
+						divs[i] = min + (max - min) * i / (numericDomainDivs - 1);
+					else
+						divs[i] = partitionPoints[i];
+				}
+				out.add("d3." + transform + "()");
 			}
+
 		}
 
 		if (reverse) {
@@ -741,9 +749,9 @@ public class D3ScaleBuilder {
 
 	private double getIncludeZeroFraction(Field[] fields, ScalePurpose purpose) {
 
-		if (purpose == ScalePurpose.x) return 0.1;               // Really do not want much empty space on color axes
-		if (purpose == size) return 0.98;           // Almost always want to go to zero
-		if (purpose == color) return 0.2;           // Color
+		if (purpose == ScalePurpose.x) return 0.1;              // Really do not want much empty space on axes
+		if (purpose == sizeAesthetic) return 0.98;            // Almost always want to go to zero
+		if (purpose == continuousAesthetic) return 0.2;            // Color
 
 		// For 'Y'
 
@@ -779,9 +787,8 @@ public class D3ScaleBuilder {
 
 	private double[] getNumericPaddingFraction(ScalePurpose purpose, Coordinates coords) {
 		double[] padding = new double[]{0, 0};
-		if (purpose == color || purpose == size)
-			return padding;                // None for aesthetics
-		if (coords == Coordinates.polar) return padding;                               // None for polar angle
+		if (!purpose.isCoord) return padding;                // None for aesthetics
+		if (coords == Coordinates.polar) return padding;     // None for polar angle
 		for (VisSingle e : elements) {
 			boolean noBottomYPadding = e.tElement == Element.bar || e.tElement == Element.area || e.tElement == Element.line;
 			if (e.tElement == Element.text) {
@@ -868,39 +875,26 @@ public class D3ScaleBuilder {
 			largeElement = true;
 
 		ColorMapping palette = Palette.makeColorMapping(f, p.modifiers(), largeElement);
-		int categories = defineScaleWithDomain("color", new Field[]{f}, color, palette.values.length, "linear", palette.values, false);
+		int categories = defineScaleWithDomain("color", new Field[]{f}, continuousAesthetic, palette.values.length, "linear", palette.values, false);
 		if (categories <= 0) out.addChained("interpolate(d3.interpolateHcl)");   // Interpolate for numeric only
 		out.addChained("range([ ").addQuoted((Object[]) palette.colors).add("])").endStatement();
 	}
 
 	private void addSymbolScale(Param p, ElementStructure element) {
-		Field f = fieldById(p, element.vis);                                	// Find the field
-		String[] requestedSymbols = findStringLists(p);                        	// Find lists of symbols in the request
-		SymbolHandler symbols = structure.symbols;                          	// Handler for all symbols
-		String[] names = symbols.getNamesForElement(element, requestedSymbols);	// List of symbol identifiers
+		Field f = fieldById(p, element.vis);                                    // Find the field
+		SymbolHandler symbols = structure.symbols;                              // Handler for all symbols
+		String[] requestedSymbols = symbols.findRequiredSymbolNames(p);    		// Lists of symbols requested
+		String[] symbolIDs = symbols.getSymbolIDs(element, requestedSymbols);   // List of symbol identifiers
 
-		defineScaleWithDomain("symbol", new Field[]{f}, color, names.length, "linear", null, false);
-		out.addChained("range([ ").addQuoted((Object[]) names).add("])").endStatement();
-	}
-
-	private String[] findStringLists(Param p) {
-		// Search for any list of strings within the parameters
-		for (Param param : p.modifiers()) {
-			if (param.type() == Type.list) {
-				List<Param> list = param.asList();
-				String[] strings = new String[list.size()];
-				for (int i = 0; i < strings.length; i++) strings[i] = list.get(i).toString();
-				return strings;
-			}
-		}
-		return null;
+		defineScaleWithDomain("symbol", new Field[]{f}, nominalAesthetic, symbolIDs.length, "linear", null, false);
+		out.addChained("range([ ").addQuoted((Object[]) symbolIDs).add("])").endStatement();
 	}
 
 	private void addOpacityScale(Param p, VisSingle vis) {
 		double min = p.hasModifiers() ? p.firstModifier().asDouble() : 0.2;
 		Field f = fieldById(p, vis);
 
-		defineScaleWithDomain("opacity", new Field[]{f}, color, 2, "linear", null, false);
+		defineScaleWithDomain("opacity", new Field[]{f}, continuousAesthetic, 2, "linear", null, false);
 		if (f.preferCategorical()) {
 			int length = f.categories().length;
 			double[] sizes = new double[length];
@@ -927,7 +921,7 @@ public class D3ScaleBuilder {
 
 		Field f = fieldById(p, vis);
 		Object[] divisions = f.isNumeric() ? null : f.categories();
-		defineScaleWithDomain(name, new Field[]{f}, size, sizes.length, defaultTransform, divisions, false);
+		defineScaleWithDomain(name, new Field[]{f}, sizeAesthetic, sizes.length, defaultTransform, divisions, false);
 		out.addChained("range([ ").add(Data.join(sizes)).add("])").endStatement();
 	}
 
