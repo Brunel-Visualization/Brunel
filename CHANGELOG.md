@@ -1,5 +1,34 @@
 # 2.3 Release Notes
 
+## Symbol Aesthetic
+
+This aesthetic is used only for point elements, and replaces the default circle with a glyph, drawn as a path.
+Brunel defines two sets of symbols, a *basic* and an *extended* set. Basic symbols are:
+
+    circle, square, triangle, diamond, cross, pentagon, star, hexagon
+
+and extended symbols include the basic symbols and
+
+    plus, alert, arrowup, arrowdown, chart, circleOutline, database, 
+    person, question, happy, neutral, sad, thumbup, thumbdown, 
+    lightbulb, flag, female, male, heart, pencil, info.
+
+The basic set are the ones used if no parameters are specified in the aesthetic syntax. The extended ones are
+used only if specifically requested. The icons have been taken from the open source collection "Google Material
+Designs". Symbol names can also be used in the style syntax to apply across a whole element.
+
+The full syntax for `symbol` is: `symbol(field:[name1, name2, ...]:uri)`
+When a set of names are given, then only the named symbols are used in the symbol mapping, with the given order.
+If the URI is given, then the given URI should contain an SVG file containing a list of valid SVG `symbol`
+definitions, each with a unique ID. If the IDs all have an identical prefix or suffix, those are stripped. Here are
+some examples of symbols; also included is the URL of a set of test symbols
+
+    point x(state) y(density) size(density)
+    bubble x(region) symbol(presidential_choice:[heart, flag]) label(abbr)
+    x(region) y(girls_name) size(#count) style('symbol:female') + x(region) y(boys_name) size(#count) style('symbol:male')
+    x(summer) y(winter) symbol(region:'http://brunelvis.org/test/testsym.svg')
+
+
 ## Map quality option 'full'
 
 Added the map quality option `full` to denote a map with the full natural earth data, no quantization

@@ -153,7 +153,7 @@ And here are some examples for a categorical field
     Edges have their stroke sizes modified. Lines and Paths become filled objects with
     varying widths. Size has no effect on areas and polygons.
 </p>
-<p class="examples"><a onClick="showAction(this.text)">point x(state) y(density) size(density)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">map + point map color(region) size(population:200%) symbol(region) key(state) legends(none)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) y(density) size(#count) mean(density) label(#count)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">line x(state) y(density) size(region)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">line x(state) y(density) size(region:400)</a></p>
@@ -163,6 +163,28 @@ And here are some examples for a categorical field
 </p>
 <p class="examples"><a onClick="showAction(this.text)">x(longitude) y(latitude) size(population, density) style('symbol:rect; size:300%')</a></p>
 
+<H3>Symbol</H3>
+<p>
+    This aesthetic is used only for point elements, and replaces the default circle with a glyph, drawn as a path.
+    Brunel defines two sets of symbols, a <b>basic</b> and an <b>extended</b> set. Basic symbols are:
+    <code>circle, square, triangle, diamond, cross, pentagon, star, hexagon</code>, and extended symbols include the
+    basic symbols and <code>plus, alert, arrowup, arrowdown, chart, circleOutline, database, person, question,
+    happy, neutral, sad, thumbup, thumbdown, lightbulb, flag, female, male, heart, pencil, info</code>.
+</p><p>
+    The basic set are the ones used if no parameters are specified in the aesthetic syntax. The extended ones are
+    used only if specifically requested. The icons have been taken from the open source collection "Google Material
+    Designs". Symbol names can also be used in the style syntax to apply across a whole element.
+</p><p>
+    The full syntax for <code>symbol</code> is: <code>symbol(field:[name1, name2, ...]:uri)</code>
+    When a set of names are given, then only the named symbols are used in the symbol mapping, with the given order.
+    If the URI is given, then the given URI should contain an SVG file containing a list of valid SVG `symbol`
+    definitions, each with a unique ID. If the IDs all have an identical prefix or suffix, those are stripped. Here are
+    some examples of symbols; also included is the URL of a set of test symbols
+</p>
+<p class="examples"><a onClick="showAction(this.text)">point x(state) y(density) size(density)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bubble x(region) symbol(presidential_choice:[heart, flag]) label(abbr)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(girls_name) size(#count) style('symbol:female') + x(region) y(boys_name) size(#count) style('symbol:male')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(summer) y(winter) symbol(region:'http://brunelvis.org/test/testsym.svg')</a></p>
 
 <H3>CSS</H3>
 <p>
