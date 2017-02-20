@@ -126,6 +126,7 @@ public class D3ElementBuilder {
 			writeElementAesthetics(details, true, vis, out);
 		}
 		if (diagram != null) diagram.writeDiagramUpdate(details);
+		out.endStatement();
 
 		out.indentLess().onNewLine().add("}").ln();
 	}
@@ -426,8 +427,6 @@ public class D3ElementBuilder {
 			out.addChained("style('fill-opacity', opacity)").
 					addChained("style('stroke-opacity', opacity)");
 		}
-
-		out.endStatement();
 	}
 
 	private void defineText(ElementDetails elementDef, VisSingle vis) {
