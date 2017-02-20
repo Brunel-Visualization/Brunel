@@ -197,6 +197,12 @@
     stroke: #000000
 }
 
+.brunel use {
+    size: 301%;
+    stroke-width:0;
+    shape-rendering:geometricPrecision
+}
+
 .brunel circle.element, .brunel .chord .element.edge, .brunel path.point.element {
     stroke-width: 1px;
     stroke-opacity: 0.25
@@ -232,6 +238,7 @@
     text-shadow: none;
     opacity:0.6;
     font-size: 14px;
+    fill: black;
 }
 
 .brunel .element.polygon.nondata {
