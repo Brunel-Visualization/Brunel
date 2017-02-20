@@ -23,7 +23,7 @@ If the URI is given, then the given URI should contain an SVG file containing a 
 definitions, each with a unique ID. If the IDs all have an identical prefix or suffix, those are stripped. Here are
 some examples of symbols; also included is the URL of a set of test symbols
 
-    point x(state) y(density) size(density)
+    point x(state) y(density) size(population:300%) symbol(density)
     bubble x(region) symbol(presidential_choice:[heart, flag]) label(abbr)
     x(region) y(girls_name) size(#count) style('symbol:female') + x(region) y(boys_name) size(#count) style('symbol:male')
     x(summer) y(winter) symbol(region:'http://brunelvis.org/test/testsym.svg')
