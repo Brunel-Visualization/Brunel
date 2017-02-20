@@ -76,7 +76,7 @@ public class D3Util {
             } else {
                 text = String.format("'%d-%02d-%02dT%02d:%02d:%02d'",
                         calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.DAY_OF_MONTH),
-                        calendar.get(Calendar.HOUR), calendar.get(Calendar.MINUTE), calendar.get(Calendar.SECOND)
+                        calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), calendar.get(Calendar.SECOND)
                 );
             }
             return wrappedWithMake ? "new Date(" + text + ")" : text;

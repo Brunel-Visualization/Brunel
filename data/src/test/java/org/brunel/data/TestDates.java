@@ -18,6 +18,7 @@ package org.brunel.data;
 
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.DateUnit;
+import org.brunel.data.util.Dates;
 import org.junit.Test;
 
 import java.util.Date;
@@ -27,8 +28,15 @@ import static org.junit.Assert.assertEquals;
 public class TestDates {
 
     @Test
+    public void testTimes() {
+        Date d = Data.asDate("12:09:24");
+        assertEquals("12:09:24", Dates.format(d, DateFormat.HourMinSec));
+    }
+
+    @Test
     public void testDateFloor() {
         Date d = Data.asDate("February 19, 1976 3:04:25");
+        assertEquals("03:04:25", Dates.format(d, DateFormat.HourMinSec));
         assertEquals(Data.asDate("February 19, 1976 3:04:25"), DateUnit.floor(d, DateUnit.second, 1));
         assertEquals(Data.asDate("February 19, 1976 3:04:24"), DateUnit.floor(d, DateUnit.second, 2));
         assertEquals(Data.asDate("February 19, 1976 3:04:15"), DateUnit.floor(d, DateUnit.second, 15));
