@@ -79,6 +79,7 @@ class Grid extends Bubble {
 		D3ElementBuilder.definePointLikeMark(details, structure, out);
 		D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
 		D3ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
+		out.endStatement();
 		labelBuilder.addGridLabels();
 	}
 
