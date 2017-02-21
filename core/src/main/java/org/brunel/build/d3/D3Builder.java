@@ -19,11 +19,7 @@ package org.brunel.build.d3;
 import org.brunel.action.Param;
 import org.brunel.build.AbstractBuilder;
 import org.brunel.build.controls.Controls;
-import org.brunel.build.d3.diagrams.D3Diagram;
-import org.brunel.build.d3.element.CoordinateElementBuilder;
-import org.brunel.build.d3.element.DiagramElementBuilder;
 import org.brunel.build.d3.element.ElementBuilder;
-import org.brunel.build.d3.element.GuideElementBuilder;
 import org.brunel.build.d3.titles.ChartTitleBuilder;
 import org.brunel.build.data.DataTransformParameters;
 import org.brunel.build.info.ChartStructure;
@@ -197,15 +193,7 @@ public class D3Builder extends AbstractBuilder {
 		ElementStructure[] structures = structure.elementStructure;
 		elementBuilders = new ElementBuilder[structures.length];
 		for (int i = 0; i < structures.length; i++) {
-			if (!structures[i].vis.tGuides.isEmpty()) {
-				elementBuilders[i] = new GuideElementBuilder(structures[i], out, scalesBuilder, interaction);
-			} else {
-				D3Diagram diagram = D3Diagram.make(structures[i], interaction, out);
-				if (diagram == null)
-					elementBuilders[i] = new CoordinateElementBuilder(structures[i], out, scalesBuilder, interaction);
-				else
-					elementBuilders[i] = new DiagramElementBuilder(structures[i], out, scalesBuilder, interaction, diagram);
-			}
+			elementBuilders[i] = ElementBuilder.make(structures[i], out, interaction, scalesBuilder);
 			structures[i].details = elementBuilders[i].makeDetails();
 		}
 	}

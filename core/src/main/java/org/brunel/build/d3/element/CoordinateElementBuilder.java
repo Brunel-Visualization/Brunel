@@ -21,7 +21,7 @@ import org.brunel.build.d3.D3ScaleBuilder;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 
-public class CoordinateElementBuilder extends ElementBuilder {
+class CoordinateElementBuilder extends ElementBuilder {
 
 	public CoordinateElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales, D3Interaction interaction) {
 		super(structure, interaction, scales, out);

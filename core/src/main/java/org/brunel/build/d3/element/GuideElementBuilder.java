@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * Overrides element builder to build guides only
  */
-public class GuideElementBuilder extends CoordinateElementBuilder {
+class GuideElementBuilder extends CoordinateElementBuilder {
 
 	private static final Set<String> MATH_FUNCTIONS = new HashSet<>(
 			Arrays.asList("e pi abs acos asin atan atan2 ceil cos exp floor log max min pow random round sin sqrt tan".split(" ")));

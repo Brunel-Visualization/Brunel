@@ -5,6 +5,7 @@ import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.D3ScaleBuilder;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.ScalePurpose;
+import org.brunel.build.d3.diagrams.D3Diagram;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.Accessibility;
 import org.brunel.build.util.ModelUtil;
@@ -219,6 +220,15 @@ public abstract class ElementBuilder {
 
 		// Define the function to fade out any item leaving the selection
 		writeRemovalOnExit(out, "selection");
+	}
+
+	public static ElementBuilder make(ElementStructure structure, ScriptWriter out, D3Interaction interaction, D3ScaleBuilder scalesBuilder) {
+		if (!structure.vis.tGuides.isEmpty())
+			return new GuideElementBuilder(structure, out, scalesBuilder, interaction);
+		D3Diagram diagram = D3Diagram.make(structure, interaction, out);
+		if (diagram != null)
+			return new DiagramElementBuilder(structure, out, scalesBuilder, interaction, diagram);
+		return new CoordinateElementBuilder(structure, out, scalesBuilder, interaction);
 	}
 
 	public abstract ElementDetails makeDetails();

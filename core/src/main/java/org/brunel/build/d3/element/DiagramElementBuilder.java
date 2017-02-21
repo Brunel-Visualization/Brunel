@@ -26,7 +26,7 @@ import org.brunel.model.VisTypes;
 
 import static org.brunel.model.VisTypes.Diagram.map;
 
-public class DiagramElementBuilder extends ElementBuilder {
+ class DiagramElementBuilder extends ElementBuilder {
 
 	private final D3Diagram diagram;
 
