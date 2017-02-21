@@ -35,19 +35,19 @@ import static org.brunel.model.VisTypes.Diagram.map;
 		this.diagram = diagram;
 	}
 
-	public ElementDetails makeDetails() {
+	 public void addAdditionalElementGroups() {
+		 if (diagram.needsDiagramExtras())
+			 out.continueOnNextLine(",").add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");
+		 if (diagram.needsDiagramLabels())
+			 out.continueOnNextLine(",")
+					 .add("diagramLabels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'diagram labels').attr('aria-hidden', 'true'), elementGroup)");
+	 }
+
+	 public ElementDetails makeDetails() {
 		return diagram.makeDetails(getCommonSymbol());
 	}
 
-	public boolean needsDiagramExtras() {
-		return diagram.needsDiagramExtras();
-	}
-
-	public boolean needsDiagramLabels() {
-		return diagram.needsDiagramLabels();
-	}
-
-	public void preBuildDefinitions() {
+	 public void preBuildDefinitions() {
 		diagram.preBuildDefinitions();
 	}
 

@@ -435,18 +435,24 @@ public class D3Builder extends AbstractBuilder {
 
 	private void addElementGroups(ElementBuilder builder, ElementStructure structure) {
 		String elementTransform = makeElementTransform(scalesBuilder.coords);
+
+		// The overall group for this element, with accessibility and transforms
 		out.add("var elementGroup = interior.append('g').attr('class', 'element" + structure.elementID() + "')");
 		Accessibility.addElementInformation(structure, out);
 		if (elementTransform != null) out.addChained(elementTransform);
-		if (builder.needsDiagramExtras())
-			out.continueOnNextLine(",").add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");
-		out.continueOnNextLine(",").add("main = elementGroup.append('g').attr('class', 'main')");
-		if (builder.needsDiagramLabels())
-			out.continueOnNextLine(",")
-					.add("diagramLabels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'diagram labels').attr('aria-hidden', 'true'), elementGroup)");
 
+		// The main group
+		out.continueOnNextLine(",").add("main = elementGroup.append('g').attr('class', 'main')");
+
+		// The group for labels
 		out.continueOnNextLine(",")
-				.add("labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup)").endStatement();
+				.add("labels = BrunelD3.undoTransform(elementGroup.append('g')")
+				.add(".attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup)");
+
+		// Any extra groups needed (diagrams mostly do this)
+		builder.addAdditionalElementGroups();
+
+		out.endStatement();
 	}
 
 	/*

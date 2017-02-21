@@ -27,16 +27,12 @@ class CoordinateElementBuilder extends ElementBuilder {
 		super(structure, interaction, scales, out);
 	}
 
+	public void addAdditionalElementGroups() {
+		// None needed
+	}
+
 	public ElementDetails makeDetails() {
 		return ElementDetails.makeForCoordinates(vis, getCommonSymbol());
-	}
-
-	public boolean needsDiagramExtras() {
-		return false;
-	}
-
-	public boolean needsDiagramLabels() {
-		return false;
 	}
 
 	public void preBuildDefinitions() {

@@ -189,6 +189,8 @@ public abstract class ElementBuilder {
 		this.labelBuilder = new D3LabelBuilder(vis, out, structure.data);
 	}
 
+	public abstract void addAdditionalElementGroups();
+
 	public void generate() {
 
 		out.add("element = elements[" + structure.index + "]").endStatement();
@@ -232,10 +234,6 @@ public abstract class ElementBuilder {
 	}
 
 	public abstract ElementDetails makeDetails();
-
-	public abstract boolean needsDiagramExtras();
-
-	public abstract boolean needsDiagramLabels();
 
 	public abstract void preBuildDefinitions();
 
