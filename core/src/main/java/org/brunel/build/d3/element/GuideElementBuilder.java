@@ -96,8 +96,6 @@ public class GuideElementBuilder extends CoordinateElementBuilder {
 
 	}
 
-
-
 	private int getSteps(List<Param> guides) {
 		int max = 0;
 		for (Param p : guides) {
@@ -120,7 +118,6 @@ public class GuideElementBuilder extends CoordinateElementBuilder {
 			return "d." + coord;
 		}
 	}
-
 
 	private String sanitize(String text) {
 		try {

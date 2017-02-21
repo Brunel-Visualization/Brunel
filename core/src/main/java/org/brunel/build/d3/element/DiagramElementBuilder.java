@@ -40,44 +40,40 @@ public class DiagramElementBuilder extends ElementBuilder {
 	}
 
 	public boolean needsDiagramExtras() {
-		return diagram != null && diagram.needsDiagramExtras();
+		return diagram.needsDiagramExtras();
 	}
 
 	public boolean needsDiagramLabels() {
-		return diagram != null && diagram.needsDiagramLabels();
+		return diagram.needsDiagramLabels();
 	}
 
 	public void preBuildDefinitions() {
-		if (diagram != null) diagram.preBuildDefinitions();
+		diagram.preBuildDefinitions();
 	}
 
 	public void writeBuildCommands() {
-		if (diagram != null) diagram.writeBuildCommands();
+		diagram.writeBuildCommands();
 	}
 
 	public void writeDiagramDataStructures() {
-		if (diagram != null) diagram.writeDataStructures();
+		diagram.writeDataStructures();
 	}
 
 	public void writePerChartDefinitions() {
-		if (diagram != null) diagram.writePerChartDefinitions();
+		diagram.writePerChartDefinitions();
 	}
 
 	protected void defineLabeling(ElementDetails details) {
 		out.onNewLine().ln().comment("Define labeling for the selection")
 				.onNewLine().add("function label(selection, transitionMillis) {")
 				.indentMore().onNewLine();
-		if (diagram == null)
-			writeElementLabelsAndTooltips(details, labelBuilder);
-		else
 			diagram.writeLabelsAndTooltips(details, labelBuilder);
 		out.indentLess().onNewLine().add("}").ln();
 	}
 
 	/* The key function ensure we have object constancy when animating */
 	protected String getKeyFunction() {
-		if (diagram != null) return diagram.getRowKeyFunction();
-		return "function(d) { return d.key }";
+		return diagram.getRowKeyFunction();
 	}
 
 
@@ -93,7 +89,6 @@ public class DiagramElementBuilder extends ElementBuilder {
 	}
 
 	protected void writeDiagramEntry(ElementDetails details) {
-		if (diagram != null)
 			diagram.writeDiagramEnter(details);
 	}
 
@@ -106,9 +101,8 @@ public class DiagramElementBuilder extends ElementBuilder {
 			writeCoordinateDefinition(details);
 			writeElementAesthetics(details, true, vis, out);
 		}
-		if (diagram != null) diagram.writeDiagramUpdate(details);
+		diagram.writeDiagramUpdate(details);
 		out.endStatement();
-
 		out.indentLess().onNewLine().add("}").ln();
 	}
 }
