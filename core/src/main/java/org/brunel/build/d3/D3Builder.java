@@ -280,11 +280,7 @@ public class D3Builder extends AbstractBuilder {
 		out.add("if (first) time = 0;").comment("No transition for first call");
 
 		// For coordinate system charts, see if axes are needed
-		if (scalesBuilder.needsAxes())
-			out.onNewLine().add("buildAxes(time)").endStatement();
-
-		// For maps, see if the graticule is needed
-		if (structure.geo != null && structure.geo.withGraticule)
+		if (scalesBuilder.needsAxes() || structure.geo != null && structure.geo.withGraticule)
 			out.onNewLine().add("buildAxes(time)").endStatement();
 
 		Integer[] order = structure.elementBuildOrder();
