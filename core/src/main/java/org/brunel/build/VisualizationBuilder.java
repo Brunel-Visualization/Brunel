@@ -19,9 +19,7 @@ package org.brunel.build;
 import org.brunel.action.Param;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.data.DataBuilder;
-import org.brunel.build.data.DataModifier;
-import org.brunel.build.data.DataTransformParameters;
-import org.brunel.build.data.DatasetBuilder;
+import org.brunel.build.data.DataTransformations;
 import org.brunel.build.element.ElementBuilder;
 import org.brunel.build.info.ChartLayout;
 import org.brunel.build.info.ChartStructure;
@@ -31,7 +29,6 @@ import org.brunel.build.util.Accessibility;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.SVGGroupUtility;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisComposition;
 import org.brunel.model.VisException;
@@ -39,7 +36,6 @@ import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Coordinates;
-import org.brunel.model.VisTypes.Element;
 import org.brunel.model.style.StyleSheet;
 
 import java.util.ArrayList;
@@ -67,7 +63,7 @@ import java.util.Map;
  *
  * A builder may be called multiple times; every call to 'build' will reset the state and start from new
  */
-public class VisualizationBuilder implements DataModifier {
+public class VisualizationBuilder {
 
 	private static final String COPYRIGHT_COMMENTS = "\t<!--\n" +
 			"\t\tD3 Copyright \u00a9 2012, Michael Bostock\n" +
@@ -312,7 +308,7 @@ public class VisualizationBuilder implements DataModifier {
 		VisSingle[] elements = new VisSingle[items.length];
 		for (int i = 0; i < items.length; i++) {
 			elements[i] = items[i].getSingle().makeCanonical();
-			data[i] = new DatasetBuilder(elements[i], this).build();
+			data[i] = new DataTransformations(elements[i]).build();
 		}
 
 		ChartStructure structure = new ChartStructure(chartIndex, elements, data, datasets, outer, innerChartIndex, options.visIdentifier);
@@ -798,51 +794,6 @@ public class VisualizationBuilder implements DataModifier {
 					+ String.format(pattern, options.locJavaScript + "/sumoselect.css");
 		}
 		return base;
-	}
-
-	public DataTransformParameters modifyParameters(DataTransformParameters params, VisSingle vis) {
-		String stackCommand = "";
-		String sortRows = params.sortRowsCommand;
-
-		if (vis.stacked) {
-			// For stacked data we need to build the stack command
-			if (vis.fY.size() > 1) {
-				// We have a series
-				stackCommand = "#values";
-			} else if (vis.fY.size() == 1) {
-				// We have a single Y value
-				stackCommand = vis.fY.get(0).asField();
-			}
-			// Apply stacking to the data
-			stackCommand += "; ";
-			boolean first = true;
-			for (Param param : vis.fX) {
-				if (first) first = false;
-				else stackCommand += ", ";
-				stackCommand += param.asField();
-			}
-
-			stackCommand += "; " + Data.join(vis.aestheticFields()) + "; " + vis.tElement.producesSingleShape;
-		} else if (isLineSortedByX(vis)) {
-			// If we have stacked, we do not need to do anything as it sorts the data. Otherwise ...
-			// d3 needs the data sorted by 'x' order for lines and paths
-			// If we have defined 'x' order, that takes precedence
-			String x = vis.fX.get(0).asField() + ":ascending";
-			if (sortRows.isEmpty())
-				sortRows = x;
-			else
-				sortRows = sortRows + "; " + x;
-		}
-
-		// Replace the stack and sort commands with updated versions
-		return new DataTransformParameters(params.constantsCommand, params.filterCommand, params.eachCommand,
-				params.transformCommand, params.summaryCommand, stackCommand, params.sortCommand,
-				sortRows, params.seriesCommand, params.rowCountCommand, params.usedCommand);
-	}
-
-	private boolean isLineSortedByX(VisSingle vis) {
-		// Must have an X coordinate to sort by!
-		return !vis.fX.isEmpty() && (vis.tElement == Element.line || vis.tElement == Element.area);
 	}
 
 }
