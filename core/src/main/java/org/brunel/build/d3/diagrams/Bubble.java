@@ -43,8 +43,8 @@ class Bubble extends D3Diagram {
 		out.add("var pack = d3.pack().size([geom.inner_width, geom.inner_height])").endStatement();
 	}
 
-	public ElementDetails makeDetails(String commonSymbol) {
-		return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "pack(tree).descendants()");
+	public ElementDetails makeDetails() {
+		return ElementDetails.makeForDiagram(structure, ElementRepresentation.largeCircle, "point", "pack(tree).descendants()");
 	}
 
 	public void writeDiagramEnter(ElementDetails details) {

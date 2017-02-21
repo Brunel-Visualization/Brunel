@@ -81,8 +81,8 @@ class Table extends D3Diagram {
 
     }
 
-    public ElementDetails makeDetails(String commonSymbol) {
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.rect, "rect", "data._rows");
+    public ElementDetails makeDetails() {
+        return ElementDetails.makeForDiagram(structure, ElementRepresentation.rect, "rect", "data._rows");
     }
 
     public void writeDiagramUpdate(ElementDetails details) {

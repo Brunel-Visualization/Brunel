@@ -71,7 +71,7 @@ public class ModelUtil {
      * @param vis the visualization to look for definitions in
      * @return "rect", "circle", etc.
      */
-    public static String getElementSymbol(VisSingle vis) {
+    public static String getSymbolFromStyle(VisSingle vis) {
         StyleTarget target = StyleTarget.makeElementTarget(null, "element", "point");
         return vis.styles == null ? null : vis.styles.get(target, "symbol");
     }

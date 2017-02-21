@@ -113,10 +113,9 @@ public abstract class D3Diagram {
 
 	/**
 	 * Define the details of the the element for future use
-	 * @param commonSymbol symbol as defined in the "style"
 	 * @return details structure
 	 */
-	public abstract ElementDetails makeDetails(String commonSymbol);
+	public abstract ElementDetails makeDetails();
 
 	public boolean needsDiagramExtras() {
 		// By default, no extras needed
@@ -135,7 +134,7 @@ public abstract class D3Diagram {
 	public void writeBuildCommands() {
 		// By default, do nothing
 	}
-	
+
 	public abstract void writeDiagramUpdate(ElementDetails details);
 
 	/**

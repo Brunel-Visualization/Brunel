@@ -59,8 +59,8 @@ class Grid extends Bubble {
 				+ rows + ", " + columns + ", " + aspect + ")").endStatement();
 	}
 
-	public ElementDetails makeDetails(String commonSymbol) {
-		return ElementDetails.makeForDiagram(vis, spaceFillingCircle, "point", "tree.leaves()");
+	public ElementDetails makeDetails() {
+		return ElementDetails.makeForDiagram(structure, spaceFillingCircle, "point", "tree.leaves()");
 	}
 
 	public void defineCoordinateFunctions(ElementDetails details) {

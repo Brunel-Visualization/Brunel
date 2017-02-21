@@ -23,7 +23,6 @@ import org.brunel.build.d3.element.ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
-import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
@@ -91,12 +90,12 @@ public class GeoMap extends D3Diagram {
         writeFeatureHookup(mapping, GeoInformation.getIDField(vis));
     }
 
-    public ElementDetails makeDetails(String commonSymbol) {
+    public ElementDetails makeDetails() {
         if (vis.tElement == point || vis.tElement == Element.text) {
-            return ElementDetails.makeForCoordinates(vis, ModelUtil.getElementSymbol(vis));
+            return ElementDetails.makeForCoordinates(vis, structure.styleSymbol);
         } else {
             // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
-            return ElementDetails.makeForDiagram(vis, ElementRepresentation.geoFeature, "polygon", "data._rows");
+            return ElementDetails.makeForDiagram(structure, ElementRepresentation.geoFeature, "polygon", "data._rows");
         }
     }
 

@@ -22,7 +22,6 @@ import org.brunel.build.d3.element.ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
-import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
@@ -62,7 +61,7 @@ class Network extends D3Diagram {
 
 	public void writeBuildCommands() {
 		// Determine if we want curved arcs
-		String symbol = ModelUtil.getElementSymbol(edges.vis);
+		String symbol = edges.styleSymbol;
 		boolean curved = symbol != null && (symbol.contains("arc") || symbol.contains("curve"));
 
 		String density = "";
@@ -83,8 +82,8 @@ class Network extends D3Diagram {
 				edgeDataset, ",", from, ",", to, ")").endStatement();
 	}
 
-	public ElementDetails makeDetails(String commonSymbol) {
-		return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "graph.nodes");
+	public ElementDetails makeDetails() {
+		return ElementDetails.makeForDiagram(structure, ElementRepresentation.largeCircle, "point", "graph.nodes");
 	}
 
 	public void writeDiagramEnter(ElementDetails details) {

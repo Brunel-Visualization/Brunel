@@ -95,8 +95,8 @@ class ParallelCoordinates extends D3Diagram {
 				.endStatement();
     }
 
-    public ElementDetails makeDetails(String commonSymbol) {
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.generalPath, "path", "data._rows");
+    public ElementDetails makeDetails() {
+        return ElementDetails.makeForDiagram(structure, ElementRepresentation.generalPath, "path", "data._rows");
     }
 
     public void writeDiagramUpdate(ElementDetails details) {

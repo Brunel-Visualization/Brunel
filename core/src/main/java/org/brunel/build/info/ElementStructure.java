@@ -18,6 +18,7 @@ package org.brunel.build.info;
 
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.element.ElementDetails;
+import org.brunel.build.util.ModelUtil;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.maps.GeoMapping;
@@ -37,6 +38,7 @@ public class ElementStructure {
 	public final Dataset original;
 	public final Dataset data;
 	public final GeoMapping geo;
+	public final String styleSymbol;                // This is the symbol defined in the style for the element
 
 	public ElementDetails details;
 	public List<Dependency> dependencies;
@@ -47,6 +49,7 @@ public class ElementStructure {
 		this.vis = vis;
 		this.data = data;
 		this.geo = geo;
+		this.styleSymbol = ModelUtil.getSymbolFromStyle(vis);
 		this.original = vis.getDataset();
 		this.dependencies = new ArrayList<>();
 	}
@@ -76,7 +79,6 @@ public class ElementStructure {
 		// We are clustered when we are a coordinate chart with 2+ X dimensions
 		return chart.diagram == null && vis.fX.size() > 1;
 	}
-
 
 	// returns true of we depend on another element
 	public boolean isDependent() {

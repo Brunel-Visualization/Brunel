@@ -81,14 +81,14 @@ class Tree extends D3Diagram {
 				.endStatement();
 	}
 
-	public ElementDetails makeDetails(String commonSymbol) {
+	public ElementDetails makeDetails() {
 		ElementRepresentation rep;
 		if (method == Method.leftRight)
 			rep = ElementRepresentation.pointLikeCircle;
 		else
 			rep = ElementRepresentation.largeCircle;
 
-		return ElementDetails.makeForDiagram(vis, rep, "point", "treeNodes");
+		return ElementDetails.makeForDiagram(structure, rep, "point", "treeNodes");
 	}
 
 	public void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {

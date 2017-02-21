@@ -409,8 +409,7 @@ public abstract class ElementBuilder {
 	}
 
 	protected String getCommonSymbol() {
-		String result = ModelUtil.getElementSymbol(vis);
-		if (result != null) return result;
+		if (structure.styleSymbol != null) return structure.styleSymbol;
 		if (structure.chart.geo != null) return "circle";             // Geo charts default to circles
 		// We default to a rectangle if all the scales are categorical or binned, otherwise we return a point
 		boolean cat = allShowExtent(structure.chart.coordinates.allXFields) && allShowExtent(structure.chart.coordinates.allYFields);

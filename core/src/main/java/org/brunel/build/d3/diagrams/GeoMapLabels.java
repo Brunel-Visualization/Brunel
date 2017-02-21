@@ -93,8 +93,8 @@ public class GeoMapLabels extends D3Diagram {
 				": (c==1 ? " + Data.quote(ids[1]) + " : " + Data.quote(ids[2]) + ")}");
 	}
 
-	public ElementDetails makeDetails(String commonSymbol) {
-		return ElementDetails.makeForDiagram(vis, ElementRepresentation.symbol, "point", "geo_labels");
+	public ElementDetails makeDetails() {
+		return ElementDetails.makeForDiagram(structure, ElementRepresentation.symbol, "point", "geo_labels");
 	}
 
 	public void writeDiagramUpdate(ElementDetails details) {

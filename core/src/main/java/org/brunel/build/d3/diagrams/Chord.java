@@ -61,8 +61,8 @@ class Chord extends D3Diagram {
         out.add("var R = scale_x(geom.inner_radius)-scale_x(0), svgTrans = 'translate(' + scale_x(0) + ',' + scale_y(0) + ')'").endStatement();
     }
 
-    public ElementDetails makeDetails(String commonSymbol) {
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.polygon, "edge", "chords.chords");
+    public ElementDetails makeDetails() {
+        return ElementDetails.makeForDiagram(structure, ElementRepresentation.polygon, "edge", "chords.chords");
     }
 
     public void writeDiagramUpdate(ElementDetails details) {

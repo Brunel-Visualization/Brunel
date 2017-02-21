@@ -22,7 +22,6 @@ import org.brunel.build.d3.element.ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
-import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 
@@ -34,7 +33,7 @@ class DependentEdge extends D3Diagram {
 
 	DependentEdge(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
 		super(structure, data, interaction, out);
-		String symbol = ModelUtil.getElementSymbol(vis);
+		String symbol = structure.styleSymbol;
 		this.arrow = symbol == null || symbol.toLowerCase().contains("arrow");
 		this.curved = symbol == null || symbol.toLowerCase().contains("curved") || symbol.toLowerCase().contains("arc");
 		this.polar = structure.chart.coordinates.isPolar();
@@ -62,8 +61,8 @@ class DependentEdge extends D3Diagram {
 		// Nothing to be done
 	}
 
-	public ElementDetails makeDetails(String commonSymbol) {
-		return ElementDetails.makeForDiagram(vis, ElementRepresentation.curvedPath, "edge", "graph.links");
+	public ElementDetails makeDetails() {
+		return ElementDetails.makeForDiagram(structure, ElementRepresentation.curvedPath, "edge", "graph.links");
 	}
 
 	public void writeDiagramUpdate(ElementDetails details) {

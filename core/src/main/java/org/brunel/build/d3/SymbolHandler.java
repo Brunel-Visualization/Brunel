@@ -4,7 +4,6 @@ import org.brunel.action.Param;
 import org.brunel.build.d3.diagrams.D3Diagram;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
-import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.w3c.dom.Document;
@@ -112,9 +111,8 @@ public class SymbolHandler {
 	 */
 	public String getSymbolIDForStyleDefinition(ElementStructure element) {
 		// Get the name from the styles and try to match into known items
-		String symbolName = ModelUtil.getElementSymbol(element.vis);
-		if (symbolName == null) return null;
-		return getSymbolIDs(element, new String[]{symbolName})[0];
+		return element.styleSymbol == null ? null
+				: getSymbolIDs(element, new String[]{element.styleSymbol})[0];
 	}
 
 	/**
@@ -326,7 +324,7 @@ public class SymbolHandler {
 		}
 
 		// Add in the one from "style('symbol:xxxx')" if there is a definition
-		String symbolFromStyle = ModelUtil.getElementSymbol(structure.vis);
+		String symbolFromStyle = structure.styleSymbol;
 
 		// Rectangle and Circle/Point are a special symbol -- actually changes the element type and handled elsewhere
 		if (symbolFromStyle != null

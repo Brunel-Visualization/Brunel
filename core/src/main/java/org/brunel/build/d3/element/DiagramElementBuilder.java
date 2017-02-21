@@ -44,7 +44,7 @@ import static org.brunel.model.VisTypes.Diagram.map;
 	 }
 
 	 public ElementDetails makeDetails() {
-		return diagram.makeDetails(getCommonSymbol());
+		return diagram.makeDetails();
 	}
 
 	 public void preBuildDefinitions() {

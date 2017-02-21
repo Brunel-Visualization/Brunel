@@ -43,8 +43,8 @@ class Treemap extends D3Diagram {
 				.endStatement();
 	}
 
-	public ElementDetails makeDetails(String commonSymbol) {
-		return ElementDetails.makeForDiagram(vis, ElementRepresentation.rect, "polygon", "treemap(tree).descendants()");
+	public ElementDetails makeDetails() {
+		return ElementDetails.makeForDiagram(structure, ElementRepresentation.rect, "polygon", "treemap(tree).descendants()");
 	}
 
 	public void writeDiagramEnter(ElementDetails details) {

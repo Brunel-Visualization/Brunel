@@ -37,8 +37,8 @@ class Cloud extends D3Diagram {
         out.add("function keyFunction(d) { return d.key }").endStatement();
     }
 
-    public ElementDetails makeDetails(String commonSymbol) {
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.text, "text", "data._rows");
+    public ElementDetails makeDetails() {
+        return ElementDetails.makeForDiagram(structure, ElementRepresentation.text, "text", "data._rows");
     }
 
     public void writeDiagramUpdate(ElementDetails details) {

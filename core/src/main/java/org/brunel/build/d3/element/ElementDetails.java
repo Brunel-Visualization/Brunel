@@ -16,6 +16,7 @@
 
 package org.brunel.build.d3.element;
 
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.data.Data;
 import org.brunel.model.VisSingle;
@@ -47,19 +48,20 @@ public class ElementDetails {
 	 * and will also remove the label if it does not fit.
 	 * a box around the shape (and so will work bets for convex shapes like rectangles and circles)
 	 *
+	 * @param structure
 	 * @param elementClass the name of the element class for CSS purposes (polygon, path, point, etc.)
 	 * @param dataSource   the javascript name of the element's data
 	 */
-	public static ElementDetails makeForDiagram(VisSingle vis, ElementRepresentation representation, String elementClass, String dataSource) {
+	public static ElementDetails makeForDiagram(ElementStructure structure, ElementRepresentation representation, String elementClass, String dataSource) {
 		if (representation == spaceFillingCircle || representation == largeCircle || representation == pointLikeCircle) {
-			if (!vis.fSymbol.isEmpty() || ModelUtil.getElementSymbol(vis) != null)
+			if (!structure.vis.fSymbol.isEmpty() || structure.styleSymbol != null)
 				representation = ElementRepresentation.symbol;
 		}
 
 		boolean filled = representation != ElementRepresentation.segment
 				&& representation != ElementRepresentation.curvedPath
 				&& representation != ElementRepresentation.generalPath;
-		return new ElementDetails(vis, representation, elementClass, dataSource, filled);
+		return new ElementDetails(structure.vis, representation, elementClass, dataSource, filled);
 	}
 
 	public final String dataSource;                     // Where the data for d3 lives
