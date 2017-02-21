@@ -43,7 +43,7 @@ public class GuideBuilder extends D3ElementBuilder {
         super(structure, out, scalesBuilder, interaction);
     }
 
-    public void generate(int elementIndex) {
+    public void generate() {
 
         List<Param> guides = vis.tGuides;
 
@@ -61,7 +61,6 @@ public class GuideBuilder extends D3ElementBuilder {
 
         int index = 0;
 
-        makeDetails();         // Create the details of what the element should be
         setGeometry();                           // And the coordinate definitions
 
         for (Param p : guides) {

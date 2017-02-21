@@ -197,12 +197,15 @@ public class D3Builder extends AbstractBuilder {
 				elementBuilders[i] = new D3ElementBuilder(structures[i], out, scalesBuilder, interaction);
 			else
 				elementBuilders[i] = new GuideBuilder(structures[i], out, scalesBuilder, interaction);
+			elementBuilders[i].makeDetails();
 
 		}
 	}
 
 	protected void defineElement(ElementStructure structure) {
+
 		D3ElementBuilder elementBuilder = elementBuilders[structure.index];
+
 
 		out.titleComment("Define element #" + structure.elementID());
 		out.add("elements[" + structure.index + "] = function() {").indentMore();
@@ -229,7 +232,6 @@ public class D3Builder extends AbstractBuilder {
 		out.titleComment("Build element from data");
 
 		out.add("function build(transitionMillis) {").ln().indentMore();
-		elementBuilder.makeDetails();
 		elementBuilder.generate();
 		interaction.addHandlers(structure);
 

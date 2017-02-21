@@ -66,6 +66,7 @@ public class ChartStructure {
 		for (int i = 0; i < elements.length; i++) {
 			GeoMapping geoMapping = geo == null ? null : geo.getGeo(elements[i]);
 			elementStructure[i] = new ElementStructure(this, i, elements[i], data[i], geoMapping);
+
 		}
 
 		// Define any dependencies between the elements

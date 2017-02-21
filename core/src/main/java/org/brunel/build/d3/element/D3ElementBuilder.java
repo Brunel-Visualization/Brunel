@@ -66,9 +66,10 @@ public class D3ElementBuilder {
 	public void generate() {
 
 		out.add("element = elements[" + structure.index + "]").endStatement();
-		writeDiagramDataStructures();
 
 		ElementDetails details = structure.details;
+
+		writeDiagramDataStructures();					// Diagram specific stuff
 		setGeometry();                                    // And the coordinate definitions
 		defineAllElementFeatures(details);                // Features for the entire element -- paths, etc.
 		defineLabelSettings(details);                    // Defines the 'labeling' settings object
