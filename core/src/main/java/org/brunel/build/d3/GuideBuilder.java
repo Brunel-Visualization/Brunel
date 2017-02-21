@@ -40,7 +40,7 @@ public class GuideBuilder extends D3ElementBuilder {
             Arrays.asList('(', ')', '*', '-', '+', '/', '?', '=', '!', '>', '<', ':'));
 
     public GuideBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scalesBuilder, D3Interaction interaction) {
-        super(structure, out, scalesBuilder, interaction);
+        super(structure, out, scalesBuilder, interaction, null);
     }
 
     public void generate() {

@@ -53,14 +53,14 @@ public class D3ElementBuilder {
 	private final D3Diagram diagram;                            // Helper to build diagrams
 	protected final ElementStructure structure;
 
-	public D3ElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales, D3Interaction interaction) {
+	public D3ElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales, D3Interaction interaction, D3Diagram diagram) {
 		this.structure = structure;
+		this.diagram = diagram;
 		this.vis = structure.vis;
 		this.out = out;
 		this.scales = scales;
 		this.interaction = interaction;
 		this.labelBuilder = new D3LabelBuilder(vis, out, structure.data);
-		this.diagram = D3Diagram.make(structure, interaction, out);
 	}
 
 	public void generate() {
@@ -240,13 +240,12 @@ public class D3ElementBuilder {
 		if (diagram != null) diagram.writePerChartDefinitions();
 	}
 
-	public void makeDetails() {
+	public ElementDetails makeDetails() {
 		// When we create diagrams this has the side effect of writing the data calls needed
 		if (diagram == null) {
-			structure.details = ElementDetails.makeForCoordinates(vis, getCommonSymbol());
+			return ElementDetails.makeForCoordinates(vis, getCommonSymbol());
 		} else {
-			out.onNewLine().comment("Data structures for a", vis.tDiagram, "diagram");
-			structure.details = diagram.makeDetails(getCommonSymbol());
+			return diagram.makeDetails(getCommonSymbol());
 		}
 
 	}

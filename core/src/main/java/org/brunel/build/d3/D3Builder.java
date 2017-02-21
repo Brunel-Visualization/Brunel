@@ -19,6 +19,7 @@ package org.brunel.build.d3;
 import org.brunel.action.Param;
 import org.brunel.build.AbstractBuilder;
 import org.brunel.build.controls.Controls;
+import org.brunel.build.d3.diagrams.D3Diagram;
 import org.brunel.build.d3.element.D3ElementBuilder;
 import org.brunel.build.d3.titles.ChartTitleBuilder;
 import org.brunel.build.data.DataTransformParameters;
@@ -193,19 +194,18 @@ public class D3Builder extends AbstractBuilder {
 		ElementStructure[] structures = structure.elementStructure;
 		elementBuilders = new D3ElementBuilder[structures.length];
 		for (int i = 0; i < structures.length; i++) {
-			if (structures[i].vis.tGuides.isEmpty())
-				elementBuilders[i] = new D3ElementBuilder(structures[i], out, scalesBuilder, interaction);
-			else
+			if (structures[i].vis.tGuides.isEmpty()) {
+				D3Diagram diagram = D3Diagram.make(structures[i], interaction, out);
+				elementBuilders[i] = new D3ElementBuilder(structures[i], out, scalesBuilder, interaction, diagram);
+			} else
 				elementBuilders[i] = new GuideBuilder(structures[i], out, scalesBuilder, interaction);
-			elementBuilders[i].makeDetails();
-
+			structures[i].details = elementBuilders[i].makeDetails();
 		}
 	}
 
 	protected void defineElement(ElementStructure structure) {
 
 		D3ElementBuilder elementBuilder = elementBuilders[structure.index];
-
 
 		out.titleComment("Define element #" + structure.elementID());
 		out.add("elements[" + structure.index + "] = function() {").indentMore();
