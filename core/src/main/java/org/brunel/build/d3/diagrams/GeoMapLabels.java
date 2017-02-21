@@ -35,14 +35,14 @@ public class GeoMapLabels extends D3Diagram {
 	private final NumberFormat F = new DecimalFormat("#.####");
 
 	public GeoMapLabels(ElementStructure vis, Dataset data, ScriptWriter out) {
-		super(vis, data, out);
+		super(vis, data);
 	}
 
 	public String getRowKeyFunction() {
 		return "function(d) { return d[2] }";
 	}
 
-	public void preBuildDefinitions() {
+	public void preBuildDefinitions(ScriptWriter out) {
 		List<LabelPoint> all = structure.chart.geo.getLabelsForFiles();
 
 		int maxPoints = 40;
@@ -83,7 +83,7 @@ public class GeoMapLabels extends D3Diagram {
 		return maxPoints < all.size() ? all.subList(0, maxPoints) : all;
 	}
 
-	public void writeDataStructures() {
+	public void writeDataStructures(ScriptWriter out) {
 		SymbolHandler symbols = structure.chart.symbols;                        // Handler for all symbols
 
 		// Get the IDs of the symbols we want to use and define a function to use them
@@ -96,7 +96,7 @@ public class GeoMapLabels extends D3Diagram {
 		return ElementDetails.makeForDiagram(structure, ElementRepresentation.symbol, "point", "geo_labels");
 	}
 
-	public void writeDiagramUpdate(ElementDetails details) {
+	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
 		// Set the symbol using a reference and then define the rect outside the shape
 		out.addChained("each(function(d) { this._p = projection(d); this._r = d[3]*geom.default_point_size/10 })")
 				.addChained("filter(function() {return this._p}) ")
@@ -119,7 +119,7 @@ public class GeoMapLabels extends D3Diagram {
 		out.add("BrunelD3.label(selection, labels, labeling, 0, geom)").endStatement();
 	}
 
-	public void writeDiagramEnter(ElementDetails details) {
+	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
 		out.addChained("classed('map', true)");
 	}
 

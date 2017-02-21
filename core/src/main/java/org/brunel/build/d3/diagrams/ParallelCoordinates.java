@@ -51,7 +51,7 @@ class ParallelCoordinates extends D3Diagram {
     private final double smoothness;            // 0 == linear, 1 is very smooth
 
     public ParallelCoordinates(ElementStructure structure, Dataset data, ScriptWriter out) {
-        super(structure, data, out);
+        super(structure, data);
         fields = data.fieldArray(vis.positionFields());
         builder = new D3ScaleBuilder(structure.chart, out);
         axes = makeAxisDetails(structure.chart, fields);
@@ -76,7 +76,7 @@ class ParallelCoordinates extends D3Diagram {
         return axes;
     }
 
-    public void writeDataStructures() {
+    public void writeDataStructures(ScriptWriter out) {
 		out.add("var axes = interior.selectAll('g.parallel.axis').data(parallel)").endStatement();
 		out.add("var builtAxes = axes.enter().append('g')")
 				.addChained("attr('class', function(d,i) { return 'parallel axis dim' + (i+1) })")
@@ -98,7 +98,7 @@ class ParallelCoordinates extends D3Diagram {
         return ElementDetails.makeForDiagram(structure, ElementRepresentation.generalPath, "path", "data._rows");
     }
 
-    public void writeDiagramUpdate(ElementDetails details) {
+    public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
         out.addChained("attr('d', path)");
 		ElementBuilder.writeElementAesthetics(details, true, vis, out);
     }
@@ -107,12 +107,12 @@ class ParallelCoordinates extends D3Diagram {
 		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
 	}
 
-	public void writePerChartDefinitions() {
+	public void writePerChartDefinitions(ScriptWriter out) {
         out.add("var parallel;").at(50).comment("Structure to store parallel axes");
     }
 
 
-    public void preBuildDefinitions() {
+    public void preBuildDefinitions(ScriptWriter out) {
         out.add("var rangeVertical = [geom.inner_height -", padding.vertical() + ", " + padding.top + "];")
                 .at(50).comment("vertical range");
 
@@ -145,14 +145,14 @@ class ParallelCoordinates extends D3Diagram {
 
         out.onNewLine().ln().add("function path(d) {").indentMore().ln();
         out.add("var p = d3.path()").endStatement();
-        if (smoothness == 0) defineLinearPath();
-        else defineSmoothPath(smoothness);
+        if (smoothness == 0) defineLinearPath(out);
+        else defineSmoothPath(smoothness, out);
         out.add("return p");
         out.indentLess().onNewLine().add("}").endStatement();
 
     }
 
-    private void defineLinearPath() {
+    private void defineLinearPath(ScriptWriter out) {
         out.add("parallel.forEach(function(dim, i) {").indentMore().indentMore().onNewLine()
                 .add("if (i) p.lineTo(scale_x(i), dim.y(d))").endStatement()
                 .add("else   p.moveTo(scale_x(i), dim.y(d))").endStatement()
@@ -164,7 +164,7 @@ class ParallelCoordinates extends D3Diagram {
      *
      * @param r zero-one parameter where 0 is linear and 1 is a flat curve
      */
-    private void defineSmoothPath(double r) {
+    private void defineSmoothPath(double r, ScriptWriter out) {
         out.add("var xa, ya, xb, yb, i, xm, ym, r = ", r / 2).endStatement();
         out.add("parallel.forEach(function(dim, i) {").indentMore().indentMore().onNewLine()
                 .add("xb = scale_x(i), yb = parallel[i].y(d)").endStatement()

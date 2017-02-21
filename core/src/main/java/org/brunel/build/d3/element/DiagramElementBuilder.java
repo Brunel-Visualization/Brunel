@@ -47,19 +47,19 @@ import static org.brunel.model.VisTypes.Diagram.map;
 	}
 
 	 public void preBuildDefinitions() {
-		diagram.preBuildDefinitions();
+		diagram.preBuildDefinitions(out);
 	}
 
 	public void writeBuildCommands() {
-		diagram.writeBuildCommands();
+		diagram.writeBuildCommands(out);
 	}
 
 	public void writeDiagramDataStructures() {
-		diagram.writeDataStructures();
+		diagram.writeDataStructures(out);
 	}
 
 	public void writePerChartDefinitions() {
-		diagram.writePerChartDefinitions();
+		diagram.writePerChartDefinitions(out);
 	}
 
 	protected void defineLabeling(ElementDetails details) {
@@ -83,12 +83,12 @@ import static org.brunel.model.VisTypes.Diagram.map;
 		} else {
 			// Set the diagram group class for CSS
 			out.add("main.attr('class',", diagram.getStyleClasses(), ")").endStatement();
-			diagram.defineCoordinateFunctions(details);
+			diagram.defineCoordinateFunctions(details, out);
 		}
 	}
 
 	protected void writeDiagramEntry(ElementDetails details) {
-			diagram.writeDiagramEnter(details);
+			diagram.writeDiagramEnter(details, out);
 	}
 
 	protected void defineUpdateState(ElementDetails details) {
@@ -100,7 +100,7 @@ import static org.brunel.model.VisTypes.Diagram.map;
 			writeCoordinateDefinition(details);
 			writeElementAesthetics(details, true, vis, out);
 		}
-		diagram.writeDiagramUpdate(details);
+		diagram.writeDiagramUpdate(details, out);
 		out.endStatement();
 		out.indentLess().onNewLine().add("}").ln();
 	}

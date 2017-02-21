@@ -27,12 +27,12 @@ import org.brunel.data.Dataset;
 class Treemap extends D3Diagram {
 
 	public Treemap(ElementStructure structure, Dataset data, ScriptWriter out) {
-		super(structure, data, out);
+		super(structure, data);
 	}
 
-	public void writeDataStructures() {
+	public void writeDataStructures(ScriptWriter out) {
 		out.comment("Define treemap (hierarchy) data structures");
-		makeHierarchicalTree(false);
+		makeHierarchicalTree(false, out);
 
 		// Create the d3 layout
 		out.add("var treemap = d3.treemap().tile(d3.treemapResquarify)")
@@ -46,7 +46,7 @@ class Treemap extends D3Diagram {
 		return ElementDetails.makeForDiagram(structure, ElementRepresentation.rect, "polygon", "treemap(tree).descendants()");
 	}
 
-	public void writeDiagramEnter(ElementDetails details) {
+	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
 		out.addChained("filter(function(d) { return d.parent })")       // Only if it has a parent
 				.addChained("attr('x', function(d) { return scale_x((d.parent.x0+d.parent.x1)/2) })")
 				.addChained("attr('y', function(d) { return scale_y((d.parent.y0+d.parent.y1)/2) })")
@@ -58,8 +58,8 @@ class Treemap extends D3Diagram {
 		labelBuilder.addTreeInternalLabelsInsideNode();
 	}
 
-	public void writeDiagramUpdate(ElementDetails details) {
-		writeHierarchicalClass();
+	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
+		writeHierarchicalClass(out);
 		out.addChained("attr('x', function(d) { return scale_x(d.x0) })")
 				.addChained("attr('y', function(d) { return scale_y(d.y0) })")
 				.addChained("attr('width', function(d) { return scale_x(d.x1) - scale_x(d.x0) })")

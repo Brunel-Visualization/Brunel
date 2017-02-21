@@ -32,7 +32,7 @@ class Network extends D3Diagram {
 	private final String nodeID, fromFieldID, toFieldID;
 
 	public Network(ElementStructure structure, Dataset data, ScriptWriter out) {
-		super(structure, data, out);
+		super(structure, data);
 		this.nodes = structure;
 		this.edges = structure.findDependentEdges();
 
@@ -58,7 +58,7 @@ class Network extends D3Diagram {
 		}
 	}
 
-	public void writeBuildCommands() {
+	public void writeBuildCommands(ScriptWriter out) {
 		// Determine if we want curved arcs
 		String symbol = edges.styleSymbol;
 		boolean curved = symbol != null && (symbol.contains("arc") || symbol.contains("curve"));
@@ -70,11 +70,11 @@ class Network extends D3Diagram {
 						+ "], elements[" + edges.index + "], zoomNode, geom, " + curved + density + ")").endStatement();
 	}
 
-	public void writePerChartDefinitions() {
+	public void writePerChartDefinitions(ScriptWriter out) {
 		out.add("var graph, simulation;").at(50).comment("Node/edge graph and force simulation");
 	}
 
-	public void writeDataStructures() {
+	public void writeDataStructures(ScriptWriter out) {
 		String edgeDataset = "elements[" + edges.index + "].data()";
 		String nodeField = quoted(nodeID), from = quoted(fromFieldID), to = quoted(toFieldID);
 		out.add("graph = graph || BrunelData.diagram_Graph.make(processed,", nodeField, ",",
@@ -85,12 +85,12 @@ class Network extends D3Diagram {
 		return ElementDetails.makeForDiagram(structure, ElementRepresentation.largeCircle, "point", "graph.nodes");
 	}
 
-	public void writeDiagramEnter(ElementDetails details) {
+	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
 		out.addChained("attr('r',", details.overallSize, ")");
 		ElementBuilder.writeElementAesthetics(details, true, vis, out);
 	}
 
-	public void writeDiagramUpdate(ElementDetails details) {
+	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
 		// Handled by the "tick" method of layout
 	}
 

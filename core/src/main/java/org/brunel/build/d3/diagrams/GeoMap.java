@@ -78,15 +78,15 @@ public class GeoMap extends D3Diagram {
     }
 
     public GeoMap(ElementStructure vis, Dataset data, GeoMapping geo, ScriptWriter out) {
-        super(vis, data, out);
+        super(vis, data);
         this.mapping = geo;
         if (mapping == null)
             throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
     }
 
-    public void writeDataStructures() {
+    public void writeDataStructures(ScriptWriter out) {
         out.indentLess().comment("Read in the feature data and call build again when done");
-        writeFeatureHookup(mapping, GeoInformation.getIDField(vis));
+        writeFeatureHookup(mapping, GeoInformation.getIDField(vis), out);
     }
 
     public ElementDetails makeDetails() {
@@ -98,13 +98,13 @@ public class GeoMap extends D3Diagram {
         }
     }
 
-    public void writePerChartDefinitions() {
+    public void writePerChartDefinitions(ScriptWriter out) {
         out.titleComment("Projection");
         writeProjection(out, mapping.getGeoInformation());
 
     }
 
-    private void writeFeatureHookup(GeoMapping mapping, String idField) {
+    private void writeFeatureHookup(GeoMapping mapping, String idField, ScriptWriter out) {
         if (mapping.fileCount() == 0) throw new IllegalStateException("No suitable map found");
 
         out.add("var features = ");
@@ -156,7 +156,7 @@ public class GeoMap extends D3Diagram {
         out.indentLess().onNewLine().add("}");
     }
 
-    public void writeDiagramEnter(ElementDetails details) {
+    public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
         out.addChained("classed('nondata', function(d) {return !d || d.row == null})");
     }
 
@@ -164,7 +164,7 @@ public class GeoMap extends D3Diagram {
         ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
 	}
 
-	public void writeDiagramUpdate(ElementDetails details) {
+	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
     }
 
 }

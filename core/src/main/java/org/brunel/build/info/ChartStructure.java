@@ -107,10 +107,6 @@ public class ChartStructure {
 		return "" + (index + 1);
 	}
 
-	public boolean hasMultipleElements() {
-		return elements.length > 1;
-	}
-
 	public boolean nested() {
 		return outer != null;
 	}
@@ -143,7 +139,7 @@ public class ChartStructure {
 		return candidate;
 	}
 
-	public GeoInformation makeGeo(VisSingle[] elements, Dataset[] data) {
+	private GeoInformation makeGeo(VisSingle[] elements, Dataset[] data) {
 		// If any element specifies a map, we make the map information for all to share
 		for (VisSingle vis : elements)
 			if (vis.tDiagram == Diagram.map)

@@ -17,6 +17,7 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.action.Param;
+import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.GeomAttribute;
@@ -45,14 +46,14 @@ class Grid extends Bubble {
 		}
 	}
 
-	public void writeDiagramEnter(ElementDetails details) {
+	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
 		// Nothing
 	}
 
-	public void writeDataStructures() {
+	public void writeDataStructures(ScriptWriter out) {
 		out.comment("Define hierarchy and grid data structures");
 
-		makeHierarchicalTree(false);
+		makeHierarchicalTree(false, out);
 
 		out.add("var gridLabels = BrunelD3.gridLayout(tree, [geom.inner_width, geom.inner_height], "
 				+ rows + ", " + columns + ", " + aspect + ")").endStatement();
@@ -62,7 +63,7 @@ class Grid extends Bubble {
 		return ElementDetails.makeForDiagram(structure, spaceFillingCircle, "point", "tree.leaves()");
 	}
 
-	public void defineCoordinateFunctions(ElementDetails details) {
+	public void defineCoordinateFunctions(ElementDetails details, ScriptWriter out) {
 		// The default symbol size is 301% -- but this means it overflows the grid.
 		// So (and this is a hack) we search for that exact default (301%) and remove it
 		GeomAttribute size = details.overallSize;
@@ -70,13 +71,14 @@ class Grid extends Bubble {
 		details.overallSize = size.isFunc() ? GeomAttribute.makeFunction(replace)
 				: GeomAttribute.makeConstant(replace);
 
-		defineXYR("scale_x(d.x)", "scale_y(d.y)", "scale_x(d.r) - scale_x(0)", details);
+		defineXYR("scale_x(d.x)", "scale_y(d.y)", "scale_x(d.r) - scale_x(0)", details, out);
 	}
 
-	public void writeDiagramUpdate(ElementDetails details) {
+	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
 		// Classes defined for CSS
 		out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 
+		D3LabelBuilder labelBuilder = new D3LabelBuilder(vis, out, structure.data);
 		ElementBuilder.definePointLikeMark(details, structure, out);
 		ElementBuilder.writeElementAesthetics(details, true, vis, out);
 		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);

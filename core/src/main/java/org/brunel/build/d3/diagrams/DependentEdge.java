@@ -16,7 +16,6 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
@@ -32,14 +31,14 @@ class DependentEdge extends D3Diagram {
 	private final boolean curved;        // True if we want a curved arc
 
 	DependentEdge(ElementStructure structure, Dataset data, ScriptWriter out) {
-		super(structure, data, out);
+		super(structure, data);
 		String symbol = structure.styleSymbol;
 		this.arrow = symbol == null || symbol.toLowerCase().contains("arrow");
 		this.curved = symbol == null || symbol.toLowerCase().contains("curved") || symbol.toLowerCase().contains("arc");
 		this.polar = structure.chart.coordinates.isPolar();
 	}
 
-	public void writePerChartDefinitions() {
+	public void writePerChartDefinitions(ScriptWriter out) {
 		// ensure an arrowhead is defined
 		if (arrow)
 			out.add("vis.append('svg:defs').selectAll('marker').data(['arrow']).enter()")
@@ -53,11 +52,11 @@ class DependentEdge extends D3Diagram {
 
 	}
 
-	public void writeDiagramEnter(ElementDetails details) {
+	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
 		if (arrow) out.addChained("attr('marker-end', 'url(#arrow)')");
 	}
 
-	public void writeDataStructures() {
+	public void writeDataStructures(ScriptWriter out) {
 		// Nothing to be done
 	}
 
@@ -65,8 +64,8 @@ class DependentEdge extends D3Diagram {
 		return ElementDetails.makeForDiagram(structure, ElementRepresentation.curvedPath, "edge", "graph.links");
 	}
 
-	public void writeDiagramUpdate(ElementDetails details) {
-		defineLocation();
+	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
+		writeEdgePlacement("target", curved, polar, out);
 		ElementBuilder.writeElementAesthetics(details, true, vis, out);
 	}
 
@@ -80,10 +79,6 @@ class DependentEdge extends D3Diagram {
 
 	public String getRowKeyFunction() {
 		return "function(d) { return d.key }";
-	}
-
-	public void defineLocation() {
-		writeEdgePlacement("target", curved, polar, out);
 	}
 
 	public static void write(boolean curved, boolean polar, ScriptWriter out, String groupName) {

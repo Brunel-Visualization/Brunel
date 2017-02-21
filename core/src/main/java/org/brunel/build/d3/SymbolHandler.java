@@ -94,8 +94,7 @@ public class SymbolHandler {
 
 		// Search all elements for use of symbols
 		for (int i = 0; i < chart.elementStructure.length; i++) {
-			ElementStructure structure = chart.elementStructure[i];
-			URI uri = getSymbolURI(structure);
+			URI uri = getSymbolURI(chart.elementStructure[i]);
 			if (uri != null) required.add(uri);
 		}
 

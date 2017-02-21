@@ -30,14 +30,14 @@ import org.brunel.model.style.StyleTarget;
 class Chord extends D3Diagram {
 
     public Chord(ElementStructure vis, Dataset data, ScriptWriter out) {
-        super(vis, data, out);
+        super(vis, data);
     }
 
     public String getRowKeyFunction() {
         return "function(d) { return d.source.index + '|' + d.target.index }";
     }
 
-    public void writeDataStructures() {
+    public void writeDataStructures(ScriptWriter out) {
         String f1 = vis.positionFields()[0];
         String f2 = position[1];
 
@@ -64,7 +64,7 @@ class Chord extends D3Diagram {
         return ElementDetails.makeForDiagram(structure, ElementRepresentation.polygon, "edge", "chords.chords");
     }
 
-    public void writeDiagramUpdate(ElementDetails details) {
+    public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
 
 
         // The Chords themselves are simple to create

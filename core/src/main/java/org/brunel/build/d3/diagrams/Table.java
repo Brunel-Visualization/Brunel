@@ -38,7 +38,7 @@ class Table extends D3Diagram {
     private final Field[] fields;               // The fields we are showing
 
     public Table(ElementStructure structure, Dataset data, ScriptWriter out) {
-        super(structure, data, out);
+        super(structure, data);
         fields = data.fieldArray(vis.positionFields());
         padding = ModelUtil.getPadding(vis, StyleTarget.makeElementTarget(null), 2);
         padding.top += 15;       // For the titles
@@ -62,7 +62,7 @@ class Table extends D3Diagram {
         return fraction;
     }
 
-    public void writeDataStructures() {
+    public void writeDataStructures(ScriptWriter out) {
         out.onNewLine().comment("Define columns for the table");
         out.add("var L = " + padding.left + ", W = geom.inner_width - " + padding.horizontal()).endStatement();
         out.add("var columns = [").onNewLine().indentMore();
@@ -84,7 +84,7 @@ class Table extends D3Diagram {
         return ElementDetails.makeForDiagram(structure, ElementRepresentation.rect, "rect", "data._rows");
     }
 
-    public void writeDiagramUpdate(ElementDetails details) {
+    public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
         out.addChained("attr('x', L).attr('width', W)")
                 .addChained("attr('y', function(d,i) { return " + padding.top + " + " + fontSize + " * i }).attr('height', " + fontSize + ")");
 		ElementBuilder.writeElementAesthetics(details, true, vis, out);

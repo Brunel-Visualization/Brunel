@@ -28,17 +28,17 @@ import org.brunel.data.Dataset;
 class Bubble extends D3Diagram {
 
 	public Bubble(ElementStructure structure, Dataset data, ScriptWriter out) {
-		super(structure, data, out);
+		super(structure, data);
 	}
 
-	public void defineCoordinateFunctions(ElementDetails details) {
+	public void defineCoordinateFunctions(ElementDetails details, ScriptWriter out) {
 		details.overallSize = GeomAttribute.makeConstant("");                                // ensure it gets replaced
-		defineXYR("scale_x(d.x)", "scale_y(d.y)", "scale_x(d.r) - scale_x(0)", details);
+		defineXYR("scale_x(d.x)", "scale_y(d.y)", "scale_x(d.r) - scale_x(0)", details, out);
 	}
 
-	public void writeDataStructures() {
+	public void writeDataStructures(ScriptWriter out) {
 		out.comment("Define bubble (hierarchy) data structures");
-		makeHierarchicalTree(false);
+		makeHierarchicalTree(false, out);
 		out.add("var pack = d3.pack().size([geom.inner_width, geom.inner_height])").endStatement();
 	}
 
@@ -46,7 +46,7 @@ class Bubble extends D3Diagram {
 		return ElementDetails.makeForDiagram(structure, ElementRepresentation.largeCircle, "point", "pack(tree).descendants()");
 	}
 
-	public void writeDiagramEnter(ElementDetails details) {
+	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
 		// We place everything at its parent when it enters the system
 		out.addChained("filter(function(d) { return d.parent })")
 				.addChained("attr('x', function(d) { return scale_x(d.parent.x) })")
@@ -62,8 +62,8 @@ class Bubble extends D3Diagram {
 		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
 	}
 
-	public void writeDiagramUpdate(ElementDetails details) {
-		writeHierarchicalClass();
+	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
+		writeHierarchicalClass(out);
 		out.addChained("filter(function(d) { return d.depth })");
 
 		// Classes defined for CSS

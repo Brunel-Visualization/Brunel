@@ -16,7 +16,6 @@
 
 package org.brunel.build.info;
 
-import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.util.ModelUtil;
@@ -82,13 +81,13 @@ public class ElementStructure {
 		return chart.diagram == null && vis.fX.size() > 1;
 	}
 
-	// returns true of we depend on another element
+	// Returns true of we depend on another element
 	public boolean isDependent() {
 		return getDependencyBase() != null;
 	}
 
-	// rReturns the element we depend on
-	public ElementStructure getDependencyBase() {
+	// Returns the element we depend on
+	private ElementStructure getDependencyBase() {
 		for (Dependency dependency : dependencies) {
 			if (dependency.dependent == this) return dependency.base;
 		}

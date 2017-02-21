@@ -208,7 +208,6 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         for (int i = 0; i < items.length; i++) {
             elements[i] = items[i].getSingle().makeCanonical();
             data[i] = new DataBuilder(elements[i], this).build();
-
         }
 
         ChartStructure structure = new ChartStructure(chartIndex, elements, data, datasets, outer, innerChartIndex, options.visIdentifier);

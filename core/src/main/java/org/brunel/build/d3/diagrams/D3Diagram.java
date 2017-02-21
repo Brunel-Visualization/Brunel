@@ -55,7 +55,7 @@ public abstract class D3Diagram {
 		if (vis.tDiagram == Diagram.treemap) return new Treemap(structure, data, out);
 		if (vis.tDiagram == Diagram.network) return new Network(structure, data, out);
 		if (isMapLabels(vis)) return new GeoMapLabels(structure, data, out);
-		if (vis.tDiagram == Diagram.map)  return new GeoMap(structure, data, structure.geo, out);
+		if (vis.tDiagram == Diagram.map) return new GeoMap(structure, data, structure.geo, out);
 		throw new IllegalStateException("Unknown diagram: " + vis.tDiagram);
 	}
 
@@ -64,29 +64,25 @@ public abstract class D3Diagram {
 		return vis.tDiagram == Diagram.map && vis.tDiagramParameters.length == 1 && vis.tDiagramParameters[0].asString().equals("labels");
 	}
 
-	final ScriptWriter out;
 	final Param size;
 	final Element element;
 	final VisSingle vis;
-	final D3LabelBuilder labelBuilder;
 	final D3Interaction interaction;
 	final String[] position;
 	final ElementStructure structure;
 	private boolean isHierarchy;
 
-	D3Diagram(ElementStructure structure, Dataset data, ScriptWriter out) {
+	D3Diagram(ElementStructure structure, Dataset data) {
 		this.structure = structure;
 		this.vis = structure.vis;
-		this.out = out;
 		this.size = vis.fSize.isEmpty() ? null : vis.fSize.get(0);
 		this.position = vis.positionFields();
 		this.element = vis.tElement;
 		this.interaction = structure.chart.interaction;
-		this.labelBuilder = new D3LabelBuilder(vis, out, data);
 
 	}
 
-	public void defineCoordinateFunctions(ElementDetails details) {
+	public void defineCoordinateFunctions(ElementDetails details, ScriptWriter out) {
 		// By default, do nothing
 	}
 
@@ -104,8 +100,9 @@ public abstract class D3Diagram {
 	 * Any initialization needed at the start of the build function
 	 *
 	 * @return
+	 * @param out
 	 */
-	public abstract void writeDataStructures();
+	public abstract void writeDataStructures(ScriptWriter out);
 
 	/**
 	 * Define the details of the the element for future use
@@ -124,34 +121,35 @@ public abstract class D3Diagram {
 		return false;
 	}
 
-	public void preBuildDefinitions() {
+	public void preBuildDefinitions(ScriptWriter out) {
 		// By default, do nothing
 	}
 
-	public void writeBuildCommands() {
+	public void writeBuildCommands(ScriptWriter out) {
 		// By default, do nothing
 	}
 
-	public abstract void writeDiagramUpdate(ElementDetails details);
+	public abstract void writeDiagramUpdate(ElementDetails details, ScriptWriter out);
 
 	/**
 	 * This is called when
 	 *
 	 * @param details
+	 * @param out
 	 */
-	public void writeDiagramEnter(ElementDetails details) {
+	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
 		// By default, nothing is needed
 	}
 
 	public abstract void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder);
 
-	public void writePerChartDefinitions() {
+	public void writePerChartDefinitions(ScriptWriter out) {
 		if (vis.tDiagram != null && vis.tDiagram.isHierarchical) {
 			out.add("var tree, expandState = [], collapseState = {};").at(50).comment("collapse state maps node IDs to true/false");
 		}
 	}
 
-	void makeHierarchicalTree(boolean definedHierarchy) {
+	void makeHierarchicalTree(boolean definedHierarchy, ScriptWriter out) {
 		Integer prune = findPruneParameter(vis.tDiagramParameters);
 		String pruneValue;
 		if (prune == null)
@@ -174,7 +172,7 @@ public abstract class D3Diagram {
 			// Positions have been defined using fields, so we create a hierarchy by treating them as categories
 			// and nesting categories of one field within the field at the next level up.
 			String fieldsList = positionFields.length == 0 ? "" : ", " + quoted(positionFields);
-			defineOrDeclareHierarchy(definedHierarchy);
+			defineOrDeclareHierarchy(definedHierarchy, out);
 			out.add("graph = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, "
 					+ sizeParam + fieldsList + ")")
 					.endStatement();
@@ -190,7 +188,7 @@ public abstract class D3Diagram {
 			String edge1Field = Data.quote(edges.vis.fKeys.get(0).asField());
 			String edge2Field = Data.quote(edges.vis.fKeys.get(1).asField());
 
-			defineOrDeclareHierarchy(definedHierarchy);
+			defineOrDeclareHierarchy(definedHierarchy, out);
 			out.add("graph = BrunelData.diagram_Hierarchical.makeByEdges(processed, "
 					+ nodeIDField + ", " + sizeParam + ", elements[" + edges.index + "].data(), " +
 					edge1Field + ", " + edge2Field + ")")
@@ -221,7 +219,7 @@ public abstract class D3Diagram {
 		isHierarchy = true;
 	}
 
-	private void defineOrDeclareHierarchy(boolean definedHierarchy) {
+	private void defineOrDeclareHierarchy(boolean definedHierarchy, ScriptWriter out) {
 		out.add("var first = (!tree)");
 		if (definedHierarchy) {
 			// Already defined so set the value on a new line
@@ -248,7 +246,7 @@ public abstract class D3Diagram {
 	}
 
 	// Define the class based on hierarchy
-	protected void writeHierarchicalClass() {
+	protected void writeHierarchicalClass(ScriptWriter out) {
 		out.addChained("attr('class', function(d) { return (d.collapsed ? 'collapsed ' : '') "
 				+ "+ (d.data.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 	}
@@ -261,7 +259,7 @@ public abstract class D3Diagram {
 	 * @param r       the radius
 	 * @param details override details in here
 	 */
-	protected void defineXYR(String x, String y, String r, ElementDetails details) {
+	protected void defineXYR(String x, String y, String r, ElementDetails details, ScriptWriter out) {
 		out.onNewLine().comment("Define Coordinate functions");
 
 		// We will substitute in our radius for the default. This is a hack depending on the name of the geom attribute

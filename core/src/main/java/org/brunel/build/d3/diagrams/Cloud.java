@@ -27,10 +27,10 @@ import org.brunel.data.Dataset;
 class Cloud extends D3Diagram {
 
     public Cloud(ElementStructure vis, Dataset data, ScriptWriter out) {
-        super(vis, data, out);
+        super(vis, data);
     }
 
-    public void writeDataStructures() {
+    public void writeDataStructures(ScriptWriter out) {
         out.comment("Build the cloud layout");
         out.add("var cloud = BrunelD3.cloudLayout(processed, [geom.inner_width, geom.inner_height], zoomNode)").endStatement();
         out.add("function keyFunction(d) { return d.key }").endStatement();
@@ -40,12 +40,12 @@ class Cloud extends D3Diagram {
         return ElementDetails.makeForDiagram(structure, ElementRepresentation.text, "text", "data._rows");
     }
 
-    public void writeDiagramUpdate(ElementDetails details) {
+    public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
         out.addChained("each(cloud.prepare).call(cloud.build)");
         ElementBuilder.writeElementAesthetics(details, true, vis, out);
     }
 
-    public void writeDiagramEnter(ElementDetails details) {
+    public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
         // The cloud needs to set all this stuff up front
         out.addChained("style('text-anchor', 'middle').classed('label', true)")
                 .addChained("text(labeling.content)");

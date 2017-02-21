@@ -33,14 +33,13 @@ import java.util.Map;
 import static org.brunel.model.VisTypes.Interaction.call;
 
 /**
- * sc
  * Handles adding interactivity to charts
  */
 public class D3Interaction {
 
 	private static final boolean[] ZOOM_ALL = new boolean[]{true, true};
 	private static final boolean[] ZOOM_NONE = new boolean[]{false, false};
-	public static final String DEFAULT_SNAP_DISTANCE = "geom.inner_radius/4";
+	private static final String DEFAULT_SNAP_DISTANCE = "geom.inner_radius/4";
 
 	private final ChartStructure structure;     // Chart Structure
 	private final boolean canZoomX, canZoomY;   // for coordinate zoom, which axes we can zoom

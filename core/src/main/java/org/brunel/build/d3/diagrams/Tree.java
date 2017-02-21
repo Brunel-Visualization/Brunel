@@ -38,10 +38,11 @@ class Tree extends D3Diagram {
 	private final boolean usesSize;                                 // True is size is used
 
 	public Tree(ElementStructure structure, Dataset data, ScriptWriter out) {
-		super(structure, data, out);
+		super(structure, data);
 		if (vis.coords == Coordinates.polar) method = Method.polar;
 		else method = Method.leftRight;
-		labelSize = labelBuilder.estimateLabelLength() * 6;
+
+		labelSize = D3LabelBuilder.estimateLabelLength(structure.vis.itemsLabel, data) * 6;
 		usesSize = !vis.fSize.isEmpty();
 
 		StyleTarget target = StyleTarget.makeElementTarget("point", "element");
@@ -49,15 +50,14 @@ class Tree extends D3Diagram {
 		pad = size == null ? 10 : (int) size.value(10) / 2 + 3;
 	}
 
-	public void writePerChartDefinitions() {
-		super.writePerChartDefinitions();
+	public void writePerChartDefinitions(ScriptWriter out) {
+		super.writePerChartDefinitions(out);
 		out.add("var graph;").at(50).comment("The tree with links");
 	}
 
-
-	public void writeDataStructures() {
+	public void writeDataStructures(ScriptWriter out) {
 		out.comment("Define tree (hierarchy) data structures");
-		makeHierarchicalTree(true);
+		makeHierarchicalTree(true, out);
 		out.add("var treeLayout = d3.tree()");
 
 		if (method == Method.polar) {
@@ -94,7 +94,7 @@ class Tree extends D3Diagram {
 		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
 	}
 
-	public void defineCoordinateFunctions(ElementDetails details) {
+	public void defineCoordinateFunctions(ElementDetails details, ScriptWriter out) {
 		String cx, cy;            // Functions defining the locations of node centers
 		if (method == Method.leftRight) {
 			cx = "scale_x(d.y)";
@@ -109,14 +109,13 @@ class Tree extends D3Diagram {
 
 		GeomAttribute rr = details.overallSize.halved();
 
-		defineXYR(cx, cy, "d.data.radius = " + rr.definition(), details);
+		defineXYR(cx, cy, "d.data.radius = " + rr.definition(), details, out);
 	}
 
-	public void writeDiagramUpdate(ElementDetails details) {
-		writeHierarchicalClass();
+	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
+		writeHierarchicalClass(out);
 		ElementBuilder.definePointLikeMark(details, structure, out);
 		ElementBuilder.writeElementAesthetics(details, true, vis, out);
-
 
 		// If we have edges defined as an element, we use those, otherwise add the following
 		if (structure.findDependentEdges() == null) {
@@ -129,6 +128,7 @@ class Tree extends D3Diagram {
 			DependentEdge.write(true, structure.chart.coordinates.isPolar(), out, "edgeGroup");
 			ElementBuilder.writeRemovalOnExit(out, "edgeGroup");
 
+			D3LabelBuilder labelBuilder = new D3LabelBuilder(structure.vis, out, structure.data);
 			labelBuilder.addTreeInternalLabelsOutsideNode(
 					method == Method.leftRight || !usesSize ? "bottom" : "center"
 			);

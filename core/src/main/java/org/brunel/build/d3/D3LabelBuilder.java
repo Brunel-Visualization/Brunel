@@ -162,9 +162,9 @@ public class D3LabelBuilder {
 
 	}
 
-	public int estimateLabelLength() {
+	public static int estimateLabelLength(List<Param> itemsLabel, Dataset data) {
 		int size = 0;
-		for (Param p : vis.itemsLabel) {
+		for (Param p : itemsLabel) {
 			if (p.isField()) {
 				Field f = data.field(p.asField());
 				if (f.isDate()) size += 8;
@@ -178,7 +178,7 @@ public class D3LabelBuilder {
 		return size;
 	}
 
-	private int maxLength(Object[] categories) {
+	private static int maxLength(Object[] categories) {
 		int max = 0;
 		for (Object o : categories) max = Math.max(max, o.toString().length());
 		return max;
