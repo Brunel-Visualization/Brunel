@@ -18,7 +18,6 @@ package org.brunel.build.d3;
 
 import org.brunel.action.Param;
 import org.brunel.build.d3.element.D3ElementBuilder;
-import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 
@@ -62,8 +61,8 @@ public class GuideBuilder extends D3ElementBuilder {
 
         int index = 0;
 
-        ElementDetails details = makeDetails();         // Create the details of what the element should be
-        setGeometry(details);                           // And the coordinate definitions
+        makeDetails();         // Create the details of what the element should be
+        setGeometry();                           // And the coordinate definitions
 
         for (Param p : guides) {
             index++;
@@ -79,8 +78,8 @@ public class GuideBuilder extends D3ElementBuilder {
                     .endStatement();
 
             // define the labeling structure to be used later
-            defineLabelSettings(details);
-            defineLabeling(details);
+            defineLabelSettings(structure.details);
+            defineLabeling(structure.details);
 
             out.add("selection = main.selectAll('.element.guide" + index + "').data(guideData)").endStatement();
 

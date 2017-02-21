@@ -31,13 +31,14 @@ class Cloud extends D3Diagram {
         super(vis, data, interaction, out);
     }
 
-    public ElementDetails initializeDiagram(String symbol) {
+    public void writeDataStructures() {
         out.comment("Build the cloud layout");
         out.add("var cloud = BrunelD3.cloudLayout(processed, [geom.inner_width, geom.inner_height], zoomNode)").endStatement();
         out.add("function keyFunction(d) { return d.key }").endStatement();
-        // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.text, "text", "data._rows");
+    }
 
+    public ElementDetails makeDetails(String commonSymbol) {
+        return ElementDetails.makeForDiagram(vis, ElementRepresentation.text, "text", "data._rows");
     }
 
     public void writeDiagramUpdate(ElementDetails details) {

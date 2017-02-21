@@ -86,10 +86,12 @@ public class GeoMap extends D3Diagram {
             throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
     }
 
-    public ElementDetails initializeDiagram(String symbol) {
+    public void writeDataStructures() {
         out.indentLess().comment("Read in the feature data and call build again when done");
         writeFeatureHookup(mapping, GeoInformation.getIDField(vis));
+    }
 
+    public ElementDetails makeDetails(String commonSymbol) {
         if (vis.tElement == point || vis.tElement == Element.text) {
             return ElementDetails.makeForCoordinates(vis, ModelUtil.getElementSymbol(vis));
         } else {

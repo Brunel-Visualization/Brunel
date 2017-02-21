@@ -63,7 +63,7 @@ class Table extends D3Diagram {
         return fraction;
     }
 
-    public ElementDetails initializeDiagram(String symbol) {
+    public void writeDataStructures() {
         out.onNewLine().comment("Define columns for the table");
         out.add("var L = " + padding.left + ", W = geom.inner_width - " + padding.horizontal()).endStatement();
         out.add("var columns = [").onNewLine().indentMore();
@@ -78,10 +78,12 @@ class Table extends D3Diagram {
             pos += fraction[i];
         }
         out.indentLess().add("]").endStatement();
-        return ElementDetails.makeForDiagram(vis, ElementRepresentation.rect, "rect", "data._rows");
 
     }
 
+    public ElementDetails makeDetails(String commonSymbol) {
+        return ElementDetails.makeForDiagram(vis, ElementRepresentation.rect, "rect", "data._rows");
+    }
 
     public void writeDiagramUpdate(ElementDetails details) {
         out.addChained("attr('x', L).attr('width', W)")

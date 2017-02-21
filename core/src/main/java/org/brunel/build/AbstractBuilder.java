@@ -184,11 +184,12 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
     private void buildElement(ElementStructure structure) {
         try {
             // Note that controls need the ORIGINAL dataset; the one passed in has been transformed
-        	
+
         	//The index of the dataset containing the field to filter
         	int datasetIndex = structure.chart.getBaseDatasetIndex(structure.vis.getDataset());
-        	
+
             controls.buildControls(structure.vis, structure.vis.getDataset(), datasetIndex);
+
             defineElement(structure);
             if (structure.vis.styles != null) {
                 StyleSheet styles = structure.vis.styles.replaceClass("currentElement", "element" + structure.elementID());
@@ -211,6 +212,7 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
 
         ChartStructure structure = new ChartStructure(chartIndex, elements, data, datasets, outer, innerChartIndex, options.visIdentifier);
         structure.accessible = options.accessibleContent;
+
         defineChart(structure, loc);
         for (ElementStructure e : structure.elementStructure) buildElement(e);
         endChart(structure);

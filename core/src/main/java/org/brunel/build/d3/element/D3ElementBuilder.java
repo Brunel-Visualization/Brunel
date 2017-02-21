@@ -63,12 +63,10 @@ public class D3ElementBuilder {
 		this.diagram = D3Diagram.make(structure, interaction, out);
 	}
 
-	public void generate(int elementIndex) {
-		out.add("element = elements[" + elementIndex + "]").endStatement();
-
-		ElementDetails details = makeDetails();         // Create the details of what the element should be
-		setGeometry(details);                           // And the coordinate definitions
-
+	public void generate() {
+		out.add("element = elements[" + structure.index + "]").endStatement();
+		ElementDetails details = structure.details;
+		setGeometry();                           			// And the coordinate definitions
 		defineAllElementFeatures(details);                // Features for the entire element -- paths, etc.
 		defineLabelSettings(details);                    // Defines the 'labeling' settings object
 		defineInitialState(details);                    // Define function to initialize element
@@ -95,7 +93,7 @@ public class D3ElementBuilder {
 	}
 
 	private void defineAllElementFeatures(ElementDetails details) {
-		boolean needsCoordinateFunctions = diagram == null              	// All non-diagrams need coordinates
+		boolean needsCoordinateFunctions = diagram == null                // All non-diagrams need coordinates
 				|| vis.tElement == Element.point && vis.tDiagram == map;    // Points on maps need coordinates
 
 		if (needsCoordinateFunctions) {
@@ -238,17 +236,19 @@ public class D3ElementBuilder {
 		if (diagram != null) diagram.writePerChartDefinitions();
 	}
 
-	protected ElementDetails makeDetails() {
+	public void makeDetails() {
 		// When we create diagrams this has the side effect of writing the data calls needed
 		if (diagram == null) {
-			return ElementDetails.makeForCoordinates(vis, getCommonSymbol());
+			structure.details = ElementDetails.makeForCoordinates(vis, getCommonSymbol());
 		} else {
 			out.onNewLine().comment("Data structures for a", vis.tDiagram, "diagram");
-			return diagram.initializeDiagram(getCommonSymbol());
+			structure.details = diagram.makeDetails(getCommonSymbol());
+			diagram.writeDataStructures();
 		}
 	}
 
-	protected void setGeometry(ElementDetails e) {
+	protected void setGeometry() {
+		ElementDetails e = structure.details;
 
 		Field[] x = structure.chart.coordinates.getX(vis);
 		Field[] y = structure.chart.coordinates.getY(vis);
@@ -378,7 +378,7 @@ public class D3ElementBuilder {
 			defineText(details, vis);
 		else if (details.representation == symbol) {
 			defineSymbol(details, structure, out);
-		}else if (details.representation == ElementRepresentation.pointLikeCircle
+		} else if (details.representation == ElementRepresentation.pointLikeCircle
 				|| details.representation == ElementRepresentation.spaceFillingCircle
 				|| details.representation == ElementRepresentation.largeCircle)
 			defineCircle(details, out);

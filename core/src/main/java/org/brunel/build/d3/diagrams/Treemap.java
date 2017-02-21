@@ -31,7 +31,7 @@ class Treemap extends D3Diagram {
 		super(structure, data, interaction, out);
 	}
 
-	public ElementDetails initializeDiagram(String symbol) {
+	public void writeDataStructures() {
 		out.comment("Define treemap (hierarchy) data structures");
 		makeHierarchicalTree(false);
 
@@ -41,7 +41,9 @@ class Treemap extends D3Diagram {
 				.addChained("padding(function(d) { return d.depth < 3 ? 2*d.depth : 0} )")
 				.addChained("paddingTop(function(d) { return d.depth ==1 ? 15 : (d.depth == 2) ? 12 : 0})")
 				.endStatement();
+	}
 
+	public ElementDetails makeDetails(String commonSymbol) {
 		return ElementDetails.makeForDiagram(vis, ElementRepresentation.rect, "polygon", "treemap(tree).descendants()");
 	}
 

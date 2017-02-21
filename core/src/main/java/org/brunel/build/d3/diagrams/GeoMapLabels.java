@@ -84,14 +84,16 @@ public class GeoMapLabels extends D3Diagram {
 		return maxPoints < all.size() ? all.subList(0, maxPoints) : all;
 	}
 
-	public ElementDetails initializeDiagram(String symbol) {
+	public void writeDataStructures() {
 		SymbolHandler symbols = structure.chart.symbols;                        // Handler for all symbols
 
 		// Get the IDs of the symbols we want to use and define a function to use them
 		String[] ids = symbols.getSymbolIDs(structure, new String[]{"star", "square", "circle"});
 		out.add("function mapLabelSymbol(c) { return !c ? " + Data.quote(ids[0]) +
 				": (c==1 ? " + Data.quote(ids[1]) + " : " + Data.quote(ids[2]) + ")}");
+	}
 
+	public ElementDetails makeDetails(String commonSymbol) {
 		return ElementDetails.makeForDiagram(vis, ElementRepresentation.symbol, "point", "geo_labels");
 	}
 

@@ -76,12 +76,14 @@ class Network extends D3Diagram {
 		out.add("var graph, simulation;").at(50).comment("Node/edge graph and force simulation");
 	}
 
-	public ElementDetails initializeDiagram(String symbol) {
+	public void writeDataStructures() {
 		String edgeDataset = "elements[" + edges.index + "].data()";
 		String nodeField = quoted(nodeID), from = quoted(fromFieldID), to = quoted(toFieldID);
 		out.add("graph = graph || BrunelData.diagram_Graph.make(processed,", nodeField, ",",
 				edgeDataset, ",", from, ",", to, ")").endStatement();
+	}
 
+	public ElementDetails makeDetails(String commonSymbol) {
 		return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "graph.nodes");
 	}
 

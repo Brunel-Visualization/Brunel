@@ -37,12 +37,13 @@ class Bubble extends D3Diagram {
 		defineXYR("scale_x(d.x)", "scale_y(d.y)", "scale_x(d.r) - scale_x(0)", details);
 	}
 
-	public ElementDetails initializeDiagram(String symbol) {
-
+	public void writeDataStructures() {
 		out.comment("Define bubble (hierarchy) data structures");
 		makeHierarchicalTree(false);
 		out.add("var pack = d3.pack().size([geom.inner_width, geom.inner_height])").endStatement();
+	}
 
+	public ElementDetails makeDetails(String commonSymbol) {
 		return ElementDetails.makeForDiagram(vis, ElementRepresentation.largeCircle, "point", "pack(tree).descendants()");
 	}
 

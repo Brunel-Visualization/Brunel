@@ -55,7 +55,8 @@ class Tree extends D3Diagram {
 		out.add("var graph;").at(50).comment("The tree with links");
 	}
 
-	public ElementDetails initializeDiagram(String symbol) {
+
+	public void writeDataStructures() {
 		out.comment("Define tree (hierarchy) data structures");
 		makeHierarchicalTree(true);
 		out.add("var treeLayout = d3.tree()");
@@ -78,7 +79,9 @@ class Tree extends D3Diagram {
 
 		out.add("BrunelD3.copyTreeLayoutInfo(treeNodes, graph, " + (method == Method.polar ? "0" : pad) + ")")
 				.endStatement();
+	}
 
+	public ElementDetails makeDetails(String commonSymbol) {
 		ElementRepresentation rep;
 		if (method == Method.leftRight)
 			rep = ElementRepresentation.pointLikeCircle;
@@ -87,11 +90,6 @@ class Tree extends D3Diagram {
 
 		return ElementDetails.makeForDiagram(vis, rep, "point", "treeNodes");
 	}
-
-//	public void writeDiagramEnter(ElementDetails details) {
-//		out.addChained("filter(function(d) { return d.parent })");       // Only if it has a parent
-//		writeNodePlacement(structure.details, "d.parent");              // place it at parent position
-//	}
 
 	public void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {
 		D3ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);

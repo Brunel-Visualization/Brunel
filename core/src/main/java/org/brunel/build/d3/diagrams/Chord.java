@@ -38,7 +38,7 @@ class Chord extends D3Diagram {
         return "function(d) { return d.source.index + '|' + d.target.index }";
     }
 
-    public ElementDetails initializeDiagram(String symbol) {
+    public void writeDataStructures() {
         String f1 = vis.positionFields()[0];
         String f2 = position[1];
 
@@ -59,7 +59,9 @@ class Chord extends D3Diagram {
 
         // Scaled size and offsets
         out.add("var R = scale_x(geom.inner_radius)-scale_x(0), svgTrans = 'translate(' + scale_x(0) + ',' + scale_y(0) + ')'").endStatement();
+    }
 
+    public ElementDetails makeDetails(String commonSymbol) {
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.polygon, "edge", "chords.chords");
     }
 

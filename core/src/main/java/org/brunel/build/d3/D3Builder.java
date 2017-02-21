@@ -225,11 +225,15 @@ public class D3Builder extends AbstractBuilder {
 
 		elementBuilder.preBuildDefinitions();
 
+
+
 		// Main method to make a vis
 		out.titleComment("Build element from data");
 
 		out.add("function build(transitionMillis) {").ln().indentMore();
-		elementBuilder.generate(structure.index);
+		 elementBuilder.makeDetails();
+
+		elementBuilder.generate();
 		interaction.addHandlers(structure);
 
 		// If a chart is nested within us, build its facets

@@ -58,7 +58,11 @@ class DependentEdge extends D3Diagram {
 		if (arrow) out.addChained("attr('marker-end', 'url(#arrow)')");
 	}
 
-	public ElementDetails initializeDiagram(String symbol) {
+	public void writeDataStructures() {
+		// Nothing to be done
+	}
+
+	public ElementDetails makeDetails(String commonSymbol) {
 		return ElementDetails.makeForDiagram(vis, ElementRepresentation.curvedPath, "edge", "graph.links");
 	}
 

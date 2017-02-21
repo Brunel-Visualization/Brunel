@@ -77,24 +77,25 @@ class ParallelCoordinates extends D3Diagram {
         return axes;
     }
 
-    public ElementDetails initializeDiagram(String symbol) {
+    public void writeDataStructures() {
+		out.add("var axes = interior.selectAll('g.parallel.axis').data(parallel)").endStatement();
+		out.add("var builtAxes = axes.enter().append('g')")
+				.addChained("attr('class', function(d,i) { return 'parallel axis dim' + (i+1) })")
+				.addChained("attr('transform', function(d,i) { return 'translate(' + scale_x(i) + ',0)' })")
+				.addChained("each(function(d) {").indentMore().indentMore()
+				.add("d3.select(this).append('text').attr('class', 'axis title').text(d.label)")
+				.addChained("attr('x', 0).attr('y', geom.inner_height).attr('dy', '-0.3em').style('text-anchor', 'middle')")
+				.indentLess().indentLess().add("})").endStatement();
 
-        out.add("var axes = interior.selectAll('g.parallel.axis').data(parallel)").endStatement();
-        out.add("var builtAxes = axes.enter().append('g')")
-                .addChained("attr('class', function(d,i) { return 'parallel axis dim' + (i+1) })")
-                .addChained("attr('transform', function(d,i) { return 'translate(' + scale_x(i) + ',0)' })")
-                .addChained("each(function(d) {").indentMore().indentMore()
-                .add("d3.select(this).append('text').attr('class', 'axis title').text(d.label)")
-                .addChained("attr('x', 0).attr('y', geom.inner_height).attr('dy', '-0.3em').style('text-anchor', 'middle')")
-                .indentLess().indentLess().add("})").endStatement();
 
+		// Write the calls to display the axes
 
-        // Write the calls to display the axes
+		out.add("BrunelD3.transition(axes.merge(builtAxes), transitionMillis)")
+				.addChained("each(function(d,i) { d3.select(this).call(d.axis.scale(d.scale)); })")
+				.endStatement();
+    }
 
-        out.add("BrunelD3.transition(axes.merge(builtAxes), transitionMillis)")
-                .addChained("each(function(d,i) { d3.select(this).call(d.axis.scale(d.scale)); })")
-                .endStatement();
-
+    public ElementDetails makeDetails(String commonSymbol) {
         return ElementDetails.makeForDiagram(vis, ElementRepresentation.generalPath, "path", "data._rows");
     }
 

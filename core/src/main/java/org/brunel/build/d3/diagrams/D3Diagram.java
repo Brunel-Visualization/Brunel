@@ -105,6 +105,19 @@ public abstract class D3Diagram {
 		return "'" + (isHierarchy ? classes + " hierarchy" : classes) + "'";
 	}
 
+	/**
+	 * Any initialization needed at the start of the build function
+	 * @return
+	 */
+	public abstract void writeDataStructures();
+
+	/**
+	 * Define the details of the the element for future use
+	 * @param commonSymbol symbol as defined in the "style"
+	 * @return details structure
+	 */
+	public abstract ElementDetails makeDetails(String commonSymbol);
+
 	public boolean needsDiagramExtras() {
 		// By default, no extras needed
 		return false;
@@ -123,7 +136,9 @@ public abstract class D3Diagram {
 		// By default, do nothing
 	}
 
-	public abstract ElementDetails initializeDiagram(String symbol);
+	public final ElementDetails initializeDiagram(String symbol) {
+		return null;
+	}
 
 	public abstract void writeDiagramUpdate(ElementDetails details);
 
