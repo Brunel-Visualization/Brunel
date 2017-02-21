@@ -16,7 +16,7 @@
 
 package org.brunel.build.d3.element;
 
-import org.brunel.build.info.ChartCoordinates;
+import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.data.Data;
@@ -42,17 +42,18 @@ public class ElementDetails {
 		if (structure.geo != null) return null;
 
 		// Some point elements are shown as rectangles
-		if (structure.vis.tElement == VisTypes.Element.point && showAsRectangle(structure.chart.coordinates))
+		if (structure.vis.tElement == VisTypes.Element.point && showAsRectangle(structure.chart))
 			return "rect";
 
 		// No knowledge
 		return null;
 	}
 
-	private static boolean showAsRectangle(ChartCoordinates coordinates) {
+	private static boolean showAsRectangle(ChartStructure chart) {
+		if (chart == null) return false;							// Happens in test code only
 		// Any numeric means we are not categorical
-		return !anyNumeric(coordinates.allXFields)
-				&& !anyNumeric(coordinates.allYFields);
+		return !anyNumeric(chart.coordinates.allXFields)
+				&& !anyNumeric(chart.coordinates.allYFields);
 
 	}
 

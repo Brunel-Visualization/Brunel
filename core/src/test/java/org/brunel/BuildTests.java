@@ -17,7 +17,7 @@
 package org.brunel;
 
 import org.brunel.action.Action;
-import org.brunel.build.Builder;
+import org.brunel.build.AbstractBuilder;
 import org.brunel.build.d3.D3Builder;
 import org.brunel.build.util.DataCache;
 import org.brunel.data.Dataset;
@@ -34,7 +34,7 @@ import static junit.framework.TestCase.assertTrue;
 public class BuildTests {
 
     private Dataset data;
-    private Builder builder;
+    private AbstractBuilder builder;
 
     @Before
     public void setUp() throws Exception {

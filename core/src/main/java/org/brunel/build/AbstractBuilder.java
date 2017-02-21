@@ -54,7 +54,7 @@ import java.util.Map;
  *
  * A builder may be called multiple times; every call to 'build' will reset the state and start from new
  */
-public abstract class AbstractBuilder implements Builder, DataModifier {
+public abstract class AbstractBuilder implements DataModifier {
 
     protected final BuilderOptions options;
     protected Controls controls;                    // Contains the controls for the current chart
@@ -69,13 +69,12 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
     }
 
     /**
-     * This is the entry point into building. When called, it will clear all existing build state (including control
-     * and style collections) and start the build process for the defined item
-     *
-     * @param main   what we ant to build
-     * @param width  pixel width of the rectangle into which the visualization is to be put
-     * @param height pixel height of the rectangle into which the visualization is to be put
-     */
+		 * Builds the visualization
+		 *
+		 * @param target the description of the visualization to build
+		 * @param width  pixel width of the rectangle into which the visualization is to be put
+		 * @param height pixel height of the rectangle into which the visualization is to be put
+		 */
     public final void build(VisItem main, int width, int height) {
 
         // Clear existing collections and prepare for new controls
@@ -114,6 +113,14 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         endVisSystem(main);
     }
 
+    /**
+     * Returns the main visualization artifact, in whatever format the builder created it.
+     * It is the responsibility of the owning application to cast and use it correctly.
+     *
+     * @return non-null visualization artifact
+     */
+    public abstract Object getVisualization();
+
     private void buildNestedChart(int width, int height, VisItem[] children) {
         // The following rules should be ensured by the parser
         if (children.length != 2)
@@ -134,10 +141,23 @@ public abstract class AbstractBuilder implements Builder, DataModifier {
         buildSingleChart(1, new VisItem[]{inner}, loc, outerStructure, null);
     }
 
+    /**
+		 * Returns the options used for building the visualization
+		 *
+		 * @return options used
+		 */
     public final BuilderOptions getOptions() {
         return options;
     }
 
+    /**
+		 * Some visualizations may re-define or add to the standard styles. This will be a CSS-compatible
+		 * set of style definitions. It will be suitable for placing within a HTML <code>style</code> section.
+		 * The styles will all be scoped to affect only <code>brunel</code> classes and (if required) the
+		 * correct chart within the visualization system.
+		 *
+		 * @return non-null, but possibly empty CSS styles definition
+		 */
     public String getStyleOverrides() {
         return visStyles.toString("#" + options.visIdentifier + ".brunel");
     }
