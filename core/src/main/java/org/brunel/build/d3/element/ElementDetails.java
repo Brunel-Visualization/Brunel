@@ -34,7 +34,7 @@ public class ElementDetails {
 
 	public static ElementDetails makeForCoordinates(ElementStructure structure, String symbol) {
 		Element element = structure.vis.tElement;
-		ElementRepresentation representation = ElementRepresentation.makeForCoordinateElement(element, symbol, structure);
+		ElementRepresentation representation = ElementRepresentation.makeForCoordinateElement(structure, symbol);
 		String dataSource = element.producesSingleShape ? "splits" : "data._rows";
 		boolean filled = element.filled || (!structure.vis.fSize.isEmpty() && (element == Element.line || element == Element.path));
 		return new ElementDetails(structure.vis, representation, element.name(), dataSource, filled);
