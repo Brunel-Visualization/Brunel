@@ -18,7 +18,7 @@ package org.brunel.build.d3.diagrams;
 
 import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
-import org.brunel.build.d3.element.D3ElementBuilder;
+import org.brunel.build.d3.element.ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
@@ -73,7 +73,7 @@ class Chord extends D3Diagram {
                 .addChained("attr('class', 'element " + element.name() + "')")
                 .addChained("attr('transform', svgTrans)");
 
-        D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
+		ElementBuilder.writeElementAesthetics(details, true, vis, out);
 
         // We now need to add the arcs on the outside for the groups
         out.onNewLine().ln().comment("Add in the arcs on the outside for the groups");
@@ -110,7 +110,7 @@ class Chord extends D3Diagram {
                 .indentLess().indentLess().onNewLine().add("})").endStatement();
 
         // Ensure removal on exit
-        D3ElementBuilder.writeRemovalOnExit(out, "arcGroup");
+		ElementBuilder.writeRemovalOnExit(out, "arcGroup");
     }
 
     public boolean needsDiagramExtras() {
@@ -118,6 +118,6 @@ class Chord extends D3Diagram {
     }
 
 	public void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {
-        D3ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
+		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
 	}
 }

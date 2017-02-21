@@ -19,7 +19,7 @@ package org.brunel.build.d3.diagrams;
 import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.D3Util;
-import org.brunel.build.d3.element.D3ElementBuilder;
+import org.brunel.build.d3.element.ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
@@ -88,11 +88,11 @@ class Table extends D3Diagram {
     public void writeDiagramUpdate(ElementDetails details) {
         out.addChained("attr('x', L).attr('width', W)")
                 .addChained("attr('y', function(d,i) { return " + padding.top + " + " + fontSize + " * i }).attr('height', " + fontSize + ")");
-		D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
+		ElementBuilder.writeElementAesthetics(details, true, vis, out);
 	}
 
 	public void writeLabelsAndTooltips(ElementDetails details, D3LabelBuilder labelBuilder) {
-        D3ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
+		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
 	}
 
 }

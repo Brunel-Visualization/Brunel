@@ -18,7 +18,7 @@ package org.brunel.build.d3.diagrams;
 
 import org.brunel.action.Param;
 import org.brunel.build.d3.D3Interaction;
-import org.brunel.build.d3.element.D3ElementBuilder;
+import org.brunel.build.d3.element.ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.GeomAttribute;
 import org.brunel.build.info.ElementStructure;
@@ -78,9 +78,9 @@ class Grid extends Bubble {
 		// Classes defined for CSS
 		out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 
-		D3ElementBuilder.definePointLikeMark(details, structure, out);
-		D3ElementBuilder.writeElementAesthetics(details, true, vis, out);
-		D3ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
+		ElementBuilder.definePointLikeMark(details, structure, out);
+		ElementBuilder.writeElementAesthetics(details, true, vis, out);
+		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
 		out.endStatement();
 		labelBuilder.addGridLabels();
 	}

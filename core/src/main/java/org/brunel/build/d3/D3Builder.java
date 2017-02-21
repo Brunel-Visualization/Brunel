@@ -20,7 +20,9 @@ import org.brunel.action.Param;
 import org.brunel.build.AbstractBuilder;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.d3.diagrams.D3Diagram;
-import org.brunel.build.d3.element.D3ElementBuilder;
+import org.brunel.build.d3.element.CoordinateElementBuilder;
+import org.brunel.build.d3.element.ElementBuilder;
+import org.brunel.build.d3.element.GuideElementBuilder;
 import org.brunel.build.d3.titles.ChartTitleBuilder;
 import org.brunel.build.data.DataTransformParameters;
 import org.brunel.build.info.ChartStructure;
@@ -72,7 +74,7 @@ public class D3Builder extends AbstractBuilder {
 	public int visWidth, visHeight;             // Overall vis size
 	private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
 	private D3Interaction interaction;          // Builder for interactions
-	private D3ElementBuilder[] elementBuilders; // Builder for each element
+	private ElementBuilder[] elementBuilders; // Builder for each element
 	private boolean hasMultipleCharts;          // flag to indicate multiple charts in the same vis
 
 	private D3Builder(BuilderOptions options) {
@@ -146,7 +148,7 @@ public class D3Builder extends AbstractBuilder {
 		// Now build the main groups
 		out.titleComment("Define groups for the chart parts");
 		writeMainGroups(structure);
-		for (D3ElementBuilder builder : elementBuilders) builder.writePerChartDefinitions();
+		for (ElementBuilder builder : elementBuilders) builder.writePerChartDefinitions();
 
 		title.writeContent("chart", out);
 		sub.writeContent("chart", out);
@@ -192,20 +194,20 @@ public class D3Builder extends AbstractBuilder {
 		interaction = new D3Interaction(structure, scalesBuilder, out);
 
 		ElementStructure[] structures = structure.elementStructure;
-		elementBuilders = new D3ElementBuilder[structures.length];
+		elementBuilders = new ElementBuilder[structures.length];
 		for (int i = 0; i < structures.length; i++) {
 			if (structures[i].vis.tGuides.isEmpty()) {
 				D3Diagram diagram = D3Diagram.make(structures[i], interaction, out);
-				elementBuilders[i] = new D3ElementBuilder(structures[i], out, scalesBuilder, interaction, diagram);
+				elementBuilders[i] = new CoordinateElementBuilder(structures[i], out, scalesBuilder, interaction, diagram);
 			} else
-				elementBuilders[i] = new GuideBuilder(structures[i], out, scalesBuilder, interaction);
+				elementBuilders[i] = new GuideElementBuilder(structures[i], out, scalesBuilder, interaction);
 			structures[i].details = elementBuilders[i].makeDetails();
 		}
 	}
 
 	protected void defineElement(ElementStructure structure) {
 
-		D3ElementBuilder elementBuilder = elementBuilders[structure.index];
+		ElementBuilder elementBuilder = elementBuilders[structure.index];
 
 		out.titleComment("Define element #" + structure.elementID());
 		out.add("elements[" + structure.index + "] = function() {").indentMore();
@@ -309,7 +311,7 @@ public class D3Builder extends AbstractBuilder {
 		for (int i : order)
 			out.onNewLine().add("elements[" + i + "].build(time);");
 
-		for (D3ElementBuilder builder : elementBuilders) builder.writeBuildCommands();
+		for (ElementBuilder builder : elementBuilders) builder.writeBuildCommands();
 
 		out.indentLess().onNewLine().add("}").ln();
 
@@ -438,7 +440,7 @@ public class D3Builder extends AbstractBuilder {
 		return -1;
 	}
 
-	private void addElementGroups(D3ElementBuilder builder, ElementStructure structure) {
+	private void addElementGroups(ElementBuilder builder, ElementStructure structure) {
 		String elementTransform = makeElementTransform(scalesBuilder.coords);
 		out.add("var elementGroup = interior.append('g').attr('class', 'element" + structure.elementID() + "')");
 		Accessibility.addElementInformation(structure, out);
