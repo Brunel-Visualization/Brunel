@@ -18,13 +18,14 @@ package org.brunel.build.d3.element;
 
 import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3ScaleBuilder;
+import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Field;
+import org.brunel.model.VisTypes;
 
 class CoordinateElementBuilder extends ElementBuilder {
 
-	public CoordinateElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales, D3Interaction interaction) {
+	CoordinateElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales, D3Interaction interaction) {
 		super(structure, interaction, scales, out);
 	}
 
@@ -32,20 +33,24 @@ class CoordinateElementBuilder extends ElementBuilder {
 		// None needed
 	}
 
-	public String getCommonSymbol() {
+	private String getCommonSymbol() {
+		// If we have a defined symbol, we use that
 		if (structure.styleSymbol != null) return structure.styleSymbol;
-		if (structure.chart.geo != null) return "circle";             // Geo charts default to circles
-		// We default to a rectangle if all the scales are categorical or binned, otherwise we return a point
-		boolean cat = allShowExtent(structure.chart.coordinates.allXFields) && allShowExtent(structure.chart.coordinates.allYFields);
-		return cat ? "rect" : "circle";
+
+		// We show a rectangle if we have a coordinate system which is all categorical
+		if (structure.vis.tElement == VisTypes.Element.point && hasAllCategoricalScales()) return "rect";
+
+		// No knowledge
+		return null;
 	}
 
-	private boolean allShowExtent(Field[] fields) {
-		// Categorical and numeric fields both show elements as extents on the axis
-		for (Field field : fields) {
-			if (field.isNumeric() && !field.isBinned()) return false;
-		}
-		return true;
+	private boolean hasAllCategoricalScales() {
+		// Any geo means we are not all categorical
+		if (structure.geo != null) return false;
+
+		// Otherwise we consult the coordinates to see if both X and Y are categorical
+		ChartCoordinates coordinates = structure.chart.coordinates;
+		return coordinates.xCategorical && coordinates.yCategorical;
 	}
 
 	public ElementDetails makeDetails() {
