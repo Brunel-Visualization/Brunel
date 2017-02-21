@@ -33,8 +33,9 @@ import static org.brunel.build.d3.element.ElementRepresentation.spaceFillingCirc
 public class ElementDetails {
 
 	public static ElementDetails makeForCoordinates(ElementStructure structure, String symbol) {
-		Element element = structure.vis.tElement;
 		ElementRepresentation representation = ElementRepresentation.makeForCoordinateElement(structure, symbol);
+
+		Element element = structure.vis.tElement;
 		String dataSource = element.producesSingleShape ? "splits" : "data._rows";
 		boolean filled = element.filled || (!structure.vis.fSize.isEmpty() && (element == Element.line || element == Element.path));
 		return new ElementDetails(structure.vis, representation, element.name(), dataSource, filled);
@@ -52,15 +53,20 @@ public class ElementDetails {
 	 * @param elementClass the name of the element class for CSS purposes (polygon, path, point, etc.)
 	 * @param dataSource   the javascript name of the element's data
 	 */
-	public static ElementDetails makeForDiagram(ElementStructure structure, ElementRepresentation representation, String elementClass, String dataSource) {
+	public static ElementDetails makeForDiagram(ElementStructure structure,
+												ElementRepresentation representation, String elementClass, String dataSource) {
+
+		// we override the suggested representation if we have a symbol defined
 		if (representation == spaceFillingCircle || representation == largeCircle || representation == pointLikeCircle) {
 			if (!structure.vis.fSymbol.isEmpty() || structure.styleSymbol != null)
 				representation = ElementRepresentation.symbol;
 		}
 
+		// Only these items are unfilled
 		boolean filled = representation != ElementRepresentation.segment
 				&& representation != ElementRepresentation.curvedPath
 				&& representation != ElementRepresentation.generalPath;
+
 		return new ElementDetails(structure.vis, representation, elementClass, dataSource, filled);
 	}
 
