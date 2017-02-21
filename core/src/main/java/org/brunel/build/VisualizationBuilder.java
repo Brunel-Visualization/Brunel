@@ -19,7 +19,7 @@ package org.brunel.build;
 import org.brunel.action.Param;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.data.DataBuilder;
-import org.brunel.build.data.DataTransformations;
+import org.brunel.build.data.TransformedData;
 import org.brunel.build.element.ElementBuilder;
 import org.brunel.build.info.ChartLayout;
 import org.brunel.build.info.ChartStructure;
@@ -304,11 +304,11 @@ public class VisualizationBuilder {
 	private ChartStructure buildSingleChart(int chartIndex, VisItem[] items, double[] loc, ChartStructure outer, Integer innerChartIndex) {
 
 		// Assemble the elements and data
-		Dataset[] data = new Dataset[items.length];
+		TransformedData[] data = new TransformedData[items.length];
 		VisSingle[] elements = new VisSingle[items.length];
 		for (int i = 0; i < items.length; i++) {
 			elements[i] = items[i].getSingle().makeCanonical();
-			data[i] = new DataTransformations(elements[i]).build();
+			data[i] = new TransformedData(elements[i]);
 		}
 
 		ChartStructure structure = new ChartStructure(chartIndex, elements, data, datasets, outer, innerChartIndex, options.visIdentifier);
@@ -384,7 +384,7 @@ public class VisualizationBuilder {
 		// Data transforms
 		int datasetIndex = structure.getBaseDatasetIndex();
 		DataBuilder dataBuilder = new DataBuilder(structure, out, datasetIndex);
-		dataBuilder.writeDataManipulation(createResultFields(structure));
+		dataBuilder.writeDataManipulation(structure.transforms, createResultFields(structure));
 
 		scalesBuilder.writeAestheticScales(structure);
 		scalesBuilder.writeLegends(structure.vis);

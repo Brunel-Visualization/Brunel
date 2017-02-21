@@ -18,6 +18,7 @@ package org.brunel.build.info;
 
 import org.brunel.build.InteractionDetails;
 import org.brunel.build.SymbolHandler;
+import org.brunel.build.data.TransformedData;
 import org.brunel.data.Dataset;
 import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
@@ -52,7 +53,7 @@ public class ChartStructure {
 	public final Dataset[] baseDataSets;
 	public int chartHeight, chartWidth;                     // Pixel expanse of chart (set during building)
 
-	public ChartStructure(int chartIndex, VisSingle[] elements, Dataset[] data, Dataset[] dataSets,
+	public ChartStructure(int chartIndex, VisSingle[] elements, TransformedData[] transformedData, Dataset[] dataSets,
 						  ChartStructure outer, Integer innerChartIndex, String visIdentifier) {
 		this.baseDataSets = dataSets;
 		this.chartIndex = chartIndex;
@@ -62,8 +63,8 @@ public class ChartStructure {
 		this.visIdentifier = visIdentifier;
 		this.elementStructure = new ElementStructure[elements.length];
 		this.diagram = findDiagram();
-		this.coordinates = new ChartCoordinates(elements, data, diagram);
-		this.geo = makeGeo(elements, data);
+		this.coordinates = new ChartCoordinates(elements, transformedData, diagram);
+		this.geo = makeGeo(elements, transformedData);
 
 		// Define any interactivity needed
 		this.interaction = new InteractionDetails(diagram, coordinates, elements);
@@ -71,7 +72,7 @@ public class ChartStructure {
 		// Define the elements
 		for (int i = 0; i < elements.length; i++) {
 			GeoMapping geoMapping = geo == null ? null : geo.getGeo(elements[i]);
-			elementStructure[i] = new ElementStructure(this, i, elements[i], data[i], geoMapping);
+			elementStructure[i] = new ElementStructure(this, i, elements[i], transformedData[i], geoMapping);
 		}
 
 		// Define any dependencies between the elements
@@ -142,7 +143,7 @@ public class ChartStructure {
 		return candidate;
 	}
 
-	private GeoInformation makeGeo(VisSingle[] elements, Dataset[] data) {
+	private GeoInformation makeGeo(VisSingle[] elements, TransformedData[] data) {
 		// If any element specifies a map, we make the map information for all to share
 		for (VisSingle vis : elements)
 			if (vis.tDiagram == Diagram.map)

@@ -188,20 +188,18 @@ public class DataBuilder {
 		datasetIndex = index;
 	}
 
-	public void writeDataManipulation(Map<String, Integer> requiredFields) {
+	public void writeDataManipulation(DataTransformParameters params, Map<String, Integer> requiredFields) {
 		out.onNewLine().ln().add("function makeData() {").ln().indentMore();
 
 		// Guides do not use data, just the fields around it
 		if (vis.tGuides.isEmpty()) {
-			writeDataTransforms();
+			writeDataTransforms(params);
 			writeHookup(requiredFields);
 		}
 		out.indentLess().onNewLine().add("}").ln();
 	}
 
-	private void writeDataTransforms() {
-		// The parameters are stored in the data set when it is transformed
-		DataTransformParameters params = (DataTransformParameters) data.property("parameters");
+	private void writeDataTransforms(DataTransformParameters params) {
 
 		out.add("original = datasets[" + datasetIndex + "]").endStatement();
 		out.add("if (filterRows) original = original.retainRows(filterRows)").endStatement();

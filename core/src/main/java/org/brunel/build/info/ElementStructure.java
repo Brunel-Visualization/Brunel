@@ -16,6 +16,8 @@
 
 package org.brunel.build.info;
 
+import org.brunel.build.data.DataTransformParameters;
+import org.brunel.build.data.TransformedData;
 import org.brunel.build.util.BuildUtil;
 import org.brunel.build.diagrams.D3Diagram;
 import org.brunel.build.element.ElementDetails;
@@ -39,17 +41,19 @@ public class ElementStructure {
 	public final Dataset original;
 	public final Dataset data;
 	public final GeoMapping geo;
-	public final String styleSymbol;                // This is the symbol defined in the style for the element
-	public final D3Diagram diagram;              	// This is the diagram we will use for the element (may be null)
-	public final ElementDetails details;            // Details on element appearance
+	public final String styleSymbol;                	// This is the symbol defined in the style for the element
+	public final D3Diagram diagram;              		// This is the diagram we will use for the element (may be null)
+	public final ElementDetails details;            	// Details on element appearance
+	public final DataTransformParameters transforms;	// Transform parameters
 
 	public List<Dependency> dependencies;
 
-	public ElementStructure(ChartStructure chartStructure, int elementIndex, VisSingle vis, Dataset data, GeoMapping geo) {
+	public ElementStructure(ChartStructure chartStructure, int elementIndex, VisSingle vis, TransformedData transformed, GeoMapping geo) {
 		this.chart = chartStructure;
 		this.index = elementIndex;
 		this.vis = vis;
-		this.data = data;
+		this.data = transformed.data;
+		this.transforms = transformed.params;
 		this.geo = geo;
 		this.styleSymbol = ModelUtil.getSymbolFromStyle(vis);
 		this.original = vis.getDataset();

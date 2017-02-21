@@ -38,43 +38,25 @@ import static org.brunel.model.VisTypes.Element.line;
 /**
  * A class for manipulating and building data structures
  */
-public class DataTransformations {
+public class TransformedData {
 
-	private final VisSingle vis;
+	public final DataTransformParameters params;                // Output transform parameters
+	public final Dataset data;                                    // Data which has been transformed by parameters
+
+	private final VisSingle vis;                                // Base visualization element we use
 
 	/**
 	 * Constructor
 	 *
 	 * @param vis the vis to build the data for
 	 */
-	public DataTransformations(VisSingle vis) {
+	public TransformedData(VisSingle vis) {
 		this.vis = vis;
+		this.params = makeTransformParameters();
+		this.data = applyDataTransforms(vis.getDataset());
 	}
 
-	/**
-	 * This builds the data and reports the built data to the builder
-	 *
-	 * @return built dataset
-	 */
-	public Dataset build() {
-
-		String constantsCommand = makeConstantsCommand();
-		String filterCommand = makeFilterCommands();
-		String eachCommand = makeEachCommands();
-		String binCommand = makeTransformCommands();
-		String summaryCommand = buildSummaryCommands();
-		String stackCommand = makeStackCommand();
-		String sortCommand = makeSortCommands();
-		String sortRowsCommand = makeSortRowsCommand();
-		String seriesYFields = makeSeriesCommand();
-		String setRowCountCommand = makeSetRowCountCommand();
-		String usedFields = required();
-
-		DataTransformParameters params = new DataTransformParameters(constantsCommand,
-				filterCommand, eachCommand, binCommand, summaryCommand, stackCommand, sortCommand, sortRowsCommand, seriesYFields,
-				setRowCountCommand, usedFields);
-
-		Dataset data = vis.getDataset();                                                // The data to use
+	private Dataset applyDataTransforms(Dataset data) {
 		data = data.addConstants(params.constantsCommand);                              // add constant fields
 		data = data.each(params.eachCommand);                                           // divide up fields into parts
 		data = data.filter(params.filterCommand);                                       // filter data
@@ -89,14 +71,23 @@ public class DataTransformations {
 		return data;
 	}
 
-	/**
-	 * Utility to get the built data from a Vis
-	 *
-	 * @param vis target to get the built data from
-	 * @return transformed data set
-	 */
-	public static Dataset getTransformedData(VisSingle vis) {
-		return new DataTransformations(vis.makeCanonical()).build();
+	private DataTransformParameters makeTransformParameters() {
+		String constantsCommand = makeConstantsCommand();
+		String filterCommand = makeFilterCommands();
+		String eachCommand = makeEachCommands();
+		String binCommand = makeTransformCommands();
+		String summaryCommand = buildSummaryCommands();
+		String stackCommand = makeStackCommand();
+		String sortCommand = makeSortCommands();
+		String sortRowsCommand = makeSortRowsCommand();
+		String seriesYFields = makeSeriesCommand();
+		String setRowCountCommand = makeSetRowCountCommand();
+		String usedFields = required();
+
+		return new DataTransformParameters(constantsCommand,
+				filterCommand, eachCommand, binCommand, summaryCommand,
+				stackCommand, sortCommand, sortRowsCommand, seriesYFields,
+				setRowCountCommand, usedFields);
 	}
 
 	private int getParameterIntValue(Param param, int defaultValue) {
