@@ -5,8 +5,6 @@ import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.D3ScaleBuilder;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.ScalePurpose;
-import org.brunel.build.d3.diagrams.D3Diagram;
-import org.brunel.build.d3.diagrams.GeoMap;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.Accessibility;
 import org.brunel.build.util.ModelUtil;
@@ -18,13 +16,12 @@ import org.brunel.model.VisTypes;
 import org.brunel.model.style.StyleTarget;
 
 import static org.brunel.build.d3.element.ElementRepresentation.symbol;
-import static org.brunel.model.VisTypes.Diagram.map;
 import static org.brunel.model.VisTypes.Diagram.tree;
 
 /**
  * Created by graham on 2/21/17.
  */
-public class ElementBuilder {
+public abstract class ElementBuilder {
 	private static final String BAR_SPACING = "0.9";            // Spacing between categorical bars
 
 	public static void writeRemovalOnExit(ScriptWriter out, String selection) {
@@ -180,17 +177,15 @@ public class ElementBuilder {
 	protected final D3ScaleBuilder scales;                        // Helper to build scales
 	protected final D3Interaction interaction;
 	protected final D3LabelBuilder labelBuilder;                  // Helper to build labels
-	protected final D3Diagram diagram;                            // Helper to build diagrams
 	protected final ElementStructure structure;
 
-	public ElementBuilder(ElementStructure structure, D3Interaction interaction, D3ScaleBuilder scales, ScriptWriter out,  D3Diagram diagram) {
+	public ElementBuilder(ElementStructure structure, D3Interaction interaction, D3ScaleBuilder scales, ScriptWriter out) {
 		this.structure = structure;
 		this.interaction = interaction;
 		this.scales = scales;
 		this.out = out;
 		this.vis = structure.vis;
 		this.labelBuilder = new D3LabelBuilder(vis, out, structure.data);
-		this.diagram = diagram;
 	}
 
 	public void generate() {
@@ -199,7 +194,7 @@ public class ElementBuilder {
 
 		ElementDetails details = structure.details;
 
-		writeDiagramDataStructures();					// Diagram specific stuff
+		writeDiagramDataStructures();                    // Diagram specific stuff
 		setGeometry();                                    // And the coordinate definitions
 		defineAllElementFeatures(details);                // Features for the entire element -- paths, etc.
 		defineLabelSettings(details);                    // Defines the 'labeling' settings object
@@ -226,39 +221,19 @@ public class ElementBuilder {
 		writeRemovalOnExit(out, "selection");
 	}
 
-	public ElementDetails makeDetails() {
-		// When we create diagrams this has the side effect of writing the data calls needed
-		if (diagram == null) {
-			return ElementDetails.makeForCoordinates(vis, getCommonSymbol());
-		} else {
-			return diagram.makeDetails(getCommonSymbol());
-		}
+	public abstract ElementDetails makeDetails();
 
-	}
+	public abstract boolean needsDiagramExtras();
 
-	public boolean needsDiagramExtras() {
-		return diagram != null && diagram.needsDiagramExtras();
-	}
+	public abstract boolean needsDiagramLabels();
 
-	public boolean needsDiagramLabels() {
-		return diagram != null && diagram.needsDiagramLabels();
-	}
+	public abstract void preBuildDefinitions();
 
-	public void preBuildDefinitions() {
-		if (diagram != null) diagram.preBuildDefinitions();
-	}
+	public abstract void writeBuildCommands();
 
-	public void writeBuildCommands() {
-		if (diagram != null) diagram.writeBuildCommands();
-	}
+	public abstract void writeDiagramDataStructures();
 
-	public void writeDiagramDataStructures() {
-		if (diagram != null) diagram.writeDataStructures();
-	}
-
-	public void writePerChartDefinitions() {
-		if (diagram != null) diagram.writePerChartDefinitions();
-	}
+	public abstract void writePerChartDefinitions();
 
 	protected void defineLabelSettings(ElementDetails details) {
 		int collisionDetectionGranularity;
@@ -277,16 +252,7 @@ public class ElementBuilder {
 				collisionDetectionGranularity);   // Labels
 	}
 
-	protected void defineLabeling(ElementDetails details) {
-		out.onNewLine().ln().comment("Define labeling for the selection")
-				.onNewLine().add("function label(selection, transitionMillis) {")
-				.indentMore().onNewLine();
-		if (diagram == null)
-			writeElementLabelsAndTooltips(details, labelBuilder);
-		else
-			diagram.writeLabelsAndTooltips(details, labelBuilder);
-		out.indentLess().onNewLine().add("}").ln();
-	}
+	protected abstract void defineLabeling(ElementDetails details);
 
 	protected void setGeometry() {
 		ElementDetails e = structure.details;
@@ -356,27 +322,7 @@ public class ElementBuilder {
 		out.add("var splits = BrunelD3.makePathSplits(" + params + ");").ln();
 	}
 
-	private void defineAllElementFeatures(ElementDetails details) {
-		boolean needsCoordinateFunctions = diagram == null                // All non-diagrams need coordinates
-				|| vis.tElement == VisTypes.Element.point && vis.tDiagram == map;    // Points on maps need coordinates
-
-		if (needsCoordinateFunctions) {
-			writeCoordinateFunctions(details);
-			if (details.representation == ElementRepresentation.wedge) {
-				// Deal with the case of wedges (polar intervals)
-				out.onNewLine().comment("Define the path for pie wedge shapes");
-				defineWedgePath();
-			} else if (details.requiresSplitting()) {
-				// Define paths needed in the element, and make data splits
-				out.onNewLine().comment("Define paths");
-				definePathsAndSplits(details);
-			}
-		} else {
-			// Set the diagram group class for CSS
-			out.add("main.attr('class',", diagram.getStyleClasses(), ")").endStatement();
-			diagram.defineCoordinateFunctions(details);
-		}
-	}
+	protected abstract void defineAllElementFeatures(ElementDetails details);
 
 	private void defineInitialState(ElementDetails details) {
 		// Define the initial placement of the items
@@ -385,15 +331,16 @@ public class ElementBuilder {
 				.onNewLine().add("selection").onNewLine();
 		out.addChained("attr('class', '" + Data.join(details.classes, " ") + "')");
 		addStylingForRoundRectangle();
-		if (diagram != null)
-			diagram.writeDiagramEnter(details);
+		writeDiagramEntry(details);
 		if (!interaction.hasElementInteraction(structure))
 			out.addChained("style('pointer-events', 'none')");
 		Accessibility.addAccessibilityLabels(structure, out, labelBuilder);
 		out.indentLess().onNewLine().add("}").ln();
 	}
 
-	private void definePathsAndSplits(ElementDetails elementDef) {
+	protected abstract void writeDiagramEntry(ElementDetails details);
+
+	protected void definePathsAndSplits(ElementDetails elementDef) {
 
 		// Now actual paths
 		if (vis.tElement == VisTypes.Element.area) {
@@ -438,22 +385,9 @@ public class ElementBuilder {
 		D3LabelBuilder.addFontSizeAttribute(vis, out);
 	}
 
-	private void defineUpdateState(ElementDetails details) {
-		// Define the update to the merged data
-		out.onNewLine().ln().comment("Define selection update operations on merged data")
-				.onNewLine().add("function updateState(selection) {").indentMore()
-				.onNewLine().add("selection").onNewLine();
-		if (diagram == null || diagram instanceof GeoMap) {
-			writeCoordinateDefinition(details);
-			writeElementAesthetics(details, true, vis, out);
-		}
-		if (diagram != null) diagram.writeDiagramUpdate(details);
-		out.endStatement();
+	protected abstract void defineUpdateState(ElementDetails details);
 
-		out.indentLess().onNewLine().add("}").ln();
-	}
-
-	private void defineWedgePath() {
+	protected void defineWedgePath() {
 		out.add("var path = d3.arc().innerRadius(0)");
 		if (vis.fSize.isEmpty())
 			out.add(".outerRadius(geom.inner_radius)");
@@ -466,7 +400,7 @@ public class ElementBuilder {
 		out.endStatement();
 	}
 
-	private String getCommonSymbol() {
+	protected String getCommonSymbol() {
 		String result = ModelUtil.getElementSymbol(vis);
 		if (result != null) return result;
 		if (structure.chart.geo != null) return "circle";             // Geo charts default to circles
@@ -476,10 +410,7 @@ public class ElementBuilder {
 	}
 
 	/* The key function ensure we have object constancy when animating */
-	private String getKeyFunction() {
-		if (diagram != null) return diagram.getRowKeyFunction();
-		return "function(d) { return d.key }";
-	}
+	protected abstract String getKeyFunction();
 
 	private GeomAttribute getSize(Field[] fields, String extent, ScalePurpose purpose, ElementDimension dim, ElementRepresentation rep) {
 		boolean needsFunction = dim.sizeFunction != null;
@@ -616,7 +547,7 @@ public class ElementBuilder {
 		}
 	}
 
-	private void writeCoordinateDefinition(ElementDetails details) {
+	protected void writeCoordinateDefinition(ElementDetails details) {
 		// If we need reference locations, write them in first
 		if (details.getRefLocation() != null) {
 			out.addChained("each(function(d) { this.r = " + details.getRefLocation().definition() + "})");
@@ -645,7 +576,7 @@ public class ElementBuilder {
 			defineCircle(details, out);
 	}
 
-	private void writeCoordinateFunctions(ElementDetails details) {
+	protected void writeCoordinateFunctions(ElementDetails details) {
 
 		writeDimLocations(details.x, "x", "w");
 		writeDimLocations(details.y, "y", "h");

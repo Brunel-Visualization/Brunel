@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * Overrides element builder to build guides only
  */
-public class GuideElementBuilder extends ElementBuilder {
+public class GuideElementBuilder extends CoordinateElementBuilder {
 
 	private static final Set<String> MATH_FUNCTIONS = new HashSet<>(
 			Arrays.asList("e pi abs acos asin atan atan2 ceil cos exp floor log max min pow random round sin sqrt tan".split(" ")));
@@ -41,7 +41,7 @@ public class GuideElementBuilder extends ElementBuilder {
 			Arrays.asList('(', ')', '*', '-', '+', '/', '?', '=', '!', '>', '<', ':'));
 
 	public GuideElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scalesBuilder, D3Interaction interaction) {
-		super(structure, interaction, scalesBuilder, out, null);
+		super(structure, out, scalesBuilder, interaction);
 	}
 
 	public void generate() {
@@ -96,6 +96,8 @@ public class GuideElementBuilder extends ElementBuilder {
 
 	}
 
+
+
 	private int getSteps(List<Param> guides) {
 		int max = 0;
 		for (Param p : guides) {
@@ -118,6 +120,7 @@ public class GuideElementBuilder extends ElementBuilder {
 			return "d." + coord;
 		}
 	}
+
 
 	private String sanitize(String text) {
 		try {
@@ -149,4 +152,5 @@ public class GuideElementBuilder extends ElementBuilder {
 			throw new RuntimeException(e);
 		}
 	}
+
 }

@@ -18,14 +18,78 @@ package org.brunel.build.d3.element;
 
 import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3ScaleBuilder;
-import org.brunel.build.d3.diagrams.D3Diagram;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 
 public class CoordinateElementBuilder extends ElementBuilder {
 
-	public CoordinateElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales, D3Interaction interaction, D3Diagram diagram) {
-		super(structure, interaction, scales, out, diagram);
+	public CoordinateElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales, D3Interaction interaction) {
+		super(structure, interaction, scales, out);
 	}
 
+	public ElementDetails makeDetails() {
+		return ElementDetails.makeForCoordinates(vis, getCommonSymbol());
+	}
+
+	public boolean needsDiagramExtras() {
+		return false;
+	}
+
+	public boolean needsDiagramLabels() {
+		return false;
+	}
+
+	public void preBuildDefinitions() {
+	}
+
+	public void writeBuildCommands() {
+	}
+
+	public void writeDiagramDataStructures() {
+	}
+
+	public void writePerChartDefinitions() {
+	}
+
+	protected void defineLabeling(ElementDetails details) {
+		out.onNewLine().ln().comment("Define labeling for the selection")
+				.onNewLine().add("function label(selection, transitionMillis) {")
+				.indentMore().onNewLine();
+		writeElementLabelsAndTooltips(details, labelBuilder);
+		out.indentLess().onNewLine().add("}").ln();
+	}
+
+	/* The key function ensure we have object constancy when animating */
+	protected String getKeyFunction() {
+		return "function(d) { return d.key }";
+	}
+
+	protected void defineAllElementFeatures(ElementDetails details) {
+
+		writeCoordinateFunctions(details);
+		if (details.representation == ElementRepresentation.wedge) {
+			// Deal with the case of wedges (polar intervals)
+			out.onNewLine().comment("Define the path for pie wedge shapes");
+			defineWedgePath();
+		} else if (details.requiresSplitting()) {
+			// Define paths needed in the element, and make data splits
+			out.onNewLine().comment("Define paths");
+			definePathsAndSplits(details);
+		}
+	}
+
+	protected void writeDiagramEntry(ElementDetails details) {
+	}
+
+	protected void defineUpdateState(ElementDetails details) {
+		// Define the update to the merged data
+		out.onNewLine().ln().comment("Define selection update operations on merged data")
+				.onNewLine().add("function updateState(selection) {").indentMore()
+				.onNewLine().add("selection").onNewLine();
+		writeCoordinateDefinition(details);
+		writeElementAesthetics(details, true, vis, out);
+		out.endStatement();
+
+		out.indentLess().onNewLine().add("}").ln();
+	}
 }

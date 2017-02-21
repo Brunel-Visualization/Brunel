@@ -19,13 +19,96 @@ package org.brunel.build.d3.element;
 import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3ScaleBuilder;
 import org.brunel.build.d3.diagrams.D3Diagram;
+import org.brunel.build.d3.diagrams.GeoMap;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
+import org.brunel.model.VisTypes;
+
+import static org.brunel.model.VisTypes.Diagram.map;
 
 public class DiagramElementBuilder extends ElementBuilder {
 
+	private final D3Diagram diagram;
+
 	public DiagramElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales, D3Interaction interaction, D3Diagram diagram) {
-		super(structure, interaction, scales, out, diagram);
+		super(structure, interaction, scales, out);
+		this.diagram = diagram;
 	}
 
+	public ElementDetails makeDetails() {
+		return diagram.makeDetails(getCommonSymbol());
+	}
+
+	public boolean needsDiagramExtras() {
+		return diagram != null && diagram.needsDiagramExtras();
+	}
+
+	public boolean needsDiagramLabels() {
+		return diagram != null && diagram.needsDiagramLabels();
+	}
+
+	public void preBuildDefinitions() {
+		if (diagram != null) diagram.preBuildDefinitions();
+	}
+
+	public void writeBuildCommands() {
+		if (diagram != null) diagram.writeBuildCommands();
+	}
+
+	public void writeDiagramDataStructures() {
+		if (diagram != null) diagram.writeDataStructures();
+	}
+
+	public void writePerChartDefinitions() {
+		if (diagram != null) diagram.writePerChartDefinitions();
+	}
+
+	protected void defineLabeling(ElementDetails details) {
+		out.onNewLine().ln().comment("Define labeling for the selection")
+				.onNewLine().add("function label(selection, transitionMillis) {")
+				.indentMore().onNewLine();
+		if (diagram == null)
+			writeElementLabelsAndTooltips(details, labelBuilder);
+		else
+			diagram.writeLabelsAndTooltips(details, labelBuilder);
+		out.indentLess().onNewLine().add("}").ln();
+	}
+
+	/* The key function ensure we have object constancy when animating */
+	protected String getKeyFunction() {
+		if (diagram != null) return diagram.getRowKeyFunction();
+		return "function(d) { return d.key }";
+	}
+
+
+	protected void defineAllElementFeatures(ElementDetails details) {
+		if (vis.tElement == VisTypes.Element.point && vis.tDiagram == map) {
+			// Points on maps do need the coordinate functions
+			writeCoordinateFunctions(details);
+		} else {
+			// Set the diagram group class for CSS
+			out.add("main.attr('class',", diagram.getStyleClasses(), ")").endStatement();
+			diagram.defineCoordinateFunctions(details);
+		}
+	}
+
+	protected void writeDiagramEntry(ElementDetails details) {
+		if (diagram != null)
+			diagram.writeDiagramEnter(details);
+	}
+
+	protected void defineUpdateState(ElementDetails details) {
+		// Define the update to the merged data
+		out.onNewLine().ln().comment("Define selection update operations on merged data")
+				.onNewLine().add("function updateState(selection) {").indentMore()
+				.onNewLine().add("selection").onNewLine();
+		if (diagram instanceof GeoMap) {
+			writeCoordinateDefinition(details);
+			writeElementAesthetics(details, true, vis, out);
+		}
+		if (diagram != null) diagram.writeDiagramUpdate(details);
+		out.endStatement();
+
+		out.indentLess().onNewLine().add("}").ln();
+	}
 }
