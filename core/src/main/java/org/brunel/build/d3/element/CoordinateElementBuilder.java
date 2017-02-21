@@ -19,8 +19,6 @@ package org.brunel.build.d3.element;
 import org.brunel.build.d3.D3ScaleBuilder;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Field;
-import org.brunel.model.VisTypes;
 
 class CoordinateElementBuilder extends ElementBuilder {
 
@@ -32,36 +30,8 @@ class CoordinateElementBuilder extends ElementBuilder {
 		// None needed
 	}
 
-	private String getCommonSymbol() {
-		// If we have a defined symbol, we use that
-		if (structure.styleSymbol != null) return structure.styleSymbol;
-
-		// Some point elements are shown as rectangles
-		if (structure.vis.tElement == VisTypes.Element.point && showAsRectangle()) return "rect";
-
-		// No knowledge
-		return null;
-	}
-
-	private boolean showAsRectangle() {
-		// Any geo means we are not all categorical
-		if (structure.geo != null) return false;
-
-		// Any numeric means we are not categorical
-		return !anyNumeric(structure.chart.coordinates.allXFields)
-				&& !anyNumeric(structure.chart.coordinates.allYFields);
-
-	}
-
-	private boolean anyNumeric(Field[] fields) {
-		for (Field field : fields)
-			if (!field.isBinned() && field.isNumeric()) return true;
-		return false;
-	}
-
 	public ElementDetails makeDetails() {
-		String symbol = getCommonSymbol();
-		return ElementDetails.makeForCoordinates(structure, symbol);
+		return ElementDetails.makeForCoordinates(structure);
 	}
 
 	public void preBuildDefinitions() {

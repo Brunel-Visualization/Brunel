@@ -40,9 +40,9 @@ public class ElementStructure {
 	public final Dataset data;
 	public final GeoMapping geo;
 	public final String styleSymbol;                // This is the symbol defined in the style for the element
-	public final D3Diagram diagram;					// This is the diagram we will use for the element (may be null)
+	public final D3Diagram diagram;              	// This is the diagram we will use for the element (may be null)
+	public final ElementDetails details;            // Details on element appearance
 
-	public ElementDetails details;
 	public List<Dependency> dependencies;
 
 	public ElementStructure(ChartStructure chartStructure, int elementIndex, VisSingle vis, Dataset data, GeoMapping geo) {
@@ -55,6 +55,7 @@ public class ElementStructure {
 		this.original = vis.getDataset();
 		this.dependencies = new ArrayList<>();
 		this.diagram = D3Diagram.make(this);
+		this.details = diagram == null ? ElementDetails.makeForCoordinates(this) : diagram.makeDetails();
 	}
 
 	public int getBaseDatasetIndex() {

@@ -189,10 +189,8 @@ public class D3Builder extends AbstractBuilder {
 
 		ElementStructure[] structures = structure.elementStructure;
 		elementBuilders = new ElementBuilder[structures.length];
-		for (int i = 0; i < structures.length; i++) {
+		for (int i = 0; i < structures.length; i++)
 			elementBuilders[i] = ElementBuilder.make(structures[i], out, scalesBuilder);
-			structures[i].details = elementBuilders[i].makeDetails();
-		}
 	}
 
 	protected void defineElement(ElementStructure structure) {

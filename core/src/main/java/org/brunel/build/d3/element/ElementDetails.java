@@ -16,9 +16,11 @@
 
 package org.brunel.build.d3.element;
 
+import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.data.Data;
+import org.brunel.data.Field;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Element;
@@ -32,8 +34,36 @@ import static org.brunel.build.d3.element.ElementRepresentation.spaceFillingCirc
  */
 public class ElementDetails {
 
-	public static ElementDetails makeForCoordinates(ElementStructure structure, String symbol) {
-		ElementRepresentation representation = ElementRepresentation.makeForCoordinateElement(structure, symbol);
+	private static String getCommonSymbol(ElementStructure structure) {
+		// If we have a defined symbol, we use that
+		if (structure.styleSymbol != null) return structure.styleSymbol;
+
+		// Geo ignores symbols
+		if (structure.geo != null) return null;
+
+		// Some point elements are shown as rectangles
+		if (structure.vis.tElement == VisTypes.Element.point && showAsRectangle(structure.chart.coordinates))
+			return "rect";
+
+		// No knowledge
+		return null;
+	}
+
+	private static boolean showAsRectangle(ChartCoordinates coordinates) {
+		// Any numeric means we are not categorical
+		return !anyNumeric(coordinates.allXFields)
+				&& !anyNumeric(coordinates.allYFields);
+
+	}
+
+	private static boolean anyNumeric(Field[] fields) {
+		for (Field field : fields)
+			if (!field.isBinned() && field.isNumeric()) return true;
+		return false;
+	}
+
+	public static ElementDetails makeForCoordinates(ElementStructure structure) {
+		ElementRepresentation representation = ElementRepresentation.makeForCoordinateElement(structure, getCommonSymbol(structure));
 
 		Element element = structure.vis.tElement;
 		String dataSource = element.producesSingleShape ? "splits" : "data._rows";
@@ -53,8 +83,8 @@ public class ElementDetails {
 	 * @param elementClass the name of the element class for CSS purposes (polygon, path, point, etc.)
 	 * @param dataSource   the javascript name of the element's data
 	 */
-	public static ElementDetails makeForDiagram(ElementStructure structure,
-												ElementRepresentation representation, String elementClass, String dataSource) {
+	public static ElementDetails makeForDiagram(ElementStructure structure, ElementRepresentation representation,
+												String elementClass, String dataSource) {
 
 		// we override the suggested representation if we have a symbol defined
 		if (representation == spaceFillingCircle || representation == largeCircle || representation == pointLikeCircle) {

@@ -90,7 +90,7 @@ public class GeoMap extends D3Diagram {
 
     public ElementDetails makeDetails() {
         if (vis.tElement == point || vis.tElement == Element.text) {
-            return ElementDetails.makeForCoordinates(structure, structure.styleSymbol);
+            return ElementDetails.makeForCoordinates(structure);
         } else {
             // The labeling will be defined later and then used when we do the actual layout call to define the D3 data
             return ElementDetails.makeForDiagram(structure, ElementRepresentation.geoFeature, "polygon", "data._rows");
