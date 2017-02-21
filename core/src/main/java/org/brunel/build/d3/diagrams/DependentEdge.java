@@ -31,8 +31,8 @@ class DependentEdge extends D3Diagram {
 	private final boolean polar;        // True if we have a polar layout
 	private final boolean curved;        // True if we want a curved arc
 
-	DependentEdge(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
-		super(structure, data, interaction, out);
+	DependentEdge(ElementStructure structure, Dataset data, ScriptWriter out) {
+		super(structure, data, out);
 		String symbol = structure.styleSymbol;
 		this.arrow = symbol == null || symbol.toLowerCase().contains("arrow");
 		this.curved = symbol == null || symbol.toLowerCase().contains("curved") || symbol.toLowerCase().contains("arc");

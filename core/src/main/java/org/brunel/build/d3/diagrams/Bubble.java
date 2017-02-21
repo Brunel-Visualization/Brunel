@@ -16,7 +16,6 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
@@ -28,8 +27,8 @@ import org.brunel.data.Dataset;
 
 class Bubble extends D3Diagram {
 
-	public Bubble(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
-		super(structure, data, interaction, out);
+	public Bubble(ElementStructure structure, Dataset data, ScriptWriter out) {
+		super(structure, data, out);
 	}
 
 	public void defineCoordinateFunctions(ElementDetails details) {

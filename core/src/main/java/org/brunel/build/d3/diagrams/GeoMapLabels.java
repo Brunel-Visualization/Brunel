@@ -16,7 +16,6 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.SymbolHandler;
 import org.brunel.build.d3.element.ElementDetails;
@@ -35,8 +34,8 @@ public class GeoMapLabels extends D3Diagram {
 
 	private final NumberFormat F = new DecimalFormat("#.####");
 
-	public GeoMapLabels(ElementStructure vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
-		super(vis, data, interaction, out);
+	public GeoMapLabels(ElementStructure vis, Dataset data, ScriptWriter out) {
+		super(vis, data, out);
 	}
 
 	public String getRowKeyFunction() {

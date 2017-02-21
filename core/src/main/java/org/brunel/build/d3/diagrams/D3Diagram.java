@@ -34,33 +34,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class D3Diagram {
-	public static D3Diagram make(ElementStructure structure, D3Interaction interaction, ScriptWriter out) {
+	public static D3Diagram make(ElementStructure structure, ScriptWriter out) {
 		VisSingle vis = structure.vis;
 		Dataset data = structure.data;
 
 		if (vis.tDiagram == null) {
 			// The edges defined for a graph or network are treated as an implicit diagram
 			if (structure.chart.diagram != null && structure.isDependentEdge())
-				return new DependentEdge(structure, data, interaction, out);
+				return new DependentEdge(structure, data, out);
 			else return null;
 
 		}
-		if (vis.tDiagram == Diagram.bubble) return new Bubble(structure, data, interaction, out);
-		if (vis.tDiagram == Diagram.chord) return new Chord(structure, data, interaction, out);
-		if (vis.tDiagram == Diagram.cloud) return new Cloud(structure, data, interaction, out);
-		if (vis.tDiagram == Diagram.tree) return new Tree(structure, data, interaction, out);
-		if (vis.tDiagram == Diagram.parallel) return new ParallelCoordinates(structure, data, interaction, out);
-		if (vis.tDiagram == Diagram.gridded) return new Grid(structure, data, interaction, out);
-		if (vis.tDiagram == Diagram.table) return new Table(structure, data, interaction, out);
-		if (vis.tDiagram == Diagram.treemap) return new Treemap(structure, data, interaction, out);
-		if (vis.tDiagram == Diagram.network)
-			return new Network(structure, data, interaction, out);
-		if (isMapLabels(vis))
-			return new GeoMapLabels(structure, data, interaction, out);
-		else if (vis.tDiagram == Diagram.map) {
-
-			return new GeoMap(structure, data, structure.geo, interaction, out);
-		}
+		if (vis.tDiagram == Diagram.bubble) return new Bubble(structure, data, out);
+		if (vis.tDiagram == Diagram.chord) return new Chord(structure, data, out);
+		if (vis.tDiagram == Diagram.cloud) return new Cloud(structure, data, out);
+		if (vis.tDiagram == Diagram.tree) return new Tree(structure, data, out);
+		if (vis.tDiagram == Diagram.parallel) return new ParallelCoordinates(structure, data, out);
+		if (vis.tDiagram == Diagram.gridded) return new Grid(structure, data, out);
+		if (vis.tDiagram == Diagram.table) return new Table(structure, data, out);
+		if (vis.tDiagram == Diagram.treemap) return new Treemap(structure, data, out);
+		if (vis.tDiagram == Diagram.network) return new Network(structure, data, out);
+		if (isMapLabels(vis)) return new GeoMapLabels(structure, data, out);
+		if (vis.tDiagram == Diagram.map)  return new GeoMap(structure, data, structure.geo, out);
 		throw new IllegalStateException("Unknown diagram: " + vis.tDiagram);
 	}
 
@@ -79,14 +74,14 @@ public abstract class D3Diagram {
 	final ElementStructure structure;
 	private boolean isHierarchy;
 
-	D3Diagram(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
+	D3Diagram(ElementStructure structure, Dataset data, ScriptWriter out) {
 		this.structure = structure;
 		this.vis = structure.vis;
 		this.out = out;
 		this.size = vis.fSize.isEmpty() ? null : vis.fSize.get(0);
 		this.position = vis.positionFields();
 		this.element = vis.tElement;
-		this.interaction = interaction;
+		this.interaction = structure.chart.interaction;
 		this.labelBuilder = new D3LabelBuilder(vis, out, data);
 
 	}
@@ -107,12 +102,14 @@ public abstract class D3Diagram {
 
 	/**
 	 * Any initialization needed at the start of the build function
+	 *
 	 * @return
 	 */
 	public abstract void writeDataStructures();
 
 	/**
 	 * Define the details of the the element for future use
+	 *
 	 * @return details structure
 	 */
 	public abstract ElementDetails makeDetails();

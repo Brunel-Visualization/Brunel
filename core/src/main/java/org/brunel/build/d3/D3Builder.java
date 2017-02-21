@@ -70,7 +70,6 @@ public class D3Builder extends AbstractBuilder {
 	private ScriptWriter out;                   // Where to write code
 	public int visWidth, visHeight;             // Overall vis size
 	private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
-	private D3Interaction interaction;          // Builder for interactions
 	private ElementBuilder[] elementBuilders; // Builder for each element
 	private boolean hasMultipleCharts;          // flag to indicate multiple charts in the same vis
 
@@ -166,7 +165,7 @@ public class D3Builder extends AbstractBuilder {
 		}
 
 		// Attach the zoom
-		interaction.addZoomFunctionality();
+		structure.interaction.addZoomFunctionality(out);
 
 		// Symbols need to be added to the svg definitions block
 		structure.symbols.addDefinitions(out);
@@ -188,12 +187,10 @@ public class D3Builder extends AbstractBuilder {
 		structure.setExtent((int) chartWidth, (int) chartHeight);
 		this.scalesBuilder = new D3ScaleBuilder(structure, out);
 
-		interaction = new D3Interaction(structure, scalesBuilder, out);
-
 		ElementStructure[] structures = structure.elementStructure;
 		elementBuilders = new ElementBuilder[structures.length];
 		for (int i = 0; i < structures.length; i++) {
-			elementBuilders[i] = ElementBuilder.make(structures[i], out, interaction, scalesBuilder);
+			elementBuilders[i] = ElementBuilder.make(structures[i], out, scalesBuilder);
 			structures[i].details = elementBuilders[i].makeDetails();
 		}
 	}
@@ -228,7 +225,7 @@ public class D3Builder extends AbstractBuilder {
 
 		out.add("function build(transitionMillis) {").ln().indentMore();
 		elementBuilder.generate();
-		interaction.addHandlers(structure);
+		structure.chart.interaction.addHandlers(structure, out);
 
 		// If a chart is nested within us, build its facets
 		Integer index = structure.chart.innerChartIndex;
@@ -313,7 +310,7 @@ public class D3Builder extends AbstractBuilder {
 			out.onNewLine().add("scales: {x:scale_x, y:scale_y},");
 		}
 
-		interaction.defineChartZoomFunction();
+		structure.interaction.defineChartZoomFunction(out);
 
 		out.onNewLine().add("build : build")
 				.indentLess().onNewLine().add("}").endStatement();
@@ -568,7 +565,7 @@ public class D3Builder extends AbstractBuilder {
 
 		out.addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top")).endStatement();
 
-		interaction.addOverlayForZoom(structure.diagram);
+		structure.interaction.addOverlayForZoom(structure.diagram, out);
 
 		out.add("chart.append('rect').attr('class', 'background')")
 				.add(".attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top)")

@@ -16,7 +16,6 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
@@ -27,8 +26,8 @@ import org.brunel.data.Dataset;
 
 class Cloud extends D3Diagram {
 
-    public Cloud(ElementStructure vis, Dataset data, D3Interaction interaction, ScriptWriter out) {
-        super(vis, data, interaction, out);
+    public Cloud(ElementStructure vis, Dataset data, ScriptWriter out) {
+        super(vis, data, out);
     }
 
     public void writeDataStructures() {

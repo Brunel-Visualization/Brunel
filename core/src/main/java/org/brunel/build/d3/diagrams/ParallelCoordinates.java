@@ -18,7 +18,6 @@ package org.brunel.build.d3.diagrams;
 
 import org.brunel.action.Param;
 import org.brunel.build.d3.AxisDetails;
-import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.D3ScaleBuilder;
 import org.brunel.build.d3.D3Util;
@@ -51,8 +50,8 @@ class ParallelCoordinates extends D3Diagram {
     private final Padding padding;              // Space around the edges
     private final double smoothness;            // 0 == linear, 1 is very smooth
 
-    public ParallelCoordinates(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
-        super(structure, data, interaction, out);
+    public ParallelCoordinates(ElementStructure structure, Dataset data, ScriptWriter out) {
+        super(structure, data, out);
         fields = data.fieldArray(vis.positionFields());
         builder = new D3ScaleBuilder(structure.chart, out);
         axes = makeAxisDetails(structure.chart, fields);

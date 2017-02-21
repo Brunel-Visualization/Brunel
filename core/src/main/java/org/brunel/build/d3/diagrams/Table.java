@@ -16,7 +16,6 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.element.ElementBuilder;
@@ -38,8 +37,8 @@ class Table extends D3Diagram {
     private final Padding padding;              // Padding for labels
     private final Field[] fields;               // The fields we are showing
 
-    public Table(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
-        super(structure, data, interaction, out);
+    public Table(ElementStructure structure, Dataset data, ScriptWriter out) {
+        super(structure, data, out);
         fields = data.fieldArray(vis.positionFields());
         padding = ModelUtil.getPadding(vis, StyleTarget.makeElementTarget(null), 2);
         padding.top += 15;       // For the titles

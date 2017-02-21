@@ -16,6 +16,7 @@
 
 package org.brunel.build.info;
 
+import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.util.ModelUtil;
@@ -52,6 +53,7 @@ public class ElementStructure {
 		this.styleSymbol = ModelUtil.getSymbolFromStyle(vis);
 		this.original = vis.getDataset();
 		this.dependencies = new ArrayList<>();
+
 	}
 
 	// Find a dependent structure on us -- edges for our nodes

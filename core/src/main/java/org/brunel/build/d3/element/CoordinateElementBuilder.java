@@ -16,17 +16,16 @@
 
 package org.brunel.build.d3.element;
 
-import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3ScaleBuilder;
-import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
+import org.brunel.data.Field;
 import org.brunel.model.VisTypes;
 
 class CoordinateElementBuilder extends ElementBuilder {
 
-	CoordinateElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales, D3Interaction interaction) {
-		super(structure, interaction, scales, out);
+	CoordinateElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales) {
+		super(structure, scales, out);
 	}
 
 	public void addAdditionalElementGroups() {
@@ -37,20 +36,27 @@ class CoordinateElementBuilder extends ElementBuilder {
 		// If we have a defined symbol, we use that
 		if (structure.styleSymbol != null) return structure.styleSymbol;
 
-		// We show a rectangle if we have a coordinate system which is all categorical
-		if (structure.vis.tElement == VisTypes.Element.point && hasAllCategoricalScales()) return "rect";
+		// Some point elements are shown as rectangles
+		if (structure.vis.tElement == VisTypes.Element.point && showAsRectangle()) return "rect";
 
 		// No knowledge
 		return null;
 	}
 
-	private boolean hasAllCategoricalScales() {
+	private boolean showAsRectangle() {
 		// Any geo means we are not all categorical
 		if (structure.geo != null) return false;
 
-		// Otherwise we consult the coordinates to see if both X and Y are categorical
-		ChartCoordinates coordinates = structure.chart.coordinates;
-		return coordinates.xCategorical && coordinates.yCategorical;
+		// Any numeric means we are not categorical
+		return !anyNumeric(structure.chart.coordinates.allXFields)
+				&& !anyNumeric(structure.chart.coordinates.allYFields);
+
+	}
+
+	private boolean anyNumeric(Field[] fields) {
+		for (Field field : fields)
+			if (!field.isBinned() && field.isNumeric()) return true;
+		return false;
 	}
 
 	public ElementDetails makeDetails() {

@@ -16,7 +16,6 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
@@ -38,8 +37,8 @@ class Tree extends D3Diagram {
 	private final int pad;                                            // Pad size
 	private final boolean usesSize;                                 // True is size is used
 
-	public Tree(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
-		super(structure, data, interaction, out);
+	public Tree(ElementStructure structure, Dataset data, ScriptWriter out) {
+		super(structure, data, out);
 		if (vis.coords == Coordinates.polar) method = Method.polar;
 		else method = Method.leftRight;
 		labelSize = labelBuilder.estimateLabelLength() * 6;

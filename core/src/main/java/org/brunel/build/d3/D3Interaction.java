@@ -22,7 +22,6 @@ import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
-import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Interaction;
 
 import java.util.ArrayList;
@@ -44,16 +43,12 @@ public class D3Interaction {
 	public static final String DEFAULT_SNAP_DISTANCE = "geom.inner_radius/4";
 
 	private final ChartStructure structure;     // Chart Structure
-	private final D3ScaleBuilder scales;        // Scales for the chart
-	private final ScriptWriter out;             // Write definitions here
 	private final boolean canZoomX, canZoomY;   // for coordinate zoom, which axes we can zoom
 	private final boolean usesCollapse;         // true if we have a collapse handler
 	private final boolean usesExpand;           // true if we have an expand handler
 
-	public D3Interaction(ChartStructure structure, D3ScaleBuilder scales, ScriptWriter out) {
+	public D3Interaction(ChartStructure structure) {
 		this.structure = structure;
-		this.scales = scales;
-		this.out = out;
 
 		boolean[] zoomTypes = zoomRequested(structure.elementStructure);    // user zoom requests
 		if (zoomTypes == null) zoomTypes = defaultZooms();                  // defaults if no user request
@@ -116,7 +111,7 @@ public class D3Interaction {
 			return ZOOM_NONE;
 
 		// we cannot zoom diagrams polar coordinates
-		if (scales.coords == Coordinates.polar) return ZOOM_NONE;
+		if (structure.coordinates.isPolar()) return ZOOM_NONE;
 
 		// Otherwise allow zoom for non-categorical axes
 		return new boolean[]{!structure.coordinates.xCategorical, !structure.coordinates.yCategorical};
@@ -126,7 +121,7 @@ public class D3Interaction {
 	 * We will always write the zoom function in, as it can be used even if the user did not request
 	 * it to be on available interactively. This way it can be called by API.
 	 */
-	public void defineChartZoomFunction() {
+	public void defineChartZoomFunction(ScriptWriter out) {
 		out.onNewLine().add("zoom: function(params, time) {").indentMore().indentMore().onNewLine()
 				.add("if (params) zoom.on('zoom').call(zoomNode, params, time)").endStatement()
 				.add("return d3.zoomTransform(zoomNode)").endStatement();
@@ -206,7 +201,7 @@ public class D3Interaction {
 	/**
 	 * This attaches event handlers to the element for click-selection
 	 */
-	public void addHandlers(ElementStructure structure) {
+	public void addHandlers(ElementStructure structure, ScriptWriter out) {
 
 		Collection<Param> interactions = structure.vis.tInteraction;
 
@@ -224,10 +219,10 @@ public class D3Interaction {
 			Interaction type = p.asEnum(Interaction.class);
 
 			// Is this a snap modifier?
-			boolean isSnap =  false;
+			boolean isSnap = false;
 			for (Param mod : p.modifiers()) if (mod.toString().startsWith("snap")) isSnap = true;
 
-				if (type == Interaction.select) {
+			if (type == Interaction.select) {
 				// One of select, select:mouseXXX, select:snap, select:snap:ZZ
 				if (isSnap) {
 					// We want a snap overlay event that will call select -- all snap events are overlays
@@ -300,12 +295,12 @@ public class D3Interaction {
 			}
 
 			out.add("chart.select('rect.overlay')").at(60).comment("Attach handlers to the overlay");
-			addDispatchers(overlayEvents);
+			addDispatchers(overlayEvents, out);
 		}
 
 		if (!elementEvents.isEmpty()) {
 			out.add("merged").at(60).comment("Attach handlers to the element");
-			addDispatchers(elementEvents);
+			addDispatchers(elementEvents, out);
 		}
 	}
 
@@ -332,8 +327,9 @@ public class D3Interaction {
 	 * Adds event handlers for each event, with a list of things to call.
 	 *
 	 * @param dispatching map of event name to list of commands
+	 * @param out
 	 */
-	private void addDispatchers(Map<String, List<String>> dispatching) {
+	private void addDispatchers(Map<String, List<String>> dispatching, ScriptWriter out) {
 		// Add all the chained items
 		for (Map.Entry<String, List<String>> e : dispatching.entrySet()) {
 			String event = e.getKey();
@@ -391,7 +387,7 @@ public class D3Interaction {
 	 *
 	 * @param diagram the diagram the chart uses
 	 */
-	public void addOverlayForZoom(VisTypes.Diagram diagram) {
+	public void addOverlayForZoom(VisTypes.Diagram diagram, ScriptWriter out) {
 		// The group for the overlay
 		out.add("var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay')");
 
@@ -433,7 +429,7 @@ public class D3Interaction {
 	/**
 	 * Set up the overlay group and shapes for trapping events for zooming.
 	 */
-	public void addZoomFunctionality() {
+	public void addZoomFunctionality(ScriptWriter out) {
 
 		// Define the zoom function
 		out.add("zoom.on('zoom', function(t, time) {")
@@ -455,15 +451,14 @@ public class D3Interaction {
 			out.add("if (p.numeric) p.scale = t.rescaleY(p._scale)").endStatement();
 			out.add("else           p.scale.range([t.y, t.y + t.k * geom.inner_height])").endStatement();
 		} else if (this.structure.diagram != VisTypes.Diagram.map) {         // The map has no scales to modify ...
-			if (canZoomX) applyZoomToScale(0);
-			if (canZoomY) applyZoomToScale(1);
+			if (canZoomX) applyZoomToScale(0, out);
+			if (canZoomY) applyZoomToScale(1, out);
 		}
 
 		out.add("zoomNode.__zoom = t").endStatement();
 
 		// Set the zoom level on the interior
-		out.add("interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));" ).endStatement();
-
+		out.add("interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));").endStatement();
 
 		if (this.structure.diagram == VisTypes.Diagram.network) {
 			// A network has a defined simulation, which we need to prod if not running
@@ -486,7 +481,7 @@ public class D3Interaction {
 	 *
 	 * @param dimension 0 for X, 1 for Y
 	 */
-	private void applyZoomToScale(int dimension) {
+	private void applyZoomToScale(int dimension, ScriptWriter out) {
 		// Which is the screen dimension for this scale dimension?
 		boolean isScreenX = structure.coordinates.isTransposed() ? dimension == 1 : dimension == 0;
 		String offset = isScreenX ? "t.x" : "t.y";

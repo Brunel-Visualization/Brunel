@@ -16,6 +16,7 @@
 
 package org.brunel.build.info;
 
+import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.SymbolHandler;
 import org.brunel.data.Dataset;
 import org.brunel.maps.GeoInformation;
@@ -36,10 +37,12 @@ public class ChartStructure {
 	public final ChartStructure outer;                      // If non-null, the enclosing element for a nested chart
 	public final Integer innerChartIndex;                   // If non-null, the index of the chart we enclose
 
-	public final ChartCoordinates coordinates;				// Coordinate system for this chart
-	public final GeoInformation geo;						// Geo information
-	public final Diagram diagram;							// Diagram for this chart
-	public final SymbolHandler symbols;						// Symbol handler for the chart
+	public final ChartCoordinates coordinates;                // Coordinate system for this chart
+	public final GeoInformation geo;                        // Geo information
+	public final Diagram diagram;                            // Diagram for this chart
+
+	public final SymbolHandler symbols;                        // Symbol handler for the chart
+	public final D3Interaction interaction;                    // Interactivity handler for the chart
 
 	public final String visIdentifier;                      // Identifier for the overall vis (the SVG ID)
 	public boolean accessible;                              // If true, generate accessible content
@@ -78,7 +81,7 @@ public class ChartStructure {
 					// No position or diagram, and we do have keys to link us to the source
 					// Check we do not depend on ourselves!
 					if (structure != elementStructure[sourceIndex]) {
-						Dependency dependency = new Dependency( elementStructure[sourceIndex], structure);
+						Dependency dependency = new Dependency(elementStructure[sourceIndex], structure);
 						dependency.attach();
 					}
 				}
@@ -89,6 +92,9 @@ public class ChartStructure {
 		// This must be called when the elements have been defined. It will look for custom symbol URIs
 		// and manage naming conventions for them
 		this.symbols = new SymbolHandler(this);
+
+		// Define any interactivity needed
+		this.interaction = new D3Interaction(this);
 
 	}
 

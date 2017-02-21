@@ -17,7 +17,6 @@
 package org.brunel.build.d3.diagrams;
 
 import org.brunel.action.Param;
-import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.element.ElementBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.GeomAttribute;
@@ -32,8 +31,8 @@ class Grid extends Bubble {
 	private int rows = 0, columns = 0;                  // size of the grid (0 -> "choose for me")
 	private double aspect = 1;                          // desired aspect ratio of the grid cells
 
-	Grid(ElementStructure structure, Dataset data, D3Interaction interaction, ScriptWriter out) {
-		super(structure, data, interaction, out);
+	Grid(ElementStructure structure, Dataset data, ScriptWriter out) {
+		super(structure, data, out);
 
 		for (Param p : vis.tDiagramParameters) {
 			String s = p.asString();

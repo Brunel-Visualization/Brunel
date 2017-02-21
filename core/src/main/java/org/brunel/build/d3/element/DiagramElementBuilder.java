@@ -16,7 +16,6 @@
 
 package org.brunel.build.d3.element;
 
-import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3ScaleBuilder;
 import org.brunel.build.d3.diagrams.D3Diagram;
 import org.brunel.build.d3.diagrams.GeoMap;
@@ -30,8 +29,8 @@ import static org.brunel.model.VisTypes.Diagram.map;
 
 	private final D3Diagram diagram;
 
-	public DiagramElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales, D3Interaction interaction, D3Diagram diagram) {
-		super(structure, interaction, scales, out);
+	public DiagramElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales, D3Diagram diagram) {
+		super(structure, scales, out);
 		this.diagram = diagram;
 	}
 

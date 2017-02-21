@@ -40,8 +40,8 @@ class GuideElementBuilder extends CoordinateElementBuilder {
 	private static final Set<Character> SYMBOLS = new HashSet<>(
 			Arrays.asList('(', ')', '*', '-', '+', '/', '?', '=', '!', '>', '<', ':'));
 
-	public GuideElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scalesBuilder, D3Interaction interaction) {
-		super(structure, out, scalesBuilder, interaction);
+	public GuideElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scalesBuilder) {
+		super(structure, out, scalesBuilder);
 	}
 
 	public void generate() {

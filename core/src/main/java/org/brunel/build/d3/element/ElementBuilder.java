@@ -180,9 +180,9 @@ public abstract class ElementBuilder {
 	protected final D3LabelBuilder labelBuilder;                  // Helper to build labels
 	protected final ElementStructure structure;
 
-	public ElementBuilder(ElementStructure structure, D3Interaction interaction, D3ScaleBuilder scales, ScriptWriter out) {
+	public ElementBuilder(ElementStructure structure, D3ScaleBuilder scales, ScriptWriter out) {
 		this.structure = structure;
-		this.interaction = interaction;
+		this.interaction = structure.chart.interaction;
 		this.scales = scales;
 		this.out = out;
 		this.vis = structure.vis;
@@ -224,13 +224,13 @@ public abstract class ElementBuilder {
 		writeRemovalOnExit(out, "selection");
 	}
 
-	public static ElementBuilder make(ElementStructure structure, ScriptWriter out, D3Interaction interaction, D3ScaleBuilder scalesBuilder) {
+	public static ElementBuilder make(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scalesBuilder) {
 		if (!structure.vis.tGuides.isEmpty())
-			return new GuideElementBuilder(structure, out, scalesBuilder, interaction);
-		D3Diagram diagram = D3Diagram.make(structure, interaction, out);
+			return new GuideElementBuilder(structure, out, scalesBuilder);
+		D3Diagram diagram = D3Diagram.make(structure, out);
 		if (diagram != null)
-			return new DiagramElementBuilder(structure, out, scalesBuilder, interaction, diagram);
-		return new CoordinateElementBuilder(structure, out, scalesBuilder, interaction);
+			return new DiagramElementBuilder(structure, out, scalesBuilder, diagram);
+		return new CoordinateElementBuilder(structure, out, scalesBuilder);
 	}
 
 	public abstract ElementDetails makeDetails();
@@ -399,7 +399,6 @@ public abstract class ElementBuilder {
 			out.addChained("startAngle(y1).endAngle(y2)");
 		out.endStatement();
 	}
-
 
 	/* The key function ensure we have object constancy when animating */
 	protected abstract String getKeyFunction();

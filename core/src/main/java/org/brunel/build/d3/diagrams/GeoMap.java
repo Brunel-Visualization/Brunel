@@ -16,7 +16,6 @@
 
 package org.brunel.build.d3.diagrams;
 
-import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.element.ElementBuilder;
@@ -78,8 +77,8 @@ public class GeoMap extends D3Diagram {
 
     }
 
-    public GeoMap(ElementStructure vis, Dataset data, GeoMapping geo, D3Interaction interaction, ScriptWriter out) {
-        super(vis, data, interaction, out);
+    public GeoMap(ElementStructure vis, Dataset data, GeoMapping geo, ScriptWriter out) {
+        super(vis, data, out);
         this.mapping = geo;
         if (mapping == null)
             throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
