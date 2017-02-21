@@ -17,7 +17,6 @@
 package org.brunel;
 
 import org.brunel.action.Action;
-import org.brunel.build.AbstractBuilder;
 import org.brunel.build.d3.D3Builder;
 import org.brunel.build.util.DataCache;
 import org.brunel.data.Dataset;
@@ -29,57 +28,57 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
 /**
- * Tetsing build process
+ * Testing build process
  */
 public class BuildTests {
 
-    private Dataset data;
-    private AbstractBuilder builder;
+	private Dataset data;
+	private D3Builder builder;
 
-    @Before
-    public void setUp() throws Exception {
-        data = DataCache.get("sample://US States.csv");
-        builder = D3Builder.make();
-    }
+	@Before
+	public void setUp() throws Exception {
+		data = DataCache.get("sample://US States.csv");
+		builder = D3Builder.make();
+	}
 
-    @Test
-    public void testBasicBuild() throws Exception {
-        Action action = Action.parse("x(winter) y(summer)");
-        VisItem vis = action.apply(data);
-        builder.build(vis, 500, 500);
-        assertTrue(builder.getVisualization().toString().length() > 100);
-        assertEquals("", builder.getStyleOverrides());
-    }
+	@Test
+	public void testBasicBuild() throws Exception {
+		Action action = Action.parse("x(winter) y(summer)");
+		VisItem vis = action.apply(data);
+		builder.build(vis, 500, 500);
+		assertTrue(builder.getVisualization().length() > 100);
+		assertEquals("", builder.getStyleOverrides());
+	}
 
-    @Test
-    public void testSingleAt() throws Exception {
-        Action action = Action.parse("x(winter) y(summer) at(40,30,80,50)");
-        VisItem vis = action.apply(data);
-        builder.build(vis, 500, 500);
-        String javascript = builder.getVisualization().toString();
-        // 500 width @ 40% and 80% results in left and right insets of 200, 100
-        // 500 height @ 30% and 50% results in top and bottom insets of 150, 250
-        // Order of insets is  TOP(150) LEFT(200) BOTTOM(250) RIGHT(100)
-        assertTrue(javascript.contains("BrunelD3.geometry(parentNode || vis.node(), 0.3, 0.4, 0.5, 0.8"));
-    }
+	@Test
+	public void testSingleAt() throws Exception {
+		Action action = Action.parse("x(winter) y(summer) at(40,30,80,50)");
+		VisItem vis = action.apply(data);
+		builder.build(vis, 500, 500);
+		String javascript = builder.getVisualization();
+		// 500 width @ 40% and 80% results in left and right insets of 200, 100
+		// 500 height @ 30% and 50% results in top and bottom insets of 150, 250
+		// Order of insets is  TOP(150) LEFT(200) BOTTOM(250) RIGHT(100)
+		assertTrue(javascript.contains("BrunelD3.geometry(parentNode || vis.node(), 0.3, 0.4, 0.5, 0.8"));
+	}
 
-    @Test
-    public void testSmallAxes() throws Exception {
-        Action action = Action.parse("x(winter) y(summer)");
-        VisItem vis = action.apply(data);
-        builder.build(vis, 200, 200);
-        String javascript = builder.getVisualization().toString();
-        // Should limit the number of ticks
-        assertTrue(javascript.contains(".ticks(4)"));
-    }
+	@Test
+	public void testSmallAxes() throws Exception {
+		Action action = Action.parse("x(winter) y(summer)");
+		VisItem vis = action.apply(data);
+		builder.build(vis, 200, 200);
+		String javascript = builder.getVisualization();
+		// Should limit the number of ticks
+		assertTrue(javascript.contains(".ticks(4)"));
+	}
 
-    @Test
-    public void testStyles() throws Exception {
-        Action action = Action.parse("x(winter) y(summer) style('fill:red')");
-        VisItem vis = action.apply(data);
-        builder.build(vis, 500, 500);
-        assertTrue(builder.getVisualization().toString().length() > 100);
-        assertEquals("#visualization.brunel .chart1 .element1 .element {\n\tfill: red;\n}", builder.getStyleOverrides());
-    }
+	@Test
+	public void testStyles() throws Exception {
+		Action action = Action.parse("x(winter) y(summer) style('fill:red')");
+		VisItem vis = action.apply(data);
+		builder.build(vis, 500, 500);
+		assertTrue(builder.getVisualization().length() > 100);
+		assertEquals("#visualization.brunel .chart1 .element1 .element {\n\tfill: red;\n}", builder.getStyleOverrides());
+	}
 
 }

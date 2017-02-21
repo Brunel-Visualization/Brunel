@@ -17,22 +17,28 @@
 package org.brunel.build.d3;
 
 import org.brunel.action.Param;
-import org.brunel.build.AbstractBuilder;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.d3.element.ElementBuilder;
 import org.brunel.build.d3.titles.ChartTitleBuilder;
+import org.brunel.build.data.DataBuilder;
+import org.brunel.build.data.DataModifier;
 import org.brunel.build.data.DataTransformParameters;
+import org.brunel.build.info.ChartLayout;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.Accessibility;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
+import org.brunel.data.Dataset;
+import org.brunel.model.VisComposition;
+import org.brunel.model.VisException;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Element;
+import org.brunel.model.style.StyleSheet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,10 +48,24 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
-/*
-		The methods of this class are called as an Abstract Builder to build the chart
+/**
+ * A rough flow of the build process is as follows:
+ *
+ * <ul>
+ * <li> A 'visualization' is created; this may consist of multiple charts each with different parts in it,
+ * but the entire system is defined within one area. This is equivalent to being within a single 'div'
+ * in a browser, or a single AWT/SWT control in a java application.
+ * <li> Individual charts are defined within the visualization; for each of them the following steps are performed:
+ * * 'createVis' is called to create a chart within a defined sub-area
+ * * Within each chart may be multiple <code>VisSingle</code> items, for each of them we:
+ * <li> collect controls and style overrides into the relevant classes
+ * <li> build the data for that element
+ * <li> call 'createSingle' to build the single visualization (e.g. a bar in combination bar/line chart).
+ * </ul>
+ *
+ * A builder may be called multiple times; every call to 'build' will reset the state and start from new
  */
-public class D3Builder extends AbstractBuilder {
+public class D3Builder implements DataModifier {
 
 	private static final String COPYRIGHT_COMMENTS = "\t<!--\n" +
 			"\t\tD3 Copyright \u00a9 2012, Michael Bostock\n" +
@@ -67,14 +87,88 @@ public class D3Builder extends AbstractBuilder {
 		return new D3Builder(options);
 	}
 
+	protected final BuilderOptions options;
+	protected final Map<Integer, Integer> nesting;    // Which charts are nested within which other ones
+	protected Controls controls;                    // Contains the controls for the current chart
+
 	private ScriptWriter out;                   // Where to write code
 	public int visWidth, visHeight;             // Overall vis size
 	private D3ScaleBuilder scalesBuilder;       // The scales for the current chart
 	private ElementBuilder[] elementBuilders; // Builder for each element
 	private boolean hasMultipleCharts;          // flag to indicate multiple charts in the same vis
+	private StyleSheet visStyles;                   // Collection of style overrides for this visualization
+	private Dataset[] datasets;                     // datasets used by this visualization
 
 	private D3Builder(BuilderOptions options) {
-		super(options);
+		this.options = options;
+		nesting = new HashMap<>();
+
+	}
+
+	/**
+	 * Builds the visualization
+	 *
+	 * @param main   the description of the visualization to build
+	 * @param width  pixel width of the rectangle into which the visualization is to be put
+	 * @param height pixel height of the rectangle into which the visualization is to be put
+	 */
+	public final void build(VisItem main, int width, int height) {
+
+		// Clear existing collections and prepare for new controls
+		visStyles = new StyleSheet();
+		controls = new Controls(options);
+		datasets = main.getDataSets();
+
+		// Create the main visualization area
+		defineVisSystem(main, width, height);
+
+		// The build process for each item is the same, regardless of composition method:
+		// - calculate the location for it relative to the defined space
+		// - build the data (giving it a an ID that is unique within the vis)
+		// - build the item, which stores controls and styles, and then calls the descendant's createSingle method
+
+		VisItem[] children = main.children();
+		if (children == null) {
+			// For a single, one-element visualization, treat as a tiling of one chart
+			buildTiledCharts(width, height, new VisItem[]{main.getSingle()});
+		} else {
+			VisTypes.Composition compositionMethod = ((VisComposition) main).method;
+
+			if (compositionMethod == VisTypes.Composition.tile) {
+				// We define a set of charts and build them, tiling them into the space.
+				buildTiledCharts(width, height, children);
+			} else if (compositionMethod == VisTypes.Composition.overlay) {
+				// If we have a set of compositions, they are placed into the whole area
+				double[] loc = new ChartLayout(width, height, main).getLocation(0);
+				buildSingleChart(0, children, loc, null, null);
+			} else if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
+				buildNestedChart(width, height, children);
+			}
+
+		}
+
+		endVisSystem(main);
+	}
+
+	/**
+	 * Returns the options used for building the visualization
+	 *
+	 * @return options used
+	 */
+	public final BuilderOptions getOptions() {
+		return options;
+	}
+
+	/**
+	 * Some visualizations may re-define or add to the standard styles. This will be a CSS-compatible
+	 * set of style definitions. It will be suitable for placing within a HTML <code>style</code> section.
+	 * The styles will all be scoped to affect only <code>brunel</code> classes and (if required) the
+	 * correct chart within the visualization system.
+	 *
+	 * @return non-null, but possibly empty CSS styles definition
+	 */
+	public String getStyleOverrides() {
+		return visStyles.toString("#" + options.visIdentifier + ".brunel");
 	}
 
 	public String getVisualization() {
@@ -169,6 +263,89 @@ public class D3Builder extends AbstractBuilder {
 
 		// Symbols need to be added to the svg definitions block
 		structure.symbols.addDefinitions(out);
+	}
+
+	// Builds controls as needed, then the custom styles, then the visualization
+	private void buildElement(ElementStructure structure) {
+		try {
+			// Note that controls need the ORIGINAL dataset; the one passed in has been transformed
+
+			//The index of the dataset containing the field to filter
+			int datasetIndex = structure.chart.getBaseDatasetIndex(structure.vis.getDataset());
+
+			controls.buildControls(structure.vis, structure.vis.getDataset(), datasetIndex);
+
+			defineElement(structure);
+			if (structure.vis.styles != null) {
+				StyleSheet styles = structure.vis.styles.replaceClass("currentElement", "element" + structure.elementID());
+				visStyles.add(styles, "chart" + structure.chart.chartID());
+			}
+		} catch (Exception e) {
+			throw VisException.makeBuilding(e, structure.vis);
+		}
+	}
+
+	private void buildNestedChart(int width, int height, VisItem[] children) {
+		// The following rules should be ensured by the parser
+		if (children.length != 2)
+			throw new IllegalStateException("Nested charts only implemented for exactly one inner, one outer");
+		if (children[0].children() != null)
+			throw new IllegalStateException("Inner chart in nesting must be atomic");
+		if (children[1].children() != null)
+			throw new IllegalStateException("Outer chart in nesting must be atomic");
+
+		VisSingle inner = children[1].getSingle();
+		VisSingle outer = children[0].getSingle();
+
+		// For now, just deal with simple case of two charts, 0 and 1
+		nesting.put(1, 0);
+		double[] loc = new ChartLayout(width, height, outer).getLocation(0);
+		ChartStructure outerStructure = buildSingleChart(0, new VisItem[]{outer}, loc, null, 1);
+		loc = new ChartLayout(width, height, inner).getLocation(0);
+		buildSingleChart(1, new VisItem[]{inner}, loc, outerStructure, null);
+	}
+
+	private ChartStructure buildSingleChart(int chartIndex, VisItem[] items, double[] loc, ChartStructure outer, Integer innerChartIndex) {
+
+		// Assemble the elements and data
+		Dataset[] data = new Dataset[items.length];
+		VisSingle[] elements = new VisSingle[items.length];
+		for (int i = 0; i < items.length; i++) {
+			elements[i] = items[i].getSingle().makeCanonical();
+			data[i] = new DataBuilder(elements[i], this).build();
+		}
+
+		ChartStructure structure = new ChartStructure(chartIndex, elements, data, datasets, outer, innerChartIndex, options.visIdentifier);
+		structure.accessible = options.accessibleContent;
+
+		defineChart(structure, loc);
+		for (ElementStructure e : structure.elementStructure) buildElement(e);
+		endChart(structure);
+		return structure;
+	}
+
+	/* Build independent charts tiled into the same display area */
+	private void buildTiledCharts(int width, int height, VisItem[] charts) {
+		ChartLayout layout = new ChartLayout(width, height, charts);
+
+		for (int i = 0; i < charts.length; i++) {
+			VisItem chart = charts[i];
+			double[] loc = layout.getLocation(i);
+			VisItem[] items = chart.children();
+
+			if (items == null) {
+				// The chart is a single element
+				buildSingleChart(i, new VisItem[]{chart}, loc, null, null);
+			} else {
+				VisTypes.Composition compositionMethod = ((VisComposition) chart).method;
+				if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
+					buildNestedChart(width, height, items);
+				} else {
+					buildSingleChart(i, items, loc, null, null);
+				}
+			}
+		}
+
 	}
 
 	private boolean forceSquare(VisSingle[] elements) {
