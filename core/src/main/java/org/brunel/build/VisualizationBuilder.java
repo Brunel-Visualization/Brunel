@@ -18,15 +18,18 @@ package org.brunel.build;
 
 import org.brunel.action.Param;
 import org.brunel.build.controls.Controls;
-import org.brunel.build.element.ElementBuilder;
-import org.brunel.build.titles.ChartTitleBuilder;
+import org.brunel.build.data.DataBuilder;
 import org.brunel.build.data.DataModifier;
 import org.brunel.build.data.DataTransformParameters;
+import org.brunel.build.data.DatasetBuilder;
+import org.brunel.build.element.ElementBuilder;
 import org.brunel.build.info.ChartLayout;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
+import org.brunel.build.titles.ChartTitleBuilder;
 import org.brunel.build.util.Accessibility;
 import org.brunel.build.util.BuilderOptions;
+import org.brunel.build.util.SVGGroupUtility;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
@@ -86,22 +89,20 @@ public class VisualizationBuilder implements DataModifier {
 		return new VisualizationBuilder(options);
 	}
 
-	protected final BuilderOptions options;
-	protected final Map<Integer, Integer> nesting;    // Which charts are nested within which other ones
-	protected Controls controls;                    // Contains the controls for the current chart
+	private final BuilderOptions options;
+	private final Map<Integer, Integer> nesting;    // Which charts are nested within which other ones
+	private Controls controls;                        // Contains the controls for the current chart
 
-	private ScriptWriter out;                   // Where to write code
-	public int visWidth, visHeight;             // Overall vis size
-	private ScaleBuilder scalesBuilder;       // The scales for the current chart
-	private ElementBuilder[] elementBuilders; // Builder for each element
-	private boolean hasMultipleCharts;          // flag to indicate multiple charts in the same vis
+	private ScriptWriter out;                    // Where to write code
+	public int visWidth, visHeight;                // Overall vis size
+	private ScaleBuilder scalesBuilder;            // The scales for the current chart
+	private ElementBuilder[] elementBuilders;        // Builder for each element
 	private StyleSheet visStyles;                   // Collection of style overrides for this visualization
 	private Dataset[] datasets;                     // datasets used by this visualization
 
 	private VisualizationBuilder(BuilderOptions options) {
 		this.options = options;
 		nesting = new HashMap<>();
-
 	}
 
 	/**
@@ -119,7 +120,7 @@ public class VisualizationBuilder implements DataModifier {
 		datasets = main.getDataSets();
 
 		// Create the main visualization area
-		defineVisSystem(main, width, height);
+		defineVisSystem(width, height);
 
 		// The build process for each item is the same, regardless of composition method:
 		// - calculate the location for it relative to the defined space
@@ -203,7 +204,7 @@ public class VisualizationBuilder implements DataModifier {
 		return base;
 	}
 
-	protected void defineChart(ChartStructure structure, double[] location) {
+	private void defineChart(ChartStructure structure, double[] location) {
 
 		// Calculate the margins for this chart within the overall size
 		double[] chartMargins = new double[]{
@@ -311,7 +312,7 @@ public class VisualizationBuilder implements DataModifier {
 		VisSingle[] elements = new VisSingle[items.length];
 		for (int i = 0; i < items.length; i++) {
 			elements[i] = items[i].getSingle().makeCanonical();
-			data[i] = new org.brunel.build.data.DataBuilder(elements[i], this).build();
+			data[i] = new DatasetBuilder(elements[i], this).build();
 		}
 
 		ChartStructure structure = new ChartStructure(chartIndex, elements, data, datasets, outer, innerChartIndex, options.visIdentifier);
@@ -369,7 +370,7 @@ public class VisualizationBuilder implements DataModifier {
 			elementBuilders[i] = ElementBuilder.make(structures[i], out, scalesBuilder);
 	}
 
-	protected void defineElement(ElementStructure structure) {
+	private void defineElement(ElementStructure structure) {
 
 		ElementBuilder elementBuilder = elementBuilders[structure.index];
 
@@ -419,11 +420,10 @@ public class VisualizationBuilder implements DataModifier {
 		out.indentLess().onNewLine().add("}()").endStatement().ln();
 	}
 
-	protected void defineVisSystem(VisItem main, int width, int height) {
+	private void defineVisSystem(int width, int height) {
 		this.visWidth = width;
 		this.visHeight = height;
 		this.out = new ScriptWriter(options);
-		this.hasMultipleCharts = main.children() != null && main.children().length > 1;
 
 		// Write the class definition function (and flag to use strict mode)
 		out.add("function ", options.className, "(visId) {").ln().indentMore();
@@ -444,7 +444,7 @@ public class VisualizationBuilder implements DataModifier {
 				.at(6).comment("Ensure defs element is present");
 	}
 
-	protected void endChart(ChartStructure structure) {
+	private void endChart(ChartStructure structure) {
 		out.onNewLine().add("function build(time, noData) {").indentMore();
 
 		out.onNewLine().add("var first = elements[0].data() == null").endStatement();
@@ -502,7 +502,7 @@ public class VisualizationBuilder implements DataModifier {
 
 	}
 
-	protected void endVisSystem(VisItem main) {
+	private void endVisSystem(VisItem main) {
 
 		// Define how we set the data into the system
 		out.add("function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }").ln();
@@ -735,7 +735,8 @@ public class VisualizationBuilder implements DataModifier {
 			out.add("var chart = ", groupUtil.createChart());
 		}
 
-		if (hasMultipleCharts) groupUtil.addAccessibleChartInfo();
+		// Only write group info if we have multiple elements within the chart
+		if (structure.elements.length > 1) groupUtil.addAccessibleChartInfo();
 
 		out.addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top")).endStatement();
 

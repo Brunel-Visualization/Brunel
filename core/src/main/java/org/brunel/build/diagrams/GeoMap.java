@@ -17,7 +17,7 @@
 package org.brunel.build.diagrams;
 
 import org.brunel.build.LabelBuilder;
-import org.brunel.build.BuildUtil;
+import org.brunel.build.util.BuildUtil;
 import org.brunel.build.element.ElementBuilder;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.element.ElementRepresentation;

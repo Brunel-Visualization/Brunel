@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.brunel.build;
+package org.brunel.build.util;
 
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.util.Accessibility;

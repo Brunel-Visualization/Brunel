@@ -17,15 +17,32 @@
 package org.brunel.build.data;
 
 import org.brunel.action.Param;
+import org.brunel.build.util.BuildUtil;
+import org.brunel.build.util.BuildUtil.DateBuilder;
+import org.brunel.build.InteractionDetails;
+import org.brunel.build.info.ElementStructure;
+import org.brunel.build.util.BuilderOptions;
+import org.brunel.build.util.BuilderOptions.DataMethod;
+import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.data.Fields;
+import org.brunel.data.summary.FieldRowComparison;
+import org.brunel.data.util.DateFormat;
+import org.brunel.data.util.Range;
+import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
+import org.brunel.model.VisTypes.Diagram;
+import org.brunel.model.VisTypes.Element;
+import org.brunel.model.VisTypes.Interaction;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -33,325 +50,429 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 /**
- * A class for manipulating and building data structures
+ * Write the Javascript for the data
  */
 public class DataBuilder {
 
-    private final DataModifier modifier;
-    private final VisSingle vis;
+	public static void writeTables(VisItem main, ScriptWriter out, BuilderOptions options) {
+		if (options.includeData == DataMethod.none) return;
+		if (options.includeData == DataMethod.minimal) {
+			throw new UnsupportedOperationException("Cannot make minimal data yet");
+		}
 
-    /**
-     * Constructor
-     *
-     * @param vis the vis to build the data for
-     */
-    public DataBuilder(VisSingle vis) {
-        this(vis, null);
-    }
+		out.titleComment("Data Tables");
 
-    /**
-     * Constructor
-     *
-     * @param vis      the vis to build the data for
-     * @param modifier a class that modifies the data parameters after they have been created (may be null)
-     */
-    public DataBuilder(VisSingle vis, DataModifier modifier) {
-        this.vis = vis;
-        this.modifier = modifier;
-    }
+		NumberFormat format = new DecimalFormat();
+		format.setGroupingUsed(false);
+		format.setMinimumFractionDigits(0);
+		format.setMaximumFractionDigits(8);
 
-    /**
-     * This builds the data and reports the built data to the builder
-     *
-     * @return built dataset
-     */
-    public Dataset build() {
+		Dataset[] datasets = main.getDataSets();
+		for (int d = 0; d < datasets.length; d++) {
+			Dataset data = datasets[d];
+			Field[] fields;
 
-        String constantsCommand = makeConstantsCommand();
-        String filterCommand = makeFilterCommands();
-        String eachCommand = makeEachCommands();
-        String binCommand = makeTransformCommands();
-        String summaryCommand = buildSummaryCommands();
-        String sortCommand = makeFieldCommands();
-        String seriesYFields = makeSeriesCommand();
-        String setRowCountCommand = makeSetRowCountCommand();
-        String usedFields = required();
+			if (options.includeData == DataMethod.columns) {
+				// Only the fields needed by the vis items
+				LinkedHashSet<Field> fieldsAsSet = new LinkedHashSet<>();
+				addUsedFields(main, data, fieldsAsSet);
+				fields = fieldsAsSet.toArray(new Field[fieldsAsSet.size()]);
+			} else {
+				// All the fields
+				fields = data.fields;
+			}
 
-        DataTransformParameters params = new DataTransformParameters(constantsCommand,
-                filterCommand, eachCommand, binCommand, summaryCommand, "", sortCommand, "", seriesYFields,
-                setRowCountCommand, usedFields);
+			if (fields.length == 0) {
+				// A Chart that doesn't actually use the data ... just meta values
+				fields = new Field[]{Fields.makeConstantField("_dummy_", "Dummy", 1.0, data.rowCount())};
+			}
 
-        // Call the engine to see if it has any special needs
-        if (modifier != null) params = modifier.modifyParameters(params, vis);
+			// Name the table with a numeric suffix for multiple tables
+			out.onNewLine().add("var", String.format(options.dataName, d + 1), "= {").indentMore();
 
-        Dataset data = vis.getDataset();                                                // The data to use
-        data = data.addConstants(params.constantsCommand);                              // add constant fields
-        data = data.each(params.eachCommand);                                           // divide up fields into parts
-        data = data.filter(params.filterCommand);                                       // filter data
-        data = data.transform(params.transformCommand);                                 // bin, rank, ... on data
-        data = data.summarize(params.summaryCommand);                                   // summarize data
-        data = data.series(params.seriesCommand);                                       // convert series
-        data = data.setRowCount(params.rowCountCommand);                                // set the number of rows
-        data = data.sort(params.sortCommand);                                           // sort data
-        data = data.sortRows(params.sortRowsCommand);                                   // sort rows only
-        data = data.stack(params.stackCommand);                                         // stack data
-        data.set("parameters", params);                                                 // Params used to build this
-        return data;
-    }
+			out.onNewLine().add(" names: [");
+			for (int i = 0; i < fields.length; i++) {
+				if (fields[i].isSynthetic()) continue;
+				String name = fields[i].name;
+				if (i > 0) out.add(", ");
+				out.add("'").add(name).add("'");
+			}
+			out.add("], ");
 
-    /**
-     * Utility to get the built data from a Vis
-     *
-     * @param vis target to get the built data from
-     * @return transformed data set
-     */
-    public static Dataset getTransformedData(VisSingle vis) {
-        return new DataBuilder(vis.makeCanonical()).build();
-    }
+			out.onNewLine().add(" options: [");
+			for (int i = 0; i < fields.length; i++) {
+				if (fields[i].isSynthetic()) continue;
+				String name;
+				if (fields[i].isDate())
+					name = "date";
+				else if (fields[i].isProperty("list"))
+					name = "list";
+				else if (fields[i].isNumeric())
+					name = "numeric";
+				else
+					name = "string";
+				if (i > 0) out.add(", ");
+				out.add("'").add(name).add("'");
+			}
+			out.add("], ");
 
-    private int getParameterIntValue(Param param, int defaultValue) {
-        if (param == null) return defaultValue;
-        if (param.isField()) {
-            // The parameter is a field, so we examine the modifier for the int value
-            return getParameterIntValue(param.firstModifier(), defaultValue);
-        } else {
-            // The parameter is a value
-            return (int) param.asDouble();
+			out.onNewLine().add(" rows: [");
+
+			for (int r = 0; r < data.rowCount(); r++) {
+				if (r > 0) out.add(",");
+				String rowText = makeRowText(fields, r, format);
+				if (out.currentColumn() + rowText.length() > 99)
+					out.onNewLine();
+				else if (r > 0)
+					out.add(" ");
+				out.add(rowText);
+			}
+			out.add("]");
+			out.indentLess().onNewLine().add("}").endStatement();
+		}
+	}
+
+	private static void addUsedFields(VisItem item, Dataset data, Collection<Field> fields) {
+		if (item.children() == null) {
+			VisSingle vis = (VisSingle) item;                           // No children => VisSingle
+			if (vis.getDataset() != data) return;                       // Does not use this data set, so ignore it
+			for (String f : vis.usedFields(true))                       // Yes! Add in the fields to be used
+				if (!f.startsWith("#")) {                               // .. but not synthetic fields
+					Field field = data.field(f, true);                  // Constant fields will not be found
+					if (field != null) fields.add(field);
+				}
+		} else {
+			for (VisItem i : item.children())                           // Pass down to child items
+				addUsedFields(i, data, fields);
+		}
+	}
+
+	// If the row contains any nulls, return null for the whole row
+	private static String makeRowText(Field[] fields, int r, NumberFormat format) {
+		StringBuilder row = new StringBuilder();
+		DateBuilder dateBuilder = new DateBuilder();
+		row.append("[");
+		for (int i = 0; i < fields.length; i++) {
+			Field field = fields[i];
+			if (field.name.startsWith("#")) continue;           // Skip special fields
+			if (i > 0) row.append(", ");
+			Object value = field.value(r);
+			if (value == null) {
+				row.append("null");
+			} else if (value instanceof Range) {
+				row.append(Data.quote(value.toString()));
+			} else if (field.isDate()) {
+				Date date = Data.asDate(value);
+				if (date == null) row.append("null");
+				else row.append(dateBuilder.make(date, (DateFormat) field.property("dateFormat"), false));
+			} else if (field.isNumeric()) {
+				Double d = Data.asNumeric(value);
+				if (d == null) row.append("null");
+				else row.append(format.format(d));
+			} else
+				row.append(Data.quote(value.toString()));
+		}
+		row.append("]");
+		return row.toString();
+	}
+
+	private final VisSingle vis;
+	private final ScriptWriter out;
+	private final Dataset data;
+	private final int datasetIndex;
+
+	public DataBuilder(ElementStructure structure, ScriptWriter out, int index) {
+		this.vis = structure.vis;
+		this.data = structure.data;
+		this.out = out;
+		datasetIndex = index;
+	}
+
+	public void writeDataManipulation(Map<String, Integer> requiredFields) {
+		out.onNewLine().ln().add("function makeData() {").ln().indentMore();
+
+		// Guides do not use data, just the fields around it
+		if (vis.tGuides.isEmpty()) {
+			writeDataTransforms();
+			writeHookup(requiredFields);
+		}
+		out.indentLess().onNewLine().add("}").ln();
+	}
+
+	private void writeDataTransforms() {
+		// The parameters are stored in the data set when it is transformed
+		DataTransformParameters params = (DataTransformParameters) data.property("parameters");
+
+		out.add("original = datasets[" + datasetIndex + "]").endStatement();
+		out.add("if (filterRows) original = original.retainRows(filterRows)").endStatement();
+		out.add("processed = pre(original,", datasetIndex, ")");
+		out.mark();
+		writeTransform("addConstants", params.constantsCommand);
+
+		// Check for selection filtering
+		Param param = InteractionDetails.getInteractionParam(vis, Interaction.filter);
+		if (param != null) {
+			if ("unselected".equals(param.asString()))
+				writeTransform("filter", "#selection is " + Field.VAL_UNSELECTED);
+			else
+				writeTransform("filter", "#selection is " + Field.VAL_SELECTED);
+		}
+
+		writeTransform("each", params.eachCommand);
+		writeTransform("transform", params.transformCommand);
+		writeTransform("summarize", params.summaryCommand);
+		writeTransform("filter", params.filterCommand);
+
+		// Because series creates duplicates of fields, it is an expensive transformation
+		// So we do not want to make it work on all fields, only the fields that are necessary.
+		// So we reduce the data set to only necessary fields (summarize already does this, so
+		// this step is not needed if summarize has been performed)
+		if (!params.seriesCommand.isEmpty()) {
+			if (params.summaryCommand.isEmpty()) writeTransform("reduce", params.usedCommand);
+			writeTransform("series", params.seriesCommand);
+		}
+		writeTransform("setRowCount", params.rowCountCommand);
+
+		writeTransform("sort", params.sortCommand);
+
+		writeTransform("stack", params.stackCommand);               // Stack must come after all else
+
+		if (vis.tDiagram == Diagram.network && vis.fY.size() > 1) {
+			// We are using the 'Y' values to generate a set of identifier
+			// We need to ensure the values are set in the summary, as well as any aesthetics
+			String command = "#values=#values";
+			for (String s : vis.aestheticFields()) if (!s.equals("#values")) command += ";" + s + "=" + s;
+			writeTransform("summarize", command);
+		}
+
+		writeTransform("sortRows", params.sortRowsCommand);
+
+		out.endStatement();
+		out.add("processed = post(processed,", datasetIndex, ")").endStatement();
+	}
+
+	private void writeHookup(Map<String, Integer> fieldsToIndex) {
+
+		// Get the list of fields we need as an array
+		String[] fields = new String[fieldsToIndex.size()];
+		for (Entry<String, Integer> e : fieldsToIndex.entrySet()) {
+			fields[e.getValue()] = e.getKey();
+		}
+
+		out.onNewLine().add("var ");
+
+		// Create references to the base fields
+		for (int i = 0; i < fields.length; i++) {
+			if (i > 0) out.onNewLine();
+			else out.indentMore();
+			out.add("f" + i, "= processed.field(" + out.quote(fields[i]) + ")");
+			if (i == fields.length - 1) out.endStatement();
+			else out.add(",");
+		}
+		out.indentLess();
+
+		// Define the key function
+		out.add("var keyFunc = ");
+		defineKeyFieldFunction(makeKeyFields(), false, fieldsToIndex);
+		out.endStatement();
+
+		out.add("data = {").ln().indentMore();
+
+		// Add field definitions
+		for (int fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
+			String fieldID = BuildUtil.canonicalFieldName(fields[fieldIndex]);
+			out.add(fieldID, ":").at(24).add("function(d) { return f" + fieldIndex + ".value(d.row) },").ln();
+		}
+
+		// Add formatted field definitions
+		for (int fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
+			String fieldID = BuildUtil.canonicalFieldName(fields[fieldIndex]);
+			out.add(fieldID + "_f", ":").at(24).add("function(d) { return f" + fieldIndex + ".valueFormatted(d.row) },").ln();
+		}
+		// Add special items
+		out.add("_split:").at(24);
+		defineKeyFieldFunction(makeSplitFields(), true, fieldsToIndex);
+		out.add(",").ln();
+		out.add("_key:").at(24).add("keyFunc").add(",").ln();
+		out.add("_rows:").at(24).add("BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())");
+
+        if (vis.fKeys.size() == 1 && vis.fX.size() == 1 && vis.fY.size() == 1) {
+            out.add(",").ln();
+            String id = "f" + fieldsToIndex.get(vis.fKeys.get(0).asField());
+            String x = "f" + fieldsToIndex.get(vis.fX.get(0).asField());
+            String y = "f" + fieldsToIndex.get(vis.fY.get(0).asField());
+            out.add("_idToPoint:").at(24).add("BrunelD3.locate(" + id, ", ", x, ",", y, ", processed.rowCount())");
         }
-    }
 
-    String buildSummaryCommands() {
-        Map<String, String> spec = new LinkedHashMap<>();
+		out.onNewLine().indentLess().add("}").endStatement();
+	}
 
-        // We must account for all of these except for the special fields series and values
-        // These are handled later in the pipeline and need no changes right now
-        Set<String> fields = new LinkedHashSet<>(Arrays.asList(vis.usedFields(false)));
-        fields.remove("#series");
-        fields.remove("#values");
-        fields.remove("#all");
+	private void writeTransform(String name, String command) {
+		// Ignore if nothing to write
+		if (!command.isEmpty())
+			out.addChained(name, "(" + out.quote(command) + ")");
+	}
 
-        // Add the summary measures
-        for (Entry<Param, String> e : vis.fSummarize.entrySet()) {
-            Param p = e.getKey();
-            String name = p.asField();
-            String measure = e.getValue();
-            if (p.hasModifiers()) measure += ":" + p.firstModifier().asString();
-            spec.put(name, name + ":" + measure);
-            fields.remove(name);
-        }
+	private void defineKeyFieldFunction(List<String> fields, boolean actsOnRowObject, Map<String, Integer> usedFields) {
+		// Add the split fields accessor
+		out.add("function(d) { return ");
+		if (fields.isEmpty()) {
+			out.add("'ALL'");
+		} else {
+			for (int i = 0; i < fields.size(); i++) {
+				String s = fields.get(i);
+				if (i > 0) out.add("+ '|' + ");
+				out.add("f" + usedFields.get(s));
+				out.add(actsOnRowObject ? ".value(d.row)" : ".value(d)");
+			}
+		}
+		out.add(" }");
+	}
 
-        // If #count is used (and not summarized) add it in as a sum
-        if (fields.contains("#count")) {
-            spec.put("#count", "#count:sum");
-            fields.remove("#count");
-        }
+	/**
+	 * The keys are used so that transitions when the data changes are logically consistent.
+	 * We want the right things to morph into each color as the data changes, and not be
+	 * dependent on table order. The following code works out the most likely items to be the keys
+	 * based on the type of chart being produced
+	 *
+	 * @return list of keys
+	 */
+	public List<String> makeKeyFields() {
+		// If we have defined keys, util them
+		if (!vis.fKeys.isEmpty()) return asFields(vis.fKeys);
 
-        // If we have nothing to summarize, we are done -- no responses mean no summarization needed
-        if (spec.isEmpty()) return "";
+		// Handle diagrams specially
+		if (vis.tDiagram != null)
+			return makeKeyFieldForDiagram(vis.tDiagram);
 
-        // X fields are used for the percentage bases unless they have been declared as summaries
-        for (Param s : vis.fX) {
-            String field = s.asField();
-            if (fields.contains(field)) {
-                spec.put(field, field + ":base");
-                fields.remove(field);
-            }
-        }
+		if (vis.tElement.producesSingleShape) {
+			// If we split by aesthetics, they are the keys
+			List<String> list = makeSplitFields();
+			removeSynthetic(list);
+			return list;
+		}
 
-        // Anything remaining is used as a simple factor
-        for (String s : fields) spec.put(s, s);
+		// Only want categorical / date position fields, also aesthetic fields
+		Set<String> result = new LinkedHashSet<>();
 
-        // Assemble into a string
-        List<String> result = new ArrayList<>();
-        for (Entry<String, String> e : spec.entrySet())
-            result.add(e.getKey() + "=" + e.getValue());
-        return Data.join(result, "; ");
-    }
+		if (vis.fY.size() > 1) {
+			// The Y fields all become "#values"
+			result.add("#values");
+			addIfCategorical(result, vis.fX);
+		} else {
+			addIfCategorical(result, vis.positionFields());
+		}
+		addIfCategorical(result, vis.aestheticFields());
 
-    private String getParameterFieldValue(Param param) {
+		removeSynthetic(result);
 
-        if (param != null && param.isField()) {
-            // Usual case of a field specified
-            return param.asField();
-        } else {
-            // Try Y fields then aesthetic fields
-            if (vis.fY.size() == 1) {
-                String s = vis.fY.get(0).asField();
-                if (!s.startsWith("'") && !s.startsWith("#")) return s;       // If it's a real field
-            }
-            if (vis.aestheticFields().length > 0) return vis.aestheticFields()[0];
-            return "#row";      // If all else fails
-        }
-    }
+		if (!suitableForKey(result)) {
+			result.clear();
+			result.add("#row");
 
-    private String makeConstantsCommand() {
-        List<String> toAdd = new ArrayList<>();
-        for (String f : vis.usedFields(false)) {
-            if (!f.startsWith("#") && vis.getDataset().field(f) == null) {
-                // Field does not exist -- assume it is a constant and add it
-                toAdd.add(f);
-            }
-        }
-        return Data.join(toAdd, "; ");
-    }
+			// Multiple rows have the same "#row" when we do make series
+			if (vis.fY.size() > 1) result.add("#series");
 
-    private String makeFieldCommands() {
-        List<Param> params = vis.fSort;
-        String[] commands = new String[params.size()];
-        for (int i = 0; i < params.size(); i++) {
-            Param p = params.get(i);
-            String s = p.asField();
-            if (p.hasModifiers())
-                commands[i] = s + ":" + p.firstModifier().asString();
-            else
-                commands[i] = s;
-        }
-        return Data.join(commands, "; ");
-    }
+			// Multiple rows have the same "#row" when we split up a list field using "each"
+			for (Entry<Param, String> e : vis.fTransform.entrySet()) {
+				if (e.getValue().equals("each")) result.add(e.getKey().asField());
+			}
+		}
 
-    private String makeFilterCommands() {
-        List<String> commands = new ArrayList<>();
+		return new ArrayList<>(result);
+	}
 
-        // All position fields must be valid for coordinate charts-- filter if not
-        if (vis.tDiagram == null) {
-            String[] pos = vis.positionFields();
-            for (String s : pos) {
-                Field f = vis.getDataset().field(s);
-                if (f == null) continue;        // May have been added as a constant -- no need to filter
-                if (f.numProperty("valid") < f.rowCount())
-                    commands.add(s + " valid");
-            }
-        }
+	private void removeSynthetic(Collection<String> result) {
+		// Remove synthetic fields except #values and #series
+		result.remove("#selection");
+		result.remove("#row");
+		result.remove("#count");
+	}
 
-        for (Entry<Param, String> e : vis.fTransform.entrySet()) {
-            String operation = e.getValue();
-            Param key = e.getKey();
-            String name = getParameterFieldValue(key);
-            Field f = vis.getDataset().field(name);
-            int N;
-            if (f == null) {
-                // The field must be a constant or created field -- get length from data set
-                N = vis.getDataset().rowCount();
-            } else {
-                name = f.name;              // Make sure we use the canonical (not lax) name
-                N = f.valid();              // And we can use the valid ones
-            }
+	private List<String> makeKeyFieldForDiagram(Diagram diagram) {
+		Set<String> result = new LinkedHashSet<>();
 
-            if (name.equals("#row")) {
-                // Invert 'top' and 'bottom' as row #1 is the top one, not the bottom
-                if (operation.equals("top")) operation = "bottom";
-                else if (operation.equals("bottom")) operation = "top";
-            }
+		if (diagram == Diagram.network) {
+			// The following handles the case when we use the edges as y values to make a key field for the nodes
+			if (vis.fY.size() > 1) return Collections.singletonList("#values");
+		}
 
-            int n = getParameterIntValue(key, 10);
-            if (operation.equals("top"))
-                commands.add(name + " ranked 1," + n);
-            else if (operation.equals("bottom")) {
-                commands.add(name + " ranked " + (N - n) + "," + N);
-            } else if (operation.equals("inner")) {
-                commands.add(name + " ranked " + n + "," + (N - n));
-            } else if (operation.equals("outer")) {
-                commands.add(name + " !ranked " + n + "," + (N - n));
-            }
-        }
+		// All position fields are needed for diagrams
+		Collections.addAll(result, vis.positionFields());
 
-        return Data.join(commands, "; ");
-    }
+		// Categorical aesthetic fields for everything except maps
+		if (diagram != Diagram.map) {
+			addIfCategorical(result, vis.aestheticFields());
+		}
 
-    private String makeSetRowCountCommand() {
+		// Check it's OK
+		if (suitableForKey(result)) {
+			// Try and remove "#selection" if we can
+			ArrayList<String> list = new ArrayList<>(result);
+			if (result.contains("#selection")) {
+				list.remove("#selection");
+				if (!suitableForKey(list)) list.add("#selection");
+			}
+			return list;
+		}
 
-        String field = null;
-        int count = 100;                                                    // Default to 100 rows
+		// If not, we give up and just use the row
+		return Collections.singletonList("#row");
+	}
 
-        for (Entry<Param, String> e : vis.fTransform.entrySet()) {
-            if (!e.getValue().equals("rows")) continue;
-            Param p = e.getKey();
+	private void addIfCategorical(Collection<String> result, String... fieldNames) {
+		for (String f : fieldNames) {
+			Field field = data.field(f, true);
+			if ((field.preferCategorical() || field.isDate()) && !field.isProperty("calculated")) result.add(f);
+		}
+	}
 
-            // We default to using the count field
-            if (p.isField()) {
-                field = p.asField();
-                p = p.firstModifier();
-            } else {
-                field = "#count";
-            }
-            if (p != null) count = (int) p.asDouble();
-        }
+	private void addIfCategorical(Collection<String> result, Collection<Param> fieldNames) {
+		for (Param p : fieldNames) {
+			String f = p.asField(data);
+			Field field = data.field(f);
+			if ((field.preferCategorical() || field.isDate()) && !field.isProperty("calculated")) result.add(f);
+		}
+	}
 
-        return field == null ? "" : field + "," + count;
-    }
+	private List<String> makeSplitFields() {
+		// Start with all the aesthetics
+		ArrayList<String> splitters = new ArrayList<>();
 
-    private String makeEachCommands() {
-        List<String> commands = new ArrayList<>();
-        for (Entry<Param, String> e : vis.fTransform.entrySet()) {
-            String operation = e.getValue();
-            Param key = e.getKey();
-            String name = getParameterFieldValue(key);
-            Field f = vis.getDataset().field(name);
-            if (operation.equals("each"))
-                commands.add(f.name);
-        }
-        return Data.join(commands, "; ");
-    }
+		// Always add splits and color
+		for (Param p : vis.fSplits) splitters.add(p.asField());
+		for (Param p : vis.fColor) splitters.add(p.asField());
+		for (Param p : vis.fOpacity) splitters.add(p.asField());
+		for (Param p : vis.fCSS) splitters.add(p.asField());
+		for (Param p : vis.fSymbol) splitters.add(p.asField());
 
-    private String makeSeriesCommand() {
-        if (!needsSeries()) return "";
-        /*
-            The command is of the form:
-                    y1, y2, y3; a1, a2
-            Where the fields y1 ... are the fields to makes the series`
-            and the additional fields a1... are ones required to be kept as-is.
-            #series and #values are always generated, so need to retain them additionally
-        */
+		// We handle sized areas specially -- don't split using the size for them
+		if (vis.tElement != Element.line && vis.tElement != Element.path) {
+			for (Param p : vis.fSize) splitters.add(p.asField());
+		}
 
-        LinkedHashSet<String> keep = new LinkedHashSet<>();
-        for (Param p : vis.fX) keep.add(p.asField());
-        Collections.addAll(keep, vis.nonPositionFields());
-        keep.remove("#series");
-        keep.remove("#values");
-        StringBuilder b = new StringBuilder();
-        for (Param p : vis.fY) {
-            if (b.length() > 0) b.append(",");
-            b.append(p.asField());
-        }
-        b.append(";").append(Data.join(keep));
-        return b.toString();
-    }
+		return splitters;
+	}
 
-    private boolean needsSeries() {
-        for (String s : vis.usedFields(false))
-            if (s.equals("#series") || s.equals("#values")) return true;
-        return false;
-    }
+	private List<String> asFields(List<Param> items) {
+		List<String> fields = new ArrayList<>();
+		for (Param p : items) fields.add(p.asField());
+		return fields;
+	}
 
-    /*
-        Builds the command to transform fields without summarizing -- ranks, bin, inside and outside
-        The commands look like this:
-            salary=bin:10; age=rank; education=outside:90
-     */
-    private String makeTransformCommands() {
-        if (vis.fTransform.isEmpty()) return "";
-        StringBuilder b = new StringBuilder();
-        for (Entry<Param, String> e : vis.fTransform.entrySet()) {
-            Param p = e.getKey();
-            String name = p.asField();
-            String measure = e.getValue();
-            if (measure.equals("bin") || measure.equals("rank")) {
-                if (p.hasModifiers()) measure += ":" + p.firstModifier().asString();
-                if (b.length() > 0) b.append("; ");
-                b.append(name).append("=").append(measure);
-            }
-        }
-        return b.toString();
-    }
+	private boolean suitableForKey(Collection<String> result) {
+		if (result.isEmpty()) return false;
+		Field[] fields = new Field[result.size()];
 
-    private String required() {
-        String[] fields = vis.usedFields(true);
-        List<String> result = new ArrayList<>();
-        Collections.addAll(result, fields);
+		int index = 0;
+		for (String s : result) fields[index++] = data.field(s);
 
-        // ensure we always have #row and #count
-        if (!result.contains("#row")) result.add("#row");
-        if (!result.contains("#count")) result.add("#count");
-        return Data.join(result, "; ");
-    }
+		// Sort and see if any adjacent 'keys' are the same
+		FieldRowComparison rowComparison = new FieldRowComparison(fields, null, false);
+		int[] order = rowComparison.makeSortedOrder();
+		for (int i = 1; i < order.length; i++)
+			if (rowComparison.compare(order[i], order[i - 1]) == 0) return false;
+		return true;
+	}
+
 }

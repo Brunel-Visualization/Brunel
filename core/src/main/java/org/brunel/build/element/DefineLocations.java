@@ -16,7 +16,7 @@
 
 package org.brunel.build.element;
 
-import org.brunel.build.BuildUtil;
+import org.brunel.build.util.BuildUtil;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.data.Field;
 import org.brunel.model.VisTypes;

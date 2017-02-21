@@ -17,7 +17,7 @@
 package org.brunel.build;
 
 import org.brunel.action.Action;
-import org.brunel.build.data.DataBuilder;
+import org.brunel.build.data.DatasetBuilder;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
 import org.junit.Test;
@@ -33,7 +33,7 @@ public class TestDataReturned {
     public void testGetSimpleData() {
         String command = "data('sample:US States.csv') x(region) y(population)";
         VisSingle vis = Action.parse(command).apply().getSingle().makeCanonical();
-        DataBuilder builder = new DataBuilder(vis);
+        DatasetBuilder builder = new DatasetBuilder(vis);
         Dataset d = builder.build();
         assertEquals(50, d.rowCount());
         assertEquals(1.0, d.field("#count").value(0));
@@ -44,7 +44,7 @@ public class TestDataReturned {
         String command = "data('sample:US States.csv') x(region) y(population) sum(population)";
         VisSingle vis = Action.parse(command).apply().getSingle().makeCanonical();
 
-        Dataset d = DataBuilder.getTransformedData(vis);
+        Dataset d = DatasetBuilder.getTransformedData(vis);
         assertEquals(6, d.rowCount());
         assertEquals(12.0, d.field("#count").value(0));
     }

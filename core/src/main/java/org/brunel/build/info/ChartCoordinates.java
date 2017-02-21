@@ -119,8 +119,8 @@ public class ChartCoordinates {
 
 		// Basic assumptions for reversing -- Don't on the horizontal, do on the vertical if categorical
 		// Ensures numeric on Y reads bottom-up, while categorical reads top-down
-		boolean reverseX = isTransposed() ? xCategorical : false;
-		boolean reverseY = isTransposed() ? false : yCategorical;
+		boolean reverseX = isTransposed() && xCategorical;
+		boolean reverseY = !isTransposed() && yCategorical;
 
 		if (needsReverse(elements, true)) reverseX = !reverseX;
 		if (needsReverse(elements, false)) reverseY = !reverseY;

@@ -21,7 +21,7 @@ import org.brunel.build.AxisDetails;
 import org.brunel.build.LabelBuilder;
 import org.brunel.build.ScalePurpose;
 import org.brunel.build.ScaleBuilder;
-import org.brunel.build.BuildUtil;
+import org.brunel.build.util.BuildUtil;
 import org.brunel.build.element.ElementBuilder;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.element.ElementRepresentation;
@@ -44,14 +44,13 @@ class ParallelCoordinates extends D3Diagram {
 
 	private final Field[] fields;               // The fields in the table
 
-	private final AxisDetails[] axes;           // Details of the axes
 	private final Padding padding;              // Space around the edges
 	private final double smoothness;            // 0 == linear, 1 is very smooth
 
 	public ParallelCoordinates(ElementStructure structure) {
 		super(structure);
 		fields = structure.data.fieldArray(vis.positionFields());
-		axes = makeAxisDetails(structure.chart, fields);
+		AxisDetails[] axes = makeAxisDetails(structure.chart, fields);
 		padding = ModelUtil.getPadding(vis, StyleTarget.makeElementTarget(null), 6);
 		padding.left += axes[0].size;
 		padding.bottom += 15;       // For the bottom "axis" of titles

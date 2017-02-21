@@ -19,6 +19,7 @@ package org.brunel.build;
 import org.brunel.action.Param;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.info.ElementStructure;
+import org.brunel.build.util.BuildUtil;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ModelUtil.Size;
 import org.brunel.build.util.ScriptWriter;
@@ -79,7 +80,7 @@ public class LabelBuilder {
 	public void addTooltips(ElementDetails details) {
 		if (vis.itemsTooltip.isEmpty()) return;
 		out.onNewLine().ln();
-		defineLabeling(prettify(vis.itemsTooltip, true), details.representation.getTooltipTextMethod(), true, true, null, 0, Collections.EMPTY_LIST, 0);
+		defineLabeling(prettify(vis.itemsTooltip, true), details.representation.getTooltipTextMethod(), true, true, null, 0, Collections.<Param>emptyList(), 0);
 		out.add("BrunelD3.addTooltip(selection, tooltipLabeling, geom)").endStatement();
 	}
 
@@ -213,7 +214,7 @@ public class LabelBuilder {
 		else return fitsShape;
 	}
 
-	// Returns the important function that defiens how we will find the shape
+	// Returns the important function that defines how we will find the shape
 	private String getMethod(HashSet<String> parts) {
 		for (String s : parts)
 			if (s.equals("path") || s.equals("wedge") || s.equals("area") || s.equals("poly") || s.equals("geo"))

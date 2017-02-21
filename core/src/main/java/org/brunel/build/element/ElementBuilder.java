@@ -3,7 +3,7 @@ package org.brunel.build.element;
 import org.brunel.build.InteractionDetails;
 import org.brunel.build.LabelBuilder;
 import org.brunel.build.ScaleBuilder;
-import org.brunel.build.BuildUtil;
+import org.brunel.build.util.BuildUtil;
 import org.brunel.build.ScalePurpose;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.Accessibility;

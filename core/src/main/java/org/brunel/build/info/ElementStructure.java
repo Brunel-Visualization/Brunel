@@ -16,7 +16,7 @@
 
 package org.brunel.build.info;
 
-import org.brunel.build.BuildUtil;
+import org.brunel.build.util.BuildUtil;
 import org.brunel.build.diagrams.D3Diagram;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.util.ModelUtil;

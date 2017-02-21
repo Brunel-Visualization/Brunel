@@ -44,7 +44,6 @@ public class ElementDimension {
 
     public boolean defineUsingExtent() {
         if (center == null) return true;                                // This requires extent and ignores size
-        if (left == null || right == null) return false;                // We need left and right
-        return true;
+        return !(left == null || right == null);
     }
 }
