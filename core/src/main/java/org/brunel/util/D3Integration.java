@@ -21,7 +21,7 @@ package org.brunel.util;
 import org.brunel.action.Action;
 import org.brunel.action.ActionUtil;
 import org.brunel.action.Param;
-import org.brunel.build.d3.D3Builder;
+import org.brunel.build.VisualizationBuilder;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.DataCache;
 import org.brunel.data.Dataset;
@@ -127,41 +127,41 @@ public class D3Integration {
 
     public static BrunelD3Result createBrunelResult(String data, String brunelSrc, int width,  int height, String visId, String controlsId) {
     			Dataset dataset = makeBrunelData(data);
-				D3Builder builder = makeD3(dataset, brunelSrc, width, height, visId, controlsId);
+				VisualizationBuilder builder = makeD3(dataset, brunelSrc, width, height, visId, controlsId);
 				BrunelD3Result result = new BrunelD3Result();
 				result.css = builder.getStyleOverrides();
 				result.js = builder.getVisualization().toString();
 				result.controls = builder.getControls();
 				return result;
     }
-    
-    
+
+
     /**
-     * Append Brunel exception messages following the cause of a given exception stack trace, stopping when reaching a VisException.  
+     * Append Brunel exception messages following the cause of a given exception stack trace, stopping when reaching a VisException.
      * @param thrown the Exception that was thrown.  The message for this exception is not included in the results.
      * @param message An initial message (or a blank string)
      * @param messageSeparator A separator for the individual messages
      * @return the full message
      */
-    
+
     public static String buildExceptionMessage (Throwable thrown, String message, String messageSeparator) {
     	Throwable cause = thrown.getCause();
     	while (cause != null) {
     		message += messageSeparator + cause.getMessage();
     		if (cause instanceof VisException) break; else cause = cause.getCause();
     	}
-    	
+
     	return message;
     }
 
 
 	//Creates a D3Builder to produce the d3 output
-    public static D3Builder makeD3(Dataset data, String actionText, int width, int height, String visId, String controlsId) {
+    public static VisualizationBuilder makeD3(Dataset data, String actionText, int width, int height, String visId, String controlsId) {
     	try {
             BuilderOptions options = BuilderOptions.makeFromENV();
             options.visIdentifier = visId;
             options.controlsIdentifier = controlsId;
-            D3Builder builder = D3Builder.make(options);
+            VisualizationBuilder builder = VisualizationBuilder.make(options);
             VisItem item = makeVisItem(data, actionText);
             builder.build(item, width, height);
             return builder;

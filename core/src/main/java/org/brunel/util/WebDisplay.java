@@ -17,7 +17,7 @@
 
 package org.brunel.util;
 
-import org.brunel.build.d3.D3Builder;
+import org.brunel.build.VisualizationBuilder;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.model.VisItem;
 
@@ -38,7 +38,7 @@ public class WebDisplay {
 	private static final String NAV_LOCATION = "/org/brunel/util/webdisplay-navigation.html";
 	private static final String NAV_BASE = new Scanner(WebDisplay.class.getResourceAsStream(NAV_LOCATION), "UTF-8").useDelimiter("\\A").next();
 
-	public static String writeHtml(D3Builder builder, int width, int height, String brunel, String... titles) {
+	public static String writeHtml(VisualizationBuilder builder, int width, int height, String brunel, String... titles) {
 		StringWriter writer = new StringWriter();
 		PageOutput output = new PageOutput(builder, writer);
 		output.addTitles(titles);
@@ -84,7 +84,7 @@ public class WebDisplay {
 	}
 
 	public void buildSingle(VisItem target, int width, int height, String file, String... titles) {
-		D3Builder builder = D3Builder.make(options);
+		VisualizationBuilder builder = VisualizationBuilder.make(options);
 		builder.build(target, width, height);
 		String html = writeHtml(builder, width, height, null, titles);
 		writeToFile(file, html);

@@ -17,7 +17,7 @@
 package org.brunel;
 
 import org.brunel.action.Action;
-import org.brunel.build.d3.D3Builder;
+import org.brunel.build.VisualizationBuilder;
 import org.brunel.build.util.DataCache;
 import org.brunel.data.Dataset;
 import org.brunel.model.VisItem;
@@ -33,12 +33,12 @@ import static junit.framework.TestCase.assertTrue;
 public class BuildTests {
 
 	private Dataset data;
-	private D3Builder builder;
+	private VisualizationBuilder builder;
 
 	@Before
 	public void setUp() throws Exception {
 		data = DataCache.get("sample://US States.csv");
-		builder = D3Builder.make();
+		builder = VisualizationBuilder.make();
 	}
 
 	@Test

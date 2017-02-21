@@ -17,7 +17,7 @@
 package org.brunel.app;
 
 import org.brunel.action.Action;
-import org.brunel.build.d3.D3Builder;
+import org.brunel.build.VisualizationBuilder;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.model.VisItem;
 
@@ -58,7 +58,7 @@ public class SampleApp {
         // Define a builder using online library version 0.7
         BuilderOptions options = new BuilderOptions();
         options.version = "2.3";
-        D3Builder builder = D3Builder.make(options);
+        VisualizationBuilder builder = VisualizationBuilder.make(options);
 
         // Build the visualization into a 600x600 area
         builder.build(vis, 600, 600);

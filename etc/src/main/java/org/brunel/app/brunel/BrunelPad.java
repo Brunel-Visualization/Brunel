@@ -20,7 +20,7 @@ package org.brunel.app.brunel;
 import org.brunel.action.Action;
 import org.brunel.action.ActionStep;
 import org.brunel.app.brunel.SourceTransfer.Droppable;
-import org.brunel.build.d3.D3Builder;
+import org.brunel.build.VisualizationBuilder;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
@@ -291,7 +291,7 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
 
         int width = getWidth() - 30;
 
-        D3Builder builder = D3Builder.make(options);
+        VisualizationBuilder builder = VisualizationBuilder.make(options);
         builder.build(item, width, (int) (width / 1.618));
 
         Writer writer = LocalOutputFiles.makeFileWriter("BrunelPad/index.html");

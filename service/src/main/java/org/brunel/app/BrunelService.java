@@ -17,7 +17,7 @@
 package org.brunel.app;
 
 import org.brunel.action.Action;
-import org.brunel.build.d3.D3Builder;
+import org.brunel.build.VisualizationBuilder;
 import org.brunel.build.util.ContentReader;
 import org.brunel.build.util.DataCache;
 import org.brunel.data.Dataset;
@@ -145,7 +145,7 @@ public class BrunelService extends Application {
 
     		String[] titles = new String[] {title, description};
 	    	String src = brunelSrc != null ? brunelSrc : ContentReader.readContentFromUrl(URI.create(brunelUrl));
-	        D3Builder builder = D3Integration.makeD3(readBrunelData(dataUrl, true), src, width, height, "visualization", "controls");
+	        VisualizationBuilder builder = D3Integration.makeD3(readBrunelData(dataUrl, true), src, width, height, "visualization", "controls");
 	        String response = WebDisplay.writeHtml(builder, width, height, brunelStr, titles);
     		return Response.ok(response).header("Access-Control-Allow-Origin", "*").build();
     	}

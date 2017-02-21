@@ -18,7 +18,7 @@ package org.brunel.action;
 
 import org.brunel.build.controls.Controls;
 import org.brunel.build.controls.FilterControl;
-import org.brunel.build.d3.D3Builder;
+import org.brunel.build.VisualizationBuilder;
 import org.brunel.data.CannedData;
 import org.brunel.data.Dataset;
 import org.brunel.data.io.CSV;
@@ -37,7 +37,7 @@ public class ControlsTest {
 
     @Test
     public void testCategoricalFilter() {
-        D3Builder builder = D3Builder.make();
+        VisualizationBuilder builder = VisualizationBuilder.make();
         Controls controls = getControls(bank, "x(gender) y(salary) filter(gender)", builder);
         assertTrue(controls.filters.size() > 0);
 
@@ -50,10 +50,10 @@ public class ControlsTest {
         assertEquals(genderFilter.label, "Gender");
 
     }
-    
+
     @Test
     public void testCategoricalFilterDefaults() {
-        D3Builder builder = D3Builder.make();
+        VisualizationBuilder builder = VisualizationBuilder.make();
         Controls controls = getControls(bank, "x(gender) y(salary) filter(gender:[male,Female])", builder);
         assertTrue(controls.filters.size() > 0);
 
@@ -66,16 +66,16 @@ public class ControlsTest {
         assertEquals(genderFilter.label, "Gender");
         String[] expected = new String[] {"Male", "Female"};
         assertTrue(Arrays.equals(expected, genderFilter.selectedCategories));
-        
+
         controls = getControls(bank, "x(gender) y(salary) filter(gender:Male)", builder);
         assertTrue(Arrays.equals(new String[] {"Male"}, controls.filters.get(0).selectedCategories));
 
 
     }
-    
+
     @Test
     public void testContinuousFilterDefaults() {
-        D3Builder builder = D3Builder.make();
+        VisualizationBuilder builder = VisualizationBuilder.make();
         Controls controls = getControls(bank, "x(gender) y(salary) filter(salary:18000-20000)", builder);
         assertTrue(controls.filters.size() > 0);
 
@@ -88,10 +88,10 @@ public class ControlsTest {
         assertEquals(salaryFilter.label, "Salary");
         assertEquals(salaryFilter.lowValue, new Double(18000.0));
         assertEquals(salaryFilter.highValue, new Double(20000.0));
-        
+
         controls = getControls(bank, "x(gender) y(salary) filter(salary:18000)", builder);
         assertEquals(controls.filters.get(0).lowValue, new Double(18000));
-        
+
         //Clip low at datamin
         controls = getControls(bank, "x(gender) y(salary) filter(salary:5)", builder);
         assertEquals(controls.filters.get(0).lowValue, new Double(16950));
@@ -99,7 +99,7 @@ public class ControlsTest {
 
     }
 
-    private static Controls getControls(Dataset data, String actionText, D3Builder builder) {
+    private static Controls getControls(Dataset data, String actionText, VisualizationBuilder builder) {
         Action action = Action.parse(actionText);
         VisItem item = action.apply(data);
         builder.build(item, 100, 100);
@@ -108,7 +108,7 @@ public class ControlsTest {
 
     @Test
     public void testContinuousFilter() {
-        D3Builder builder = D3Builder.make();
+        VisualizationBuilder builder = VisualizationBuilder.make();
         Controls controls = getControls(bank, "x(gender) y(salary) filter(salary)", builder);
         assertTrue(controls.filters.size() > 0);
 
@@ -125,7 +125,7 @@ public class ControlsTest {
     public void testNoFilter() {
 
         //Builder doesn't matter for controls
-        D3Builder builder = D3Builder.make();
+        VisualizationBuilder builder = VisualizationBuilder.make();
         Controls controls = getControls(bank, "x(gender) y(salary)", builder);
         assertTrue(controls.filters.isEmpty());
     }

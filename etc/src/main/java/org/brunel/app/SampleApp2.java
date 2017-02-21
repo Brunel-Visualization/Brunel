@@ -17,7 +17,7 @@
 package org.brunel.app;
 
 import org.brunel.action.Action;
-import org.brunel.build.d3.D3Builder;
+import org.brunel.build.VisualizationBuilder;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
@@ -52,7 +52,7 @@ public class SampleApp2 {
 
         // Define a builder using default options
         BuilderOptions options = new BuilderOptions();
-        D3Builder builder = D3Builder.make(options);
+        VisualizationBuilder builder = VisualizationBuilder.make(options);
 
         // Build the visualization into a 600x600 area
         builder.build(vis, 600, 600);

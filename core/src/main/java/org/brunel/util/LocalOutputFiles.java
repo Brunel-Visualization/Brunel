@@ -16,7 +16,7 @@
 
 package org.brunel.util;
 
-import org.brunel.build.d3.D3Builder;
+import org.brunel.build.VisualizationBuilder;
 
 import java.awt.*;
 import java.io.File;
@@ -96,10 +96,10 @@ public class LocalOutputFiles {
     private void ensureResourceExists(String resourceName) {
         // Copy required static JS from Brunel project
         try {
-            InputStream is = D3Builder.class.getResourceAsStream("/javascript/" + resourceName);
+            InputStream is = VisualizationBuilder.class.getResourceAsStream("/javascript/" + resourceName);
             // If the file is a translated file, we look for it in either a jar location or in the file system
             if (is == null)
-                is = D3Builder.class.getResourceAsStream("/translated/" + resourceName);
+                is = VisualizationBuilder.class.getResourceAsStream("/translated/" + resourceName);
             if (is == null) {
                 File file = new File("data/build/translated/");
                 if (!file.exists()) file = new File("../data/build/translated/");

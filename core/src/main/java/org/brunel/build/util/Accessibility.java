@@ -16,7 +16,7 @@
 
 package org.brunel.build.util;
 
-import org.brunel.build.d3.D3LabelBuilder;
+import org.brunel.build.LabelBuilder;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.data.Data;
 import org.brunel.model.VisSingle;
@@ -36,7 +36,7 @@ public class Accessibility {
      * @param out          writes to this
      * @param labelBuilder the element's label builder
      */
-    private static void defineElementLabelFunction(ElementStructure structure, ScriptWriter out, D3LabelBuilder labelBuilder) {
+    private static void defineElementLabelFunction(ElementStructure structure, ScriptWriter out, LabelBuilder labelBuilder) {
         if (!structure.chart.accessible) return;
         VisSingle vis = structure.vis;
         out.onNewLine().add("function(d) { return ");
@@ -56,7 +56,7 @@ public class Accessibility {
      * @param structure the element structure
      * @param out       writes to this
      */
-    public static void addAccessibilityLabels(ElementStructure structure, ScriptWriter out, D3LabelBuilder labelBuilder) {
+    public static void addAccessibilityLabels(ElementStructure structure, ScriptWriter out, LabelBuilder labelBuilder) {
         if (!structure.chart.accessible) return;
             out.addChained("attr('role', 'img').attr('aria-label', ");
         defineElementLabelFunction(structure, out, labelBuilder);

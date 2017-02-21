@@ -16,8 +16,8 @@
 
 package org.brunel.build.info;
 
-import org.brunel.build.d3.D3Interaction;
-import org.brunel.build.d3.SymbolHandler;
+import org.brunel.build.InteractionDetails;
+import org.brunel.build.SymbolHandler;
 import org.brunel.data.Dataset;
 import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
@@ -42,7 +42,7 @@ public class ChartStructure {
 	public final Diagram diagram;                            // Diagram for this chart
 
 	public final SymbolHandler symbols;                        // Symbol handler for the chart
-	public final D3Interaction interaction;                    // Interactivity handler for the chart
+	public final InteractionDetails interaction;                    // Interactivity handler for the chart
 
 	public final String visIdentifier;                      // Identifier for the overall vis (the SVG ID)
 	public boolean accessible;                              // If true, generate accessible content
@@ -66,7 +66,7 @@ public class ChartStructure {
 		this.geo = makeGeo(elements, data);
 
 		// Define any interactivity needed
-		this.interaction = new D3Interaction(diagram, coordinates, elements);
+		this.interaction = new InteractionDetails(diagram, coordinates, elements);
 
 		// Define the elements
 		for (int i = 0; i < elements.length; i++) {

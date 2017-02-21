@@ -16,7 +16,7 @@
 
 package org.brunel.util;
 
-import org.brunel.build.d3.D3Builder;
+import org.brunel.build.VisualizationBuilder;
 
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -55,7 +55,7 @@ public class PageOutput {
         documentEnd
     }
 
-    private final D3Builder builder;        // Source of information
+    private final VisualizationBuilder builder;        // Source of information
     private final PrintWriter out;          // destination to write to
     private final List<String> titleList;   // Titles to add to the chart
     private final List<String> footerList;  // Footnotes to add to the chart
@@ -68,7 +68,7 @@ public class PageOutput {
      * @param builder the fully built base builder
      * @param writer  the output writer to send to
      */
-    public PageOutput(D3Builder builder, Writer writer) {
+    public PageOutput(VisualizationBuilder builder, Writer writer) {
         this.out = new PrintWriter(writer);
         this.builder = builder;
         this.titleList = new ArrayList<>();

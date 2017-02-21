@@ -17,7 +17,7 @@
 package org.brunel.app;
 
 import org.brunel.action.Action;
-import org.brunel.build.d3.D3Builder;
+import org.brunel.build.VisualizationBuilder;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.DataCache;
 import org.brunel.build.util.SimpleCache;
@@ -63,7 +63,7 @@ public class SampleAppTwoDataSets {
 
 		// Define a builder using default options
 		BuilderOptions options = new BuilderOptions();
-		D3Builder builder = D3Builder.make(options);
+		VisualizationBuilder builder = VisualizationBuilder.make(options);
 
 		// Probably don't need the synchronization, but might adds a little safety
 		synchronized (cache) {

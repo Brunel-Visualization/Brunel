@@ -16,7 +16,7 @@
 
 package org.brunel.model.style;
 
-import org.brunel.build.d3.D3Builder;
+import org.brunel.build.VisualizationBuilder;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -40,7 +40,7 @@ public class StyleSheet {
     private static void ensureDefaultBuilt() {
         if (brunelDefault == null) {
             // Create this when it is needed
-            String text = new Scanner(D3Builder.class.getResourceAsStream("/javascript/Brunel.css"), "UTF-8").useDelimiter("\\A").next();
+            String text = new Scanner(VisualizationBuilder.class.getResourceAsStream("/javascript/Brunel.css"), "UTF-8").useDelimiter("\\A").next();
             brunelDefault = StyleFactory.instance().makeStyleSheet(text);
         }
     }

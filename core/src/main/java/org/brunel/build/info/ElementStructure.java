@@ -16,9 +16,9 @@
 
 package org.brunel.build.info;
 
-import org.brunel.build.d3.D3Util;
-import org.brunel.build.d3.diagrams.D3Diagram;
-import org.brunel.build.d3.element.ElementDetails;
+import org.brunel.build.BuildUtil;
+import org.brunel.build.diagrams.D3Diagram;
+import org.brunel.build.element.ElementDetails;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
@@ -96,7 +96,7 @@ public class ElementStructure {
 		String idToPointName = "elements[" + getDependencyBase().index + "].internal()._idToPoint(";
 		String[] references = new String[keys.length];
 		for (int i = 0; i < references.length; i++)
-			references[i] = idToPointName + D3Util.writeCall(keys[i]) + ")";
+			references[i] = idToPointName + BuildUtil.writeCall(keys[i]) + ")";
 		return references;
 	}
 }
