@@ -64,9 +64,12 @@ public class D3ElementBuilder {
 	}
 
 	public void generate() {
+
 		out.add("element = elements[" + structure.index + "]").endStatement();
+		writeDiagramDataStructures();
+
 		ElementDetails details = structure.details;
-		setGeometry();                           			// And the coordinate definitions
+		setGeometry();                                    // And the coordinate definitions
 		defineAllElementFeatures(details);                // Features for the entire element -- paths, etc.
 		defineLabelSettings(details);                    // Defines the 'labeling' settings object
 		defineInitialState(details);                    // Define function to initialize element
@@ -243,8 +246,12 @@ public class D3ElementBuilder {
 		} else {
 			out.onNewLine().comment("Data structures for a", vis.tDiagram, "diagram");
 			structure.details = diagram.makeDetails(getCommonSymbol());
-			diagram.writeDataStructures();
 		}
+
+	}
+
+	public void writeDiagramDataStructures() {
+		if (diagram != null) diagram.writeDataStructures();
 	}
 
 	protected void setGeometry() {

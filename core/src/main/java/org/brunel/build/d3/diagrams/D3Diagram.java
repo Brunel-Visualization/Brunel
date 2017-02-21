@@ -135,11 +135,7 @@ public abstract class D3Diagram {
 	public void writeBuildCommands() {
 		// By default, do nothing
 	}
-
-	public final ElementDetails initializeDiagram(String symbol) {
-		return null;
-	}
-
+	
 	public abstract void writeDiagramUpdate(ElementDetails details);
 
 	/**
