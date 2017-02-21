@@ -157,6 +157,9 @@ public class D3ScaleBuilder {
 	// Return array for X and Y dimensions
 	private AxisSpec[] makeCombinedAxes() {
 
+		// Diagrams mean no axes
+		if (structure.diagram != null) return new AxisSpec[2];
+
 		AxisSpec x = null;
 		AxisSpec y = null;
 
@@ -169,10 +172,8 @@ public class D3ScaleBuilder {
 
 		// The rule here is that we add axes as much as possible, so presence overrides lack of presence
 		for (VisSingle e : elements) {
-			if (e.tDiagram != null || e.fAxes.containsKey(Axes.none)) {
-				// return two null specs -- we do not want axes
-				return new AxisSpec[2];
-			}
+			// return two null specs -- we do not want axes
+			if (e.fAxes.containsKey(Axes.none)) return new AxisSpec[2];
 
 			for (Entry<Axes, Param[]> p : e.fAxes.entrySet()) {
 				auto = false;
@@ -184,7 +185,7 @@ public class D3ScaleBuilder {
 		}
 
 		// If auto, check for the coordinate system / diagram / nesting to determine what is wanted
-		if (auto) if (coords == Coordinates.polar || structure.diagram != null || structure.nested())
+		if (auto) if (coords == Coordinates.polar || structure.nested())
 			return new AxisSpec[2];
 		else
 			return new AxisSpec[]{AxisSpec.DEFAULT, AxisSpec.DEFAULT};
@@ -883,7 +884,7 @@ public class D3ScaleBuilder {
 	private void addSymbolScale(Param p, ElementStructure element) {
 		Field f = fieldById(p, element.vis);                                    // Find the field
 		SymbolHandler symbols = structure.symbols;                              // Handler for all symbols
-		String[] requestedSymbols = symbols.findRequiredSymbolNames(p);    		// Lists of symbols requested
+		String[] requestedSymbols = symbols.findRequiredSymbolNames(p);            // Lists of symbols requested
 		String[] symbolIDs = symbols.getSymbolIDs(element, requestedSymbols);   // List of symbol identifiers
 
 		defineScaleWithDomain("symbol", new Field[]{f}, nominalAesthetic, symbolIDs.length, "linear", null, false);

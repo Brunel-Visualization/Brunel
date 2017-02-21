@@ -23,12 +23,11 @@ import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.d3.element.GeomAttribute;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Dataset;
 
 class Bubble extends D3Diagram {
 
-	public Bubble(ElementStructure structure, Dataset data, ScriptWriter out) {
-		super(structure, data);
+	public Bubble(ElementStructure structure) {
+		super(structure);
 	}
 
 	public void defineCoordinateFunctions(ElementDetails details, ScriptWriter out) {

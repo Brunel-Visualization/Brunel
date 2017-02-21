@@ -22,12 +22,11 @@ import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Dataset;
 
 class Treemap extends D3Diagram {
 
-	public Treemap(ElementStructure structure, Dataset data, ScriptWriter out) {
-		super(structure, data);
+	public Treemap(ElementStructure structure) {
+		super(structure);
 	}
 
 	public void writeDataStructures(ScriptWriter out) {

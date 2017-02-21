@@ -23,7 +23,6 @@ import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
-import org.brunel.data.Dataset;
 import org.brunel.maps.LabelPoint;
 
 import java.text.DecimalFormat;
@@ -34,8 +33,8 @@ public class GeoMapLabels extends D3Diagram {
 
 	private final NumberFormat F = new DecimalFormat("#.####");
 
-	public GeoMapLabels(ElementStructure vis, Dataset data, ScriptWriter out) {
-		super(vis, data);
+	public GeoMapLabels(ElementStructure structure) {
+		super(structure);
 	}
 
 	public String getRowKeyFunction() {

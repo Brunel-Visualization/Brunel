@@ -25,28 +25,28 @@ import org.brunel.model.VisTypes;
 
 import static org.brunel.model.VisTypes.Diagram.map;
 
- class DiagramElementBuilder extends ElementBuilder {
+class DiagramElementBuilder extends ElementBuilder {
 
 	private final D3Diagram diagram;
 
-	public DiagramElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales, D3Diagram diagram) {
+	public DiagramElementBuilder(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scales) {
 		super(structure, scales, out);
-		this.diagram = diagram;
+		this.diagram = structure.diagram;
 	}
 
-	 public void addAdditionalElementGroups() {
-		 if (diagram.needsDiagramExtras())
-			 out.continueOnNextLine(",").add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");
-		 if (diagram.needsDiagramLabels())
-			 out.continueOnNextLine(",")
-					 .add("diagramLabels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'diagram labels').attr('aria-hidden', 'true'), elementGroup)");
-	 }
+	public void addAdditionalElementGroups() {
+		if (diagram.needsDiagramExtras())
+			out.continueOnNextLine(",").add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");
+		if (diagram.needsDiagramLabels())
+			out.continueOnNextLine(",")
+					.add("diagramLabels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'diagram labels').attr('aria-hidden', 'true'), elementGroup)");
+	}
 
-	 public ElementDetails makeDetails() {
+	public ElementDetails makeDetails() {
 		return diagram.makeDetails();
 	}
 
-	 public void preBuildDefinitions() {
+	public void preBuildDefinitions() {
 		diagram.preBuildDefinitions(out);
 	}
 
@@ -66,7 +66,7 @@ import static org.brunel.model.VisTypes.Diagram.map;
 		out.onNewLine().ln().comment("Define labeling for the selection")
 				.onNewLine().add("function label(selection, transitionMillis) {")
 				.indentMore().onNewLine();
-			diagram.writeLabelsAndTooltips(details, labelBuilder);
+		diagram.writeLabelsAndTooltips(details, labelBuilder);
 		out.indentLess().onNewLine().add("}").ln();
 	}
 
@@ -74,7 +74,6 @@ import static org.brunel.model.VisTypes.Diagram.map;
 	protected String getKeyFunction() {
 		return diagram.getRowKeyFunction();
 	}
-
 
 	protected void defineAllElementFeatures(ElementDetails details) {
 		if (vis.tElement == VisTypes.Element.point && vis.tDiagram == map) {
@@ -88,7 +87,7 @@ import static org.brunel.model.VisTypes.Diagram.map;
 	}
 
 	protected void writeDiagramEntry(ElementDetails details) {
-			diagram.writeDiagramEnter(details, out);
+		diagram.writeDiagramEnter(details, out);
 	}
 
 	protected void defineUpdateState(ElementDetails details) {

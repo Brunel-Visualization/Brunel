@@ -24,7 +24,6 @@ import org.brunel.build.d3.element.GeomAttribute;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Dataset;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.style.StyleTarget;
 
@@ -37,12 +36,12 @@ class Tree extends D3Diagram {
 	private final int pad;                                            // Pad size
 	private final boolean usesSize;                                 // True is size is used
 
-	public Tree(ElementStructure structure, Dataset data, ScriptWriter out) {
-		super(structure, data);
+	public Tree(ElementStructure structure) {
+		super(structure);
 		if (vis.coords == Coordinates.polar) method = Method.polar;
 		else method = Method.leftRight;
 
-		labelSize = D3LabelBuilder.estimateLabelLength(structure.vis.itemsLabel, data) * 6;
+		labelSize = D3LabelBuilder.estimateLabelLength(structure.vis.itemsLabel, structure.data) * 6;
 		usesSize = !vis.fSize.isEmpty();
 
 		StyleTarget target = StyleTarget.makeElementTarget("point", "element");
@@ -118,7 +117,7 @@ class Tree extends D3Diagram {
 		ElementBuilder.writeElementAesthetics(details, true, vis, out);
 
 		// If we have edges defined as an element, we use those, otherwise add the following
-		if (structure.findDependentEdges() == null) {
+		if (getDependentEdges() == null) {
 			out.onNewLine().ln().comment("Add in the arcs on the outside for the groups");
 			out.add("diagramExtras.attr('class', 'diagram tree edge')").endStatement();
 			out.add("function edgeKey(d) { return nodeKey(d.source) + '%' + nodeKey(d.target) }").endStatement();
@@ -128,7 +127,7 @@ class Tree extends D3Diagram {
 			DependentEdge.write(true, structure.chart.coordinates.isPolar(), out, "edgeGroup");
 			ElementBuilder.writeRemovalOnExit(out, "edgeGroup");
 
-			D3LabelBuilder labelBuilder = new D3LabelBuilder(structure.vis, out, structure.data);
+			D3LabelBuilder labelBuilder = new D3LabelBuilder(structure, out);
 			labelBuilder.addTreeInternalLabelsOutsideNode(
 					method == Method.leftRight || !usesSize ? "bottom" : "center"
 			);

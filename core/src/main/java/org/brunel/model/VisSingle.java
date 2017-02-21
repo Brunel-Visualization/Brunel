@@ -440,12 +440,13 @@ public class VisSingle extends VisItem implements Cloneable {
 
         boolean addSeriesSplit = requiresSplitForSeries();
         boolean convertYsToRange = requireYFieldsAsRange();
+        boolean isDependentEdge = isDependentEdge();
 
         // See if we need to add a Y field to stack with
         boolean addY = stacked && fY.isEmpty() && fRange == null;
 
         // If no changes, we can return this vis
-        if (tElement != null && !addY && !containsAll && !addSeriesSplit && !convertYsToRange) return this;
+        if (tElement != null && !addY && !containsAll && !addSeriesSplit && !convertYsToRange && !isDependentEdge) return this;
 
         VisSingle result;
         try {
@@ -459,6 +460,9 @@ public class VisSingle extends VisItem implements Cloneable {
             result.fRange = new Param[]{fY.get(0), fY.get(1)};
             result.fY = Collections.emptyList();
         }
+
+        // Set the diagram to be a dependent edge when needed
+        if (isDependentEdge && result.tDiagram == null) result.tDiagram = Diagram.dependentEdge;
 
         // Set the default element, if not otherwise set
         if (tElement == null) {
@@ -505,7 +509,12 @@ public class VisSingle extends VisItem implements Cloneable {
         return result;
     }
 
-    // Returns true if we convert 2+ Y fields to a range (the additional fields are likely to be ignored)
+	private boolean isDependentEdge() {
+		// Edges with 2 key fields are dependent
+		return tElement == Element.edge && fKeys.size() == 2;
+	}
+
+	// Returns true if we convert 2+ Y fields to a range (the additional fields are likely to be ignored)
     private boolean requireYFieldsAsRange() {
         // Only for edge elements
         return fY.size() > 1 && tElement == Element.edge;

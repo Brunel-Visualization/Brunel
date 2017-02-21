@@ -24,7 +24,6 @@ import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
-import org.brunel.data.Dataset;
 import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
 import org.brunel.model.VisTypes.Element;
@@ -77,9 +76,9 @@ public class GeoMap extends D3Diagram {
 
     }
 
-    public GeoMap(ElementStructure vis, Dataset data, GeoMapping geo, ScriptWriter out) {
-        super(vis, data);
-        this.mapping = geo;
+    public GeoMap(ElementStructure structure) {
+        super(structure);
+        this.mapping = structure.geo;
         if (mapping == null)
             throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
     }

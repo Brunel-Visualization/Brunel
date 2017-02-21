@@ -17,7 +17,7 @@
 package org.brunel.build.d3;
 
 import org.brunel.action.Param;
-import org.brunel.build.info.ChartStructure;
+import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.model.VisSingle;
@@ -41,26 +41,27 @@ public class D3Interaction {
 	private static final boolean[] ZOOM_NONE = new boolean[]{false, false};
 	private static final String DEFAULT_SNAP_DISTANCE = "geom.inner_radius/4";
 
-	private final ChartStructure structure;     // Chart Structure
 	private final boolean canZoomX, canZoomY;   // for coordinate zoom, which axes we can zoom
 	private final boolean usesCollapse;         // true if we have a collapse handler
 	private final boolean usesExpand;           // true if we have an expand handler
+	private final VisTypes.Diagram diagram;        // The diagram for this chart
+	private final ChartCoordinates coordinates;    // Coordinate system for the chart
 
-	public D3Interaction(ChartStructure structure) {
-		this.structure = structure;
+	public D3Interaction(VisTypes.Diagram diagram, ChartCoordinates coordinates, VisSingle[] elements) {
+		this.diagram = diagram;
+		this.coordinates = coordinates;
 
-		boolean[] zoomTypes = zoomRequested(structure.elementStructure);    // user zoom requests
+		boolean[] zoomTypes = zoomRequested(elements);    // user zoom requests
 		if (zoomTypes == null) zoomTypes = defaultZooms();                  // defaults if no user request
 
 		// Set the values
 		canZoomX = zoomTypes[0];
 		canZoomY = zoomTypes[1];
-		VisTypes.Diagram diagram = structure.diagram;
-		usesExpand = expandRequested(structure.elementStructure);
+		usesExpand = expandRequested(elements);
 
 		usesCollapse = diagram != null && !usesExpand
 				&& diagram.isHierarchical && diagram != VisTypes.Diagram.gridded
-				&& !banned(Interaction.collapse);
+				&& !banned(elements, Interaction.collapse);
 
 	}
 
@@ -82,17 +83,17 @@ public class D3Interaction {
 		return usesExpand;
 	}
 
-	private boolean banned(Interaction type) {
-		for (ElementStructure e : structure.elementStructure) {
+	private boolean banned(VisSingle[] elements, Interaction type) {
+		for (VisSingle vis : elements) {
 			// If the parameter exists, it is only banned if it is specified as "none"
-			Param param = getInteractionParam(e.vis, type);
+			Param param = getInteractionParam(vis, type);
 			if (param != null)
 				return param.hasModifiers() && param.firstModifier().asString().equals("none");
 		}
 
 		// Otherwise a "none" wins
-		for (ElementStructure e : structure.elementStructure)
-			if (getInteractionParam(e.vis, Interaction.none) != null) return true;
+		for (VisSingle vis : elements)
+			if (getInteractionParam(vis, Interaction.none) != null) return true;
 
 		// If no information, it is not banned
 		return false;
@@ -100,20 +101,20 @@ public class D3Interaction {
 
 	private boolean[] defaultZooms() {
 		// Handle cases when there are diagrams -- the ones that do not fill the space by default are zoomable
-		if (structure.diagram == VisTypes.Diagram.network || structure.diagram == VisTypes.Diagram.map
-				|| structure.diagram == VisTypes.Diagram.tree) return ZOOM_ALL;
+		if (diagram == VisTypes.Diagram.network || diagram == VisTypes.Diagram.map
+				|| diagram == VisTypes.Diagram.tree) return ZOOM_ALL;
 
 		// Parallel coordinates gets special zooming -- just the "Y"
-		if (structure.diagram == VisTypes.Diagram.parallel) return new boolean[]{false, true};
+		if (diagram == VisTypes.Diagram.parallel) return new boolean[]{false, true};
 
-		else if (structure.diagram != null)
+		else if (diagram != null)
 			return ZOOM_NONE;
 
 		// we cannot zoom diagrams polar coordinates
-		if (structure.coordinates.isPolar()) return ZOOM_NONE;
+		if (coordinates.isPolar()) return ZOOM_NONE;
 
 		// Otherwise allow zoom for non-categorical axes
-		return new boolean[]{!structure.coordinates.xCategorical, !structure.coordinates.yCategorical};
+		return new boolean[]{!coordinates.xCategorical, !coordinates.yCategorical};
 	}
 
 	/**
@@ -129,14 +130,14 @@ public class D3Interaction {
 
 	// Return an array stating whether x and y requested or banned
 	// null means no info -- use auto
-	private boolean[] zoomRequested(ElementStructure[] elements) {
+	private boolean[] zoomRequested(VisSingle[] elements) {
 		// Explicit requests in the code are honored. In case of multiple specs, just the first one is used
-		for (ElementStructure e : elements) {
+		for (VisSingle vis : elements) {
 			// "None" means we don't get any interaction
-			if (getInteractionParam(e.vis, Interaction.none) != null) return ZOOM_NONE;
+			if (getInteractionParam(vis, Interaction.none) != null) return ZOOM_NONE;
 
 			// Find the panzoom request and use it
-			Param param = getInteractionParam(e.vis, Interaction.panzoom);
+			Param param = getInteractionParam(vis, Interaction.panzoom);
 			if (param != null) {
 				String s = param.hasModifiers() ? param.firstModifier().asString() : "both";
 				if (s.equals("none")) return ZOOM_NONE;
@@ -149,13 +150,13 @@ public class D3Interaction {
 	}
 
 	// Return true if we want node expand to fill functionality
-	private boolean expandRequested(ElementStructure[] elements) {
+	private boolean expandRequested(VisSingle[] elements) {
 		// Explicit requests in the code are honored. In case of multiple specs, just the first one is used
-		for (ElementStructure e : elements)
-			if (getInteractionParam(e.vis, Interaction.expand) != null) return true;
+		for (VisSingle vis : elements)
+			if (getInteractionParam(vis, Interaction.expand) != null) return true;
 
-		for (ElementStructure e : elements)
-			if (getInteractionParam(e.vis, Interaction.none) != null) return false;
+		for (VisSingle vis : elements)
+			if (getInteractionParam(vis, Interaction.none) != null) return false;
 
 		return false;
 	}
@@ -435,21 +436,21 @@ public class D3Interaction {
 				.indentMore().indentMore().onNewLine();
 
 		// If the transform is undefined, define it (and restrict the pan amount for coord charts)
-		if (this.structure.diagram == null)
+		if (diagram == null)
 			out.add("t = t ||BrunelD3.restrictZoom(d3.event.transform, geom, this)");
 		else
 			out.add("t = t || d3.event.transform");
 
 		out.endStatement();
 
-		if (this.structure.diagram == VisTypes.Diagram.parallel) {           // Very special handling
+		if (diagram == VisTypes.Diagram.parallel) {           // Very special handling
 			out.add("var index = Math.round(d3.mouse(zoomNode)[0] * (parallel.length-1) / geom.inner_width)")
 					.endStatement();
 			out.add("var p = parallel[index]").endStatement();
 			out.add("p._scale = p._scale || p.scale").endStatement();
 			out.add("if (p.numeric) p.scale = t.rescaleY(p._scale)").endStatement();
 			out.add("else           p.scale.range([t.y, t.y + t.k * geom.inner_height])").endStatement();
-		} else if (this.structure.diagram != VisTypes.Diagram.map) {         // The map has no scales to modify ...
+		} else if (diagram != VisTypes.Diagram.map) {         // The map has no scales to modify ...
 			if (canZoomX) applyZoomToScale(0, out);
 			if (canZoomY) applyZoomToScale(1, out);
 		}
@@ -459,11 +460,11 @@ public class D3Interaction {
 		// Set the zoom level on the interior
 		out.add("interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));").endStatement();
 
-		if (this.structure.diagram == VisTypes.Diagram.network) {
+		if (diagram == VisTypes.Diagram.network) {
 			// A network has a defined simulation, which we need to prod if not running
 			out.comment("If the simulation has stopped, run one pass to use the scale");
 			out.add("if (simulation && simulation.alpha() < simulation.alphaMin()) simulation.on('tick')()").endStatement();
-		} else if (this.structure.diagram == VisTypes.Diagram.cloud) {
+		} else if (diagram == VisTypes.Diagram.cloud) {
 			// A cloud just gets the container transformed
 			out.add("interior.attr('transform', d3.zoomTransform(zoomNode))").endStatement();
 		} else {
@@ -482,13 +483,13 @@ public class D3Interaction {
 	 */
 	private void applyZoomToScale(int dimension, ScriptWriter out) {
 		// Which is the screen dimension for this scale dimension?
-		boolean isScreenX = structure.coordinates.isTransposed() ? dimension == 1 : dimension == 0;
+		boolean isScreenX = coordinates.isTransposed() ? dimension == 1 : dimension == 0;
 		String offset = isScreenX ? "t.x" : "t.y";
 
 		out.add(dimension == 0 ? "scale_x" : "scale_y");
 
-		boolean xCategorical = structure.diagram == null && structure.coordinates.xCategorical;
-		boolean yCategorical = structure.diagram == null && structure.coordinates.yCategorical;
+		boolean xCategorical = diagram == null && coordinates.xCategorical;
+		boolean yCategorical = diagram == null && coordinates.yCategorical;
 
 		if (dimension == 0 && xCategorical) {
 			// We cannot change the domain, so we change the range instead, which we know runs from 0 to the geom extent

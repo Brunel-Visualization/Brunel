@@ -24,13 +24,12 @@ import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
-import org.brunel.data.Dataset;
 import org.brunel.model.style.StyleTarget;
 
 class Chord extends D3Diagram {
 
-    public Chord(ElementStructure vis, Dataset data, ScriptWriter out) {
-        super(vis, data);
+    public Chord(ElementStructure vis) {
+        super(vis);
     }
 
     public String getRowKeyFunction() {

@@ -18,72 +18,73 @@ package org.brunel.model;
 
 public class VisTypes {
 
-    /* Axes types */
-    public enum Axes {
-        none, x, y
-    }
+	/* Axes types */
+	public enum Axes {
+		none, x, y
+	}
 
-    /* Element usage modifiers */
-    public enum Using {
-        none, dodge, interpolate
-    }
+	/* Element usage modifiers */
+	public enum Using {
+		none, dodge, interpolate
+	}
 
-    /* How we compose visualizations */
-    public enum Composition {
-        inside, nested, overlay, tile
-    }
+	/* How we compose visualizations */
+	public enum Composition {
+		inside, nested, overlay, tile
+	}
 
-    /* Coordinate methods */
-    public enum Coordinates {
-        regular, transposed, coords, polar
-    }
+	/* Coordinate methods */
+	public enum Coordinates {
+		regular, transposed, coords, polar
+	}
 
-    /* Our diagram layouts; each may have an option default element to use */
-    public enum Diagram {
-        bubble(Element.point, true), chord(Element.edge, false), cloud(Element.text, false), tree(Element.point, true),
-        treemap(Element.bar, true), network(Element.point, false), map(Element.polygon, false),
-        parallel(Element.bar, false), table(Element.point, false), gridded(Element.point, true);
+	/* Our diagram layouts; each may have an option default element to use */
+	public enum Diagram {
+		bubble(Element.point, true), chord(Element.edge, false), cloud(Element.text, false), tree(Element.point, true),
+		treemap(Element.bar, true), network(Element.point, false), map(Element.polygon, false),
+		parallel(Element.bar, false), table(Element.point, false), gridded(Element.point, true),
+		dependentEdge(Element.edge, false);
 
-        public final Element defaultElement;
-        public final boolean isHierarchical;
+		public final Element defaultElement;
+		public final boolean isHierarchical;
 
-        Diagram(Element defaultElement, boolean isHierarchical) {
-            this.defaultElement = defaultElement;
-            this.isHierarchical = isHierarchical;
-        }
-    }
+		Diagram(Element defaultElement, boolean isHierarchical) {
+			this.defaultElement = defaultElement;
+			this.isHierarchical = isHierarchical;
+		}
+	}
 
-    /* Element types */
-    public enum Element {
-        area(true, true, true), bar(false, true, true), edge(false, false, true), line(true, false, false),
-        path(true, false, false), point(false, true, false), polygon(true, true, false), text(false, true, false);
+	/* Element types */
+	public enum Element {
+		area(true, true, true), bar(false, true, true), edge(false, false, true), line(true, false, false),
+		path(true, false, false), point(false, true, false), polygon(true, true, false), text(false, true, false);
 
-        public final boolean producesSingleShape;       // If true, multiple rows make a single shape
-        public final boolean filled;                    // If true, element typically has fill and stroke
-        public final boolean showsRange;                // If true, the element spans a range of 2 y values
+		public final boolean producesSingleShape;       // If true, multiple rows make a single shape
+		public final boolean filled;                    // If true, element typically has fill and stroke
+		public final boolean showsRange;                // If true, the element spans a range of 2 y values
 
-        Element(boolean producesSingleShape, boolean filled, boolean showsRange) {
-            this.producesSingleShape = producesSingleShape;
-            this.filled = filled;
-            this.showsRange = showsRange;
-        }
-    }
+		Element(boolean producesSingleShape, boolean filled, boolean showsRange) {
+			this.producesSingleShape = producesSingleShape;
+			this.filled = filled;
+			this.showsRange = showsRange;
+		}
+	}
 
-    /* Axes types */
-    public enum Legends {
-        all, auto, none
-    }
+	/* Axes types */
+	public enum Legends {
+		all, auto, none
+	}
 
-    /* Interaction types */
-    public enum Interaction {
-        select,                     // Select items using mouse
-        panzoom,                    // Allow panning and zooming using the mouse
-        filter,                     // Apply filtering to the data
-        collapse,                   // Collapse trees using the mouse
-        expand,                     // Expand subtrees using the mouse
-        call,                       // A custom call to user code
-        auto,                       // automatic interaction behavior
-        none                        // turn off interactivity
-    }
+	/* Interaction types */
+	public enum Interaction {
+		select,                     // Select items using mouse
+		panzoom,                    // Allow panning and zooming using the mouse
+		filter,                     // Apply filtering to the data
+		collapse,                   // Collapse trees using the mouse
+		expand,                     // Expand subtrees using the mouse
+		call,                       // A custom call to user code
+		auto,                       // automatic interaction behavior
+		none                        // turn off interactivity
+	}
 
 }

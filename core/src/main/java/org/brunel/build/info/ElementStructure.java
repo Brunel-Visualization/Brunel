@@ -17,6 +17,7 @@
 package org.brunel.build.info;
 
 import org.brunel.build.d3.D3Util;
+import org.brunel.build.d3.diagrams.D3Diagram;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.data.Dataset;
@@ -39,6 +40,7 @@ public class ElementStructure {
 	public final Dataset data;
 	public final GeoMapping geo;
 	public final String styleSymbol;                // This is the symbol defined in the style for the element
+	public final D3Diagram diagram;					// This is the diagram we will use for the element (may be null)
 
 	public ElementDetails details;
 	public List<Dependency> dependencies;
@@ -52,16 +54,7 @@ public class ElementStructure {
 		this.styleSymbol = ModelUtil.getSymbolFromStyle(vis);
 		this.original = vis.getDataset();
 		this.dependencies = new ArrayList<>();
-
-	}
-
-	// Find a dependent structure on us -- edges for our nodes
-	public ElementStructure findDependentEdges() {
-		for (Dependency dependency : dependencies) {
-			// Needs two keys
-			if (dependency.base == this && dependency.dependent.vis.fKeys.size() > 1) return dependency.dependent;
-		}
-		return null;
+		this.diagram = D3Diagram.make(this);
 	}
 
 	public int getBaseDatasetIndex() {

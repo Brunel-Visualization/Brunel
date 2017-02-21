@@ -26,7 +26,6 @@ import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.Padding;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
-import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.model.style.StyleTarget;
 
@@ -37,9 +36,9 @@ class Table extends D3Diagram {
     private final Padding padding;              // Padding for labels
     private final Field[] fields;               // The fields we are showing
 
-    public Table(ElementStructure structure, Dataset data, ScriptWriter out) {
-        super(structure, data);
-        fields = data.fieldArray(vis.positionFields());
+    public Table(ElementStructure structure) {
+        super(structure);
+        fields = structure.data.fieldArray(vis.positionFields());
         padding = ModelUtil.getPadding(vis, StyleTarget.makeElementTarget(null), 2);
         padding.top += 15;       // For the titles
         fraction = divideColumnSpace(fields);

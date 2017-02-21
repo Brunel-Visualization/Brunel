@@ -21,10 +21,10 @@ import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.GeomAttribute;
+import org.brunel.build.info.Dependency;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
-import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Diagram;
@@ -34,28 +34,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class D3Diagram {
-	public static D3Diagram make(ElementStructure structure, ScriptWriter out) {
+	public static D3Diagram make(ElementStructure structure) {
 		VisSingle vis = structure.vis;
-		Dataset data = structure.data;
 
-		if (vis.tDiagram == null) {
-			// The edges defined for a graph or network are treated as an implicit diagram
-			if (structure.chart.diagram != null && structure.isDependentEdge())
-				return new DependentEdge(structure, data, out);
-			else return null;
+		// The simple case -- coordinates
+		if (vis.tDiagram == null) return null;
 
-		}
-		if (vis.tDiagram == Diagram.bubble) return new Bubble(structure, data, out);
-		if (vis.tDiagram == Diagram.chord) return new Chord(structure, data, out);
-		if (vis.tDiagram == Diagram.cloud) return new Cloud(structure, data, out);
-		if (vis.tDiagram == Diagram.tree) return new Tree(structure, data, out);
-		if (vis.tDiagram == Diagram.parallel) return new ParallelCoordinates(structure, data, out);
-		if (vis.tDiagram == Diagram.gridded) return new Grid(structure, data, out);
-		if (vis.tDiagram == Diagram.table) return new Table(structure, data, out);
-		if (vis.tDiagram == Diagram.treemap) return new Treemap(structure, data, out);
-		if (vis.tDiagram == Diagram.network) return new Network(structure, data, out);
-		if (isMapLabels(vis)) return new GeoMapLabels(structure, data, out);
-		if (vis.tDiagram == Diagram.map) return new GeoMap(structure, data, structure.geo, out);
+		// Dependent edges are only handled as a diagram if they are attached to a diagram
+		if (vis.tDiagram == Diagram.dependentEdge)
+			return structure.chart.diagram == null ? null : new DependentEdge(structure);
+
+		// Normal diagrams
+		if (vis.tDiagram == Diagram.bubble) return new Bubble(structure);
+		if (vis.tDiagram == Diagram.chord) return new Chord(structure);
+		if (vis.tDiagram == Diagram.cloud) return new Cloud(structure);
+		if (vis.tDiagram == Diagram.tree) return new Tree(structure);
+		if (vis.tDiagram == Diagram.parallel) return new ParallelCoordinates(structure);
+		if (vis.tDiagram == Diagram.gridded) return new Grid(structure);
+		if (vis.tDiagram == Diagram.table) return new Table(structure);
+		if (vis.tDiagram == Diagram.treemap) return new Treemap(structure);
+		if (vis.tDiagram == Diagram.network) return new Network(structure);
+		if (isMapLabels(vis)) return new GeoMapLabels(structure);
+		if (vis.tDiagram == Diagram.map) return new GeoMap(structure);
 		throw new IllegalStateException("Unknown diagram: " + vis.tDiagram);
 	}
 
@@ -72,14 +72,21 @@ public abstract class D3Diagram {
 	final ElementStructure structure;
 	private boolean isHierarchy;
 
-	D3Diagram(ElementStructure structure, Dataset data) {
+	D3Diagram(ElementStructure structure) {
 		this.structure = structure;
 		this.vis = structure.vis;
 		this.size = vis.fSize.isEmpty() ? null : vis.fSize.get(0);
 		this.position = vis.positionFields();
 		this.element = vis.tElement;
 		this.interaction = structure.chart.interaction;
+		if (this.interaction == null) throw new IllegalStateException("Interaction must be defined at this point");
+	}
 
+	protected ElementStructure getDependentEdges() {
+		// Needs two keys to be an edge
+		for (Dependency dependency : structure.dependencies)
+			if (dependency.base == structure && dependency.dependent.vis.fKeys.size() > 1) return dependency.dependent;
+		return null;
 	}
 
 	public void defineCoordinateFunctions(ElementDetails details, ScriptWriter out) {
@@ -99,8 +106,8 @@ public abstract class D3Diagram {
 	/**
 	 * Any initialization needed at the start of the build function
 	 *
-	 * @return
 	 * @param out
+	 * @return
 	 */
 	public abstract void writeDataStructures(ScriptWriter out);
 
@@ -178,7 +185,7 @@ public abstract class D3Diagram {
 					.endStatement();
 		} else {
 			// We have no positions, so we must find a dependent element with keys that define edges building the hierarchy
-			ElementStructure edges = structure.findDependentEdges();
+			ElementStructure edges = getDependentEdges();
 
 			if (vis.fKeys.isEmpty()) throw new IllegalStateException("Tree needs keys for ids");
 			if (edges == null)

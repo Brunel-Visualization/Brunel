@@ -18,6 +18,7 @@ package org.brunel.build.d3;
 
 import org.brunel.action.Param;
 import org.brunel.build.d3.element.ElementDetails;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ModelUtil.Size;
 import org.brunel.build.util.ScriptWriter;
@@ -42,12 +43,12 @@ public class D3LabelBuilder {
 
 	private final VisSingle vis;
 	private final ScriptWriter out;
-	private final Dataset data;
+	private final ElementStructure structure;
 
-	public D3LabelBuilder(VisSingle vis, ScriptWriter out, Dataset data) {
-		this.vis = vis;
+	public D3LabelBuilder(ElementStructure structure, ScriptWriter out) {
+		this.structure = structure;
+		this.vis = structure.vis;
 		this.out = out;
-		this.data = data;
 	}
 
 	public void addElementLabeling() {
@@ -239,7 +240,7 @@ public class D3LabelBuilder {
 		for (int i = 0; i < items.size(); i++) {
 			Param p = items.get(i);
 			if (!p.isField()) return items;            // Any non-field and we do not prettify
-			Field f = data.field(p.asField());
+			Field f = structure.data.field(p.asField());
 			if (i > 0) result.add(Param.makeString(longForm ? "<br/>" : ", "));
 			if (longForm)
 				result.add(Param.makeString("<span class=\"title\">" + f.label + ": </span>"));
@@ -262,7 +263,7 @@ public class D3LabelBuilder {
 		for (Param p : prettify(items, false)) {
 			if (!first) out.add("\n\t\t\t+ ");
 			if (p.isField()) {
-				Field f = data.field(p.asField());
+				Field f = structure.data.field(p.asField());
 				if (forTooltip) out.add("'<span class=\"field\">' + ");
 				if (p.hasModifiers()) out.add("BrunelD3.shorten(");
 				out.add("data." + D3Util.baseFieldID(f) + "_f(d)");

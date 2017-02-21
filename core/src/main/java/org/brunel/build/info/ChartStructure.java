@@ -65,6 +65,9 @@ public class ChartStructure {
 		this.coordinates = new ChartCoordinates(elements, data, diagram);
 		this.geo = makeGeo(elements, data);
 
+		// Define any interactivity needed
+		this.interaction = new D3Interaction(diagram, coordinates, elements);
+
 		// Define the elements
 		for (int i = 0; i < elements.length; i++) {
 			GeoMapping geoMapping = geo == null ? null : geo.getGeo(elements[i]);
@@ -77,7 +80,8 @@ public class ChartStructure {
 		if (sourceIndex >= 0) {
 			for (ElementStructure structure : this.elementStructure) {
 				VisSingle vis = structure.vis;
-				if (vis.positionFields().length == 0 && vis.tDiagram == null && !vis.fKeys.isEmpty()) {
+				boolean isOtherDependent = vis.positionFields().length == 0 && vis.tDiagram == null && !vis.fKeys.isEmpty();
+				if (vis.tDiagram == Diagram.dependentEdge || isOtherDependent) {
 					// No position or diagram, and we do have keys to link us to the source
 					// Check we do not depend on ourselves!
 					if (structure != elementStructure[sourceIndex]) {
@@ -92,9 +96,6 @@ public class ChartStructure {
 		// This must be called when the elements have been defined. It will look for custom symbol URIs
 		// and manage naming conventions for them
 		this.symbols = new SymbolHandler(this);
-
-		// Define any interactivity needed
-		this.interaction = new D3Interaction(this);
 
 	}
 
@@ -114,7 +115,9 @@ public class ChartStructure {
 	private Diagram findDiagram() {
 		// Any diagram make the chart all diagram. Mixing diagrams and non-diagrams will
 		// likely be useless at best, but we will not throw an error for it
-		for (VisSingle e : elements) if (e.tDiagram != null) return e.tDiagram;
+		// Note that we don't count a dependent edge as a diagram for the overall chart
+		for (VisSingle e : elements)
+			if (e.tDiagram != null && e.tDiagram != Diagram.dependentEdge) return e.tDiagram;
 		return null;
 	}
 

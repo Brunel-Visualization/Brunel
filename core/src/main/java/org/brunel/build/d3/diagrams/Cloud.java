@@ -22,12 +22,11 @@ import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Dataset;
 
 class Cloud extends D3Diagram {
 
-    public Cloud(ElementStructure vis, Dataset data, ScriptWriter out) {
-        super(vis, data);
+    public Cloud(ElementStructure vis) {
+        super(vis);
     }
 
     public void writeDataStructures(ScriptWriter out) {

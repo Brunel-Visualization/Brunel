@@ -22,19 +22,16 @@ import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Dataset;
 import org.brunel.model.VisSingle;
 
 class Network extends D3Diagram {
 
 	private final ElementStructure nodes;
-	private final ElementStructure edges;
-	private final String nodeID, fromFieldID, toFieldID;
+	private final String nodeID;
 
-	public Network(ElementStructure structure, Dataset data, ScriptWriter out) {
-		super(structure, data);
+	public Network(ElementStructure structure) {
+		super(structure);
 		this.nodes = structure;
-		this.edges = structure.findDependentEdges();
 
 		if (vis.fKeys.size() > 0) {
 			nodeID = vis.fKeys.get(0).asField(nodes.data);
@@ -45,8 +42,32 @@ class Network extends D3Diagram {
 		} else {
 			throw new IllegalStateException("Networks require nodes to have a key field or position field");
 		}
+	}
+
+	public void writeBuildCommands(ScriptWriter out) {
+		DependentEdge dependentEdge = (DependentEdge) getDependentEdges().diagram;
+
+		// Determine if we want curved arcs and add a density parameter if requested
+		boolean curved = dependentEdge.curved;
+		String density = vis.tDiagramParameters.length == 0 ? "" : ", " + vis.tDiagramParameters[0].asDouble();
+
+		out.onNewLine().add("if (simulation) simulation.stop()").endStatement()
+				.add("simulation = BrunelD3.network(graph, elements[" + nodes.index
+						+ "], elements[" + getDependentEdges().index + "], zoomNode, geom, " + curved + density + ")").endStatement();
+	}
+
+	public void writePerChartDefinitions(ScriptWriter out) {
+		out.add("var graph, simulation;").at(50).comment("Node/edge graph and force simulation");
+	}
+
+	public void writeDataStructures(ScriptWriter out) {
+		ElementStructure edges = getDependentEdges();
 
 		VisSingle edgesVis = edges.vis;
+
+		String edgeDataset = "elements[" + edges.index + "].data()";
+
+		String fromFieldID, toFieldID;
 		if (edgesVis.fKeys.size() > 1) {
 			fromFieldID = edgesVis.fKeys.get(0).asField(edges.data);
 			toFieldID = edgesVis.fKeys.get(1).asField(edges.data);
@@ -56,26 +77,7 @@ class Network extends D3Diagram {
 		} else {
 			throw new IllegalStateException("Networks require edges to have two key fields or position fields");
 		}
-	}
 
-	public void writeBuildCommands(ScriptWriter out) {
-		// Determine if we want curved arcs
-		String symbol = edges.styleSymbol;
-		boolean curved = symbol != null && (symbol.contains("arc") || symbol.contains("curve"));
-
-		String density = "";
-		if (vis.tDiagramParameters.length > 0) density = ", " + vis.tDiagramParameters[0].asDouble();
-		out.onNewLine().add("if (simulation) simulation.stop()").endStatement()
-				.add("simulation = BrunelD3.network(graph, elements[" + nodes.index
-						+ "], elements[" + edges.index + "], zoomNode, geom, " + curved + density + ")").endStatement();
-	}
-
-	public void writePerChartDefinitions(ScriptWriter out) {
-		out.add("var graph, simulation;").at(50).comment("Node/edge graph and force simulation");
-	}
-
-	public void writeDataStructures(ScriptWriter out) {
-		String edgeDataset = "elements[" + edges.index + "].data()";
 		String nodeField = quoted(nodeID), from = quoted(fromFieldID), to = quoted(toFieldID);
 		out.add("graph = graph || BrunelData.diagram_Graph.make(processed,", nodeField, ",",
 				edgeDataset, ",", from, ",", to, ")").endStatement();

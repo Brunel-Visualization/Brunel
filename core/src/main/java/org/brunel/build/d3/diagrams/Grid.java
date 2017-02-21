@@ -23,7 +23,6 @@ import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.GeomAttribute;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Dataset;
 
 import static org.brunel.build.d3.element.ElementRepresentation.spaceFillingCircle;
 
@@ -32,8 +31,8 @@ class Grid extends Bubble {
 	private int rows = 0, columns = 0;                  // size of the grid (0 -> "choose for me")
 	private double aspect = 1;                          // desired aspect ratio of the grid cells
 
-	Grid(ElementStructure structure, Dataset data, ScriptWriter out) {
-		super(structure, data, out);
+	Grid(ElementStructure structure) {
+		super(structure);
 
 		for (Param p : vis.tDiagramParameters) {
 			String s = p.asString();
@@ -78,7 +77,7 @@ class Grid extends Bubble {
 		// Classes defined for CSS
 		out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 
-		D3LabelBuilder labelBuilder = new D3LabelBuilder(vis, out, structure.data);
+		D3LabelBuilder labelBuilder = new D3LabelBuilder(structure, out);
 		ElementBuilder.definePointLikeMark(details, structure, out);
 		ElementBuilder.writeElementAesthetics(details, true, vis, out);
 		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);

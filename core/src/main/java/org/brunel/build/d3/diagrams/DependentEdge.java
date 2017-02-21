@@ -22,19 +22,24 @@ import org.brunel.build.d3.element.ElementDetails;
 import org.brunel.build.d3.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Dataset;
+import org.brunel.model.VisTypes;
 
 class DependentEdge extends D3Diagram {
 
 	private final boolean arrow;        // True if we want arrows
 	private final boolean polar;        // True if we have a polar layout
-	private final boolean curved;        // True if we want a curved arc
+	public final boolean curved;        // True if we want a curved arc
 
-	DependentEdge(ElementStructure structure, Dataset data, ScriptWriter out) {
-		super(structure, data);
+	DependentEdge(ElementStructure structure) {
+		super(structure);
 		String symbol = structure.styleSymbol;
-		this.arrow = symbol == null || symbol.toLowerCase().contains("arrow");
-		this.curved = symbol == null || symbol.toLowerCase().contains("curved") || symbol.toLowerCase().contains("arc");
+		if (symbol == null) {
+			this.arrow = true;
+			this.curved = structure.chart.diagram != VisTypes.Diagram.network;
+		} else {
+			this.arrow = symbol.toLowerCase().contains("arrow");
+			this.curved = symbol.toLowerCase().contains("curved") || symbol.toLowerCase().contains("arc");
+		}
 		this.polar = structure.chart.coordinates.isPolar();
 	}
 

@@ -5,7 +5,6 @@ import org.brunel.build.d3.D3LabelBuilder;
 import org.brunel.build.d3.D3ScaleBuilder;
 import org.brunel.build.d3.D3Util;
 import org.brunel.build.d3.ScalePurpose;
-import org.brunel.build.d3.diagrams.D3Diagram;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.Accessibility;
 import org.brunel.build.util.ModelUtil;
@@ -186,7 +185,7 @@ public abstract class ElementBuilder {
 		this.scales = scales;
 		this.out = out;
 		this.vis = structure.vis;
-		this.labelBuilder = new D3LabelBuilder(vis, out, structure.data);
+		this.labelBuilder = new D3LabelBuilder(structure, out);
 	}
 
 	public abstract void addAdditionalElementGroups();
@@ -227,9 +226,8 @@ public abstract class ElementBuilder {
 	public static ElementBuilder make(ElementStructure structure, ScriptWriter out, D3ScaleBuilder scalesBuilder) {
 		if (!structure.vis.tGuides.isEmpty())
 			return new GuideElementBuilder(structure, out, scalesBuilder);
-		D3Diagram diagram = D3Diagram.make(structure, out);
-		if (diagram != null)
-			return new DiagramElementBuilder(structure, out, scalesBuilder, diagram);
+		if (structure.diagram != null)
+			return new DiagramElementBuilder(structure, out, scalesBuilder);
 		return new CoordinateElementBuilder(structure, out, scalesBuilder);
 	}
 
