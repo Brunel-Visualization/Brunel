@@ -20,6 +20,7 @@ import org.brunel.build.d3.D3Interaction;
 import org.brunel.build.d3.D3ScaleBuilder;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
+import org.brunel.data.Field;
 
 class CoordinateElementBuilder extends ElementBuilder {
 
@@ -31,8 +32,25 @@ class CoordinateElementBuilder extends ElementBuilder {
 		// None needed
 	}
 
+	public String getCommonSymbol() {
+		if (structure.styleSymbol != null) return structure.styleSymbol;
+		if (structure.chart.geo != null) return "circle";             // Geo charts default to circles
+		// We default to a rectangle if all the scales are categorical or binned, otherwise we return a point
+		boolean cat = allShowExtent(structure.chart.coordinates.allXFields) && allShowExtent(structure.chart.coordinates.allYFields);
+		return cat ? "rect" : "circle";
+	}
+
+	private boolean allShowExtent(Field[] fields) {
+		// Categorical and numeric fields both show elements as extents on the axis
+		for (Field field : fields) {
+			if (field.isNumeric() && !field.isBinned()) return false;
+		}
+		return true;
+	}
+
 	public ElementDetails makeDetails() {
-		return ElementDetails.makeForCoordinates(vis, getCommonSymbol());
+		String symbol = getCommonSymbol();
+		return ElementDetails.makeForCoordinates(structure, symbol);
 	}
 
 	public void preBuildDefinitions() {

@@ -32,12 +32,12 @@ import static org.brunel.build.d3.element.ElementRepresentation.spaceFillingCirc
  */
 public class ElementDetails {
 
-	public static ElementDetails makeForCoordinates(VisSingle vis, String symbol) {
-		Element element = vis.tElement;
-		ElementRepresentation representation = ElementRepresentation.makeForCoordinateElement(element, symbol, vis);
+	public static ElementDetails makeForCoordinates(ElementStructure structure, String symbol) {
+		Element element = structure.vis.tElement;
+		ElementRepresentation representation = ElementRepresentation.makeForCoordinateElement(element, symbol, structure);
 		String dataSource = element.producesSingleShape ? "splits" : "data._rows";
-		boolean filled = element.filled || (!vis.fSize.isEmpty() && (element == Element.line || element == Element.path));
-		return new ElementDetails(vis, representation, element.name(), dataSource, filled);
+		boolean filled = element.filled || (!structure.vis.fSize.isEmpty() && (element == Element.line || element == Element.path));
+		return new ElementDetails(structure.vis, representation, element.name(), dataSource, filled);
 	}
 
 	/**

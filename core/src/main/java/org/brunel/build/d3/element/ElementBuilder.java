@@ -314,14 +314,6 @@ public abstract class ElementBuilder {
 			out.addChained("attr('rx'," + size.value(8.0) + ").attr('ry', " + size.value(8.0) + ")");
 	}
 
-	private boolean allShowExtent(Field[] fields) {
-		// Categorical and numeric fields both show elements as extents on the axis
-		for (Field field : fields) {
-			if (field.isNumeric() && !field.isBinned()) return false;
-		}
-		return true;
-	}
-
 	private void constructSplitPath() {
 		// We add the x function to signal we need the paths sorted
 		String params = "data, path";
@@ -408,13 +400,6 @@ public abstract class ElementBuilder {
 		out.endStatement();
 	}
 
-	protected String getCommonSymbol() {
-		if (structure.styleSymbol != null) return structure.styleSymbol;
-		if (structure.chart.geo != null) return "circle";             // Geo charts default to circles
-		// We default to a rectangle if all the scales are categorical or binned, otherwise we return a point
-		boolean cat = allShowExtent(structure.chart.coordinates.allXFields) && allShowExtent(structure.chart.coordinates.allYFields);
-		return cat ? "rect" : "circle";
-	}
 
 	/* The key function ensure we have object constancy when animating */
 	protected abstract String getKeyFunction();

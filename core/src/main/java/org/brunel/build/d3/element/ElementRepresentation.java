@@ -16,7 +16,7 @@
 
 package org.brunel.build.d3.element;
 
-import org.brunel.model.VisSingle;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.model.VisTypes;
 
 /**
@@ -39,11 +39,11 @@ public enum ElementRepresentation {
 	symbol("use", "box", false),                        // A symbol drawn via a 'use', but behaves like a large circle
 	wedge("path", "wedge", false);                      // A pie chart wedge gets a special labeling location
 
-	static ElementRepresentation makeForCoordinateElement(VisTypes.Element element, String symbolName, VisSingle vis) {
-		VisTypes.Coordinates coords = vis.coords;
+	static ElementRepresentation makeForCoordinateElement(VisTypes.Element element, String symbolName, ElementStructure structure) {
+		VisTypes.Coordinates coords = structure.vis.coords;
 
 		// If there is a symbol aesthetic, then we need to have a symbol!
-		if (!vis.fSymbol.isEmpty())
+		if (!structure.vis.fSymbol.isEmpty())
 			return symbol;
 
 		// Bars in polar coordinates are wedges
