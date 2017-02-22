@@ -240,7 +240,15 @@ public class DataBuilder {
 		writeTransform("sort", params.sortCommand);
 		writeTransform("stack", params.stackCommand);
 
-		// TODO: kill this
+		/*
+				This is a horrible hack. The purpose is to allow the following syntax to work:
+
+						edge key(a, b) + network y(a, b) key(#values)
+
+				usually aggregation happens BEFORE series are created, but we want to aggregate up all
+				the y values so we only get one unique ID in the rows, and do this AFTER series has been
+				applied. The following code isolates this use case and makes it work.
+		 */
 		if (vis.tDiagram == Diagram.network && vis.fY.size() > 1) {
 			// We are using the 'Y' values to generate a set of identifier
 			// We need to ensure the values are set in the summary, as well as any aesthetics
