@@ -422,7 +422,7 @@ public class VisualizationBuilder {
 
 		// Write the class definition function (and flag to use strict mode)
 		out.add("function ", options.className, "(visId) {").ln().indentMore();
-		out.add("\"use strict\";").comment("Strict Mode");
+		out.add("\"use strict\";").comment("Strict mode");
 
 		// Add commonly used definitions
 		out.add("var datasets = [],").comment("Array of datasets for the original data");
@@ -430,13 +430,9 @@ public class VisualizationBuilder {
 		out.add("    post = function(d, i) { return d },").comment("Default post-process does nothing");
 		out.add("    transitionTime = 200,").comment("Transition time for animations");
 		out.add("    charts = [],").comment("The charts in the system");
-		out.add("    hasData = function(d) {return d && (d.row != null || hasData(d.data))},")
-				.comment("Filters to data items");
-		out.add("    vis = d3.select('#' + visId).attr('class', 'brunel'),").comment("the SVG container");
-		out.add("    isSelected = function(data) { return function(d) {return data.$selection(d)=='\u2713'} };")
-				.comment("returns a filter function identifying selected items");
-		out.add("vis.selectAll('defs').data(['X']).enter().append('defs');")
-				.comment("Ensure defs element is present");
+		out.add("    vis = d3.select('#' + visId).attr('class', 'brunel');").comment("the SVG container");
+
+		out.ln().add("BrunelD3.addDefinitions(vis);").comment("ensure standard symbols present");
 	}
 
 	private void endChart(ChartStructure structure) {
@@ -660,8 +656,9 @@ public class VisualizationBuilder {
 
 	/**
 	 * Write a set of field names as properties
-	 * @param key property key
-	 * @param fieldNames  list of names to write
+	 *
+	 * @param key              property key
+	 * @param fieldNames       list of names to write
 	 * @param needsCommaBefore true if a comma needs to be written (it is part of a list)
 	 * @return updated needsCommaBefore, changed to be true if we added anthing
 	 */

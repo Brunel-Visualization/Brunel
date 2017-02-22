@@ -48,23 +48,23 @@ public class SymbolHandler {
 	};
 
 	// URI to indicate that we want to define default symbols
-	private static final URI BASIC_SYMBOLS_URI, EXTENDED_SYMBOLS_URI;
+	private static final URI BASIC_SYMBOLS_URI = URI.create("internal");
+	private static final URI EXTENDED_SYMBOLS_URI = findExtendedSymbolsURI();
 
-	// Store for the basic and extended symbols when we find them
+	private static URI findExtendedSymbolsURI() {
+		try {
+			return SymbolHandler.class.getResource("/org/brunel/build/symbols_extended.svg").toURI();
+		} catch (URISyntaxException e) {
+			throw new IllegalStateException("Internal error -- unable to load extended symbols");
+		}
+	}
+
+	// The basic symbols will map to null elements, indicating they are pre-defined
 	private static final Map<String, Element> basicSymbols = new LinkedHashMap<>();
 	private static final Map<String, Element> extendedSymbols = new LinkedHashMap<>();
 
 	// Needed for this visualization
 	private final Set<URI> required = new LinkedHashSet<>();
-
-	static {
-		try {
-			BASIC_SYMBOLS_URI = SymbolHandler.class.getResource("/org/brunel/build/symbols_basic.svg").toURI();
-			EXTENDED_SYMBOLS_URI = SymbolHandler.class.getResource("/org/brunel/build/symbols_extended.svg").toURI();
-		} catch (URISyntaxException e) {
-			throw new IllegalStateException("Internal error -- unable to load symbols");
-		}
-	}
 
 	/**
 	 * Search through modifiers in the parameters to find any list of strings, which will be required symbol names.
@@ -87,19 +87,14 @@ public class SymbolHandler {
 	}
 
 	private final String visID;
-	// Map the URI requested to the symbols to display (as a DOM element)
 
 	public SymbolHandler(ChartStructure chart) {
 		visID = chart.visIdentifier;
-
 		// Search all elements for use of symbols
 		for (int i = 0; i < chart.elementStructure.length; i++) {
 			URI uri = getSymbolURI(chart.elementStructure[i]);
 			if (uri != null) required.add(uri);
 		}
-
-		// We will need this if we have any symbols defined, so load now
-		if (!required.isEmpty()) getBasicSymbols();
 	}
 
 	/**
@@ -139,15 +134,18 @@ public class SymbolHandler {
 			// Return all the ids for this element
 			List<String> keys = new ArrayList<>(elements.keySet());
 			String[] strings = new String[keys.size()];
-			for (int i = 0; i < strings.length; i++)
-				strings[i] = elements.get(keys.get(i)).getAttribute("id");
+			for (int i = 0; i < strings.length; i++) {
+				String key = keys.get(i);
+				Element e = elements.get(key);
+				strings[i] = e == null ? "_sym_" + key : e.getAttribute("id");
+			}
 			return strings;
 		}
 	}
 
 	private Map<String, Element> getSymbolDefinitions(URI uri) {
 
-		if (uri == BASIC_SYMBOLS_URI) return getBasicSymbols();
+		if (uri == BASIC_SYMBOLS_URI) return basicSymbols;
 		if (uri == EXTENDED_SYMBOLS_URI) return getExtendedSymbols();
 
 		synchronized (uriToSymbols) {
@@ -207,7 +205,8 @@ public class SymbolHandler {
 	 * @return unique prefix to add to the symbol names
 	 */
 	private String getSymbolPrefix(URI uri) {
-		if (uri == BASIC_SYMBOLS_URI || uri == EXTENDED_SYMBOLS_URI) return visID + "_symbol_";
+		// Standard symbols get standard names
+		if (uri == BASIC_SYMBOLS_URI || uri == EXTENDED_SYMBOLS_URI) return "_sym_";
 		else return visID + "_" + uri.hashCode() + "_";
 	}
 
@@ -267,7 +266,9 @@ public class SymbolHandler {
 	 * Call this to write symbol definitions into the defs element of the SVG
 	 */
 	public void addDefinitions(ScriptWriter out) {
-		if (required.isEmpty()) return;                        // No definitions means no work to do
+		// We do not need to any any definitions when we have no required symbols, or they are all basic symbols
+		if (required.isEmpty()) return;
+		if (required.size() == 1 && required.contains(BASIC_SYMBOLS_URI)) return;
 
 		Transformer t = makeTransformer();
 
@@ -275,15 +276,19 @@ public class SymbolHandler {
 
 		// The defs element has already been written, so we need only a group for these symbols
 		out.add("vis.selectAll('defs').append('g').html(").indentMore();
-		out.add("'<symbol id=\"symbol_default\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"11\"><symbol>'");
 		for (URI uri : required) {
+			boolean first = true;
 			for (Element value : getSymbolDefinitions(uri).values()) {
-				out.onNewLine().add("+ ").add(nodeToQuotedText(value, t));
+				// A null value means it has been pre-defined
+				if (value != null) {
+					out.onNewLine();
+					if (!first) out.add("+ ");
+					out.add(nodeToQuotedText(value, t));
+					first = false;
+				}
 			}
 		}
-
 		out.indentLess().onNewLine().add(")").endStatement();
-
 	}
 
 	private String nodeToQuotedText(Node node, Transformer t) {
@@ -327,9 +332,9 @@ public class SymbolHandler {
 
 		// Rectangle and Circle/Point are a special symbol -- actually changes the element type and handled elsewhere
 		if (symbolFromStyle != null
-				&& !"rect".equals(symbolFromStyle)
-				&& !"circle".equals(symbolFromStyle)
-				&& !"point".equals(symbolFromStyle))
+				&& !"rect" .equals(symbolFromStyle)
+				&& !"circle" .equals(symbolFromStyle)
+				&& !"point" .equals(symbolFromStyle))
 			requiredSymbols.add(symbolFromStyle);
 
 		// Find the internal URI that contains the symbols we need
@@ -349,10 +354,14 @@ public class SymbolHandler {
 	}
 
 	private Map<String, Element> getBasicSymbols() {
+
+		//  Arrays.asList("circle", "square", "triangle", "diamond", "cross", "pentagon", "star", "hexagon"));
 		synchronized (basicSymbols) {
-			// Read basic symbols if that has not been done already
+			// Read basic symbols if that has not been done already, putting null for the Element as it has been defined already
 			if (basicSymbols.isEmpty()) {
-				basicSymbols.putAll(readSymbolsFromURI(BASIC_SYMBOLS_URI));
+				for (String id : new String[]{"circle", "square", "triangle", "diamond", "cross", "pentagon", "star", "hexagon"}) {
+					basicSymbols.put(id, null);
+				}
 			}
 			return basicSymbols;
 		}

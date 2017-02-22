@@ -3,10 +3,10 @@ package org.brunel.build.element;
 import org.brunel.build.InteractionDetails;
 import org.brunel.build.LabelBuilder;
 import org.brunel.build.ScaleBuilder;
-import org.brunel.build.util.BuildUtil;
 import org.brunel.build.ScalePurpose;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.Accessibility;
+import org.brunel.build.util.BuildUtil;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
@@ -48,7 +48,7 @@ public abstract class ElementBuilder {
 
 		if (filterToDataOnly && (showsColor || showsOpacity || showsStrokeSize || showsCSS || showsSymbol)) {
 			// Filter only to show the data based items
-			out.addChained("filter(hasData)").comment("following only performed for data items");
+			out.addChained("filter(BrunelD3.hasData)").comment("following only performed for data items");
 		}
 
 		int n = vis.fCSS.size();
@@ -213,7 +213,9 @@ public abstract class ElementBuilder {
 		// Set initial state and selection status (which cannot be applied to a transition)
 		// Then call update and label functions which will transition to new state
 		out.add("initialState(added)").endStatement();
-		out.add("selection.filter(hasData).classed('selected', isSelected(data)).filter(isSelected(data)).raise()")
+		out.add("selection.filter(BrunelD3.hasData)")
+				.addChained("classed('selected', BrunelD3.isSelected(data))")
+				.addChained("filter(BrunelD3.isSelected(data)).raise()")
 				.endStatement();
 		out.add("updateState(BrunelD3.transition(merged, transitionMillis))").endStatement();
 		out.add("label(merged, transitionMillis)").endStatement();

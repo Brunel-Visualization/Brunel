@@ -2055,7 +2055,25 @@ var BrunelD3 = (function () {
     }
 
 
-    // Expose these methods
+    // filters to data items only
+    function hasData(d) {
+        return d && (d.row != null || hasData(d.data))
+    }
+
+    // returns a filter function identifying selected items of the data
+    function isSelected(data) {
+        return function (d) {
+            return data.$selection(d) == '\u2713'
+        }
+    }
+
+    // Add definitions tag to the visualization with standard symbols
+    function addStandardDefinitions(vis) {
+        vis.selectAll('defs').data(['X']).enter().append('defs').html(
+            '<g><symbol id="_sym_circle" viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></symbol><symbol id="_sym_square" viewBox="0 0 24 24"><path d="M3,3V21H21V3Z"/></symbol><symbol id="_sym_triangle" viewBox="0 0 24 24"><path d="M1,21H23L12,2Z"/></symbol><symbol id="_sym_diamond" viewBox="0 0 24 24"><path d="M21.5,10.8L13.2,2.5C12.5,1.8 11.5,1.8 10.8,2.5L2.5,10.8C1.8,11.5 1.8,12.5 2.5,13.2L10.8,21.5C11.5,22.2 12.5,22.2 13.2,21.5L21.5,13.2C22.1,12.5 22.1,11.5 21.5,10.8Z"/></symbol><symbol id="_sym_cross" viewBox="0 0 24 24"><path d="M23,16H16V23H8V16H1V8H8V1H16V8H23V16Z"/></symbol><symbol id="_sym_pentagon" viewBox="0 0 24 24"><path d="M12,2.5L2,9.8L5.8,21.5H18.2L22,9.8L12,2.5Z"/></symbol><symbol id="_sym_star" viewBox="0 0 24 24"><path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/></symbol><symbol id="_sym_hexagon" viewBox="0 0 24 24"><path d="M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5Z"/></symbol></g>'
+        );
+    }
+
     return {
         'makeData': makeDataset,
         'geometry': geometries,
@@ -2094,7 +2112,10 @@ var BrunelD3 = (function () {
         'geoStream': geoStream,
         'winkel3': winkel3,
         'setAspect': setAspect,
-        'copyTreeLayoutInfo': copyTreeLayoutInfo
+        'hasData': hasData,
+        'isSelected': isSelected,
+        'copyTreeLayoutInfo': copyTreeLayoutInfo,
+        'addDefinitions' : addStandardDefinitions
     }
 
 })

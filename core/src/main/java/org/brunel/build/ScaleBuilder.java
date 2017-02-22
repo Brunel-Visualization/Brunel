@@ -295,17 +295,20 @@ public class ScaleBuilder {
 		if (color != null) {
 			addColorScale(color, vis);
 			Field field = fieldById(color, vis);
-			out.onNewLine().add("var color = function(d) { return scale_color(" + BuildUtil.writeCall(field, dataInside) + ") }").endStatement();
+			out.onNewLine().add("var color = function(d) { return scale_color("
+					+ BuildUtil.writeCall(field, dataInside) + ") }").endStatement();
 		}
 		if (opacity != null) {
 			addOpacityScale(opacity, vis);
 			Field field = fieldById(opacity, vis);
-			out.onNewLine().add("var opacity = function(d) { return scale_opacity(" + BuildUtil.writeCall(field, dataInside) + ") }").endStatement();
+			out.onNewLine().add("var opacity = function(d) { return scale_opacity(" +
+					BuildUtil.writeCall(field, dataInside) + ") }").endStatement();
 		}
 		if (symbol != null) {
 			addSymbolScale(symbol, structure);
 			Field field = fieldById(symbol, vis);
-			out.onNewLine().add("var symbolID = function(d) { var sym =" + BuildUtil.writeCall(field, dataInside) + "; return sym ? scale_symbol(sym) : 'symbol_default' }").endStatement();
+			out.onNewLine().add("var symbolID = function(d) { var sym ="
+					+ BuildUtil.writeCall(field, dataInside) + "; return sym ? scale_symbol(sym) : '_sym_circle' }").endStatement();
 		}
 		for (int i = 0; i < css.length; i++) {
 			Param p = css[i];
