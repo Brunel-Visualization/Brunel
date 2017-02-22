@@ -163,20 +163,6 @@
     x(state) y(summer) style('stroke:red') + line x(state)
     y(winter) style('stroke:blue')</a></p>
 
-<H4>Point Symbol Style</H4>
-
-<p>
-    If the "symbol" style is set for an element and that element is shown as a point, the requested symbol will
-    be drawn instead of a circle. Valid symbols are all d3 symbols
-    (<code>circle</code>,<code>cross</code>,<code>diamond</code>,<code>square</code>,<code>Wye</code>,<code>triangle</code>)
-    together with the following brunel extensions:
-</p>
-<p><code>star-N</code> request an 'N' pointed star (N is a number >= 3). <code>star</code> defaults to a 5-pointed star.</p>
-<p><code>poly-N</code> request an 'N' sided polygon (N is a number >= 3). <code>poly</code> defaults to a pentagram.</p>
-<p><code>person</code> request an outline of a person as a symbol</p>
-
-<p class="examples"><a onClick="showAction(this.text)"></a>data("sample:US States.csv") x(summer) y(winter) style("symbol:person") size(population:1000%) label(abbr) style("label-location:center")</p>
-
 
 <H4>Limited gradient support</H4>
 
