@@ -41,8 +41,10 @@ import org.brunel.model.style.StyleSheet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A rough flow of the build process is as follows:
@@ -87,11 +89,12 @@ public class VisualizationBuilder {
 	private final Map<Integer, Integer> nesting;    // Which charts are nested within which other ones
 	private Controls controls;                        // Contains the controls for the current chart
 
-	private ScriptWriter out;                    // Where to write code
-	public int visWidth, visHeight;                // Overall vis size
-	private ScaleBuilder scalesBuilder;            // The scales for the current chart
-	private ElementBuilder[] elementBuilders;        // Builder for each element
+	private ScriptWriter out;                    	// Where to write code
+	public int visWidth, visHeight;                	// Overall vis size
+	private ScaleBuilder scalesBuilder;            	// The scales for the current chart
+	private ElementBuilder[] elementBuilders;      	// Builder for each element
 	private StyleSheet visStyles;                   // Collection of style overrides for this visualization
+	private Set<TransformedData> datasets;			// Collection of all built data sets
 
 	private VisualizationBuilder(BuilderOptions options) {
 		this.options = options;
@@ -107,9 +110,10 @@ public class VisualizationBuilder {
 	 */
 	public final void build(VisItem main, int width, int height) {
 
-		// Clear existing collections and prepare for new controls
+		// Clear existing collections and prepare for new items
 		visStyles = new StyleSheet();
 		controls = new Controls(options);
+		datasets = new LinkedHashSet<>();
 
 		// Index the datasets with the number in the list of input data sets
 		Dataset[] datasets = main.getDataSets();
@@ -264,12 +268,8 @@ public class VisualizationBuilder {
 	// Builds controls as needed, then the custom styles, then the visualization
 	private void buildElement(ElementStructure structure) {
 		try {
-			// Note that controls need the ORIGINAL dataset; the one passed in has been transformed
 
-			//The index of the dataset containing the field to filter
-			int datasetIndex = structure.chart.getBaseDatasetIndex(structure.vis.getDataset());
-
-			controls.buildControls(structure.vis, structure.vis.getDataset(), datasetIndex);
+			controls.buildControls(structure);
 
 			defineElement(structure);
 			if (structure.vis.styles != null) {

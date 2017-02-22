@@ -25,7 +25,7 @@ public class BuilderOptions {
     public String controlsIdentifier = "controls";              // The HTML ID of the DIV element containing the vis controls
     public String dataName = "table%d";                         // Pattern for the data table ID. %d is the index.
     public String className = "BrunelVis";                      // Name of the base function
-    public DataMethod includeData = DataMethod.columns;         // What level of data to include
+    public DataMethod includeData = DataMethod.minimal;         // What level of data to include
     public boolean generateBuildCode = true;                    // if true, Add javascript to build the chart initially
     public boolean readableJavascript = true;                   // Readable or shorter
     public boolean accessibleContent = false;                   // If true, generate accessible content

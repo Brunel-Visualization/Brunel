@@ -18,6 +18,7 @@ package org.brunel.build.controls;
 
 import com.google.gson.Gson;
 import org.brunel.action.Param;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
@@ -33,84 +34,85 @@ import java.util.List;
  */
 public class Controls {
 
-    public final List<FilterControl> filters;		//Filter state
-    private final transient BuilderOptions options; //Options not serialized to JSON
-    private final transient Gson gson = new Gson();
+	public final List<FilterControl> filters;        //Filter state
+	private final transient BuilderOptions options; //Options not serialized to JSON
+	private final transient Gson gson = new Gson();
 
+	public Controls(BuilderOptions options) {
+		this.options = options;
+		this.filters = new ArrayList<>();
+	}
 
-    public Controls(BuilderOptions options) {
-        this.options = options;
-        this.filters = new ArrayList<>();
-    }
+	public void buildControls(ElementStructure element) {
+		VisSingle vis = element.vis;							// Definition
+		Dataset data = element.data.getSource();				// Original (pre-transform) data
+		int datasetIndex = element.data.intProperty("index");	// Index of the original data set within all datasets
+		for (Param f : vis.fFilter) {
+			filters.add(FilterControl.makeForFilterField(data, datasetIndex, f.asField(data), f.firstModifier()));
+		}
+		FilterControl animationControl = FilterControl.makeForAnimation(data, datasetIndex, vis.fAnimate);
+		if (animationControl != null) filters.add(animationControl);
+	}
 
-    public void buildControls(VisSingle vis, Dataset data, int datasetIndex) {
-        for (Param f : vis.fFilter) {
-            filters.add(FilterControl.makeForFilterField(data, datasetIndex, f.asField(data), f.firstModifier()));
-        }
-        FilterControl animationControl = FilterControl.makeForAnimation(data, datasetIndex, vis.fAnimate);
-        if (animationControl != null) filters.add(animationControl);
-    }
+	public boolean isNeeded() {
+		return !filters.isEmpty();
+	}
 
-    public boolean isNeeded() {
-        return !filters.isEmpty();
-    }
+	public void writeControls(ScriptWriter out, String visInstance) {
+		if (options.controlsIdentifier != null)
+			writeControls(options.controlsIdentifier, "BrunelJQueryControlFactory", out, visInstance);
+	}
 
-    public void writeControls(ScriptWriter out, String visInstance) {
-    	if (options.controlsIdentifier != null)
-    		writeControls(options.controlsIdentifier, "BrunelJQueryControlFactory", out, visInstance);
-    }
+	private void writeControls(String controlId, String uiFactoryClass, ScriptWriter out, String visInstance) {
+		if (!needsControls()) return;
+		out.titleComment("Create and wire controls");
+		out.add("$(function() {").ln().indentMore();
+		createFilters(controlId, uiFactoryClass, out, visInstance);
 
-    public void writeControls(String controlId, String uiFactoryClass, ScriptWriter out, String visInstance) {
-        if (!needsControls()) return;
-        out.titleComment("Create and wire controls");
-        out.add("$(function() {").ln().indentMore();
-        createFilters(controlId, uiFactoryClass, out, visInstance);
+		out.indentLess().ln();
+		out.add("})").endStatement();
 
-        out.indentLess().ln();
-        out.add("})").endStatement();
+	}
 
+	public void writeEventHandler(ScriptWriter out, String visInstance) {
+		if (!needsControls()) return;
+		String filterDefaults = gson.toJson(FilterControl.buildFilterDefaults(filters));
 
-    }
-    
-    public void writeEventHandler(ScriptWriter out, String visInstance) {
-        if (!needsControls()) return;
-        String filterDefaults =  gson.toJson(FilterControl.buildFilterDefaults(filters));
-        
-        out.add("var eventHandler = BrunelEventHandlers(",visInstance,")").endStatement();
-        out.add("eventHandler.make_filter_handler(",filterDefaults,")").endStatement();
-    }
-    
-    private boolean needsControls() {
-    	return !filters.isEmpty(); 
-    }
+		out.add("var eventHandler = BrunelEventHandlers(", visInstance, ")").endStatement();
+		out.add("eventHandler.make_filter_handler(", filterDefaults, ")").endStatement();
+	}
 
-    private void createFilters(String controlId, String uiFactoryClass, ScriptWriter out, String visInstance) {
+	private boolean needsControls() {
+		return !filters.isEmpty();
+	}
 
-        for (FilterControl filter : filters) {
-            String fieldId = filter.id;
-            String label = filter.label;
-            Object[] categories = filter.categories;
-            Double low = filter.lowValue;
-            Double high = filter.highValue;
-            Object[] selectedCategories = filter.selectedCategories;
-            Double animateSpeed = filter.animateSpeed;
-            Double animateFrames = filter.animateFrames;
-            boolean animate = filter.animate;
-            int datasetIndex = filter.datasetIndex;
+	private void createFilters(String controlId, String uiFactoryClass, ScriptWriter out, String visInstance) {
 
-            //Range filter
-            if (categories == null) {
-                out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_range_slider(", out.quote(options.visIdentifier),",",datasetIndex, ",",
-                        out.quote(fieldId), ",", out.quote(label), ",", low, ",", high, ",",
-                        visInstance, ".data(null,",datasetIndex,").field(", out.quote(fieldId), "),", animate, "," , animateFrames, ",", animateSpeed, "))").endStatement();
-            }
+		for (FilterControl filter : filters) {
+			String fieldId = filter.id;
+			String label = filter.label;
+			Object[] categories = filter.categories;
+			Double low = filter.lowValue;
+			Double high = filter.highValue;
+			Object[] selectedCategories = filter.selectedCategories;
+			Double animateSpeed = filter.animateSpeed;
+			Double animateFrames = filter.animateFrames;
+			boolean animate = filter.animate;
+			int datasetIndex = filter.datasetIndex;
 
-            //Category filter
-            else {
-                out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_category_filter(", out.quote(options.visIdentifier), ",",datasetIndex,",",
-                        out.quote(fieldId), ",", out.quote(label), ",", gson.toJson(categories), ",", gson.toJson(selectedCategories), "))").endStatement();
-            }
+			//Range filter
+			if (categories == null) {
+				out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_range_slider(", out.quote(options.visIdentifier), ",", datasetIndex, ",",
+						out.quote(fieldId), ",", out.quote(label), ",", low, ",", high, ",",
+						visInstance, ".data(null,", datasetIndex, ").field(", out.quote(fieldId), "),", animate, ",", animateFrames, ",", animateSpeed, "))").endStatement();
+			}
 
-        }
-    }
+			//Category filter
+			else {
+				out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_category_filter(", out.quote(options.visIdentifier), ",", datasetIndex, ",",
+						out.quote(fieldId), ",", out.quote(label), ",", gson.toJson(categories), ",", gson.toJson(selectedCategories), "))").endStatement();
+			}
+
+		}
+	}
 }

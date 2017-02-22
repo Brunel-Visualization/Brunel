@@ -57,9 +57,13 @@ public class DataBuilder {
 
 	public static void writeTables(VisItem main, ScriptWriter out, BuilderOptions options) {
 		if (options.includeData == DataMethod.none) return;
+
+		Dataset[] datasets = main.getDataSets();
+
 		if (options.includeData == DataMethod.minimal) {
-			throw new UnsupportedOperationException("Cannot make minimal data yet");
+			// throw new UnsupportedOperationException("Cannot make minimal data yet");
 		}
+
 
 		out.titleComment("Data Tables");
 
@@ -68,7 +72,6 @@ public class DataBuilder {
 		format.setMinimumFractionDigits(0);
 		format.setMaximumFractionDigits(8);
 
-		Dataset[] datasets = main.getDataSets();
 		for (int d = 0; d < datasets.length; d++) {
 			Dataset data = datasets[d];
 			Field[] fields;

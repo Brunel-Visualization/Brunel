@@ -19,7 +19,6 @@ package org.brunel.build.info;
 import org.brunel.build.InteractionDetails;
 import org.brunel.build.SymbolHandler;
 import org.brunel.build.data.TransformedData;
-import org.brunel.data.Dataset;
 import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
 import org.brunel.model.VisSingle;
@@ -172,10 +171,6 @@ public class ChartStructure {
 		});
 
 		return order;
-	}
-
-	public int getBaseDatasetIndex(Dataset dataset) {
-		return dataset.intProperty("index");
 	}
 
 	public String chartID() {

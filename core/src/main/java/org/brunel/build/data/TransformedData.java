@@ -25,12 +25,13 @@ import org.brunel.model.VisSingle;
  */
 public class TransformedData extends Dataset {
 
-	private TransformParameters transformParameters;    // The parameters used for the transform
+	private final Dataset source;                           	// Original dataset the transform was applied to
+	private final TransformParameters transformParameters;     	// The parameters used for the transform
 
 	public static TransformedData make(VisSingle vis) {
 		TransformParameters params = new TransformParameterBuilder(vis).make();
 		Dataset source = vis.getDataset();
-		return new TransformedData(params, transform(source, params));
+		return new TransformedData(source, params, transform(source, params));
 	}
 
 	/**
@@ -39,9 +40,10 @@ public class TransformedData extends Dataset {
 	 * @param params parameters used to transform
 	 * @param result transformed data
 	 */
-	private TransformedData(TransformParameters params, Dataset result) {
+	private TransformedData(Dataset source, TransformParameters params, Dataset result) {
 		super(result);
 		this.transformParameters = params;
+		this.source = source;
 	}
 
 	private static Dataset transform(Dataset data, TransformParameters params) {
@@ -56,6 +58,10 @@ public class TransformedData extends Dataset {
 				.sort(params.sortCommand)                                           // sort data
 				.sortRows(params.sortRowsCommand)                                   // sort rows only
 				.stack(params.stackCommand);                                        // stack data
+	}
+
+	public Dataset getSource() {
+		return source;
 	}
 
 	public TransformParameters getTransformParameters() {
