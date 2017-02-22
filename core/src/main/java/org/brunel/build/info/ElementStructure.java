@@ -16,13 +16,11 @@
 
 package org.brunel.build.info;
 
-import org.brunel.build.data.DataTransformParameters;
 import org.brunel.build.data.TransformedData;
-import org.brunel.build.util.BuildUtil;
 import org.brunel.build.diagrams.D3Diagram;
 import org.brunel.build.element.ElementDetails;
+import org.brunel.build.util.BuildUtil;
 import org.brunel.build.util.ModelUtil;
-import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.maps.GeoMapping;
 import org.brunel.model.VisSingle;
@@ -35,35 +33,27 @@ import java.util.List;
  * Defines how to display an element
  */
 public class ElementStructure {
-	public final ChartStructure chart;
-	public final int index;
-	public final VisSingle vis;
-	public final Dataset original;
-	public final Dataset data;
-	public final GeoMapping geo;
-	public final String styleSymbol;                	// This is the symbol defined in the style for the element
-	public final D3Diagram diagram;              		// This is the diagram we will use for the element (may be null)
-	public final ElementDetails details;            	// Details on element appearance
-	public final DataTransformParameters transforms;	// Transform parameters
+	public final ChartStructure chart;                    // The owning chart
+	public final int index;                                // index of this element within the parent chart
+	public final VisSingle vis;                            // definition of the element
+	public final TransformedData data;                    // data set to use for this element (transformation has been applied)
+	public final GeoMapping geo;                        // geographical mapping info for this element
+	public final String styleSymbol;                    // This is the symbol defined in the style for the element
+	public final D3Diagram diagram;                    // This is the diagram we will use for the element (may be null)
+	public final ElementDetails details;                // Details on element appearance
 
 	public List<Dependency> dependencies;
 
-	public ElementStructure(ChartStructure chartStructure, int elementIndex, VisSingle vis, TransformedData transformed, GeoMapping geo) {
+	public ElementStructure(ChartStructure chartStructure, int elementIndex, VisSingle vis, TransformedData data, GeoMapping geo) {
 		this.chart = chartStructure;
 		this.index = elementIndex;
 		this.vis = vis;
-		this.data = transformed.data;
-		this.transforms = transformed.params;
+		this.data = data;
 		this.geo = geo;
 		this.styleSymbol = ModelUtil.getSymbolFromStyle(vis);
-		this.original = vis.getDataset();
 		this.dependencies = new ArrayList<>();
 		this.diagram = D3Diagram.make(this);
 		this.details = diagram == null ? ElementDetails.makeForCoordinates(this) : diagram.makeDetails();
-	}
-
-	public int getBaseDatasetIndex() {
-		return chart.getBaseDatasetIndex(original);
 	}
 
 	public String elementID() {

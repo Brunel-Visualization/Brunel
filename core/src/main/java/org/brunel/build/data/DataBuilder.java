@@ -179,16 +179,14 @@ public class DataBuilder {
 	private final VisSingle vis;
 	private final ScriptWriter out;
 	private final Dataset data;
-	private final int datasetIndex;
 
-	public DataBuilder(ElementStructure structure, ScriptWriter out, int index) {
+	public DataBuilder(ElementStructure structure, ScriptWriter out) {
 		this.vis = structure.vis;
 		this.data = structure.data;
 		this.out = out;
-		datasetIndex = index;
 	}
 
-	public void writeDataManipulation(DataTransformParameters params, Map<String, Integer> requiredFields) {
+	public void writeDataManipulation(TransformedData params, Map<String, Integer> requiredFields) {
 		out.onNewLine().ln().add("function makeData() {").ln().indentMore();
 
 		// Guides do not use data, just the fields around it
@@ -199,12 +197,18 @@ public class DataBuilder {
 		out.indentLess().onNewLine().add("}").ln();
 	}
 
-	private void writeDataTransforms(DataTransformParameters params) {
+	private void writeDataTransforms(TransformedData data) {
 
+		// The original index of this data (the one passed into the javascript build method)
+		int datasetIndex = data.intProperty("index");
+
+		// Apply filtering and pre-processing
 		out.add("original = datasets[" + datasetIndex + "]").endStatement();
 		out.add("if (filterRows) original = original.retainRows(filterRows)").endStatement();
 		out.add("processed = pre(original,", datasetIndex, ")");
 		out.mark();
+
+		TransformParameters params = data.getTransformParameters();
 		writeTransform("addConstants", params.constantsCommand);
 
 		// Check for selection filtering
@@ -230,10 +234,8 @@ public class DataBuilder {
 			writeTransform("series", params.seriesCommand);
 		}
 		writeTransform("setRowCount", params.rowCountCommand);
-
 		writeTransform("sort", params.sortCommand);
-
-		writeTransform("stack", params.stackCommand);               // Stack must come after all else
+		writeTransform("stack", params.stackCommand);
 
 		if (vis.tDiagram == Diagram.network && vis.fY.size() > 1) {
 			// We are using the 'Y' values to generate a set of identifier

@@ -103,6 +103,15 @@ public class Dataset extends Informative implements Serializable {
         for (Field f : fields) fieldByName.put(f.name, f);
     }
 
+    /** Copy all the details into this new object
+     * This is a shallow clone; sharing all fields and structures
+     * @param base dataset to shallow copy info from
+     */
+    public Dataset(Dataset base) {
+        this(base.fields);					// Same fields
+		copyAllProperties(base);			// Same properties
+    }
+
     public Dataset retainRows(int[] keep) {
         Field[] results = new Field[fields.length];
         for (int i = 0; i < results.length; i++)
@@ -335,9 +344,18 @@ public class Dataset extends Informative implements Serializable {
 
         Set<Integer> expanded = source.expandedOriginalRows(row, keys);
         for (int i : expanded) {
-            if (method.equals("sel") || method.equals("add")) sel.setValue(on, i);
-            else if (method.equals("sub")) sel.setValue(off, i);
-            else sel.setValue(sel.value(i) == on ? off : on, i);
+			switch (method) {
+				case "sel":
+				case "add":
+					sel.setValue(on, i);
+					break;
+				case "sub":
+					sel.setValue(off, i);
+					break;
+				default:
+					sel.setValue(sel.value(i) == on ? off : on, i);
+					break;
+			}
         }
 
     }

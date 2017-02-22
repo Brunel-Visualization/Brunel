@@ -22,7 +22,7 @@ public enum ScalePurpose {
     y(true, false),                         // Y coordinate is a coordinate with continuous range
     inner(true, false),                     // Clustered inner coordinate is a coordinate with continuous range
     parallel(true, false),                  // Parallel axes coordinate is a coordinate with continuous range
-    sizeAesthetic(false, false),            // Size aesthetic is NOT a coordinate, but has continuous range
+    sizeAesthetic(false, false),            // Size aesthetic is not a coordinate, but has continuous range
     continuousAesthetic(false, false),      // Any aesthetic with continuous range (color, opacity ...)
     nominalAesthetic(false, true);          // Any aesthetic with nominal range (symbol, css class, ...)
 

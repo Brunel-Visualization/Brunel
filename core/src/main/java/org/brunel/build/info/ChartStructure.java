@@ -50,12 +50,10 @@ public class ChartStructure {
 
 	public final VisSingle[] elements;
 	public final ElementStructure[] elementStructure;
-	public final Dataset[] baseDataSets;
 	public int chartHeight, chartWidth;                     // Pixel expanse of chart (set during building)
 
-	public ChartStructure(int chartIndex, VisSingle[] elements, TransformedData[] transformedData, Dataset[] dataSets,
+	public ChartStructure(int chartIndex, VisSingle[] elements, TransformedData[] data,
 						  ChartStructure outer, Integer innerChartIndex, String visIdentifier) {
-		this.baseDataSets = dataSets;
 		this.chartIndex = chartIndex;
 		this.elements = elements;
 		this.outer = outer;
@@ -63,8 +61,8 @@ public class ChartStructure {
 		this.visIdentifier = visIdentifier;
 		this.elementStructure = new ElementStructure[elements.length];
 		this.diagram = findDiagram();
-		this.coordinates = new ChartCoordinates(elements, transformedData, diagram);
-		this.geo = makeGeo(elements, transformedData);
+		this.coordinates = new ChartCoordinates(elements, data, diagram);
+		this.geo = makeGeo(elements, data);
 
 		// Define any interactivity needed
 		this.interaction = new InteractionDetails(diagram, coordinates, elements);
@@ -72,7 +70,7 @@ public class ChartStructure {
 		// Define the elements
 		for (int i = 0; i < elements.length; i++) {
 			GeoMapping geoMapping = geo == null ? null : geo.getGeo(elements[i]);
-			elementStructure[i] = new ElementStructure(this, i, elements[i], transformedData[i], geoMapping);
+			elementStructure[i] = new ElementStructure(this, i, elements[i], data[i], geoMapping);
 		}
 
 		// Define any dependencies between the elements
@@ -177,9 +175,7 @@ public class ChartStructure {
 	}
 
 	public int getBaseDatasetIndex(Dataset dataset) {
-		for (int i = 0; i < baseDataSets.length; i++)
-			if (dataset == baseDataSets[i]) return i;
-		throw new IllegalStateException("Could not find data set in array of datasets");
+		return dataset.intProperty("index");
 	}
 
 	public String chartID() {

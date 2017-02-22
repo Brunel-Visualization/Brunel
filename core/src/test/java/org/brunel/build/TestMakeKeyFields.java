@@ -31,31 +31,30 @@ import static junit.framework.TestCase.assertEquals;
  */
 public class TestMakeKeyFields {
 
-    @Test
-    public void testKeysReturned() {
+	@Test
+	public void testKeysReturned() {
 
-        // A defined key wins
-        assertEquals("Income", getElementKeys("x(region) key(income)"));
-        assertEquals("Region, Income", getElementKeys("x(region) key(region, income)"));
+		// A defined key wins
+		assertEquals("Income", getElementKeys("x(region) key(income)"));
+		assertEquals("Region, Income", getElementKeys("x(region) key(region, income)"));
 
-        // If we only have an x-axis, that will win unless it is numeric
-        assertEquals("Region", getElementKeys("x(region) y(population) mean(population)"));
-        assertEquals("Date", getElementKeys("x(date) y(population) mean(population)"));
-        assertEquals("#row", getElementKeys("x(income) y(population) mean(population)"));
-        assertEquals("Income", getElementKeys("x(income) y(population) bin(income) mean(population)"));
-        assertEquals("Region", getElementKeys("line x(Summer) y(Density) color(region) size(#selection)"));
+		// If we only have an x-axis, that will win unless it is numeric
+		assertEquals("Region", getElementKeys("x(region) y(population) mean(population)"));
+		assertEquals("Date", getElementKeys("x(date) y(population) mean(population)"));
+		assertEquals("#row", getElementKeys("x(income) y(population) mean(population)"));
+		assertEquals("Income", getElementKeys("x(income) y(population) bin(income) mean(population)"));
+		assertEquals("Region", getElementKeys("line x(Summer) y(Density) color(region) size(#selection)"));
 
+		// Trickier case -- should grab the aesthetic
+		assertEquals("Region", getElementKeys("x(Summer) y(Winter) color(region) filter(winter) mean(summer, winter)"));
+	}
 
-        // Trickier case -- should grab the aesthetic
-        assertEquals("Region", getElementKeys("x(Summer) y(Winter) color(region) filter(winter) mean(summer, winter)"));
-    }
-
-    private String getElementKeys(String commands) {
-        String command = "data('sample:US States.csv') " + commands;
-        VisSingle vis = Action.parse(command).apply().getSingle().makeCanonical();
-        ElementStructure structure = new ElementStructure(null, 0, vis, new TransformedData(vis.makeCanonical()), null);
-        DataBuilder builder = new DataBuilder(structure, null, 0);
-        return Data.join(builder.makeKeyFields());
-    }
+	private String getElementKeys(String commands) {
+		String command = "data('sample:US States.csv') " + commands;
+		VisSingle vis = Action.parse(command).apply().getSingle().makeCanonical();
+		ElementStructure structure = new ElementStructure(null, 0, vis, TransformedData.make(vis) , null);
+		DataBuilder builder = new DataBuilder(structure, null);
+		return Data.join(builder.makeKeyFields());
+	}
 
 }

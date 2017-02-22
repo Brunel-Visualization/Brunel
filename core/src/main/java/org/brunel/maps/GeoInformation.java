@@ -222,12 +222,12 @@ public class GeoInformation {
 	}
 
 	// The whole array returned will be null if nothing is a map
-	private Map<VisSingle, GeoMapping> makeGeoMappings(TransformedData[] datas, Poly positionHull, GeoInformation geoInfo) {
+	private Map<VisSingle, GeoMapping> makeGeoMappings(TransformedData[] data, Poly positionHull, GeoInformation geoInfo) {
 		Map<VisSingle, GeoMapping> map = new LinkedHashMap<>();
 		GeoFile[] validFiles = null;
 		for (int i = 0; i < elements.length; i++) {
 			if (elements[i].tDiagram == Diagram.map) {
-				GeoMapping mapping = makeMapping(elements[i], datas[i].data, positionHull, geoInfo);
+				GeoMapping mapping = makeMapping(elements[i], data[i], positionHull, geoInfo);
 				if (mapping != null) {
 					map.put(elements[i], mapping);
 					if (validFiles == null) validFiles = mapping.files;

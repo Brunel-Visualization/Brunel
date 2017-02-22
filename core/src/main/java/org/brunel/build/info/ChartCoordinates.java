@@ -49,7 +49,7 @@ public class ChartCoordinates {
 	private final Map<VisSingle, Field[]> x = new HashMap<>();
 	private final Map<VisSingle, Field[]> y = new HashMap<>();
 
-	public ChartCoordinates(VisSingle[] elements, TransformedData[] transformedData, VisTypes.Diagram diagram) {
+	public ChartCoordinates(VisSingle[] elements, TransformedData[] data, VisTypes.Diagram diagram) {
 
 		this.coords = makeCombinedCoords(elements, diagram);
 
@@ -64,8 +64,8 @@ public class ChartCoordinates {
 		for (int i = 0; i < elements.length; i++) {
 			VisSingle vis = elements[i];
 			if (vis.tDiagram == null) {
-				Field[] visXFields = getXFields(vis, transformedData[i].data);
-				Field[] visYFields = getYFields(vis, transformedData[i].data);
+				Field[] visXFields = getXFields(vis, data[i]);
+				Field[] visYFields = getYFields(vis, data[i]);
 
 				if (xTransform == null) xTransform = getDefinedXTransform(vis);
 				if (yTransform == null) yTransform = getDefinedYTransform(vis);

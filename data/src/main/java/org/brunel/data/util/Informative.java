@@ -22,45 +22,50 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Informative {
-    protected Map<String, Object> info = new HashMap<>();    // Stores the info
+	protected Map<String, Object> info = new HashMap<>();    // Stores the info
 
-    /**
-     * Copy properties form a source.
-     * Note that missing values in the source are made missing in this also
-     *
-     * @param source where to get the values
-     * @param items  the keys to copy over
-     */
-    public void copyProperties(Informative source, String... items) {
-        for (String s : items) set(s, source.property(s));
-    }
+	/**
+	 * Copy properties form a source.
+	 * Note that missing values in the source are made missing in this also
+	 *
+	 * @param source where to get the values
+	 * @param items  the keys to copy over
+	 */
+	public void copyProperties(Informative source, String... items) {
+		for (String s : items) set(s, source.property(s));
+	}
 
-    public void copyAllProperties(Informative other) {
-        info.putAll(other.info);
-    }
+	public void copyAllProperties(Informative other) {
+		info.putAll(other.info);
+	}
 
-    public Double numProperty(String key) {
-        return Data.asNumeric(property(key));
-    }
+	public Integer intProperty(String key) {
+		Double v = Data.asNumeric(property(key));
+		return v == null ? null : v.intValue();
+	}
 
-    public Object property(String key) {
-        return info.get(key);
-    }
+	public Double numProperty(String key) {
+		return Data.asNumeric(property(key));
+	}
 
-    public String strProperty(String key) {
-        Object v = property(key);
-        return v == null ? null : v.toString();
-    }
+	public Object property(String key) {
+		return info.get(key);
+	}
 
-    public boolean isProperty(String key) {
-        Boolean v = (Boolean) property(key);
-        return v != null && v;
-    }
+	public String strProperty(String key) {
+		Object v = property(key);
+		return v == null ? null : v.toString();
+	}
 
-    public void set(String key, Object value) {
-        if (value == null)
-            info.remove(key);
-        else
-            info.put(key, value);
-    }
+	public boolean isProperty(String key) {
+		Boolean v = (Boolean) property(key);
+		return v != null && v;
+	}
+
+	public void set(String key, Object value) {
+		if (value == null)
+			info.remove(key);
+		else
+			info.put(key, value);
+	}
 }

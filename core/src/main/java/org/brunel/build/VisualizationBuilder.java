@@ -94,7 +94,6 @@ public class VisualizationBuilder {
 	private ScaleBuilder scalesBuilder;            // The scales for the current chart
 	private ElementBuilder[] elementBuilders;        // Builder for each element
 	private StyleSheet visStyles;                   // Collection of style overrides for this visualization
-	private Dataset[] datasets;                     // datasets used by this visualization
 
 	private VisualizationBuilder(BuilderOptions options) {
 		this.options = options;
@@ -113,7 +112,10 @@ public class VisualizationBuilder {
 		// Clear existing collections and prepare for new controls
 		visStyles = new StyleSheet();
 		controls = new Controls(options);
-		datasets = main.getDataSets();
+
+		// Index the datasets with the number in the list of input data sets
+		Dataset[] datasets = main.getDataSets();
+		for (int i = 0; i < datasets.length; i++) datasets[i].set("index", i);
 
 		// Create the main visualization area
 		defineVisSystem(width, height);
@@ -308,10 +310,10 @@ public class VisualizationBuilder {
 		VisSingle[] elements = new VisSingle[items.length];
 		for (int i = 0; i < items.length; i++) {
 			elements[i] = items[i].getSingle().makeCanonical();
-			data[i] = new TransformedData(elements[i]);
+			data[i] = TransformedData.make(elements[i]);
 		}
 
-		ChartStructure structure = new ChartStructure(chartIndex, elements, data, datasets, outer, innerChartIndex, options.visIdentifier);
+		ChartStructure structure = new ChartStructure(chartIndex, elements, data, outer, innerChartIndex, options.visIdentifier);
 		structure.accessible = options.accessibleContent;
 
 		defineChart(structure, loc);
@@ -381,10 +383,10 @@ public class VisualizationBuilder {
 		// Add data variables used throughout
 		addElementGroups(elementBuilder, structure);
 
-		// Data transforms
-		int datasetIndex = structure.getBaseDatasetIndex();
-		DataBuilder dataBuilder = new DataBuilder(structure, out, datasetIndex);
-		dataBuilder.writeDataManipulation(structure.transforms, createResultFields(structure));
+		// Write the data transforms
+		DataBuilder dataBuilder = new DataBuilder(structure, out);
+		Map<String, Integer> fieldToIndexMap = createOutputFields(structure);
+		dataBuilder.writeDataManipulation(structure.data, fieldToIndexMap);
 
 		scalesBuilder.writeAestheticScales(structure);
 		scalesBuilder.writeLegends(structure.vis);
@@ -621,7 +623,7 @@ public class VisualizationBuilder {
 	/*
 		Builds a mapping from the fields we will use in the built data object to an indexing 0,1,2,3, ...
 	 */
-	private Map<String, Integer> createResultFields(ElementStructure structure) {
+	private Map<String, Integer> createOutputFields(ElementStructure structure) {
 		VisSingle vis = structure.vis;
 		LinkedHashSet<String> needed = new LinkedHashSet<>();
 		if (vis.fY.size() > 1 && structure.data.field("#series") != null) {
