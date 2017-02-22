@@ -56,6 +56,8 @@ public class ScriptWriter {
 
 	public ScriptWriter indentLess() {
 		indentLevel--;
+		if (indentLevel < 0)
+			throw new IllegalStateException("indentLess not matched by an indentMore -- negative indent level requested");
 		return this;
 	}
 
@@ -153,8 +155,14 @@ public class ScriptWriter {
 
 	public ScriptWriter comment(String text) {
 		if (options.readableJavascript) {
-			// Right justify if possible and we are not on a line by ourselves
-			if (consecutiveNewLines == 0) at(lineMaxLength - 3 - text.length());
+			// When we are at the end of a line with other info on it
+			if (consecutiveNewLines == 0) {
+				// Right justify
+				at(lineMaxLength - 3 - text.length());
+				// ensure lower case start
+				if (Character.isUpperCase(text.charAt(0)))
+					text = Character.toLowerCase(text.charAt(0)) + text.substring(1);
+			}
 			add("// ").add(text);
 		}
 		return ln();

@@ -69,7 +69,8 @@ public class GeoMap extends D3Diagram {
             else if (step < 10) step = Math.round(step * 2) / 2.0;
             else step = 10;
 
-			out.onNewLine().add("var graticule = d3.geoGraticule().step([", step, ",", step, "])(),").ln().indent().add("graticulePath = interior.append('path').attr('class', 'grid')").endStatement()
+			out.onNewLine().add("var graticule = d3.geoGraticule().step([", step, ",", step, "])(),")
+                    .ln().indent().add("graticulePath = interior.append('path').attr('class', 'grid')").endStatement()
                     .onNewLine().add("function buildAxes() { graticulePath.attr('d', path(graticule) ) }");
         }
 
@@ -83,7 +84,7 @@ public class GeoMap extends D3Diagram {
     }
 
     public void writeDataStructures(ScriptWriter out) {
-        out.indentLess().comment("Read in the feature data and call build again when done");
+        out.comment("Read in the feature data and call build again when done");
         writeFeatureHookup(mapping, GeoInformation.getIDField(vis), out);
     }
 
@@ -137,11 +138,12 @@ public class GeoMap extends D3Diagram {
 
         // Write out the resulting structure
         out.add("{").indentMore();
+
         for (int k = 0; k < files.length; k++) {
             if (k > 0) out.add(",").onNewLine();
             String fileName = files[k];
             String source = Data.quote(out.options.locMaps + "/" + out.options.version + "/" + map.getQuality() + "/" + fileName + ".json");
-            out.onNewLine().add(source, ":{").indentMore();
+            out.onNewLine().add(source, ": {").indentMore();
             int i = 0;
             Map<Object, Integer> features = combined.get(fileName);
             for (Entry<Object, Integer> s : features.entrySet()) {
