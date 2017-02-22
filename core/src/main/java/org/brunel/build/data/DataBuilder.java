@@ -17,10 +17,10 @@
 package org.brunel.build.data;
 
 import org.brunel.action.Param;
-import org.brunel.build.util.BuildUtil;
-import org.brunel.build.util.BuildUtil.DateBuilder;
 import org.brunel.build.InteractionDetails;
 import org.brunel.build.info.ElementStructure;
+import org.brunel.build.util.BuildUtil;
+import org.brunel.build.util.BuildUtil.DateBuilder;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.BuilderOptions.DataMethod;
 import org.brunel.build.util.ScriptWriter;
@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -176,22 +177,24 @@ public class DataBuilder {
 		return row.toString();
 	}
 
-	private final VisSingle vis;
+	private final ElementStructure structure;
 	private final ScriptWriter out;
-	private final Dataset data;
+	private final VisSingle vis;
 
 	public DataBuilder(ElementStructure structure, ScriptWriter out) {
+		this.structure = structure;
 		this.vis = structure.vis;
-		this.data = structure.data;
 		this.out = out;
 	}
 
-	public void writeDataManipulation(TransformedData params, Map<String, Integer> requiredFields) {
+	public void writeDataManipulation() {
+		Map<String, Integer> requiredFields = createOutputFields();
+
 		out.onNewLine().ln().add("function makeData() {").ln().indentMore();
 
 		// Guides do not use data, just the fields around it
-		if (vis.tGuides.isEmpty()) {
-			writeDataTransforms(params);
+		if (structure.vis.tGuides.isEmpty()) {
+			writeDataTransforms(structure.data);
 			writeHookup(requiredFields);
 		}
 		out.indentLess().onNewLine().add("}").ln();
@@ -237,6 +240,7 @@ public class DataBuilder {
 		writeTransform("sort", params.sortCommand);
 		writeTransform("stack", params.stackCommand);
 
+		// TODO: kill this
 		if (vis.tDiagram == Diagram.network && vis.fY.size() > 1) {
 			// We are using the 'Y' values to generate a set of identifier
 			// We need to ensure the values are set in the summary, as well as any aesthetics
@@ -296,13 +300,13 @@ public class DataBuilder {
 		out.add("_key:").at(24).add("keyFunc").add(",").ln();
 		out.add("_rows:").at(24).add("BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())");
 
-        if (vis.fKeys.size() == 1 && vis.fX.size() == 1 && vis.fY.size() == 1) {
-            out.add(",").ln();
-            String id = "f" + fieldsToIndex.get(vis.fKeys.get(0).asField());
-            String x = "f" + fieldsToIndex.get(vis.fX.get(0).asField());
-            String y = "f" + fieldsToIndex.get(vis.fY.get(0).asField());
-            out.add("_idToPoint:").at(24).add("BrunelD3.locate(" + id, ", ", x, ",", y, ", processed.rowCount())");
-        }
+		if (vis.fKeys.size() == 1 && vis.fX.size() == 1 && vis.fY.size() == 1) {
+			out.add(",").ln();
+			String id = "f" + fieldsToIndex.get(vis.fKeys.get(0).asField());
+			String x = "f" + fieldsToIndex.get(vis.fX.get(0).asField());
+			String y = "f" + fieldsToIndex.get(vis.fY.get(0).asField());
+			out.add("_idToPoint:").at(24).add("BrunelD3.locate(" + id, ", ", x, ",", y, ", processed.rowCount())");
+		}
 
 		out.onNewLine().indentLess().add("}").endStatement();
 	}
@@ -422,15 +426,15 @@ public class DataBuilder {
 
 	private void addIfCategorical(Collection<String> result, String... fieldNames) {
 		for (String f : fieldNames) {
-			Field field = data.field(f, true);
+			Field field = structure.data.field(f, true);
 			if ((field.preferCategorical() || field.isDate()) && !field.isProperty("calculated")) result.add(f);
 		}
 	}
 
 	private void addIfCategorical(Collection<String> result, Collection<Param> fieldNames) {
 		for (Param p : fieldNames) {
-			String f = p.asField(data);
-			Field field = data.field(f);
+			String f = p.asField(structure.data);
+			Field field = structure.data.field(f);
 			if ((field.preferCategorical() || field.isDate()) && !field.isProperty("calculated")) result.add(f);
 		}
 	}
@@ -465,7 +469,7 @@ public class DataBuilder {
 		Field[] fields = new Field[result.size()];
 
 		int index = 0;
-		for (String s : result) fields[index++] = data.field(s);
+		for (String s : result) fields[index++] = structure.data.field(s);
 
 		// Sort and see if any adjacent 'keys' are the same
 		FieldRowComparison rowComparison = new FieldRowComparison(fields, null, false);
@@ -473,6 +477,48 @@ public class DataBuilder {
 		for (int i = 1; i < order.length; i++)
 			if (rowComparison.compare(order[i], order[i - 1]) == 0) return false;
 		return true;
+	}
+
+	/*
+	Builds a mapping from the fields we will use in the built data object to an indexing 0,1,2,3, ...
+ */
+	private Map<String, Integer> createOutputFields() {
+		VisSingle vis = structure.vis;
+		LinkedHashSet<String> needed = new LinkedHashSet<>();
+		if (vis.fY.size() > 1 && structure.data.field("#series") != null) {
+			// A series needs special handling -- Y's are different in output than input
+			if (vis.stacked) {
+				// Stacked series chart needs lower and upper values
+				needed.add("#values$lower");
+				needed.add("#values$upper");
+			}
+			// Always need series and values
+			needed.add("#series");
+			needed.add("#values");
+
+			// And then all the X fields
+			for (Param p : vis.fX) needed.add(p.asField());
+
+			// And the non-position fields
+			Collections.addAll(needed, vis.nonPositionFields());
+		} else {
+			if (vis.stacked) {
+				// Stacked chart needs lower and upper Y field values as well as the rest
+				String y = vis.fY.get(0).asField();
+				needed.add(y + "$lower");
+				needed.add(y + "$upper");
+			}
+			Collections.addAll(needed, vis.usedFields(true));
+		}
+
+		// We always want the row field and selection
+		needed.add("#row");
+		needed.add("#selection");
+
+		// Convert to map for easy lookup
+		Map<String, Integer> result = new HashMap<>();
+		for (String s : needed) result.put(s, result.size());
+		return result;
 	}
 
 }

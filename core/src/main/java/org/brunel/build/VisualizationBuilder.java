@@ -385,8 +385,7 @@ public class VisualizationBuilder {
 
 		// Write the data transforms
 		DataBuilder dataBuilder = new DataBuilder(structure, out);
-		Map<String, Integer> fieldToIndexMap = createOutputFields(structure);
-		dataBuilder.writeDataManipulation(structure.data, fieldToIndexMap);
+		dataBuilder.writeDataManipulation();
 
 		scalesBuilder.writeAestheticScales(structure);
 		scalesBuilder.writeLegends(structure.vis);
@@ -618,48 +617,6 @@ public class VisualizationBuilder {
 		builder.addAdditionalElementGroups();
 
 		out.endStatement();
-	}
-
-	/*
-		Builds a mapping from the fields we will use in the built data object to an indexing 0,1,2,3, ...
-	 */
-	private Map<String, Integer> createOutputFields(ElementStructure structure) {
-		VisSingle vis = structure.vis;
-		LinkedHashSet<String> needed = new LinkedHashSet<>();
-		if (vis.fY.size() > 1 && structure.data.field("#series") != null) {
-			// A series needs special handling -- Y's are different in output than input
-			if (vis.stacked) {
-				// Stacked series chart needs lower and upper values
-				needed.add("#values$lower");
-				needed.add("#values$upper");
-			}
-			// Always need series and values
-			needed.add("#series");
-			needed.add("#values");
-
-			// And then all the X fields
-			for (Param p : vis.fX) needed.add(p.asField());
-
-			// And the non-position fields
-			Collections.addAll(needed, vis.nonPositionFields());
-		} else {
-			if (vis.stacked) {
-				// Stacked chart needs lower and upper Y field values as well as the rest
-				String y = vis.fY.get(0).asField();
-				needed.add(y + "$lower");
-				needed.add(y + "$upper");
-			}
-			Collections.addAll(needed, vis.usedFields(true));
-		}
-
-		// We always want the row field and selection
-		needed.add("#row");
-		needed.add("#selection");
-
-		// Convert to map for easy lookup
-		Map<String, Integer> result = new HashMap<>();
-		for (String s : needed) result.put(s, result.size());
-		return result;
 	}
 
 	private void addElementExports(VisSingle vis, DataBuilder dataBuilder, ElementStructure structure) {
