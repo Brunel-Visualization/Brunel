@@ -28,6 +28,18 @@ some examples of symbols; also included is the URL of a set of test symbols
     x(region) y(girls_name) size(#count) style('symbol:female') + x(region) y(boys_name) size(#count) style('symbol:male')
     x(summer) y(winter) symbol(region:'http://brunelvis.org/test/testsym.svg')
 
+## Limited gradient support
+
+Brunel defines four gradients which can be used in style statements. A typical use might be:
+ 
+    style('fill:url(#_gradient_radial_red);stroke:none')
+    
+The four gradients are `_gradient_linear_blue`, `_gradient_linear_red`, `_gradient_radial_blue`, `_gradient_radial_red`.
+As you might guess form the names, two are linear and two are radial. The colors have been chosen to match the 
+first two default brunel element colors.
+
+Note that use of gradient styles overrides any color or opacity aesthetic on the element.
+
 
 ## Map quality option 'full'
 
