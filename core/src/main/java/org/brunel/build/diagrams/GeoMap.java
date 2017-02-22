@@ -69,8 +69,7 @@ public class GeoMap extends D3Diagram {
             else if (step < 10) step = Math.round(step * 2) / 2.0;
             else step = 10;
 
-            out.onNewLine().add("var graticule = d3.geoGraticule().step([", step, ",", step, "])(),")
-                    .continueOnNextLine().add("graticulePath = interior.append('path').attr('class', 'grid')").endStatement()
+			out.onNewLine().add("var graticule = d3.geoGraticule().step([", step, ",", step, "])(),").ln().indent().add("graticulePath = interior.append('path').attr('class', 'grid')").endStatement()
                     .onNewLine().add("function buildAxes() { graticulePath.attr('d', path(graticule) ) }");
         }
 

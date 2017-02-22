@@ -48,7 +48,7 @@ public abstract class ElementBuilder {
 
 		if (filterToDataOnly && (showsColor || showsOpacity || showsStrokeSize || showsCSS || showsSymbol)) {
 			// Filter only to show the data based items
-			out.addChained("filter(hasData)").at(50).comment("following only performed for data items");
+			out.addChained("filter(hasData)").comment("following only performed for data items");
 		}
 
 		int n = vis.fCSS.size();

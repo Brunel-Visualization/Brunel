@@ -152,7 +152,7 @@ public abstract class D3Diagram {
 
 	public void writePerChartDefinitions(ScriptWriter out) {
 		if (vis.tDiagram != null && vis.tDiagram.isHierarchical) {
-			out.add("var tree, expandState = [], collapseState = {};").at(50).comment("collapse state maps node IDs to true/false");
+			out.add("var tree, expandState = [], collapseState = {};").comment("collapse state maps node IDs to true/false");
 		}
 	}
 

@@ -85,7 +85,7 @@ class GuideElementBuilder extends CoordinateElementBuilder {
 			out.add("var added = selection.enter().append('path').attr('class', 'element line guide guide" + index + "')");
 			if (structure.chart.accessible)
 				out.addChained("attr('role', 'img').attr('aria-label', 'reference guide')");
-			out.continueOnNextLine(",").add("merged = selection.merge(added)").endStatement();
+			out.add(",").ln().indent().add("merged = selection.merge(added)").endStatement();
 
 			out.add("BrunelD3.transition(merged, transitionMillis)")
 					.addChained("attr('d', path(guideData))")

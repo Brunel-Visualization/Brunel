@@ -78,9 +78,7 @@ class Chord extends D3Diagram {
         out.add("diagramExtras.attr('class', 'diagram chord arcs')").endStatement();
 
         // Each chord group will be a group with a donut arc and a text path in it
-        out.add("var arcGroup = diagramExtras.selectAll('g').data(chords.groups),")
-                .continueOnNextLine().add("addedArcGroups = arcGroup.enter().append('g'),")
-                .continueOnNextLine().add("arcPath = d3.arc().innerRadius(R - arc_width).outerRadius(R)")
+		out.add("var arcGroup = diagramExtras.selectAll('g').data(chords.groups),").ln().indent().add("addedArcGroups = arcGroup.enter().append('g'),").ln().indent().add("arcPath = d3.arc().innerRadius(R - arc_width).outerRadius(R)")
                 .endStatement();
 
         // Add the two parts to each group, linking them through an ID

@@ -103,7 +103,7 @@ class ParallelCoordinates extends D3Diagram {
 	}
 
 	public void writePerChartDefinitions(ScriptWriter out) {
-		out.add("var parallel;").at(50).comment("Structure to store parallel axes");
+		out.add("var parallel;").comment("Structure to store parallel axes");
 	}
 
 	public void preBuildDefinitions(ScriptWriter out) {
@@ -111,7 +111,7 @@ class ParallelCoordinates extends D3Diagram {
 		ScaleBuilder builder = new ScaleBuilder(structure.chart, out);
 
 		out.add("var rangeVertical = [geom.inner_height -", padding.vertical() + ", " + padding.top + "];")
-				.at(50).comment("vertical range");
+				.comment("vertical range");
 
 		out.add("var scale_x = d3.scaleLinear().range(["
 				+ padding.left + ", geom.inner_width -", padding.horizontal() + "])")

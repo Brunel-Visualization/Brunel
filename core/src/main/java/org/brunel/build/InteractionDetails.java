@@ -294,12 +294,12 @@ public class InteractionDetails {
 					e.add(0, "var c = BrunelD3.closest(merged, '" + snapInfo[0] + "', " + snapInfo[1] + " )");
 			}
 
-			out.add("chart.select('rect.overlay')").at(60).comment("Attach handlers to the overlay");
+			out.add("chart.select('rect.overlay')").comment("Attach handlers to the overlay");
 			addDispatchers(overlayEvents, out);
 		}
 
 		if (!elementEvents.isEmpty()) {
-			out.add("merged").at(60).comment("Attach handlers to the element");
+			out.add("merged").comment("Attach handlers to the element");
 			addDispatchers(elementEvents, out);
 		}
 	}

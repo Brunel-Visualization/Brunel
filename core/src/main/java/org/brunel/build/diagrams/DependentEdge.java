@@ -107,26 +107,28 @@ class DependentEdge extends D3Diagram {
 					.add("return 'M' + scale_x(r1*Math.cos(a1)) + ',' + scale_y(r1*Math.sin(a1)) +");
 
 			// Add curve if requested, else just a straight line
-			if (curved)
-				out.continueOnNextLine().add("'Q' +  scale_x(r*Math.cos(a2)) + ',' + scale_y(r*Math.sin(a2)) + ' '");
-			else
-				out.continueOnNextLine().add("'L'");
+			if (curved) {
+				out.ln().indent().add("'Q' +  scale_x(r*Math.cos(a2)) + ',' + scale_y(r*Math.sin(a2)) + ' '");
+			}
+			else {
+				out.ln().indent().add("'L'");
+			}
 
-			out.continueOnNextLine().add(" +  scale_x(r2*Math.cos(a2)) + ',' + scale_y(r2*Math.sin(a2))")
+			out.ln().indent().add(" +  scale_x(r2*Math.cos(a2)) + ',' + scale_y(r2*Math.sin(a2))")
 					.endStatement();
 		} else {
-			out.add("var p = BrunelD3.insetEdge(scale_x(d.source.y), scale_y(d.source.x), d.source,")
-					.continueOnNextLine().add("scale_x(d.target.y), scale_y(d.target.x), d.target)")
+			out.add("var p = BrunelD3.insetEdge(scale_x(d.source.y), scale_y(d.source.x), d.source,").ln().indent().add("scale_x(d.target.y), scale_y(d.target.x), d.target)")
 					.endStatement()
 					.add("return 'M' + p.x1 + ',' + p.y1 + ");
 			// Add curve if requested, else just a straight line
-			if (curved)
-				out.continueOnNextLine().add("'C' + (p.x1+p.x2)/2 + ',' + p.y1")
-						.continueOnNextLine().add(" + ' ' + (p.x1+p.x2)/2 + ',' + p.y2 + ' ' ");
-			else
-				out.continueOnNextLine().add("'L'");
+			if (curved) {
+				out.ln().indent().add("'C' + (p.x1+p.x2)/2 + ',' + p.y1").ln().indent().add(" + ' ' + (p.x1+p.x2)/2 + ',' + p.y2 + ' ' ");
+			}
+			else {
+				out.ln().indent().add("'L'");
+			}
 
-			out.continueOnNextLine().add("+ p.x2 + ',' + p.y2").endStatement();
+			out.ln().indent().add("+ p.x2 + ',' + p.y2").endStatement();
 		}
 		out.indentLess().indentLess().add("})");
 

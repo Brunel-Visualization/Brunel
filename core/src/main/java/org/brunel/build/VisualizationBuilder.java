@@ -40,9 +40,7 @@ import org.brunel.model.style.StyleSheet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -226,7 +224,7 @@ public class VisualizationBuilder {
 
 		out.add("var geom = BrunelD3.geometry(parentNode || vis.node(),", chartMargins, ",", margins, "),")
 				.indentMore()
-				.onNewLine().add("elements = [];").at(50).comment("Array of elements in this chart")
+				.onNewLine().add("elements = [];").comment("Array of elements in this chart")
 				.indentLess();
 
 		// Transpose if needed
@@ -374,10 +372,10 @@ public class VisualizationBuilder {
 
 		out.titleComment("Define element #" + structure.elementID());
 		out.add("elements[" + structure.index + "] = function() {").indentMore();
-		out.onNewLine().add("var original, processed,").at(40).comment("data sets passed in and then transformed")
+		out.onNewLine().add("var original, processed,").comment("data sets passed in and then transformed")
 				.indentMore()
-				.onNewLine().add("element, data,").at(40).comment("Brunel element information and brunel data")
-				.onNewLine().add("selection, merged;").at(40).comment("D3 selection and merged selection")
+				.onNewLine().add("element, data,").comment("Brunel element information and brunel data")
+				.onNewLine().add("selection, merged;").comment("D3 selection and merged selection")
 				.indentLess();
 
 		// Add data variables used throughout
@@ -427,18 +425,18 @@ public class VisualizationBuilder {
 		out.add("\"use strict\";").comment("Strict Mode");
 
 		// Add commonly used definitions
-		out.add("var datasets = [],").at(60).comment("Array of datasets for the original data");
-		out.add("    pre = function(d, i) { return d },").at(60).comment("Default pre-process does nothing");
-		out.add("    post = function(d, i) { return d },").at(60).comment("Default post-process does nothing");
-		out.add("    transitionTime = 200,").at(60).comment("Transition time for animations");
-		out.add("    charts = [],").at(60).comment("The charts in the system");
+		out.add("var datasets = [],").comment("Array of datasets for the original data");
+		out.add("    pre = function(d, i) { return d },").comment("Default pre-process does nothing");
+		out.add("    post = function(d, i) { return d },").comment("Default post-process does nothing");
+		out.add("    transitionTime = 200,").comment("Transition time for animations");
+		out.add("    charts = [],").comment("The charts in the system");
 		out.add("    hasData = function(d) {return d && (d.row != null || hasData(d.data))},")
-				.at(60).comment("Filters to data items");
-		out.add("    vis = d3.select('#' + visId).attr('class', 'brunel'),").at(60).comment("the SVG container");
+				.comment("Filters to data items");
+		out.add("    vis = d3.select('#' + visId).attr('class', 'brunel'),").comment("the SVG container");
 		out.add("    isSelected = function(data) { return function(d) {return data.$selection(d)=='\u2713'} };")
 				.comment("returns a filter function identifying selected items");
 		out.add("vis.selectAll('defs').data(['X']).enter().append('defs');")
-				.at(6).comment("Ensure defs element is present");
+				.comment("Ensure defs element is present");
 	}
 
 	private void endChart(ChartStructure structure) {
@@ -606,10 +604,10 @@ public class VisualizationBuilder {
 		if (elementTransform != null) out.addChained(elementTransform);
 
 		// The main group
-		out.continueOnNextLine(",").add("main = elementGroup.append('g').attr('class', 'main')");
+		out.add(",").ln().indent().add("main = elementGroup.append('g').attr('class', 'main')");
 
 		// The group for labels
-		out.continueOnNextLine(",")
+		out.add(",").ln().indent()
 				.add("labels = BrunelD3.undoTransform(elementGroup.append('g')")
 				.add(".attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup)");
 
@@ -630,24 +628,23 @@ public class VisualizationBuilder {
 		out.onNewLine().add("chart:").at(24).add("function() { return charts[" + structure.chart.chartIndex + "] },");
 		out.onNewLine().add("group:").at(24).add("function() { return elementGroup },");
 		out.onNewLine().add("fields: {").indentMore();
-		out.mark();
 
-		writeFieldName("x", vis.fX);
+		boolean needsComma = writeFieldName("x", vis.fX, false);
 		if (vis.fRange != null)
-			writeFieldName("y", Arrays.asList(vis.fRange));
+			needsComma = writeFieldName("y", Arrays.asList(vis.fRange), needsComma);
 		else
-			writeFieldName("y", vis.fY);
+			needsComma = writeFieldName("y", vis.fY, needsComma);
 
 		List<String> keys = dataBuilder.makeKeyFields();
 		if (!keys.isEmpty()) {
-			writeFieldName("key", keys);
+			needsComma = writeFieldName("key", keys, needsComma);
 		}
 
-		writeFieldName("color", vis.fColor);
-		writeFieldName("size", vis.fSize);
-		writeFieldName("opacity", vis.fOpacity);
-		writeFieldName("class", vis.fCSS);
-		writeFieldName("symbol", vis.fSymbol);
+		needsComma = writeFieldName("color", vis.fColor, needsComma);
+		needsComma = writeFieldName("size", vis.fSize, needsComma);
+		needsComma = writeFieldName("opacity", vis.fOpacity, needsComma);
+		needsComma = writeFieldName("class", vis.fCSS, needsComma);
+		writeFieldName("symbol", vis.fSymbol, needsComma);
 		out.onNewLine().indentLess().add("}");
 		out.indentLess().onNewLine().add("}").endStatement();
 	}
@@ -661,15 +658,23 @@ public class VisualizationBuilder {
 			return null;
 	}
 
-	private void writeFieldName(String name, List fieldNames) {
-		if (fieldNames.isEmpty()) return;
-		if (out.changedSinceMark()) out.add(",");
+	/**
+	 * Write a set of field names as properties
+	 * @param key property key
+	 * @param fieldNames  list of names to write
+	 * @param needsCommaBefore true if a comma needs to be written (it is part of a list)
+	 * @return updated needsCommaBefore, changed to be true if we added anthing
+	 */
+	private boolean writeFieldName(String key, List fieldNames, boolean needsCommaBefore) {
+		if (fieldNames.isEmpty()) return needsCommaBefore;
+		if (needsCommaBefore) out.add(",");
 		List<String> names = new ArrayList<>();
 		for (Object p : fieldNames) {
 			if (p instanceof Param) names.add(((Param) p).asField());
 			else names.add(p.toString());
 		}
-		out.onNewLine().add(name, ":").at(24).add("[").addQuotedCollection(names).add("]");
+		out.onNewLine().add(key, ":").at(24).add("[").addQuotedCollection(names).add("]");
+		return true;
 	}
 
 	private void writeMainGroups(ChartStructure structure) {

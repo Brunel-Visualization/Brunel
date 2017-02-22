@@ -57,7 +57,7 @@ class Network extends D3Diagram {
 	}
 
 	public void writePerChartDefinitions(ScriptWriter out) {
-		out.add("var graph, simulation;").at(50).comment("Node/edge graph and force simulation");
+		out.add("var graph, simulation;").comment("Node/edge graph and force simulation");
 	}
 
 	public void writeDataStructures(ScriptWriter out) {

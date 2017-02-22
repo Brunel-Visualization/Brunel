@@ -35,11 +35,13 @@ class DiagramElementBuilder extends ElementBuilder {
 	}
 
 	public void addAdditionalElementGroups() {
-		if (diagram.needsDiagramExtras())
-			out.continueOnNextLine(",").add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");
-		if (diagram.needsDiagramLabels())
-			out.continueOnNextLine(",")
+		if (diagram.needsDiagramExtras()) {
+			out.add(",").ln().indent().add("diagramExtras = elementGroup.append('g').attr('class', 'extras')");
+		}
+		if (diagram.needsDiagramLabels()) {
+			out.add(",").ln().indent()
 					.add("diagramLabels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'diagram labels').attr('aria-hidden', 'true'), elementGroup)");
+		}
 	}
 
 	public ElementDetails makeDetails() {

@@ -513,7 +513,7 @@ public class ScaleBuilder {
 	}
 
 	protected void writeScaleExtras() {
-		out.onNewLine().add("var base_scales = [scale_x, scale_y];").at(50).comment("Untransformed original scales");
+		out.onNewLine().add("var base_scales = [scale_x, scale_y];").comment("Untransformed original scales");
 		writeAspect();
 	}
 

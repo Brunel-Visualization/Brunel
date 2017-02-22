@@ -209,7 +209,6 @@ public class DataBuilder {
 		out.add("original = datasets[" + datasetIndex + "]").endStatement();
 		out.add("if (filterRows) original = original.retainRows(filterRows)").endStatement();
 		out.add("processed = pre(original,", datasetIndex, ")");
-		out.mark();
 
 		TransformParameters params = data.getTransformParameters();
 		writeTransform("addConstants", params.constantsCommand);
