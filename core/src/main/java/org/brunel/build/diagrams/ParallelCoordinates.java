@@ -17,7 +17,7 @@
 package org.brunel.build.diagrams;
 
 import org.brunel.action.Param;
-import org.brunel.build.AxisDetails;
+import org.brunel.build.guides.AxisDetails;
 import org.brunel.build.LabelBuilder;
 import org.brunel.build.ScalePurpose;
 import org.brunel.build.ScaleBuilder;

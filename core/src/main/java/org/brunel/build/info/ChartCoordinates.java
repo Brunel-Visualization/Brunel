@@ -38,7 +38,7 @@ import java.util.Map;
  */
 public class ChartCoordinates {
 
-	public final VisTypes.Coordinates coords;
+	public final VisTypes.Coordinates type;
 	public final Field[] allXFields, allYFields, allXClusterFields;
 	public final String xTransform, yTransform;
 	public final boolean xCategorical, yCategorical;                // Basic measure for the x and y dimensions
@@ -51,7 +51,7 @@ public class ChartCoordinates {
 
 	public ChartCoordinates(VisSingle[] elements, TransformedData[] data, VisTypes.Diagram diagram) {
 
-		this.coords = makeCombinedCoords(elements, diagram);
+		this.type = makeCombinedCoords(elements, diagram);
 
 		String xTransform = null, yTransform = null;                // If defined by the VisSingle
 
@@ -155,11 +155,11 @@ public class ChartCoordinates {
 	}
 
 	public boolean isPolar() {
-		return coords == VisTypes.Coordinates.polar;
+		return type == VisTypes.Coordinates.polar;
 	}
 
 	public boolean isTransposed() {
-		return coords == VisTypes.Coordinates.transposed;
+		return type == VisTypes.Coordinates.transposed;
 	}
 
 	private VisTypes.Coordinates makeCombinedCoords(VisSingle[] elements, VisTypes.Diagram diagram) {

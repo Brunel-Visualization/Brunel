@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package org.brunel.build;
+package org.brunel.build.guides;
 
 import org.brunel.build.info.ChartStructure;
-import org.brunel.build.titles.AxisTitleBuilder;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.Padding;
 import org.brunel.build.util.ScriptWriter;
@@ -26,6 +25,7 @@ import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
 import org.brunel.data.util.Range;
 import org.brunel.model.VisSingle;
+import org.brunel.model.VisTypes;
 import org.brunel.model.style.StyleTarget;
 
 import java.util.ArrayList;
@@ -37,8 +37,8 @@ import java.util.List;
  */
 public class AxisDetails {
 
+	public final VisTypes.Axes dimension;            	// Dimension
 	public final String title;                         // Title for the axis
-	public final String scale;                         // Name for the scale to use for this axis
 	public final boolean hasGrid;                      // true if gridlines are desired
 	public final StyleTarget styleTarget;              // style to target the axis
 	public final boolean categorical;                  // True if the axis is categorical
@@ -61,24 +61,25 @@ public class AxisDetails {
 	private AxisTitleBuilder titleBuilder;              // builds the title for this axis
 
 	/* Constructs the axis for the given fields */
-	public AxisDetails(String dimension, Field[] definedFields, boolean categorical, String userTitle, int tickCount, boolean grid) {
-		this.scale = "scale_" + dimension;
+	public AxisDetails(AxisRequirement req, Field[] definedFields, boolean categorical) {
+		this.dimension = req.dimension;
+		this.hasGrid = req.grid;
+
 		this.fields = definedFields;
 		this.categorical = categorical;
 		this.tickCount = tickCount < 100 ? tickCount : null;
 
-		if (userTitle != null)
-			this.title = (userTitle.isEmpty() ? null : userTitle);
+		if (req.title != null)
+			this.title = (req.title.isEmpty() ? null : req.title);
 		else
 			this.title = title(fields);
 
 		this.inMillions = !categorical && isInMillions(definedFields);
-		this.hasGrid = grid;
-		this.styleTarget = StyleTarget.makeTopLevelTarget("g", "axis", isX() ? "x" : "y");
+		this.styleTarget = StyleTarget.makeTopLevelTarget("g", "axis", dimension == VisTypes.Axes.x ? "x" : "y");
 	}
 
-	public boolean isX() {
-		return scale.endsWith("x");
+	public String getScaleName() {
+		return "scale_" + dimension;
 	}
 
 	public void setAdditionalHAxisOffset(double additionalHAxisOffset) {

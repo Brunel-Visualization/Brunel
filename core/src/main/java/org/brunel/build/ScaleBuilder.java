@@ -17,13 +17,12 @@
 package org.brunel.build;
 
 import org.brunel.action.Param;
-import org.brunel.action.Param.Type;
+import org.brunel.build.guides.AxisDetails;
 import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.BuildUtil;
 import org.brunel.build.util.ModelUtil;
-import org.brunel.build.util.SVGGroupUtility;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.color.ColorMapping;
 import org.brunel.color.Palette;
@@ -37,7 +36,6 @@ import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.DateUnit;
 import org.brunel.data.util.Range;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes.Axes;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
@@ -48,8 +46,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Set;
+
+import static org.brunel.model.VisTypes.Coordinates.coords;
 
 /**
  * Adds scales and axes; also guesses the right size to leave for axes
@@ -65,76 +64,23 @@ public class ScaleBuilder {
 
 	private static final double MIN_SIZE_FACTOR = 0.001;
 
-	final Coordinates coords;                       // Combined coordinate system derived from all elements
 	private final Field colorLegendField;           // Field to use for the color legend
-	private final AxisDetails hAxis, vAxis;         // Details for each axis
-	private final double[] marginTLBR;              // Margins between the coordinate area and the chart space
 	private final ChartStructure structure;         // Overall detail on the chart composition
 	private final VisSingle[] elements;             // The elements that define the scales used
 	private final ScriptWriter out;                 // Write definitions to here
 
 	public ScaleBuilder(ChartStructure structure, ScriptWriter out) {
 		this.structure = structure;
-		this.elements = structure.elements;
 		this.out = out;
-		this.coords = makeCombinedCoords();
-		AxisSpec[] axes = makeCombinedAxes();
+		this.elements = structure.elements;
 
 		// Create the position needed
 		this.colorLegendField = getColorLegendField();
 
-		ChartCoordinates coords = structure.coordinates;
-
-		// Set the axis information for each dimension
-		AxisDetails xAxis, yAxis;
-		if (axes[0] != null) {
-			xAxis = new AxisDetails("x", coords.allXFields, coords.xCategorical, axes[0].name, axes[0].ticks, axes[0].grid);
-		} else
-			xAxis = new AxisDetails("x", new Field[0], coords.xCategorical, null, 9999, false);
-		if (axes[1] != null)
-			yAxis = new AxisDetails("y", coords.allYFields, coords.yCategorical, axes[1].name, axes[1].ticks, axes[1].grid);
-		else
-			yAxis = new AxisDetails("y", new Field[0], coords.yCategorical, null, 9999, false);
-
-		// Map the dimension to the physical location on screen
-		if (this.coords == Coordinates.transposed) {
-			hAxis = yAxis;
-			vAxis = xAxis;
-		} else {
-			hAxis = xAxis;
-			vAxis = yAxis;
-		}
-
-		hAxis.setTextDetails(structure, true);
-		vAxis.setTextDetails(structure, false);
-
-		int legendWidth = legendWidth();
-
-        /*
-			We have a slight chicken-and-egg situation here. To layout any axis, we need to
-            know the available space for it. But to do that we need to know the size of the
-            color axis. But to do that we need to lay out the color axis ...
-            To resolve this, we make a very simple guess for the horizontal axis, then
-            layout the vertical axis based on that, then layout the horizontal
-         */
-
-		vAxis.layoutVertically(structure.chartHeight - hAxis.estimatedSimpleSizeWhenHorizontal());
-		hAxis.layoutHorizontally(structure.chartWidth - vAxis.size - legendWidth, elementsFillHorizontal(ScalePurpose.x));
-
-		// Set the margins
-		int marginTop = vAxis.topGutter;                                    // Only the vAxis needs space here
-		int marginLeft = Math.max(vAxis.size, hAxis.leftGutter);            // Width of vAxis, or horizontal gutter
-		int marginBottom = Math.max(hAxis.size, vAxis.bottomGutter);        // Height of hAxis, or gutter for vAxis
-		int marginRight = Math.max(hAxis.rightGutter, legendWidth);         // Overflow for hAxis, or legend
-		marginTLBR = new double[]{marginTop, marginLeft, marginBottom, marginRight};
 	}
 
 	public boolean needsLegends() {
 		return colorLegendField != null;
-	}
-
-	public void setAdditionalHAxisOffset(double v) {
-		hAxis.setAdditionalHAxisOffset(v);
 	}
 
 	private Coordinates makeCombinedCoords() {
@@ -151,44 +97,6 @@ public class ScaleBuilder {
 		return result;
 	}
 
-	// Return array for X and Y dimensions
-	private AxisSpec[] makeCombinedAxes() {
-
-		// Diagrams mean no axes
-		if (structure.diagram != null) return new AxisSpec[2];
-
-		AxisSpec x = null;
-		AxisSpec y = null;
-
-		boolean auto = true;
-
-		// Rules:
-		// none overrides everything and no axes are used
-		// auto or no parameters means that we want default axes for this chart
-		// x or y means that we wish to define just that axis
-
-		// The rule here is that we add axes as much as possible, so presence overrides lack of presence
-		for (VisSingle e : elements) {
-			// return two null specs -- we do not want axes
-			if (e.fAxes.containsKey(Axes.none)) return new AxisSpec[2];
-
-			for (Entry<Axes, Param[]> p : e.fAxes.entrySet()) {
-				auto = false;
-				Axes key = p.getKey();
-				Param[] value = p.getValue();
-				if (key == Axes.x) x = (x == null ? AxisSpec.DEFAULT : x).merge(value);
-				else if (key == Axes.y) y = (y == null ? AxisSpec.DEFAULT : y).merge(value);
-			}
-		}
-
-		// If auto, check for the coordinate system / diagram / nesting to determine what is wanted
-		if (auto) if (coords == Coordinates.polar || structure.nested())
-			return new AxisSpec[2];
-		else
-			return new AxisSpec[]{AxisSpec.DEFAULT, AxisSpec.DEFAULT};
-
-		return new AxisSpec[]{x, y};
-	}
 
 	private Field getColorLegendField() {
 		Field result = null;
@@ -207,7 +115,7 @@ public class ScaleBuilder {
 		return result;
 	}
 
-	private int legendWidth() {
+	public int legendWidth() {
 		if (!needsLegends()) return 0;
 		AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical(), null, 9999, false);
 		legendAxis.setTextDetails(structure, false);
@@ -216,7 +124,8 @@ public class ScaleBuilder {
 		return 6 + Math.max(spaceNeededForTicks, spaceNeededForTitle);                // Add some spacing
 	}
 
-	private boolean elementsFillHorizontal(ScalePurpose purpose) {
+
+	public boolean elementsFillHorizontal(ScalePurpose purpose) {
 		for (VisSingle e : elements) {
 			// All must be lines or areas to fill to the edge
 			if (e.tElement != Element.line && e.tElement != Element.area) return false;
@@ -268,14 +177,6 @@ public class ScaleBuilder {
 			}
 		}
 		return r;
-	}
-
-	public double[] marginsTLBR() {
-		return this.marginTLBR;
-	}
-
-	public boolean needsAxes() {
-		return hAxis.exists() || vAxis.exists();
 	}
 
 	public void writeAestheticScales(ElementStructure structure) {
@@ -370,143 +271,6 @@ public class ScaleBuilder {
 						+ BuildUtil.writeCall(field, dataInside) + ") }").endStatement();
 	}
 
-	/**
-	 * This method writes the code needed to define axes
-	 */
-	public void writeAxes() {
-		if (!hAxis.exists() && !vAxis.exists()) return;                          // No axes needed
-
-		// Define the spaces needed to work in
-
-		// Define the groups for the axes and add titles
-		if (hAxis.exists()) {
-			SVGGroupUtility groupUtil = new SVGGroupUtility(structure, "x_axis", out);
-			out.onNewLine().add("axes.append('g').attr('class', 'x axis')")
-					.addChained("attr('transform','translate(0,' + geom.inner_rawHeight + ')')");
-			groupUtil.addClipPathReference("haxis");
-			groupUtil.addAccessibleTitle("Horizontal Axis");
-			out.endStatement();
-			groupUtil.defineHorizontalAxisClipPath();
-
-			// Add the title if necessary
-			hAxis.writeTitle("axes.select('g.axis.x')", out);
-		}
-		if (vAxis.exists()) {
-			SVGGroupUtility groupUtil = new SVGGroupUtility(structure, "y_axis", out);
-			out.onNewLine().add("axes.append('g').attr('class', 'y axis')");
-			groupUtil.addClipPathReference("vaxis");
-			groupUtil.addAccessibleTitle("Vertical Axis");
-			out.endStatement();
-			groupUtil.defineVerticalAxisClipPath();
-
-			// Add the title if necessary
-			vAxis.writeTitle("axes.select('g.axis.y')", out);
-
-		}
-
-		// Define the axes themselves and the method to build (and re-build) them
-		out.onNewLine().ln();
-		defineAxis("var axis_bottom = d3.axisBottom", this.hAxis, true);
-		defineAxis("var axis_left = d3.axisLeft", this.vAxis, false);
-		defineAxesBuild();
-	}
-
-	/**
-	 * Defines an axis
-	 *
-	 * @param basicDefinition start of the line to generate
-	 * @param axis            axis information
-	 * @param horizontal      if the axis is horizontal
-	 */
-	public void defineAxis(String basicDefinition, AxisDetails axis, boolean horizontal) {
-		if (axis.exists()) {
-			String transform = horizontal ? structure.coordinates.xTransform : structure.coordinates.yTransform;
-			DateFormat dateFormat = horizontal ? structure.coordinates.xDateFormat : structure.coordinates.yDateFormat;
-
-			// Do not define ticks by default
-			String ticks;
-			if (axis.tickCount != null) {
-				ticks = Integer.toString(axis.tickCount);
-			} else if (horizontal) {
-				ticks = "Math.min(10, Math.round(geom.inner_width / " + (1.5 * axis.maxCategoryWidth()) + "))";
-			} else {
-				ticks = "Math.min(10, Math.round(geom.inner_width / 20))";
-			}
-
-			out.add(basicDefinition).add("(" + axis.scale + ").ticks(" + ticks);
-			if (dateFormat != null)
-				out.add(")");                                // No format needed
-			else if ("log".equals(transform)) {
-				if (axis.inMillions) out.add(", '0.0s')");    // format with no decimal places
-				else out.add(", ',')");
-			} else if (axis.inMillions)
-				out.add(", 's')");                            // Units style formatting
-			else
-				out.add(")");                                // No formatting
-			out.endStatement();
-		}
-	}
-
-	/**
-	 * Adds the calls to set the axes into the already defined scale groups
-	 */
-	private void defineAxesBuild() {
-		out.onNewLine().ln().add("function buildAxes(time) {").indentMore();
-		if (hAxis.exists()) {
-			if (hAxis.categorical) {
-				// Ensure the ticks are filtered so as not to overlap
-				out.onNewLine().add("axis_bottom.tickValues(BrunelD3.filterTicks(" + hAxis.scale + "))");
-			}
-			out.onNewLine().add("var axis_x = axes.select('g.axis.x');");
-			out.onNewLine().add("BrunelD3.transition(axis_x, time).call(axis_bottom.scale(" + hAxis.scale + "))");
-			if (hAxis.rotatedTicks) addRotateTicks();
-			out.endStatement();
-		}
-
-		if (vAxis.exists()) {
-			if (vAxis.categorical) {
-				// Ensure the ticks are filtered so as not to overlap
-				out.onNewLine().add("axis_left.tickValues(BrunelD3.filterTicks(" + vAxis.scale + "))");
-			}
-
-			out.onNewLine().add("var axis_y = axes.select('g.axis.y');");
-			out.onNewLine().add("BrunelD3.transition(axis_y, time).call(axis_left.scale(" + vAxis.scale + "))");
-			if (vAxis.rotatedTicks) addRotateTicks();
-			out.endStatement();
-		}
-
-		// The gridlines are with an untransposed group, which makes this logic
-		// much harder -- the 'hAxis' is on the horizontal, but it could be for the
-		// 'y' scale, and the widths are transposed, so they need inverting (when
-		// we want the transposed height, we as for the width)
-
-		if (hAxis.hasGrid) {
-			if (hAxis.isX()) addGrid("scale_x", "geom.inner_height", true);
-			else addGrid("scale_y", "geom.inner_width", true);
-		}
-		if (vAxis.hasGrid) {
-			if (vAxis.isX()) addGrid("scale_x", "geom.inner_height", false);
-			else addGrid("scale_y", "geom.inner_width", false);
-		}
-
-		out.indentLess().add("}").ln();
-	}
-
-	private void addGrid(String scaleName, String extent, boolean isX) {
-		out.onNewLine().add("BrunelD3.makeGrid(gridGroup, " + scaleName + ", " + extent + ", " + isX + " )")
-				.endStatement();
-	}
-
-	private void addRotateTicks() {
-		out.add(".selectAll('.tick text')")
-				.addChained("attr('transform', function() {")
-				.indentMore().indentMore().onNewLine()
-				.onNewLine().add("var v = this.getComputedTextLength() / Math.sqrt(2)/2;")
-				.onNewLine().add("return 'translate(-' + (v+6) + ',' + v + ') rotate(-45)'")
-				.indentLess().indentLess().onNewLine().add("})");
-
-	}
-
 	public void writeCoordinateScales() {
 		ChartCoordinates coordinates = structure.coordinates;
 		writePositionScale(ScalePurpose.x, coordinates.allXFields, getXRange(), elementsFillHorizontal(ScalePurpose.x), coordinates.xReversed);
@@ -515,7 +279,7 @@ public class ScaleBuilder {
 		writeScaleExtras();
 	}
 
-	protected void writeScaleExtras() {
+	private void writeScaleExtras() {
 		out.onNewLine().add("var base_scales = [scale_x, scale_y];").comment("Untransformed original scales");
 		writeAspect();
 	}
@@ -963,46 +727,5 @@ public class ScaleBuilder {
 		return result.toArray(new Object[result.size()]);
 	}
 
-	private static final class AxisSpec {
-		static final AxisSpec DEFAULT = new AxisSpec();
-
-		final int ticks;
-		final String name;
-		final boolean grid;
-		final boolean reverse;
-
-		private AxisSpec() {
-			ticks = 9999;
-			name = null;
-			grid = false;
-			reverse = false;
-		}
-
-		public AxisSpec(int ticks, String name, boolean grid, boolean reverse) {
-			this.ticks = ticks;
-			this.name = name;
-			this.grid = grid;
-			this.reverse = reverse;
-		}
-
-		public AxisSpec merge(Param[] params) {
-			AxisSpec result = this;
-			for (Param p : params) {
-				if (p.type() == Type.number) {
-					int newTicks = Math.min((int) p.asDouble(), result.ticks);
-					result = new AxisSpec(newTicks, result.name, result.grid, result.reverse);
-				} else if (p.type() == Type.string) {
-					String newTitle = p.asString();
-					result = new AxisSpec(result.ticks, newTitle, result.grid, result.reverse);
-				} else if (p.type() == Type.option) {
-					if ("grid".equals(p.asString()))
-						result = new AxisSpec(result.ticks, result.name, true, result.reverse);
-					else if ("reverse".equals(p.asString()))
-						result = new AxisSpec(result.ticks, result.name, result.grid, true);
-				}
-			}
-			return result;
-		}
-	}
 
 }

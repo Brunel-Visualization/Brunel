@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.brunel.build.titles;
+package org.brunel.build.guides;
 
 import org.brunel.action.Param;
 import org.brunel.build.info.ChartStructure;
