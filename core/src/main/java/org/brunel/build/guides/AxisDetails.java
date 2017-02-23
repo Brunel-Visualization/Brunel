@@ -37,12 +37,14 @@ import java.util.List;
  */
 public class AxisDetails {
 
-	public final VisTypes.Axes dimension;            	// Dimension
+	public final boolean exists;						// Is it needed?
+	public final VisTypes.Axes dimension;              // Dimension
 	public final String title;                         // Title for the axis
 	public final boolean hasGrid;                      // true if gridlines are desired
 	public final StyleTarget styleTarget;              // style to target the axis
 	public final boolean categorical;                  // True if the axis is categorical
 	public final boolean inMillions;                   // True if the fields values are nicely shown in millions
+	public final String scaleName;                    // Name for the scale
 
 	public boolean rotatedTicks;                       // If true, ticks are to be rotated
 	public Integer tickCount;                          // If non-null, request this many ticks for the axis
@@ -62,12 +64,15 @@ public class AxisDetails {
 
 	/* Constructs the axis for the given fields */
 	public AxisDetails(AxisRequirement req, Field[] definedFields, boolean categorical) {
+		this.exists = req != null;				// Are we needed
+		if (!exists) req = new AxisRequirement(VisTypes.Axes.none, -1);
 		this.dimension = req.dimension;
 		this.hasGrid = req.grid;
+		this.scaleName = "scale_" + dimension + (req.index < 0 ? "" : req.index);
+		this.tickCount = req.ticks < 200 ? req.ticks : null;
 
 		this.fields = definedFields;
 		this.categorical = categorical;
-		this.tickCount = tickCount < 100 ? tickCount : null;
 
 		if (req.title != null)
 			this.title = (req.title.isEmpty() ? null : req.title);
@@ -78,16 +83,12 @@ public class AxisDetails {
 		this.styleTarget = StyleTarget.makeTopLevelTarget("g", "axis", dimension == VisTypes.Axes.x ? "x" : "y");
 	}
 
-	public String getScaleName() {
-		return "scale_" + dimension;
-	}
-
 	public void setAdditionalHAxisOffset(double additionalHAxisOffset) {
-		if (exists()) titleBuilder.bottomOffset = additionalHAxisOffset;
+		if (exists) titleBuilder.bottomOffset = additionalHAxisOffset;
 	}
 
 	public void setTextDetails(ChartStructure structure, boolean isHorizontal) {
-		if (!exists()) return;
+		if (!exists) return;
 		VisSingle vis = findLikelyElement(structure);
 		titleBuilder = new AxisTitleBuilder(vis, this, isHorizontal);
 
@@ -161,7 +162,7 @@ public class AxisDetails {
 	 * @param fillToEdge     if true, ticks will go to the edges, rather than be in the middle as usual
 	 */
 	public void layoutHorizontally(double availableSpace, boolean fillToEdge) {
-		if (!exists()) return;
+		if (!exists) return;
 
 		int tickWidth = maxCategoryWidth() + 5;
 		if (tickWidth > availableSpace * 0.5) tickWidth = (int) (availableSpace * 0.5);
@@ -203,11 +204,6 @@ public class AxisDetails {
 				this.tickCount = (int) (availableSpace / (tickWidth + 5));
 			}
 		}
-	}
-
-	/* Does not exist if no fields to show */
-	public boolean exists() {
-		return fields.length > 0;
 	}
 
 	/* Estimate the space needed to show all text categories */
@@ -264,7 +260,7 @@ public class AxisDetails {
 	}
 
 	public int estimatedSimpleSizeWhenHorizontal() {
-		return exists() ? fontSize + tickPadding.vertical() + spaceForMarks() + estimatedTitleHeight() : 0;
+		return exists ? fontSize + tickPadding.vertical() + spaceForMarks() + estimatedTitleHeight() : 0;
 	}
 
 	// A negative mark size is drawn inside, but we don't want to subtract the size!
@@ -273,7 +269,7 @@ public class AxisDetails {
 	}
 
 	public void layoutVertically(double availableSpace) {
-		if (!exists()) return;
+		if (!exists) return;
 		int tickCount = countTicks(fields);
 
 		// A simple fixed gutter for ticks to flow into

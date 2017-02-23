@@ -10,15 +10,26 @@ import java.util.Map;
 /**
  * Defines the axis we want to create
  */
-final class AxisRequirement {
+public final class AxisRequirement {
 
-	final Axes dimension;
-	final int ticks;
-	final String title;
-	final boolean grid;
+	final Axes dimension;                // Which dimension
+	final int index;                    // Which axis within that dimension (currently only used for parallel axes)
 
-	private AxisRequirement(Axes dimension, int ticks, String name, boolean grid) {
+	final int ticks;                    // Required ticks to show
+	final String title;                    // Required title
+	final boolean grid;                    // Show grid?
+
+	public AxisRequirement(Axes dimension, int index) {
 		this.dimension = dimension;
+		this.index = index;
+		this.title = null;
+		this.grid = false;
+		this.ticks = 9999;
+	}
+
+	private AxisRequirement(Axes dimension, int index, int ticks, String name, boolean grid) {
+		this.dimension = dimension;
+		this.index = index;
 		this.ticks = ticks;
 		this.title = name;
 		this.grid = grid;
@@ -29,13 +40,13 @@ final class AxisRequirement {
 		for (Param p : params) {
 			if (p.type() == Param.Type.number) {
 				int newTicks = Math.min((int) p.asDouble(), result.ticks);
-				result = new AxisRequirement(dimension, newTicks, result.title, result.grid);
+				result = new AxisRequirement(dimension, index, newTicks, result.title, result.grid);
 			} else if (p.type() == Param.Type.string) {
 				String newTitle = p.asString();
-				result = new AxisRequirement(dimension, result.ticks, newTitle, result.grid);
+				result = new AxisRequirement(dimension, index, result.ticks, newTitle, result.grid);
 			} else if (p.type() == Param.Type.option) {
 				if ("grid".equals(p.asString()))
-					result = new AxisRequirement(dimension, result.ticks, result.title, true);
+					result = new AxisRequirement(dimension, index, result.ticks, result.title, true);
 			}
 		}
 		return result;
@@ -50,11 +61,11 @@ final class AxisRequirement {
 	 * @return a pair of axes [x, y]
 	 */
 	static AxisRequirement makeCombinedAxis(Axes which, ChartStructure structure) {
-		if (structure.diagram != null) return null;        	// Diagrams mean no axis
-		boolean auto = true;                            	// If true, the user made no request
+		if (structure.diagram != null) return null;            // Diagrams mean no axis
+		boolean auto = true;                                // If true, the user made no request
 
 		// The default is unbounded ticks, no required title and no grid
-		AxisRequirement result = new AxisRequirement(which, 9999, null, false);
+		AxisRequirement result = new AxisRequirement(which, -1);
 
 		// Rules:
 		// none overrides everything and no axes are used
@@ -67,8 +78,8 @@ final class AxisRequirement {
 			if (e.fAxes.containsKey(Axes.none)) return null;
 
 			for (Map.Entry<Axes, Param[]> p : e.fAxes.entrySet()) {
-				auto = false;                        		// Any axis statement means we do not use defaults
-				if (p.getKey() == which) 					// Merge current definition with parameters
+				auto = false;                                // Any axis statement means we do not use defaults
+				if (p.getKey() == which)                    // Merge current definition with parameters
 					result = result.merge(p.getValue());
 			}
 		}

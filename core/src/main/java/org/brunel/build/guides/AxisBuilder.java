@@ -36,7 +36,7 @@ public class AxisBuilder {
 	private final AxisDetails hAxis, vAxis;         // Details for each axis
 	private final double[] marginTLBR;              // Margins between the coordinate area and the chart space
 
-	public AxisBuilder(ChartStructure structure, ScaleBuilder scalesBuilder, ScriptWriter out) {
+	public AxisBuilder(ChartStructure structure, ScaleBuilder scalesBuilder, LegendBuilder legendBuilder, ScriptWriter out) {
 		this.structure = structure;
 		this.out = out;
 
@@ -53,8 +53,6 @@ public class AxisBuilder {
 		hAxis.setTextDetails(structure, true);
 		vAxis.setTextDetails(structure, false);
 
-		int legendWidth = scalesBuilder.legendWidth();
-
         /*
 			We have a slight chicken-and-egg situation here. To layout any axis, we need to
             know the available space for it. But to do that we need to know the size of the
@@ -64,13 +62,13 @@ public class AxisBuilder {
          */
 
 		vAxis.layoutVertically(structure.chartHeight - hAxis.estimatedSimpleSizeWhenHorizontal());
-		hAxis.layoutHorizontally(structure.chartWidth - vAxis.size - legendWidth, scalesBuilder.elementsFillHorizontal(ScalePurpose.x));
+		hAxis.layoutHorizontally(structure.chartWidth - vAxis.size - legendBuilder.legendWidth(), scalesBuilder.elementsFillHorizontal(ScalePurpose.x));
 
 		// Set the margins
 		int marginTop = vAxis.topGutter;                                    // Only the vAxis needs space here
 		int marginLeft = Math.max(vAxis.size, hAxis.leftGutter);            // Width of vAxis, or horizontal gutter
 		int marginBottom = Math.max(hAxis.size, vAxis.bottomGutter);        // Height of hAxis, or gutter for vAxis
-		int marginRight = Math.max(hAxis.rightGutter, legendWidth);         // Overflow for hAxis, or legend
+		int marginRight = Math.max(hAxis.rightGutter, legendBuilder.legendWidth());         // Overflow for hAxis, or legend
 
 		marginTLBR = new double[]{marginTop, marginLeft, marginBottom, marginRight};
 	}
@@ -84,19 +82,19 @@ public class AxisBuilder {
 	}
 
 	public boolean needsAxes() {
-		return hAxis.exists() || vAxis.exists();
+		return hAxis.exists || vAxis.exists;
 	}
 
 	/**
 	 * This method writes the code needed to define axes
 	 */
 	public void writeAxes() {
-		if (!hAxis.exists() && !vAxis.exists()) return;                          // No axes needed
+		if (!hAxis.exists && !vAxis.exists) return;                          // No axes needed
 
 		// Define the spaces needed to work in
 
 		// Define the groups for the axes and add titles
-		if (hAxis.exists()) {
+		if (hAxis.exists) {
 			SVGGroupUtility groupUtil = new SVGGroupUtility(structure, "x_axis", out);
 			out.onNewLine().add("axes.append('g').attr('class', 'x axis')")
 					.addChained("attr('transform','translate(0,' + geom.inner_rawHeight + ')')");
@@ -108,7 +106,7 @@ public class AxisBuilder {
 			// Add the title if necessary
 			hAxis.writeTitle("axes.select('g.axis.x')", out);
 		}
-		if (vAxis.exists()) {
+		if (vAxis.exists) {
 			SVGGroupUtility groupUtil = new SVGGroupUtility(structure, "y_axis", out);
 			out.onNewLine().add("axes.append('g').attr('class', 'y axis')");
 			groupUtil.addClipPathReference("vaxis");
@@ -136,7 +134,7 @@ public class AxisBuilder {
 	 * @param horizontal      if the axis is horizontal
 	 */
 	private void defineAxis(String basicDefinition, AxisDetails axis, boolean horizontal) {
-		if (axis.exists()) {
+		if (axis.exists) {
 			String transform = horizontal ? structure.coordinates.xTransform : structure.coordinates.yTransform;
 			DateFormat dateFormat = horizontal ? structure.coordinates.xDateFormat : structure.coordinates.yDateFormat;
 
@@ -150,7 +148,7 @@ public class AxisBuilder {
 				ticks = "Math.min(10, Math.round(geom.inner_width / 20))";
 			}
 
-			out.add(basicDefinition).add("(" + axis.getScaleName() + ").ticks(" + ticks);
+			out.add(basicDefinition).add("(" + axis.scaleName + ").ticks(" + ticks);
 			if (dateFormat != null)
 				out.add(")");                                // No format needed
 			else if ("log".equals(transform)) {
@@ -169,25 +167,25 @@ public class AxisBuilder {
 	 */
 	private void defineAxesBuild() {
 		out.onNewLine().ln().add("function buildAxes(time) {").indentMore();
-		if (hAxis.exists()) {
+		if (hAxis.exists) {
 			if (hAxis.categorical) {
 				// Ensure the ticks are filtered so as not to overlap
-				out.onNewLine().add("axis_bottom.tickValues(BrunelD3.filterTicks(" + hAxis.getScaleName() + "))");
+				out.onNewLine().add("axis_bottom.tickValues(BrunelD3.filterTicks(" + hAxis.scaleName + "))");
 			}
 			out.onNewLine().add("var axis_x = axes.select('g.axis.x');");
-			out.onNewLine().add("BrunelD3.transition(axis_x, time).call(axis_bottom.scale(" + hAxis.getScaleName() + "))");
+			out.onNewLine().add("BrunelD3.transition(axis_x, time).call(axis_bottom.scale(" + hAxis.scaleName + "))");
 			if (hAxis.rotatedTicks) addRotateTicks();
 			out.endStatement();
 		}
 
-		if (vAxis.exists()) {
+		if (vAxis.exists) {
 			if (vAxis.categorical) {
 				// Ensure the ticks are filtered so as not to overlap
-				out.onNewLine().add("axis_left.tickValues(BrunelD3.filterTicks(" + vAxis.getScaleName() + "))");
+				out.onNewLine().add("axis_left.tickValues(BrunelD3.filterTicks(" + vAxis.scaleName + "))");
 			}
 
 			out.onNewLine().add("var axis_y = axes.select('g.axis.y');");
-			out.onNewLine().add("BrunelD3.transition(axis_y, time).call(axis_left.scale(" + vAxis.getScaleName() + "))");
+			out.onNewLine().add("BrunelD3.transition(axis_y, time).call(axis_left.scale(" + vAxis.scaleName + "))");
 			if (vAxis.rotatedTicks) addRotateTicks();
 			out.endStatement();
 		}

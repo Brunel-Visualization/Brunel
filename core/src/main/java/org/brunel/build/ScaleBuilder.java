@@ -17,7 +17,6 @@
 package org.brunel.build;
 
 import org.brunel.action.Param;
-import org.brunel.build.guides.AxisDetails;
 import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
@@ -31,15 +30,12 @@ import org.brunel.data.Field;
 import org.brunel.data.Fields;
 import org.brunel.data.auto.Auto;
 import org.brunel.data.auto.NumericScale;
-import org.brunel.data.stats.DateStats;
 import org.brunel.data.util.DateFormat;
-import org.brunel.data.util.DateUnit;
 import org.brunel.data.util.Range;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
-import org.brunel.model.VisTypes.Legends;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,7 +60,6 @@ public class ScaleBuilder {
 
 	private static final double MIN_SIZE_FACTOR = 0.001;
 
-	private final Field colorLegendField;           // Field to use for the color legend
 	private final ChartStructure structure;         // Overall detail on the chart composition
 	private final VisSingle[] elements;             // The elements that define the scales used
 	private final ScriptWriter out;                 // Write definitions to here
@@ -74,56 +69,7 @@ public class ScaleBuilder {
 		this.out = out;
 		this.elements = structure.elements;
 
-		// Create the position needed
-		this.colorLegendField = getColorLegendField();
-
 	}
-
-	public boolean needsLegends() {
-		return colorLegendField != null;
-	}
-
-	private Coordinates makeCombinedCoords() {
-		// For diagrams, we set the coords to polar for the chord chart and clouds, and centered for networks
-		if (structure.diagram == Diagram.chord || structure.diagram == Diagram.cloud)
-			return Coordinates.polar;
-
-		// The rule here is that we return the one with the highest ordinal value;
-		// that will correspond to the most "unusual". In practice this means that
-		// you need only define 'polar' or 'transpose' in one chart
-		Coordinates result = elements[0].coords;
-		for (VisSingle e : elements) if (e.coords.compareTo(result) > 0) result = e.coords;
-
-		return result;
-	}
-
-
-	private Field getColorLegendField() {
-		Field result = null;
-		for (VisSingle vis : elements) {
-			boolean auto = vis.tLegends == Legends.auto;
-			if (auto && structure.nested()) continue;                       // No default legend for nested charts
-			if (vis.fColor.isEmpty()) continue;                             // No color means no color legend
-			if (vis.tLegends == Legends.none) continue;            // No legend if not asked for one
-
-			Field f = fieldById(getColor(vis).asField(), vis);
-			if (auto && f.name.equals("#selection")) continue;              // No default legend for selection
-
-			if (result == null) result = f;                                 // The first color definition
-			else if (!same(result, f)) return null;                         // Two incompatible colors
-		}
-		return result;
-	}
-
-	public int legendWidth() {
-		if (!needsLegends()) return 0;
-		AxisDetails legendAxis = new AxisDetails("color", new Field[]{colorLegendField}, colorLegendField.preferCategorical(), null, 9999, false);
-		legendAxis.setTextDetails(structure, false);
-		int spaceNeededForTicks = 32 + legendAxis.maxCategoryWidth();
-		int spaceNeededForTitle = colorLegendField.label.length() * 7;                // Assume 7 pixels per character
-		return 6 + Math.max(spaceNeededForTicks, spaceNeededForTitle);                // Add some spacing
-	}
-
 
 	public boolean elementsFillHorizontal(ScalePurpose purpose) {
 		for (VisSingle e : elements) {
@@ -572,61 +518,6 @@ public class ScaleBuilder {
 		return padding;
 	}
 
-	public void writeLegends(VisSingle vis) {
-		DateFormat dateFormat = null;
-		if (vis.fColor.isEmpty() || colorLegendField == null) return;
-		if (!vis.fColor.get(0).asField().equals(colorLegendField.name)) return;
-		String legendTicks;
-		if (colorLegendField.preferCategorical()) {
-			// Categorical data can just grab it from the domain
-			legendTicks = "scale_color.domain()";
-			// Binned numeric data reads in opposite direction (bottom to top)
-			if (colorLegendField.isBinned() && colorLegendField.isNumeric())
-				legendTicks += ".reverse()";
-		} else {
-			// Numeric must calculate a nice range
-			NumericScale details = Auto.makeNumericScale(colorLegendField, true, new double[]{0, 0}, 0.25, 7, false);
-			Double[] divisions = details.divisions;
-			if (details.granular) {
-				// Granular data has divisions BETWEEN the values, not at them, so need to fix that
-				Double[] newDiv = new Double[divisions.length - 1];
-				for (int i = 0; i < newDiv.length; i++) newDiv[i] = (divisions[i] + divisions[i + 1]) / 2;
-				divisions = newDiv;
-			}
-			// Reverse
-			for (int i = 0; i < divisions.length / 2; i++) {
-				Double t = divisions[divisions.length - 1 - i];
-				divisions[divisions.length - 1 - i] = divisions[i];
-				divisions[i] = t;
-			}
-
-			if (colorLegendField.isDate()) {
-				// We cannot use the format for the date field, as it may be much more detailed than we need
-				// We can instwad look at the difference between ticks to get the best format
-				DateUnit dateUnit = DateStats.getUnit(Math.abs(divisions[divisions.length - 1] - divisions[0]));
-				dateFormat = DateStats.getFormat(dateUnit, Math.abs(divisions[1] - divisions[0]));
-
-				BuildUtil.DateBuilder dateBuilder = new BuildUtil.DateBuilder();
-				String[] divs = new String[divisions.length];
-				for (int i = 0; i < divs.length; i++)
-					divs[i] = dateBuilder.make(Data.asDate(divisions[i]), dateFormat, true);
-
-				legendTicks = "[" + Data.join(divs) + "]";
-			} else {
-				legendTicks = "[" + Data.join(divisions) + "]";
-			}
-		}
-
-		String title = colorLegendField.label;
-		if (title == null) title = colorLegendField.name;
-
-		// Add the date format field in only for date legends
-		out.add("BrunelD3.addLegend(legends, " + out.quote(title) + ", scale_color, " + legendTicks);
-		if (dateFormat != null)
-			out.add(", BrunelData.util_DateFormat." + dateFormat.name());
-		out.add(")").endStatement();
-	}
-
 	private void addColorScale(Param p, VisSingle vis) {
 		Field f = fieldById(p, vis);
 
@@ -726,6 +617,5 @@ public class ScaleBuilder {
 		if (result.size() == 1) result.add(0, MIN_SIZE_FACTOR);
 		return result.toArray(new Object[result.size()]);
 	}
-
 
 }

@@ -17,21 +17,23 @@
 package org.brunel.build.diagrams;
 
 import org.brunel.action.Param;
-import org.brunel.build.guides.AxisDetails;
 import org.brunel.build.LabelBuilder;
-import org.brunel.build.ScalePurpose;
 import org.brunel.build.ScaleBuilder;
-import org.brunel.build.util.BuildUtil;
+import org.brunel.build.ScalePurpose;
 import org.brunel.build.element.ElementBuilder;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.element.ElementRepresentation;
+import org.brunel.build.guides.AxisDetails;
+import org.brunel.build.guides.AxisRequirement;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
+import org.brunel.build.util.BuildUtil;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.Padding;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Field;
+import org.brunel.model.VisTypes;
 import org.brunel.model.style.StyleTarget;
 
 import java.util.Arrays;
@@ -64,7 +66,8 @@ class ParallelCoordinates extends D3Diagram {
 		for (int i = 0; i < fields.length; i++) {
 			Field f = fields[i];
 			// Create the Axis details and lay out in vertical space
-			AxisDetails details = new AxisDetails("y" + i, new Field[]{f}, f.preferCategorical(), null, 9999, false);
+			AxisRequirement req = new AxisRequirement(VisTypes.Axes.y, i);
+			AxisDetails details = new AxisDetails(req, new Field[]{f}, f.preferCategorical());
 			details.setTextDetails(chart, false);
 			details.layoutVertically(chart.chartHeight);
 			axes[i] = details;

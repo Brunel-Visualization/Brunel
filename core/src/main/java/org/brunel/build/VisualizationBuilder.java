@@ -23,10 +23,11 @@ import org.brunel.build.data.DataTransformWriter;
 import org.brunel.build.data.TransformedData;
 import org.brunel.build.element.ElementBuilder;
 import org.brunel.build.guides.AxisBuilder;
+import org.brunel.build.guides.ChartTitleBuilder;
+import org.brunel.build.guides.LegendBuilder;
 import org.brunel.build.info.ChartLayout;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
-import org.brunel.build.guides.ChartTitleBuilder;
 import org.brunel.build.util.Accessibility;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.SVGGroupUtility;
@@ -89,15 +90,16 @@ public class VisualizationBuilder {
 
 	private final BuilderOptions options;
 	private final Map<Integer, Integer> nesting;        // Which charts are nested within which other ones
-	private Controls controls;                            // Contains the controls for the current chart
+	private Controls controls;                          // Contains the controls for the current chart
 
-	private ScriptWriter out;                            // Where to write code
-	public int visWidth, visHeight;                        // Overall vis size
-	private ElementBuilder[] elementBuilders;            // Builder for each element
-	private StyleSheet visStyles;                    // Collection of style overrides for this visualization
-	private Set<ElementStructure> allElements;        // Collection of all elements used
-	private ScaleBuilder scalesBuilder;                    // The scales for the current chart
+	private ScriptWriter out;                           // Where to write code
+	public int visWidth, visHeight;                     // Overall vis size
+	private ElementBuilder[] elementBuilders;           // Builder for each element
+	private StyleSheet visStyles;                        // Collection of style overrides for this visualization
+	private Set<ElementStructure> allElements;          // Collection of all elements used
+	private ScaleBuilder scalesBuilder;                 // The scales for the current chart
 	private AxisBuilder axisBuilder;                    // Axis for the current chart
+	private LegendBuilder legendBuilder;                // Legends for the current chart
 
 	private VisualizationBuilder(BuilderOptions options) {
 		this.options = options;
@@ -236,7 +238,7 @@ public class VisualizationBuilder {
 
 		// Transpose if needed
 		if (forceSquare(structure.elements)) out.add("geom.makeSquare()").endStatement();
-		if (scalesBuilder.getCoords() == Coordinates.transposed) out.add("geom.transpose()").endStatement();
+		if (structure.coordinates.isTransposed()) out.add("geom.transpose()").endStatement();
 
 		// Now build the main groups
 		out.titleComment("Define groups for the chart parts");
@@ -362,8 +364,9 @@ public class VisualizationBuilder {
 		double chartWidth = visWidth - chartMargins[1] - chartMargins[3];
 		double chartHeight = visHeight - chartMargins[0] - chartMargins[2];
 		structure.setExtent((int) chartWidth, (int) chartHeight);
-		this.scalesBuilder = new ScaleBuilder(structure, out);
-		this.axisBuilder = new AxisBuilder(structure, scalesBuilder, out);
+		scalesBuilder = new ScaleBuilder(structure, out);
+		legendBuilder = new LegendBuilder(structure, out);
+		axisBuilder = new AxisBuilder(structure, scalesBuilder, legendBuilder, out);
 
 		ElementStructure[] structures = structure.elementStructure;
 		elementBuilders = new ElementBuilder[structures.length];
@@ -391,7 +394,7 @@ public class VisualizationBuilder {
 		dataBuilder.writeDataManipulation();
 
 		scalesBuilder.writeAestheticScales(structure);
-		scalesBuilder.writeLegends(structure.vis);
+		legendBuilder.writeLegends(structure.vis);
 
 		elementBuilder.preBuildDefinitions();
 
@@ -597,7 +600,7 @@ public class VisualizationBuilder {
 	}
 
 	private void addElementGroups(ElementBuilder builder, ElementStructure structure) {
-		String elementTransform = makeElementTransform(scalesBuilder.getCoords());
+		String elementTransform = makeElementTransform(structure.chart.coordinates.type);
 
 		// The overall group for this element, with accessibility and transforms
 		out.add("var elementGroup = interior.append('g').attr('class', 'element" + structure.elementID() + "')");
@@ -727,7 +730,7 @@ public class VisualizationBuilder {
 		if (axisBuilder.needsAxes())
 			out.add("var axes = chart.append('g').attr('class', 'axis')")
 					.addChained(axesTransform).endStatement();
-		if (scalesBuilder.needsLegends()) {
+		if (legendBuilder.needsLegends()) {
 			out.add("var legends = chart.append('g').attr('class', 'legend')")
 					.addChained(makeTranslateTransform("(geom.chart_right-geom.chart_left - 3)", "0"));
 			groupUtil.addAccessibleTitle("Legend");
