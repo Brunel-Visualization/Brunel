@@ -82,7 +82,7 @@ public class DataTransformWriter {
 		// Check for selection filtering
 		Param param = InteractionDetails.getInteractionParam(vis, Interaction.filter);
 		if (param != null) {
-			if ("unselected" .equals(param.asString()))
+			if ("unselected".equals(param.asString()))
 				writeTransform("filter", "#selection is " + Field.VAL_UNSELECTED);
 			else
 				writeTransform("filter", "#selection is " + Field.VAL_SELECTED);

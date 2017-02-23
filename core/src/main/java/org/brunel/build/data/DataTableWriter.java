@@ -31,7 +31,6 @@ import org.brunel.model.VisItem;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -65,6 +64,7 @@ public class DataTableWriter {
 			Dataset dataset = datasets[i];
 
 			Collection<Field> required;
+			boolean summarized = false;
 			if (method == DataMethod.full) {
 				required = stripSynthetic(Arrays.asList(dataset.fields));
 			} else if (method == DataMethod.columns) {
@@ -78,6 +78,7 @@ public class DataTableWriter {
 				} else {
 					// Success -- use it
 					required = minimal;
+					summarized = true;
 				}
 			} else {
 				throw new IllegalStateException("Unknown method option: " + method);
@@ -87,7 +88,7 @@ public class DataTableWriter {
 			if (required.isEmpty())
 				required.add(Fields.makeConstantField("_dummy_", "Dummy", 1.0, dataset.rowCount()));
 
-			writeTable(i, required);
+			writeTable(i, required, summarized);
 		}
 	}
 
@@ -113,11 +114,12 @@ public class DataTableWriter {
 		return result;
 	}
 
-	private void writeTable(int index, Collection<Field> ff) {
+	private void writeTable(int index, Collection<Field> ff, boolean summarized) {
 		Field[] fields = ff.toArray(new Field[ff.size()]);
 
 		// Name the table with a numeric suffix for multiple tables
 		out.onNewLine().add("var", String.format(options.dataName, index + 1), "= {").indentMore();
+		out.onNewLine().add(" summarized: " + summarized + ",");
 
 		out.onNewLine().add(" names: [");
 		for (int i = 0; i < fields.length; i++) {
@@ -192,7 +194,7 @@ public class DataTableWriter {
 			row.append(']');
 		} else if (field.isDate()) {
 			DateFormat dateFormat = (DateFormat) field.property("dateFormat");
-			row.append(Data.quote(dateFormat.format((Date) value)));
+			row.append(Data.quote(dateFormat.formatCanonical(Data.asDate(value))));
 		} else if (field.isNumeric()) {
 			Double d = Data.asNumeric(value);
 			if (d == null) row.append("null");

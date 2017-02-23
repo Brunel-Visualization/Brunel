@@ -88,27 +88,9 @@ var BrunelD3 = (function () {
     // Create a dataset from rows. Each object has three parts - names, types, rows
     // The types are 'string', 'date',  'numeric' or "synthetic" (one of #row, #selection, #count)
     function makeDataset(data) {
-        var col, field, i, opt, fields = [];
-        for (i = 0; i < data.names.length; i++) {
-            col = data.rows.map(function (x) {
-                var v = x[i];
-                if (v && v.constructor === Array) return BrunelData.util_Range.make(v[0], v[1]);
-                return v
-            });                               // Extract i'th item
-            var name = data.names[i];
-            field = new BrunelData.Field(name, null, new BrunelData.values_ColumnProvider(col));
-            opt = data.options ? data.options[i] : "string";     // Apply type options
-            // Synthe
-            if (opt == 'synthetic') {
-                if (name == '#row') opt = 'list';
-                if (name == '#count') opt = 'numeric';
-            }
-            if (opt == 'numeric') field = BrunelData.Data.toNumeric(field);
-            else if (opt == 'date') field = BrunelData.Data.toDate(field);
-            else if (opt == 'list') field = BrunelData.Data.toList(field);
-            fields.push(field);
-        }
-        return BrunelData.Dataset.make(fields, false);
+        var d = BrunelData.Dataset.makeTyped(data.names, data.options, data.rows);
+        d.set("summarized", data.summarized);        // Preserve the status in the info
+        return d;
     }
 
     // Add a color legend
@@ -153,7 +135,6 @@ var BrunelD3 = (function () {
             .attr('class', 'legend').append('text').attr('x', 0).attr('y', 0)
             .style('text-anchor', 'end').attr('dy', '0.85em').text(title).attr('class', 'title');
     }
-
 
     // Create Split data structure for use in lines, paths and areas
     function split(data, path, xFunction) {

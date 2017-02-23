@@ -15,7 +15,7 @@ import java.util.Set;
 /**
  * Minimizes the data needed to be passed down
  */
-class DataMinimizer {
+public class DataMinimizer {
 	private final Collection<Field> required;
 	private final Dataset original;
 	private final Set<ElementStructure> elements;
@@ -44,9 +44,6 @@ class DataMinimizer {
 
 			// There is no point trying to minimize; without a summarization we need all the data anyway
 			if (p.summaryCommand.isEmpty()) return null;
-
-			// Filters will change the summary dynamically -- so we cannot use summarized data with filters
-			if (!p.filterCommand.isEmpty()) return null;
 		}
 
 		// Create initial reduced set of parameters
@@ -82,25 +79,21 @@ class DataMinimizer {
 	public TransformParameters merge(TransformParameters a, TransformParameters b) {
 		if (a == null || b == null) return null;	// Once it goes wrong, it stays wrong
 
-		TransformParameters result = new TransformParameters();
-
 
 		// Adding constants is easy -- we can add as many as we like
-		result.constantsCommand = mergeSemiColonSeparatedLists(a.constantsCommand, b.constantsCommand);
+		a.constantsCommand = mergeSemiColonSeparatedLists(a.constantsCommand, b.constantsCommand);
 
 		// Eliminating the use of "each" is safe -- it means that when we summarize using
 		// that field, we use the combined list as a key, which is just less efficient
-		result.eachCommand = eliminateIfDifferent(a.eachCommand, b.eachCommand);
+		a.eachCommand = eliminateIfDifferent(a.eachCommand, b.eachCommand);
 
 		// The transforms (bins, ranks) must be the same, otherwise summaries will be all wrong
 		if (!a.transformCommand.equals(b.transformCommand)) return null;
-		result.transformCommand = a.transformCommand;
 
-		// The sumries must also match
+		// The summaries must also match
 		if (!a.summaryCommand.equals(b.summaryCommand)) return null;
-		result.summaryCommand = a.summaryCommand;
 
-		return result;
+		return a;
 	}
 
 	private TransformParameters makeReducedTransformParams(TransformParameters a) {

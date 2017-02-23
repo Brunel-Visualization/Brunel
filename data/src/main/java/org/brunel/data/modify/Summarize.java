@@ -98,7 +98,11 @@ public class Summarize extends DataOperation {
         Summarize s = new Summarize(measures, dimensions, percentBase, base.rowCount());
         Field[] fields = s.make();
 
-        return base.replaceFields(fields);
+        Dataset result = base.replaceFields(fields);
+        result.set("reduced", true);                    // Data has been reduced to only needed fields
+        result.set("summarized", true);                 // Data has been summarized (aggregated)
+
+        return result;
     }
 
     private final List<MeasureField> measures;

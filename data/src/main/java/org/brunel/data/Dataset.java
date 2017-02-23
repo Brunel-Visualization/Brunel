@@ -29,8 +29,11 @@ import org.brunel.data.modify.Stack;
 import org.brunel.data.modify.Summarize;
 import org.brunel.data.modify.Transform;
 import org.brunel.data.summary.FieldRowComparison;
+import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Informative;
 import org.brunel.data.util.ItemsList;
+import org.brunel.data.util.Range;
+import org.brunel.data.values.ColumnProvider;
 import org.brunel.translator.JSTranslation;
 
 import java.io.ByteArrayOutputStream;
@@ -51,6 +54,71 @@ public class Dataset extends Informative implements Serializable {
 	@JSTranslation(ignore = true)
 	public static Dataset make(Field[] fields) {
 		return make(fields, null);
+	}
+
+	public static Dataset makeTyped(String[] names, String[] options, Object[][] rows) {
+		/*
+				var col, field, i, opt, fields = [];
+        for (i = 0; i < data.names.length; i++) {
+            col = data.rows.map(function (x) {
+                var v = x[i];
+                if (v && v.constructor === Array) return BrunelData.util_Range.make(v[0], v[1]);
+                return v
+            });                               // Extract i'th item
+            var name = data.names[i];
+            field = new BrunelData.Field(name, null, new BrunelData.values_ColumnProvider(col));
+            opt = data.options ? data.options[i] : "string";     // Apply type options
+            // Synthe
+            if (opt == 'synthetic') {
+                if (name == '#row') opt = 'list';
+                if (name == '#count') opt = 'numeric';
+            }
+            if (opt == 'numeric') field = BrunelData.Data.toNumeric(field);
+            else if (opt == 'date') field = BrunelData.Data.toDate(field);
+            else if (opt == 'list') field = BrunelData.Data.toList(field);
+            fields.push(field);
+        }
+        return BrunelData.Dataset.make(fields, false);
+
+		 */
+		Field[] fields = new Field[names.length];
+
+		for (int k = 0; k < fields.length; k++) {
+			// Options is a base type (string,date,numeric)
+			// If a date, the format is added afterwards (date-Year, date-HourMinSec)
+			// If a range, the range is first (range-numeric, range-date-Year)
+			String[] o = options[k].split("-");
+			boolean range = o[0].equals("range");
+			String type = range ? o[1] : o[0];
+			DateFormat df = type.equals("date") ? DateFormat.valueOf(range ? o[2] : o[1]) : null;
+			Object[] values = new Object[rows.length];
+			for (int i = 0; i < values.length; i++) {
+				Object x = rows[i][k];
+				if (x == null) {
+					values[i] = null;
+				} else if (range) {
+					Object[] v = (Object[]) x;
+					if (df == null)
+						values[i] = Range.makeNumeric(Data.asNumeric(v[0]), Data.asNumeric(v[1]), false);
+					else
+						values[i] = Range.makeDateNative(Data.asDate(v[0]), Data.asDate(v[1]), false, df);
+				} else if (type.equals("numeric")) {
+					values[i] = Data.asNumeric(x);
+				} else if (type.equals("date")) {
+					values[i] = Data.asDate(x);
+				} else {
+					values[i] = x.toString();
+				}
+			}
+			fields[k] = new Field(names[k], null, new ColumnProvider(values));
+			if (type.equals("numeric")) fields[k].setNumeric();
+			if (type.equals("date")) {
+				fields[k].set("date", true);
+				fields[k].setNumeric();
+			}
+
+		}
+		return Dataset.make(fields, false);
 	}
 
 	/*
@@ -123,7 +191,8 @@ public class Dataset extends Informative implements Serializable {
 	 * @return binned data set
 	 */
 	public Dataset transform(String command) {
-		return Transform.transform(this, command);
+		// Do not transform if already summarized
+		return isSummarized() ? this : Transform.transform(this, command);
 	}
 
 	/**
@@ -299,7 +368,7 @@ public class Dataset extends Informative implements Serializable {
 	/**
 	 * Create a new data set based on this one by summarizing (aggregating) the data
 	 *
-	 * Each command generates a new field, using onr of the following syntax statements:
+	 * Each command generates a new field, using one of the following syntax statements:
 	 * OUTPUT_FIELD = INPUT_FIELD                   -- define a field as group (measure)
 	 * OUTPUT_FIELD = INPUT_FIELD : base            -- define a field as group (measure) and use as base for percent
 	 * OUTPUT_FIELD = INPUT_FIELD : ????            -- define a field as a calculated value (measure)
@@ -311,9 +380,12 @@ public class Dataset extends Informative implements Serializable {
 	 * @return sorted data set
 	 */
 	public Dataset summarize(String command) {
-		Dataset dataset = Summarize.transform(this, command);
-		dataset.set("reduced", true); // Data has been reduced to only needed fields
-		return dataset;
+		// Do not summarize if already summarized
+		return isSummarized() ? this : Summarize.transform(this, command);
+	}
+
+	private boolean isSummarized() {
+		return Boolean.TRUE.equals(property("summarized"));
 	}
 
 	/**

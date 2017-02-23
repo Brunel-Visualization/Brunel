@@ -121,7 +121,6 @@ public class Dates {
 		dateFormats.add(new SimpleDateFormat("HH:mm:ss.SSS", Locale.US));
 		dateFormats.add(new SimpleDateFormat("H:m:s", Locale.US));
 		dateFormats.add(new SimpleDateFormat("H:m", Locale.US));
-		dateFormats.add(new SimpleDateFormat("yyyy", Locale.US));
 
 		for (SimpleDateFormat df : outputFormats)
 			df.setTimeZone(TimeZone.getTimeZone("UTC"));

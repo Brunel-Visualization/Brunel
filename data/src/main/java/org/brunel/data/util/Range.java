@@ -23,75 +23,81 @@ import java.util.Date;
 
 public class Range implements Comparable<Range> {
 
-    @JSTranslation(ignore = true)
-    public static Range make(Double low, Double high) {
-        return make(low, high, null);
-    }
+	@JSTranslation(ignore = true)
+	public static Range make(Double low, Double high) {
+		return make(low, high, null);
+	}
 
-    public static Range make(Double low, Double high, DateFormat dateFormat) {
-        if (low == null || high == null) return null;
-        return dateFormat == null ? makeNumeric(low, high, false) : makeDate(low, high, false, dateFormat);
-    }
+	public static Range make(Double low, Double high, DateFormat dateFormat) {
+		if (low == null || high == null) return null;
+		return dateFormat == null ? makeNumeric(low, high, false) : makeDate(low, high, false, dateFormat);
+	}
 
-    public static Range makeNumeric(double low, double high, boolean nameAtMid) {
-        double mid = (high + low) / 2, ext = 2 * (high - low) + 1;
-        String name = nameAtMid ? formatV(mid, ext) : formatV(low, ext) + "\u2026" + formatV(high, ext);
-        return new Range(low, high, mid, name);
-    }
+	public static Range makeNumeric(double low, double high, boolean nameAtMid) {
+		double mid = (high + low) / 2, ext = 2 * (high - low) + 1;
+		String name = nameAtMid ? formatV(mid, ext) : formatV(low, ext) + "\u2026" + formatV(high, ext);
+		return new Range(low, high, mid, name);
+	}
 
-    private static String formatV(double v, double ext) {
-        if (ext > 2e6)
-            return Data.formatNumeric(v / 1e6, null, false) + "M";
-        else
-            return Data.formatNumeric(v, null, true);
+	private static String formatV(double v, double ext) {
+		if (ext > 2e6)
+			return Data.formatNumeric(v / 1e6, null, false) + "M";
+		else
+			return Data.formatNumeric(v, null, true);
 
-    }
+	}
 
-    public static Range makeDate(double low, double high, boolean nameAtMid, DateFormat df) {
-        Date lowDate = Data.asDate(low);
-        Date highDate = Data.asDate(high);
-        Date midDate = Data.asDate((high + low) / 2);
-        String name = nameAtMid ? df.format(midDate) : df.format(lowDate) + "\u2026" + df.format(highDate);
-        return new Range(lowDate, highDate, midDate, name);
-    }
+	public static Range makeDateNative(Date lowDate, Date highDate, boolean nameAtMid, DateFormat df) {
+		Date midDate = Data.asDate((Data.asNumeric(lowDate) + Data.asNumeric(highDate)) / 2);
+		String name = nameAtMid ? df.format(midDate) : df.format(lowDate) + "\u2026" + df.format(highDate);
+		return new Range(lowDate, highDate, midDate, name);
+	}
 
-    public final Object high;
-    public final Object mid;
-    public final Object low;
+	public static Range makeDate(double low, double high, boolean nameAtMid, DateFormat df) {
+		Date lowDate = Data.asDate(low);
+		Date highDate = Data.asDate(high);
+		Date midDate = Data.asDate((high + low) / 2);
+		String name = nameAtMid ? df.format(midDate) : df.format(lowDate) + "\u2026" + df.format(highDate);
+		return new Range(lowDate, highDate, midDate, name);
+	}
 
-    private final String name;
+	public final Object high;
+	public final Object mid;
+	public final Object low;
 
-    private Range(Object low, Object high, Object mid, String name) {
-        this.low = low;
-        this.high = high;
-        this.mid = mid;
-        this.name = name;
-    }
+	private final String name;
 
-    public int compareTo(Range o) {
-        return Data.compare(asNumeric(), o.asNumeric());
-    }
+	private Range(Object low, Object high, Object mid, String name) {
+		this.low = low;
+		this.high = high;
+		this.mid = mid;
+		this.name = name;
+	}
 
-    public Double asNumeric() {
-        return (Data.asNumeric(low) + Data.asNumeric(high)) / 2.0;
-    }
+	public int compareTo(Range o) {
+		return Data.compare(asNumeric(), o.asNumeric());
+	}
 
-    private double extent() {
-        return Data.asNumeric(high) - Data.asNumeric(low);
-    }
+	public Double asNumeric() {
+		return (Data.asNumeric(low) + Data.asNumeric(high)) / 2.0;
+	}
 
-    @JSTranslation(js = "return this.name;")
-    public int hashCode() {
-        return low.hashCode() + 31 * high.hashCode();
-    }
+	private double extent() {
+		return Data.asNumeric(high) - Data.asNumeric(low);
+	}
 
-    public boolean equals(Object obj) {
-        return this == obj ||
-                obj instanceof Range && ((Range) obj).low == low && ((Range) obj).high == high;
-    }
+	@JSTranslation(js = "return this.name;")
+	public int hashCode() {
+		return low.hashCode() + 31 * high.hashCode();
+	}
 
-    public String toString() {
-        return name;
-    }
+	public boolean equals(Object obj) {
+		return this == obj ||
+				obj instanceof Range && ((Range) obj).low == low && ((Range) obj).high == high;
+	}
+
+	public String toString() {
+		return name;
+	}
 
 }
