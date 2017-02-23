@@ -32,7 +32,7 @@ public abstract class DataOperation {
      * @param command command to be split into sections
      * @return array of commands, or null if there are none
      */
-    static List<String[]> map(String command) {
+    public static List<String[]> map(String command) {
         List<String[]> result = new ArrayList<>();
         for (String c : strings(command, ';'))
             result.add(strings(c, '='));

@@ -17,7 +17,7 @@
 package org.brunel.build;
 
 import org.brunel.action.Action;
-import org.brunel.build.data.DataBuilder;
+import org.brunel.build.data.DataTransformWriter;
 import org.brunel.build.data.TransformedData;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.data.Data;
@@ -53,7 +53,7 @@ public class TestMakeKeyFields {
 		String command = "data('sample:US States.csv') " + commands;
 		VisSingle vis = Action.parse(command).apply().getSingle().makeCanonical();
 		ElementStructure structure = new ElementStructure(null, 0, vis, TransformedData.make(vis) , null);
-		DataBuilder builder = new DataBuilder(structure, null);
+		DataTransformWriter builder = new DataTransformWriter(structure, null);
 		return Data.join(builder.makeKeyFields());
 	}
 

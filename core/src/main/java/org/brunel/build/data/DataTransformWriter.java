@@ -20,29 +20,17 @@ import org.brunel.action.Param;
 import org.brunel.build.InteractionDetails;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.BuildUtil;
-import org.brunel.build.util.BuildUtil.DateBuilder;
-import org.brunel.build.util.BuilderOptions;
-import org.brunel.build.util.BuilderOptions.DataMethod;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Data;
-import org.brunel.data.Dataset;
 import org.brunel.data.Field;
-import org.brunel.data.Fields;
 import org.brunel.data.summary.FieldRowComparison;
-import org.brunel.data.util.DateFormat;
-import org.brunel.data.util.Range;
-import org.brunel.model.VisItem;
 import org.brunel.model.VisSingle;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 import org.brunel.model.VisTypes.Interaction;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -51,140 +39,15 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 /**
- * Write the Javascript for the data
+ * Write Javascript to transform the data
  */
-public class DataBuilder {
-
-	public static void writeTables(VisItem main, ScriptWriter out, BuilderOptions options) {
-		if (options.includeData == DataMethod.none) return;
-
-		Dataset[] datasets = main.getDataSets();
-
-		if (options.includeData == DataMethod.minimal) {
-			// throw new UnsupportedOperationException("Cannot make minimal data yet");
-		}
-
-
-		out.titleComment("Data Tables");
-
-		NumberFormat format = new DecimalFormat();
-		format.setGroupingUsed(false);
-		format.setMinimumFractionDigits(0);
-		format.setMaximumFractionDigits(8);
-
-		for (int d = 0; d < datasets.length; d++) {
-			Dataset data = datasets[d];
-			Field[] fields;
-
-			if (options.includeData == DataMethod.columns) {
-				// Only the fields needed by the vis items
-				LinkedHashSet<Field> fieldsAsSet = new LinkedHashSet<>();
-				addUsedFields(main, data, fieldsAsSet);
-				fields = fieldsAsSet.toArray(new Field[fieldsAsSet.size()]);
-			} else {
-				// All the fields
-				fields = data.fields;
-			}
-
-			if (fields.length == 0) {
-				// A Chart that doesn't actually use the data ... just meta values
-				fields = new Field[]{Fields.makeConstantField("_dummy_", "Dummy", 1.0, data.rowCount())};
-			}
-
-			// Name the table with a numeric suffix for multiple tables
-			out.onNewLine().add("var", String.format(options.dataName, d + 1), "= {").indentMore();
-
-			out.onNewLine().add(" names: [");
-			for (int i = 0; i < fields.length; i++) {
-				if (fields[i].isSynthetic()) continue;
-				String name = fields[i].name;
-				if (i > 0) out.add(", ");
-				out.add("'").add(name).add("'");
-			}
-			out.add("], ");
-
-			out.onNewLine().add(" options: [");
-			for (int i = 0; i < fields.length; i++) {
-				if (fields[i].isSynthetic()) continue;
-				String name;
-				if (fields[i].isDate())
-					name = "date";
-				else if (fields[i].isProperty("list"))
-					name = "list";
-				else if (fields[i].isNumeric())
-					name = "numeric";
-				else
-					name = "string";
-				if (i > 0) out.add(", ");
-				out.add("'").add(name).add("'");
-			}
-			out.add("], ");
-
-			out.onNewLine().add(" rows: [");
-
-			for (int r = 0; r < data.rowCount(); r++) {
-				if (r > 0) out.add(",");
-				String rowText = makeRowText(fields, r, format);
-				if (out.currentColumn() + rowText.length() > 99)
-					out.onNewLine();
-				else if (r > 0)
-					out.add(" ");
-				out.add(rowText);
-			}
-			out.add("]");
-			out.indentLess().onNewLine().add("}").endStatement();
-		}
-	}
-
-	private static void addUsedFields(VisItem item, Dataset data, Collection<Field> fields) {
-		if (item.children() == null) {
-			VisSingle vis = (VisSingle) item;                           // No children => VisSingle
-			if (vis.getDataset() != data) return;                       // Does not use this data set, so ignore it
-			for (String f : vis.usedFields(true))                       // Yes! Add in the fields to be used
-				if (!f.startsWith("#")) {                               // .. but not synthetic fields
-					Field field = data.field(f, true);                  // Constant fields will not be found
-					if (field != null) fields.add(field);
-				}
-		} else {
-			for (VisItem i : item.children())                           // Pass down to child items
-				addUsedFields(i, data, fields);
-		}
-	}
-
-	// If the row contains any nulls, return null for the whole row
-	private static String makeRowText(Field[] fields, int r, NumberFormat format) {
-		StringBuilder row = new StringBuilder();
-		DateBuilder dateBuilder = new DateBuilder();
-		row.append("[");
-		for (int i = 0; i < fields.length; i++) {
-			Field field = fields[i];
-			if (field.name.startsWith("#")) continue;           // Skip special fields
-			if (i > 0) row.append(", ");
-			Object value = field.value(r);
-			if (value == null) {
-				row.append("null");
-			} else if (value instanceof Range) {
-				row.append(Data.quote(value.toString()));
-			} else if (field.isDate()) {
-				Date date = Data.asDate(value);
-				if (date == null) row.append("null");
-				else row.append(dateBuilder.make(date, (DateFormat) field.property("dateFormat"), false));
-			} else if (field.isNumeric()) {
-				Double d = Data.asNumeric(value);
-				if (d == null) row.append("null");
-				else row.append(format.format(d));
-			} else
-				row.append(Data.quote(value.toString()));
-		}
-		row.append("]");
-		return row.toString();
-	}
+public class DataTransformWriter {
 
 	private final ElementStructure structure;
 	private final ScriptWriter out;
 	private final VisSingle vis;
 
-	public DataBuilder(ElementStructure structure, ScriptWriter out) {
+	public DataTransformWriter(ElementStructure structure, ScriptWriter out) {
 		this.structure = structure;
 		this.vis = structure.vis;
 		this.out = out;
@@ -219,7 +82,7 @@ public class DataBuilder {
 		// Check for selection filtering
 		Param param = InteractionDetails.getInteractionParam(vis, Interaction.filter);
 		if (param != null) {
-			if ("unselected".equals(param.asString()))
+			if ("unselected" .equals(param.asString()))
 				writeTransform("filter", "#selection is " + Field.VAL_UNSELECTED);
 			else
 				writeTransform("filter", "#selection is " + Field.VAL_SELECTED);
@@ -491,7 +354,7 @@ public class DataBuilder {
 
 	/*
 	Builds a mapping from the fields we will use in the built data object to an indexing 0,1,2,3, ...
- */
+ 	*/
 	private Map<String, Integer> createOutputFields() {
 		VisSingle vis = structure.vis;
 		LinkedHashSet<String> needed = new LinkedHashSet<>();

@@ -40,17 +40,17 @@ public class Dates {
 	};
 
 	private static final List<SimpleDateFormat> dateFormats;
-	private static final SimpleDateFormat[] outputFormats;
-
-	public static Object getPattern(DateFormat dateFormat) {
-		synchronized (outputFormats) {
-			return outputFormats[dateFormat.ordinal()].toPattern();
-		}
-	}
+	private static final SimpleDateFormat[] outputFormats, canonicalFormats;
 
 	public static String format(Date date, DateFormat dateFormat) {
 		synchronized (outputFormats) {
 			return outputFormats[dateFormat.ordinal()].format(date);
+		}
+	}
+
+	public static String formatCanonical(Date date, DateFormat dateFormat) {
+		synchronized (canonicalFormats) {
+			return canonicalFormats[dateFormat.ordinal()].format(date);
 		}
 	}
 
@@ -77,13 +77,23 @@ public class Dates {
 
 	static {
 		outputFormats = new SimpleDateFormat[]{
-				new SimpleDateFormat("HH:mm:ss"),            // seconds
-				new SimpleDateFormat("HH:mm"),                // hours and minutes
-				new SimpleDateFormat("MMM d HH:mm"),        // day and hour
-				new SimpleDateFormat("MMM d, yyyy"),        // full date
-				new SimpleDateFormat("MMM yyyy"),            // months
-				new SimpleDateFormat("yyyy")                // years
+				new SimpleDateFormat("HH:mm:ss"),            	// seconds
+				new SimpleDateFormat("HH:mm"),              	// hours and minutes
+				new SimpleDateFormat("MMM d HH:mm"),        	// day and hour
+				new SimpleDateFormat("MMM d, yyyy"),        	// full date
+				new SimpleDateFormat("MMM yyyy"),            	// months
+				new SimpleDateFormat("yyyy")                	// years
 		};
+
+		canonicalFormats = new SimpleDateFormat[]{
+				new SimpleDateFormat("HH:mm:ss"),            	// seconds
+				new SimpleDateFormat("HH:mm:ss"),               // hours and minutes
+				new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"),    // day and hour
+				new SimpleDateFormat("yyyy-MM-dd"),        		// full date
+				new SimpleDateFormat("yyyy-MM-dd"),            	// months
+				new SimpleDateFormat("yyyy-MM-dd")              // years
+		};
+
 
 		dateFormats = new LinkedList<>();
 		dateFormats.add(new SimpleDateFormat("y-M-d'T'H:m:s.SSS", Locale.US));
@@ -111,10 +121,12 @@ public class Dates {
 		dateFormats.add(new SimpleDateFormat("HH:mm:ss.SSS", Locale.US));
 		dateFormats.add(new SimpleDateFormat("H:m:s", Locale.US));
 		dateFormats.add(new SimpleDateFormat("H:m", Locale.US));
+		dateFormats.add(new SimpleDateFormat("yyyy", Locale.US));
 
 		for (SimpleDateFormat df : outputFormats)
 			df.setTimeZone(TimeZone.getTimeZone("UTC"));
-
+		for (SimpleDateFormat df : canonicalFormats)
+			df.setTimeZone(TimeZone.getTimeZone("UTC"));
 		for (SimpleDateFormat format : dateFormats)
 			format.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}

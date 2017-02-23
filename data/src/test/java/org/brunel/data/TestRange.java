@@ -37,7 +37,9 @@ public class TestRange {
         assertEquals(-150.25, Data.asNumeric(b), 0.01);
 
         assertNotEquals(a.hashCode(), b.hashCode());
-
     }
+
+//    @Test
+//    public void testAutocreation
 
 }

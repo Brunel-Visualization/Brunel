@@ -58,4 +58,5 @@ final class TransformParameters {
 	 * Command to retain only used fields
 	 */
 	String usedCommand;
+
 }

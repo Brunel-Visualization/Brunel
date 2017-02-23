@@ -86,18 +86,26 @@ var BrunelD3 = (function () {
 
 
     // Create a dataset from rows. Each object has three parts - names, types, rows
-    // The types are 'string', 'date' or 'numeric'
+    // The types are 'string', 'date',  'numeric' or "synthetic" (one of #row, #selection, #count)
     function makeDataset(data) {
         var col, field, i, opt, fields = [];
         for (i = 0; i < data.names.length; i++) {
             col = data.rows.map(function (x) {
-                return x[i]
+                var v = x[i];
+                if (v && v.constructor === Array) return BrunelData.util_Range.make(v[0], v[1]);
+                return v
             });                               // Extract i'th item
-            field = new BrunelData.Field(data.names[i], null, new BrunelData.values_ColumnProvider(col));
-            opt = data.options ? data.options[i] : "string";                                // Apply type options
+            var name = data.names[i];
+            field = new BrunelData.Field(name, null, new BrunelData.values_ColumnProvider(col));
+            opt = data.options ? data.options[i] : "string";     // Apply type options
+            // Synthe
+            if (opt == 'synthetic') {
+                if (name == '#row') opt = 'list';
+                if (name == '#count') opt = 'numeric';
+            }
             if (opt == 'numeric') field = BrunelData.Data.toNumeric(field);
-            if (opt == 'date') field = BrunelData.Data.toDate(field);
-            if (opt == 'list') field = BrunelData.Data.toList(field);
+            else if (opt == 'date') field = BrunelData.Data.toDate(field);
+            else if (opt == 'list') field = BrunelData.Data.toList(field);
             fields.push(field);
         }
         return BrunelData.Dataset.make(fields, false);
@@ -1578,7 +1586,7 @@ var BrunelD3 = (function () {
 
     // find the closest point on a path
     // array is an array of objects with (x,y,d) values
-    // (x,y) is the target point to find the enarest array point to
+    // (x,y) is the target point to find the nearest array point to
     // distanceMethod is one of "x", "y", or "xy"
     function closestPathPoint(array, x, y, distanceMethod) {
         result = {distance: 1e99};

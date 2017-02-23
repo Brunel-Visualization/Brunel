@@ -21,26 +21,43 @@ import org.brunel.translator.JSTranslation;
 import java.util.Date;
 
 public enum DateFormat {
-    HourMinSec, HourMin, DayHour, YearMonthDay, YearMonth, Year;
+	HourMinSec, HourMin, DayHour, YearMonthDay, YearMonth, Year;
 
-    /*
-     * Format using the desired method.
-     * In Javascript, UTCString is 'Tue, 10 Mar 2015 14:59:52 GMT',
-     * so splitting into parts gives 0:weekday, 1:day_of_month, 2:month, 3:year, 4:HMS
-     */
-    @JSTranslation(js = {
-            "var p = date.toUTCString().split(' ');",
-            "var t = this.toString();",
-            "if (t == 'HourMinSec') return p[4];",
-            "if (t == 'Year') return p[3];",
-            "if (t == 'YearMonth') return p[2] + ' ' + Number(p[3]);",
-            "if (t == 'YearMonthDay') return p[2] + ' ' + Number(p[1]) + ', ' + Number(p[3]);",
-            "var q = p[4].split(':');",
-            "var hm = q[0] + ':' + q[1];",
-            "if (t == 'HourMin') return hm;",
-            "return p[2] + ' ' + Number(p[1]) + ' ' +  hm;"
-    })
-    public String format(Date date) {
-        return Dates.format(date, this);
-    }
+	/*
+	 * Format using the desired method.
+	 * In Javascript, UTCString is 'Tue, 10 Mar 2015 14:59:52 GMT',
+	 * so splitting into parts gives 0:weekday, 1:day_of_month, 2:month, 3:year, 4:HMS
+	 */
+	@JSTranslation(js = {
+			"var p = date.toUTCString().split(' ');",
+			"var t = this.toString();",
+			"if (t == 'HourMinSec') return p[4];",
+			"if (t == 'Year') return p[3];",
+			"if (t == 'YearMonth') return p[2] + ' ' + Number(p[3]);",
+			"if (t == 'YearMonthDay') return p[2] + ' ' + Number(p[1]) + ', ' + Number(p[3]);",
+			"var q = p[4].split(':');",
+			"var hm = q[0] + ':' + q[1];",
+			"if (t == 'HourMin') return hm;",
+			"return p[2] + ' ' + Number(p[1]) + ' ' +  hm;"
+	})
+	public String format(Date date) {
+		return Dates.format(date, this);
+	}
+
+	/*
+	 * Format using canonical method (year, y-m-d, or full)
+	 */
+	@JSTranslation(js = {
+			"var t = this.toString();",
+			"function p(x) { return x<10 ? '0'+x : x};",
+			"function hms(x) { return p(date.getUTCHours()) + ':' + p(date.getUTCMinutes()) + ':' + p(date.getUTCSeconds()) };",
+			"function ymd(x) { return date.getUTCFullYear() + '-' + p(date.getUTCMonth() + 1) + '-' + p(date.getUTCDate()) };",
+			"if (t.indexOf('Year') >=0 ) return ymd(date);",
+			"if (t == 'HourMinSec' || t == 'HourMin') return hms(date);",
+			"return ymd(date) + ' ' + hms(date);"
+	})
+	public String formatCanonical(Date date) {
+		return Dates.formatCanonical(date, this);
+	}
+
 }

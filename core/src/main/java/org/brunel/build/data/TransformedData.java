@@ -41,12 +41,12 @@ public class TransformedData extends Dataset {
 	 * @param result transformed data
 	 */
 	private TransformedData(Dataset source, TransformParameters params, Dataset result) {
-		super(result);
+		super(result.fields, result);
 		this.transformParameters = params;
 		this.source = source;
 	}
 
-	private static Dataset transform(Dataset data, TransformParameters params) {
+	public static Dataset transform(Dataset data, TransformParameters params) {
 		return data
 				.addConstants(params.constantsCommand)                              // add constant fields
 				.each(params.eachCommand)                                           // divide up fields into parts

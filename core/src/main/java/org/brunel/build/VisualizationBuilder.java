@@ -18,7 +18,8 @@ package org.brunel.build;
 
 import org.brunel.action.Param;
 import org.brunel.build.controls.Controls;
-import org.brunel.build.data.DataBuilder;
+import org.brunel.build.data.DataTableWriter;
+import org.brunel.build.data.DataTransformWriter;
 import org.brunel.build.data.TransformedData;
 import org.brunel.build.element.ElementBuilder;
 import org.brunel.build.info.ChartLayout;
@@ -86,15 +87,15 @@ public class VisualizationBuilder {
 	}
 
 	private final BuilderOptions options;
-	private final Map<Integer, Integer> nesting;    // Which charts are nested within which other ones
-	private Controls controls;                        // Contains the controls for the current chart
+	private final Map<Integer, Integer> nesting;    	// Which charts are nested within which other ones
+	private Controls controls;                        	// Contains the controls for the current chart
 
-	private ScriptWriter out;                    	// Where to write code
-	public int visWidth, visHeight;                	// Overall vis size
-	private ScaleBuilder scalesBuilder;            	// The scales for the current chart
-	private ElementBuilder[] elementBuilders;      	// Builder for each element
-	private StyleSheet visStyles;                   // Collection of style overrides for this visualization
-	private Set<TransformedData> datasets;			// Collection of all built data sets
+	private ScriptWriter out;                        	// Where to write code
+	public int visWidth, visHeight;                    	// Overall vis size
+	private ScaleBuilder scalesBuilder;                	// The scales for the current chart
+	private ElementBuilder[] elementBuilders;        	// Builder for each element
+	private StyleSheet visStyles;                   	// Collection of style overrides for this visualization
+	private Set<ElementStructure> allElements;      	// Collection of all elements used
 
 	private VisualizationBuilder(BuilderOptions options) {
 		this.options = options;
@@ -113,7 +114,7 @@ public class VisualizationBuilder {
 		// Clear existing collections and prepare for new items
 		visStyles = new StyleSheet();
 		controls = new Controls(options);
-		datasets = new LinkedHashSet<>();
+		allElements = new LinkedHashSet<>();
 
 		// Index the datasets with the number in the list of input data sets
 		Dataset[] datasets = main.getDataSets();
@@ -269,13 +270,14 @@ public class VisualizationBuilder {
 	private void buildElement(ElementStructure structure) {
 		try {
 
-			controls.buildControls(structure);
-
-			defineElement(structure);
+			controls.buildControls(structure);			// build controls
+			defineElement(structure);          			// define the element
 			if (structure.vis.styles != null) {
+				// we need to add these to the main style sheet with correct element class identifier
 				StyleSheet styles = structure.vis.styles.replaceClass("currentElement", "element" + structure.elementID());
 				visStyles.add(styles, "chart" + structure.chart.chartID());
 			}
+			allElements.add(structure);                	// store the built data
 		} catch (Exception e) {
 			throw VisException.makeBuilding(e, structure.vis);
 		}
@@ -382,7 +384,7 @@ public class VisualizationBuilder {
 		addElementGroups(elementBuilder, structure);
 
 		// Write the data transforms
-		DataBuilder dataBuilder = new DataBuilder(structure, out);
+		DataTransformWriter dataBuilder = new DataTransformWriter(structure, out);
 		dataBuilder.writeDataManipulation();
 
 		scalesBuilder.writeAestheticScales(structure);
@@ -532,7 +534,7 @@ public class VisualizationBuilder {
 		out.indentLess().onNewLine().add("}").ln();
 
 		// Create the initial raw data table
-		DataBuilder.writeTables(main, out, options);
+		new DataTableWriter(main, allElements, out, options).write();
 
 		// Call the function on the data
 		if (options.generateBuildCode) {
@@ -613,7 +615,7 @@ public class VisualizationBuilder {
 		out.endStatement();
 	}
 
-	private void addElementExports(VisSingle vis, DataBuilder dataBuilder, ElementStructure structure) {
+	private void addElementExports(VisSingle vis, DataTransformWriter dataBuilder, ElementStructure structure) {
 		out.add("return {").indentMore();
 		out.onNewLine().add("data:").at(24).add("function() { return processed },");
 		out.onNewLine().add("original:").at(24).add("function() { return original },");
