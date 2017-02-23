@@ -43,21 +43,4 @@ public enum DateFormat {
 	public String format(Date date) {
 		return Dates.format(date, this);
 	}
-
-	/*
-	 * Format using canonical method (year, y-m-d, or full)
-	 */
-	@JSTranslation(js = {
-			"var t = this.toString();",
-			"function p(x) { return x<10 ? '0'+x : x};",
-			"function hms(x) { return p(date.getUTCHours()) + ':' + p(date.getUTCMinutes()) + ':' + p(date.getUTCSeconds()) };",
-			"function ymd(x) { return date.getUTCFullYear() + '-' + p(date.getUTCMonth() + 1) + '-' + p(date.getUTCDate()) };",
-			"if (t.indexOf('Year') >=0 ) return ymd(date);",
-			"if (t == 'HourMinSec' || t == 'HourMin') return hms(date);",
-			"return ymd(date) + ' ' + hms(date);"
-	})
-	public String formatCanonical(Date date) {
-		return Dates.formatCanonical(date, this);
-	}
-
 }

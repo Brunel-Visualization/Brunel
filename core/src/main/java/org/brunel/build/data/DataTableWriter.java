@@ -28,12 +28,14 @@ import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
 import org.brunel.model.VisItem;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 
 /**
  * Write the Javascript for the data
@@ -45,11 +47,15 @@ public class DataTableWriter {
 	private final ScriptWriter out;
 	private final BuilderOptions options;
 
+	private final SimpleDateFormat dateFormatter;
+
 	public DataTableWriter(VisItem main, Set<ElementStructure> elements, ScriptWriter out, BuilderOptions options) {
 		this.main = main;
 		this.elements = elements;
 		this.out = out;
 		this.options = options;
+		dateFormatter = new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss");
+		dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
 
 	public void write() {
@@ -194,7 +200,7 @@ public class DataTableWriter {
 			row.append(']');
 		} else if (field.isDate()) {
 			DateFormat dateFormat = (DateFormat) field.property("dateFormat");
-			row.append(Data.quote(dateFormat.formatCanonical(Data.asDate(value))));
+			row.append(Data.quote(dateFormatter.format(Data.asDate(value))));
 		} else if (field.isNumeric()) {
 			Double d = Data.asNumeric(value);
 			if (d == null) row.append("null");

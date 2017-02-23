@@ -64,29 +64,6 @@ public class TestDates {
 	}
 
 	@Test
-	public void testCanonicalDateFormats() {
-		Date d = Data.asDate("January 19, 2011 03:04:05");
-		assertEquals("03:04:05", DateFormat.HourMinSec.formatCanonical(d));
-		assertEquals("03:04:05", DateFormat.HourMin.formatCanonical(d));
-		assertEquals("2011-01-19 03:04:05", DateFormat.DayHour.formatCanonical(d));
-		assertEquals("2011-01-19", DateFormat.YearMonthDay.formatCanonical(d));
-		assertEquals("2011-01-19", DateFormat.YearMonth.formatCanonical(d));
-		assertEquals("2011-01-19", DateFormat.Year.formatCanonical(d));
-	}
-
-	@Test
-	public void testCanonicalRoundTrip() {
-		assertEquals("03:04:05", DateFormat.HourMinSec.formatCanonical(Data.asDate("03:04:05")));
-		assertEquals("03:04:05", DateFormat.HourMin.formatCanonical(Data.asDate("03:04:05")));
-		assertEquals("2011-01-19 03:04:05", DateFormat.DayHour.formatCanonical(Data.asDate("2011-01-19 03:04:05")));
-		assertEquals("2011-01-19", DateFormat.YearMonthDay.formatCanonical(Data.asDate("2011-01-19")));
-		assertEquals("2011-01-19", DateFormat.YearMonth.formatCanonical(Data.asDate("2011-01-19")));
-		assertEquals("2011-01-19", DateFormat.Year.formatCanonical(Data.asDate("2011-01-19")));
-	}
-
-
-
-	@Test
 	public void testDateCalculations() {
 		Date d = Data.asDate("January 1, 1970");
 		assertEquals(0, Data.asNumeric(d), 1e-6);
