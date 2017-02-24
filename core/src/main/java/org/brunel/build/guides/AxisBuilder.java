@@ -73,16 +73,16 @@ public class AxisBuilder {
 		marginTLBR = new double[]{marginTop, marginLeft, marginBottom, marginRight};
 	}
 
-	public void setAdditionalHAxisOffset(double v) {
-		hAxis.setAdditionalHAxisOffset(v);
-	}
-
 	public double[] marginsTLBR() {
 		return this.marginTLBR;
 	}
 
 	public boolean needsAxes() {
 		return hAxis.exists || vAxis.exists;
+	}
+
+	public void setAdditionalHAxisOffset(double v) {
+		hAxis.setAdditionalHAxisOffset(v);
 	}
 
 	/**
@@ -126,40 +126,19 @@ public class AxisBuilder {
 		defineAxesBuild();
 	}
 
-	/**
-	 * Defines an axis
-	 *
-	 * @param basicDefinition start of the line to generate
-	 * @param axis            axis information
-	 * @param horizontal      if the axis is horizontal
-	 */
-	private void defineAxis(String basicDefinition, AxisDetails axis, boolean horizontal) {
-		if (axis.exists) {
-			String transform = horizontal ? structure.coordinates.xTransform : structure.coordinates.yTransform;
-			DateFormat dateFormat = horizontal ? structure.coordinates.xDateFormat : structure.coordinates.yDateFormat;
+	private void addGrid(String scaleName, String extent, boolean isX) {
+		out.onNewLine().add("BrunelD3.makeGrid(gridGroup, " + scaleName + ", " + extent + ", " + isX + " )")
+				.endStatement();
+	}
 
-			// Do not define ticks by default
-			String ticks;
-			if (axis.tickCount != null) {
-				ticks = Integer.toString(axis.tickCount);
-			} else if (horizontal) {
-				ticks = "Math.min(10, Math.round(geom.inner_width / " + (1.5 * axis.maxCategoryWidth()) + "))";
-			} else {
-				ticks = "Math.min(10, Math.round(geom.inner_width / 20))";
-			}
+	private void addRotateTicks() {
+		out.add(".selectAll('.tick text')")
+				.addChained("attr('transform', function() {")
+				.indentMore().indentMore().onNewLine()
+				.onNewLine().add("var v = this.getComputedTextLength() / Math.sqrt(2)/2;")
+				.onNewLine().add("return 'translate(-' + (v+6) + ',' + v + ') rotate(-45)'")
+				.indentLess().indentLess().onNewLine().add("})");
 
-			out.add(basicDefinition).add("(" + axis.scaleName + ").ticks(" + ticks);
-			if (dateFormat != null)
-				out.add(")");                                // No format needed
-			else if ("log".equals(transform)) {
-				if (axis.inMillions) out.add(", '0.0s')");    // format with no decimal places
-				else out.add(", ',')");
-			} else if (axis.inMillions)
-				out.add(", 's')");                            // Units style formatting
-			else
-				out.add(")");                                // No formatting
-			out.endStatement();
-		}
 	}
 
 	/**
@@ -207,19 +186,40 @@ public class AxisBuilder {
 		out.indentLess().add("}").ln();
 	}
 
-	private void addGrid(String scaleName, String extent, boolean isX) {
-		out.onNewLine().add("BrunelD3.makeGrid(gridGroup, " + scaleName + ", " + extent + ", " + isX + " )")
-				.endStatement();
-	}
+	/**
+	 * Defines an axis
+	 *
+	 * @param basicDefinition start of the line to generate
+	 * @param axis            axis information
+	 * @param horizontal      if the axis is horizontal
+	 */
+	private void defineAxis(String basicDefinition, AxisDetails axis, boolean horizontal) {
+		if (axis.exists) {
+			String transform = horizontal ? structure.coordinates.xTransform : structure.coordinates.yTransform;
+			DateFormat dateFormat = horizontal ? structure.coordinates.xDateFormat : structure.coordinates.yDateFormat;
 
-	private void addRotateTicks() {
-		out.add(".selectAll('.tick text')")
-				.addChained("attr('transform', function() {")
-				.indentMore().indentMore().onNewLine()
-				.onNewLine().add("var v = this.getComputedTextLength() / Math.sqrt(2)/2;")
-				.onNewLine().add("return 'translate(-' + (v+6) + ',' + v + ') rotate(-45)'")
-				.indentLess().indentLess().onNewLine().add("})");
+			// Do not define ticks by default
+			String ticks;
+			if (axis.tickCount != null) {
+				ticks = Integer.toString(axis.tickCount);
+			} else if (horizontal) {
+				ticks = "Math.min(10, Math.round(geom.inner_width / " + (1.5 * axis.maxCategoryWidth()) + "))";
+			} else {
+				ticks = "Math.min(10, Math.round(geom.inner_width / 20))";
+			}
 
+			out.add(basicDefinition).add("(" + axis.scaleName + ").ticks(" + ticks);
+			if (dateFormat != null)
+				out.add(")");                                // No format needed
+			else if ("log".equals(transform)) {
+				if (axis.inMillions) out.add(", '0.0s')");    // format with no decimal places
+				else out.add(", ',')");
+			} else if (axis.inMillions)
+				out.add(", 's')");                            // Units style formatting
+			else
+				out.add(")");                                // No formatting
+			out.endStatement();
+		}
 	}
 
 }

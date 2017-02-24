@@ -29,42 +29,41 @@ import java.util.Map;
  */
 public class SimpleCache implements DatasetCache {
 
-    /* Maximum amount of memory to allow in cache in bytes */
-    private static final long MAX_ESTIMATED_MEMORY = 512 * 1024 * 1024;
+	/* Maximum amount of memory to allow in cache in bytes */
+	private static final long MAX_ESTIMATED_MEMORY = 512 * 1024 * 1024;
 
-    private final Map<String, Dataset> map = Collections.synchronizedMap(new MapCache());
-    private long estimatedMemoryUse;
+	private final Map<String, Dataset> map = Collections.synchronizedMap(new MapCache());
+	private long estimatedMemoryUse;
 
-    @Override
-    public synchronized Dataset retrieve(String key) {
-        return map.get(key);
-    }
+	@Override
+	public synchronized Dataset retrieve(String key) {
+		return map.get(key);
+	}
 
-    @Override
-    public synchronized void store(String key, Dataset dataset) {
-        Dataset previous = map.put(key, dataset);
-        if (previous != null) estimatedMemoryUse -= previous.expectedSize();
-        estimatedMemoryUse += dataset.expectedSize();
-    }
+	@Override
+	public synchronized void store(String key, Dataset dataset) {
+		Dataset previous = map.put(key, dataset);
+		if (previous != null) estimatedMemoryUse -= previous.expectedSize();
+		estimatedMemoryUse += dataset.expectedSize();
+	}
 
-    @Override
-    public synchronized void remove(String key) {
-        Dataset previous = map.remove(key);
-        if (previous != null) estimatedMemoryUse -= previous.expectedSize();
-    }
+	@Override
+	public synchronized void remove(String key) {
+		Dataset previous = map.remove(key);
+		if (previous != null) estimatedMemoryUse -= previous.expectedSize();
+	}
 
-
-    private class MapCache extends LinkedHashMap<String, Dataset> {
-        protected boolean removeEldestEntry(Map.Entry<String, Dataset> eldest) {
-            synchronized (SimpleCache.this) {
-                if (estimatedMemoryUse > MAX_ESTIMATED_MEMORY) {
-                    // This will be removed, so reduce the total memory size
-                    estimatedMemoryUse -= eldest.getValue().expectedSize();
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        }
-    }
+	private class MapCache extends LinkedHashMap<String, Dataset> {
+		protected boolean removeEldestEntry(Map.Entry<String, Dataset> eldest) {
+			synchronized (SimpleCache.this) {
+				if (estimatedMemoryUse > MAX_ESTIMATED_MEMORY) {
+					// This will be removed, so reduce the total memory size
+					estimatedMemoryUse -= eldest.getValue().expectedSize();
+					return true;
+				} else {
+					return false;
+				}
+			}
+		}
+	}
 }

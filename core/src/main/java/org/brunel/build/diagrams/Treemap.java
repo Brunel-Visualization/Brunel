@@ -45,16 +45,8 @@ class Treemap extends D3Diagram {
 		return ElementDetails.makeForDiagram(structure, ElementRepresentation.rect, "polygon", "treemap(tree).descendants()");
 	}
 
-	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
-		out.addChained("filter(function(d) { return d.parent })")       // Only if it has a parent
-				.addChained("attr('x', function(d) { return scale_x((d.parent.x0+d.parent.x1)/2) })")
-				.addChained("attr('y', function(d) { return scale_y((d.parent.y0+d.parent.y1)/2) })")
-				.addChained("attr('width', 0).attr('height', 0)");
-	}
-
-	public void writeLabelsAndTooltips(ElementDetails details, LabelBuilder labelBuilder) {
-		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
-		labelBuilder.addTreeInternalLabelsInsideNode();
+	public boolean needsDiagramLabels() {
+		return true;
 	}
 
 	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
@@ -66,8 +58,16 @@ class Treemap extends D3Diagram {
 		ElementBuilder.writeElementAesthetics(details, true, vis, out);
 	}
 
-	public boolean needsDiagramLabels() {
-		return true;
+	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
+		out.addChained("filter(function(d) { return d.parent })")       // Only if it has a parent
+				.addChained("attr('x', function(d) { return scale_x((d.parent.x0+d.parent.x1)/2) })")
+				.addChained("attr('y', function(d) { return scale_y((d.parent.y0+d.parent.y1)/2) })")
+				.addChained("attr('width', 0).attr('height', 0)");
+	}
+
+	public void writeLabelsAndTooltips(ElementDetails details, LabelBuilder labelBuilder) {
+		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
+		labelBuilder.addTreeInternalLabelsInsideNode();
 	}
 
 }

@@ -16,8 +16,8 @@
 
 package org.brunel.build.diagrams;
 
-import org.brunel.build.SymbolHandler;
 import org.brunel.build.LabelBuilder;
+import org.brunel.build.SymbolHandler;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
@@ -39,6 +39,10 @@ public class GeoMapLabels extends D3Diagram {
 
 	public String getRowKeyFunction() {
 		return "function(d) { return d[2] }";
+	}
+
+	public ElementDetails makeDetails() {
+		return ElementDetails.makeForDiagram(structure, ElementRepresentation.symbol, "point", "geo_labels");
 	}
 
 	public void preBuildDefinitions(ScriptWriter out) {
@@ -78,10 +82,6 @@ public class GeoMapLabels extends D3Diagram {
 		out.indentLess().add("]").endStatement();
 	}
 
-	private List<LabelPoint> subset(List<LabelPoint> all, int maxPoints) {
-		return maxPoints < all.size() ? all.subList(0, maxPoints) : all;
-	}
-
 	public void writeDataStructures(ScriptWriter out) {
 		SymbolHandler symbols = structure.chart.symbols;                        // Handler for all symbols
 
@@ -91,8 +91,8 @@ public class GeoMapLabels extends D3Diagram {
 				": (c==1 ? " + Data.quote(ids[1]) + " : " + Data.quote(ids[2]) + ")}");
 	}
 
-	public ElementDetails makeDetails() {
-		return ElementDetails.makeForDiagram(structure, ElementRepresentation.symbol, "point", "geo_labels");
+	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
+		out.addChained("classed('map', true)");
 	}
 
 	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
@@ -118,10 +118,6 @@ public class GeoMapLabels extends D3Diagram {
 		out.add("BrunelD3.label(selection, labels, labeling, 0, geom)").endStatement();
 	}
 
-	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
-		out.addChained("classed('map', true)");
-	}
-
 	public void writeLabelsAndTooltips(ElementDetails details, LabelBuilder labelBuilder) {
 		// Do nothing; this diagram is nothing but labels
 	}
@@ -129,5 +125,9 @@ public class GeoMapLabels extends D3Diagram {
 	private int radiusFor(LabelPoint p, int high, int low, boolean needsBoost) {
 		// The "boost" is for starts, which are otherwise too small, relatively speaking
 		return (int) (Math.round((p.pop - low) * 4.0 / (high - low) + 4)) + (needsBoost ? 2 : 0);
+	}
+
+	private List<LabelPoint> subset(List<LabelPoint> all, int maxPoints) {
+		return maxPoints < all.size() ? all.subList(0, maxPoints) : all;
 	}
 }

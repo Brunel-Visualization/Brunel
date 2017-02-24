@@ -22,29 +22,28 @@ import java.net.URI;
 import java.net.URLConnection;
 
 public class ContentReader {
-    public static String readContentFromUrl(URI uri) throws IOException {
-        //TODO:  Centrally handle security
-    	try {
-    		//Setting User-Agent avoids receiving an http 403 error.
-    	    URLConnection httpcon = uri.toURL().openConnection();
-    	    httpcon.addRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11");
+	public static String readContentFromUrl(URI uri) throws IOException {
+		//TODO:  Centrally handle security
+		try {
+			//Setting User-Agent avoids receiving an http 403 error.
+			URLConnection httpcon = uri.toURL().openConnection();
+			httpcon.addRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11");
 
-    	    return readContent(httpcon.getInputStream());
-    	}
-    	catch(IllegalArgumentException ex) {
-    		throw new IllegalArgumentException("Could not read data from: " + uri,ex.getCause());
-    	}
-    }
+			return readContent(httpcon.getInputStream());
+		} catch (IllegalArgumentException ex) {
+			throw new IllegalArgumentException("Could not read data from: " + uri, ex.getCause());
+		}
+	}
 
-    public static String readContent(InputStream is) throws IOException {
-        // Use StringBuilder to read the data in large chunks
-        StringBuilder builder = new StringBuilder();
-        byte[] data = new byte[20480];
+	public static String readContent(InputStream is) throws IOException {
+		// Use StringBuilder to read the data in large chunks
+		StringBuilder builder = new StringBuilder();
+		byte[] data = new byte[20480];
 
-        int c;
-        while ((c = is.read(data, 0, data.length)) > 0)
-            builder.append(new String(data, 0, c));
+		int c;
+		while ((c = is.read(data, 0, data.length)) > 0)
+			builder.append(new String(data, 0, c));
 
-        return builder.toString();
-    }
+		return builder.toString();
+	}
 }

@@ -50,7 +50,7 @@ public class VisComposition extends VisItem {
         this.items = items;
     }
 
-    public VisSingle getSingle() {
+    public VisElement getSingle() {
         return items[0].getSingle();
     }
 
@@ -73,8 +73,8 @@ public class VisComposition extends VisItem {
     public Dataset[] getDataSets() {
         Set<Dataset> datas = new LinkedHashSet<>();
         for (VisItem v : items) {
-            if (v instanceof VisSingle)
-                datas.add(((VisSingle) v).getDataset());
+            if (v instanceof VisElement)
+                datas.add(((VisElement) v).getDataset());
             else
                 Collections.addAll(datas, v.getDataSets());
         }

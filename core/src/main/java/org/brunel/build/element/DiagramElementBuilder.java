@@ -64,19 +64,6 @@ class DiagramElementBuilder extends ElementBuilder {
 		diagram.writePerChartDefinitions(out);
 	}
 
-	protected void defineLabeling(ElementDetails details) {
-		out.onNewLine().ln().comment("Define labeling for the selection")
-				.onNewLine().add("function label(selection, transitionMillis) {")
-				.indentMore().onNewLine();
-		diagram.writeLabelsAndTooltips(details, labelBuilder);
-		out.indentLess().onNewLine().add("}").ln();
-	}
-
-	/* The key function ensure we have object constancy when animating */
-	protected String getKeyFunction() {
-		return diagram.getRowKeyFunction();
-	}
-
 	protected void defineAllElementFeatures(ElementDetails details) {
 		if (vis.tElement == VisTypes.Element.point && vis.tDiagram == map) {
 			// Points on maps do need the coordinate functions
@@ -88,8 +75,12 @@ class DiagramElementBuilder extends ElementBuilder {
 		}
 	}
 
-	protected void writeDiagramEntry(ElementDetails details) {
-		diagram.writeDiagramEnter(details, out);
+	protected void defineLabeling(ElementDetails details) {
+		out.onNewLine().ln().comment("Define labeling for the selection")
+				.onNewLine().add("function label(selection, transitionMillis) {")
+				.indentMore().onNewLine();
+		diagram.writeLabelsAndTooltips(details, labelBuilder);
+		out.indentLess().onNewLine().add("}").ln();
 	}
 
 	protected void defineUpdateState(ElementDetails details) {
@@ -104,5 +95,14 @@ class DiagramElementBuilder extends ElementBuilder {
 		diagram.writeDiagramUpdate(details, out);
 		out.endStatement();
 		out.indentLess().onNewLine().add("}").ln();
+	}
+
+	/* The key function ensure we have object constancy when animating */
+	protected String getKeyFunction() {
+		return diagram.getRowKeyFunction();
+	}
+
+	protected void writeDiagramEntry(ElementDetails details) {
+		diagram.writeDiagramEnter(details, out);
 	}
 }

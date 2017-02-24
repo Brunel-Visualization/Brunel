@@ -17,7 +17,7 @@
 package org.brunel.build.data;
 
 import org.brunel.action.Action;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertEquals;
@@ -50,7 +50,7 @@ public class TestDataBuilder {
 
     private String getSummarizeCommands(String brunel) {
         String command = "data('sample:US States.csv') " + brunel;
-        VisSingle vis = Action.parse(command).apply().getSingle().makeCanonical();
+        VisElement vis = Action.parse(command).apply().getSingle().makeCanonical();
         return new TransformParameterBuilder(vis).makeSummaryCommands();
     }
 }

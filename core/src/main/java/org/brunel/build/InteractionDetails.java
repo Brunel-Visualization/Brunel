@@ -20,7 +20,7 @@ import org.brunel.action.Param;
 import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Interaction;
 
@@ -41,13 +41,18 @@ public class InteractionDetails {
 	private static final boolean[] ZOOM_NONE = new boolean[]{false, false};
 	private static final String DEFAULT_SNAP_DISTANCE = "geom.inner_radius/4";
 
+	public static Param getInteractionParam(VisElement vis, Interaction type) {
+		for (Param p : vis.tInteraction)
+			if (p.asEnum(Interaction.class) == type) return p;
+		return null;
+	}
 	private final boolean canZoomX, canZoomY;   // for coordinate zoom, which axes we can zoom
 	private final boolean usesCollapse;         // true if we have a collapse handler
 	private final boolean usesExpand;           // true if we have an expand handler
 	private final VisTypes.Diagram diagram;        // The diagram for this chart
 	private final ChartCoordinates coordinates;    // Coordinate system for the chart
 
-	public InteractionDetails(VisTypes.Diagram diagram, ChartCoordinates coordinates, VisSingle[] elements) {
+	public InteractionDetails(VisTypes.Diagram diagram, ChartCoordinates coordinates, VisElement[] elements) {
 		this.diagram = diagram;
 		this.coordinates = coordinates;
 
@@ -63,139 +68,6 @@ public class InteractionDetails {
 				&& diagram.isHierarchical && diagram != VisTypes.Diagram.gridded
 				&& !banned(elements, Interaction.collapse);
 
-	}
-
-	/**
-	 * Returns true if we need to prune trees to collapse some nodes
-	 *
-	 * @return T/F
-	 */
-	public boolean needsHierarchyPrune() {
-		return usesCollapse;
-	}
-
-	/**
-	 * Returns true if we need to search a tree to find a node to expand out to
-	 *
-	 * @return T/F
-	 */
-	public boolean needsHierarchySearch() {
-		return usesExpand;
-	}
-
-	private boolean banned(VisSingle[] elements, Interaction type) {
-		for (VisSingle vis : elements) {
-			// If the parameter exists, it is only banned if it is specified as "none"
-			Param param = getInteractionParam(vis, type);
-			if (param != null)
-				return param.hasModifiers() && param.firstModifier().asString().equals("none");
-		}
-
-		// Otherwise a "none" wins
-		for (VisSingle vis : elements)
-			if (getInteractionParam(vis, Interaction.none) != null) return true;
-
-		// If no information, it is not banned
-		return false;
-	}
-
-	private boolean[] defaultZooms() {
-		// Handle cases when there are diagrams -- the ones that do not fill the space by default are zoomable
-		if (diagram == VisTypes.Diagram.network || diagram == VisTypes.Diagram.map
-				|| diagram == VisTypes.Diagram.tree) return ZOOM_ALL;
-
-		// Parallel coordinates gets special zooming -- just the "Y"
-		if (diagram == VisTypes.Diagram.parallel) return new boolean[]{false, true};
-
-		else if (diagram != null)
-			return ZOOM_NONE;
-
-		// we cannot zoom diagrams polar coordinates
-		if (coordinates.isPolar()) return ZOOM_NONE;
-
-		// Otherwise allow zoom for non-categorical axes
-		return new boolean[]{!coordinates.xCategorical, !coordinates.yCategorical};
-	}
-
-	/**
-	 * We will always write the zoom function in, as it can be used even if the user did not request
-	 * it to be on available interactively. This way it can be called by API.
-	 */
-	public void defineChartZoomFunction(ScriptWriter out) {
-		out.onNewLine().add("zoom: function(params, time) {").indentMore().indentMore().onNewLine()
-				.add("if (params) zoom.on('zoom').call(zoomNode, params, time)").endStatement()
-				.add("return d3.zoomTransform(zoomNode)").endStatement();
-		out.indentLess().indentLess().onNewLine().add("},");
-	}
-
-	// Return an array stating whether x and y requested or banned
-	// null means no info -- use auto
-	private boolean[] zoomRequested(VisSingle[] elements) {
-		// Explicit requests in the code are honored. In case of multiple specs, just the first one is used
-		for (VisSingle vis : elements) {
-			// "None" means we don't get any interaction
-			if (getInteractionParam(vis, Interaction.none) != null) return ZOOM_NONE;
-
-			// Find the panzoom request and use it
-			Param param = getInteractionParam(vis, Interaction.panzoom);
-			if (param != null) {
-				String s = param.hasModifiers() ? param.firstModifier().asString() : "both";
-				if (s.equals("none")) return ZOOM_NONE;
-				if (s.equals("x")) return new boolean[]{true, false};
-				if (s.equals("y")) return new boolean[]{false, true};
-				return ZOOM_ALL;
-			}
-		}
-		return null;
-	}
-
-	// Return true if we want node expand to fill functionality
-	private boolean expandRequested(VisSingle[] elements) {
-		// Explicit requests in the code are honored. In case of multiple specs, just the first one is used
-		for (VisSingle vis : elements)
-			if (getInteractionParam(vis, Interaction.expand) != null) return true;
-
-		for (VisSingle vis : elements)
-			if (getInteractionParam(vis, Interaction.none) != null) return false;
-
-		return false;
-	}
-
-	/**
-	 * Returns true if the element has any mouse events to be attached to it
-	 *
-	 * @param structure the element information
-	 * @return true if any handler will need to be attached to the element
-	 */
-	public boolean hasElementInteraction(ElementStructure structure) {
-		if (!structure.vis.itemsTooltip.isEmpty()) return true;                 // tooltips require a handler
-		if (structure.chart.diagram == VisTypes.Diagram.network) return true;   // networks are draggable
-		if (usesCollapse || usesExpand)
-			return true;                            // if we need tree interactivity, need a handler
-
-		for (Param p : structure.vis.tInteraction) {
-			String s = p.asString();
-			// Only these types create element event handlers
-			if (s.equals(Interaction.select.name())
-					|| s.equals(call.name())
-					|| s.equals(Interaction.collapse.name())) {
-				if (targetsElement(p)) return true;
-			}
-		}
-		return false;
-	}
-
-	private boolean targetsElement(Param param) {
-		if (param == null) return false;                            // No interaction => no targeting
-		for (Param p : param.modifiers())
-			if (p.asString().startsWith("snap")) return false;      // snap means the handler is attached to background
-		return true;                                                // No snap means we do need an element handler
-	}
-
-	public static Param getInteractionParam(VisSingle vis, Interaction type) {
-		for (Param p : vis.tInteraction)
-			if (p.asEnum(Interaction.class) == type) return p;
-		return null;
 	}
 
 	/**
@@ -304,84 +176,6 @@ public class InteractionDetails {
 		}
 	}
 
-	private String addSelectEvent(LinkedHashMap<String, List<String>> elementEvents, Param p) {
-		// We want an event handler on the element -- Also add corresponding mouse out event
-		String eventName = p.hasModifiers() ? p.firstModifier().asString() : "click";
-		addFunctionDefinition(eventName + ".interact",
-				"BrunelD3.select(d, this, element, updateAll)", elementEvents);
-		if (eventName.equals("mouseover") || eventName.equals("mousemove"))
-			addFunctionDefinition("mouseout.interact",
-					"BrunelD3.select(null, this, element, updateAll)", elementEvents);
-		return eventName;
-	}
-
-	private String addEvent(LinkedHashMap<String, List<String>> elementEvents, Param p, String functionName) {
-		String eventName = p.modifiers().length > 1 ? p.modifiers()[1].toString() : "click";
-		addFunctionDefinition(eventName + ".user", functionName + "(d, this, element)", elementEvents);
-		if (eventName.equals("mouseover") || eventName.equals("mousemove"))
-			addFunctionDefinition("mouseout.user", functionName + "(null, this, element)", elementEvents);
-		return eventName;
-	}
-
-	/**
-	 * Adds event handlers for each event, with a list of things to call.
-	 *
-	 * @param dispatching map of event name to list of commands
-	 * @param out
-	 */
-	private void addDispatchers(Map<String, List<String>> dispatching, ScriptWriter out) {
-		// Add all the chained items
-		for (Map.Entry<String, List<String>> e : dispatching.entrySet()) {
-			String event = e.getKey();
-
-			out.addChained("on('" + event + "', function(d) {");
-			List<String> calls = e.getValue();
-
-			if (calls.size() == 1) {
-				// write it inline all one one line
-				out.add(calls.get(0), "})");
-			} else {
-				// One call per line
-				out.onNewLine().indentMore().indentMore();
-				for (String s : calls)
-					out.onNewLine().add(s).endStatement();
-				out.onNewLine().indentLess().add("})").indentLess();
-			}
-		}
-		out.endStatement();
-	}
-
-	private void addFunctionDefinition(String eventName, String definition, Map<String, List<String>> dispatching) {
-		List<String> list = dispatching.get(eventName);
-		if (list == null) {
-			list = new ArrayList<>();
-			dispatching.put(eventName, list);
-		}
-		list.add(definition);
-	}
-
-	// The distance to use to snap points to locations
-	// returns the snap method (snap, snapX, snapY) and then the distance
-	private String[] findSnapInfo(Param param) {
-		String snapFunction = null;
-		for (Param p : param.modifiers()) {
-			if (p.asString().startsWith("snap")) {
-				if (p.asString().equalsIgnoreCase("snapx")) snapFunction = "x";
-				else if (p.asString().equalsIgnoreCase("snapy")) snapFunction = "y";
-				else snapFunction = "xy";
-			} else if (snapFunction != null) {
-				// Next param is the numeric value
-				double d = p.asDouble();
-				return d < 1 ? null : new String[]{snapFunction, "" + (int) d};
-			}
-		}
-
-		if (snapFunction != null)
-			return new String[]{snapFunction, DEFAULT_SNAP_DISTANCE};   // Default to a quarter the space allowed on screen
-		else
-			return null;                                    // No snap
-	}
-
 	/**
 	 * Set up the overlay group and shapes for trapping events for zooming.
 	 *
@@ -420,10 +214,6 @@ public class InteractionDetails {
 
 		out.addChained("node()").endStatement();
 		out.add("zoomNode.__zoom = d3.zoomIdentity").endStatement();
-	}
-
-	public boolean hasZoomInteractivity() {
-		return canZoomX || canZoomY;
 	}
 
 	/**
@@ -476,6 +266,119 @@ public class InteractionDetails {
 	}
 
 	/**
+	 * We will always write the zoom function in, as it can be used even if the user did not request
+	 * it to be on available interactively. This way it can be called by API.
+	 */
+	public void defineChartZoomFunction(ScriptWriter out) {
+		out.onNewLine().add("zoom: function(params, time) {").indentMore().indentMore().onNewLine()
+				.add("if (params) zoom.on('zoom').call(zoomNode, params, time)").endStatement()
+				.add("return d3.zoomTransform(zoomNode)").endStatement();
+		out.indentLess().indentLess().onNewLine().add("},");
+	}
+
+	/**
+	 * Returns true if the element has any mouse events to be attached to it
+	 *
+	 * @param structure the element information
+	 * @return true if any handler will need to be attached to the element
+	 */
+	public boolean hasElementInteraction(ElementStructure structure) {
+		if (!structure.vis.itemsTooltip.isEmpty()) return true;                 // tooltips require a handler
+		if (structure.chart.diagram == VisTypes.Diagram.network) return true;   // networks are draggable
+		if (usesCollapse || usesExpand)
+			return true;                            // if we need tree interactivity, need a handler
+
+		for (Param p : structure.vis.tInteraction) {
+			String s = p.asString();
+			// Only these types create element event handlers
+			if (s.equals(Interaction.select.name())
+					|| s.equals(call.name())
+					|| s.equals(Interaction.collapse.name())) {
+				if (targetsElement(p)) return true;
+			}
+		}
+		return false;
+	}
+
+	public boolean hasZoomInteractivity() {
+		return canZoomX || canZoomY;
+	}
+
+	/**
+	 * Returns true if we need to prune trees to collapse some nodes
+	 *
+	 * @return T/F
+	 */
+	public boolean needsHierarchyPrune() {
+		return usesCollapse;
+	}
+
+	/**
+	 * Returns true if we need to search a tree to find a node to expand out to
+	 *
+	 * @return T/F
+	 */
+	public boolean needsHierarchySearch() {
+		return usesExpand;
+	}
+
+	/**
+	 * Adds event handlers for each event, with a list of things to call.
+	 *
+	 * @param dispatching map of event name to list of commands
+	 * @param out
+	 */
+	private void addDispatchers(Map<String, List<String>> dispatching, ScriptWriter out) {
+		// Add all the chained items
+		for (Map.Entry<String, List<String>> e : dispatching.entrySet()) {
+			String event = e.getKey();
+
+			out.addChained("on('" + event + "', function(d) {");
+			List<String> calls = e.getValue();
+
+			if (calls.size() == 1) {
+				// write it inline all one one line
+				out.add(calls.get(0), "})");
+			} else {
+				// One call per line
+				out.onNewLine().indentMore().indentMore();
+				for (String s : calls)
+					out.onNewLine().add(s).endStatement();
+				out.onNewLine().indentLess().add("})").indentLess();
+			}
+		}
+		out.endStatement();
+	}
+
+	private String addEvent(LinkedHashMap<String, List<String>> elementEvents, Param p, String functionName) {
+		String eventName = p.modifiers().length > 1 ? p.modifiers()[1].toString() : "click";
+		addFunctionDefinition(eventName + ".user", functionName + "(d, this, element)", elementEvents);
+		if (eventName.equals("mouseover") || eventName.equals("mousemove"))
+			addFunctionDefinition("mouseout.user", functionName + "(null, this, element)", elementEvents);
+		return eventName;
+	}
+
+	private void addFunctionDefinition(String eventName, String definition, Map<String, List<String>> dispatching) {
+		List<String> list = dispatching.get(eventName);
+		if (list == null) {
+			list = new ArrayList<>();
+			dispatching.put(eventName, list);
+		}
+		list.add(definition);
+	}
+
+	private String addSelectEvent(LinkedHashMap<String, List<String>> elementEvents, Param p) {
+		// We want an event handler on the element -- Also add corresponding mouse out event
+		String eventName = p.hasModifiers() ? p.firstModifier().asString() : "click";
+		addFunctionDefinition(eventName + ".interact",
+				"BrunelD3.select(d, this, element, updateAll)", elementEvents);
+		if (eventName.equals("mouseover") || eventName.equals("mousemove"))
+			addFunctionDefinition("mouseout.interact",
+					"BrunelD3.select(null, this, element, updateAll)", elementEvents);
+		return eventName;
+	}
+
+	/**
 	 * Apply the zoom transform to the scale.
 	 * This code is called during the handling of a zoom event (the transform is in the variable 't')
 	 *
@@ -505,6 +408,102 @@ public class InteractionDetails {
 		}
 
 		out.endStatement();
+	}
+
+	private boolean banned(VisElement[] elements, Interaction type) {
+		for (VisElement vis : elements) {
+			// If the parameter exists, it is only banned if it is specified as "none"
+			Param param = getInteractionParam(vis, type);
+			if (param != null)
+				return param.hasModifiers() && param.firstModifier().asString().equals("none");
+		}
+
+		// Otherwise a "none" wins
+		for (VisElement vis : elements)
+			if (getInteractionParam(vis, Interaction.none) != null) return true;
+
+		// If no information, it is not banned
+		return false;
+	}
+
+	private boolean[] defaultZooms() {
+		// Handle cases when there are diagrams -- the ones that do not fill the space by default are zoomable
+		if (diagram == VisTypes.Diagram.network || diagram == VisTypes.Diagram.map
+				|| diagram == VisTypes.Diagram.tree) return ZOOM_ALL;
+
+		// Parallel coordinates gets special zooming -- just the "Y"
+		if (diagram == VisTypes.Diagram.parallel) return new boolean[]{false, true};
+
+		else if (diagram != null)
+			return ZOOM_NONE;
+
+		// we cannot zoom diagrams polar coordinates
+		if (coordinates.isPolar()) return ZOOM_NONE;
+
+		// Otherwise allow zoom for non-categorical axes
+		return new boolean[]{!coordinates.xCategorical, !coordinates.yCategorical};
+	}
+
+	// Return true if we want node expand to fill functionality
+	private boolean expandRequested(VisElement[] elements) {
+		// Explicit requests in the code are honored. In case of multiple specs, just the first one is used
+		for (VisElement vis : elements)
+			if (getInteractionParam(vis, Interaction.expand) != null) return true;
+
+		for (VisElement vis : elements)
+			if (getInteractionParam(vis, Interaction.none) != null) return false;
+
+		return false;
+	}
+
+	// The distance to use to snap points to locations
+	// returns the snap method (snap, snapX, snapY) and then the distance
+	private String[] findSnapInfo(Param param) {
+		String snapFunction = null;
+		for (Param p : param.modifiers()) {
+			if (p.asString().startsWith("snap")) {
+				if (p.asString().equalsIgnoreCase("snapx")) snapFunction = "x";
+				else if (p.asString().equalsIgnoreCase("snapy")) snapFunction = "y";
+				else snapFunction = "xy";
+			} else if (snapFunction != null) {
+				// Next param is the numeric value
+				double d = p.asDouble();
+				return d < 1 ? null : new String[]{snapFunction, "" + (int) d};
+			}
+		}
+
+		if (snapFunction != null)
+			return new String[]{snapFunction, DEFAULT_SNAP_DISTANCE};   // Default to a quarter the space allowed on screen
+		else
+			return null;                                    // No snap
+	}
+
+	private boolean targetsElement(Param param) {
+		if (param == null) return false;                            // No interaction => no targeting
+		for (Param p : param.modifiers())
+			if (p.asString().startsWith("snap")) return false;      // snap means the handler is attached to background
+		return true;                                                // No snap means we do need an element handler
+	}
+
+	// Return an array stating whether x and y requested or banned
+	// null means no info -- use auto
+	private boolean[] zoomRequested(VisElement[] elements) {
+		// Explicit requests in the code are honored. In case of multiple specs, just the first one is used
+		for (VisElement vis : elements) {
+			// "None" means we don't get any interaction
+			if (getInteractionParam(vis, Interaction.none) != null) return ZOOM_NONE;
+
+			// Find the panzoom request and use it
+			Param param = getInteractionParam(vis, Interaction.panzoom);
+			if (param != null) {
+				String s = param.hasModifiers() ? param.firstModifier().asString() : "both";
+				if (s.equals("none")) return ZOOM_NONE;
+				if (s.equals("x")) return new boolean[]{true, false};
+				if (s.equals("y")) return new boolean[]{false, true};
+				return ZOOM_ALL;
+			}
+		}
+		return null;
 	}
 
 }

@@ -22,7 +22,7 @@ import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,9 +44,9 @@ public class Controls {
 	}
 
 	public void buildControls(ElementStructure element) {
-		VisSingle vis = element.vis;							// Definition
-		Dataset data = element.data.getSource();				// Original (pre-transform) data
-		int datasetIndex = element.data.intProperty("index");	// Index of the original data set within all datasets
+		VisElement vis = element.vis;                            // Definition
+		Dataset data = element.data.getSource();                // Original (pre-transform) data
+		int datasetIndex = element.data.intProperty("index");    // Index of the original data set within all datasets
 		for (Param f : vis.fFilter) {
 			filters.add(FilterControl.makeForFilterField(data, datasetIndex, f.asField(data), f.firstModifier()));
 		}
@@ -63,27 +63,12 @@ public class Controls {
 			writeControls(options.controlsIdentifier, "BrunelJQueryControlFactory", out, visInstance);
 	}
 
-	private void writeControls(String controlId, String uiFactoryClass, ScriptWriter out, String visInstance) {
-		if (!needsControls()) return;
-		out.titleComment("Create and wire controls");
-		out.add("$(function() {").ln().indentMore();
-		createFilters(controlId, uiFactoryClass, out, visInstance);
-
-		out.indentLess().ln();
-		out.add("})").endStatement();
-
-	}
-
 	public void writeEventHandler(ScriptWriter out, String visInstance) {
 		if (!needsControls()) return;
 		String filterDefaults = gson.toJson(FilterControl.buildFilterDefaults(filters));
 
 		out.add("var eventHandler = BrunelEventHandlers(", visInstance, ")").endStatement();
 		out.add("eventHandler.make_filter_handler(", filterDefaults, ")").endStatement();
-	}
-
-	private boolean needsControls() {
-		return !filters.isEmpty();
 	}
 
 	private void createFilters(String controlId, String uiFactoryClass, ScriptWriter out, String visInstance) {
@@ -114,5 +99,20 @@ public class Controls {
 			}
 
 		}
+	}
+
+	private boolean needsControls() {
+		return !filters.isEmpty();
+	}
+
+	private void writeControls(String controlId, String uiFactoryClass, ScriptWriter out, String visInstance) {
+		if (!needsControls()) return;
+		out.titleComment("Create and wire controls");
+		out.add("$(function() {").ln().indentMore();
+		createFilters(controlId, uiFactoryClass, out, visInstance);
+
+		out.indentLess().ln();
+		out.add("})").endStatement();
+
 	}
 }

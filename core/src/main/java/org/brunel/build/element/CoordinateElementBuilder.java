@@ -46,19 +46,6 @@ class CoordinateElementBuilder extends ElementBuilder {
 	public void writePerChartDefinitions() {
 	}
 
-	protected void defineLabeling(ElementDetails details) {
-		out.onNewLine().ln().comment("Define labeling for the selection")
-				.onNewLine().add("function label(selection, transitionMillis) {")
-				.indentMore().onNewLine();
-		writeElementLabelsAndTooltips(details, labelBuilder);
-		out.indentLess().onNewLine().add("}").ln();
-	}
-
-	/* The key function ensure we have object constancy when animating */
-	protected String getKeyFunction() {
-		return "function(d) { return d.key }";
-	}
-
 	protected void defineAllElementFeatures(ElementDetails details) {
 
 		writeCoordinateFunctions(details);
@@ -73,7 +60,12 @@ class CoordinateElementBuilder extends ElementBuilder {
 		}
 	}
 
-	protected void writeDiagramEntry(ElementDetails details) {
+	protected void defineLabeling(ElementDetails details) {
+		out.onNewLine().ln().comment("Define labeling for the selection")
+				.onNewLine().add("function label(selection, transitionMillis) {")
+				.indentMore().onNewLine();
+		writeElementLabelsAndTooltips(details, labelBuilder);
+		out.indentLess().onNewLine().add("}").ln();
 	}
 
 	protected void defineUpdateState(ElementDetails details) {
@@ -86,5 +78,13 @@ class CoordinateElementBuilder extends ElementBuilder {
 		out.endStatement();
 
 		out.indentLess().onNewLine().add("}").ln();
+	}
+
+	/* The key function ensure we have object constancy when animating */
+	protected String getKeyFunction() {
+		return "function(d) { return d.key }";
+	}
+
+	protected void writeDiagramEntry(ElementDetails details) {
 	}
 }

@@ -26,7 +26,7 @@ import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 import org.brunel.model.style.StyleTarget;
@@ -42,7 +42,40 @@ import java.util.List;
  */
 public class LabelBuilder {
 
-	private final VisSingle vis;
+	public static void addFontSizeAttribute(VisElement vis, ScriptWriter out) {
+		if (!vis.fSize.isEmpty()) {
+			StyleTarget target = StyleTarget.makeElementTarget("text", "label");
+			Size parts = ModelUtil.getSize(vis, target, "font-size");
+			if (parts == null) {
+				out.addChained("style('font-size', function(d) { return (100*size(d)) + '%' })");
+			} else {
+				out.addChained("style('font-size', function(d) { return (", parts.value(12), "* size(d)) +'" + parts.suffix() + "' })");
+			}
+		}
+	}
+
+	public static int estimateLabelLength(List<Param> itemsLabel, Dataset data) {
+		int size = 0;
+		for (Param p : itemsLabel) {
+			if (p.isField()) {
+				Field f = data.field(p.asField());
+				if (f.isDate()) size += 8;
+				else if (f.preferCategorical()) size += maxLength(f.categories()) + 1;
+				else size += 6;
+			} else {
+				// Text
+				size += p.asString().length() + 1;
+			}
+		}
+		return size;
+	}
+
+	private static int maxLength(Object[] categories) {
+		int max = 0;
+		for (Object o : categories) max = Math.max(max, o.toString().length());
+		return max;
+	}
+	private final VisElement vis;
 	private final ScriptWriter out;
 	private final ElementStructure structure;
 
@@ -65,16 +98,19 @@ public class LabelBuilder {
 			out.add("BrunelD3.label(selection, labels, labeling, transitionMillis, geom)").endStatement();
 	}
 
-	public static void addFontSizeAttribute(VisSingle vis, ScriptWriter out) {
-		if (!vis.fSize.isEmpty()) {
-			StyleTarget target = StyleTarget.makeElementTarget("text", "label");
-			Size parts = ModelUtil.getSize(vis, target, "font-size");
-			if (parts == null) {
-				out.addChained("style('font-size', function(d) { return (100*size(d)) + '%' })");
-			} else {
-				out.addChained("style('font-size', function(d) { return (", parts.value(12), "* size(d)) +'" + parts.suffix() + "' })");
-			}
-		}
+	/* Call to add labels for the rough centers to a grid layout */
+	public void addGridLabels() {
+
+		out.add("var gridLabelSel = diagramExtras.selectAll('text.title').data(gridLabels, function(d) { return d.label })")
+				.endStatement();
+
+		out.add("var gridLabelAdd = gridLabelSel.enter().append('text').attr('class', 'diagram gridded hierarchy title')")
+				.addChained("text(function(d) { return d.label }).attr('dy', '0.3em').style('text-anchor', 'middle')")
+				.endStatement();
+
+		out.add("BrunelD3.transition(gridLabelAdd.merge(gridLabelSel))")
+				.addChained("attr('x', function(d) { return scale_x(d.x) } ).attr('y', function(d) { return scale_y(d.y) } )")
+				.endStatement();
 	}
 
 	public void addTooltips(ElementDetails details) {
@@ -82,6 +118,30 @@ public class LabelBuilder {
 		out.onNewLine().ln();
 		defineLabeling(prettify(vis.itemsTooltip, true), details.representation.getTooltipTextMethod(), true, true, null, 0, Collections.<Param>emptyList(), 0);
 		out.add("BrunelD3.addTooltip(selection, tooltipLabeling, geom)").endStatement();
+	}
+
+	/* Call to add labels for internal nodes of trees and treemaps */
+	public void addTreeInternalLabelsInsideNode() {
+		out.add("diagramLabels.attr('class', 'axis diagram treemap hierarchy')").endStatement()
+				.add("var treeLabeling = { method:'inner-left', fit:true, dy:0.83, align:'start', ")
+				.indentMore()
+				.onNewLine().add("content:  function(d) { return d.data.innerNodeName },")
+				.onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height }, ")
+				.onNewLine().add("where :   function(box) { return {'x': box.x + 2, 'y': box.y, 'box': box} }")
+				.indentLess().onNewLine().add("}").endStatement();
+		out.add("BrunelD3.label(selection.filter(function(d) {return d.data.key}), diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
+	}
+
+	/* Call to add labels for internal nodes of trees and treemaps */
+	public void addTreeInternalLabelsOutsideNode(String vertical) {
+		String dy = vertical.equals("bottom") ? "0.75" : "0.25";
+		out.add("diagramLabels.attr('class', 'axis diagram tree hierarchy')").endStatement()
+				.add("var treeLabeling = { location:['center', '" + vertical + "'], fit:false, dy:" + dy + ", align:'middle', granularity:1, ")
+				.indentMore()
+				.onNewLine().add("content:  function(d) { return d.data.innerNodeName },")
+				.onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height } ")
+				.indentLess().onNewLine().add("}").endStatement();
+		out.add("BrunelD3.label(selection.filter(function(d) {return d.data.innerNodeName}), diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
 	}
 
 	/**
@@ -164,92 +224,6 @@ public class LabelBuilder {
 
 	}
 
-	public static int estimateLabelLength(List<Param> itemsLabel, Dataset data) {
-		int size = 0;
-		for (Param p : itemsLabel) {
-			if (p.isField()) {
-				Field f = data.field(p.asField());
-				if (f.isDate()) size += 8;
-				else if (f.preferCategorical()) size += maxLength(f.categories()) + 1;
-				else size += 6;
-			} else {
-				// Text
-				size += p.asString().length() + 1;
-			}
-		}
-		return size;
-	}
-
-	private static int maxLength(Object[] categories) {
-		int max = 0;
-		for (Object o : categories) max = Math.max(max, o.toString().length());
-		return max;
-	}
-
-	private boolean needsData(List<Param> items) {
-		for (Param p : prettify(items, false))
-			if (p.isField()) return true;
-		return false;
-	}
-
-	// How to offset the text so it fits correctly
-	private double getOffset(HashSet<String> parts, boolean inside) {
-		if (parts.contains("top")) return inside ? 0.7 : -0.25;
-		if (parts.contains("bottom")) return inside ? -0.25 : 0.7;
-		return 0.3;
-
-	}
-
-	// Gets the text alignment based on where to draw relative to the shape
-	private String getAlignment(HashSet<String> parts, boolean inside) {
-		if (parts.contains("left")) return inside ? "start" : "end";
-		if (parts.contains("right")) return inside ? "end" : "start";
-		return "middle";
-	}
-
-	private boolean isInside(HashSet<String> parts, boolean fitsShape) {
-		// The user request  is checked first. Then, if asked to fit, we assume inside
-		if (parts.contains("inside")) return true;
-		else if (parts.contains("outside")) return false;
-		else return fitsShape;
-	}
-
-	// Returns the important function that defines how we will find the shape
-	private String getMethod(HashSet<String> parts) {
-		for (String s : parts)
-			if (s.equals("path") || s.equals("wedge") || s.equals("area") || s.equals("poly") || s.equals("geo"))
-				return s;
-		return "box";
-	}
-
-	// returns a two part array with the horizontal and vertical method locations
-	private String getLocation(HashSet<String> parts) {
-		String h = "center", v = "center";
-		if (parts.contains("left")) h = "left";
-		if (parts.contains("right")) h = "right";
-		if (parts.contains("top")) v = "top";
-		if (parts.contains("bottom")) v = "bottom";
-		return "['" + h + "', '" + v + "']";
-	}
-
-	private List<Param> prettify(List<Param> items, boolean longForm) {
-
-		// If we have nothing but field names, and at least two, we add separators
-		if (items.size() < 2) return items;    // One item does not get prettified
-
-		ArrayList<Param> result = new ArrayList<>();
-		for (int i = 0; i < items.size(); i++) {
-			Param p = items.get(i);
-			if (!p.isField()) return items;            // Any non-field and we do not prettify
-			Field f = structure.data.field(p.asField());
-			if (i > 0) result.add(Param.makeString(longForm ? "<br/>" : ", "));
-			if (longForm)
-				result.add(Param.makeString("<span class=\"title\">" + f.label + ": </span>"));
-			result.add(p);
-		}
-		return result;
-	}
-
 	public void writeContent(List<Param> items, boolean forTooltip) {
 		// We must have some content
 		if (items.isEmpty()) {
@@ -279,43 +253,68 @@ public class LabelBuilder {
 		}
 	}
 
-	/* Call to add labels for internal nodes of trees and treemaps */
-	public void addTreeInternalLabelsInsideNode() {
-		out.add("diagramLabels.attr('class', 'axis diagram treemap hierarchy')").endStatement()
-				.add("var treeLabeling = { method:'inner-left', fit:true, dy:0.83, align:'start', ")
-				.indentMore()
-				.onNewLine().add("content:  function(d) { return d.data.innerNodeName },")
-				.onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height }, ")
-				.onNewLine().add("where :   function(box) { return {'x': box.x + 2, 'y': box.y, 'box': box} }")
-				.indentLess().onNewLine().add("}").endStatement();
-		out.add("BrunelD3.label(selection.filter(function(d) {return d.data.key}), diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
+	// Gets the text alignment based on where to draw relative to the shape
+	private String getAlignment(HashSet<String> parts, boolean inside) {
+		if (parts.contains("left")) return inside ? "start" : "end";
+		if (parts.contains("right")) return inside ? "end" : "start";
+		return "middle";
 	}
 
-	/* Call to add labels for internal nodes of trees and treemaps */
-	public void addTreeInternalLabelsOutsideNode(String vertical) {
-		String dy = vertical.equals("bottom") ? "0.75" : "0.25";
-		out.add("diagramLabels.attr('class', 'axis diagram tree hierarchy')").endStatement()
-				.add("var treeLabeling = { location:['center', '" + vertical + "'], fit:false, dy:" + dy + ", align:'middle', granularity:1, ")
-				.indentMore()
-				.onNewLine().add("content:  function(d) { return d.data.innerNodeName },")
-				.onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height } ")
-				.indentLess().onNewLine().add("}").endStatement();
-		out.add("BrunelD3.label(selection.filter(function(d) {return d.data.innerNodeName}), diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
+	// returns a two part array with the horizontal and vertical method locations
+	private String getLocation(HashSet<String> parts) {
+		String h = "center", v = "center";
+		if (parts.contains("left")) h = "left";
+		if (parts.contains("right")) h = "right";
+		if (parts.contains("top")) v = "top";
+		if (parts.contains("bottom")) v = "bottom";
+		return "['" + h + "', '" + v + "']";
 	}
 
-	/* Call to add labels for the rough centers to a grid layout */
-	public void addGridLabels() {
+	// Returns the important function that defines how we will find the shape
+	private String getMethod(HashSet<String> parts) {
+		for (String s : parts)
+			if (s.equals("path") || s.equals("wedge") || s.equals("area") || s.equals("poly") || s.equals("geo"))
+				return s;
+		return "box";
+	}
 
-		out.add("var gridLabelSel = diagramExtras.selectAll('text.title').data(gridLabels, function(d) { return d.label })")
-				.endStatement();
+	// How to offset the text so it fits correctly
+	private double getOffset(HashSet<String> parts, boolean inside) {
+		if (parts.contains("top")) return inside ? 0.7 : -0.25;
+		if (parts.contains("bottom")) return inside ? -0.25 : 0.7;
+		return 0.3;
 
-		out.add("var gridLabelAdd = gridLabelSel.enter().append('text').attr('class', 'diagram gridded hierarchy title')")
-				.addChained("text(function(d) { return d.label }).attr('dy', '0.3em').style('text-anchor', 'middle')")
-				.endStatement();
+	}
 
-		out.add("BrunelD3.transition(gridLabelAdd.merge(gridLabelSel))")
-				.addChained("attr('x', function(d) { return scale_x(d.x) } ).attr('y', function(d) { return scale_y(d.y) } )")
-				.endStatement();
+	private boolean isInside(HashSet<String> parts, boolean fitsShape) {
+		// The user request  is checked first. Then, if asked to fit, we assume inside
+		if (parts.contains("inside")) return true;
+		else if (parts.contains("outside")) return false;
+		else return fitsShape;
+	}
+
+	private boolean needsData(List<Param> items) {
+		for (Param p : prettify(items, false))
+			if (p.isField()) return true;
+		return false;
+	}
+
+	private List<Param> prettify(List<Param> items, boolean longForm) {
+
+		// If we have nothing but field names, and at least two, we add separators
+		if (items.size() < 2) return items;    // One item does not get prettified
+
+		ArrayList<Param> result = new ArrayList<>();
+		for (int i = 0; i < items.size(); i++) {
+			Param p = items.get(i);
+			if (!p.isField()) return items;            // Any non-field and we do not prettify
+			Field f = structure.data.field(p.asField());
+			if (i > 0) result.add(Param.makeString(longForm ? "<br/>" : ", "));
+			if (longForm)
+				result.add(Param.makeString("<span class=\"title\">" + f.label + ": </span>"));
+			result.add(p);
+		}
+		return result;
 	}
 
 }

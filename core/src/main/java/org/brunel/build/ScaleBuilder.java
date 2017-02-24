@@ -32,7 +32,7 @@ import org.brunel.data.auto.Auto;
 import org.brunel.data.auto.NumericScale;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 
@@ -58,7 +58,7 @@ public class ScaleBuilder {
 	private static final double MIN_SIZE_FACTOR = 0.001;
 
 	private final ChartStructure structure;         // Overall detail on the chart composition
-	private final VisSingle[] elements;             // The elements that define the scales used
+	private final VisElement[] elements;             // The elements that define the scales used
 	private final ScriptWriter out;                 // Write definitions to here
 
 	public ScaleBuilder(ChartStructure structure, ScriptWriter out) {
@@ -68,208 +68,11 @@ public class ScaleBuilder {
 
 	}
 
-	public boolean elementsFillHorizontal(ScalePurpose purpose) {
-		for (VisSingle e : elements) {
-			// All must be lines or areas to fill to the edge
-			if (e.tElement != Element.line && e.tElement != Element.area) return false;
-			// There must be no clustering on the X axis
-			if (purpose == ScalePurpose.x && e.fX.size() > 1) return false;
-		}
-
-		return true;
-	}
-
-	private Field fieldById(String fieldName, VisSingle vis) {
-		for (int i = 0; i < elements.length; i++) {
-			if (elements[i] == vis) {
-				Field field = structure.elementStructure[i].data.field(fieldName);
-				if (field == null) throw new IllegalStateException("Unknown field " + fieldName);
-				return field;
-			}
-		}
-		throw new IllegalStateException("Passed in a vis that was not part of the system defined in the constructor");
-	}
-
-	private Param getColor(VisSingle vis) {
-		return vis.fColor.isEmpty() ? null : vis.fColor.get(0);
-	}
-
-	private Param getSymbol(VisSingle vis) {
-		return vis.fSymbol.isEmpty() ? null : vis.fSymbol.get(0);
-	}
-
 	public boolean allNumeric(Field[] fields) {
 		for (Field f : fields)
 			if (!f.isNumeric())
 				return false;
 		return true;
-	}
-
-	public Double getGranularitySuitableForSizing(Field[] ff) {
-		Double r = null;
-		for (Field f : ff) {
-			if (f.isDate()) continue;   // No date granularity use
-			Double g = f.numProperty("granularity");
-			if (g != null && g / (f.max() - f.min()) > 0.02) {
-				if (r == null || g < r) r = g;
-			}
-		}
-		return r;
-	}
-
-	public void writeAestheticScales(ElementStructure structure) {
-		VisSingle vis = structure.vis;
-
-		// Some node structures have the data within a 'data' fields instead of at the top level
-		boolean dataInside = structure.hasHierarchicalData() && !structure.isDependent();
-
-		Param color = getColor(vis);
-		Param symbol = getSymbol(vis);
-		Param[] size = getSize(vis);
-		Param[] css = getCSSAesthetics(vis);
-		Param opacity = getOpacity(vis);
-		if (color == null && opacity == null && size.length == 0 && css.length == 0 && symbol == null) return;
-
-		out.onNewLine().comment("Aesthetic Functions");
-		if (color != null) {
-			addColorScale(color, vis);
-			Field field = fieldById(color, vis);
-			out.onNewLine().add("var color = function(d) { return scale_color("
-					+ BuildUtil.writeCall(field, dataInside) + ") }").endStatement();
-		}
-		if (opacity != null) {
-			addOpacityScale(opacity, vis);
-			Field field = fieldById(opacity, vis);
-			out.onNewLine().add("var opacity = function(d) { return scale_opacity(" +
-					BuildUtil.writeCall(field, dataInside) + ") }").endStatement();
-		}
-		if (symbol != null) {
-			addSymbolScale(symbol, structure);
-			Field field = fieldById(symbol, vis);
-			out.onNewLine().add("var symbolID = function(d) { var sym ="
-					+ BuildUtil.writeCall(field, dataInside) + "; return sym ? scale_symbol(sym) : '_sym_circle' }").endStatement();
-		}
-		for (int i = 0; i < css.length; i++) {
-			Param p = css[i];
-			String suffix = css.length > 1 ? "_" + (i + 1) : "";                    // Add a suffix for multiple class aesthetics only
-			defineCSSClassAesthetic(vis, dataInside, p, suffix);
-		}
-
-		if (size.length == 1) {
-			// We have exactly one field and util that for the single size scale, with a root transform by default for point elements
-			String defaultTransform = (vis.tElement == Element.point || vis.tElement == Element.text)
-					? "sqrt" : "linear";
-			addSizeScale("size", size[0], vis, defaultTransform);
-			Field field = fieldById(size[0], vis);
-			out.onNewLine().add("var size = function(d) { return scale_size(" + BuildUtil.writeCall(field, dataInside) + ") }").endStatement();
-		} else if (size.length > 1) {
-			// We have two field and util them for height and width
-			addSizeScale("width", size[0], vis, "linear");
-			addSizeScale("height", size[1], vis, "linear");
-			Field widthField = fieldById(size[0], vis);
-			out.onNewLine().add("var width = function(d) { return scale_width(" + BuildUtil.writeCall(widthField, dataInside) + ") }").endStatement();
-			Field heightField = fieldById(size[1], vis);
-			out.onNewLine().add("var height = function(d) { return scale_height(" + BuildUtil.writeCall(heightField, dataInside) + ") }").endStatement();
-		}
-	}
-
-	private void defineCSSClassAesthetic(VisSingle vis, boolean dataInside, Param p, String suffix) {
-		Field field = fieldById(p, vis);
-
-		// Define the prefix for the classes we will use
-		String cssPrefix = p.hasModifiers() ? p.firstModifier().asString() : "brunel_class_";
-
-		// Only use names if specifically requested
-		boolean useNames = p.modifiers().length > 1 && p.modifiers()[1].asString().equals("names");
-
-		if (useNames) {
-			// This is easy as we have no need for a scale -- we just use the raw values coming from the field
-			out.onNewLine().add("var css" + suffix + " = function(d) { return " + Data.quote(cssPrefix) + " + "
-					+ BuildUtil.writeCall(field, dataInside) + " }").endStatement();
-			return;
-		}
-
-		// Define the scale
-		out.add("var scale_css" + suffix + " = ");
-
-		if (field.preferCategorical()) {
-			// Each category is mapped to 1,2,3, etc.
-			int categories = makeCategoricalScale(new Field[]{field}, ScalePurpose.nominalAesthetic, false);
-			String[] indices = new String[categories];
-			for (int i = 0; i < indices.length; i++) indices[i] = Data.quote(cssPrefix + (i + 1));
-			out.addChained("range(" + Arrays.toString(indices) + ")");
-		} else {
-			// Divide into two categories
-			out.add("d3.scaleQuantize().domain([" + field.min() + ", " + field.max() + "]).range(["
-					+ Data.quote(cssPrefix + "1") + ", " + Data.quote(cssPrefix + "2") + "])");
-		}
-
-		out.endStatement()
-				.add("var css" + suffix + " = function(d) { return scale_css" + suffix + "("
-						+ BuildUtil.writeCall(field, dataInside) + ") }").endStatement();
-	}
-
-	public void writeCoordinateScales() {
-		ChartCoordinates coordinates = structure.coordinates;
-		writePositionScale(ScalePurpose.x, coordinates.allXFields, getXRange(), elementsFillHorizontal(ScalePurpose.x), coordinates.xReversed);
-		writePositionScale(ScalePurpose.inner, coordinates.allXClusterFields, "[-0.5, 0.5]", elementsFillHorizontal(ScalePurpose.inner), coordinates.xReversed);
-		writePositionScale(ScalePurpose.y, coordinates.allYFields, getYRange(), false, coordinates.yReversed);
-		writeScaleExtras();
-	}
-
-	private void writeScaleExtras() {
-		out.onNewLine().add("var base_scales = [scale_x, scale_y];").comment("Untransformed original scales");
-		writeAspect();
-	}
-
-	public void writeDiagramScales() {
-		out.onNewLine().add("var scale_x = d3.scaleLinear(), scale_y = d3.scaleLinear()").endStatement();
-		writeScaleExtras();
-	}
-
-	private void writeAspect() {
-		Double aspect = getAspect();
-		boolean anyCategorial = structure.coordinates.xCategorical || structure.coordinates.yCategorical;
-
-		if (aspect != null && !anyCategorial) {
-			out.onNewLine().add("BrunelD3.setAspect(scale_x, scale_y, " + aspect + ")");
-			out.endStatement();
-		}
-	}
-
-	private void writePositionScale(ScalePurpose purpose, Field[] fields, String range, boolean fillToEdge, boolean reverse) {
-		int categories = defineScaleWithDomain(purpose.name(), fields, purpose, 2, "linear", null, reverse);
-		out.addChained("range(" + range + ")");
-		if (categories > 0 && fillToEdge)
-			out.add(".padding(0)");
-		out.endStatement();
-	}
-
-	private String getXRange() {
-		if (structure.coordinates.isPolar()) return "[0, geom.inner_radius]";
-		if (structure.coordinates.isTransposed()) return "[geom.inner_width, 0]";
-		return "[0, geom.inner_width]";
-	}
-
-	private String getYRange() {
-		if (structure.coordinates.isPolar()) return "[0, Math.PI*2]";
-		if (structure.coordinates.isTransposed()) return "[0, geom.inner_height]";
-		return "[geom.inner_height, 0]";
-	}
-
-	private Double getAspect() {
-		//Find Param with "aspect" and return its value
-		for (VisSingle e : elements) {
-			for (Param p : e.fCoords) {
-				if (p.asString().equals("aspect")) {
-					Param m = p.firstModifier();
-					//Use "square" for 1.0 aspect ratio
-					if (m.asString().equals("square")) return 1.0;
-					else return m.asDouble();
-				}
-			}
-		}
-		return null;
 	}
 
 	/**
@@ -404,6 +207,346 @@ public class ScaleBuilder {
 		return -1;
 	}
 
+	public boolean elementsFillHorizontal(ScalePurpose purpose) {
+		for (VisElement e : elements) {
+			// All must be lines or areas to fill to the edge
+			if (e.tElement != Element.line && e.tElement != Element.area) return false;
+			// There must be no clustering on the X axis
+			if (purpose == ScalePurpose.x && e.fX.size() > 1) return false;
+		}
+
+		return true;
+	}
+
+	public List<Object> getCategories(Field[] ff) {
+		Set<Object> all = new LinkedHashSet<>();
+		for (Field f : ff) if (f.preferCategorical()) Collections.addAll(all, f.categories());
+		return new ArrayList<>(all);
+	}
+
+	public Double getGranularitySuitableForSizing(Field[] ff) {
+		Double r = null;
+		for (Field f : ff) {
+			if (f.isDate()) continue;   // No date granularity use
+			Double g = f.numProperty("granularity");
+			if (g != null && g / (f.max() - f.min()) > 0.02) {
+				if (r == null || g < r) r = g;
+			}
+		}
+		return r;
+	}
+
+	public void writeAestheticScales(ElementStructure structure) {
+		VisElement vis = structure.vis;
+
+		// Some node structures have the data within a 'data' fields instead of at the top level
+		boolean dataInside = structure.hasHierarchicalData() && !structure.isDependent();
+
+		Param color = getColor(vis);
+		Param symbol = getSymbol(vis);
+		Param[] size = getSize(vis);
+		Param[] css = getCSSAesthetics(vis);
+		Param opacity = getOpacity(vis);
+		if (color == null && opacity == null && size.length == 0 && css.length == 0 && symbol == null) return;
+
+		out.onNewLine().comment("Aesthetic Functions");
+		if (color != null) {
+			addColorScale(color, vis);
+			Field field = fieldById(color, vis);
+			out.onNewLine().add("var color = function(d) { return scale_color("
+					+ BuildUtil.writeCall(field, dataInside) + ") }").endStatement();
+		}
+		if (opacity != null) {
+			addOpacityScale(opacity, vis);
+			Field field = fieldById(opacity, vis);
+			out.onNewLine().add("var opacity = function(d) { return scale_opacity(" +
+					BuildUtil.writeCall(field, dataInside) + ") }").endStatement();
+		}
+		if (symbol != null) {
+			addSymbolScale(symbol, structure);
+			Field field = fieldById(symbol, vis);
+			out.onNewLine().add("var symbolID = function(d) { var sym ="
+					+ BuildUtil.writeCall(field, dataInside) + "; return sym ? scale_symbol(sym) : '_sym_circle' }").endStatement();
+		}
+		for (int i = 0; i < css.length; i++) {
+			Param p = css[i];
+			String suffix = css.length > 1 ? "_" + (i + 1) : "";                    // Add a suffix for multiple class aesthetics only
+			defineCSSClassAesthetic(vis, dataInside, p, suffix);
+		}
+
+		if (size.length == 1) {
+			// We have exactly one field and util that for the single size scale, with a root transform by default for point elements
+			String defaultTransform = (vis.tElement == Element.point || vis.tElement == Element.text)
+					? "sqrt" : "linear";
+			addSizeScale("size", size[0], vis, defaultTransform);
+			Field field = fieldById(size[0], vis);
+			out.onNewLine().add("var size = function(d) { return scale_size(" + BuildUtil.writeCall(field, dataInside) + ") }").endStatement();
+		} else if (size.length > 1) {
+			// We have two field and util them for height and width
+			addSizeScale("width", size[0], vis, "linear");
+			addSizeScale("height", size[1], vis, "linear");
+			Field widthField = fieldById(size[0], vis);
+			out.onNewLine().add("var width = function(d) { return scale_width(" + BuildUtil.writeCall(widthField, dataInside) + ") }").endStatement();
+			Field heightField = fieldById(size[1], vis);
+			out.onNewLine().add("var height = function(d) { return scale_height(" + BuildUtil.writeCall(heightField, dataInside) + ") }").endStatement();
+		}
+	}
+
+	public void writeCoordinateScales() {
+		ChartCoordinates coordinates = structure.coordinates;
+		writePositionScale(ScalePurpose.x, coordinates.allXFields, getXRange(), elementsFillHorizontal(ScalePurpose.x), coordinates.xReversed);
+		writePositionScale(ScalePurpose.inner, coordinates.allXClusterFields, "[-0.5, 0.5]", elementsFillHorizontal(ScalePurpose.inner), coordinates.xReversed);
+		writePositionScale(ScalePurpose.y, coordinates.allYFields, getYRange(), false, coordinates.yReversed);
+		writeScaleExtras();
+	}
+
+	public void writeDiagramScales() {
+		out.onNewLine().add("var scale_x = d3.scaleLinear(), scale_y = d3.scaleLinear()").endStatement();
+		writeScaleExtras();
+	}
+
+	private void addColorScale(Param p, VisElement vis) {
+		Field f = fieldById(p, vis);
+
+		// Determine if the element fills a big area
+		boolean largeElement = vis.tElement == Element.area || vis.tElement == Element.bar
+				|| vis.tElement == Element.polygon;
+		if (vis.tDiagram == Diagram.map || vis.tDiagram == Diagram.treemap)
+			largeElement = true;
+
+		if (vis.tElement == Element.path && !vis.fSize.isEmpty())
+			largeElement = true;
+
+		ColorMapping palette = Palette.makeColorMapping(f, p.modifiers(), largeElement);
+		int categories = defineScaleWithDomain("color", new Field[]{f}, ScalePurpose.continuousAesthetic, palette.values.length, "linear", palette.values, false);
+		if (categories <= 0) out.addChained("interpolate(d3.interpolateHcl)");   // Interpolate for numeric only
+		out.addChained("range([ ").addQuoted((Object[]) palette.colors).add("])").endStatement();
+	}
+
+	private void addOpacityScale(Param p, VisElement vis) {
+		double min = p.hasModifiers() ? p.firstModifier().asDouble() : 0.2;
+		Field f = fieldById(p, vis);
+
+		defineScaleWithDomain("opacity", new Field[]{f}, ScalePurpose.continuousAesthetic, 2, "linear", null, false);
+		if (f.preferCategorical()) {
+			int length = f.categories().length;
+			double[] sizes = new double[length];
+			// degenerate data gets the min value
+			if (length == 1)
+				sizes[0] = min;
+			else
+				for (int i = 0; i < length; i++) sizes[i] = min + (1 - min) * i / (length - 1);
+			out.addChained("range(" + Arrays.toString(sizes) + ")");
+		} else {
+			out.addChained("range([" + min + ", 1])");
+		}
+		out.endStatement();
+	}
+
+	private void addSizeScale(String name, Param p, VisElement vis, String defaultTransform) {
+
+		Object[] sizes;
+		if (p.hasModifiers()) {
+			sizes = getSizes(p.modifiers()[0].asList());
+		} else {
+			sizes = new Object[]{MIN_SIZE_FACTOR, 1.0};
+		}
+
+		Field f = fieldById(p, vis);
+		Object[] divisions = f.isNumeric() ? null : f.categories();
+		defineScaleWithDomain(name, new Field[]{f}, ScalePurpose.sizeAesthetic, sizes.length, defaultTransform, divisions, false);
+		out.addChained("range([ ").add(Data.join(sizes)).add("])").endStatement();
+	}
+
+	private void addSymbolScale(Param p, ElementStructure element) {
+		Field f = fieldById(p, element.vis);                                    // Find the field
+		SymbolHandler symbols = structure.symbols;                              // Handler for all symbols
+		String[] requestedSymbols = symbols.findRequiredSymbolNames(p);            // Lists of symbols requested
+		String[] symbolIDs = symbols.getSymbolIDs(element, requestedSymbols);   // List of symbol identifiers
+
+		defineScaleWithDomain("symbol", new Field[]{f}, ScalePurpose.nominalAesthetic, symbolIDs.length, "linear", null, false);
+		out.addChained("range([ ").addQuoted((Object[]) symbolIDs).add("])").endStatement();
+	}
+
+	private Field combineNumericFields(Field[] ff) {
+		List<Object> data = new ArrayList<>();
+		for (Field f : ff)
+			for (int i = 0; i < f.rowCount(); i++) {
+				Object value = f.value(i);
+				if (value instanceof Range) {
+					data.add(Data.asNumeric(((Range) value).low));
+					data.add(Data.asNumeric(((Range) value).high));
+				} else
+					data.add(Data.asNumeric(value));
+			}
+		Field combined = Fields.makeColumnField("combined", null, data.toArray(new Object[data.size()]));
+		combined.set("numeric", true);
+		return combined;
+	}
+
+	private void defineCSSClassAesthetic(VisElement vis, boolean dataInside, Param p, String suffix) {
+		Field field = fieldById(p, vis);
+
+		// Define the prefix for the classes we will use
+		String cssPrefix = p.hasModifiers() ? p.firstModifier().asString() : "brunel_class_";
+
+		// Only use names if specifically requested
+		boolean useNames = p.modifiers().length > 1 && p.modifiers()[1].asString().equals("names");
+
+		if (useNames) {
+			// This is easy as we have no need for a scale -- we just use the raw values coming from the field
+			out.onNewLine().add("var css" + suffix + " = function(d) { return " + Data.quote(cssPrefix) + " + "
+					+ BuildUtil.writeCall(field, dataInside) + " }").endStatement();
+			return;
+		}
+
+		// Define the scale
+		out.add("var scale_css" + suffix + " = ");
+
+		if (field.preferCategorical()) {
+			// Each category is mapped to 1,2,3, etc.
+			int categories = makeCategoricalScale(new Field[]{field}, ScalePurpose.nominalAesthetic, false);
+			String[] indices = new String[categories];
+			for (int i = 0; i < indices.length; i++) indices[i] = Data.quote(cssPrefix + (i + 1));
+			out.addChained("range(" + Arrays.toString(indices) + ")");
+		} else {
+			// Divide into two categories
+			out.add("d3.scaleQuantize().domain([" + field.min() + ", " + field.max() + "]).range(["
+					+ Data.quote(cssPrefix + "1") + ", " + Data.quote(cssPrefix + "2") + "])");
+		}
+
+		out.endStatement()
+				.add("var css" + suffix + " = function(d) { return scale_css" + suffix + "("
+						+ BuildUtil.writeCall(field, dataInside) + ") }").endStatement();
+	}
+
+	private Field fieldById(String fieldName, VisElement vis) {
+		for (int i = 0; i < elements.length; i++) {
+			if (elements[i] == vis) {
+				Field field = structure.elementStructure[i].data.field(fieldName);
+				if (field == null) throw new IllegalStateException("Unknown field " + fieldName);
+				return field;
+			}
+		}
+		throw new IllegalStateException("Passed in a vis that was not part of the system defined in the constructor");
+	}
+
+	private Field fieldById(Param p, VisElement vis) {
+		return fieldById(p.asField(), vis);
+	}
+
+	private Double getAspect() {
+		//Find Param with "aspect" and return its value
+		for (VisElement e : elements) {
+			for (Param p : e.fCoords) {
+				if (p.asString().equals("aspect")) {
+					Param m = p.firstModifier();
+					//Use "square" for 1.0 aspect ratio
+					if (m.asString().equals("square")) return 1.0;
+					else return m.asDouble();
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Returns css class aesthetics as an array
+	 */
+	private Param[] getCSSAesthetics(VisElement vis) {
+		return vis.fCSS.toArray(new Param[vis.fCSS.size()]);
+	}
+
+	private Param getColor(VisElement vis) {
+		return vis.fColor.isEmpty() ? null : vis.fColor.get(0);
+	}
+
+	private double getIncludeZeroFraction(Field[] fields, ScalePurpose purpose) {
+
+		if (purpose == ScalePurpose.x) return 0.1;              // Really do not want much empty space on axes
+		if (purpose == ScalePurpose.sizeAesthetic) return 0.98;            // Almost always want to go to zero
+		if (purpose == ScalePurpose.continuousAesthetic) return 0.2;            // Color
+
+		// For 'Y'
+
+		// If any position are  counts or sums, always include zero
+		for (Field f : fields)
+			if (f.name.equals("#count") || "sum".equals(f.strProperty("summary"))) return 1.0;
+
+		int nBarArea = 0;       // Count elements that are bars or areas
+		for (VisElement e : elements)
+			if ((e.tElement == Element.bar || e.tElement == Element.area)
+					&& e.fRange == null) nBarArea++;
+
+		if (nBarArea == elements.length) return 1.0;        // All bars?  Always go to zero
+		if (nBarArea > 0) return 0.8;                       // Some bars?  Strongly want to go to zero
+		return 0.2;                                         // By default, only if we have 20% extra space
+	}
+
+	private double[] getNumericPaddingFraction(ScalePurpose purpose) {
+		double[] padding = new double[]{0, 0};
+		if (!purpose.isCoord) return padding;                    // None for aesthetics
+		if (structure.coordinates.isPolar()) return padding;    // None for polar angle
+		for (VisElement e : elements) {
+			boolean noBottomYPadding = e.tElement == Element.bar || e.tElement == Element.area || e.tElement == Element.line;
+			if (e.tElement == Element.text) {
+				// Text needs lot of padding
+				padding[0] = Math.max(padding[0], 0.1);
+				padding[1] = Math.max(padding[1], 0.1);
+			} else if (purpose == ScalePurpose.y && noBottomYPadding) {
+				// A little padding on the top only
+				padding[1] = Math.max(padding[1], 0.02);
+			} else {
+				// A little padding
+				padding[0] = Math.max(padding[0], 0.02);
+				padding[1] = Math.max(padding[1], 0.02);
+			}
+		}
+		return padding;
+	}
+
+	private Param getOpacity(VisElement vis) {
+		return vis.fOpacity.isEmpty() ? null : vis.fOpacity.get(0);
+	}
+
+	/**
+	 * Returns position for the sizes as an array
+	 */
+	private Param[] getSize(VisElement vis) {
+		List<Param> fSize = vis.fSize;
+		return fSize.toArray(new Param[fSize.size()]);
+	}
+
+	private Object[] getSizes(List<Param> params) {
+		// The parameters define the lists we want
+		List<Double> result = new ArrayList<>();
+		for (Param p : params) {
+			String s = p.asString();
+			if (s.endsWith("%")) s = s.substring(0, s.length() - 1);
+			Double d = Data.asNumeric(s);
+			if (d != null) result.add(d / 100);
+		}
+		if (result.isEmpty()) return new Object[]{MIN_SIZE_FACTOR, 1.0};
+		if (result.size() == 1) result.add(0, MIN_SIZE_FACTOR);
+		return result.toArray(new Object[result.size()]);
+	}
+
+	private Param getSymbol(VisElement vis) {
+		return vis.fSymbol.isEmpty() ? null : vis.fSymbol.get(0);
+	}
+
+	private String getXRange() {
+		if (structure.coordinates.isPolar()) return "[0, geom.inner_radius]";
+		if (structure.coordinates.isTransposed()) return "[geom.inner_width, 0]";
+		return "[0, geom.inner_width]";
+	}
+
+	private String getYRange() {
+		if (structure.coordinates.isPolar()) return "[0, Math.PI*2]";
+		if (structure.coordinates.isTransposed()) return "[0, geom.inner_height]";
+		return "[geom.inner_height, 0]";
+	}
+
 	private int makeCategoricalScale(Field[] fields, ScalePurpose purpose, boolean reverse) {
 		// Combine all categories in the position after each color
 		// We use all the categories in the data; we do not need the partition points
@@ -425,11 +568,6 @@ public class ScaleBuilder {
 		return list.size();
 	}
 
-	private int makeEmptyZeroOneScale() {
-		out.add("d3.scaleLinear().domain([0,1])");
-		return -1;
-	}
-
 	// Create the D3 scale name
 	private String makeD3ScaleName(String defaultTransform, Field scaleField, String transform) {
 		if (transform == null) {
@@ -444,170 +582,32 @@ public class ScaleBuilder {
 		throw new IllegalStateException("Unknown scale type: " + transform);
 	}
 
-	public List<Object> getCategories(Field[] ff) {
-		Set<Object> all = new LinkedHashSet<>();
-		for (Field f : ff) if (f.preferCategorical()) Collections.addAll(all, f.categories());
-		return new ArrayList<>(all);
+	private int makeEmptyZeroOneScale() {
+		out.add("d3.scaleLinear().domain([0,1])");
+		return -1;
 	}
 
-	private double getIncludeZeroFraction(Field[] fields, ScalePurpose purpose) {
+	private void writeAspect() {
+		Double aspect = getAspect();
+		boolean anyCategorial = structure.coordinates.xCategorical || structure.coordinates.yCategorical;
 
-		if (purpose == ScalePurpose.x) return 0.1;              // Really do not want much empty space on axes
-		if (purpose == ScalePurpose.sizeAesthetic) return 0.98;            // Almost always want to go to zero
-		if (purpose == ScalePurpose.continuousAesthetic) return 0.2;            // Color
-
-		// For 'Y'
-
-		// If any position are  counts or sums, always include zero
-		for (Field f : fields)
-			if (f.name.equals("#count") || "sum".equals(f.strProperty("summary"))) return 1.0;
-
-		int nBarArea = 0;       // Count elements that are bars or areas
-		for (VisSingle e : elements)
-			if ((e.tElement == Element.bar || e.tElement == Element.area)
-					&& e.fRange == null) nBarArea++;
-
-		if (nBarArea == elements.length) return 1.0;        // All bars?  Always go to zero
-		if (nBarArea > 0) return 0.8;                       // Some bars?  Strongly want to go to zero
-		return 0.2;                                         // By default, only if we have 20% extra space
-	}
-
-	private Field combineNumericFields(Field[] ff) {
-		List<Object> data = new ArrayList<>();
-		for (Field f : ff)
-			for (int i = 0; i < f.rowCount(); i++) {
-				Object value = f.value(i);
-				if (value instanceof Range) {
-					data.add(Data.asNumeric(((Range) value).low));
-					data.add(Data.asNumeric(((Range) value).high));
-				} else
-					data.add(Data.asNumeric(value));
-			}
-		Field combined = Fields.makeColumnField("combined", null, data.toArray(new Object[data.size()]));
-		combined.set("numeric", true);
-		return combined;
-	}
-
-	private double[] getNumericPaddingFraction(ScalePurpose purpose) {
-		double[] padding = new double[]{0, 0};
-		if (!purpose.isCoord) return padding;                	// None for aesthetics
-		if (structure.coordinates.isPolar()) return padding;  	// None for polar angle
-		for (VisSingle e : elements) {
-			boolean noBottomYPadding = e.tElement == Element.bar || e.tElement == Element.area || e.tElement == Element.line;
-			if (e.tElement == Element.text) {
-				// Text needs lot of padding
-				padding[0] = Math.max(padding[0], 0.1);
-				padding[1] = Math.max(padding[1], 0.1);
-			} else if (purpose == ScalePurpose.y && noBottomYPadding) {
-				// A little padding on the top only
-				padding[1] = Math.max(padding[1], 0.02);
-			} else {
-				// A little padding
-				padding[0] = Math.max(padding[0], 0.02);
-				padding[1] = Math.max(padding[1], 0.02);
-			}
+		if (aspect != null && !anyCategorial) {
+			out.onNewLine().add("BrunelD3.setAspect(scale_x, scale_y, " + aspect + ")");
+			out.endStatement();
 		}
-		return padding;
 	}
 
-	private void addColorScale(Param p, VisSingle vis) {
-		Field f = fieldById(p, vis);
-
-		// Determine if the element fills a big area
-		boolean largeElement = vis.tElement == Element.area || vis.tElement == Element.bar
-				|| vis.tElement == Element.polygon;
-		if (vis.tDiagram == Diagram.map || vis.tDiagram == Diagram.treemap)
-			largeElement = true;
-
-		if (vis.tElement == Element.path && !vis.fSize.isEmpty())
-			largeElement = true;
-
-		ColorMapping palette = Palette.makeColorMapping(f, p.modifiers(), largeElement);
-		int categories = defineScaleWithDomain("color", new Field[]{f}, ScalePurpose.continuousAesthetic, palette.values.length, "linear", palette.values, false);
-		if (categories <= 0) out.addChained("interpolate(d3.interpolateHcl)");   // Interpolate for numeric only
-		out.addChained("range([ ").addQuoted((Object[]) palette.colors).add("])").endStatement();
-	}
-
-	private void addSymbolScale(Param p, ElementStructure element) {
-		Field f = fieldById(p, element.vis);                                    // Find the field
-		SymbolHandler symbols = structure.symbols;                              // Handler for all symbols
-		String[] requestedSymbols = symbols.findRequiredSymbolNames(p);            // Lists of symbols requested
-		String[] symbolIDs = symbols.getSymbolIDs(element, requestedSymbols);   // List of symbol identifiers
-
-		defineScaleWithDomain("symbol", new Field[]{f}, ScalePurpose.nominalAesthetic, symbolIDs.length, "linear", null, false);
-		out.addChained("range([ ").addQuoted((Object[]) symbolIDs).add("])").endStatement();
-	}
-
-	private void addOpacityScale(Param p, VisSingle vis) {
-		double min = p.hasModifiers() ? p.firstModifier().asDouble() : 0.2;
-		Field f = fieldById(p, vis);
-
-		defineScaleWithDomain("opacity", new Field[]{f}, ScalePurpose.continuousAesthetic, 2, "linear", null, false);
-		if (f.preferCategorical()) {
-			int length = f.categories().length;
-			double[] sizes = new double[length];
-			// degenerate data gets the min value
-			if (length == 1)
-				sizes[0] = min;
-			else
-				for (int i = 0; i < length; i++) sizes[i] = min + (1 - min) * i / (length - 1);
-			out.addChained("range(" + Arrays.toString(sizes) + ")");
-		} else {
-			out.addChained("range([" + min + ", 1])");
-		}
+	private void writePositionScale(ScalePurpose purpose, Field[] fields, String range, boolean fillToEdge, boolean reverse) {
+		int categories = defineScaleWithDomain(purpose.name(), fields, purpose, 2, "linear", null, reverse);
+		out.addChained("range(" + range + ")");
+		if (categories > 0 && fillToEdge)
+			out.add(".padding(0)");
 		out.endStatement();
 	}
 
-	private void addSizeScale(String name, Param p, VisSingle vis, String defaultTransform) {
-
-		Object[] sizes;
-		if (p.hasModifiers()) {
-			sizes = getSizes(p.modifiers()[0].asList());
-		} else {
-			sizes = new Object[]{MIN_SIZE_FACTOR, 1.0};
-		}
-
-		Field f = fieldById(p, vis);
-		Object[] divisions = f.isNumeric() ? null : f.categories();
-		defineScaleWithDomain(name, new Field[]{f}, ScalePurpose.sizeAesthetic, sizes.length, defaultTransform, divisions, false);
-		out.addChained("range([ ").add(Data.join(sizes)).add("])").endStatement();
-	}
-
-	private Field fieldById(Param p, VisSingle vis) {
-		return fieldById(p.asField(), vis);
-	}
-
-	private Param getOpacity(VisSingle vis) {
-		return vis.fOpacity.isEmpty() ? null : vis.fOpacity.get(0);
-	}
-
-	/**
-	 * Returns position for the sizes as an array
-	 */
-	private Param[] getSize(VisSingle vis) {
-		List<Param> fSize = vis.fSize;
-		return fSize.toArray(new Param[fSize.size()]);
-	}
-
-	/**
-	 * Returns css class aesthetics as an array
-	 */
-	private Param[] getCSSAesthetics(VisSingle vis) {
-		return vis.fCSS.toArray(new Param[vis.fCSS.size()]);
-	}
-
-	private Object[] getSizes(List<Param> params) {
-		// The parameters define the lists we want
-		List<Double> result = new ArrayList<>();
-		for (Param p : params) {
-			String s = p.asString();
-			if (s.endsWith("%")) s = s.substring(0, s.length() - 1);
-			Double d = Data.asNumeric(s);
-			if (d != null) result.add(d / 100);
-		}
-		if (result.isEmpty()) return new Object[]{MIN_SIZE_FACTOR, 1.0};
-		if (result.size() == 1) result.add(0, MIN_SIZE_FACTOR);
-		return result.toArray(new Object[result.size()]);
+	private void writeScaleExtras() {
+		out.onNewLine().add("var base_scales = [scale_x, scale_y];").comment("Untransformed original scales");
+		writeAspect();
 	}
 
 }

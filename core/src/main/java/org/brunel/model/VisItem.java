@@ -22,7 +22,7 @@ import org.brunel.data.Dataset;
 public abstract class VisItem {
 
     /* This is the last element in the composition, or this item if we are a VisSingle */
-    public abstract VisSingle getSingle();
+    public abstract VisElement getSingle();
 
     /* Return child parts -- will be null for a VisSingle */
     public abstract VisItem[] children();

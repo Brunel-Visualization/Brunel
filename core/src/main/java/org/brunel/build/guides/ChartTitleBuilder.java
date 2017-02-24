@@ -21,7 +21,7 @@ import org.brunel.build.info.ChartStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 import org.brunel.model.style.StyleTarget;
 
 /**
@@ -29,58 +29,57 @@ import org.brunel.model.style.StyleTarget;
  */
 public class ChartTitleBuilder extends TitleBuilder {
 
-    private final String location;          // "header" or  "footer"
+	/**
+	 * Search for the first element with a title defined
+	 *
+	 * @param structure chart definition
+	 * @return titled element, or null
+	 */
+	private static VisElement findTitleElement(ChartStructure structure) {
+		for (VisElement vis : structure.elements) {
+			if (!vis.itemsTitle.isEmpty()) return vis;
+		}
+		return structure.elements[0];
+	}
+	private final String location;          // "header" or  "footer"
 
-    /**
-     * Builder for making titles
-     *
-     * @param structure chart structure to use
-     * @param location  where to place the text
-     */
-    public ChartTitleBuilder(ChartStructure structure, String location) {
-        super(findTitleElement(structure), StyleTarget.makeTopLevelTarget(null, "title", location));
-        this.location = location;
-    }
+	/**
+	 * Builder for making titles
+	 *
+	 * @param structure chart structure to use
+	 * @param location  where to place the text
+	 */
+	public ChartTitleBuilder(ChartStructure structure, String location) {
+		super(findTitleElement(structure), StyleTarget.makeTopLevelTarget(null, "title", location));
+		this.location = location;
+	}
 
-    /**
-     * Search for the first element with a title defined
-     *
-     * @param structure chart definition
-     * @return titled element, or null
-     */
-    private static VisSingle findTitleElement(ChartStructure structure) {
-        for (VisSingle vis : structure.elements) {
-            if (!vis.itemsTitle.isEmpty()) return vis;
-        }
-        return structure.elements[0];
-    }
+	protected void defineVerticalLocation(ScriptWriter out) {
+		if ("header".equals(location)) {
+			out.addChained("attr('y'," + padding.top + ").attr('dy','0.8em')");
+		} else {
+			out.addChained("attr('y','100%').attr('dy', -" + (padding.bottom + fontSize * 4 / 10) + ")");
+		}
+	}
 
-    protected void defineVerticalLocation(ScriptWriter out) {
-        if ("header".equals(location)) {
-            out.addChained("attr('y'," + padding.top + ").attr('dy','0.8em')");
-        } else {
-            out.addChained("attr('y','100%').attr('dy', -" + (padding.bottom + fontSize * 4 / 10) + ")");
-        }
-    }
-
-    protected String makeText() {
-        if (vis == null) return null;
-        StringBuilder s = new StringBuilder();
-        for (Param p : vis.itemsTitle) {
-            String pType = "header";                                        // The default
-            if (p.hasModifiers()) pType = p.modifiers()[0].asString();      // Unless modified by a :footer or similar
-            if (pType.equals(location)) {
-                if (p.isField()) {
-                    Dataset data = vis.getDataset();
-                    Field f = data.field(p.asField(data));
-                    if (f == null) throw new IllegalStateException("Unknown field: " + p.asString());
-                    else s.append(f.label);
-                } else {
-                    s.append(p.asString());
-                }
-            }
-        }
-        return s.toString();
-    }
+	protected String makeText() {
+		if (vis == null) return null;
+		StringBuilder s = new StringBuilder();
+		for (Param p : vis.itemsTitle) {
+			String pType = "header";                                        // The default
+			if (p.hasModifiers()) pType = p.modifiers()[0].asString();      // Unless modified by a :footer or similar
+			if (pType.equals(location)) {
+				if (p.isField()) {
+					Dataset data = vis.getDataset();
+					Field f = data.field(p.asField(data));
+					if (f == null) throw new IllegalStateException("Unknown field: " + p.asString());
+					else s.append(f.label);
+				} else {
+					s.append(p.asString());
+				}
+			}
+		}
+		return s.toString();
+	}
 
 }

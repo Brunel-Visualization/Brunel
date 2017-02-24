@@ -26,66 +26,6 @@ import org.brunel.model.VisTypes;
 
 class DependentEdge extends D3Diagram {
 
-	private final boolean arrow;        // True if we want arrows
-	private final boolean polar;        // True if we have a polar layout
-	public final boolean curved;        // True if we want a curved arc
-
-	DependentEdge(ElementStructure structure) {
-		super(structure);
-		String symbol = structure.styleSymbol;
-		if (symbol == null) {
-			this.arrow = true;
-			this.curved = structure.chart.diagram != VisTypes.Diagram.network;
-		} else {
-			this.arrow = symbol.toLowerCase().contains("arrow");
-			this.curved = symbol.toLowerCase().contains("curved") || symbol.toLowerCase().contains("arc");
-		}
-		this.polar = structure.chart.coordinates.isPolar();
-	}
-
-	public void writePerChartDefinitions(ScriptWriter out) {
-		// ensure an arrowhead is defined
-		if (arrow)
-			out.add("vis.append('svg:defs').selectAll('marker').data(['arrow']).enter()")
-					.addChained("append('svg:marker').attr('id', 'arrow')")
-					.addChained("attr('viewBox', '0 -6 10 10').attr('orient', 'auto')")
-					.addChained("attr('refX', 7).attr('refY', 0)")
-					.addChained("attr('markerWidth', 6).attr('markerHeight', 6)")
-					.addChained("attr('fill', '#888888')")
-					.addChained("append('svg:path').attr('d', 'M0,-4L8,0L0,4')")
-					.endStatement();
-
-	}
-
-	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
-		if (arrow) out.addChained("attr('marker-end', 'url(#arrow)')");
-	}
-
-	public void writeDataStructures(ScriptWriter out) {
-		// Nothing to be done
-	}
-
-	public ElementDetails makeDetails() {
-		return ElementDetails.makeForDiagram(structure, ElementRepresentation.curvedPath, "edge", "graph.links");
-	}
-
-	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
-		writeEdgePlacement("target", curved, polar, out);
-		ElementBuilder.writeElementAesthetics(details, true, vis, out);
-	}
-
-	public void writeLabelsAndTooltips(ElementDetails details, LabelBuilder labelBuilder) {
-		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
-	}
-
-	public String getStyleClasses() {
-		return "'diagram hierarchy edge'";
-	}
-
-	public String getRowKeyFunction() {
-		return "function(d) { return d.key }";
-	}
-
 	public static void write(boolean curved, boolean polar, ScriptWriter out, String groupName) {
 		// Create paths for the added items, and grow the from the source
 		out.add("var added = " + "edgeGroup" + ".enter().append('path').attr('class', 'edge')");
@@ -109,8 +49,7 @@ class DependentEdge extends D3Diagram {
 			// Add curve if requested, else just a straight line
 			if (curved) {
 				out.ln().indent().add("'Q' +  scale_x(r*Math.cos(a2)) + ',' + scale_y(r*Math.sin(a2)) + ' '");
-			}
-			else {
+			} else {
 				out.ln().indent().add("'L'");
 			}
 
@@ -123,14 +62,72 @@ class DependentEdge extends D3Diagram {
 			// Add curve if requested, else just a straight line
 			if (curved) {
 				out.ln().indent().add("'C' + (p.x1+p.x2)/2 + ',' + p.y1").ln().indent().add(" + ' ' + (p.x1+p.x2)/2 + ',' + p.y2 + ' ' ");
-			}
-			else {
+			} else {
 				out.ln().indent().add("'L'");
 			}
 
 			out.ln().indent().add("+ p.x2 + ',' + p.y2").endStatement();
 		}
 		out.indentLess().indentLess().add("})");
+
+	}
+	public final boolean curved;        // True if we want a curved arc
+	private final boolean arrow;        // True if we want arrows
+	private final boolean polar;        // True if we have a polar layout
+
+	DependentEdge(ElementStructure structure) {
+		super(structure);
+		String symbol = structure.styleSymbol;
+		if (symbol == null) {
+			this.arrow = true;
+			this.curved = structure.chart.diagram != VisTypes.Diagram.network;
+		} else {
+			this.arrow = symbol.toLowerCase().contains("arrow");
+			this.curved = symbol.toLowerCase().contains("curved") || symbol.toLowerCase().contains("arc");
+		}
+		this.polar = structure.chart.coordinates.isPolar();
+	}
+
+	public String getRowKeyFunction() {
+		return "function(d) { return d.key }";
+	}
+
+	public String getStyleClasses() {
+		return "'diagram hierarchy edge'";
+	}
+
+	public ElementDetails makeDetails() {
+		return ElementDetails.makeForDiagram(structure, ElementRepresentation.curvedPath, "edge", "graph.links");
+	}
+
+	public void writeDataStructures(ScriptWriter out) {
+		// Nothing to be done
+	}
+
+	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
+		if (arrow) out.addChained("attr('marker-end', 'url(#arrow)')");
+	}
+
+	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
+		writeEdgePlacement("target", curved, polar, out);
+		ElementBuilder.writeElementAesthetics(details, true, vis, out);
+	}
+
+	public void writeLabelsAndTooltips(ElementDetails details, LabelBuilder labelBuilder) {
+		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
+	}
+
+	public void writePerChartDefinitions(ScriptWriter out) {
+		// ensure an arrowhead is defined
+		if (arrow)
+			out.add("vis.append('svg:defs').selectAll('marker').data(['arrow']).enter()")
+					.addChained("append('svg:marker').attr('id', 'arrow')")
+					.addChained("attr('viewBox', '0 -6 10 10').attr('orient', 'auto')")
+					.addChained("attr('refX', 7).attr('refY', 0)")
+					.addChained("attr('markerWidth', 6).attr('markerHeight', 6)")
+					.addChained("attr('fill', '#888888')")
+					.addChained("append('svg:path').attr('d', 'M0,-4L8,0L0,4')")
+					.endStatement();
 
 	}
 

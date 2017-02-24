@@ -28,7 +28,7 @@ import org.brunel.geom.Poly;
 import org.brunel.geom.Rect;
 import org.brunel.maps.projection.Projection;
 import org.brunel.maps.projection.ProjectionBuilder;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Diagram;
 
@@ -48,7 +48,7 @@ public class GeoInformation {
 
 	private static final String KEY_GEO_NAMES = "geo names";
 
-	public static String getIDField(VisSingle vis) {
+	public static String getIDField(VisElement vis) {
 		if (vis.fKeys.isEmpty()) {
 			if (vis.positionFields().length == 0)
 				return null;
@@ -98,15 +98,15 @@ public class GeoInformation {
 		return results;
 	}
 
-	private final Map<VisSingle, GeoMapping> geo;            // Geographic mappings, one per geo element
-	private final VisSingle[] elements;
+	private final Map<VisElement, GeoMapping> geo;            // Geographic mappings, one per geo element
+	private final VisElement[] elements;
 	private final ChartCoordinates positionFields;
 	private final Poly hull;                                        // Convex hull for the points
 	private final boolean needsExpansion;
 	private final Projection projection;
 	public final boolean withGraticule;
 
-	public GeoInformation(VisSingle[] elements, TransformedData[] datas, ChartCoordinates positionFields) {
+	public GeoInformation(VisElement[] elements, TransformedData[] datas, ChartCoordinates positionFields) {
 		this.elements = elements;
 		this.positionFields = positionFields;
 		Poly positionHull = getPositionPoints(positionFields);
@@ -124,11 +124,11 @@ public class GeoInformation {
 		this.projection = ProjectionBuilder.makeProjection(getProjectionBounds());
 	}
 
-	private boolean includesAxes(VisSingle[] elements) {
+	private boolean includesAxes(VisElement[] elements) {
 		// Run through all the axes defs for all the elements, if anything says none, no axes.
 		// Otherwise anything else means "yes"
 		boolean required = false;
-		for (VisSingle vis : elements)
+		for (VisElement vis : elements)
 			for (VisTypes.Axes e : vis.fAxes.keySet()) {
 				if (e == VisTypes.Axes.none) return false;
 				required = true;
@@ -164,7 +164,7 @@ public class GeoInformation {
 		return bounds;
 	}
 
-	private Poly combineForHull(Poly pointsHull, Map<VisSingle, GeoMapping> geo, boolean includeReferenceMaps) {
+	private Poly combineForHull(Poly pointsHull, Map<VisElement, GeoMapping> geo, boolean includeReferenceMaps) {
 		List<Point> combined = new ArrayList<>();
 		Collections.addAll(combined, pointsHull.points);
 
@@ -188,7 +188,7 @@ public class GeoInformation {
 	private Poly getPositionPoints(ChartCoordinates positionFields) {
 		Set<Point> points = new HashSet<>();
 		// Add points for all the fields for each element
-		for (VisSingle e : elements) {
+		for (VisElement e : elements) {
 			Field[] xx = positionFields.getX(e);
 			Field[] yy = positionFields.getY(e);
 			for (Field x : xx)
@@ -209,7 +209,7 @@ public class GeoInformation {
 	 * @param e target
 	 * @return result
 	 */
-	public GeoMapping getGeo(VisSingle e) {
+	public GeoMapping getGeo(VisElement e) {
 		return geo.get(e);
 	}
 
@@ -222,8 +222,8 @@ public class GeoInformation {
 	}
 
 	// The whole array returned will be null if nothing is a map
-	private Map<VisSingle, GeoMapping> makeGeoMappings(TransformedData[] data, Poly positionHull, GeoInformation geoInfo) {
-		Map<VisSingle, GeoMapping> map = new LinkedHashMap<>();
+	private Map<VisElement, GeoMapping> makeGeoMappings(TransformedData[] data, Poly positionHull, GeoInformation geoInfo) {
+		Map<VisElement, GeoMapping> map = new LinkedHashMap<>();
 		GeoFile[] validFiles = null;
 		for (int i = 0; i < elements.length; i++) {
 			if (elements[i].tDiagram == Diagram.map) {
@@ -240,7 +240,7 @@ public class GeoInformation {
 			// We will build a world map. This is an edge case, but supports the simple Brunel 'map'
 			GeoMapping world = world();
 			validFiles = world.files;
-			for (VisSingle e : elements) {
+			for (VisElement e : elements) {
 				if (e.tDiagram == Diagram.map && e.tDiagramParameters.length == 0) {
 					map.put(e, world);
 				}
@@ -248,7 +248,7 @@ public class GeoInformation {
 		}
 
 		// Now run through any elements that should have a mapping, but do not
-		for (VisSingle e : elements) {
+		for (VisElement e : elements) {
 			if (e.tDiagram == Diagram.map && map.get(e) == null) {
 				String quality = GeoData.getQuality(e.tDiagramParameters);
 				map.put(e, GeoMapping.createGeoMapping(new Object[0], Arrays.asList(validFiles), GeoData.instance(), quality, geoInfo));
@@ -258,7 +258,7 @@ public class GeoInformation {
 		return map;
 	}
 
-	private GeoMapping makeMapping(VisSingle e, Dataset data, Poly positionHull, GeoInformation geoInfo) {
+	private GeoMapping makeMapping(VisElement e, Dataset data, Poly positionHull, GeoInformation geoInfo) {
 		String idField = getIDField(e);
 		Param[] diagramParameters = e.tDiagramParameters;
 		if (idField != null)

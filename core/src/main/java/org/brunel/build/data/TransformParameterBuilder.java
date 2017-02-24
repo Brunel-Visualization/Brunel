@@ -19,7 +19,7 @@ package org.brunel.build.data;
 import org.brunel.action.Param;
 import org.brunel.data.Data;
 import org.brunel.data.Field;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,19 +39,20 @@ import static org.brunel.model.VisTypes.Element.line;
  */
 class TransformParameterBuilder {
 
-	private final VisSingle vis;                      // Base visualization element we use
+	private final VisElement vis;                      // Base visualization element we use
 
 	/**
 	 * Construct a builder for transforms
 	 *
 	 * @param vis the vis to build the data for
 	 */
-	TransformParameterBuilder(VisSingle vis) {
+	TransformParameterBuilder(VisElement vis) {
 		this.vis = vis;
 	}
 
 	/**
 	 * Build the parameters based on the visualization
+	 *
 	 * @return complete parameters for transformation
 	 */
 	TransformParameters make() {
@@ -70,81 +71,6 @@ class TransformParameterBuilder {
 		return p;
 	}
 
-	private int getParameterIntValue(Param param, int defaultValue) {
-		if (param == null) return defaultValue;
-		if (param.isField()) {
-			// The parameter is a field, so we examine the modifier for the int value
-			return getParameterIntValue(param.firstModifier(), defaultValue);
-		} else {
-			// The parameter is a value
-			return (int) param.asDouble();
-		}
-	}
-
-	String makeSummaryCommands() {
-		Map<String, String> spec = new LinkedHashMap<>();
-
-		// We must account for all of these except for the special fields series and values
-		// These are handled later in the pipeline and need no changes right now
-		Set<String> fields = new LinkedHashSet<>(Arrays.asList(vis.usedFields(false)));
-		fields.remove("#series");
-		fields.remove("#values");
-		fields.remove("#all");
-
-		// Add the summary measures
-		for (Entry<Param, String> e : vis.fSummarize.entrySet()) {
-			Param p = e.getKey();
-			String name = p.asField();
-			String measure = e.getValue();
-			if (p.hasModifiers()) measure += ":" + p.firstModifier().asString();
-			spec.put(name, name + ":" + measure);
-			fields.remove(name);
-		}
-
-		// If #count is used (and not summarized) add it in as a sum
-		if (fields.contains("#count")) {
-			spec.put("#count", "#count:sum");
-			fields.remove("#count");
-		}
-
-		// If we have nothing to summarize, we are done -- no responses mean no summarization needed
-		if (spec.isEmpty()) return "";
-
-		// X fields are used for the percentage bases unless they have been declared as summaries
-		for (Param s : vis.fX) {
-			String field = s.asField();
-			if (fields.contains(field)) {
-				spec.put(field, field + ":base");
-				fields.remove(field);
-			}
-		}
-
-		// Anything remaining is used as a simple factor
-		for (String s : fields) spec.put(s, s);
-
-		// Assemble into a string
-		List<String> result = new ArrayList<>();
-		for (Entry<String, String> e : spec.entrySet())
-			result.add(e.getKey() + "=" + e.getValue());
-		return Data.join(result, "; ");
-	}
-
-	private String getParameterFieldValue(Param param) {
-
-		if (param != null && param.isField()) {
-			// Usual case of a field specified
-			return param.asField();
-		} else {
-			// Try Y fields then aesthetic fields
-			if (vis.fY.size() == 1) {
-				String s = vis.fY.get(0).asField();
-				if (!s.startsWith("'") && !s.startsWith("#")) return s;       // If it's a real field
-			}
-			if (vis.aestheticFields().length > 0) return vis.aestheticFields()[0];
-			return "#row";      // If all else fails
-		}
-	}
-
 	String makeConstantsCommand() {
 		List<String> toAdd = new ArrayList<>();
 		for (String f : vis.usedFields(false)) {
@@ -156,31 +82,17 @@ class TransformParameterBuilder {
 		return Data.join(toAdd, "; ");
 	}
 
-	String makeSortCommands() {
+	String makeEachCommands() {
 		List<String> commands = new ArrayList<>();
-
-		// Add in the sorts required by the specification
-		for (Param p : vis.fSort) {
-			String s = p.asField();
-			if (p.hasModifiers())
-				commands.add(s + ":" + p.firstModifier().asString());
-			else
-				commands.add(s);
+		for (Entry<Param, String> e : vis.fTransform.entrySet()) {
+			String operation = e.getValue();
+			Param key = e.getKey();
+			String name = getParameterFieldValue(key);
+			Field f = vis.getDataset().field(name);
+			if (operation.equals("each"))
+				commands.add(f.name);
 		}
-
 		return Data.join(commands, "; ");
-	}
-
-	String makeSortRowsCommand() {
-		// If we need to have sorting on Xs (because we are a line or area), add that in
-		// Must have an X coordinate to sort by!
-		boolean needsXSorted = !vis.fX.isEmpty() && (vis.tElement == line || vis.tElement == area);
-
-		if (needsXSorted)
-			return (vis.fX.get(0).asField() + ":ascending");
-		else
-			return "";
-
 	}
 
 	String makeFilterCommands() {
@@ -238,41 +150,6 @@ class TransformParameterBuilder {
 		return Data.join(commands, "; ");
 	}
 
-	String makeSetRowCountCommand() {
-
-		String field = null;
-		int count = 100;                                                    // Default to 100 rows
-
-		for (Entry<Param, String> e : vis.fTransform.entrySet()) {
-			if (!e.getValue().equals("rows")) continue;
-			Param p = e.getKey();
-
-			// We default to using the count field
-			if (p.isField()) {
-				field = p.asField();
-				p = p.firstModifier();
-			} else {
-				field = "#count";
-			}
-			if (p != null) count = (int) p.asDouble();
-		}
-
-		return field == null ? "" : field + "," + count;
-	}
-
-	String makeEachCommands() {
-		List<String> commands = new ArrayList<>();
-		for (Entry<Param, String> e : vis.fTransform.entrySet()) {
-			String operation = e.getValue();
-			Param key = e.getKey();
-			String name = getParameterFieldValue(key);
-			Field f = vis.getDataset().field(name);
-			if (operation.equals("each"))
-				commands.add(f.name);
-		}
-		return Data.join(commands, "; ");
-	}
-
 	String makeSeriesCommand() {
 		if (!needsSeries()) return "";
 		/*
@@ -297,10 +174,131 @@ class TransformParameterBuilder {
 		return b.toString();
 	}
 
-	private boolean needsSeries() {
-		for (String s : vis.usedFields(false))
-			if (s.equals("#series") || s.equals("#values")) return true;
-		return false;
+	String makeSetRowCountCommand() {
+
+		String field = null;
+		int count = 100;                                                    // Default to 100 rows
+
+		for (Entry<Param, String> e : vis.fTransform.entrySet()) {
+			if (!e.getValue().equals("rows")) continue;
+			Param p = e.getKey();
+
+			// We default to using the count field
+			if (p.isField()) {
+				field = p.asField();
+				p = p.firstModifier();
+			} else {
+				field = "#count";
+			}
+			if (p != null) count = (int) p.asDouble();
+		}
+
+		return field == null ? "" : field + "," + count;
+	}
+
+	String makeSortCommands() {
+		List<String> commands = new ArrayList<>();
+
+		// Add in the sorts required by the specification
+		for (Param p : vis.fSort) {
+			String s = p.asField();
+			if (p.hasModifiers())
+				commands.add(s + ":" + p.firstModifier().asString());
+			else
+				commands.add(s);
+		}
+
+		return Data.join(commands, "; ");
+	}
+
+	String makeSortRowsCommand() {
+		// If we need to have sorting on Xs (because we are a line or area), add that in
+		// Must have an X coordinate to sort by!
+		boolean needsXSorted = !vis.fX.isEmpty() && (vis.tElement == line || vis.tElement == area);
+
+		if (needsXSorted)
+			return (vis.fX.get(0).asField() + ":ascending");
+		else
+			return "";
+
+	}
+
+	String makeStackCommand() {
+
+		if (!vis.stacked) return "";            // No stacking => No command
+
+		String stackCommand;
+
+		// Handle the Y dimension -- what we stack
+		if (vis.fY.size() > 1) {
+			// We have a series
+			stackCommand = "#values";
+		} else if (vis.fY.size() == 1) {
+			// We have a single Y value
+			stackCommand = vis.fY.get(0).asField();
+		} else {
+			// Nothing on the Y axis
+			stackCommand = "";
+		}
+
+		// Handle the X dimension -- what defines each stack
+		stackCommand += "; ";
+		boolean first = true;
+		for (Param param : vis.fX) {
+			if (first) first = false;
+			else stackCommand += ", ";
+			stackCommand += param.asField();
+		}
+
+		return stackCommand + "; " + Data.join(vis.aestheticFields()) + "; " + vis.tElement.producesSingleShape;
+	}
+
+	String makeSummaryCommands() {
+		Map<String, String> spec = new LinkedHashMap<>();
+
+		// We must account for all of these except for the special fields series and values
+		// These are handled later in the pipeline and need no changes right now
+		Set<String> fields = new LinkedHashSet<>(Arrays.asList(vis.usedFields(false)));
+		fields.remove("#series");
+		fields.remove("#values");
+		fields.remove("#all");
+
+		// Add the summary measures
+		for (Entry<Param, String> e : vis.fSummarize.entrySet()) {
+			Param p = e.getKey();
+			String name = p.asField();
+			String measure = e.getValue();
+			if (p.hasModifiers()) measure += ":" + p.firstModifier().asString();
+			spec.put(name, name + ":" + measure);
+			fields.remove(name);
+		}
+
+		// If #count is used (and not summarized) add it in as a sum
+		if (fields.contains("#count")) {
+			spec.put("#count", "#count:sum");
+			fields.remove("#count");
+		}
+
+		// If we have nothing to summarize, we are done -- no responses mean no summarization needed
+		if (spec.isEmpty()) return "";
+
+		// X fields are used for the percentage bases unless they have been declared as summaries
+		for (Param s : vis.fX) {
+			String field = s.asField();
+			if (fields.contains(field)) {
+				spec.put(field, field + ":base");
+				fields.remove(field);
+			}
+		}
+
+		// Anything remaining is used as a simple factor
+		for (String s : fields) spec.put(s, s);
+
+		// Assemble into a string
+		List<String> result = new ArrayList<>();
+		for (Entry<String, String> e : spec.entrySet())
+			result.add(e.getKey() + "=" + e.getValue());
+		return Data.join(result, "; ");
 	}
 
 	/*
@@ -335,34 +333,37 @@ class TransformParameterBuilder {
 		return Data.join(result, "; ");
 	}
 
-	String makeStackCommand() {
+	private String getParameterFieldValue(Param param) {
 
-		if (!vis.stacked) return "";            // No stacking => No command
-
-		String stackCommand;
-
-		// Handle the Y dimension -- what we stack
-		if (vis.fY.size() > 1) {
-			// We have a series
-			stackCommand = "#values";
-		} else if (vis.fY.size() == 1) {
-			// We have a single Y value
-			stackCommand = vis.fY.get(0).asField();
+		if (param != null && param.isField()) {
+			// Usual case of a field specified
+			return param.asField();
 		} else {
-			// Nothing on the Y axis
-			stackCommand = "";
+			// Try Y fields then aesthetic fields
+			if (vis.fY.size() == 1) {
+				String s = vis.fY.get(0).asField();
+				if (!s.startsWith("'") && !s.startsWith("#")) return s;       // If it's a real field
+			}
+			if (vis.aestheticFields().length > 0) return vis.aestheticFields()[0];
+			return "#row";      // If all else fails
 		}
+	}
 
-		// Handle the X dimension -- what defines each stack
-		stackCommand += "; ";
-		boolean first = true;
-		for (Param param : vis.fX) {
-			if (first) first = false;
-			else stackCommand += ", ";
-			stackCommand += param.asField();
+	private int getParameterIntValue(Param param, int defaultValue) {
+		if (param == null) return defaultValue;
+		if (param.isField()) {
+			// The parameter is a field, so we examine the modifier for the int value
+			return getParameterIntValue(param.firstModifier(), defaultValue);
+		} else {
+			// The parameter is a value
+			return (int) param.asDouble();
 		}
+	}
 
-		return stackCommand + "; " + Data.join(vis.aestheticFields()) + "; " + vis.tElement.producesSingleShape;
+	private boolean needsSeries() {
+		for (String s : vis.usedFields(false))
+			if (s.equals("#series") || s.equals("#values")) return true;
+		return false;
 	}
 
 }

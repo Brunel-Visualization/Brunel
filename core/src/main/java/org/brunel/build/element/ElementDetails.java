@@ -21,7 +21,7 @@ import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.data.Data;
 import org.brunel.data.Field;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Element;
 
@@ -33,35 +33,6 @@ import static org.brunel.build.element.ElementRepresentation.spaceFillingCircle;
  * Encapsulate information on how we want to represent different types of element
  */
 public class ElementDetails {
-
-	private static String getCommonSymbol(ElementStructure structure) {
-		// If we have a defined symbol, we use that
-		if (structure.styleSymbol != null) return structure.styleSymbol;
-
-		// Geo ignores symbols
-		if (structure.geo != null) return null;
-
-		// Some point elements are shown as rectangles
-		if (structure.vis.tElement == VisTypes.Element.point && showAsRectangle(structure.chart))
-			return "rect";
-
-		// No knowledge
-		return null;
-	}
-
-	private static boolean showAsRectangle(ChartStructure chart) {
-		if (chart == null) return false;							// Happens in test code only
-		// Any numeric means we are not categorical
-		return !anyNumeric(chart.coordinates.allXFields)
-				&& !anyNumeric(chart.coordinates.allYFields);
-
-	}
-
-	private static boolean anyNumeric(Field[] fields) {
-		for (Field field : fields)
-			if (!field.isBinned() && field.isNumeric()) return true;
-		return false;
-	}
 
 	public static ElementDetails makeForCoordinates(ElementStructure structure) {
 		ElementRepresentation representation = ElementRepresentation.makeForCoordinateElement(structure, getCommonSymbol(structure));
@@ -101,40 +72,47 @@ public class ElementDetails {
 		return new ElementDetails(structure.vis, representation, elementClass, dataSource, filled);
 	}
 
+	private static boolean anyNumeric(Field[] fields) {
+		for (Field field : fields)
+			if (!field.isBinned() && field.isNumeric()) return true;
+		return false;
+	}
+
+	private static String getCommonSymbol(ElementStructure structure) {
+		// If we have a defined symbol, we use that
+		if (structure.styleSymbol != null) return structure.styleSymbol;
+
+		// Geo ignores symbols
+		if (structure.geo != null) return null;
+
+		// Some point elements are shown as rectangles
+		if (structure.vis.tElement == VisTypes.Element.point && showAsRectangle(structure.chart))
+			return "rect";
+
+		// No knowledge
+		return null;
+	}
+
+	private static boolean showAsRectangle(ChartStructure chart) {
+		if (chart == null) return false;                            // Happens in test code only
+		// Any numeric means we are not categorical
+		return !anyNumeric(chart.coordinates.allXFields)
+				&& !anyNumeric(chart.coordinates.allYFields);
+
+	}
 	public final String dataSource;                     // Where the data for d3 lives
 	public final ElementRepresentation representation;  // The type of element produced
 	public final String[] classes;                      // Class names for this item
+	public final ElementDimension x, y;                 // Definitions for x and y fields
 	private final String userDefinedLabelPosition;      // Custom override for the label position
 	private final boolean strokedShape;                 // If true, the shape is to be stroked, not filled
 	private final boolean allowTextOverlap;             // If true, allow text labels to overlap
 	private final double labelPadding;                  // How much to pad labels by
 	private final String labelAlignment;                // User defined label alignment (may be null)
-
-	public final ElementDimension x, y;                 // Definitions for x and y fields
 	public GeomAttribute overallSize;                   // A general size for the whole item
 	private GeomAttribute refLocation;                  // Defines the location using a reference to another element
 
-	public String getAlignment() {
-		return labelAlignment;
-	}
-
-	public double getPadding() {
-		return labelPadding;
-	}
-
-	public GeomAttribute getRefLocation() {
-		return refLocation;
-	}
-
-	public boolean isPath() {
-		return representation.isDrawnAsPath();
-	}
-
-	public void setReferences(String[] references) {
-		this.refLocation = GeomAttribute.makeFunction("[" + Data.join(references) + "]");
-	}
-
-	public ElementDetails(VisSingle vis, ElementRepresentation representation, String className, String dataSource, boolean filled) {
+	public ElementDetails(VisElement vis, ElementRepresentation representation, String className, String dataSource, boolean filled) {
 		if (className == null || className.contains(" "))
 			throw new IllegalArgumentException("Class name must be a single word");
 		classes = filled ? new String[]{"element", className, "filled"} : new String[]{"element", className};
@@ -149,16 +127,36 @@ public class ElementDetails {
 		this.allowTextOverlap = vis.tDiagram == VisTypes.Diagram.network;                       // Diagrams can overlap text
 	}
 
+	public String getAlignment() {
+		return labelAlignment;
+	}
+
+	public double getPadding() {
+		return labelPadding;
+	}
+
+	public GeomAttribute getRefLocation() {
+		return refLocation;
+	}
+
 	public String getTextMethod() {
 		return userDefinedLabelPosition != null ? userDefinedLabelPosition : representation.getDefaultTextMethod();
+	}
+
+	public boolean isPath() {
+		return representation.isDrawnAsPath();
+	}
+
+	public boolean isStroked() {
+		return strokedShape;
 	}
 
 	public boolean requiresSplitting() {
 		return dataSource.equals("splits");
 	}
 
-	public boolean isStroked() {
-		return strokedShape;
+	public void setReferences(String[] references) {
+		this.refLocation = GeomAttribute.makeFunction("[" + Data.join(references) + "]");
 	}
 
 	public boolean textCanOverlap() {

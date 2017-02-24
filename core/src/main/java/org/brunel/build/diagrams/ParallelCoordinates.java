@@ -42,10 +42,21 @@ import java.util.Set;
 
 class ParallelCoordinates extends D3Diagram {
 
+	private static AxisDetails[] makeAxisDetails(ChartStructure chart, Field[] fields) {
+		AxisDetails[] axes = new AxisDetails[fields.length];
+		for (int i = 0; i < fields.length; i++) {
+			Field f = fields[i];
+			// Create the Axis details and lay out in vertical space
+			AxisRequirement req = new AxisRequirement(VisTypes.Axes.y, i);
+			AxisDetails details = new AxisDetails(req, new Field[]{f}, f.preferCategorical());
+			details.setTextDetails(chart, false);
+			details.layoutVertically(chart.chartHeight);
+			axes[i] = details;
+		}
+		return axes;
+	}
 	private final Set<String> TRANSFORMS = new HashSet<>(Arrays.asList("linear", "log", "root"));
-
 	private final Field[] fields;               // The fields in the table
-
 	private final Padding padding;              // Space around the edges
 	private final double smoothness;            // 0 == linear, 1 is very smooth
 
@@ -61,52 +72,8 @@ class ParallelCoordinates extends D3Diagram {
 		smoothness = vis.tDiagramParameters.length == 0 ? 0 : vis.tDiagramParameters[0].asDouble();
 	}
 
-	private static AxisDetails[] makeAxisDetails(ChartStructure chart, Field[] fields) {
-		AxisDetails[] axes = new AxisDetails[fields.length];
-		for (int i = 0; i < fields.length; i++) {
-			Field f = fields[i];
-			// Create the Axis details and lay out in vertical space
-			AxisRequirement req = new AxisRequirement(VisTypes.Axes.y, i);
-			AxisDetails details = new AxisDetails(req, new Field[]{f}, f.preferCategorical());
-			details.setTextDetails(chart, false);
-			details.layoutVertically(chart.chartHeight);
-			axes[i] = details;
-		}
-		return axes;
-	}
-
-	public void writeDataStructures(ScriptWriter out) {
-		out.add("var axes = interior.selectAll('g.parallel.axis').data(parallel)").endStatement();
-		out.add("var builtAxes = axes.enter().append('g')")
-				.addChained("attr('class', function(d,i) { return 'parallel axis dim' + (i+1) })")
-				.addChained("attr('transform', function(d,i) { return 'translate(' + scale_x(i) + ',0)' })")
-				.addChained("each(function(d) {").indentMore().indentMore()
-				.add("d3.select(this).append('text').attr('class', 'axis title').text(d.label)")
-				.addChained("attr('x', 0).attr('y', geom.inner_height).attr('dy', '-0.3em').style('text-anchor', 'middle')")
-				.indentLess().indentLess().add("})").endStatement();
-
-		// Write the calls to display the axes
-
-		out.add("BrunelD3.transition(axes.merge(builtAxes), transitionMillis)")
-				.addChained("each(function(d,i) { d3.select(this).call(d.axis.scale(d.scale)); })")
-				.endStatement();
-	}
-
 	public ElementDetails makeDetails() {
 		return ElementDetails.makeForDiagram(structure, ElementRepresentation.generalPath, "path", "data._rows");
-	}
-
-	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
-		out.addChained("attr('d', path)");
-		ElementBuilder.writeElementAesthetics(details, true, vis, out);
-	}
-
-	public void writeLabelsAndTooltips(ElementDetails details, LabelBuilder labelBuilder) {
-		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
-	}
-
-	public void writePerChartDefinitions(ScriptWriter out) {
-		out.add("var parallel;").comment("Structure to store parallel axes");
 	}
 
 	public void preBuildDefinitions(ScriptWriter out) {
@@ -150,6 +117,36 @@ class ParallelCoordinates extends D3Diagram {
 		out.add("return p");
 		out.indentLess().onNewLine().add("}").endStatement();
 
+	}
+
+	public void writeDataStructures(ScriptWriter out) {
+		out.add("var axes = interior.selectAll('g.parallel.axis').data(parallel)").endStatement();
+		out.add("var builtAxes = axes.enter().append('g')")
+				.addChained("attr('class', function(d,i) { return 'parallel axis dim' + (i+1) })")
+				.addChained("attr('transform', function(d,i) { return 'translate(' + scale_x(i) + ',0)' })")
+				.addChained("each(function(d) {").indentMore().indentMore()
+				.add("d3.select(this).append('text').attr('class', 'axis title').text(d.label)")
+				.addChained("attr('x', 0).attr('y', geom.inner_height).attr('dy', '-0.3em').style('text-anchor', 'middle')")
+				.indentLess().indentLess().add("})").endStatement();
+
+		// Write the calls to display the axes
+
+		out.add("BrunelD3.transition(axes.merge(builtAxes), transitionMillis)")
+				.addChained("each(function(d,i) { d3.select(this).call(d.axis.scale(d.scale)); })")
+				.endStatement();
+	}
+
+	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
+		out.addChained("attr('d', path)");
+		ElementBuilder.writeElementAesthetics(details, true, vis, out);
+	}
+
+	public void writeLabelsAndTooltips(ElementDetails details, LabelBuilder labelBuilder) {
+		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
+	}
+
+	public void writePerChartDefinitions(ScriptWriter out) {
+		out.add("var parallel;").comment("Structure to store parallel axes");
 	}
 
 	private void defineLinearPath(ScriptWriter out) {

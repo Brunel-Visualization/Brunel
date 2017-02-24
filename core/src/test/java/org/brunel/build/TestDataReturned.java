@@ -19,7 +19,7 @@ package org.brunel.build;
 import org.brunel.action.Action;
 import org.brunel.build.data.TransformedData;
 import org.brunel.data.Dataset;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertEquals;
@@ -32,7 +32,7 @@ public class TestDataReturned {
     @Test
     public void testGetSimpleData() {
         String command = "data('sample:US States.csv') x(region) y(population)";
-        VisSingle vis = Action.parse(command).apply().getSingle().makeCanonical();
+        VisElement vis = Action.parse(command).apply().getSingle().makeCanonical();
         Dataset d = TransformedData.make(vis);
         assertEquals(50, d.rowCount());
         assertEquals(1.0, d.field("#count").value(0));
@@ -41,7 +41,7 @@ public class TestDataReturned {
     @Test
     public void testGetSummarizedData() {
         String command = "data('sample:US States.csv') x(region) y(population) sum(population)";
-        VisSingle vis = Action.parse(command).apply().getSingle().makeCanonical();
+        VisElement vis = Action.parse(command).apply().getSingle().makeCanonical();
         Dataset d = TransformedData.make(vis);
         assertEquals(6, d.rowCount());
         assertEquals(12.0, d.field("#count").value(0));

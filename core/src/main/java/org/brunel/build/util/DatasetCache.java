@@ -26,21 +26,21 @@ import org.brunel.data.Dataset;
  */
 public interface DatasetCache {
 
-    /**
-     * Retrieve a Dataset instance given a key
-     *
-     * @param key the key
-     * @return the Dataset instance for the given key
-     */
-    Dataset retrieve(String key);
+	void remove(String key);
 
-    /**
-     * Store a given data set using the given key
-     *
-     * @param key     unique key
-     * @param dataset the Dataset instance to store in the cache
-     */
-    void store(String key, Dataset dataset);
+	/**
+	 * Retrieve a Dataset instance given a key
+	 *
+	 * @param key the key
+	 * @return the Dataset instance for the given key
+	 */
+	Dataset retrieve(String key);
 
-    void remove(String key);
+	/**
+	 * Store a given data set using the given key
+	 *
+	 * @param key     unique key
+	 * @param dataset the Dataset instance to store in the cache
+	 */
+	void store(String key, Dataset dataset);
 }

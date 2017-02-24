@@ -20,7 +20,7 @@ import org.brunel.data.Dataset;
 import org.brunel.model.VisComposition;
 import org.brunel.model.VisException;
 import org.brunel.model.VisItem;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -188,7 +188,7 @@ public class Action implements Comparable<Action> {
     /* Apply nesting if needed */
     private VisItem applyNesting(List<ActionStep> steps, Dataset data) {
         // We work forwards, keeping track of what nesting we need to do
-        VisSingle outer = new VisSingle(data);
+        VisElement outer = new VisElement(data);
         for (int i = 0; i < steps.size(); i++) {
             ActionStep a = steps.get(i);
             if (a.name.startsWith(">")) {

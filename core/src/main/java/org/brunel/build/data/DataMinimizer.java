@@ -51,7 +51,7 @@ public class DataMinimizer {
 
 		// Run through the rest and make sure they are compatible
 		for (int i = 1; i < structures.size(); i++) {
-			 params = merge(params, structures.get(i).data.getTransformParameters());
+			params = merge(params, structures.get(i).data.getTransformParameters());
 		}
 
 		// Failure to merge
@@ -62,23 +62,11 @@ public class DataMinimizer {
 		return matchRequiredFields(transformed);
 	}
 
-	private Collection<Field> matchRequiredFields(Dataset dataset) {
-		List<Field> fields = new ArrayList<>();
-		for (Field field : required) {
-			Field matched = dataset.field(field.name);
-			if (matched == null)
-				throw new IllegalArgumentException("Unmatched field: " + field.name);
-			fields.add(matched);
-		}
-		return fields;
-	}
-
 	/**
 	 * Attempt to combine two transforms into a "minimal" combined transformation
 	 */
 	public TransformParameters merge(TransformParameters a, TransformParameters b) {
-		if (a == null || b == null) return null;	// Once it goes wrong, it stays wrong
-
+		if (a == null || b == null) return null;    // Once it goes wrong, it stays wrong
 
 		// Adding constants is easy -- we can add as many as we like
 		a.constantsCommand = mergeSemiColonSeparatedLists(a.constantsCommand, b.constantsCommand);
@@ -91,6 +79,11 @@ public class DataMinimizer {
 		if (!a.summaryCommand.equals(b.summaryCommand)) return null;
 
 		return a;
+	}
+
+	// If different, return the empty command
+	private String eliminateIfDifferent(String a, String b) {
+		return a.equals(b) ? a : "";
 	}
 
 	private TransformParameters makeReducedTransformParams(TransformParameters a) {
@@ -110,9 +103,15 @@ public class DataMinimizer {
 		return result;
 	}
 
-	// If different, return the empty command
-	private String eliminateIfDifferent(String a, String b) {
-		return a.equals(b) ? a : "";
+	private Collection<Field> matchRequiredFields(Dataset dataset) {
+		List<Field> fields = new ArrayList<>();
+		for (Field field : required) {
+			Field matched = dataset.field(field.name);
+			if (matched == null)
+				throw new IllegalArgumentException("Unmatched field: " + field.name);
+			fields.add(matched);
+		}
+		return fields;
 	}
 
 	// Merge lists of the form "a; b;d"

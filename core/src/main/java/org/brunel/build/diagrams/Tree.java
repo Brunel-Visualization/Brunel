@@ -29,13 +29,10 @@ import org.brunel.model.style.StyleTarget;
 
 class Tree extends D3Diagram {
 
-	private enum Method {leftRight, topBottom, polar}
-
 	private final Method method;                                    // How to draw it
 	private final int labelSize;                                    // Size to leave for labels
 	private final int pad;                                            // Pad size
 	private final boolean usesSize;                                 // True is size is used
-
 	public Tree(ElementStructure structure) {
 		super(structure);
 		if (vis.coords == Coordinates.polar) method = Method.polar;
@@ -49,9 +46,22 @@ class Tree extends D3Diagram {
 		pad = size == null ? 10 : (int) size.value(10) / 2 + 3;
 	}
 
-	public void writePerChartDefinitions(ScriptWriter out) {
-		super.writePerChartDefinitions(out);
-		out.add("var graph;").comment("The tree with links");
+	public void defineCoordinateFunctions(ElementDetails details, ScriptWriter out) {
+		String cx, cy;            // Functions defining the locations of node centers
+		if (method == Method.leftRight) {
+			cx = "scale_x(d.y)";
+			cy = "scale_y(d.x)";
+		} else if (method == Method.topBottom) {
+			cx = "scale_x(d.x)";
+			cy = "scale_y(d.y)";
+		} else {
+			cx = "scale_x(d.y * Math.cos(d.x))";
+			cy = "scale_y(d.y * Math.sin(d.x))";
+		}
+
+		GeomAttribute rr = details.overallSize.halved();
+
+		defineXYR(cx, cy, "d.data.radius = " + rr.definition(), details, out);
 	}
 
 	public void writeDataStructures(ScriptWriter out) {
@@ -89,26 +99,12 @@ class Tree extends D3Diagram {
 		return ElementDetails.makeForDiagram(structure, rep, "point", "treeNodes");
 	}
 
-	public void writeLabelsAndTooltips(ElementDetails details, LabelBuilder labelBuilder) {
-		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
+	public boolean needsDiagramExtras() {
+		return true;
 	}
 
-	public void defineCoordinateFunctions(ElementDetails details, ScriptWriter out) {
-		String cx, cy;            // Functions defining the locations of node centers
-		if (method == Method.leftRight) {
-			cx = "scale_x(d.y)";
-			cy = "scale_y(d.x)";
-		} else if (method == Method.topBottom) {
-			cx = "scale_x(d.x)";
-			cy = "scale_y(d.y)";
-		} else {
-			cx = "scale_x(d.y * Math.cos(d.x))";
-			cy = "scale_y(d.y * Math.sin(d.x))";
-		}
-
-		GeomAttribute rr = details.overallSize.halved();
-
-		defineXYR(cx, cy, "d.data.radius = " + rr.definition(), details, out);
+	public boolean needsDiagramLabels() {
+		return true;
 	}
 
 	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
@@ -135,12 +131,15 @@ class Tree extends D3Diagram {
 
 	}
 
-	public boolean needsDiagramExtras() {
-		return true;
+	public void writeLabelsAndTooltips(ElementDetails details, LabelBuilder labelBuilder) {
+		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
 	}
 
-	public boolean needsDiagramLabels() {
-		return true;
+	public void writePerChartDefinitions(ScriptWriter out) {
+		super.writePerChartDefinitions(out);
+		out.add("var graph;").comment("The tree with links");
 	}
+
+	private enum Method {leftRight, topBottom, polar}
 
 }

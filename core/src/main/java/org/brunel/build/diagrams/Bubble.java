@@ -45,6 +45,17 @@ class Bubble extends D3Diagram {
 		return ElementDetails.makeForDiagram(structure, ElementRepresentation.largeCircle, "point", "pack(tree).descendants()");
 	}
 
+	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
+		writeHierarchicalClass(out);
+		out.addChained("filter(function(d) { return d.depth })");
+
+		// Classes defined for CSS
+		out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
+
+		ElementBuilder.definePointLikeMark(details, structure, out);
+		ElementBuilder.writeElementAesthetics(details, true, vis, out);
+	}
+
 	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
 		// We place everything at its parent when it enters the system
 		out.addChained("filter(function(d) { return d.parent })")
@@ -59,17 +70,6 @@ class Bubble extends D3Diagram {
 
 	public void writeLabelsAndTooltips(ElementDetails details, LabelBuilder labelBuilder) {
 		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
-	}
-
-	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
-		writeHierarchicalClass(out);
-		out.addChained("filter(function(d) { return d.depth })");
-
-		// Classes defined for CSS
-		out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
-
-		ElementBuilder.definePointLikeMark(details, structure, out);
-		ElementBuilder.writeElementAesthetics(details, true, vis, out);
 	}
 
 }

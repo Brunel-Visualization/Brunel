@@ -25,7 +25,7 @@ import org.brunel.build.info.Dependency;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
@@ -35,7 +35,7 @@ import java.util.List;
 
 public abstract class D3Diagram {
 	public static D3Diagram make(ElementStructure structure) {
-		VisSingle vis = structure.vis;
+		VisElement vis = structure.vis;
 
 		// The simple case -- coordinates
 		if (vis.tDiagram == null) return null;
@@ -60,13 +60,13 @@ public abstract class D3Diagram {
 	}
 
 	// Identify a diagram that is for map labels
-	public static boolean isMapLabels(VisSingle vis) {
+	public static boolean isMapLabels(VisElement vis) {
 		return vis.tDiagram == Diagram.map && vis.tDiagramParameters.length == 1 && vis.tDiagramParameters[0].asString().equals("labels");
 	}
 
 	final Param size;
 	final Element element;
-	final VisSingle vis;
+	final VisElement vis;
 	final InteractionDetails interaction;
 	final String[] position;
 	final ElementStructure structure;
@@ -82,13 +82,6 @@ public abstract class D3Diagram {
 		if (this.interaction == null) throw new IllegalStateException("Interaction must be defined at this point");
 	}
 
-	protected ElementStructure getDependentEdges() {
-		// Needs two keys to be an edge
-		for (Dependency dependency : structure.dependencies)
-			if (dependency.base == structure && dependency.dependent.vis.fKeys.size() > 1) return dependency.dependent;
-		return null;
-	}
-
 	public void defineCoordinateFunctions(ElementDetails details, ScriptWriter out) {
 		// By default, do nothing
 	}
@@ -102,14 +95,6 @@ public abstract class D3Diagram {
 		String classes = "diagram " + vis.tDiagram.name();
 		return "'" + (isHierarchy ? classes + " hierarchy" : classes) + "'";
 	}
-
-	/**
-	 * Any initialization needed at the start of the build function
-	 *
-	 * @param out
-	 * @return
-	 */
-	public abstract void writeDataStructures(ScriptWriter out);
 
 	/**
 	 * Define the details of the the element for future use
@@ -136,7 +121,13 @@ public abstract class D3Diagram {
 		// By default, do nothing
 	}
 
-	public abstract void writeDiagramUpdate(ElementDetails details, ScriptWriter out);
+	/**
+	 * Any initialization needed at the start of the build function
+	 *
+	 * @param out
+	 * @return
+	 */
+	public abstract void writeDataStructures(ScriptWriter out);
 
 	/**
 	 * This is called when
@@ -148,12 +139,82 @@ public abstract class D3Diagram {
 		// By default, nothing is needed
 	}
 
+	public abstract void writeDiagramUpdate(ElementDetails details, ScriptWriter out);
+
 	public abstract void writeLabelsAndTooltips(ElementDetails details, LabelBuilder labelBuilder);
 
 	public void writePerChartDefinitions(ScriptWriter out) {
 		if (vis.tDiagram != null && vis.tDiagram.isHierarchical) {
 			out.add("var tree, expandState = [], collapseState = {};").comment("collapse state maps node IDs to true/false");
 		}
+	}
+
+	/**
+	 * Define coordinate functions to be used in the diagram
+	 *
+	 * @param x       the x coordinate
+	 * @param y       the x coordinate
+	 * @param r       the radius
+	 * @param details override details in here
+	 */
+	protected void defineXYR(String x, String y, String r, ElementDetails details, ScriptWriter out) {
+		out.onNewLine().comment("Define Coordinate functions");
+
+		// We will substitute in our radius for the default. This is a hack depending on the name of the geom attribute
+		// function(d) { return size(d) * 3.0 * geom.default_point_size}
+
+		String def = details.overallSize.definition();
+		String newDef = def.replace("geom.default_point_size", "(" + r + ")");
+		if (def.equals(newDef)) {
+			// Replacement failed -- just use the new def
+			newDef = r;
+		}
+
+		out.add("function r(d) { return " + newDef + " }").endStatement();
+
+		if (details.representation.isBoxlike()) {
+			// For symbols and rectangles, define the lower and upper extents for each dimension
+			out.add("function x1(d) { return " + x + " - r(d) }").endStatement()
+					.add("function x2(d) { return " + x + " + r(d) }").endStatement()
+					.add("function y1(d) { return " + y + " - r(d) }").endStatement()
+					.add("function y2(d) { return " + y + " + r(d) }").endStatement();
+
+			// Known extent locations to use
+			details.x.left = GeomAttribute.makeFunction("x1(d)");
+			details.x.right = GeomAttribute.makeFunction("x2(d)");
+			details.y.left = GeomAttribute.makeFunction("y1(d)");
+			details.y.right = GeomAttribute.makeFunction("y2(d)");
+		} else {
+			// For everything else (circle-like) just the center and radius is needed
+			out.add("function x(d) { return " + x + " }").endStatement()
+					.add("function y(d) { return " + y + " }").endStatement();
+
+			// Known center locations to use
+			details.x.center = GeomAttribute.makeFunction("x(d)");
+			details.y.center = GeomAttribute.makeFunction("y(d)");
+			details.overallSize = GeomAttribute.makeFunction("r(d) * 2");
+		}
+
+		details.x.sizeFunction = null;
+	}
+
+	protected ElementStructure getDependentEdges() {
+		// Needs two keys to be an edge
+		for (Dependency dependency : structure.dependencies)
+			if (dependency.base == structure && dependency.dependent.vis.fKeys.size() > 1) return dependency.dependent;
+		return null;
+	}
+
+	protected String quoted(String... items) {
+		List<String> p = new ArrayList<>();
+		for (String s : items) p.add(Data.quote(s));
+		return Data.join(p);
+	}
+
+	// Define the class based on hierarchy
+	protected void writeHierarchicalClass(ScriptWriter out) {
+		out.addChained("attr('class', function(d) { return (d.collapsed ? 'collapsed ' : '') "
+				+ "+ (d.data.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 	}
 
 	void makeHierarchicalTree(boolean definedHierarchy, ScriptWriter out) {
@@ -244,67 +305,6 @@ public abstract class D3Diagram {
 				else return -1;
 			}
 		return null;
-	}
-
-	protected String quoted(String... items) {
-		List<String> p = new ArrayList<>();
-		for (String s : items) p.add(Data.quote(s));
-		return Data.join(p);
-	}
-
-	// Define the class based on hierarchy
-	protected void writeHierarchicalClass(ScriptWriter out) {
-		out.addChained("attr('class', function(d) { return (d.collapsed ? 'collapsed ' : '') "
-				+ "+ (d.data.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
-	}
-
-	/**
-	 * Define coordinate functions to be used in the diagram
-	 *
-	 * @param x       the x coordinate
-	 * @param y       the x coordinate
-	 * @param r       the radius
-	 * @param details override details in here
-	 */
-	protected void defineXYR(String x, String y, String r, ElementDetails details, ScriptWriter out) {
-		out.onNewLine().comment("Define Coordinate functions");
-
-		// We will substitute in our radius for the default. This is a hack depending on the name of the geom attribute
-		// function(d) { return size(d) * 3.0 * geom.default_point_size}
-
-		String def = details.overallSize.definition();
-		String newDef = def.replace("geom.default_point_size", "(" + r + ")");
-		if (def.equals(newDef)) {
-			// Replacement failed -- just use the new def
-			newDef = r;
-		}
-
-		out.add("function r(d) { return " + newDef + " }").endStatement();
-
-		if (details.representation.isBoxlike()) {
-			// For symbols and rectangles, define the lower and upper extents for each dimension
-			out.add("function x1(d) { return " + x + " - r(d) }").endStatement()
-					.add("function x2(d) { return " + x + " + r(d) }").endStatement()
-					.add("function y1(d) { return " + y + " - r(d) }").endStatement()
-					.add("function y2(d) { return " + y + " + r(d) }").endStatement();
-
-			// Known extent locations to use
-			details.x.left = GeomAttribute.makeFunction("x1(d)");
-			details.x.right = GeomAttribute.makeFunction("x2(d)");
-			details.y.left = GeomAttribute.makeFunction("y1(d)");
-			details.y.right = GeomAttribute.makeFunction("y2(d)");
-		} else {
-			// For everything else (circle-like) just the center and radius is needed
-			out.add("function x(d) { return " + x + " }").endStatement()
-					.add("function y(d) { return " + y + " }").endStatement();
-
-			// Known center locations to use
-			details.x.center = GeomAttribute.makeFunction("x(d)");
-			details.y.center = GeomAttribute.makeFunction("y(d)");
-			details.overallSize = GeomAttribute.makeFunction("r(d) * 2");
-		}
-
-		details.x.sizeFunction = null;
 	}
 
 }

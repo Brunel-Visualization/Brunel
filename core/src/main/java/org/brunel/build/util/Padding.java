@@ -20,23 +20,23 @@ package org.brunel.build.util;
  * Simple padding structure
  */
 public class Padding {
-    public int top;
-    public int left;
-    public int bottom;
-    public int right;
+	public int top;
+	public int left;
+	public int bottom;
+	public int right;
 
-    public int horizontal() {
-        return left + right;
-    }
+	public Padding(int top, int left, int bottom, int right) {
+		this.top = top;
+		this.left = left;
+		this.bottom = bottom;
+		this.right = right;
+	}
 
-    public int vertical() {
-        return top + bottom;
-    }
+	public int horizontal() {
+		return left + right;
+	}
 
-    public Padding(int top, int left, int bottom, int right) {
-        this.top = top;
-        this.left = left;
-        this.bottom = bottom;
-        this.right = right;
-    }
+	public int vertical() {
+		return top + bottom;
+	}
 }

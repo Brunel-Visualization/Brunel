@@ -95,6 +95,15 @@ class GuideElementBuilder extends CoordinateElementBuilder {
 
 	}
 
+	// Returns the definition of the given coord (which defaults to the defined value)
+	private String definition(Param p, String coord) {
+		if (p.asString().equals(coord)) {
+			return sanitize(p.firstModifier().asString());
+		} else {
+			return "d." + coord;
+		}
+	}
+
 	private int getSteps(List<Param> guides) {
 		int max = 0;
 		for (Param p : guides) {
@@ -107,15 +116,6 @@ class GuideElementBuilder extends CoordinateElementBuilder {
 			}
 		}
 		return max <= 1 ? 40 : max;
-	}
-
-	// Returns the definition of the given coord (which defaults to the defined value)
-	private String definition(Param p, String coord) {
-		if (p.asString().equals(coord)) {
-			return sanitize(p.firstModifier().asString());
-		} else {
-			return "d." + coord;
-		}
 	}
 
 	private String sanitize(String text) {

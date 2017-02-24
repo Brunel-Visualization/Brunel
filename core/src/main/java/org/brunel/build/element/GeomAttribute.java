@@ -24,59 +24,58 @@ package org.brunel.build.element;
  */
 public class GeomAttribute {
 
-    private final String def;
-    private final boolean func;
+	public static GeomAttribute makeFunction(String def) {
+		return new GeomAttribute(def, true);
+	}
 
-    private GeomAttribute(String def, boolean func) {
-        this.def = def;
-        this.func = func;
-    }
+	public static GeomAttribute makeConstant(String def) {
+		return new GeomAttribute(def, false);
+	}
+	private final String def;
+	private final boolean func;
 
-    public static GeomAttribute makeFunction(String def) {
-        return new GeomAttribute(def, true);
-    }
+	private GeomAttribute(String def, boolean func) {
+		this.def = def;
+		this.func = func;
+	}
 
-    public static GeomAttribute makeConstant(String def) {
-        return new GeomAttribute(def, false);
-    }
+	public String call() {
+		return call(def);
+	}
 
-    public String call() {
-        return call(def);
-    }
+	public String call(String functionName) {
+		return isFunc() ? functionName + "(d)" : functionName;
+	}
 
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+	public String definition() {
+		return def;
+	}
 
-        GeomAttribute that = (GeomAttribute) o;
+	public GeomAttribute halved() {
+		return new GeomAttribute(def + " / 2", func);
+	}
 
-        return func == that.func && def.equals(that.def);
+	public int hashCode() {
+		int result = def.hashCode();
+		result = 31 * result + (func ? 1 : 0);
+		return result;
+	}
 
-    }
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
 
-    public GeomAttribute halved() {
-        return new GeomAttribute(def + " / 2", func);
-    }
+		GeomAttribute that = (GeomAttribute) o;
 
-    public int hashCode() {
-        int result = def.hashCode();
-        result = 31 * result + (func ? 1 : 0);
-        return result;
-    }
+		return func == that.func && def.equals(that.def);
 
-    public String call(String functionName) {
-        return isFunc() ? functionName + "(d)" : functionName;
-    }
+	}
 
-    public String definition() {
-        return def;
-    }
+	public String toString() {
+		return func ? "function(d) { return " + def + "}" : def;
+	}
 
-    public boolean isFunc() {
-        return func;
-    }
-
-    public String toString() {
-        return func ? "function(d) { return " + def + "}" : def;
-    }
+	public boolean isFunc() {
+		return func;
+	}
 }

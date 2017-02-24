@@ -25,33 +25,33 @@ import org.brunel.build.util.ScriptWriter;
 
 class Cloud extends D3Diagram {
 
-    public Cloud(ElementStructure vis) {
-        super(vis);
-    }
+	public Cloud(ElementStructure vis) {
+		super(vis);
+	}
 
-    public void writeDataStructures(ScriptWriter out) {
-        out.comment("Build the cloud layout");
-        out.add("var cloud = BrunelD3.cloudLayout(processed, [geom.inner_width, geom.inner_height], zoomNode)").endStatement();
-        out.add("function keyFunction(d) { return d.key }").endStatement();
-    }
+	public void writeDataStructures(ScriptWriter out) {
+		out.comment("Build the cloud layout");
+		out.add("var cloud = BrunelD3.cloudLayout(processed, [geom.inner_width, geom.inner_height], zoomNode)").endStatement();
+		out.add("function keyFunction(d) { return d.key }").endStatement();
+	}
 
-    public ElementDetails makeDetails() {
-        return ElementDetails.makeForDiagram(structure, ElementRepresentation.text, "text", "data._rows");
-    }
+	public ElementDetails makeDetails() {
+		return ElementDetails.makeForDiagram(structure, ElementRepresentation.text, "text", "data._rows");
+	}
 
-    public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
-        out.addChained("each(cloud.prepare).call(cloud.build)");
-        ElementBuilder.writeElementAesthetics(details, true, vis, out);
-    }
+	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
+		out.addChained("each(cloud.prepare).call(cloud.build)");
+		ElementBuilder.writeElementAesthetics(details, true, vis, out);
+	}
 
-    public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
-        // The cloud needs to set all this stuff up front
-        out.addChained("style('text-anchor', 'middle').classed('label', true)")
-                .addChained("text(labeling.content)");
-        LabelBuilder.addFontSizeAttribute(vis, out);
-    }
+	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
+		// The cloud needs to set all this stuff up front
+		out.addChained("style('text-anchor', 'middle').classed('label', true)")
+				.addChained("text(labeling.content)");
+		LabelBuilder.addFontSizeAttribute(vis, out);
+	}
 
 	public void writeLabelsAndTooltips(ElementDetails details, LabelBuilder labelBuilder) {
-        ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
+		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
 	}
 }

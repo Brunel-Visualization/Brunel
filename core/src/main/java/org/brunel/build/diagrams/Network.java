@@ -22,7 +22,7 @@ import org.brunel.build.element.ElementDetails;
 import org.brunel.build.element.ElementRepresentation;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 
 class Network extends D3Diagram {
 
@@ -44,26 +44,10 @@ class Network extends D3Diagram {
 		}
 	}
 
-	public void writeBuildCommands(ScriptWriter out) {
-		DependentEdge dependentEdge = (DependentEdge) getDependentEdges().diagram;
-
-		// Determine if we want curved arcs and add a density parameter if requested
-		boolean curved = dependentEdge.curved;
-		String density = vis.tDiagramParameters.length == 0 ? "" : ", " + vis.tDiagramParameters[0].asDouble();
-
-		out.onNewLine().add("if (simulation) simulation.stop()").endStatement()
-				.add("simulation = BrunelD3.network(graph, elements[" + nodes.index
-						+ "], elements[" + getDependentEdges().index + "], zoomNode, geom, " + curved + density + ")").endStatement();
-	}
-
-	public void writePerChartDefinitions(ScriptWriter out) {
-		out.add("var graph, simulation;").comment("Node/edge graph and force simulation");
-	}
-
 	public void writeDataStructures(ScriptWriter out) {
 		ElementStructure edges = getDependentEdges();
 
-		VisSingle edgesVis = edges.vis;
+		VisElement edgesVis = edges.vis;
 
 		String edgeDataset = "elements[" + edges.index + "].data()";
 
@@ -87,17 +71,33 @@ class Network extends D3Diagram {
 		return ElementDetails.makeForDiagram(structure, ElementRepresentation.largeCircle, "point", "graph.nodes");
 	}
 
-	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
-		out.addChained("attr('r',", details.overallSize, ")");
-		ElementBuilder.writeElementAesthetics(details, true, vis, out);
+	public void writeBuildCommands(ScriptWriter out) {
+		DependentEdge dependentEdge = (DependentEdge) getDependentEdges().diagram;
+
+		// Determine if we want curved arcs and add a density parameter if requested
+		boolean curved = dependentEdge.curved;
+		String density = vis.tDiagramParameters.length == 0 ? "" : ", " + vis.tDiagramParameters[0].asDouble();
+
+		out.onNewLine().add("if (simulation) simulation.stop()").endStatement()
+				.add("simulation = BrunelD3.network(graph, elements[" + nodes.index
+						+ "], elements[" + getDependentEdges().index + "], zoomNode, geom, " + curved + density + ")").endStatement();
 	}
 
 	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
 		// Handled by the "tick" method of layout
 	}
 
+	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
+		out.addChained("attr('r',", details.overallSize, ")");
+		ElementBuilder.writeElementAesthetics(details, true, vis, out);
+	}
+
 	public void writeLabelsAndTooltips(ElementDetails details, LabelBuilder labelBuilder) {
 		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
+	}
+
+	public void writePerChartDefinitions(ScriptWriter out) {
+		out.add("var graph, simulation;").comment("Node/edge graph and force simulation");
 	}
 
 }

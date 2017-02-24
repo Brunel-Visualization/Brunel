@@ -21,7 +21,7 @@ import org.brunel.build.SymbolHandler;
 import org.brunel.build.data.TransformedData;
 import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 
@@ -33,25 +33,24 @@ import java.util.Comparator;
  */
 public class ChartStructure {
 
+	public static String makeChartID(int index) {
+		return "" + (index + 1);
+	}
 	public final int chartIndex;                            // 0-based chart index
 	public final ChartStructure outer;                      // If non-null, the enclosing element for a nested chart
 	public final Integer innerChartIndex;                   // If non-null, the index of the chart we enclose
-
 	public final ChartCoordinates coordinates;                // Coordinate system for this chart
 	public final GeoInformation geo;                        // Geo information
 	public final Diagram diagram;                            // Diagram for this chart
-
 	public final SymbolHandler symbols;                        // Symbol handler for the chart
 	public final InteractionDetails interaction;                    // Interactivity handler for the chart
-
 	public final String visIdentifier;                      // Identifier for the overall vis (the SVG ID)
-	public boolean accessible;                              // If true, generate accessible content
-
-	public final VisSingle[] elements;
+	public final VisElement[] elements;
 	public final ElementStructure[] elementStructure;
+	public boolean accessible;                              // If true, generate accessible content
 	public int chartHeight, chartWidth;                     // Pixel expanse of chart (set during building)
 
-	public ChartStructure(int chartIndex, VisSingle[] elements, TransformedData[] data,
+	public ChartStructure(int chartIndex, VisElement[] elements, TransformedData[] data,
 						  ChartStructure outer, Integer innerChartIndex, String visIdentifier) {
 		this.chartIndex = chartIndex;
 		this.elements = elements;
@@ -77,7 +76,7 @@ public class ChartStructure {
 
 		if (sourceIndex >= 0) {
 			for (ElementStructure structure : this.elementStructure) {
-				VisSingle vis = structure.vis;
+				VisElement vis = structure.vis;
 				boolean isOtherDependent = vis.positionFields().length == 0 && vis.tDiagram == null && !vis.fKeys.isEmpty();
 				if (vis.tDiagram == Diagram.dependentEdge || isOtherDependent) {
 					// No position or diagram, and we do have keys to link us to the source
@@ -97,55 +96,8 @@ public class ChartStructure {
 
 	}
 
-	public void setExtent(int chartWidth, int chartHeight) {
-		this.chartWidth = chartWidth;
-		this.chartHeight = chartHeight;
-	}
-
-	public static String makeChartID(int index) {
-		return "" + (index + 1);
-	}
-
-	public boolean nested() {
-		return outer != null;
-	}
-
-	private Diagram findDiagram() {
-		// Any diagram make the chart all diagram. Mixing diagrams and non-diagrams will
-		// likely be useless at best, but we will not throw an error for it
-		// Note that we don't count a dependent edge as a diagram for the overall chart
-		for (VisSingle e : elements)
-			if (e.tDiagram != null && e.tDiagram != Diagram.dependentEdge) return e.tDiagram;
-		return null;
-	}
-
-	private int findSourceElement(VisSingle[] elements) {
-		int candidate = -1;
-		for (int i = 0; i < elements.length; i++) {
-			VisSingle vis = elements[i];
-			if (vis.fKeys.size() == 1) {
-				// A source must have one key only
-				if (candidate < 0) {
-					candidate = i;
-				} else {
-					// If there are multiple elements with one key, we need to pick the better one
-					// Diagrams are always better sources, otherwise the one that defines positions is better.
-					if (vis.tDiagram != null) return i;
-					if (vis.positionFields().length > elements[candidate].positionFields().length) {
-						candidate = i;
-					}
-				}
-			}
-		}
-		return candidate;
-	}
-
-	private GeoInformation makeGeo(VisSingle[] elements, TransformedData[] data) {
-		// If any element specifies a map, we make the map information for all to share
-		for (VisSingle vis : elements)
-			if (vis.tDiagram == Diagram.map)
-				return new GeoInformation(elements, data, coordinates);
-		return null;
+	public String chartID() {
+		return makeChartID(chartIndex);
 	}
 
 	public Integer[] elementBuildOrder() {
@@ -155,7 +107,7 @@ public class ChartStructure {
 
 		Arrays.sort(order, new Comparator<Integer>() {
 			public int compare(Integer a, Integer b) {
-				VisSingle aa = elements[a], bb = elements[b];
+				VisElement aa = elements[a], bb = elements[b];
 
 				// Diagrams go first
 				if (aa.tDiagram != null && bb.tDiagram == null) return -1;
@@ -173,8 +125,51 @@ public class ChartStructure {
 		return order;
 	}
 
-	public String chartID() {
-		return makeChartID(chartIndex);
+	public boolean nested() {
+		return outer != null;
+	}
+
+	public void setExtent(int chartWidth, int chartHeight) {
+		this.chartWidth = chartWidth;
+		this.chartHeight = chartHeight;
+	}
+
+	private Diagram findDiagram() {
+		// Any diagram make the chart all diagram. Mixing diagrams and non-diagrams will
+		// likely be useless at best, but we will not throw an error for it
+		// Note that we don't count a dependent edge as a diagram for the overall chart
+		for (VisElement e : elements)
+			if (e.tDiagram != null && e.tDiagram != Diagram.dependentEdge) return e.tDiagram;
+		return null;
+	}
+
+	private int findSourceElement(VisElement[] elements) {
+		int candidate = -1;
+		for (int i = 0; i < elements.length; i++) {
+			VisElement vis = elements[i];
+			if (vis.fKeys.size() == 1) {
+				// A source must have one key only
+				if (candidate < 0) {
+					candidate = i;
+				} else {
+					// If there are multiple elements with one key, we need to pick the better one
+					// Diagrams are always better sources, otherwise the one that defines positions is better.
+					if (vis.tDiagram != null) return i;
+					if (vis.positionFields().length > elements[candidate].positionFields().length) {
+						candidate = i;
+					}
+				}
+			}
+		}
+		return candidate;
+	}
+
+	private GeoInformation makeGeo(VisElement[] elements, TransformedData[] data) {
+		// If any element specifies a map, we make the map information for all to share
+		for (VisElement vis : elements)
+			if (vis.tDiagram == Diagram.map)
+				return new GeoInformation(elements, data, coordinates);
+		return null;
 	}
 
 }

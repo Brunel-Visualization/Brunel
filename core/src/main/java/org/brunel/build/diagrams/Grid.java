@@ -45,8 +45,15 @@ class Grid extends Bubble {
 		}
 	}
 
-	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
-		// Nothing
+	public void defineCoordinateFunctions(ElementDetails details, ScriptWriter out) {
+		// The default symbol size is 301% -- but this means it overflows the grid.
+		// So (and this is a hack) we search for that exact default (301%) and remove it
+		GeomAttribute size = details.overallSize;
+		String replace = size.definition().replace("3.01", "1");
+		details.overallSize = size.isFunc() ? GeomAttribute.makeFunction(replace)
+				: GeomAttribute.makeConstant(replace);
+
+		defineXYR("scale_x(d.x)", "scale_y(d.y)", "scale_x(d.r) - scale_x(0)", details, out);
 	}
 
 	public void writeDataStructures(ScriptWriter out) {
@@ -62,15 +69,8 @@ class Grid extends Bubble {
 		return ElementDetails.makeForDiagram(structure, spaceFillingCircle, "point", "tree.leaves()");
 	}
 
-	public void defineCoordinateFunctions(ElementDetails details, ScriptWriter out) {
-		// The default symbol size is 301% -- but this means it overflows the grid.
-		// So (and this is a hack) we search for that exact default (301%) and remove it
-		GeomAttribute size = details.overallSize;
-		String replace = size.definition().replace("3.01", "1");
-		details.overallSize = size.isFunc() ? GeomAttribute.makeFunction(replace)
-				: GeomAttribute.makeConstant(replace);
-
-		defineXYR("scale_x(d.x)", "scale_y(d.y)", "scale_x(d.r) - scale_x(0)", details, out);
+	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
+		// Nothing
 	}
 
 	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {

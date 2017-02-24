@@ -74,7 +74,7 @@
 
 .brunel .legend .swatch use {
     stroke: black;
-    fill: grey;
+    fill: #0b9bdb;
     stroke-width: 1px;
     stroke-opacity: 0.5
 }

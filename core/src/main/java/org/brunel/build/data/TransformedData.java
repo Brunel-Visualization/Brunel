@@ -17,7 +17,7 @@
 package org.brunel.build.data;
 
 import org.brunel.data.Dataset;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 
 /**
  * This is a dataset that is the result of a transform from another data set.
@@ -25,25 +25,10 @@ import org.brunel.model.VisSingle;
  */
 public class TransformedData extends Dataset {
 
-	private final Dataset source;                           	// Original dataset the transform was applied to
-	private final TransformParameters transformParameters;     	// The parameters used for the transform
-
-	public static TransformedData make(VisSingle vis) {
+	public static TransformedData make(VisElement vis) {
 		TransformParameters params = new TransformParameterBuilder(vis).make();
 		Dataset source = vis.getDataset();
 		return new TransformedData(source, params, transform(source, params));
-	}
-
-	/**
-	 * Private constructor copies all the input from the result data (shallow copy) and stores info
-	 *
-	 * @param params parameters used to transform
-	 * @param result transformed data
-	 */
-	private TransformedData(Dataset source, TransformParameters params, Dataset result) {
-		super(result.fields, result);
-		this.transformParameters = params;
-		this.source = source;
 	}
 
 	public static Dataset transform(Dataset data, TransformParameters params) {
@@ -58,6 +43,20 @@ public class TransformedData extends Dataset {
 				.sort(params.sortCommand)                                           // sort data
 				.sortRows(params.sortRowsCommand)                                   // sort rows only
 				.stack(params.stackCommand);                                        // stack data
+	}
+	private final Dataset source;                            // Original dataset the transform was applied to
+	private final TransformParameters transformParameters;        // The parameters used for the transform
+
+	/**
+	 * Private constructor copies all the input from the result data (shallow copy) and stores info
+	 *
+	 * @param params parameters used to transform
+	 * @param result transformed data
+	 */
+	private TransformedData(Dataset source, TransformParameters params, Dataset result) {
+		super(result.fields, result);
+		this.transformParameters = params;
+		this.source = source;
 	}
 
 	public Dataset getSource() {

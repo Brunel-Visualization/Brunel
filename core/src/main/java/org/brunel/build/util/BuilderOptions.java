@@ -21,67 +21,66 @@ package org.brunel.build.util;
  */
 public class BuilderOptions {
 
-    public String visIdentifier = "visualization";              // The HTML ID of the SVG element containing the vis
-    public String controlsIdentifier = "controls";              // The HTML ID of the DIV element containing the vis controls
-    public String dataName = "table%d";                         // Pattern for the data table ID. %d is the index.
-    public String className = "BrunelVis";                      // Name of the base function
-    public DataMethod includeData = DataMethod.minimal;         // What level of data to include
-    public boolean generateBuildCode = true;                    // if true, Add javascript to build the chart initially
-    public boolean readableJavascript = true;                   // Readable or shorter
-    public boolean accessibleContent = false;                   // If true, generate accessible content
-    public String locJavaScript = "https://brunelvis.org/js";   // The location of the javascript libraries
-    public String locMaps = "https://brunelvis.org/geo";        // The location of the mapping resources
-    public String locD3 = "//cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min";            //Location of D3 in require-friendly pattern
-    public String locTopoJson = "//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min";  //Location of D3's TopoJson support in require friendly pattern
-    public String version = "2.3";                              // Which online version to use
+	public static BuilderOptions make(String[] args) {
+		BuilderOptions options = new BuilderOptions();
+		for (int i = 0; i < args.length; i++) {
+			String arg = args[i].toLowerCase();
+			if (arg.equals("-a") || arg.equals("-accessible"))
+				options.accessibleContent = true;
+			if (i + 1 < args.length) {
+				if (arg.equals("-v") || arg.equals("-version"))
+					options.version = args[i + 1];
+				if (arg.equals("-js") || arg.equals("-javascript"))
+					options.locJavaScript = args[i + 1];
+				if (arg.equals("-m") || arg.equals("-maps"))
+					options.locMaps = args[i + 1];
+			}
+		}
+		return options;
+	}
 
-    public static BuilderOptions make(String[] args) {
-        BuilderOptions options = new BuilderOptions();
-        for (int i = 0; i < args.length; i++) {
-            String arg = args[i].toLowerCase();
-            if (arg.equals("-a") || arg.equals("-accessible"))
-                options.accessibleContent = true;
-            if (i + 1 < args.length) {
-                if (arg.equals("-v") || arg.equals("-version"))
-                    options.version = args[i + 1];
-                if (arg.equals("-js") || arg.equals("-javascript"))
-                    options.locJavaScript = args[i + 1];
-                if (arg.equals("-m") || arg.equals("-maps"))
-                    options.locMaps = args[i + 1];
-            }
-        }
-        return options;
-    }
+	public static BuilderOptions makeFromENV() {
+		BuilderOptions options = new BuilderOptions();
 
-    public static BuilderOptions makeFromENV() {
-        BuilderOptions options = new BuilderOptions();
+		String config = System.getenv("BRUNEL_CONFIG");
+		if (config == null) return options;
+		String[] configs = config.split(";");
+		for (String c : configs) {
+			String[] keyVal = c.trim().split("=");
+			if (keyVal[0].trim().equalsIgnoreCase("locJavaScript")) options.locJavaScript = keyVal[1].trim();
+			else if (keyVal[0].trim().equalsIgnoreCase("locMaps")) options.locMaps = keyVal[1].trim();
+			else if (keyVal[0].trim().equalsIgnoreCase("locD3")) options.locD3 = keyVal[1].trim();
+			else if (keyVal[0].trim().equalsIgnoreCase("locTopoJson")) options.locTopoJson = keyVal[1].trim();
+		}
 
-        String config = System.getenv("BRUNEL_CONFIG");
-        if (config == null) return options;
-        String[] configs = config.split(";");
-        for (String c : configs) {
-            String[] keyVal = c.trim().split("=");
-            if (keyVal[0].trim().equalsIgnoreCase("locJavaScript")) options.locJavaScript = keyVal[1].trim();
-            else if (keyVal[0].trim().equalsIgnoreCase("locMaps")) options.locMaps = keyVal[1].trim();
-            else if (keyVal[0].trim().equalsIgnoreCase("locD3")) options.locD3 = keyVal[1].trim();
-            else if (keyVal[0].trim().equalsIgnoreCase("locTopoJson")) options.locTopoJson = keyVal[1].trim();
-        }
+		return options;
+	}
 
-        return options;
-    }
+	public static String fullLocation(String requireLocation) {
+		return "https:" + requireLocation + ".js";
+	}
+	public String visIdentifier = "visualization";              // The HTML ID of the SVG element containing the vis
+	public String controlsIdentifier = "controls";              // The HTML ID of the DIV element containing the vis controls
+	public String dataName = "table%d";                         // Pattern for the data table ID. %d is the index.
+	public String className = "BrunelVis";                      // Name of the base function
+	public DataMethod includeData = DataMethod.minimal;         // What level of data to include
+	public boolean generateBuildCode = true;                    // if true, Add javascript to build the chart initially
+	public boolean readableJavascript = true;                   // Readable or shorter
+	public boolean accessibleContent = false;                   // If true, generate accessible content
+	public String locJavaScript = "https://brunelvis.org/js";   // The location of the javascript libraries
+	public String locMaps = "https://brunelvis.org/geo";        // The location of the mapping resources
+	public String locD3 = "//cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min";            //Location of D3 in require-friendly pattern
+	public String locTopoJson = "//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min";  //Location of D3's TopoJson support in require friendly pattern
+	public String version = "2.3";                              // Which online version to use
 
-    public static String fullLocation(String requireLocation ) {
-    	return "https:" + requireLocation + ".js";
-    }
-
-    /**
-     * none -  no data described
-     * full - send full data set
-     * columns - send only required columns
-     * minimal - send the minimal data needed by the system
-     */
-    public enum DataMethod {
-        none, full, columns, minimal
-    }
+	/**
+	 * none -  no data described
+	 * full - send full data set
+	 * columns - send only required columns
+	 * minimal - send the minimal data needed by the system
+	 */
+	public enum DataMethod {
+		none, full, columns, minimal
+	}
 
 }

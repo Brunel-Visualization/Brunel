@@ -102,6 +102,30 @@ public class DataTableWriter {
 		}
 	}
 
+	private void appendValue(StringBuilder row, Field field, Object value) {
+		if (value == null) {
+			row.append("null");
+		} else if (value instanceof Range) {
+			Range range = (Range) value;
+			row.append('[');
+			appendValue(row, field, range.low);
+			row.append(',');
+			appendValue(row, field, range.high);
+			row.append(']');
+		} else if (field.isDate()) {
+			DateFormat df = (DateFormat) field.property("dateFormat");
+			String d = df.ordinal() >= YearMonthDay.ordinal()
+					? dateFormatter.format(Data.asDate(value))
+					: dateTimeFormatter.format(Data.asDate(value));
+			row.append(Data.quote(d));
+		} else if (field.isNumeric()) {
+			Double d = Data.asNumeric(value);
+			if (d == null) row.append("null");
+			else row.append(Data.format(d, false));
+		} else
+			row.append(Data.quote(value.toString()));
+	}
+
 	private Set<Field> findUsed(Dataset dataset) {
 		Set<Field> result = new LinkedHashSet<>();
 		for (ElementStructure e : elements) {
@@ -115,6 +139,20 @@ public class DataTableWriter {
 			}
 		}
 		return result;
+	}
+
+	// If the row contains any nulls, return null for the whole row
+	private String makeRowText(Field[] fields, int r) {
+		StringBuilder row = new StringBuilder();
+		row.append("[");
+		for (int i = 0; i < fields.length; i++) {
+			Field field = fields[i];
+			if (i > 0) row.append(", ");
+			Object value = field.value(r);
+			appendValue(row, field, value);
+		}
+		row.append("]");
+		return row.toString();
 	}
 
 	private List<Field> stripSynthetic(Collection<Field> fields) {
@@ -176,43 +214,5 @@ public class DataTableWriter {
 		}
 		out.add("]");
 		out.indentLess().onNewLine().add("}").endStatement();
-	}
-
-	// If the row contains any nulls, return null for the whole row
-	private String makeRowText(Field[] fields, int r) {
-		StringBuilder row = new StringBuilder();
-		row.append("[");
-		for (int i = 0; i < fields.length; i++) {
-			Field field = fields[i];
-			if (i > 0) row.append(", ");
-			Object value = field.value(r);
-			appendValue(row, field, value);
-		}
-		row.append("]");
-		return row.toString();
-	}
-
-	private void appendValue(StringBuilder row, Field field, Object value) {
-		if (value == null) {
-			row.append("null");
-		} else if (value instanceof Range) {
-			Range range = (Range) value;
-			row.append('[');
-			appendValue(row, field, range.low);
-			row.append(',');
-			appendValue(row, field, range.high);
-			row.append(']');
-		} else if (field.isDate()) {
-			DateFormat df = (DateFormat) field.property("dateFormat");
-			String d = df.ordinal() >= YearMonthDay.ordinal()
-					? dateFormatter.format(Data.asDate(value))
-					: dateTimeFormatter.format(Data.asDate(value));
-			row.append(Data.quote(d));
-		} else if (field.isNumeric()) {
-			Double d = Data.asNumeric(value);
-			if (d == null) row.append("null");
-			else row.append(Data.format(d, false));
-		} else
-			row.append(Data.quote(value.toString()));
 	}
 }

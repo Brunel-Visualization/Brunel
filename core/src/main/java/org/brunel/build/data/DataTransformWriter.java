@@ -23,7 +23,7 @@ import org.brunel.build.util.BuildUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Field;
 import org.brunel.data.summary.FieldRowComparison;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 import org.brunel.model.VisTypes.Interaction;
@@ -45,12 +45,65 @@ public class DataTransformWriter {
 
 	private final ElementStructure structure;
 	private final ScriptWriter out;
-	private final VisSingle vis;
+	private final VisElement vis;
 
 	public DataTransformWriter(ElementStructure structure, ScriptWriter out) {
 		this.structure = structure;
 		this.vis = structure.vis;
 		this.out = out;
+	}
+
+	/**
+	 * The keys are used so that transitions when the data changes are logically consistent.
+	 * We want the right things to morph into each color as the data changes, and not be
+	 * dependent on table order. The following code works out the most likely items to be the keys
+	 * based on the type of chart being produced
+	 *
+	 * @return list of keys
+	 */
+	public List<String> makeKeyFields() {
+		// If we have defined keys, util them
+		if (!vis.fKeys.isEmpty()) return asFields(vis.fKeys);
+
+		// Handle diagrams specially
+		if (vis.tDiagram != null)
+			return makeKeyFieldForDiagram(vis.tDiagram);
+
+		if (vis.tElement.producesSingleShape) {
+			// If we split by aesthetics, they are the keys
+			List<String> list = makeSplitFields();
+			removeSynthetic(list);
+			return list;
+		}
+
+		// Only want categorical / date position fields, also aesthetic fields
+		Set<String> result = new LinkedHashSet<>();
+
+		if (vis.fY.size() > 1) {
+			// The Y fields all become "#values"
+			result.add("#values");
+			addIfCategorical(result, vis.fX);
+		} else {
+			addIfCategorical(result, vis.positionFields());
+		}
+		addIfCategorical(result, vis.aestheticFields());
+
+		removeSynthetic(result);
+
+		if (!suitableForKey(result)) {
+			result.clear();
+			result.add("#row");
+
+			// Multiple rows have the same "#row" when we do make series
+			if (vis.fY.size() > 1) result.add("#series");
+
+			// Multiple rows have the same "#row" when we split up a list field using "each"
+			for (Entry<Param, String> e : vis.fTransform.entrySet()) {
+				if (e.getValue().equals("each")) result.add(e.getKey().asField());
+			}
+		}
+
+		return new ArrayList<>(result);
 	}
 
 	public void writeDataManipulation() {
@@ -64,6 +117,157 @@ public class DataTransformWriter {
 			writeHookup(requiredFields);
 		}
 		out.indentLess().onNewLine().add("}").ln();
+	}
+
+	private void addIfCategorical(Collection<String> result, String... fieldNames) {
+		for (String f : fieldNames) {
+			Field field = structure.data.field(f, true);
+			if ((field.preferCategorical() || field.isDate()) && !field.isProperty("calculated")) result.add(f);
+		}
+	}
+
+	private void addIfCategorical(Collection<String> result, Collection<Param> fieldNames) {
+		for (Param p : fieldNames) {
+			String f = p.asField(structure.data);
+			Field field = structure.data.field(f);
+			if ((field.preferCategorical() || field.isDate()) && !field.isProperty("calculated")) result.add(f);
+		}
+	}
+
+	private List<String> asFields(List<Param> items) {
+		List<String> fields = new ArrayList<>();
+		for (Param p : items) fields.add(p.asField());
+		return fields;
+	}
+
+	/*
+	Builds a mapping from the fields we will use in the built data object to an indexing 0,1,2,3, ...
+ 	*/
+	private Map<String, Integer> createOutputFields() {
+		VisElement vis = structure.vis;
+		LinkedHashSet<String> needed = new LinkedHashSet<>();
+		if (vis.fY.size() > 1 && structure.data.field("#series") != null) {
+			// A series needs special handling -- Y's are different in output than input
+			if (vis.stacked) {
+				// Stacked series chart needs lower and upper values
+				needed.add("#values$lower");
+				needed.add("#values$upper");
+			}
+			// Always need series and values
+			needed.add("#series");
+			needed.add("#values");
+
+			// And then all the X fields
+			for (Param p : vis.fX) needed.add(p.asField());
+
+			// And the non-position fields
+			Collections.addAll(needed, vis.nonPositionFields());
+		} else {
+			if (vis.stacked) {
+				// Stacked chart needs lower and upper Y field values as well as the rest
+				String y = vis.fY.get(0).asField();
+				needed.add(y + "$lower");
+				needed.add(y + "$upper");
+			}
+			Collections.addAll(needed, vis.usedFields(true));
+		}
+
+		// We always want the row field and selection
+		needed.add("#row");
+		needed.add("#selection");
+
+		// Convert to map for easy lookup
+		Map<String, Integer> result = new HashMap<>();
+		for (String s : needed) result.put(s, result.size());
+		return result;
+	}
+
+	private void defineKeyFieldFunction(List<String> fields, boolean actsOnRowObject, Map<String, Integer> usedFields) {
+		// Add the split fields accessor
+		out.add("function(d) { return ");
+		if (fields.isEmpty()) {
+			out.add("'ALL'");
+		} else {
+			for (int i = 0; i < fields.size(); i++) {
+				String s = fields.get(i);
+				if (i > 0) out.add("+ '|' + ");
+				out.add("f" + usedFields.get(s));
+				out.add(actsOnRowObject ? ".value(d.row)" : ".value(d)");
+			}
+		}
+		out.add(" }");
+	}
+
+	private List<String> makeKeyFieldForDiagram(Diagram diagram) {
+		Set<String> result = new LinkedHashSet<>();
+
+		if (diagram == Diagram.network) {
+			// The following handles the case when we use the edges as y values to make a key field for the nodes
+			if (vis.fY.size() > 1) return Collections.singletonList("#values");
+		}
+
+		// All position fields are needed for diagrams
+		Collections.addAll(result, vis.positionFields());
+
+		// Categorical aesthetic fields for everything except maps
+		if (diagram != Diagram.map) {
+			addIfCategorical(result, vis.aestheticFields());
+		}
+
+		// Check it's OK
+		if (suitableForKey(result)) {
+			// Try and remove "#selection" if we can
+			ArrayList<String> list = new ArrayList<>(result);
+			if (result.contains("#selection")) {
+				list.remove("#selection");
+				if (!suitableForKey(list)) list.add("#selection");
+			}
+			return list;
+		}
+
+		// If not, we give up and just use the row
+		return Collections.singletonList("#row");
+	}
+
+	private List<String> makeSplitFields() {
+		// Start with all the aesthetics
+		ArrayList<String> splitters = new ArrayList<>();
+
+		// Always add splits and color
+		for (Param p : vis.fSplits) splitters.add(p.asField());
+		for (Param p : vis.fColor) splitters.add(p.asField());
+		for (Param p : vis.fOpacity) splitters.add(p.asField());
+		for (Param p : vis.fCSS) splitters.add(p.asField());
+		for (Param p : vis.fSymbol) splitters.add(p.asField());
+
+		// We handle sized areas specially -- don't split using the size for them
+		if (vis.tElement != Element.line && vis.tElement != Element.path) {
+			for (Param p : vis.fSize) splitters.add(p.asField());
+		}
+
+		return splitters;
+	}
+
+	private void removeSynthetic(Collection<String> result) {
+		// Remove synthetic fields except #values and #series
+		result.remove("#selection");
+		result.remove("#row");
+		result.remove("#count");
+	}
+
+	private boolean suitableForKey(Collection<String> result) {
+		if (result.isEmpty()) return false;
+		Field[] fields = new Field[result.size()];
+
+		int index = 0;
+		for (String s : result) fields[index++] = structure.data.field(s);
+
+		// Sort and see if any adjacent 'keys' are the same
+		FieldRowComparison rowComparison = new FieldRowComparison(fields, null, false);
+		int[] order = rowComparison.makeSortedOrder();
+		for (int i = 1; i < order.length; i++)
+			if (rowComparison.compare(order[i], order[i - 1]) == 0) return false;
+		return true;
 	}
 
 	private void writeDataTransforms(TransformedData data) {
@@ -188,210 +392,6 @@ public class DataTransformWriter {
 		// Ignore if nothing to write
 		if (!command.isEmpty())
 			out.addChained(name, "(" + out.quote(command) + ")");
-	}
-
-	private void defineKeyFieldFunction(List<String> fields, boolean actsOnRowObject, Map<String, Integer> usedFields) {
-		// Add the split fields accessor
-		out.add("function(d) { return ");
-		if (fields.isEmpty()) {
-			out.add("'ALL'");
-		} else {
-			for (int i = 0; i < fields.size(); i++) {
-				String s = fields.get(i);
-				if (i > 0) out.add("+ '|' + ");
-				out.add("f" + usedFields.get(s));
-				out.add(actsOnRowObject ? ".value(d.row)" : ".value(d)");
-			}
-		}
-		out.add(" }");
-	}
-
-	/**
-	 * The keys are used so that transitions when the data changes are logically consistent.
-	 * We want the right things to morph into each color as the data changes, and not be
-	 * dependent on table order. The following code works out the most likely items to be the keys
-	 * based on the type of chart being produced
-	 *
-	 * @return list of keys
-	 */
-	public List<String> makeKeyFields() {
-		// If we have defined keys, util them
-		if (!vis.fKeys.isEmpty()) return asFields(vis.fKeys);
-
-		// Handle diagrams specially
-		if (vis.tDiagram != null)
-			return makeKeyFieldForDiagram(vis.tDiagram);
-
-		if (vis.tElement.producesSingleShape) {
-			// If we split by aesthetics, they are the keys
-			List<String> list = makeSplitFields();
-			removeSynthetic(list);
-			return list;
-		}
-
-		// Only want categorical / date position fields, also aesthetic fields
-		Set<String> result = new LinkedHashSet<>();
-
-		if (vis.fY.size() > 1) {
-			// The Y fields all become "#values"
-			result.add("#values");
-			addIfCategorical(result, vis.fX);
-		} else {
-			addIfCategorical(result, vis.positionFields());
-		}
-		addIfCategorical(result, vis.aestheticFields());
-
-		removeSynthetic(result);
-
-		if (!suitableForKey(result)) {
-			result.clear();
-			result.add("#row");
-
-			// Multiple rows have the same "#row" when we do make series
-			if (vis.fY.size() > 1) result.add("#series");
-
-			// Multiple rows have the same "#row" when we split up a list field using "each"
-			for (Entry<Param, String> e : vis.fTransform.entrySet()) {
-				if (e.getValue().equals("each")) result.add(e.getKey().asField());
-			}
-		}
-
-		return new ArrayList<>(result);
-	}
-
-	private void removeSynthetic(Collection<String> result) {
-		// Remove synthetic fields except #values and #series
-		result.remove("#selection");
-		result.remove("#row");
-		result.remove("#count");
-	}
-
-	private List<String> makeKeyFieldForDiagram(Diagram diagram) {
-		Set<String> result = new LinkedHashSet<>();
-
-		if (diagram == Diagram.network) {
-			// The following handles the case when we use the edges as y values to make a key field for the nodes
-			if (vis.fY.size() > 1) return Collections.singletonList("#values");
-		}
-
-		// All position fields are needed for diagrams
-		Collections.addAll(result, vis.positionFields());
-
-		// Categorical aesthetic fields for everything except maps
-		if (diagram != Diagram.map) {
-			addIfCategorical(result, vis.aestheticFields());
-		}
-
-		// Check it's OK
-		if (suitableForKey(result)) {
-			// Try and remove "#selection" if we can
-			ArrayList<String> list = new ArrayList<>(result);
-			if (result.contains("#selection")) {
-				list.remove("#selection");
-				if (!suitableForKey(list)) list.add("#selection");
-			}
-			return list;
-		}
-
-		// If not, we give up and just use the row
-		return Collections.singletonList("#row");
-	}
-
-	private void addIfCategorical(Collection<String> result, String... fieldNames) {
-		for (String f : fieldNames) {
-			Field field = structure.data.field(f, true);
-			if ((field.preferCategorical() || field.isDate()) && !field.isProperty("calculated")) result.add(f);
-		}
-	}
-
-	private void addIfCategorical(Collection<String> result, Collection<Param> fieldNames) {
-		for (Param p : fieldNames) {
-			String f = p.asField(structure.data);
-			Field field = structure.data.field(f);
-			if ((field.preferCategorical() || field.isDate()) && !field.isProperty("calculated")) result.add(f);
-		}
-	}
-
-	private List<String> makeSplitFields() {
-		// Start with all the aesthetics
-		ArrayList<String> splitters = new ArrayList<>();
-
-		// Always add splits and color
-		for (Param p : vis.fSplits) splitters.add(p.asField());
-		for (Param p : vis.fColor) splitters.add(p.asField());
-		for (Param p : vis.fOpacity) splitters.add(p.asField());
-		for (Param p : vis.fCSS) splitters.add(p.asField());
-		for (Param p : vis.fSymbol) splitters.add(p.asField());
-
-		// We handle sized areas specially -- don't split using the size for them
-		if (vis.tElement != Element.line && vis.tElement != Element.path) {
-			for (Param p : vis.fSize) splitters.add(p.asField());
-		}
-
-		return splitters;
-	}
-
-	private List<String> asFields(List<Param> items) {
-		List<String> fields = new ArrayList<>();
-		for (Param p : items) fields.add(p.asField());
-		return fields;
-	}
-
-	private boolean suitableForKey(Collection<String> result) {
-		if (result.isEmpty()) return false;
-		Field[] fields = new Field[result.size()];
-
-		int index = 0;
-		for (String s : result) fields[index++] = structure.data.field(s);
-
-		// Sort and see if any adjacent 'keys' are the same
-		FieldRowComparison rowComparison = new FieldRowComparison(fields, null, false);
-		int[] order = rowComparison.makeSortedOrder();
-		for (int i = 1; i < order.length; i++)
-			if (rowComparison.compare(order[i], order[i - 1]) == 0) return false;
-		return true;
-	}
-
-	/*
-	Builds a mapping from the fields we will use in the built data object to an indexing 0,1,2,3, ...
- 	*/
-	private Map<String, Integer> createOutputFields() {
-		VisSingle vis = structure.vis;
-		LinkedHashSet<String> needed = new LinkedHashSet<>();
-		if (vis.fY.size() > 1 && structure.data.field("#series") != null) {
-			// A series needs special handling -- Y's are different in output than input
-			if (vis.stacked) {
-				// Stacked series chart needs lower and upper values
-				needed.add("#values$lower");
-				needed.add("#values$upper");
-			}
-			// Always need series and values
-			needed.add("#series");
-			needed.add("#values");
-
-			// And then all the X fields
-			for (Param p : vis.fX) needed.add(p.asField());
-
-			// And the non-position fields
-			Collections.addAll(needed, vis.nonPositionFields());
-		} else {
-			if (vis.stacked) {
-				// Stacked chart needs lower and upper Y field values as well as the rest
-				String y = vis.fY.get(0).asField();
-				needed.add(y + "$lower");
-				needed.add(y + "$upper");
-			}
-			Collections.addAll(needed, vis.usedFields(true));
-		}
-
-		// We always want the row field and selection
-		needed.add("#row");
-		needed.add("#selection");
-
-		// Convert to map for easy lookup
-		Map<String, Integer> result = new HashMap<>();
-		for (String s : needed) result.put(s, result.size());
-		return result;
 	}
 
 }

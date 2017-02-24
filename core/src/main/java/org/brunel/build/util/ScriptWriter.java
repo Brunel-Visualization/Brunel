@@ -32,10 +32,10 @@ public class ScriptWriter {
 
 	private static final Set<Character> NO_SPACE_BEFORE = new HashSet<>(Arrays.asList(':', ',', ';', '(', ')', ']'));
 	private static final String INDENT = "  ";
+	public final BuilderOptions options;
 	private final int lineMaxLength;
 	private final PrintWriter out;
 	private final StringWriter base;
-	public final BuilderOptions options;
 	private int consecutiveNewLines;
 	private int indentLevel;
 
@@ -45,20 +45,6 @@ public class ScriptWriter {
 		base = new StringWriter();
 		out = new PrintWriter(base);
 		consecutiveNewLines = 1;
-	}
-
-	public ScriptWriter addChained(Object... items) {
-		if (options.readableJavascript) {
-			return indentMore().onNewLine().add(".").add(items).indentLess();
-		} else
-			return add(".").add(items);
-	}
-
-	public ScriptWriter indentLess() {
-		indentLevel--;
-		if (indentLevel < 0)
-			throw new IllegalStateException("indentLess not matched by an indentMore -- negative indent level requested");
-		return this;
 	}
 
 	public ScriptWriter add(Object... items) {
@@ -88,20 +74,11 @@ public class ScriptWriter {
 		return this;
 	}
 
-	public ScriptWriter onNewLine() {
-		if (consecutiveNewLines == 0) ln();
-		return this;
-	}
-
-	public ScriptWriter indentMore() {
-		indentLevel++;
-		return this;
-	}
-
-	public ScriptWriter ln() {
-		consecutiveNewLines++;
-		out.println();
-		return this;
+	public ScriptWriter addChained(Object... items) {
+		if (options.readableJavascript) {
+			return indentMore().onNewLine().add(".").add(items).indentLess();
+		} else
+			return add(".").add(items);
 	}
 
 	public ScriptWriter addQuoted(Object... items) {
@@ -113,19 +90,6 @@ public class ScriptWriter {
 		}
 		indentLess().indentLess();
 		return this;
-	}
-
-	public int currentColumn() {
-		base.flush();
-		StringBuffer b = base.getBuffer();
-		int end = b.length() - 1;
-		int eol = b.lastIndexOf("\n");
-		if (eol < 0) eol = 0;
-		return end - eol;
-	}
-
-	public String quote(Object item) {
-		return item == null ? "null" : Data.quote(item.toString());
 	}
 
 	public ScriptWriter addQuotedCollection(Collection<?> items) {
@@ -173,13 +137,49 @@ public class ScriptWriter {
 		return base.toString();
 	}
 
+	public int currentColumn() {
+		base.flush();
+		StringBuffer b = base.getBuffer();
+		int end = b.length() - 1;
+		int eol = b.lastIndexOf("\n");
+		if (eol < 0) eol = 0;
+		return end - eol;
+	}
+
+	public ScriptWriter endStatement() {
+		return add(";").ln();
+	}
+
 	public ScriptWriter indent() {
 		if (options.readableJavascript) out.print(INDENT);
 		return this;
 	}
 
-	public ScriptWriter endStatement() {
-		return add(";").ln();
+	public ScriptWriter indentLess() {
+		indentLevel--;
+		if (indentLevel < 0)
+			throw new IllegalStateException("indentLess not matched by an indentMore -- negative indent level requested");
+		return this;
+	}
+
+	public ScriptWriter indentMore() {
+		indentLevel++;
+		return this;
+	}
+
+	public ScriptWriter ln() {
+		consecutiveNewLines++;
+		out.println();
+		return this;
+	}
+
+	public ScriptWriter onNewLine() {
+		if (consecutiveNewLines == 0) ln();
+		return this;
+	}
+
+	public String quote(Object item) {
+		return item == null ? "null" : Data.quote(item.toString());
 	}
 
 	public void titleComment(Object... items) {

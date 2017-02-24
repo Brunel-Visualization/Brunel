@@ -21,7 +21,7 @@ import org.brunel.build.data.DataTransformWriter;
 import org.brunel.build.data.TransformedData;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.data.Data;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertEquals;
@@ -51,7 +51,7 @@ public class TestMakeKeyFields {
 
 	private String getElementKeys(String commands) {
 		String command = "data('sample:US States.csv') " + commands;
-		VisSingle vis = Action.parse(command).apply().getSingle().makeCanonical();
+		VisElement vis = Action.parse(command).apply().getSingle().makeCanonical();
 		ElementStructure structure = new ElementStructure(null, 0, vis, TransformedData.make(vis) , null);
 		DataTransformWriter builder = new DataTransformWriter(structure, null);
 		return Data.join(builder.makeKeyFields());

@@ -23,7 +23,7 @@ import org.brunel.build.util.BuildUtil;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.data.Field;
 import org.brunel.maps.GeoMapping;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes.Element;
 
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ import java.util.List;
 public class ElementStructure {
 	public final ChartStructure chart;                    // The owning chart
 	public final int index;                                // index of this element within the parent chart
-	public final VisSingle vis;                            // definition of the element
+	public final VisElement vis;                            // definition of the element
 	public final TransformedData data;                    // data set to use for this element (transformation has been applied)
 	public final GeoMapping geo;                        // geographical mapping info for this element
 	public final String styleSymbol;                    // This is the symbol defined in the style for the element
@@ -44,7 +44,7 @@ public class ElementStructure {
 
 	public List<Dependency> dependencies;
 
-	public ElementStructure(ChartStructure chartStructure, int elementIndex, VisSingle vis, TransformedData data, GeoMapping geo) {
+	public ElementStructure(ChartStructure chartStructure, int elementIndex, VisElement vis, TransformedData data, GeoMapping geo) {
 		this.chart = chartStructure;
 		this.index = elementIndex;
 		this.vis = vis;
@@ -74,14 +74,6 @@ public class ElementStructure {
 		return getDependencyBase() != null;
 	}
 
-	// Returns the element we depend on
-	private ElementStructure getDependencyBase() {
-		for (Dependency dependency : dependencies) {
-			if (dependency.dependent == this) return dependency.base;
-		}
-		return null;
-	}
-
 	public boolean isDependentEdge() {
 		return vis.tElement == Element.edge && isDependent();
 	}
@@ -92,5 +84,13 @@ public class ElementStructure {
 		for (int i = 0; i < references.length; i++)
 			references[i] = idToPointName + BuildUtil.writeCall(keys[i]) + ")";
 		return references;
+	}
+
+	// Returns the element we depend on
+	private ElementStructure getDependencyBase() {
+		for (Dependency dependency : dependencies) {
+			if (dependency.dependent == this) return dependency.base;
+		}
+		return null;
 	}
 }

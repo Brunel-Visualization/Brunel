@@ -19,7 +19,7 @@ package org.brunel.action;
 import org.brunel.action.parse.ParseGrammar;
 import org.brunel.data.Data;
 import org.brunel.model.VisException;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 
@@ -56,7 +56,7 @@ public class ActionStep {
         return name + '(' + Data.join(parameters) + ')';
     }
 
-    VisSingle apply(VisSingle item) {
+    VisElement apply(VisElement item) {
         try {
             if (name.equals("x")) {
                 item.x(parameters);

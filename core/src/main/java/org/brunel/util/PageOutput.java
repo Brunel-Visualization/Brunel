@@ -136,8 +136,8 @@ public class PageOutput {
         }
 
         writeSection(svgItem, "<svg id=\"visualization\" width=\""
-                + builder.visWidth + "\" height=\""
-                + builder.visHeight + "\"></svg>");
+                + builder.getWidth() + "\" height=\""
+                + builder.getHeight() + "\"></svg>");
 
         if (builder.getControls().isNeeded()) {
             writeSection(controls, "<div id=\"controls\" class=\"brunel\"></div>");

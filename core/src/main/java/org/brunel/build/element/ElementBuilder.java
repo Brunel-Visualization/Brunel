@@ -11,7 +11,7 @@ import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Field;
-import org.brunel.model.VisSingle;
+import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes;
 import org.brunel.model.style.StyleTarget;
 
@@ -39,7 +39,7 @@ public abstract class ElementBuilder {
 		labelBuilder.addTooltips(details);
 	}
 
-	public static void writeElementAesthetics(ElementDetails details, boolean filterToDataOnly, VisSingle vis, ScriptWriter out) {
+	public static void writeElementAesthetics(ElementDetails details, boolean filterToDataOnly, VisElement vis, ScriptWriter out) {
 		boolean showsColor = !vis.fColor.isEmpty();
 		boolean showsStrokeSize = details.isStroked() && !vis.fSize.isEmpty();
 		boolean showsOpacity = !vis.fOpacity.isEmpty();
@@ -115,6 +115,14 @@ public abstract class ElementBuilder {
 				.addChained("attr('height', function(d) { return this.r.h })");
 	}
 
+	public static ElementBuilder make(ElementStructure structure, ScriptWriter out, ScaleBuilder scalesBuilder) {
+		if (!structure.vis.tGuides.isEmpty())
+			return new GuideElementBuilder(structure, out, scalesBuilder);
+		if (structure.diagram != null)
+			return new DiagramElementBuilder(structure, out, scalesBuilder);
+		return new CoordinateElementBuilder(structure, out, scalesBuilder);
+	}
+
 	private static boolean centerDefined(ElementDetails elementDef) {
 		return elementDef.x.center != null && elementDef.y.center != null;
 	}
@@ -141,7 +149,7 @@ public abstract class ElementBuilder {
 		}
 	}
 
-	private static GeomAttribute getOverallSize(VisSingle vis, ElementDetails def) {
+	private static GeomAttribute getOverallSize(VisElement vis, ElementDetails def) {
 		StyleTarget target = StyleTarget.makeElementTarget(null, def.classes);
 		ModelUtil.Size size = ModelUtil.getSize(vis, target, "size");
 		boolean needsFunction = vis.fSize.size() == 1;
@@ -170,9 +178,8 @@ public abstract class ElementBuilder {
 			return GeomAttribute.makeConstant(content);
 		}
 	}
-
 	protected final ScriptWriter out;                             // To write code out to
-	protected final VisSingle vis;                                // Element definition
+	protected final VisElement vis;                                // Element definition
 	protected final ScaleBuilder scales;                        // Helper to build scales
 	protected final InteractionDetails interaction;
 	protected final LabelBuilder labelBuilder;                  // Helper to build labels
@@ -224,14 +231,6 @@ public abstract class ElementBuilder {
 		writeRemovalOnExit(out, "selection");
 	}
 
-	public static ElementBuilder make(ElementStructure structure, ScriptWriter out, ScaleBuilder scalesBuilder) {
-		if (!structure.vis.tGuides.isEmpty())
-			return new GuideElementBuilder(structure, out, scalesBuilder);
-		if (structure.diagram != null)
-			return new DiagramElementBuilder(structure, out, scalesBuilder);
-		return new CoordinateElementBuilder(structure, out, scalesBuilder);
-	}
-
 	public abstract ElementDetails makeDetails();
 
 	public abstract void preBuildDefinitions();
@@ -241,6 +240,17 @@ public abstract class ElementBuilder {
 	public abstract void writeDiagramDataStructures();
 
 	public abstract void writePerChartDefinitions();
+
+	protected abstract void defineAllElementFeatures(ElementDetails details);
+
+	protected abstract void defineLabeling(ElementDetails details);
+
+	protected abstract void defineUpdateState(ElementDetails details);
+
+	/* The key function ensure we have object constancy when animating */
+	protected abstract String getKeyFunction();
+
+	protected abstract void writeDiagramEntry(ElementDetails details);
 
 	protected void defineLabelSettings(ElementDetails details) {
 		int collisionDetectionGranularity;
@@ -259,7 +269,41 @@ public abstract class ElementBuilder {
 				collisionDetectionGranularity);   // Labels
 	}
 
-	protected abstract void defineLabeling(ElementDetails details);
+	protected void definePathsAndSplits(ElementDetails elementDef) {
+
+		// Now actual paths
+		if (vis.tElement == VisTypes.Element.area) {
+			out.add("var path = d3.area().x(x).y1(y2).y0(y1)");
+		} else if (vis.tElement.producesSingleShape) {
+			// Choose the top line if there is a range (say for stacking)
+			String yDef = elementDef.y.right == null ? "y" : "y2";
+			if (vis.fSize.size() == 1) {
+				out.add("var path = BrunelD3.sizedPath().x(x).y(" + yDef + ")");
+				GeomAttribute size = elementDef.y.size != null ? elementDef.y.size : elementDef.overallSize;
+				out.addChained("r( function(d) { return " + size.definition() + "})");
+			} else {
+				out.add("var path = d3.line().x(x).y(" + yDef + ")");
+			}
+		}
+		if (vis.tUsing == VisTypes.Using.interpolate) {
+			out.add(".curve(d3.curveCatmullRom)");
+		}
+		out.endStatement();
+		constructSplitPath();
+	}
+
+	protected void defineWedgePath() {
+		out.add("var path = d3.arc().innerRadius(0)");
+		if (vis.fSize.isEmpty())
+			out.add(".outerRadius(geom.inner_radius)");
+		else
+			out.add(".outerRadius(function(d) { return size(d) * geom.inner_radius })");
+		if (vis.fRange == null && !vis.stacked)
+			out.addChained("startAngle(0).endAngle(y)");
+		else
+			out.addChained("startAngle(y1).endAngle(y2)");
+		out.endStatement();
+	}
 
 	protected void setGeometry() {
 		ElementDetails e = structure.details;
@@ -305,6 +349,51 @@ public abstract class ElementBuilder {
 		e.overallSize = getOverallSize(vis, e);
 	}
 
+	protected void writeCoordinateDefinition(ElementDetails details) {
+		// If we need reference locations, write them in first
+		if (details.getRefLocation() != null) {
+			out.addChained("each(function(d) { this.r = " + details.getRefLocation().definition() + "})");
+			out.addChained("style('visibility', function() { return validReference(this.r) ? 'visible' : 'hidden'})");
+		}
+
+		if (details.requiresSplitting())
+			out.addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
+		else if (details.isPath()) {
+			// Annoyingly, D3 adds a comma before L commands for geo maps, which is illegal and Firefox chokes on it
+			if (vis.tDiagram == VisTypes.Diagram.map)
+				out.addChained("attr('d', function(d) { return path(d).replace(/,L/g, 'L').replace(/,Z/g, 'Z') })");
+			else
+				out.addChained("attr('d', path)");
+		} else if (details.representation == ElementRepresentation.rect)
+			defineRect(details, out);
+		else if (details.representation == ElementRepresentation.segment) {
+			out.addChained("attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)");
+		} else if (details.representation == ElementRepresentation.text)
+			defineText(details, vis);
+		else if (details.representation == ElementRepresentation.symbol) {
+			defineSymbol(details, structure, out);
+		} else if (details.representation == ElementRepresentation.pointLikeCircle
+				|| details.representation == ElementRepresentation.spaceFillingCircle
+				|| details.representation == ElementRepresentation.largeCircle)
+			defineCircle(details, out);
+	}
+
+	protected void writeCoordinateFunctions(ElementDetails details) {
+
+		writeDimLocations(details.x, "x", "w");
+		writeDimLocations(details.y, "y", "h");
+
+		if (details.getRefLocation() != null) {
+			// This will be used to ensure missing references are not displayed with junk locations
+			out.add("function validReference(r) {");
+			if (details.representation == ElementRepresentation.segment)
+				out.add("return r[0][0] != null && r[0][1] != null && r[1][0] != null && r[1][1] != null");
+			else
+				out.add("return r[0][0] != null && r[0][1] != null");
+			out.add("}").endStatement();
+		}
+	}
+
 	private void addStylingForRoundRectangle() {
 		// Added rounded styling if needed
 		StyleTarget target = StyleTarget.makeElementTarget("rect", "element", "point");
@@ -321,8 +410,6 @@ public abstract class ElementBuilder {
 		out.add("var splits = BrunelD3.makePathSplits(" + params + ");").ln();
 	}
 
-	protected abstract void defineAllElementFeatures(ElementDetails details);
-
 	private void defineInitialState(ElementDetails details) {
 		// Define the initial placement of the items
 		out.onNewLine().ln().comment("Define selection entry operations")
@@ -335,31 +422,6 @@ public abstract class ElementBuilder {
 			out.addChained("style('pointer-events', 'none')");
 		Accessibility.addAccessibilityLabels(structure, out, labelBuilder);
 		out.indentLess().onNewLine().add("}").ln();
-	}
-
-	protected abstract void writeDiagramEntry(ElementDetails details);
-
-	protected void definePathsAndSplits(ElementDetails elementDef) {
-
-		// Now actual paths
-		if (vis.tElement == VisTypes.Element.area) {
-			out.add("var path = d3.area().x(x).y1(y2).y0(y1)");
-		} else if (vis.tElement.producesSingleShape) {
-			// Choose the top line if there is a range (say for stacking)
-			String yDef = elementDef.y.right == null ? "y" : "y2";
-			if (vis.fSize.size() == 1) {
-				out.add("var path = BrunelD3.sizedPath().x(x).y(" + yDef + ")");
-				GeomAttribute size = elementDef.y.size != null ? elementDef.y.size : elementDef.overallSize;
-				out.addChained("r( function(d) { return " + size.definition() + "})");
-			} else {
-				out.add("var path = d3.line().x(x).y(" + yDef + ")");
-			}
-		}
-		if (vis.tUsing == VisTypes.Using.interpolate) {
-			out.add(".curve(d3.curveCatmullRom)");
-		}
-		out.endStatement();
-		constructSplitPath();
 	}
 
 	private void defineReferenceFunctions(ElementDetails e, Field[] keys) {
@@ -376,31 +438,13 @@ public abstract class ElementBuilder {
 		}
 	}
 
-	private void defineText(ElementDetails elementDef, VisSingle vis) {
+	private void defineText(ElementDetails elementDef, VisElement vis) {
 		// If the center is not defined, this has been placed using a translation transform
 		if (elementDef.x.center != null) out.addChained("attr('x'," + elementDef.x.center + ")");
 		if (elementDef.y.center != null) out.addChained("attr('y'," + elementDef.y.center + ")");
 		out.addChained("attr('dy', '0.35em').text(labeling.content)");
 		LabelBuilder.addFontSizeAttribute(vis, out);
 	}
-
-	protected abstract void defineUpdateState(ElementDetails details);
-
-	protected void defineWedgePath() {
-		out.add("var path = d3.arc().innerRadius(0)");
-		if (vis.fSize.isEmpty())
-			out.add(".outerRadius(geom.inner_radius)");
-		else
-			out.add(".outerRadius(function(d) { return size(d) * geom.inner_radius })");
-		if (vis.fRange == null && !vis.stacked)
-			out.addChained("startAngle(0).endAngle(y)");
-		else
-			out.addChained("startAngle(y1).endAngle(y2)");
-		out.endStatement();
-	}
-
-	/* The key function ensure we have object constancy when animating */
-	protected abstract String getKeyFunction();
 
 	private GeomAttribute getSize(Field[] fields, String extent, ScalePurpose purpose, ElementDimension dim, ElementRepresentation rep) {
 		boolean needsFunction = dim.sizeFunction != null;
@@ -534,51 +578,6 @@ public abstract class ElementBuilder {
 			def.x.right = GeomAttribute.makeFunction("projection([" + xHigh + "," + yHigh + "])[0]");
 			def.y.left = GeomAttribute.makeFunction("projection([" + xLow + "," + yLow + "])[1]");
 			def.y.right = GeomAttribute.makeFunction("projection([" + xHigh + "," + yHigh + "])[1]");
-		}
-	}
-
-	protected void writeCoordinateDefinition(ElementDetails details) {
-		// If we need reference locations, write them in first
-		if (details.getRefLocation() != null) {
-			out.addChained("each(function(d) { this.r = " + details.getRefLocation().definition() + "})");
-			out.addChained("style('visibility', function() { return validReference(this.r) ? 'visible' : 'hidden'})");
-		}
-
-		if (details.requiresSplitting())
-			out.addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
-		else if (details.isPath()) {
-			// Annoyingly, D3 adds a comma before L commands for geo maps, which is illegal and Firefox chokes on it
-			if (vis.tDiagram == VisTypes.Diagram.map)
-				out.addChained("attr('d', function(d) { return path(d).replace(/,L/g, 'L').replace(/,Z/g, 'Z') })");
-			else
-				out.addChained("attr('d', path)");
-		} else if (details.representation == ElementRepresentation.rect)
-			defineRect(details, out);
-		else if (details.representation == ElementRepresentation.segment) {
-			out.addChained("attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)");
-		} else if (details.representation == ElementRepresentation.text)
-			defineText(details, vis);
-		else if (details.representation == ElementRepresentation.symbol) {
-			defineSymbol(details, structure, out);
-		} else if (details.representation == ElementRepresentation.pointLikeCircle
-				|| details.representation == ElementRepresentation.spaceFillingCircle
-				|| details.representation == ElementRepresentation.largeCircle)
-			defineCircle(details, out);
-	}
-
-	protected void writeCoordinateFunctions(ElementDetails details) {
-
-		writeDimLocations(details.x, "x", "w");
-		writeDimLocations(details.y, "y", "h");
-
-		if (details.getRefLocation() != null) {
-			// This will be used to ensure missing references are not displayed with junk locations
-			out.add("function validReference(r) {");
-			if (details.representation == ElementRepresentation.segment)
-				out.add("return r[0][0] != null && r[0][1] != null && r[1][0] != null && r[1][1] != null");
-			else
-				out.add("return r[0][0] != null && r[0][1] != null");
-			out.add("}").endStatement();
 		}
 	}
 
