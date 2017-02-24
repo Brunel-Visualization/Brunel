@@ -29,7 +29,7 @@ public class ChartBuilder {
 
 	private final VisInfo visInfo;                      // information on the main visualization
 	private final BuilderOptions options;               // options for building
-	private final double[] loc;							// where to place the chart
+	private final ChartLocation location;                 // where to place the chart
 	private final ScriptWriter out;                     // where to write to
 
 	private ElementBuilder[] elementBuilders;           // Builder for each element
@@ -37,10 +37,10 @@ public class ChartBuilder {
 	private AxisBuilder axisBuilder;                    // Axis for the current chart
 	private LegendBuilder legendBuilder;                // Legends for the current chart
 
-	public ChartBuilder(VisInfo visInfo, BuilderOptions options, double[] loc, ScriptWriter out) {
+	public ChartBuilder(VisInfo visInfo, BuilderOptions options, double[] location, ScriptWriter out) {
 		this.visInfo = visInfo;
 		this.options = options;
-		this.loc = loc;
+		this.location = new ChartLocation(visInfo.width, visInfo.height, location);
 		this.out = out;
 	}
 
@@ -65,10 +65,10 @@ public class ChartBuilder {
 			data[i] = TransformedData.make(elements[i]);
 		}
 
-		ChartStructure structure = new ChartStructure(chartIndex, elements, data, outer, innerChartIndex, options.visIdentifier);
+		ChartStructure structure = new ChartStructure(chartIndex, elements, location, data, outer, innerChartIndex, options.visIdentifier);
 		structure.accessible = options.accessibleContent;
 
-		defineChart(structure, loc);
+		defineChart(structure);
 		for (ElementStructure e : structure.elementStructure) buildElement(e);
 		endChart(structure);
 
@@ -133,27 +133,23 @@ public class ChartBuilder {
 	private void buildElement(ElementStructure structure) {
 		try {
 
-			visInfo.controls.buildControls(structure);            	// build controls
-			defineElement(structure);                    			// define the element
+			visInfo.controls.buildControls(structure);                // build controls
+			defineElement(structure);                                // define the element
 			// we need to add these to the main style sheet with correct element class identifier
 			if (structure.vis.styles != null) {
 				StyleSheet styles = structure.vis.styles.replaceClass("currentElement", "element" + structure.elementID());
 				visInfo.visStyles.add(styles, "chart" + structure.chart.chartID());
 			}
-			visInfo.allElements.add(structure);                    	// store the built data
+			visInfo.allElements.add(structure);                        // store the built data
 		} catch (Exception e) {
 			throw VisException.makeBuilding(e, structure.vis);
 		}
 	}
 
-	private void createBuilders(ChartStructure structure, double[] chartMargins) {
-		// Define scales
-		double chartWidth = visInfo.width - chartMargins[1] - chartMargins[3];
-		double chartHeight = visInfo.height - chartMargins[0] - chartMargins[2];
-		structure.setExtent((int) chartWidth, (int) chartHeight);
+	private void createBuilders(ChartStructure structure) {
 		scalesBuilder = new ScaleBuilder(structure, out);
 		legendBuilder = new LegendBuilder(structure, out);
-		axisBuilder = new AxisBuilder(structure, scalesBuilder, legendBuilder, out);
+		axisBuilder = new AxisBuilder(structure, scalesBuilder, out);
 
 		ElementStructure[] structures = structure.elementStructure;
 		elementBuilders = new ElementBuilder[structures.length];
@@ -161,29 +157,24 @@ public class ChartBuilder {
 			elementBuilders[i] = ElementBuilder.make(structures[i], out, scalesBuilder);
 	}
 
-	private void defineChart(ChartStructure structure, double[] location) {
+	private void defineChart(ChartStructure structure) {
+
+		ChartTitleBuilder title = new ChartTitleBuilder(structure, "header");
+		ChartTitleBuilder sub = new ChartTitleBuilder(structure, "footer");
+		structure.location.setTitleMargins(title.verticalSpace(), sub.verticalSpace());
 
 		// Calculate the margins for this chart within the overall size
-		double[] chartMargins = new double[]{
-				location[0] / 100, location[1] / 100, location[2] / 100, location[3] / 100
-		};
-
 		// Create the scales and element builders.   This also creates the interaction instance.
-		createBuilders(structure, chartMargins);
+		createBuilders(structure);
 
 		// Write the class definition function
 		out.titleComment("Define chart #" + structure.chartID(), "in the visualization");
 		out.add("charts[" + structure.chartIndex + "] = function(parentNode, filterRows) {").ln();
 		out.indentMore();
 
-		double[] margins = axisBuilder.marginsTLBR();
-		ChartTitleBuilder title = new ChartTitleBuilder(structure, "header");
-		ChartTitleBuilder sub = new ChartTitleBuilder(structure, "footer");
-		margins[0] += title.verticalSpace();
-		margins[2] += sub.verticalSpace();
 		axisBuilder.setAdditionalHAxisOffset(sub.verticalSpace());
 
-		out.add("var geom = BrunelD3.geometry(parentNode || vis.node(),", chartMargins, ",", margins, "),")
+		out.add("var geom = BrunelD3.geometry(parentNode || vis.node(),", location.insets, ",", location.innerMargins(), "),")
 				.indentMore()
 				.onNewLine().add("elements = [];").comment("Array of elements in this chart")
 				.indentLess();

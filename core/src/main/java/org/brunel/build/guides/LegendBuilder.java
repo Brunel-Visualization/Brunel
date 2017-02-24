@@ -76,6 +76,8 @@ public class LegendBuilder {
 			ticksDefinition = null;
 			title = null;
 		}
+
+		structure.location.setLegendWidth(legendWidth());
 	}
 
 	/**
@@ -101,7 +103,7 @@ public class LegendBuilder {
 		}
 	}
 
-	public int legendWidth() {
+	private int legendWidth() {
 		if (!needsLegends()) return 0;
 		AxisRequirement legendRequirement = new AxisRequirement(VisTypes.Axes.none, -1);
 		Field field = colorField != null ? colorField : symbolField;

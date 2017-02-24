@@ -50,11 +50,12 @@ class ParallelCoordinates extends D3Diagram {
 			AxisRequirement req = new AxisRequirement(VisTypes.Axes.y, i);
 			AxisDetails details = new AxisDetails(req, new Field[]{f}, f.preferCategorical());
 			details.setTextDetails(chart, false);
-			details.layoutVertically(chart.chartHeight);
+			details.layoutVertically(chart.location.height);
 			axes[i] = details;
 		}
 		return axes;
 	}
+
 	private final Set<String> TRANSFORMS = new HashSet<>(Arrays.asList("linear", "log", "root"));
 	private final Field[] fields;               // The fields in the table
 	private final Padding padding;              // Space around the edges

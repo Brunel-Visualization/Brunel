@@ -16,6 +16,7 @@
 
 package org.brunel.build.info;
 
+import org.brunel.build.ChartLocation;
 import org.brunel.build.InteractionDetails;
 import org.brunel.build.SymbolHandler;
 import org.brunel.build.data.TransformedData;
@@ -36,7 +37,9 @@ public class ChartStructure {
 	public static String makeChartID(int index) {
 		return "" + (index + 1);
 	}
+
 	public final int chartIndex;                            // 0-based chart index
+	public final ChartLocation location;                    // chart location information
 	public final ChartStructure outer;                      // If non-null, the enclosing element for a nested chart
 	public final Integer innerChartIndex;                   // If non-null, the index of the chart we enclose
 	public final ChartCoordinates coordinates;                // Coordinate system for this chart
@@ -48,12 +51,12 @@ public class ChartStructure {
 	public final VisElement[] elements;
 	public final ElementStructure[] elementStructure;
 	public boolean accessible;                              // If true, generate accessible content
-	public int chartHeight, chartWidth;                     // Pixel expanse of chart (set during building)
 
-	public ChartStructure(int chartIndex, VisElement[] elements, TransformedData[] data,
+	public ChartStructure(int chartIndex, VisElement[] elements, ChartLocation location, TransformedData[] data,
 						  ChartStructure outer, Integer innerChartIndex, String visIdentifier) {
 		this.chartIndex = chartIndex;
 		this.elements = elements;
+		this.location = location;
 		this.outer = outer;
 		this.innerChartIndex = innerChartIndex;
 		this.visIdentifier = visIdentifier;
@@ -127,11 +130,6 @@ public class ChartStructure {
 
 	public boolean nested() {
 		return outer != null;
-	}
-
-	public void setExtent(int chartWidth, int chartHeight) {
-		this.chartWidth = chartWidth;
-		this.chartHeight = chartHeight;
 	}
 
 	private Diagram findDiagram() {

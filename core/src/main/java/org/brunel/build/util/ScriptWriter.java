@@ -62,6 +62,8 @@ public class ScriptWriter {
 				s = Data.join((Object[]) item);
 			} else if (item instanceof double[]) {
 				s = Data.join((double[]) item);
+			} else if (item instanceof int[]) {
+				s = Data.join((int[]) item);
 			} else if (item.getClass().isArray()) {
 				throw new IllegalStateException("Cannot handle array of type: " + item.getClass());
 			} else {

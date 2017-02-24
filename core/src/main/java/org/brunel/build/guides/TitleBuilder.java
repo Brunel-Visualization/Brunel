@@ -58,8 +58,8 @@ public abstract class TitleBuilder {
 		return content;
 	}
 
-	public double verticalSpace() {
-		return content() == null ? 0 : fontSize + padding.vertical();
+	public int verticalSpace() {
+		return content() == null ? 0 : Math.round(fontSize + padding.vertical());
 	}
 
 	/**

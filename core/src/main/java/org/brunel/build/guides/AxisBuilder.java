@@ -16,6 +16,7 @@
 
 package org.brunel.build.guides;
 
+import org.brunel.build.ChartLocation;
 import org.brunel.build.ScaleBuilder;
 import org.brunel.build.ScalePurpose;
 import org.brunel.build.info.ChartCoordinates;
@@ -34,9 +35,8 @@ public class AxisBuilder {
 	private final ScriptWriter out;                 // Write definitions to here
 
 	private final AxisDetails hAxis, vAxis;         // Details for each axis
-	private final double[] marginTLBR;              // Margins between the coordinate area and the chart space
 
-	public AxisBuilder(ChartStructure structure, ScaleBuilder scalesBuilder, LegendBuilder legendBuilder, ScriptWriter out) {
+	public AxisBuilder(ChartStructure structure, ScaleBuilder scalesBuilder, ScriptWriter out) {
 		this.structure = structure;
 		this.out = out;
 
@@ -61,20 +61,19 @@ public class AxisBuilder {
             layout the vertical axis based on that, then layout the horizontal
          */
 
-		vAxis.layoutVertically(structure.chartHeight - hAxis.estimatedSimpleSizeWhenHorizontal());
-		hAxis.layoutHorizontally(structure.chartWidth - vAxis.size - legendBuilder.legendWidth(), scalesBuilder.elementsFillHorizontal(ScalePurpose.x));
+		ChartLocation location = structure.location;
 
-		// Set the margins
-		int marginTop = vAxis.topGutter;                                    // Only the vAxis needs space here
-		int marginLeft = Math.max(vAxis.size, hAxis.leftGutter);            // Width of vAxis, or horizontal gutter
-		int marginBottom = Math.max(hAxis.size, vAxis.bottomGutter);        // Height of hAxis, or gutter for vAxis
-		int marginRight = Math.max(hAxis.rightGutter, legendBuilder.legendWidth());         // Overflow for hAxis, or legend
+		vAxis.layoutVertically(location.getAvailableHeight() - hAxis.estimatedSimpleSizeWhenHorizontal());
+		hAxis.layoutHorizontally(location.getAvailableWidth() - vAxis.size, scalesBuilder.elementsFillHorizontal(ScalePurpose.x));
 
-		marginTLBR = new double[]{marginTop, marginLeft, marginBottom, marginRight};
-	}
+		// Order is T L B R
+		location.setAxisMargins(
+				vAxis.topGutter,                                // Only the vAxis needs space here
+				Math.max(vAxis.size, hAxis.leftGutter),    		// Height of vAxis, or gutter for hAxis
+				Math.max(hAxis.size, vAxis.bottomGutter),       // Height of hAxis, or gutter for vAxis
+				hAxis.rightGutter                               // Only the hAxis needs space here
+		);
 
-	public double[] marginsTLBR() {
-		return this.marginTLBR;
 	}
 
 	public boolean needsAxes() {
