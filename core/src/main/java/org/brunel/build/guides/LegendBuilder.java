@@ -33,6 +33,7 @@ import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Legends;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -47,25 +48,47 @@ import java.util.List;
  */
 public class LegendBuilder {
 
-	private final Field colorField;            // Field to use for the color legend
+	private final Field colorField;             // Field to use for the color legend
 	private final Field symbolField;            // Field to use for the symbol legend
 	private final ChartStructure structure;
-	private final ScriptWriter out;                 // Write definitions to here
+	private final ScriptWriter out;             // Write definitions to here
+	private final String ticksDefinition;       // The ticks to display
+	private final String[] title;               // Legend title, wrapped into lines
+	private DateFormat dateFormat;                // Function to use to format dates (set during processing)
 
 	public LegendBuilder(ChartStructure structure, ScriptWriter out) {
 		this.structure = structure;
 		this.out = out;
+
+		// Find the color and/or symbol fields to legend
 		this.colorField = getTargetField("color", null);
 		this.symbolField = getTargetField("symbol", colorField);
+
+		// Build ticks definition for the legend (if both symbol and color are defined, they are the same)
+		if (colorField != null) {
+			ticksDefinition = getTicksDefinition("color", colorField);
+			title = makeTitle(colorField.label);
+		} else if (symbolField != null) {
+			ticksDefinition = getTicksDefinition("symbol", symbolField);
+			title = makeTitle(symbolField.label);
+
+		} else {
+			ticksDefinition = null;
+			title = null;
+		}
+	}
+
+	private String[] makeTitle(String label) {
+		return new String[]{Data.quote(label)};
 	}
 
 	/**
 	 * Return true if we need a legend
 	 *
-	 * @return true if one is needed
+	 * @return true if a legend is needed
 	 */
 	public boolean needsLegends() {
-		return colorField != null || symbolField != null;
+		return ticksDefinition != null;
 	}
 
 	/**
@@ -108,10 +131,11 @@ public class LegendBuilder {
 	public int legendWidth() {
 		if (!needsLegends()) return 0;
 		AxisRequirement legendRequirement = new AxisRequirement(VisTypes.Axes.none, -1);
-		AxisDetails legendAxis = new AxisDetails(legendRequirement, new Field[]{colorField}, colorField.preferCategorical());
+		Field field = colorField != null ? colorField : symbolField;
+		AxisDetails legendAxis = new AxisDetails(legendRequirement, new Field[]{field}, field.preferCategorical());
 		legendAxis.setTextDetails(structure, false);
 		int spaceNeededForTicks = 32 + legendAxis.maxCategoryWidth();
-		int spaceNeededForTitle = colorField.label.length() * 7;                // Assume 7 pixels per character
+		int spaceNeededForTitle = field.label.length() * 7;                // Assume 7 pixels per character
 		return 6 + Math.max(spaceNeededForTicks, spaceNeededForTitle);                // Add some spacing
 	}
 
@@ -134,62 +158,66 @@ public class LegendBuilder {
 	 * @param e the element we are writing at the moment
 	 */
 	public void defineUsageForLegend(ElementStructure e) {
-		if (colorField == getAestheticField(e, "color")) {
+		boolean defineColor = colorField != null && colorField == getAestheticField(e, "color");
+		boolean defineSymbol = symbolField != null && symbolField == getAestheticField(e, "symbol");
 
-			DateFormat dateFormat = null;
-			String legendTicks;
-			if (colorField.preferCategorical()) {
-				// Categorical data can just grab it from the domain
-				legendTicks = getTargetScaleName() + ".domain()";
-				// Binned numeric data reads in opposite direction (bottom to top)
-				if (colorField.isBinned() && colorField.isNumeric())
-					legendTicks += ".reverse()";
-			} else {
-				// Numeric must calculate a nice range
-				NumericScale details = Auto.makeNumericScale(colorField, true, new double[]{0, 0}, 0.25, 7, false);
-				Double[] divisions = details.divisions;
-				if (details.granular) {
-					// Granular data has divisions BETWEEN the values, not at them, so need to fix that
-					Double[] newDiv = new Double[divisions.length - 1];
-					for (int i = 0; i < newDiv.length; i++) newDiv[i] = (divisions[i] + divisions[i + 1]) / 2;
-					divisions = newDiv;
-				}
-				// Reverse
-				for (int i = 0; i < divisions.length / 2; i++) {
-					Double t = divisions[divisions.length - 1 - i];
-					divisions[divisions.length - 1 - i] = divisions[i];
-					divisions[i] = t;
-				}
+		if (defineColor || defineSymbol) {
+			out.onNewLine().add("legends._legend = legends._legend || { title: [")
+					.add(Data.join(title)).add("], ");
+			if (dateFormat != null)
+				out.add("dateFormat: BrunelData.util_DateFormat." + dateFormat.name() + ", ");
 
-				if (colorField.isDate()) {
-					// We cannot use the format for the date field, as it may be much more detailed than we need
-					// We can instead look at the difference between ticks to get the best format
-					DateUnit dateUnit = DateStats.getUnit(Math.abs(divisions[divisions.length - 1] - divisions[0]));
-					dateFormat = DateStats.getFormat(dateUnit, Math.abs(divisions[1] - divisions[0]));
+			out.onNewLine().indent().add("ticks: ").add(ticksDefinition).add("}").endStatement();
 
-					BuildUtil.DateBuilder dateBuilder = new BuildUtil.DateBuilder();
-					String[] divs = new String[divisions.length];
-					for (int i = 0; i < divs.length; i++)
-						divs[i] = dateBuilder.make(Data.asDate(divisions[i]), dateFormat, true);
+			if (defineColor) out.add("legends._legend.color = scale_color").endStatement();
+			if (defineSymbol) out.add("legends._legend.symbol = scale_symbol").endStatement();
+		}
+	}
 
-					legendTicks = "[" + Data.join(divs) + "]";
-				} else {
-					legendTicks = "[" + Data.join(divisions) + "]";
-				}
+	private String getTicksDefinition(String name, Field field) {
+		String legendTicks;
+		if (field.preferCategorical()) {
+			// Categorical data can just grab it from the domain
+			legendTicks = "scale_" + name + ".domain()";
+			// Binned numeric data reads in opposite direction (bottom to top)
+			if (field.isBinned() && field.isNumeric())
+				legendTicks += ".reverse()";
+		} else {
+			// Numeric must calculate a nice range
+			NumericScale details = Auto.makeNumericScale(field, true, new double[]{0, 0}, 0.25, 7, false);
+			Double[] divisions = details.divisions;
+			if (details.granular) {
+				// Granular data has divisions BETWEEN the values, not at them, so need to fix that
+				Double[] newDiv = new Double[divisions.length - 1];
+				for (int i = 0; i < newDiv.length; i++) newDiv[i] = (divisions[i] + divisions[i + 1]) / 2;
+				divisions = newDiv;
+			}
+			// Reverse
+			for (int i = 0; i < divisions.length / 2; i++) {
+				Double t = divisions[divisions.length - 1 - i];
+				divisions[divisions.length - 1 - i] = divisions[i];
+				divisions[i] = t;
 			}
 
-			String title = colorField.label;
-			if (title == null) title = colorField.name;
+			if (field.isDate()) {
+				// We cannot use the format for the date field, as it may be much more detailed than we need
+				// We can instead look at the difference between ticks to get the best format
+				DateUnit dateUnit = DateStats.getUnit(Math.abs(divisions[divisions.length - 1] - divisions[0]));
+				dateFormat = DateStats.getFormat(dateUnit, Math.abs(divisions[1] - divisions[0]));
 
-			out.onNewLine().add("legends._legend = legends._legend || { title: ")
-					.add(Data.quote(title)).add(", ticks: ").add(legendTicks).add("}").endStatement()
-					.add("legends._legend.color = scale_color").endStatement();
+				BuildUtil.DateBuilder dateBuilder = new BuildUtil.DateBuilder();
+				String[] divs = new String[divisions.length];
+				for (int i = 0; i < divs.length; i++) {
+					Date date = Data.asDate(divisions[i]);
+					divs[i] = dateBuilder.make(date, dateFormat, true);
+				}
 
-			if (dateFormat != null)
-				out.add("legends._legend.dateFormat = BrunelData.util_DateFormat." + dateFormat.name())
-						.endStatement();
-
+				legendTicks = "[" + Data.join(divs) + "]";
+			} else {
+				legendTicks = "[" + Data.join(divisions) + "]";
+			}
 		}
+		return legendTicks;
 	}
 
 	/**
@@ -197,10 +225,6 @@ public class LegendBuilder {
 	 */
 	public void writeLegends() {
 		if (needsLegends()) out.onNewLine().add("BrunelD3.addLegend(legends, legends._legend)").endStatement();
-	}
-
-	private String getTargetScaleName() {
-		return "scale_color";
 	}
 
 }

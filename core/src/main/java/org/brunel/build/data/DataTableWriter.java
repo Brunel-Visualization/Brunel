@@ -37,6 +37,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
+import static org.brunel.data.util.DateFormat.YearMonthDay;
+
 /**
  * Write the Javascript for the data
  */
@@ -47,15 +49,17 @@ public class DataTableWriter {
 	private final ScriptWriter out;
 	private final BuilderOptions options;
 
-	private final SimpleDateFormat dateFormatter;
+	private final SimpleDateFormat dateFormatter, dateTimeFormatter;
 
 	public DataTableWriter(VisItem main, Set<ElementStructure> elements, ScriptWriter out, BuilderOptions options) {
 		this.main = main;
 		this.elements = elements;
 		this.out = out;
 		this.options = options;
-		dateFormatter = new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss");
+		dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
 		dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+		dateTimeFormatter = new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss");
+		dateTimeFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
 
 	public void write() {
@@ -199,8 +203,11 @@ public class DataTableWriter {
 			appendValue(row, field, range.high);
 			row.append(']');
 		} else if (field.isDate()) {
-			DateFormat dateFormat = (DateFormat) field.property("dateFormat");
-			row.append(Data.quote(dateFormatter.format(Data.asDate(value))));
+			DateFormat df = (DateFormat) field.property("dateFormat");
+			String d = df.ordinal() >= YearMonthDay.ordinal()
+					? dateFormatter.format(Data.asDate(value))
+					: dateTimeFormatter.format(Data.asDate(value));
+			row.append(Data.quote(d));
 		} else if (field.isNumeric()) {
 			Double d = Data.asNumeric(value);
 			if (d == null) row.append("null");

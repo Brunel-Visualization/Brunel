@@ -124,10 +124,10 @@ var BrunelD3 = (function () {
         } : "#_sym_square");
 
         // Create an appropriate text function nicely to format the ticks
-        var textf;
-        if (dateFormat)
+        var ticks = def.ticks, textf;
+        if (def.dateFormat)
             textf = function (d) {
-                return dateFormat.format(d);
+                return def.dateFormat.format(d)
             };
         else if (typeof(ticks[0]) == 'number') {
             var range = Math.abs(ticks[ticks.length - 1] - ticks[0]),
