@@ -33,7 +33,6 @@ import org.brunel.data.auto.NumericScale;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
 import org.brunel.model.VisSingle;
-import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 
@@ -43,8 +42,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-
-import static org.brunel.model.VisTypes.Coordinates.coords;
 
 /**
  * Adds scales and axes; also guesses the right size to leave for axes
@@ -99,11 +96,6 @@ public class ScaleBuilder {
 
 	private Param getSymbol(VisSingle vis) {
 		return vis.fSymbol.isEmpty() ? null : vis.fSymbol.get(0);
-	}
-
-	// Determine if position are the same
-	private boolean same(Field a, Field b) {
-		return a.name.equals(b.name) && a.preferCategorical() == b.preferCategorical();
 	}
 
 	public boolean allNumeric(Field[] fields) {
@@ -326,8 +318,8 @@ public class ScaleBuilder {
 		}
 
 		// We util a nice scale only for rectangular coordinates
-		boolean nice = purpose.isCoord && coords != Coordinates.polar;
-		double[] padding = getNumericPaddingFraction(purpose, coords);
+		boolean nice = purpose.isCoord && !structure.coordinates.isPolar();
+		double[] padding = getNumericPaddingFraction(purpose);
 
 		// Areas and line should fill the horizontal dimension, as should any binned field
 		if (scaleField.isBinned() || isX && elementsFillHorizontal(ScalePurpose.x)) {
@@ -496,10 +488,10 @@ public class ScaleBuilder {
 		return combined;
 	}
 
-	private double[] getNumericPaddingFraction(ScalePurpose purpose, Coordinates coords) {
+	private double[] getNumericPaddingFraction(ScalePurpose purpose) {
 		double[] padding = new double[]{0, 0};
-		if (!purpose.isCoord) return padding;                // None for aesthetics
-		if (coords == Coordinates.polar) return padding;     // None for polar angle
+		if (!purpose.isCoord) return padding;                	// None for aesthetics
+		if (structure.coordinates.isPolar()) return padding;  	// None for polar angle
 		for (VisSingle e : elements) {
 			boolean noBottomYPadding = e.tElement == Element.bar || e.tElement == Element.area || e.tElement == Element.line;
 			if (e.tElement == Element.text) {

@@ -83,11 +83,8 @@ public class DataMinimizer {
 		// Adding constants is easy -- we can add as many as we like
 		a.constantsCommand = mergeSemiColonSeparatedLists(a.constantsCommand, b.constantsCommand);
 
-		// Eliminating the use of "each" is safe -- it means that when we summarize using
-		// that field, we use the combined list as a key, which is just less efficient
-		a.eachCommand = eliminateIfDifferent(a.eachCommand, b.eachCommand);
-
-		// The transforms (bins, ranks) must be the same, otherwise summaries will be all wrong
+		// The each and transforms (bins, ranks) must be the same, otherwise summaries will be all wrong
+		if (!a.eachCommand.equals(b.eachCommand)) return null;
 		if (!a.transformCommand.equals(b.transformCommand)) return null;
 
 		// The summaries must also match

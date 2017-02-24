@@ -57,30 +57,6 @@ public class Dataset extends Informative implements Serializable {
 	}
 
 	public static Dataset makeTyped(String[] names, String[] options, Object[][] rows) {
-		/*
-				var col, field, i, opt, fields = [];
-        for (i = 0; i < data.names.length; i++) {
-            col = data.rows.map(function (x) {
-                var v = x[i];
-                if (v && v.constructor === Array) return BrunelData.util_Range.make(v[0], v[1]);
-                return v
-            });                               // Extract i'th item
-            var name = data.names[i];
-            field = new BrunelData.Field(name, null, new BrunelData.values_ColumnProvider(col));
-            opt = data.options ? data.options[i] : "string";     // Apply type options
-            // Synthe
-            if (opt == 'synthetic') {
-                if (name == '#row') opt = 'list';
-                if (name == '#count') opt = 'numeric';
-            }
-            if (opt == 'numeric') field = BrunelData.Data.toNumeric(field);
-            else if (opt == 'date') field = BrunelData.Data.toDate(field);
-            else if (opt == 'list') field = BrunelData.Data.toList(field);
-            fields.push(field);
-        }
-        return BrunelData.Dataset.make(fields, false);
-
-		 */
 		Field[] fields = new Field[names.length];
 
 		for (int k = 0; k < fields.length; k++) {
@@ -116,6 +92,8 @@ public class Dataset extends Informative implements Serializable {
 				fields[k].set("date", true);
 				fields[k].setNumeric();
 			}
+			if (type.equals("list")) fields[k] = Data.toList(fields[k]);
+
 
 		}
 		return Dataset.make(fields, false);
@@ -264,7 +242,8 @@ public class Dataset extends Informative implements Serializable {
 	 * @return increased data set
 	 */
 	public Dataset each(String command) {
-		return Each.transform(this, command);
+		// Do not transform if already summarized
+		return isSummarized() ? this : Each.transform(this, command);
 	}
 
 	public Dataset replaceFields(Field[] fields) {
