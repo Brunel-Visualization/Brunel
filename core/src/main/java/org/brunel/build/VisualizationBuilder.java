@@ -394,7 +394,7 @@ public class VisualizationBuilder {
 		dataBuilder.writeDataManipulation();
 
 		scalesBuilder.writeAestheticScales(structure);
-		legendBuilder.writeLegends(structure.vis);
+		legendBuilder.defineUsageForLegend(structure);
 
 		elementBuilder.preBuildDefinitions();
 
@@ -471,6 +471,8 @@ public class VisualizationBuilder {
 			out.onNewLine().add("elements[" + i + "].build(time);");
 
 		for (ElementBuilder builder : elementBuilders) builder.writeBuildCommands();
+
+		legendBuilder.writeLegends();
 
 		out.indentLess().onNewLine().add("}").ln();
 
