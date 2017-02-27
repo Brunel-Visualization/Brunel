@@ -1,5 +1,37 @@
 # 2.3 Release Notes
 
+## Data Pipeline Change
+
+To support Brunel's increasing use in large data applications, we have modified the way we handle data sets.
+Previously, all rows of data were copied into the Javascript for processing, even if a summary was being performed.
+This could be very inefficient for large data sets that were being summarized. In version 2.3 we have modified the
+behavior so that if we detect that not all the data are needed, we only send summarized data to the Javascript front
+end. Further, the data set is tagged as summarized so that the data processing steps for summarizing it are not
+performed a second time.
+ 
+The rules for when we can summarize a data set and pass it down are complex, but in general:
+ 
+ * If there is no summary operation requested (no explicit sum, mean, or other summary operation and no use of #count),
+   then summarization is not performed.
+ * If a data set is used for two elements, then they must have the same way of summarizing the data 
+  (same summary, transforms, each statements), otherwise summarization is not performed
+ * filter statements (since they dynamically change the data in the client) stop summarization of a data set 
+ * Using the Javascript API to pre-modify the data (by defining the `pre` command) is not recognized because it is
+   a client-side operation. If you wish to use `pre` it is strong recommended you change the build option for data to
+   be `columns` to stop automatic summarization (see below)
+   
+### Builder Options
+
+You can specify the field `includeData` in the `BuilderOptions` structure to modify the data pipeline. The default
+value is `minimal`:
+
+ * `none` - no data set information will be written. It is the responsibility of the user to provide data sets
+ * `full` - all data passed to Brunel will be sent to the Javascript, even columns not needed for the chart
+ * `columns` - only the columns needed for the visualization will be written (this was the version 2.2 default)
+ * `minimal` - only columns needed will be passed down, and summarization will be performed if possible
+
+
+
 ## Symbol Aesthetic
 
 This aesthetic is used only for point elements, and replaces the default circle with a glyph, drawn as a path.
