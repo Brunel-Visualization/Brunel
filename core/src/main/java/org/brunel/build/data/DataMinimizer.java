@@ -44,6 +44,10 @@ public class DataMinimizer {
 
 			// There is no point trying to minimize; without a summarization we need all the data anyway
 			if (p.summaryCommand.isEmpty()) return null;
+
+			// Filtering stops summarization
+			if (!p.filterCommand.isEmpty()) return null;
+
 		}
 
 		// Create initial reduced set of parameters
