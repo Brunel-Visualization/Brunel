@@ -247,7 +247,7 @@ public class SymbolHandler {
 
 	private Map<String, Element> getSymbolDefinitions(URI uri) {
 
-		if (uri == BASIC_SYMBOLS_URI) return basicSymbols;
+		if (uri == BASIC_SYMBOLS_URI) return getBasicSymbols();
 		if (uri == EXTENDED_SYMBOLS_URI) return getExtendedSymbols();
 
 		synchronized (uriToSymbols) {

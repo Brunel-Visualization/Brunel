@@ -88,7 +88,8 @@ public class GeoMapLabels extends D3Diagram {
 		// Get the IDs of the symbols we want to use and define a function to use them
 		String[] ids = symbols.getSymbolIDs(structure, new String[]{"star", "square", "circle"});
 		out.add("function mapLabelSymbol(c) { return !c ? " + Data.quote(ids[0]) +
-				": (c==1 ? " + Data.quote(ids[1]) + " : " + Data.quote(ids[2]) + ")}");
+				": (c==1 ? " + Data.quote(ids[1]) + " : " + Data.quote(ids[2]) + ")}")
+		.endStatement();
 	}
 
 	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
