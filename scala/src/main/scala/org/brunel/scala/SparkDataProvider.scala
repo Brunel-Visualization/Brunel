@@ -50,7 +50,7 @@ class SparkDataProvider[+T] (colIndex:Int, rows:Array[Row]) extends Provider {
 
     val unique = column.distinct
     var total = 24 + 4 * column.length
-    if (column(0).isInstanceOf[String]) {
+    if (column.size > 0 && column(0).isInstanceOf[String]) {
       for (item <- unique) total += (42 + item.asInstanceOf[String].length() * 2)
     }
     else {
