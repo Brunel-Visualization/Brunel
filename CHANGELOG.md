@@ -59,6 +59,15 @@ some examples of symbols; also included is the URL of a set of test symbols
     bubble x(region) symbol(presidential_choice:[heart, flag]) label(abbr)
     x(region) y(girls_name) size(#count) style('symbol:female') + x(region) y(boys_name) size(#count) style('symbol:male')
     x(summer) y(winter) symbol(region:'http://brunelvis.org/test/testsym.svg')
+    
+    
+### Legends for symbols
+
+Previously, only `color` would display a legend. Now, a legend will be shown for color and symbol mappings. 
+If only one of `color` or `symbol` is specified, that will be shown in a legend (subject to the options in the 
+legend statement, if any exists). If both are specified, and they refer to the same field with the same
+transformations and summaries a combined legend will be shown with both aesthetics applied. If both are specified,
+but they are not showing compatible information, the color legend only will be shown. 
 
 ## Limited gradient support
 
