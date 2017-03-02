@@ -42,7 +42,7 @@ class Bubble extends D3Diagram {
 	}
 
 	public ElementDetails makeDetails() {
-		return ElementDetails.makeForDiagram(structure, ElementRepresentation.largeCircle, "point", "pack(tree).descendants()");
+		return ElementDetails.makeForDiagram(structure, ElementRepresentation.spaceFillingCircle, "point", "pack(tree).descendants()");
 	}
 
 	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
