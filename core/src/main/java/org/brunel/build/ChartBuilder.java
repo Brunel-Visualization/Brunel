@@ -274,24 +274,17 @@ public class ChartBuilder {
 
 		Integer[] order = structure.elementBuildOrder();
 
-		out.onNewLine().add("if ((first || time > -1) && !noData)");
-		if (order.length > 1) {
-			out.add("{").indentMore();
-			for (int i : order)
-				out.onNewLine().add("elements[" + i + "].makeData()").endStatement();
-			out.indentLess().onNewLine().add("}").ln();
-			if (structure.diagram == VisTypes.Diagram.network) {
-				out.onNewLine().add("graph = null").endStatement();
-			}
-		} else {
-			out.add("elements[0].makeData()").endStatement();
-		}
+		out.onNewLine().add("if ((first || time > -1) && !noData) {").indentMore();
+		for (int i : order)
+			out.onNewLine().add("elements[" + i + "].makeData()").endStatement();
+		legendBuilder.writeLegends();
+		out.indentLess().onNewLine().add("}").ln();
+		if (structure.diagram == VisTypes.Diagram.network)
+			out.onNewLine().add("graph = null").endStatement();
 		for (int i : order)
 			out.onNewLine().add("elements[" + i + "].build(time);");
 
 		for (ElementBuilder builder : elementBuilders) builder.writeBuildCommands();
-
-		legendBuilder.writeLegends();
 
 		out.indentLess().onNewLine().add("}").ln();
 

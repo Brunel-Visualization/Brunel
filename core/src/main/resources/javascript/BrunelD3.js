@@ -107,17 +107,18 @@ var BrunelD3 = (function () {
     function makeLegend(target, def) {
 
         // Define the title for the legend
-        target.attr('class', 'legend').append('text').attr('x', 0).attr('y', 0)
+        target.attr('class', 'legend').selectAll('text.title').data(['all']).enter()
+            .append('text').attr('x', 0).attr('y', 0)
             .style('text-anchor', 'end').attr('dy', '0.85em').text(def.title).attr('class', 'title');
 
-        // Create the legend group
-        var legend = target.selectAll('legend').data(def.ticks).enter().append('g').attr('class', 'swatch')
+        // Create the legend entries
+        var entries = target.selectAll('g.swatch').data(def.ticks).enter().append('g').attr('class', 'swatch')
             .attr('transform', function (d, i) {
                 return 'translate(-20,' + (20 + i * 20) + ')';
             });
 
         // Create the swatch and style it
-        var swatch = legend.append('use').attr('x', 2).attr('width', 18).attr('height', 18);
+        var swatch = entries.append('use').attr('x', 2).attr('width', 18).attr('height', 18);
         if (def.color) swatch.style('fill', def.color);
         swatch.attr('xlink:href', def.symbol ? function (d) {
             return '#' + def.symbol(d)
@@ -148,7 +149,7 @@ var BrunelD3 = (function () {
             };
 
         // Add the text to the legend
-        legend.append('text').attr('y', 8).attr('dy', '.35em').style('text-anchor', 'end').text(textf)
+        entries.append('text').attr('y', 8).attr('dy', '.35em').style('text-anchor', 'end').text(textf)
             .attr('class', 'legend').append('text').attr('x', 0).attr('y', 0);
     }
 

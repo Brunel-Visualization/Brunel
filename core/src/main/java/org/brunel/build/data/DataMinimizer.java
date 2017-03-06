@@ -4,6 +4,7 @@ import org.brunel.build.info.ElementStructure;
 import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
+import org.brunel.model.VisElement;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,8 +46,8 @@ public class DataMinimizer {
 			// There is no point trying to minimize; without a summarization we need all the data anyway
 			if (p.summaryCommand.isEmpty()) return null;
 
-			// Filtering stops summarization
-			if (!p.filterCommand.isEmpty()) return null;
+			// Filtering of animation stops summarization
+			if (hasFilterOrAnimation(structure.vis)) return null;
 
 		}
 
@@ -64,6 +65,10 @@ public class DataMinimizer {
 		// OK, we are good -- use the transforms
 		Dataset transformed = TransformedData.transform(original, params);
 		return matchRequiredFields(transformed);
+	}
+
+	private boolean hasFilterOrAnimation(VisElement vis) {
+		return !vis.fAnimate.isEmpty() || !vis.fFilter.isEmpty();
 	}
 
 	/**
