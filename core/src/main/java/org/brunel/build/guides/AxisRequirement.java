@@ -23,9 +23,7 @@ public final class AxisRequirement {
 	static AxisRequirement makeCombinedAxis(Axes which, ChartStructure structure) {
 		if (structure.diagram != null) return null;            // Diagrams mean no axis
 		boolean auto = true;                                // If true, the user made no request
-
-		// The default is unbounded ticks, no required title and no grid
-		AxisRequirement result = new AxisRequirement(which, -1);
+		AxisRequirement result = null;                        // Nothing requested yet
 
 		// Rules:
 		// none overrides everything and no axes are used
@@ -39,8 +37,8 @@ public final class AxisRequirement {
 
 			for (Map.Entry<Axes, Param[]> p : e.fAxes.entrySet()) {
 				auto = false;                                // Any axis statement means we do not use defaults
-				if (p.getKey() == which)                    // Merge current definition with parameters
-					result = result.merge(p.getValue());
+				if (p.getKey() == which)                     // Merge current definition with parameters
+					result = (result == null ? makeDefault(which) : result).merge(p.getValue());
 			}
 		}
 
@@ -48,12 +46,19 @@ public final class AxisRequirement {
 			// There were no axis statements, so we choose based on the coordinate system
 			// No axes desired for nested or polar charts
 			if (structure.coordinates.isPolar() || structure.nested()) return null;
-			return result;
+
+			return makeDefault(which);
 		} else {
 			// Honor exactly the user definition
 			return result;
 		}
 	}
+
+	// The default is unbounded ticks, no required title and no grid
+	private static AxisRequirement makeDefault(Axes which) {
+		return new AxisRequirement(which, -1);
+	}
+
 	final Axes dimension;                // Which dimension
 	final int index;                    // Which axis within that dimension (currently only used for parallel axes)
 	final int ticks;                    // Required ticks to show
