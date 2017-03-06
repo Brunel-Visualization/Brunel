@@ -180,9 +180,7 @@ public class DataTableWriter {
 		out.onNewLine().add(" options: [");
 		for (int i = 0; i < fields.length; i++) {
 			String name;
-			if (fields[i].isSynthetic())
-				name = "synthetic";
-			else if (fields[i].isDate())
+			if (fields[i].isDate())
 				name = "date-" + fields[i].property("dateFormat");
 			else if (fields[i].isProperty("list"))
 				name = "list";
