@@ -101,7 +101,7 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - cpi       / x(food) y(housing) color(DATE) + line  x(food) y(housing) fit(housing) :: pass
 - whiskey   / bubble color(#count) size(#count) sort(#count) label(brand:1) | bubble color(#count) size(#count) sort(#count:ascending) label(brand:1) :: pass :: Two different sort orders
 - simple    / x(#row) y('reds') color(#row:reds) axes(y) legends(none) + x(#row) y('red') color(#row:red) legends(none) + x(#row) y('blues-reds') color(#row:[blues, reds]) legends(none) + x(#row) y('blue-red') color(#row:[blue, red]) legends(none) + x(#row) y('blue-none-red') color(#row:[blue, none, red]) legends(none)  + x(#row) y('blue-black-red') color(#row:[blue, black, red]) legends(none) + x(#row) y('nominal') color(#row:nominal)  legends(none) :: pass
-- simple    / data('raw:A,B;a,b;a,c;a,d;b,c;a,e;e,f;g,h;m,n;n,o') edge key(A, B) + data('raw:A;a;b;c;d;e;f;g;h;n;o') network key(A) color(A) label(A) legends(none) style('fill-opacity:1;size:20px') :: pass
+- simple    / data('raw:A,B;a,b;a,c;a,d;b,c;a,e;e,f;g,h;m,n;n,o') edge style('symbol:curved') key(A, B) + data('raw:A;a;b;c;d;e;f;g;h;n;o') network key(A) color(A) label(A) legends(none) style('fill-opacity:1;size:20px') :: pass :: Note curved edges with no arrowheads
 
 tree whiskey #count category country / css(rating) :: pass
 tree whiskey #count category rating age / polar tree(prune) symbol(category) size(#count) :: pass

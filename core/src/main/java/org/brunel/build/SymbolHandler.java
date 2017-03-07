@@ -6,6 +6,7 @@ import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
+import org.brunel.model.VisTypes;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -272,6 +273,10 @@ public class SymbolHandler {
 	private URI getSymbolURI(ElementStructure structure) {
 		// Map labels use symbols internally and so we must return them here.
 		if (D3Diagram.isMapLabels(structure.vis)) return BASIC_SYMBOLS_URI;
+
+		// Only points are currently supported
+		if (structure.vis.tElement != VisTypes.Element.point) return null;
+
 
 		// This collection collects all the symbols we want to be able to use
 		Set<String> requiredSymbols = new HashSet<>();
