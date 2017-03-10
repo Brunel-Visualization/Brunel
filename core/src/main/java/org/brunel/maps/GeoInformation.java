@@ -101,9 +101,9 @@ public class GeoInformation {
 	private final Map<VisElement, GeoMapping> geo;            // Geographic mappings, one per geo element
 	private final VisElement[] elements;
 	private final ChartCoordinates positionFields;
-	private final Poly hull;                                        // Convex hull for the points
+	private Poly hull;                                        // Convex hull for the points
 	private final boolean needsExpansion;
-	private final Projection projection;
+	private Projection projection;
 	public final boolean withGraticule;
 
 	public GeoInformation(VisElement[] elements, TransformedData[] datas, ChartCoordinates positionFields) {
@@ -122,6 +122,19 @@ public class GeoInformation {
 		}
 
 		this.projection = ProjectionBuilder.makeProjection(getProjectionBounds());
+	}
+	
+	/**
+	 * Sets the projection and bounds using the supplied rectangle.  Used for user provided maps.
+	 * 
+	 * @param newBounds
+	 */
+	public void setProjectionBounds(Rect newBounds) {
+
+		this.projection = ProjectionBuilder.makeProjection(newBounds);		
+		List<Point> boundary = new ArrayList<Point>(Arrays.asList(newBounds.makeBoundaryPoints()));		
+		this.hull = Geom.makeConvexHull(boundary);
+		
 	}
 
 	private boolean includesAxes(VisElement[] elements) {

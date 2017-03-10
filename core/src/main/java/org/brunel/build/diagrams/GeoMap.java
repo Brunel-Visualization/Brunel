@@ -16,24 +16,27 @@
 
 package org.brunel.build.diagrams;
 
-import org.brunel.build.LabelBuilder;
-import org.brunel.build.element.ElementBuilder;
-import org.brunel.build.element.ElementDetails;
-import org.brunel.build.element.ElementRepresentation;
-import org.brunel.build.info.ElementStructure;
-import org.brunel.build.util.BuildUtil;
-import org.brunel.build.util.ScriptWriter;
-import org.brunel.data.Data;
-import org.brunel.maps.GeoInformation;
-import org.brunel.maps.GeoMapping;
-import org.brunel.model.VisTypes.Element;
+import static org.brunel.model.VisTypes.Element.point;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import static org.brunel.model.VisTypes.Element.point;
+import org.brunel.action.Param;
+import org.brunel.build.LabelBuilder;
+import org.brunel.build.element.ElementBuilder;
+import org.brunel.build.element.ElementDetails;
+import org.brunel.build.element.ElementRepresentation;
+import org.brunel.build.info.ElementStructure;
+import org.brunel.build.util.BuildUtil;
+import org.brunel.build.util.ContentReader;
+import org.brunel.build.util.ScriptWriter;
+import org.brunel.data.Data;
+import org.brunel.geom.Rect;
+import org.brunel.maps.GeoInformation;
+import org.brunel.maps.GeoMapping;
+import org.brunel.model.VisTypes.Element;
 
 public class GeoMap extends D3Diagram {
 
@@ -78,6 +81,11 @@ public class GeoMap extends D3Diagram {
 
 		out.indentLess().onNewLine().add("}");
 	}
+	
+	private static void writeCustomMapping(ScriptWriter out, String location) {
+		out.add("{ ", out.quote(location), ": {} }");
+
+	}
 
 	private static void writeProjection(ScriptWriter out, GeoInformation geo) {
 
@@ -116,10 +124,12 @@ public class GeoMap extends D3Diagram {
 
 	}
 	private final GeoMapping mapping;           // Mapping of identifiers to features
-
+	private final String[] customMapParts;		// If custom map, [location, topojson field property name that matches the data]
+	
 	public GeoMap(ElementStructure structure) {
 		super(structure);
 		this.mapping = structure.geo;
+		this.customMapParts = prepareCustomMap();
 		if (mapping == null)
 			throw new IllegalStateException("Maps need either a position field or key with the feature names; or another element to define positions");
 	}
@@ -151,19 +161,43 @@ public class GeoMap extends D3Diagram {
 
 	public void writePerChartDefinitions(ScriptWriter out) {
 		out.titleComment("Projection");
+			
 		writeProjection(out, mapping.getGeoInformation());
 
 	}
+	
+	//Store custom map parameters and update the map bounds & projection based on the custom map.
+	private String[] prepareCustomMap() {
+		Param[] p = vis.tDiagramParameters;
+		if (p == null || p.length != 1) return null;
+		String s = p[0].asString();
+		String[] parts = s.split("#");
+		if (parts.length == 2) {
+			Rect bounds = ContentReader.extractBoundsFromTopoJson(parts[0]);
+			mapping.getGeoInformation().setProjectionBounds(bounds);
+
+			return parts;
+		}
+		return null;
+	}
+	
 
 	private void writeFeatureHookup(GeoMapping mapping, String idField, ScriptWriter out) {
 		if (mapping.fileCount() == 0) throw new IllegalStateException("No suitable map found");
-
+		String customFeatureName = "null";
+		
 		out.add("var features = ");
-		writeMapping(out, mapping);
+		if (customMapParts == null) 
+			writeMapping(out, mapping);
+		else {
+			writeCustomMapping(out, customMapParts[0]);
+			customFeatureName = "\""+ customMapParts[1] + "\"";   
+		}
+		
 		out.endStatement();
 
 		String idName = idField == null ? "null" : "data." + BuildUtil.canonicalFieldName(idField);
-		out.add("if (BrunelD3.addFeatures(data, features,", idName, ", this, transitionMillis)) return").endStatement();
+		out.add("if (BrunelD3.addFeatures(data, features,", customFeatureName, ",", idName, ", this, transitionMillis)) return").endStatement();
 	}
 
 }

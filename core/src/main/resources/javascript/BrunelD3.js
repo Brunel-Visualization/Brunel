@@ -1303,19 +1303,22 @@ var BrunelD3 = (function () {
             return v || [null, null];
         }
     };
+    
 
     /*
      Reads feature data from a geojson file and adds to the data's rows
      data:      Brunel's data structure
      locations: Maps from source file -> map of data names to their geo file indices
+	 property:  For custom maps, the topojson property name of the feature that matches the data.  
      idFunc:    Function to return the element ID (may be null for background maps)
      element:   The element we are loading data into
      millis:    Time to use for transitioning in the next build
      returns true if we have started loading, but not added the data in yet
      */
-    function makeMap(data, locations, idFunc, element, millis) {
+    function makeMap(data, locations, property, idFunc, element, millis) {
 
         // locations looks like { "http://../world.json":{'FR':23, 'GE':123, ...} , ... }
+    	var use_property = property ? true : false;	//for custom maps, use the supplied property name for the feature ids
 
         function read() {
             element._features = {};             // Maps names in data to GeoJSON features
@@ -1339,11 +1342,19 @@ var BrunelD3 = (function () {
                     d3.json(url, function (error, x) {
                         var i, id, rev = {};                        // reverse mapping
                         var d, all = x.objects.all.geometries;       // All features in the topojson
+                        if (use_property) 
+                        	if (idFunc) {							//Custom topojson, build the mapping object assuming perfect                        											
+                        		var arr = data._rows.map(idFunc);   //matches between the data and the topojson features	
+                        		for (var i in arr ) mapping[arr[i]] = arr[i];
+                        	}
+                        	else mapping = {};						//Custom reference map
+                        else 
+                        	property = "a";						    //Standard brunel topojson has geo identifier in property 'a'
                         for (i in mapping) rev[mapping[i]] = i;     // 'rev' maps from feature ID to data name
                         all.forEach(function (v, i) {
                             d = topojson.feature(x, v);             // convert using topojson call
-                            id = rev[d.properties.a];               // The data name for this
-                            if (id)
+                            id = rev[d.properties[property]];       // The data name for this
+                            if (id != null)
                                 element._features[id] = d;          // Remember it by data name
                             else {
                                 element._featureExtras.push(d);     // Store as an unused element
