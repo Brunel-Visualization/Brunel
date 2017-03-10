@@ -93,7 +93,7 @@ public class Range implements Comparable<Range> {
 
 	public boolean equals(Object obj) {
 		return this == obj ||
-				obj instanceof Range && ((Range) obj).low == low && ((Range) obj).high == high;
+				obj instanceof Range && ((Range) obj).low.equals(low) && ((Range) obj).high.equals(high);
 	}
 
 	public String toString() {

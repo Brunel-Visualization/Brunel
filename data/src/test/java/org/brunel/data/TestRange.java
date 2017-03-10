@@ -16,8 +16,11 @@
 
 package org.brunel.data;
 
+import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
 import org.junit.Test;
+
+import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -39,7 +42,20 @@ public class TestRange {
         assertNotEquals(a.hashCode(), b.hashCode());
     }
 
-//    @Test
-//    public void testAutocreation
+    @Test
+    public void testEquality() {
+        Date d1a = new Date(233444);
+        Date d1b = new Date(233444);
+        Date d2 = new Date(233455544);
+
+        assertEquals(d1a, d1b);
+        Range r1 = Range.makeDateNative(d1a, d2, true, DateFormat.HourMinSec);
+        Range r2 = Range.makeDateNative(d1b, d2, true, DateFormat.HourMinSec);
+
+        assertEquals(r1, r2);
+
+
+
+    }
 
 }

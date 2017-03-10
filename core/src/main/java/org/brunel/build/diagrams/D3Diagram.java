@@ -123,17 +123,11 @@ public abstract class D3Diagram {
 
 	/**
 	 * Any initialization needed at the start of the build function
-	 *
-	 * @param out
-	 * @return
 	 */
 	public abstract void writeDataStructures(ScriptWriter out);
 
 	/**
-	 * This is called when
-	 *
-	 * @param details
-	 * @param out
+	 * This is called when entering
 	 */
 	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
 		// By default, nothing is needed
