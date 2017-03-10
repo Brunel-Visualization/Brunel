@@ -110,6 +110,16 @@ They can be set with a style `symbol` command to request that style. The valid s
 The arrowhead will always be a drawn in a neutral grey color. This is a limitation
 of current SVG technology, due to be fixed in SVG 2.0.
 
+## Custom Maps
+
+You can now use custom maps.  Instructions for using GeoJSON files are here:  https://github.com/Brunel-Visualization/Brunel/wiki/Custom-Maps.
+The `map` action takes a location to a topojson file and the name of the property used for matching to the data values separated by `#`
+
+`data('boroughs') map('http://localhost:8889/tree/notebooks/data/boroughs.json#BoroName') x(Borough) color(value) label(Borough)`
+
+Note that a field must be present in the data containing values that exactly match the attribute values for the chosen property name.
+
+
 # 2.2 Release Notes
 
 ## Trees and Hierarchies
