@@ -77,12 +77,13 @@ public class ContentReader {
 		try {
 			JsonElement parsed = readJsonContentFromUrl(url);
 			JsonObject root = parsed.getAsJsonObject();
-			JsonObject objects = root.getAsJsonObject("objects");
-			JsonArray bbox = objects.getAsJsonObject("all").getAsJsonArray("bbox");
-			Rect bounds = new Rect(bbox.get(0).getAsDouble(), bbox.get(1).getAsDouble(), bbox.get(2).getAsDouble(), bbox.get(3).getAsDouble());
+			JsonArray bbox = root.getAsJsonArray("bbox");
+			Rect bounds = new Rect(bbox.get(0).getAsDouble(), bbox.get(2).getAsDouble(), bbox.get(1).getAsDouble(), bbox.get(3).getAsDouble());			
 			return bounds;
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new IllegalArgumentException("Unable to locate map bounds in topojson at : " + url);
+
 		}
 		
 	}

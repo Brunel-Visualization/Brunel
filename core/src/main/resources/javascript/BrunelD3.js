@@ -1342,6 +1342,8 @@ var BrunelD3 = (function () {
                     d3.json(url, function (error, x) {
                         var i, id, rev = {};                        // reverse mapping
                         var d, all = x.objects.all.geometries;       // All features in the topojson
+                        if (!all.bbox) all.bbox = 					//Ensure bbox from a custom map is as expected
+                        	[x.bbox[0], x.bbox[2], x.bbox[1], x.bbox[4]];
                         if (use_property) 
                         	if (idFunc) {							//Custom topojson, build the mapping object assuming perfect                        											
                         		var arr = data._rows.map(idFunc);   //matches between the data and the topojson features	

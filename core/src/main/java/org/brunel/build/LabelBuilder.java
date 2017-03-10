@@ -167,8 +167,15 @@ public class LabelBuilder {
 
 		if (textMethod.equals("geo")) {
 			// We define a function to extract the coordinates from the geo, and project them
-			String func = "function(box,text,d) {var p = project_center(d.geo_properties); return {box:box, x:p[0], y:p[1]}}";
-			out.onNewLine().add("where:", func, ",");
+			if (!isCustomMap()) {
+				//We cannot assume the center location has been calcluated for custom maps
+				String func = "function(box,text,d) {var p = project_center(d.geo_properties); return {box:box, x:p[0], y:p[1]}}";
+				out.onNewLine().add("where:", func, ",");
+			}
+			else {
+				out.onNewLine().add("method: 'poly',");
+				fit = false;
+			}
 		} else {
 			HashSet<String> parts = new HashSet<>(Arrays.asList(textMethod.split("-")));
 			boolean inside = isInside(parts, fitsShape);
@@ -251,6 +258,10 @@ public class LabelBuilder {
 			}
 			first = false;
 		}
+	}
+	
+	private boolean isCustomMap() {
+		return vis.tDiagramParameters.length == 1 && vis.tDiagramParameters[0].asString().contains("#");
 	}
 
 	// Gets the text alignment based on where to draw relative to the shape
