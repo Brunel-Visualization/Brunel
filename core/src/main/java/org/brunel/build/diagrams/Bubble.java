@@ -56,7 +56,7 @@ class Bubble extends D3Diagram {
 		ElementBuilder.writeElementAesthetics(details, true, vis, out);
 	}
 
-	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
+	public void writeDiagramEnter(ElementDetails details, LabelBuilder labelBuilder, ScriptWriter out) {
 		// We place everything at its parent when it enters the system
 		out.addChained("filter(function(d) { return d.parent })")
 				.addChained("attr('x', function(d) { return scale_x(d.parent.x) })")

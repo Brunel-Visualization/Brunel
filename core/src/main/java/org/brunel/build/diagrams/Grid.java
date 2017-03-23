@@ -69,7 +69,7 @@ class Grid extends Bubble {
 		return ElementDetails.makeForDiagram(structure, spaceFillingCircle, "point", "tree.leaves()");
 	}
 
-	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
+	public void writeDiagramEnter(ElementDetails details, LabelBuilder labelBuilder, ScriptWriter out) {
 		// Nothing
 	}
 

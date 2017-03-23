@@ -121,8 +121,8 @@ var BrunelD3 = (function () {
         var swatch = entries.append('use').attr('x', 2).attr('width', 18).attr('height', 18);
         if (def.color) swatch.style('fill', def.color);
         swatch.attr('xlink:href', def.symbol ? function (d) {
-            return '#' + def.symbol(d)
-        } : "#_sym_square");
+                return '#' + def.symbol(d)
+            } : "#_sym_square");
 
         // Create an appropriate text function nicely to format the ticks
         var ticks = def.ticks, textf;
@@ -283,7 +283,7 @@ var BrunelD3 = (function () {
         var index = N / 2, heightAtX = 0, edgeD;
         for (i in lower) {
             t = upper[i] - lower[i];
-            if (lower[i + 1] && lower[i - 1])  t = (2 * t + (upper[i + 1] - lower[i + 1] + upper[i - 1] - lower[i - 1]) / 2) / 3;
+            if (lower[i + 1] && lower[i - 1]) t = (2 * t + (upper[i + 1] - lower[i + 1] + upper[i - 1] - lower[i - 1]) / 2) / 3;
             edgeD = Math.min(i, N - i) * dx;
             if (edgeD < margin) t *= 0.01;          // Only add here if we really have to
             else if (edgeD < 3 * margin) t *= 0.8;   // Prefer further in
@@ -1054,12 +1054,13 @@ var BrunelD3 = (function () {
 
         if (!labeling.align) labeling.align = "middle";
 
-        // Ensure the label exists and cross-reference both to each other
-        var txt = item.__label__;
+        // Ensure the label exists and store a reference to it
+        var attached = item.__labels__;                     // The collection of attached labels
+        if (!attached) item.__labels__ = attached = {};     // Ensure it exists
+        var txt = attached[labeling.index];                 // Get the item for this label
         if (!txt) {
             txt = labelGroup.append('text');
-            item.__label__ = txt;
-            txt.__target__ = item;
+            attached[labeling.index] = txt;
             txt.__labeling__ = labeling;
         }
 
@@ -1091,7 +1092,7 @@ var BrunelD3 = (function () {
                 b.width > loc.box.width && !addEllipses(textNode, content, loc.box.width));
                 if (kill) {
                     textNode.parentNode.removeChild(textNode);          // remove from parent
-                    item.__label__ = null;                              // dissociate from item
+                    attached[i] = null;                                 // dissociate from item
                 }
 
             } else {
@@ -1101,16 +1102,29 @@ var BrunelD3 = (function () {
     }
 
 
-    // Apply labeling
-    function applyLabeling(element, group, labeling, time, geom) {
+    function removeLabels(item) {
+        var i, attached = item.__labels__;
+        if (attached)
+            for (i in attached) if (attached[i]) attached[i].remove();
+    }
+
+
+    /**
+     * Apply labels to shapes
+     * @param element the d3 selection for the element to be labeled
+     * @param group the group to place labels in
+     * @param time transition time
+     * @param geom overall geometry
+     * @param labelingArray array of labeling definitions to use
+     */
+    function applyLabeling(element, group, time, geom, labelingArray) {
         function makeHits() {                                               // Keeps track of hit items
-            return {D: labeling.granularity}
+            return {D: labelingArray[0].granularity}
         }
 
         var hits = makeHits();                               // Hit items for one pass
 
         element.each(function (d, i) {                                      // index in order
-            d._ix = i
             d._ix = i
         });
         var sorted = element.sort(function (a, b) {                         // sorted by reverse order
@@ -1118,18 +1132,24 @@ var BrunelD3 = (function () {
         });
         element.order();                                                    // restore element order
 
+        function doLabeling(item) {
+            labelingArray.forEach(function (labeling) {
+                labelItem(item, group, labeling, hits, geom);       // label each item
+            });
+        }
+
         if (time > 0)
             return sorted.transition("labels").duration(time).tween('func', function (d, i) {
                 var item = this;
                 return function () {
                     if (!i) hits = makeHits();                              // Every time we start a pass
-                    labelItem(item, group, labeling, hits, geom);           // label each item
+                    doLabeling(item);
                 }
             });
         else
             return sorted.each(
                 function () {
-                    labelItem(this, group, labeling, hits, geom)
+                    doLabeling(this);
                 }
             );
     }
@@ -1303,13 +1323,13 @@ var BrunelD3 = (function () {
             return v || [null, null];
         }
     };
-    
+
 
     /*
      Reads feature data from a geojson file and adds to the data's rows
      data:      Brunel's data structure
      locations: Maps from source file -> map of data names to their geo file indices
-	 property:  For custom maps, the topojson property name of the feature that matches the data.  
+     property:  For custom maps, the topojson property name of the feature that matches the data.
      idFunc:    Function to return the element ID (may be null for background maps)
      element:   The element we are loading data into
      millis:    Time to use for transitioning in the next build
@@ -1318,7 +1338,7 @@ var BrunelD3 = (function () {
     function makeMap(data, locations, property, idFunc, element, millis) {
 
         // locations looks like { "http://../world.json":{'FR':23, 'GE':123, ...} , ... }
-    	var use_property = property ? true : false;	//for custom maps, use the supplied property name for the feature ids
+        var use_property = property ? true : false;	//for custom maps, use the supplied property name for the feature ids
 
         function read() {
             element._features = {};             // Maps names in data to GeoJSON features
@@ -1343,15 +1363,15 @@ var BrunelD3 = (function () {
                         var i, id, rev = {};                        // reverse mapping
                         var d, all = x.objects.all.geometries;       // All features in the topojson
                         if (!all.bbox) all.bbox = 					//Ensure bbox from a custom map is as expected
-                        	[x.bbox[0], x.bbox[2], x.bbox[1], x.bbox[4]];
-                        if (use_property) 
-                        	if (idFunc) {							//Custom topojson, build the mapping object assuming perfect                        											
-                        		var arr = data._rows.map(idFunc);   //matches between the data and the topojson features	
-                        		for (var i in arr ) mapping[arr[i]] = arr[i];
-                        	}
-                        	else mapping = {};						//Custom reference map
-                        else 
-                        	property = "a";						    //Standard brunel topojson has geo identifier in property 'a'
+                            [x.bbox[0], x.bbox[2], x.bbox[1], x.bbox[4]];
+                        if (use_property)
+                            if (idFunc) {							//Custom topojson, build the mapping object assuming perfect
+                                var arr = data._rows.map(idFunc);   //matches between the data and the topojson features
+                                for (var i in arr) mapping[arr[i]] = arr[i];
+                            }
+                            else mapping = {};						//Custom reference map
+                        else
+                            property = "a";						    //Standard brunel topojson has geo identifier in property 'a'
                         for (i in mapping) rev[mapping[i]] = i;     // 'rev' maps from feature ID to data name
                         all.forEach(function (v, i) {
                             d = topojson.feature(x, v);             // convert using topojson call
@@ -1486,20 +1506,24 @@ var BrunelD3 = (function () {
             }
 
             mergedNodes.each(function (d) {
+                    // Set the known radius on the data
                     d.radius = +this.getAttribute("r") || this.getBBox().getWidth();
-                    var txt = this.__label__;
-                    if (!txt) return;
-                    if (txt.__off__) {
-                        // We have calculated the position, just need to move it
-                        txt.attr('x', scaleX(txt.__off__.dx + d.x));
-                        txt.attr('y', scaleY(txt.__off__.dy + d.y));
-                    } else {
-                        // First time placement without hit detection
-                        labelItem(this, null, txt.__labeling__, null, geom);
-                        // record unscaled relative location
-                        txt.__off__ = {
-                            dx: +txt.attr('x') / t.k + t.x - d.x,
-                            dy: +txt.attr('y') / t.k + t.y - d.y
+                    // Adjust placement of labels
+                    var i, txt, L = this.__labels__;
+                    if (L)for (i in L) {
+                        txt = L[i];
+                        if (txt.__off__) {
+                            // We have calculated the position, just need to move it
+                            txt.attr('x', scaleX(txt.__off__.dx + d.x));
+                            txt.attr('y', scaleY(txt.__off__.dy + d.y));
+                        } else {
+                            // First time placement without hit detection
+                            labelItem(this, null, txt.__labeling__, null, geom);
+                            // record unscaled relative location
+                            txt.__off__ = {
+                                dx: +txt.attr('x') / t.k + t.x - d.x,
+                                dy: +txt.attr('y') / t.k + t.y - d.y
+                            }
                         }
                     }
                 }
@@ -1876,8 +1900,8 @@ var BrunelD3 = (function () {
             delta = Math.abs(range[1] - range[0]),
             skip = Math.ceil(16 * domain.length / delta);
         return skip < 2 ? domain : domain.filter(function (d, i) {
-            return !(i % skip);
-        })
+                return !(i % skip);
+            })
     }
 
     /**
@@ -2104,6 +2128,7 @@ var BrunelD3 = (function () {
         'centerInWedge': centerInArc,
         'makeRowsWithKeys': makeRowsWithKeys,
         'label': applyLabeling,
+        'removeLabels': removeLabels,
         'undoTransform': undoTransform,
         'cloudLayout': cloud,
         'gridLayout': gridLayout,

@@ -81,7 +81,7 @@ public class GeoMap extends D3Diagram {
 
 		out.indentLess().onNewLine().add("}");
 	}
-	
+
 	private static void writeCustomMapping(ScriptWriter out, String location) {
 		out.add("{ ", out.quote(location), ": {} }");
 
@@ -125,7 +125,7 @@ public class GeoMap extends D3Diagram {
 	}
 	private final GeoMapping mapping;           // Mapping of identifiers to features
 	private final String[] customMapParts;		// If custom map, [location, topojson field property name that matches the data]
-	
+
 	public GeoMap(ElementStructure structure) {
 		super(structure);
 		this.mapping = structure.geo;
@@ -151,7 +151,7 @@ public class GeoMap extends D3Diagram {
 	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
 	}
 
-	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
+	public void writeDiagramEnter(ElementDetails details, LabelBuilder labelBuilder, ScriptWriter out) {
 		out.addChained("classed('nondata', function(d) {return !d || d.row == null})");
 	}
 
@@ -161,11 +161,11 @@ public class GeoMap extends D3Diagram {
 
 	public void writePerChartDefinitions(ScriptWriter out) {
 		out.titleComment("Projection");
-			
+
 		writeProjection(out, mapping.getGeoInformation());
 
 	}
-	
+
 	//Store custom map parameters and update the map bounds & projection based on the custom map.
 	private String[] prepareCustomMap() {
 		Param[] p = vis.tDiagramParameters;
@@ -180,20 +180,20 @@ public class GeoMap extends D3Diagram {
 		}
 		return null;
 	}
-	
+
 
 	private void writeFeatureHookup(GeoMapping mapping, String idField, ScriptWriter out) {
 		if (mapping.fileCount() == 0) throw new IllegalStateException("No suitable map found");
 		String customFeatureName = "null";
-		
+
 		out.add("var features = ");
-		if (customMapParts == null) 
+		if (customMapParts == null)
 			writeMapping(out, mapping);
 		else {
 			writeCustomMapping(out, customMapParts[0]);
-			customFeatureName = "\""+ customMapParts[1] + "\"";   
+			customFeatureName = "\""+ customMapParts[1] + "\"";
 		}
-		
+
 		out.endStatement();
 
 		String idName = idField == null ? "null" : "data." + BuildUtil.canonicalFieldName(idField);

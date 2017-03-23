@@ -76,6 +76,9 @@ class DiagramElementBuilder extends ElementBuilder {
 	}
 
 	protected void defineLabeling(ElementDetails details) {
+		// Do not write if no need for them
+		if (!structure.needsLabels() && !structure.needsTooltips()) return;
+
 		out.onNewLine().ln().comment("Define labeling for the selection")
 				.onNewLine().add("function label(selection, transitionMillis) {")
 				.indentMore().onNewLine();
@@ -103,6 +106,6 @@ class DiagramElementBuilder extends ElementBuilder {
 	}
 
 	protected void writeDiagramEntry(ElementDetails details) {
-		diagram.writeDiagramEnter(details, out);
+		diagram.writeDiagramEnter(details, labelBuilder, out);
 	}
 }

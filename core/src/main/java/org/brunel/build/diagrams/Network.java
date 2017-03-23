@@ -87,7 +87,7 @@ class Network extends D3Diagram {
 		// Handled by the "tick" method of layout
 	}
 
-	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
+	public void writeDiagramEnter(ElementDetails details, LabelBuilder labelBuilder, ScriptWriter out) {
 		out.addChained("attr('r',", details.overallSize, ")");
 		ElementBuilder.writeElementAesthetics(details, true, vis, out);
 	}

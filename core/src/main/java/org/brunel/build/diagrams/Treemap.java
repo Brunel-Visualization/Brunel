@@ -58,7 +58,7 @@ class Treemap extends D3Diagram {
 		ElementBuilder.writeElementAesthetics(details, true, vis, out);
 	}
 
-	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
+	public void writeDiagramEnter(ElementDetails details, LabelBuilder labelBuilder, ScriptWriter out) {
 		out.addChained("filter(function(d) { return d.parent })")       // Only if it has a parent
 				.addChained("attr('x', function(d) { return scale_x((d.parent.x0+d.parent.x1)/2) })")
 				.addChained("attr('y', function(d) { return scale_y((d.parent.y0+d.parent.y1)/2) })")

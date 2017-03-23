@@ -74,9 +74,11 @@ class DependentEdge extends D3Diagram {
 	public final boolean curved;        // True if we want a curved arc
 	private final boolean arrow;        // True if we want arrows
 	private final boolean polar;        // True if we have a polar layout
+	private final boolean isTree;		// True for hierarchical structures
 
 	DependentEdge(ElementStructure structure) {
 		super(structure);
+		this.isTree =  structure.chart.diagram.isHierarchical;
 		String symbol = structure.styleSymbol;
 		if (symbol == null) {
 			this.arrow = true;
@@ -97,14 +99,15 @@ class DependentEdge extends D3Diagram {
 	}
 
 	public ElementDetails makeDetails() {
-		return ElementDetails.makeForDiagram(structure, ElementRepresentation.curvedPath, "edge", "validEdges(tree, graph.links)");
+		String dataDef = isTree ? "validEdges(tree, graph.links)" : "graph.links";
+		return ElementDetails.makeForDiagram(structure, ElementRepresentation.curvedPath, "edge", dataDef);
 	}
 
 	public void writeDataStructures(ScriptWriter out) {
 		// Nothing to be done
 	}
 
-	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
+	public void writeDiagramEnter(ElementDetails details, LabelBuilder labelBuilder, ScriptWriter out) {
 		if (arrow) out.addChained("attr('marker-end', 'url(#arrow)')");
 	}
 
@@ -118,8 +121,8 @@ class DependentEdge extends D3Diagram {
 	}
 
 	public void preBuildDefinitions(ScriptWriter out) {
-		// Ensure that we have a valid list of identifiers
-		out.add("function validEdges(edges) {").comment("Strip out pruned edges").indentMore()
+		// Ensure that we have a valid list of identifiers (from a pruned tree)
+		if (isTree) out.add("function validEdges(edges) {").comment("Strip out pruned edges").indentMore()
 				.add("var V={};").comment("Stores valid node IDs")
 				.add("tree.descendants().forEach(function(x) { V[x.data.key] = 1})").endStatement()
 				.add("return graph.links.filter(function(x) {return V[x.source.key] && V[x.target.key]})")

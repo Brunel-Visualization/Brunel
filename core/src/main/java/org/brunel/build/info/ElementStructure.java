@@ -24,6 +24,7 @@ import org.brunel.build.util.ModelUtil;
 import org.brunel.data.Field;
 import org.brunel.maps.GeoMapping;
 import org.brunel.model.VisElement;
+import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Element;
 
 import java.util.ArrayList;
@@ -84,6 +85,15 @@ public class ElementStructure {
 		for (int i = 0; i < references.length; i++)
 			references[i] = idToPointName + BuildUtil.writeCall(keys[i]) + ")";
 		return references;
+	}
+
+	public boolean needsLabels() {
+		// Clouds do not need labels
+		return vis.tDiagram != VisTypes.Diagram.cloud && !vis.itemsLabel.isEmpty();
+	}
+
+	public boolean needsTooltips() {
+		return !vis.itemsTooltip.isEmpty();
 	}
 
 	// Returns the element we depend on

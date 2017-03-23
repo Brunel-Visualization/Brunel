@@ -153,15 +153,26 @@ public class Param implements Comparable<Param> {
         return modifiers.length == 0 ? null : modifiers[0];
     }
 
-    /**
-     * Search modifiers for a number and return it (or null, if none found)
-     * @return
-     */
-    public Double firstNumericModifier() {
-        for (Param modifier : modifiers)
-            if (modifier.type == Type.number) return modifier.asDouble();
-        return null;
-    }
+	/**
+	 * Search modifiers for a string or option and return it as a string (or null, if none found)
+	 * @return valid text or null
+	 */
+	public String firstTextModifier() {
+		for (Param modifier : modifiers)
+			if (modifier.type == Type.string || modifier.type == Type.option)
+				return modifier.asString();
+		return null;
+	}
+
+	/**
+	 * Search modifiers for a number and return it (or null, if none found)
+	 * @return valid number or null
+	 */
+	public Double firstNumericModifier() {
+		for (Param modifier : modifiers)
+			if (modifier.type == Type.number) return modifier.asDouble();
+		return null;
+	}
 
 	public boolean hasModifiers() {
         return modifiers.length > 0;

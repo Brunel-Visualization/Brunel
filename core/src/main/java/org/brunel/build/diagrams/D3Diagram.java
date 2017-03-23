@@ -129,7 +129,7 @@ public abstract class D3Diagram {
 	/**
 	 * This is called when entering
 	 */
-	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
+	public void writeDiagramEnter(ElementDetails details, LabelBuilder labelBuilder, ScriptWriter out) {
 		// By default, nothing is needed
 	}
 

@@ -92,7 +92,7 @@ public class GeoMapLabels extends D3Diagram {
 		.endStatement();
 	}
 
-	public void writeDiagramEnter(ElementDetails details, ScriptWriter out) {
+	public void writeDiagramEnter(ElementDetails details, LabelBuilder labelBuilder, ScriptWriter out) {
 		out.addChained("classed('map', true)");
 	}
 

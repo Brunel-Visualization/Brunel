@@ -33,9 +33,12 @@ import org.brunel.model.style.StyleTarget;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Creates and defines labels for a chart element
@@ -87,16 +90,17 @@ public class LabelBuilder {
 	}
 
 	public void addElementLabeling() {
-		if (vis.itemsLabel.isEmpty()) return;
+		if (!structure.needsLabels()) return;
+
 		// Networks are updated on ticks., so just attach once -- no transitions
 		if (vis.tDiagram == Diagram.network) {
-			out.add("BrunelD3.label(selection, labels, labeling, 0, geom)").endStatement();
+			out.add("BrunelD3.label(selection, labels, 0, geom, labeling)").endStatement();
 			return;
 		}
 
 		// Text elements define labeling as the main item; they do not need labels attached, which is what this does
 		if (vis.tElement != Element.text)
-			out.add("BrunelD3.label(selection, labels, labeling, transitionMillis, geom)").endStatement();
+			out.add("BrunelD3.label(selection, labels, transitionMillis, geom, labeling)").endStatement();
 	}
 
 	/* Call to add labels for the rough centers to a grid layout */
@@ -115,7 +119,7 @@ public class LabelBuilder {
 	}
 
 	public void addTooltips(ElementDetails details) {
-		if (vis.itemsTooltip.isEmpty()) return;
+		if (!structure.needsTooltips()) return;
 		out.onNewLine().ln();
 		defineLabeling(prettify(vis.itemsTooltip, true), details.representation.getTooltipTextMethod(), true, true, null, 0, Collections.<Param>emptyList(), 0);
 		out.add("BrunelD3.addTooltip(selection, tooltipLabeling, geom)").endStatement();
@@ -150,7 +154,7 @@ public class LabelBuilder {
 	 *
 	 * @param items                the items to form the content
 	 * @param textMethod           method for placing text relative to the object it is attached to
-	 * @param forTooltip           true if this is for a tooltip
+	 * @param forTooltip           true if it is for tooltips
 	 * @param fitsShape            true if the text is to fit inside the shape (if the shape wants it)
 	 * @param alignment            left | right | center
 	 * @param padding              numeric amount
@@ -161,15 +165,45 @@ public class LabelBuilder {
 							   boolean fitsShape, String alignment, double padding,
 							   List<Param> cssFunctions, int hitDetectGranularity) {
 		if (vis.tElement != Element.text && items.isEmpty()) return;
-		String name = forTooltip ? "tooltipLabeling" : "labeling";
-		out.add("var", name, "= {").ln().indentMore();
+		out.add("var", (forTooltip ? "tooltipLabeling" : "labeling"), " = ");
+
+		if (forTooltip) {
+			defineSingleLabeling(items, textMethod, -1, fitsShape, alignment, padding, cssFunctions, hitDetectGranularity);
+		} else {
+			Collection<List<Param>> split = splitByLocation(items);
+			out.add("[");
+			if (split.size() > 1) out.indentMore().onNewLine();
+
+			int index = 0;
+			for (List<Param> part : split) {
+				if (index > 0) out.add(", ");
+				defineSingleLabeling(part, textMethod, index, fitsShape, alignment, padding, cssFunctions, hitDetectGranularity);
+				index++;
+			}
+
+			if (split.size() > 1) out.indentLess().onNewLine();
+			out.add("]");
+
+		}
+		out.endStatement();
+
+	}
+
+	private void defineSingleLabeling(List<Param> items, String textMethod, int index, boolean fitsShape, String alignment, double padding, List<Param> cssFunctions, int hitDetectGranularity) {
+
+		// Override the text method if the items define it (they will all have the same text modifier)
+		String definedTextMethod = items.get(0).firstTextModifier();
+		if (definedTextMethod != null) textMethod = definedTextMethod;
+
+
+		out.add("{").ln().indentMore();
 
 		boolean fit = true;
 
 		if (textMethod.equals("geo")) {
 			// We define a function to extract the coordinates from the geo, and project them
 			if (!isCustomMap()) {
-				//We cannot assume the center location has been calcluated for custom maps
+				//We cannot assume the center location has been calculated for custom maps
 				String func = "function(box,text,d) {var p = project_center(d.geo_properties); return {box:box, x:p[0], y:p[1]}}";
 				out.onNewLine().add("where:", func, ",");
 			} else {
@@ -185,7 +219,8 @@ public class LabelBuilder {
 			double offset = getOffset(parts, inside);
 			fit = inside && fitsShape;
 			out.onNewLine()
-					.add("method:", Data.quote(method))
+					.add("index:", index)
+					.add(", method:", Data.quote(method))
 					.add(", location:", location)
 					.add(", inside:", inside)
 					.add(", align:", Data.quote(align))
@@ -224,11 +259,25 @@ public class LabelBuilder {
 		else
 			out.onNewLine().add("return ");
 
-		writeContent(items, forTooltip);
+		writeContent(items, index < 0);                        // Index == -1 for tooltips
 		out.indentLess().onNewLine().add("}");
 
-		out.indentLess().onNewLine().add("}").endStatement();
+		out.indentLess().onNewLine().add("}");
+	}
 
+	public Collection<List<Param>> splitByLocation(List<Param> all) {
+		Map<String, List<Param>> map = new LinkedHashMap<>();
+		for (Param p : all) {
+			String place = p.firstTextModifier();
+			if (place == null) place = "*";
+			List<Param> list = map.get(place);
+			if (list == null) {
+				list = new ArrayList<>();
+				map.put(place, list);
+			}
+			list.add(p);
+		}
+		return map.values();
 	}
 
 	public void writeContent(List<Param> items, boolean forTooltip) {

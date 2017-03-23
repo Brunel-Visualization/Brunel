@@ -29,7 +29,7 @@ public abstract class ElementBuilder {
 		out.onNewLine().ln().add("BrunelD3.transition(" + selection + ".exit(), transitionMillis/3)");
 		out.addChained("style('opacity', 0.5).each( function() {")
 				.indentMore().indentMore().onNewLine()
-				.add("this.remove(); if (this.__label__) this.__label__.remove()")
+				.add("this.remove(); BrunelD3.removeLabels(this); ")
 				.indentLess().indentLess().onNewLine()
 				.add("})").endStatement();
 	}
@@ -86,7 +86,7 @@ public abstract class ElementBuilder {
 			defineCircle(elementDef, out);
 	}
 
-	public static void defineRect(ElementDetails details, ScriptWriter out) {
+	private static void defineRect(ElementDetails details, ScriptWriter out) {
 		// Rectangles must have extents > 0 to display, so we need to write that code in
 		out.addChained("each(function(d) {").indentMore().indentMore().onNewLine();
 		if (details.x.defineUsingExtent()) {
@@ -178,6 +178,7 @@ public abstract class ElementBuilder {
 			return GeomAttribute.makeConstant(content);
 		}
 	}
+
 	protected final ScriptWriter out;                             // To write code out to
 	protected final VisElement vis;                                // Element definition
 	protected final ScaleBuilder scales;                        // Helper to build scales
@@ -225,7 +226,9 @@ public abstract class ElementBuilder {
 				.addChained("filter(BrunelD3.isSelected(data)).raise()")
 				.endStatement();
 		out.add("updateState(BrunelD3.transition(merged, transitionMillis))").endStatement();
-		out.add("label(merged, transitionMillis)").endStatement();
+
+		if (structure.needsLabels() || structure.needsTooltips())
+			out.add("label(merged, transitionMillis)").endStatement();
 
 		// Define the function to fade out any item leaving the selection
 		writeRemovalOnExit(out, "selection");
@@ -253,6 +256,8 @@ public abstract class ElementBuilder {
 	protected abstract void writeDiagramEntry(ElementDetails details);
 
 	protected void defineLabelSettings(ElementDetails details) {
+		if (!structure.needsLabels()) return;
+
 		int collisionDetectionGranularity;
 		if (details.textCanOverlap()) {
 			collisionDetectionGranularity = 0;
@@ -264,9 +269,12 @@ public abstract class ElementBuilder {
 			collisionDetectionGranularity = Math.min(16, Math.max(1, collisionDetectionGranularity));
 		}
 
-		labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(), false, details.textFitsShape(),
+		labelBuilder.defineLabeling(vis.itemsLabel, details.getTextMethod(),
+				false,
+				details.textFitsShape(),
 				details.getAlignment(), details.getPadding(), vis.fCSS,
 				collisionDetectionGranularity);   // Labels
+
 	}
 
 	protected void definePathsAndSplits(ElementDetails elementDef) {
