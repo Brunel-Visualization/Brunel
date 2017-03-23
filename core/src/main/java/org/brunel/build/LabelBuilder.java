@@ -75,6 +75,7 @@ public class LabelBuilder {
 		for (Object o : categories) max = Math.max(max, o.toString().length());
 		return max;
 	}
+
 	private final VisElement vis;
 	private final ScriptWriter out;
 	private final ElementStructure structure;
@@ -171,8 +172,7 @@ public class LabelBuilder {
 				//We cannot assume the center location has been calcluated for custom maps
 				String func = "function(box,text,d) {var p = project_center(d.geo_properties); return {box:box, x:p[0], y:p[1]}}";
 				out.onNewLine().add("where:", func, ",");
-			}
-			else {
+			} else {
 				out.onNewLine().add("method: 'poly',");
 				fit = false;
 			}
@@ -247,9 +247,13 @@ public class LabelBuilder {
 			if (p.isField()) {
 				Field f = structure.data.field(p.asField());
 				if (forTooltip) out.add("'<span class=\"field\">' + ");
-				if (p.hasModifiers()) out.add("BrunelD3.shorten(");
+
+				// We look for a modifier that is numeric; if we find it, we wrap the format code with the shorten call
+				Double restrict = p.firstNumericModifier();
+				if (restrict != null) out.add("BrunelD3.shorten(");
 				out.add("data." + BuildUtil.baseFieldID(f) + "_f(d)");
-				if (p.hasModifiers()) out.add(",", (int) p.firstModifier().asDouble(), ")");
+				if (restrict != null) out.add(",", restrict.intValue(), ")");
+
 				if (forTooltip) out.add(" + '</span>'");
 			} else {
 				String o = p.asString();
@@ -259,7 +263,7 @@ public class LabelBuilder {
 			first = false;
 		}
 	}
-	
+
 	private boolean isCustomMap() {
 		return vis.tDiagramParameters.length == 1 && vis.tDiagramParameters[0].asString().contains("#");
 	}

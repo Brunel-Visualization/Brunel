@@ -153,7 +153,17 @@ public class Param implements Comparable<Param> {
         return modifiers.length == 0 ? null : modifiers[0];
     }
 
-    public boolean hasModifiers() {
+    /**
+     * Search modifiers for a number and return it (or null, if none found)
+     * @return
+     */
+    public Double firstNumericModifier() {
+        for (Param modifier : modifiers)
+            if (modifier.type == Type.number) return modifier.asDouble();
+        return null;
+    }
+
+	public boolean hasModifiers() {
         return modifiers.length > 0;
     }
 
