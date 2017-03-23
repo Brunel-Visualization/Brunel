@@ -97,7 +97,7 @@ class DependentEdge extends D3Diagram {
 	}
 
 	public ElementDetails makeDetails() {
-		return ElementDetails.makeForDiagram(structure, ElementRepresentation.curvedPath, "edge", "graph.links");
+		return ElementDetails.makeForDiagram(structure, ElementRepresentation.curvedPath, "edge", "validEdges(tree, graph.links)");
 	}
 
 	public void writeDataStructures(ScriptWriter out) {
@@ -115,6 +115,16 @@ class DependentEdge extends D3Diagram {
 
 	public void writeLabelsAndTooltips(ElementDetails details, LabelBuilder labelBuilder) {
 		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
+	}
+
+	public void preBuildDefinitions(ScriptWriter out) {
+		// Ensure that we have a valid list of identifiers
+		out.add("function validEdges(edges) {").comment("Strip out pruned edges").indentMore()
+				.add("var V={};").comment("Stores valid node IDs")
+				.add("tree.descendants().forEach(function(x) { V[x.data.key] = 1})").endStatement()
+				.add("return graph.links.filter(function(x) {return V[x.source.key] && V[x.target.key]})")
+				.endStatement().indentLess()
+				.add("}");
 	}
 
 	public void writePerChartDefinitions(ScriptWriter out) {
