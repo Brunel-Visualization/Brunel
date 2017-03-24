@@ -165,6 +165,17 @@ public class Param implements Comparable<Param> {
 	}
 
 	/**
+	 * Search modifiers for a list and return it or nul, if none found
+	 * @return valid text or null
+	 */
+	public List<Param> firstListModifier() {
+		for (Param modifier : modifiers)
+			if (modifier.type == Type.list)
+				return modifier.asList();
+		return null;
+	}
+
+	/**
 	 * Search modifiers for a number and return it (or null, if none found)
 	 * @return valid number or null
 	 */

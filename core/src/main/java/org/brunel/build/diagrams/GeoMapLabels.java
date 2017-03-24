@@ -89,7 +89,7 @@ public class GeoMapLabels extends D3Diagram {
 		String[] ids = symbols.getSymbolIDs(structure, new String[]{"star", "square", "circle"});
 		out.add("function mapLabelSymbol(c) { return !c ? " + Data.quote(ids[0]) +
 				": (c==1 ? " + Data.quote(ids[1]) + " : " + Data.quote(ids[2]) + ")}")
-		.endStatement();
+				.endStatement();
 	}
 
 	public void writeDiagramEnter(ElementDetails details, LabelBuilder labelBuilder, ScriptWriter out) {
@@ -107,7 +107,6 @@ public class GeoMapLabels extends D3Diagram {
 				.addChained("attr('x', function(d) { return this._p[0] - this._r })")
 				.addChained("attr('y', function(d) { return this._p[1] - this._r })")
 				.endStatement();
-
 
 		// Labels
 		out.add("var labeling = [{").indentMore()

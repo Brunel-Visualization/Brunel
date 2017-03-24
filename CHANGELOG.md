@@ -30,6 +30,20 @@ value is `minimal`:
  * `columns` - only the columns needed for the visualization will be written (this was the version 2.2 default)
  * `minimal` - only columns needed will be passed down, and summarization will be performed if possible
 
+## Multiple labels
+
+It is now possible to have multiple labels on a shape. This is done by specifying an optional location as part of
+each label element. All labels at the same location are concatenated into a single string. 
+
+The location can be specified as a list composing location parts, or as a string linking them with "-".
+The allowable elements are: `top`, `bottom`, `middle`  for the vertical location; `left`, `right`, `center`
+for the horizontal, and `inside`, `outside` for whether to show the label inside or outside the shape.
+
+Thus the following are all legal label comments:
+
+       label(name:top, ':':top, #count:top)
+       label(name:'top-outside', #count:'bottom-right')
+       label(name:'outside-top', #count:[bottom,right])
 
 
 ## Symbol Aesthetic

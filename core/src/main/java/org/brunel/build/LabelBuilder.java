@@ -192,7 +192,9 @@ public class LabelBuilder {
 	private void defineSingleLabeling(List<Param> items, String textMethod, int index, boolean fitsShape, String alignment, double padding, List<Param> cssFunctions, int hitDetectGranularity) {
 
 		// Override the text method if the items define it (they will all have the same text modifier)
-		String definedTextMethod = items.get(0).firstTextModifier();
+		Param modifier = items.get(0);
+		String definedTextMethod = modifier.firstTextModifier();
+		if (definedTextMethod == null) definedTextMethod = toDashSeparated(modifier.firstListModifier());
 		if (definedTextMethod != null) textMethod = definedTextMethod;
 
 
@@ -263,6 +265,10 @@ public class LabelBuilder {
 		out.indentLess().onNewLine().add("}");
 
 		out.indentLess().onNewLine().add("}");
+	}
+
+	private String toDashSeparated(List<Param> params) {
+		return params == null ? null : Data.join(params, "-");
 	}
 
 	public Collection<List<Param>> splitByLocation(List<Param> all) {

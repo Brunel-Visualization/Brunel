@@ -219,7 +219,7 @@ public class Field extends Informative implements Comparable<Field> {
     }
 
     public String format(Object v) {
-        if (v == null) return "?";
+        if (v == null) return null;
         if (v instanceof Range) return v.toString();
         if (isDate())
             return ((DateFormat) property("dateFormat")).format(Data.asDate(v));
