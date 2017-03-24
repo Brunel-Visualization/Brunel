@@ -110,13 +110,13 @@ public class GeoMapLabels extends D3Diagram {
 
 
 		// Labels
-		out.add("var labeling = {").indentMore()
-				.onNewLine().add("method:'box', pad:3, inside:false, align:'start', granularity:2,")
+		out.add("var labeling = [{").indentMore()
+				.onNewLine().add("index:0, method:'box', pad:3, inside:false, align:'start', granularity:2,")
 				.onNewLine().add("location:['right', 'middle'], content: function(d) {return d[2]}")
-				.indentLess().onNewLine().add("}").endStatement();
+				.indentLess().onNewLine().add("}]").endStatement();
 
 		// Only show ones with valid projections
-		out.add("BrunelD3.label(selection.filter(function() {return this._p}), labels, labeling, 0, geom)").endStatement();
+		out.add("BrunelD3.label(selection.filter(function() {return this._p}), labels, 0, geom, labeling)").endStatement();
 	}
 
 	public void writeLabelsAndTooltips(ElementDetails details, LabelBuilder labelBuilder) {
