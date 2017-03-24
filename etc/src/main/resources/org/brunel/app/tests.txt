@@ -78,7 +78,7 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - whiskey	/ edge yrange(country, category) chord size(#count) color(country) tooltip(#all)        :: pass
 - whiskey	/ point size(#count) color(country) bubble label(country, '\n', #count) tooltip(#all)   :: improve :: should respect the newline character
 
-- simple	/ bar x(mammal, aquatic) size(#count) color(#count) label('Mammal=', mammal, '; Aquatic=', aquatic) treemap tooltip(#all)   :: pass
+- simple	/ bar x(mammal, aquatic) size(#count) color(#count) label('Mammal=':top, mammal:top, 'Aquatic=':bottom, aquatic:bottom) treemap tooltip(#all)   :: pass
 - whiskey	/ bar x(country, category) size(#count) mean(Rating) color(Rating) label(Country, ',' , category) treemap tooltip(#all)     :: pass
 - baseball	/ bar x(HomeRunRate) y(Salary)                             :: pass
 - baseball	/ bar x(HomeRunRate) y(Salary) transpose                   :: improve :: axes labels clash

@@ -263,7 +263,6 @@ public class LabelBuilder {
 
 		writeContent(items, index < 0);                        // Index == -1 for tooltips
 		out.indentLess().onNewLine().add("}");
-
 		out.indentLess().onNewLine().add("}");
 	}
 

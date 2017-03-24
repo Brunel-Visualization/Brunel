@@ -1092,7 +1092,7 @@ var BrunelD3 = (function () {
                 b.width > loc.box.width && !addEllipses(textNode, content, loc.box.width));
                 if (kill) {
                     textNode.parentNode.removeChild(textNode);          // remove from parent
-                    attached[i] = null;                                 // dissociate from item
+                    attached[labeling.index] = null;                    // dissociate from item
                 }
 
             } else {
