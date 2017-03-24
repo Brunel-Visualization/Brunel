@@ -51,7 +51,8 @@ Thus the following are all legal label comments:
 This aesthetic is used only for point elements, and replaces the default circle with a glyph, drawn as a path.
 Brunel defines two sets of symbols, a *basic* and an *extended* set. Basic symbols are:
 
-    circle, square, triangle, diamond, cross, pentagon, star, hexagon
+    circle, square, triangle, diamond, 
+    cross, pentagon, star, hexagon
 
 and extended symbols include the basic symbols and
 
