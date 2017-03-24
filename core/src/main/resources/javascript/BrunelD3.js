@@ -343,15 +343,15 @@ var BrunelD3 = (function () {
                 loc = pathLoc(target);
         } else {
 
+            box = target.getBBox();
             // A target defined by a "use" has a BBox that is the symbol inside its viewport,
-            // which is no use to us, so we can just grab it from the defined values
-            if (target.x && target.height)
-                box = {
-                    x: +target.getAttribute("x"), y: +target.getAttribute("y"),
-                    width: +target.getAttribute("width"), height: +target.getAttribute("height")
-                };
-            else
-                box = target.getBBox();
+            // so we need to offset by that
+            if (target.x && target.y) {
+                box.x += +target.getAttribute("x");
+                box.y += +target.getAttribute("y");
+            }
+
+            // Adjust for target transform
             box = transformBox(box, target.getCTM());
 
             var hPad = labeling.align == 'start' ? pad : -pad;

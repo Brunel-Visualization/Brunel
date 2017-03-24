@@ -250,8 +250,6 @@ public class LabelBuilder {
 
 		}
 
-		//                 .onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height } ")
-
 		// Write it out as a wrapped function
 		out.onNewLine().add("content: function(d) {").indentMore();
 

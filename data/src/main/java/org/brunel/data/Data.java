@@ -101,7 +101,6 @@ public class Data {
             "if (typeof(o) == 'number') return $$CLASS$$.formatNumeric(o, null, useGrouping);",
             "return '' + o;"
     })
-
     public static String format(Object o, boolean useGrouping) {
         if (o == null) return "?";
         if (o instanceof Number) return formatNumeric(((Number) o).doubleValue(), null, useGrouping);
