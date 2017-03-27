@@ -74,10 +74,10 @@ def to_csv(df):
             csvIO = StringIO.StringIO()
             df.to_csv(csvIO, index=use_index, encoding='utf-8')
             csv = csvIO.getvalue()
-            return csv
+            return unicode(csv, errors="ignore")
         else:
             csvIO = io.StringIO()
-            df.to_csv(csvIO, index=use_index, encoding='utf-8')
+            df.to_csv(csvIO, index=use_index)
             csv = csvIO.getvalue()
             return csv
 
