@@ -36,11 +36,19 @@ public class Library {
     private static Library STANDARD;
 
     public static Action choose(Field... selected) {
-        Library lib = standard();
+        return standard().chooseAction(selected);
+    }
+
+    /**
+     * This is the main method that should be called to provide the most appropriate action
+     * @param selected fields to use
+     * @return Brunel Action to use to display (null if one cannot be found)
+     */
+    public Action chooseAction(Field[] selected) {
         if (selected == null || selected.length == 0) return null;
-        if (selected.length == 1) return lib.chooseUnivariate(selected[0]);
-        if (selected.length == 2) return lib.chooseBivariate(selected[0], selected[1]);
-        return lib.chooseMultivariate(selected);
+        if (selected.length == 1) return chooseUnivariate(selected[0]);
+        if (selected.length == 2) return chooseBivariate(selected[0], selected[1]);
+        return chooseMultivariate(selected);
     }
 
     public Action make(String name, Field... fields) {
