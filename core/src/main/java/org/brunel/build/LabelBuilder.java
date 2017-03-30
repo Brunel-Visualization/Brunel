@@ -45,18 +45,6 @@ import java.util.Map;
  */
 public class LabelBuilder {
 
-	public static void addFontSizeAttribute(VisElement vis, ScriptWriter out) {
-		if (!vis.fSize.isEmpty()) {
-			StyleTarget target = StyleTarget.makeElementTarget("text", "label");
-			Size parts = ModelUtil.getSize(vis, target, "font-size");
-			if (parts == null) {
-				out.addChained("style('font-size', function(d) { return (100*size(d)) + '%' })");
-			} else {
-				out.addChained("style('font-size', function(d) { return (", parts.value(12), "* size(d)) +'" + parts.suffix() + "' })");
-			}
-		}
-	}
-
 	public static int estimateLabelLength(List<Param> itemsLabel, Dataset data) {
 		int size = 0;
 		for (Param p : itemsLabel) {
@@ -77,6 +65,30 @@ public class LabelBuilder {
 		int max = 0;
 		for (Object o : categories) max = Math.max(max, o.toString().length());
 		return max;
+	}
+
+	/**
+	 * Define the text() content and set the size based on the vis parameters.
+	 *
+	 * @param out where to write to
+	 * @param vis the vis containing the items and the size info
+	 */
+	public void setTextContentAndFontSize(ScriptWriter out, VisElement vis) {
+		// Define the text
+		out.addChained("text(function(d) { return ");
+		writeContent(vis.itemsLabel, false);
+		out.add(" })");
+
+		// Only add sie info if we need to
+		if (!vis.fSize.isEmpty()) return;
+
+		StyleTarget target = StyleTarget.makeElementTarget("text", "label");
+		Size parts = ModelUtil.getSize(vis, target, "font-size");
+		if (parts == null) {
+			out.addChained("style('font-size', function(d) { return (100*size(d)) + '%' })");
+		} else {
+			out.addChained("style('font-size', function(d) { return (", parts.value(12), "* size(d)) +'" + parts.suffix() + "' })");
+		}
 	}
 
 	private final VisElement vis;
@@ -196,7 +208,6 @@ public class LabelBuilder {
 		String definedTextMethod = modifier.firstTextModifier();
 		if (definedTextMethod == null) definedTextMethod = toDashSeparated(modifier.firstListModifier());
 		if (definedTextMethod != null) textMethod = definedTextMethod;
-
 
 		out.add("{").ln().indentMore();
 

@@ -450,8 +450,8 @@ public abstract class ElementBuilder {
 		// If the center is not defined, this has been placed using a translation transform
 		if (elementDef.x.center != null) out.addChained("attr('x'," + elementDef.x.center + ")");
 		if (elementDef.y.center != null) out.addChained("attr('y'," + elementDef.y.center + ")");
-		out.addChained("attr('dy', '0.35em').text(labeling.content)");
-		LabelBuilder.addFontSizeAttribute(vis, out);
+		out.addChained("attr('dy', '0.35em')");
+		labelBuilder.setTextContentAndFontSize(out, vis);
 	}
 
 	private GeomAttribute getSize(Field[] fields, String extent, ScalePurpose purpose, ElementDimension dim, ElementRepresentation rep) {

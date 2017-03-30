@@ -346,7 +346,7 @@ var BrunelD3 = (function () {
             box = target.getBBox();
             // A target defined by a "use" has a BBox that is the symbol inside its viewport,
             // so we need to offset by that
-            if (target.x && target.y) {
+            if (target.tagName == 'use') {
                 box.x += +target.getAttribute("x");
                 box.y += +target.getAttribute("y");
             }
