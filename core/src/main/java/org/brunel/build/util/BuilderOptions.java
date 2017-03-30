@@ -60,6 +60,7 @@ public class BuilderOptions {
 		return "https:" + requireLocation + ".js";
 	}
 	public String visIdentifier = "visualization";              // The HTML ID of the SVG element containing the vis
+	public String visObject = "v";								// The name for the JS instance of the vis
 	public String controlsIdentifier = "controls";              // The HTML ID of the DIV element containing the vis controls
 	public String dataName = "table%d";                         // Pattern for the data table ID. %d is the index.
 	public String className = "BrunelVis";                      // Name of the base function
