@@ -21,6 +21,9 @@ var BrunelD3 = (function () {
     if (typeof topojson === 'undefined' && typeof require === 'function') topojson = require('topojson');
     if (typeof d3 === 'undefined' && typeof require === 'function') d3 = require('d3');
 
+    // Sadly we need slightly different code for the bounding box of a symbol ('use')
+    var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
     var tooltip, lastTime, lastTimeDescr;
     // Return geometries for the given target given the desired margins
     function geometries(target, chart_top, chart_left, chart_bottom, chart_right,
@@ -345,8 +348,8 @@ var BrunelD3 = (function () {
 
             box = target.getBBox();
             // A target defined by a "use" has a BBox that is the symbol inside its viewport,
-            // so we need to offset by that
-            if (target.tagName == 'use') {
+            // so we need to offset by that when in Safari, which gets the BBox wrong
+            if (isSafari && target.tagName == 'use') {
                 box.x += +target.getAttribute("x");
                 box.y += +target.getAttribute("y");
             }
