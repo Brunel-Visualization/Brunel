@@ -80,7 +80,7 @@ public class LabelBuilder {
 		out.add(" })");
 
 		// Only add sie info if we need to
-		if (!vis.fSize.isEmpty()) return;
+		if (vis.fSize.isEmpty()) return;
 
 		StyleTarget target = StyleTarget.makeElementTarget("text", "label");
 		Size parts = ModelUtil.getSize(vis, target, "font-size");
