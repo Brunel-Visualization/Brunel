@@ -89,7 +89,7 @@ public class Controls {
 			if (categories == null) {
 				out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_range_slider(", out.quote(options.visIdentifier), ",", datasetIndex, ",",
 						out.quote(fieldId), ",", out.quote(label), ",", low, ",", high, ",",
-						visInstance, ".data(null,", datasetIndex, ").field(", out.quote(fieldId), "),", animate, ",", animateFrames, ",", animateSpeed, "))").endStatement();
+						visInstance + ".data(null,", datasetIndex, ").field(", out.quote(fieldId), "),", animate, ",", animateFrames, ",", animateSpeed, "))").endStatement();
 			}
 
 			//Category filter
