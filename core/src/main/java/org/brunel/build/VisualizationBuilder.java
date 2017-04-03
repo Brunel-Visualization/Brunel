@@ -314,7 +314,7 @@ public class VisualizationBuilder {
 		// Call the function on the data
 		if (options.generateBuildCode) {
 			out.titleComment("Call Code to Build the system");
-			out.add("var", options.visObject, "= new", options.className, "(" + out.quote(options.visIdentifier) + ")").endStatement();
+			out.add("var " + options.visObject, " = new", options.className, "(" + out.quote(options.visIdentifier) + ")").endStatement();
 
 			//Initialize and wire any events that may be needed for controls.
 			//This must be done prior to building the visualization so defaults can be set.
@@ -327,7 +327,7 @@ public class VisualizationBuilder {
 				out.add("BrunelD3.animateBuild(v,", String.format(options.dataName, 1),
 						",", enterAnimateTime, ")").endStatement();
 			} else {
-				out.add(options.visObject, ".build(");
+				out.add(options.visObject + ".build(");
 				for (int i = 0; i < length; i++) {
 					if (i > 0) out.add(", ");
 					out.add(String.format(options.dataName, i + 1));
