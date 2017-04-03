@@ -140,13 +140,13 @@ public class LabelBuilder {
 	/* Call to add labels for internal nodes of trees and treemaps */
 	public void addTreeInternalLabelsInsideNode() {
 		out.add("diagramLabels.attr('class', 'axis diagram treemap hierarchy')").endStatement()
-				.add("var treeLabeling = { method:'inner-left', fit:true, dy:0.83, align:'start', ")
+				.add("var treeLabeling = [{ index:0, method:'inner-left', fit:true, dy:0.83, align:'start', ")
 				.indentMore()
 				.onNewLine().add("content:  function(d) { return d.data.innerNodeName },")
 				.onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height }, ")
 				.onNewLine().add("where :   function(box) { return {'x': box.x + 2, 'y': box.y, 'box': box} }")
-				.indentLess().onNewLine().add("}").endStatement();
-		out.add("BrunelD3.label(selection.filter(function(d) {return d.data.key}), diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
+				.indentLess().onNewLine().add("}]").endStatement();
+		out.add("BrunelD3.label(selection.filter(function(d) {return d.data.key}), diagramLabels, transitionMillis, geom, treeLabeling)").endStatement();
 	}
 
 	/* Call to add labels for internal nodes of trees and treemaps */
@@ -158,7 +158,7 @@ public class LabelBuilder {
 				.onNewLine().add("content:  function(d) { return d.data.innerNodeName },")
 				.onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height } ")
 				.indentLess().onNewLine().add("}").endStatement();
-		out.add("BrunelD3.label(selection.filter(function(d) {return d.data.innerNodeName}), diagramLabels, treeLabeling, transitionMillis, geom)").endStatement();
+		out.add("BrunelD3.label(selection.filter(function(d) {return d.data.innerNodeName}), diagramLabels, transitionMillis, geom, treeLabeling)").endStatement();
 	}
 
 	/**
