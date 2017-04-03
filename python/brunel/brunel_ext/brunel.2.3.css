@@ -128,7 +128,7 @@
     fill-opacity: 1;
 }
 
-.brunel .label {
+.brunel .label:not(.element) {
     fill: black;
     font-size: 12px;
     stroke: none;
