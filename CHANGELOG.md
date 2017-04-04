@@ -1,3 +1,10 @@
+# 2.4 Release Notes
+
+### Tooltips on Cloud and Text charts
+Now supported.
+
+
+
 # 2.3 Release Notes
 
 ## Data Pipeline Change
