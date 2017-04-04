@@ -1,6 +1,7 @@
 package org.brunel.build.guides;
 
 import org.brunel.action.Param;
+import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes.Axes;
@@ -37,8 +38,9 @@ public final class AxisRequirement {
 
 			for (Map.Entry<Axes, Param[]> p : e.fAxes.entrySet()) {
 				auto = false;                                // Any axis statement means we do not use defaults
-				if (p.getKey() == which)                     // Merge current definition with parameters
-					result = (result == null ? makeDefault(which) : result).merge(p.getValue());
+				if (p.getKey() == which)                     // Merge current definition with parameters {
+					result = (result == null ? new AxisRequirement(which, -1) : result)
+							.merge(p.getValue());
 			}
 		}
 
@@ -47,7 +49,7 @@ public final class AxisRequirement {
 			// No axes desired for nested or polar charts
 			if (structure.coordinates.isPolar() || structure.nested()) return null;
 
-			return makeDefault(which);
+			return makeDefault(which, structure.coordinates);
 		} else {
 			// Honor exactly the user definition
 			return result;
@@ -55,7 +57,10 @@ public final class AxisRequirement {
 	}
 
 	// The default is unbounded ticks, no required title and no grid
-	private static AxisRequirement makeDefault(Axes which) {
+	private static AxisRequirement makeDefault(Axes which, ChartCoordinates coordinates) {
+		// No default axis if no fields for that dimension
+		if (which == Axes.x && coordinates.allXFields.length == 0) return null;
+		if (which == Axes.y && coordinates.allYFields.length == 0) return null;
 		return new AxisRequirement(which, -1);
 	}
 
