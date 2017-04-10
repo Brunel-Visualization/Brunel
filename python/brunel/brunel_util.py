@@ -13,8 +13,9 @@
 # limitations under the License.
 
 
-# If the JVM cannot be located automatically, use this variable to get it from an environment variable.  It should be the fully qualified
-# path to the JVM.  Typically jvm.dll on Windows or libjvm.so on Unix
+# If the JVM cannot be located automatically, use this variable to get it from
+# an environment variable.  It should be the fully qualified path to the JVM.
+# Typically jvm.dll on Windows or libjvm.so on Unix
 import os
 JVM_PATH = ""
 D3_LOC = "//cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min"
@@ -22,15 +23,14 @@ TOPO_JSON_LOC = "//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min"
 JS_LOC = "/nbextensions/brunel_ext"
 
 BRUNEL_CONFIG = os.getenv("BRUNEL_CONFIG", "")
-opts = BRUNEL_CONFIG.strip().split(";")
-
-for opt in opts:
-    keyval = opt.strip().split("=");
-    if keyval[0].strip().lower() == "jvm":
-        JVM_PATH = keyval[1]
-    elif keyval[0].strip().lower() == "locd3":
-        D3_LOC = keyval[1]
-    elif keyval[0].strip().lower() == "locjavascript":
-        JS_LOC = keyval[1]
-    elif keyval[0].strip().lower() == "loctopojson":
-        TOPO_JSON_LOC = keyval[1]
+for opt in BRUNEL_CONFIG.strip().split(";"):
+    key, value = opt.strip().split("=")
+    key = key.strip().lower()
+    if key == "jvm":
+        JVM_PATH = value
+    elif key == "locd3":
+        D3_LOC = value
+    elif key == "locjavascript":
+        JS_LOC = value
+    elif key == "loctopojson":
+        TOPO_JSON_LOC = value
