@@ -173,3 +173,6 @@ local.properties
 # Brunel Archives
 brunel*.gz
 brunel*.zip
+
+# Patch files
+.patch
