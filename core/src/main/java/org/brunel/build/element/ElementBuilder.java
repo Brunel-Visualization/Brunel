@@ -397,7 +397,9 @@ public abstract class ElementBuilder {
 		// Symbols must be square, so use the overall size for 'w' and make the height the same as the width
 		if (details.representation == ElementRepresentation.symbol) {
 			details.x.size = details.overallSize;
-			details.y.size = GeomAttribute.makeConstant("w");
+			details.y.size = details.overallSize.isFunc() ?
+					GeomAttribute.makeFunction("w(d)")
+					: GeomAttribute.makeConstant("w");
 		}
 
 		writeDimLocations(details.x, "x", "w");
