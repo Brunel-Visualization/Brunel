@@ -151,10 +151,16 @@ class ParallelCoordinates extends D3Diagram {
 	}
 
 	private void defineLinearPath(ScriptWriter out) {
-		out.add("parallel.forEach(function(dim, i) {").indentMore().indentMore().onNewLine()
-				.add("if (i) p.lineTo(scale_x(i), dim.y(d))").endStatement()
-				.add("else   p.moveTo(scale_x(i), dim.y(d))").endStatement()
-				.indentLess().indentLess().add("} )").endStatement();
+		out.add("var radius = 5").endStatement();
+		out.add("parallel.forEach(function(dim, i) {").indentMore().indentMore().onNewLine();
+		if (element == VisTypes.Element.point) {
+			out.add("p.moveTo(scale_x(i)+radius, dim.y(d))").endStatement()
+					.add("p.arc(scale_x(i), dim.y(d), radius, 0, 2 * Math.PI)").endStatement();
+		} else {
+			out.add("if (i) p.lineTo(scale_x(i), dim.y(d))").endStatement()
+					.add("else   p.moveTo(scale_x(i), dim.y(d))").endStatement();
+		}
+		out.indentLess().indentLess().add("} )").endStatement();
 	}
 
 	/**
@@ -194,7 +200,7 @@ class ParallelCoordinates extends D3Diagram {
 
 	private boolean isReversed(Field field) {
 		// Numeric runs bottom to top
-		boolean reversed = !field.preferCategorical();
+		boolean reversed = !field.isNumeric();
 		for (Param p : vis.fX) if (requestsReverse(field, p)) reversed = !reversed;
 		for (Param p : vis.fY) if (requestsReverse(field, p)) reversed = !reversed;
 		return reversed;

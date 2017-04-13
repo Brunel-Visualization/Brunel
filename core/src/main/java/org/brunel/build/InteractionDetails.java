@@ -26,6 +26,7 @@ import org.brunel.model.VisTypes.Interaction;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,7 @@ public class InteractionDetails {
 			if (p.asEnum(Interaction.class) == type) return p;
 		return null;
 	}
+
 	private final boolean canZoomX, canZoomY;   // for coordinate zoom, which axes we can zoom
 	private final boolean usesCollapse;         // true if we have a collapse handler
 	private final boolean usesExpand;           // true if we have an expand handler
@@ -76,6 +78,12 @@ public class InteractionDetails {
 	public void addHandlers(ElementStructure structure, ScriptWriter out) {
 
 		Collection<Param> interactions = structure.vis.tInteraction;
+		if (interactions.isEmpty() && structure.chart.diagram == VisTypes.Diagram.parallel) {
+			// If we have not specified any interactivity for a parallel axis line, we use hover selection
+			interactions = Collections.singleton(
+					Param.makeOption("select").addModifiers(Param.makeOption("mouseover"))
+			);
+		}
 
 		// A map from the event names to a set of commands to write for each event
 		// One map for the element, the other for 'snap' events, which go on the overlay
@@ -285,6 +293,7 @@ public class InteractionDetails {
 	public boolean hasElementInteraction(ElementStructure structure) {
 		if (!structure.vis.itemsTooltip.isEmpty()) return true;                 // tooltips require a handler
 		if (structure.chart.diagram == VisTypes.Diagram.network) return true;   // networks are draggable
+		if (structure.chart.diagram == VisTypes.Diagram.parallel) return true;   // parallel axes use them by default
 		if (usesCollapse || usesExpand)
 			return true;                            // if we need tree interactivity, need a handler
 

@@ -69,6 +69,10 @@ public class ElementDetails {
 				&& representation != ElementRepresentation.curvedPath
 				&& representation != ElementRepresentation.generalPath;
 
+		// Exception! Points in parallel coordinates are drawn as circles, and so although as paths, do need filling
+		if (structure.vis.tElement ==Element.point && structure.chart.diagram == VisTypes.Diagram.parallel)
+			filled = true;
+
 		return new ElementDetails(structure.vis, representation, elementClass, dataSource, filled);
 	}
 

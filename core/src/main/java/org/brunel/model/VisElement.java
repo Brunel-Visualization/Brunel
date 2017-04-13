@@ -435,7 +435,7 @@ public class VisElement extends VisItem implements Cloneable {
 
 		// Collect a replacement for the "#all" field, if needed
 		LinkedHashSet<String> replacement = new LinkedHashSet<>();
-		for (String f : used) if (!f.equals("#all")) replacement.add(f);
+		for (String f : used) if (!f.equals("#all") && !f.equals("#selection")) replacement.add(f);
 		boolean containsAll = replacement.size() != used.length;
 
 		boolean addSeriesSplit = requiresSplitForSeries();

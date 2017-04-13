@@ -173,8 +173,12 @@
 }
 
 .brunel .parallel path {
-    stroke-linecap: butt;
+    stroke-linecap: round;
     stroke-linejoin: round;
+}
+
+.brunel .parallel .element:not(.selected) {
+    opacity: 0.25
 }
 
 .brunel path.element.guide {
