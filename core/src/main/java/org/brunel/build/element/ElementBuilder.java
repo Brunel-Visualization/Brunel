@@ -394,6 +394,13 @@ public abstract class ElementBuilder {
 	}
 
 	protected void writeCoordinateFunctions(ElementDetails details) {
+		// Symbols must be square, so use the overall size for 'w' and make the height the same as the width
+		if (details.representation == ElementRepresentation.symbol) {
+			details.x.size = details.overallSize;
+			details.y.size = details.overallSize.isFunc() ?
+					GeomAttribute.makeFunction("w(d)")
+					: GeomAttribute.makeConstant("w");
+		}
 
 		// Symbols must be square, so use the overall size for 'w' and make the height the same as the width
 		if (details.representation == ElementRepresentation.symbol) {
