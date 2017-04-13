@@ -175,4 +175,4 @@ brunel*.gz
 brunel*.zip
 
 # Patch files
-.patch
+*.patch
