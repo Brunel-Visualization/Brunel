@@ -22,7 +22,7 @@ First install `devtools` if you have not already and then install the brunel pac
 
 ```
 install.packages("devtools")
-devtools::install_github("Brunel-Visualization/Brunel", subdir="R", ref="v2.2")
+devtools::install_github("Brunel-Visualization/Brunel", subdir="R", ref="v2.3")
 ```
 
 
