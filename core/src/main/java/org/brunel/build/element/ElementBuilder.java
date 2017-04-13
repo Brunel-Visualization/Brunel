@@ -86,7 +86,14 @@ public abstract class ElementBuilder {
 			defineCircle(elementDef, out);
 	}
 
+	/**
+	 * Define geometry for a rectangular shape
+	 *
+	 * @param details how to draw the element
+	 * @param out     where to write to
+	 */
 	private static void defineRect(ElementDetails details, ScriptWriter out) {
+
 		// Rectangles must have extents > 0 to display, so we need to write that code in
 		out.addChained("each(function(d) {").indentMore().indentMore().onNewLine();
 		if (details.x.defineUsingExtent()) {
@@ -387,6 +394,13 @@ public abstract class ElementBuilder {
 	}
 
 	protected void writeCoordinateFunctions(ElementDetails details) {
+		// Symbols must be square, so use the overall size for 'w' and make the height the same as the width
+		if (details.representation == ElementRepresentation.symbol) {
+			details.x.size = details.overallSize;
+			details.y.size = details.overallSize.isFunc() ?
+					GeomAttribute.makeFunction("w(d)")
+					: GeomAttribute.makeConstant("w");
+		}
 
 		writeDimLocations(details.x, "x", "w");
 		writeDimLocations(details.y, "y", "h");
