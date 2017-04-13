@@ -30,7 +30,7 @@ def distName = 'brunel-all'
 
 
 
-version = '2.3'
+version = '2.4'
 
 configure([project(":data"), project(":core"), project(":etc"), project(":service")]) {
     apply plugin: 'java'
@@ -40,7 +40,7 @@ configure([project(":data"), project(":core"), project(":etc"), project(":servic
     compileJava.options.encoding = 'UTF-8'
     compileTestJava.options.encoding = 'UTF-8'
 
-    version = '2.3'
+    version = '2.4'
 
     repositories {
         mavenCentral()
@@ -109,7 +109,7 @@ task brunelSyntaxDoc(type: Copy) {
 
 
 task brunelGeoFiles(type: Copy) {
-    from project(':core').file('etc/geo files 2.3.zip')
+    from project(':core').file('etc/geo files 2.4.zip')
     into 'out'
 }
 

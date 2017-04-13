@@ -250,7 +250,15 @@ class TransformParameterBuilder {
 			stackCommand += param.asField();
 		}
 
-		return stackCommand + "; " + Data.join(vis.aestheticFields()) + "; " + vis.tElement.producesSingleShape;
+		// ensure that selection is first as that makes most sense when stacking
+		// It avoids selected bars "floating" in the middle of the stack and ensures they are always first
+		List<String> stackAesthetics = new ArrayList<>();
+		for (String f : vis.aestheticFields()) {
+			if (f.equals("#selection")) stackAesthetics.add(0, f);
+			else stackAesthetics.add(f);
+		}
+
+		return stackCommand + "; " + Data.join(stackAesthetics) + "; " + vis.tElement.producesSingleShape;
 	}
 
 	String makeSummaryCommands() {

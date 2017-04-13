@@ -779,7 +779,9 @@ var BrunelD3 = (function () {
         }
 
         function prepare(d, index) {
-            d3.select(this).style('alignment-baseline', 'auto');
+            var d3this = d3.select(this);
+            d3this.style('alignment-baseline', 'auto');
+            if (this._originalSize) d3this.style('font-size', this._originalSize);  // restore original size
             var r = this.getBBox(), asc = r.height + r.y, desc = asc * 0.9,
                 ht = r.height, wd = r.width + 2, oy = 0,
                 ascDesc = ascender(this.textContent);
@@ -802,6 +804,9 @@ var BrunelD3 = (function () {
             if (rotated) item = {height: item.width, width: item.height, oy: 0, ox: oy, _rotated: true};
             item._txt = this;
             items[index] = item;
+
+            if (!this._originalSize) this._originalSize = d3this.style('font-size');
+
             totalArea += item.height * item.width;
         }
 
@@ -868,6 +873,10 @@ var BrunelD3 = (function () {
             }
 
             transformToFill(parent);
+
+            // Resets information used read for next build
+            items = [];
+            totalArea = 0.0;
 
         }
 
