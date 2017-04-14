@@ -124,8 +124,8 @@ var BrunelD3 = (function () {
         var swatch = entries.append('use').attr('x', 2).attr('width', 18).attr('height', 18);
         if (def.color) swatch.style('fill', def.color);
         swatch.attr('xlink:href', def.symbol ? function (d) {
-                return '#' + def.symbol(d)
-            } : "#_sym_square");
+            return '#' + def.symbol(d)
+        } : "#_sym_square");
 
         // Create an appropriate text function nicely to format the ticks
         var ticks = def.ticks, textf;
@@ -312,6 +312,7 @@ var BrunelD3 = (function () {
     }
 
     function transformBox(box, matrix) {
+        if (!matrix) return box;
         var p = apply(matrix, box.x, box.y),
             w = matrix.a * box.width + matrix.c * box.height,
             h = matrix.b * box.width + matrix.d * box.height;
@@ -319,6 +320,7 @@ var BrunelD3 = (function () {
     }
 
     function transformLoc(loc, matrix) {
+        if (!matrix) return loc;
         var c = apply(matrix, loc.x, loc.y),
             b = transformBox(loc.box, matrix);
         return {x: c[0], y: c[1], box: b};
@@ -1598,10 +1600,12 @@ var BrunelD3 = (function () {
 
     // Ensures a D3 item has no cumulative matrix transform
     function undoTransform(labels, element) {
-        var node = labels.node(),                                       // SVG node
-            m = element.node().getCTM().inverse(),                      // Invert its matrix
-            t = node.ownerSVGElement.createSVGTransformFromMatrix(m);   // Convert to a transform
-        node.transform.baseVal.initialize(t);                           // Apply to create an overall identity transform
+        var ctm = element.node().getCTM();
+        if (ctm) {
+            var node = labels.node(),                                                   // SVG node
+                t = node.ownerSVGElement.createSVGTransformFromMatrix(ctm.inverse());   // Convert to a transform
+            node.transform.baseVal.initialize(t);                // Apply to create an overall identity transform
+        }
         return labels;
     }
 
@@ -1903,8 +1907,8 @@ var BrunelD3 = (function () {
             delta = Math.abs(range[1] - range[0]),
             skip = Math.ceil(16 * domain.length / delta);
         return skip < 2 ? domain : domain.filter(function (d, i) {
-                return !(i % skip);
-            })
+            return !(i % skip);
+        })
     }
 
     /**
