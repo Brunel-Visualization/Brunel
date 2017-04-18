@@ -573,7 +573,7 @@ This release adds support for Scala/Spark Jupyter Notebooks using the Apachee To
    desired for a numeric axis) or string (to give a title to an axis, with the empty string '' suppressing titles)
  * Improved the algorithm for shortening labels (using `label(field:N)` where _N_ is the desired text length)
  * Clustering is now allowed; specifying two _x_ dimensions where the first is categorical will place the
-   second dimensions within the first as a clustered X axis
+   second dimensions within the first as a clustered X axis.
 
 ## Fixes
 
