@@ -319,7 +319,7 @@ public class Data {
         return f;
     }
 
-    // Java does not use regexes for split; Java does
+    // Javascript does not use regexes for split; Java does
     @JSTranslation(js = "return text.split(sep);")
     public static String[] split(String text, char sep) {
         return text.split("\\" + sep);
@@ -362,10 +362,17 @@ public class Data {
             else if (c == '\t') text += "\\t";
             else if (c == '\\') text += "\\\\";
             else if (c == quoteChar) text += "\\" + c;
+            else if (c >= '\u00ff') text += "\\u" + hex4Format(c);          // escape non-unicode
             else text += c;
         }
 
         return quoteChar + text + quoteChar;
+    }
+
+    @JSTranslation(js = "return ('0000' + c.charCodeAt(0).toString(16)).substr(-4);")
+    private static String hex4Format(char c) {
+        return String.format("%04X", (int) c);
+
     }
 
     @JSTranslation(ignore = true)
