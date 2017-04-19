@@ -13,15 +13,6 @@ import java.util.Set;
  * A single span of domains
  */
 public class DomainSpan implements Comparable<DomainSpan> {
-	/**
-	 * Build a domain from categories
-	 *
-	 * @param f the field to use
-	 * @return (categorical) domain span
-	 */
-	public static DomainSpan makeCategorical(Field f) {
-		return new DomainSpan(f.categories(), 0, 0, false);
-	}
 
 	/**
 	 * Build a domain from a numeric range
@@ -29,20 +20,25 @@ public class DomainSpan implements Comparable<DomainSpan> {
 	 * @param f the field to use
 	 * @return (numeric) domain span
 	 */
-	public static DomainSpan makeNumeric(Field f) {
-		return new DomainSpan(null, f.min(), f.max(), f.isDate());
+	public static DomainSpan make(Field f, int index) {
+		if (f.isNumeric())
+			return new DomainSpan(f.preferCategorical() ? f.categories() : null, f.min(), f.max(), f.isDate(), index);
+		else
+			return new DomainSpan(f.categories(), Double.NaN, Double.NaN, false, index);
 	}
 
-	private Object[] categories;       // Categorical data
-	private double low;                // Numeric low value
-	private double high;               // Numeric high value
-	private boolean isDate;            // Is this a (numeric) date range?
+	private final Object[] categories;       // Categorical data
+	private final double low;                // Numeric low value
+	private final double high;               // Numeric high value
+	private final boolean isDate;            // Is this a (numeric) date range?
+	private final int index;                // To preserve the order we added them in
 
-	private DomainSpan(Object[] categories, double low, double high, boolean isDate) {
+	private DomainSpan(Object[] categories, double low, double high, boolean isDate, int index) {
 		this.categories = categories;
 		this.low = low;
 		this.high = high;
 		this.isDate = isDate;
+		this.index = index;
 	}
 
 	/**
@@ -54,15 +50,19 @@ public class DomainSpan implements Comparable<DomainSpan> {
 	 * @return sort order
 	 */
 	public int compareTo(DomainSpan o) {
-		if (categories != null) {
-			// we are categorical
-			return o.categories == null ? 1 :
-					o.categories.length - categories.length;
-		} else {
-			if (o.categories != null) return -1;                // numerics go first
-			if (isDate != o.isDate) return isDate ? -1 : 1;     // dates go ahead of non-dates
-			return Double.compare(low, o.low);                  // By lowest min value
-		}
+		// Types comparison first
+		int d = typeScore() - o.typeScore();
+		if (d != 0) return d;
+
+		// Order by low value, or nothing for non-numeric
+		if (categories == null) return Data.compare(low, o.low);
+		return index - o.index;
+	}
+
+	private int typeScore() {
+		if (isDate) return categories == null ? 1 : 2;                // Dates first, with binned dates second
+		if (!Double.isNaN(low)) return categories == null ? 3 : 4;    // Numeric next, with binned numerics after
+		return 5;                                                    // Purely categorical is last
 	}
 
 	public Object[] content() {
@@ -75,29 +75,29 @@ public class DomainSpan implements Comparable<DomainSpan> {
 	 * Attempt to update this domain also to include another domain
 	 *
 	 * @param o the other domain to include
-	 * @return false if it could not be done
+	 * @return the merged domain, or null if nothing could be done
 	 */
-	public boolean include(DomainSpan o) {
-		if (categories != null) {
-			if (o.categories == null)
-				return false;            // Only categorical domains can merge with categorical
-			Set<Object> all = new HashSet<>();
-			Collections.addAll(all, categories);                // Add all our categories to the set
+	public DomainSpan merge(DomainSpan o) {
+		if (o.isDate != isDate) return null;                    // Only match dates with dates
 
-			List<Object> ordered = new ArrayList<>();
-			Collections.addAll(ordered, categories);            // Our categories go first
-			for (Object a : o.categories)                    // Add new categories from the other list
-				if (!all.contains(a)) ordered.add(a);
-			if (ordered.size() > categories.length)                // Only update if we need to
-				categories = ordered.toArray(new Object[ordered.size()]);
-		} else {
-			if (o.categories != null) return false;          // Only numeric domains can merge with numeric
-			if (o.isDate != isDate) return false;            // Only match dates with dates
-			this.low = Math.min(low, o.low);
-			this.high = Math.max(high, o.high);
-		}
-		// we updated
-		return true;
+		Object[] mCats = mergeCategories(categories, o.categories);
+		double a = Math.min(low, o.low);
+		double b = Math.max(high, o.high);
+
+		if (mCats == null && Double.isNaN(a)) return null;        // No match either for continuous or categories
+		return new DomainSpan(mCats, a, b, isDate, Math.min(index, o.index));    // Matched result
+	}
+
+	private static Object[] mergeCategories(Object[] a, Object[] b) {
+		if (a == null || b == null) return null;
+
+		Set<Object> all = new HashSet<>();
+		Collections.addAll(all, a);                                // Add all our categories to the set
+		List<Object> ordered = new ArrayList<>();
+		Collections.addAll(ordered, a);                            // Our categories go first
+		for (Object o : b)                                        // Add new categories from the other list
+			if (!all.contains(o)) ordered.add(o);
+		return ordered.toArray(new Object[ordered.size()]);
 	}
 
 	public double relativeSize() {

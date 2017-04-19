@@ -19,6 +19,7 @@ package org.brunel.data.auto;
 import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.data.Fields;
+import org.brunel.data.modify.Transform;
 import org.brunel.data.util.DateFormat;
 import org.junit.Test;
 
@@ -30,14 +31,14 @@ public class TestDomain {
 
 	@Test
 	public void emptyTest() {
-		Domain domain = new Domain();
+		Domain domain = new Domain(true);
 		assertEquals(0, domain.domains().length);
 		assertEquals(0, domain.domainRanges().length);
 	}
 
 	@Test
 	public void testOneCategorical() {
-		Domain domain = new Domain();
+		Domain domain = new Domain(true);
 
 		Field f = Fields.makeColumnField("field", null, new Object[]{"a", "c", "f"});
 
@@ -60,7 +61,7 @@ public class TestDomain {
 
 	@Test
 	public void testOneNumeric() {
-		Domain domain = new Domain();
+		Domain domain = new Domain(true);
 
 		Field f = Data.toNumeric(Fields.makeColumnField("field", null, new Object[]{40, 3}));
 
@@ -82,7 +83,7 @@ public class TestDomain {
 
 	@Test
 	public void testOneDate() {
-		Domain domain = new Domain();
+		Domain domain = new Domain(true);
 
 		// Make some dates
 		Date d1 = Data.asDate("1971-1-3");
@@ -109,7 +110,7 @@ public class TestDomain {
 
 	@Test
 	public void testTwoCategorical() {
-		Domain domain = new Domain();
+		Domain domain = new Domain(true);
 
 		Field f = Fields.makeColumnField("field", null, new Object[]{"a", "c", "f"});
 		Field g = Fields.makeColumnField("field", null, new Object[]{"a", "d", "h"});
@@ -136,7 +137,7 @@ public class TestDomain {
 
 	@Test
 	public void testTwoNumeric() {
-		Domain domain = new Domain();
+		Domain domain = new Domain(true);
 
 		Field f = Data.toNumeric(Fields.makeColumnField("field", null, new Object[]{40, 3}));
 		Field g = Data.toNumeric(Fields.makeColumnField("field", null, new Object[]{20, 50}));
@@ -172,12 +173,7 @@ public class TestDomain {
 		Field c2 = Fields.makeColumnField("field", null, new Object[]{"a", "d", "h"});
 
 		// Include in mixed order
-		Domain domain = new Domain();
-		domain.include(n1);
-		domain.include(c1);
-		domain.include(d);
-		domain.include(n2);
-		domain.include(c2);
+		Domain domain = new Domain(true).include(n1).include(c1).include(d).include(n2).include(c2);
 
 		Object[][] domains = domain.domains();
 		double[][] ranges = domain.domainRanges();
@@ -217,7 +213,58 @@ public class TestDomain {
 		// Third: categorical
 		assertEquals(2.2 * R, ranges[2][0], 1e-9);
 		assertEquals(1.0, ranges[2][1], 1e-9);
+	}
+
+	@Test
+	public void testBinnedAlone() {
+		Field a = Data.toNumeric(Fields.makeColumnField("num", null, new Object[]{3, 4, 9, 20, 23, 30, 45}));
+		Field binnedA = Transform.bin(a, 3);
+
+		// Binning when we prefer categorical output
+		Object[][] domains = new Domain(false).include(binnedA).domains();
+		assertEquals(1, domains.length);
+		assertEquals(3, domains[0].length);
+		assertEquals("0\u202620", Data.format(domains[0][0],false));
+		assertEquals("20\u202640", Data.format(domains[0][1],false));
+		assertEquals("40\u202660", Data.format(domains[0][2],false));
+
+		domains = new Domain(false).include(binnedA).domains();
+		assertEquals(1, domains.length);
+		assertEquals(3, domains[0].length);
+		assertEquals("0\u202620", Data.format(domains[0][0],false));
+		assertEquals("20\u202640", Data.format(domains[0][1],false));
+		assertEquals("40\u202660", Data.format(domains[0][2],false));
 
 	}
+
+	@Test
+	public void testBinned() {
+		Field a = Data.toNumeric(Fields.makeColumnField("num", null, new Object[]{3, 4, 9, 20, 23, 30, 45}));
+		Field b = Data.toNumeric(Fields.makeColumnField("numeric", null, new Object[]{-45, -15}));
+
+		Field c = Fields.makeColumnField("cat", null, new Object[]{"a", "c", "f"});
+
+		Field binnedA = Transform.bin(a, 3);
+
+		// Binned with categorical data -- one set of categories, ranges first
+		Object[][] domains = new Domain(true).include(c).include(binnedA).domains();
+		assertEquals(1, domains.length);
+		assertEquals(6, domains[0].length);
+		assertEquals("0\u202620", Data.format(domains[0][0],false));
+		assertEquals("20\u202640", Data.format(domains[0][1],false));
+		assertEquals("40\u202660", Data.format(domains[0][2],false));
+		assertEquals("a", domains[0][3]);
+		assertEquals("c", domains[0][4]);
+		assertEquals("f", domains[0][5]);
+
+		// Binned with numeric data -- one set of numeric range
+		domains = new Domain(true).include(b).include(binnedA).domains();
+		assertEquals(1, domains.length);
+		assertEquals(2, domains[0].length);
+		assertEquals(-45.0, domains[0][0]);
+		assertEquals(60.0, domains[0][1]);
+
+	}
+
 
 }

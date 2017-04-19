@@ -12,49 +12,66 @@ import java.util.List;
  * The domain can handle a mix of numeric, date and time domains
  */
 public class Domain {
-	/*
-		This is a sorted list of data spans; each of which covers part of the data range
-	 */
-	private final List<DomainSpan> spans;
+
+	private final List<DomainSpan> raw;                        // Added one at a time
+	private final boolean preferContinuous;
+	private List<DomainSpan> merged;                        // When called, merges compatible domains
 
 	/**
 	 * Creates the domain with an empty list of spans
+	 *
+	 * @param preferContinuous
 	 */
-	public Domain() {
-		this.spans = new ArrayList<>();
+	public Domain(boolean preferContinuous) {
+		this.preferContinuous = preferContinuous;
+		this.raw = new ArrayList<>();
 	}
 
-	public void include(Field f) {
-		// Make a domain span for the field
-		DomainSpan d = f.preferCategorical() ? DomainSpan.makeCategorical(f)
-				: DomainSpan.makeNumeric(f);
-
-		// If we can add to an existing span, do so
-		for (DomainSpan span : spans)
-			if (span.include(d)) return;
-
-		// Otherwise we have a new span
-		spans.add(d);
+	public Domain include(Field f) {
+		raw.add(DomainSpan.make(f, raw.size()));              // Add it in (indexing to preserve sort order)
+		merged = null;                                        // invalidate merging
+		return this;
 	}
 
 	// Get the domain contents to use
 	public Object[][] domains() {
-		Collections.sort(spans);                            // Sort into order
-		Object[][] result = new Object[spans.size()][];
+		merge();
+		Object[][] result = new Object[merged.size()][];
 		for (int i = 0; i < result.length; i++)
-			result[i] = spans.get(i).content();
+			result[i] = merged.get(i).content();
 		return result;
+	}
+
+	// Process the raw fields into a minimal ordered list
+	private void merge() {
+		Collections.sort(raw);                                        // Sort into order
+		merged = new ArrayList<>();
+		DomainSpan current = null;                                // Try to merge into this
+		for (DomainSpan span : raw) {
+			if (current == null)
+				current = span;                                        // The first span
+			else {
+				DomainSpan next = current.merge(span);               // Merge this with the current span
+				if (next == null) {                                // Could not merge, so:
+					merged.add(current);                            // Add the old one in
+					current = span;                                    // This span is the new one to attempt to merge to
+				} else {
+					current = next;                                    // This is a successful merge
+				}
+			}
+		}
+		if (current != null) merged.add(current);                // Add the current span
+
 	}
 
 	// Allocate the spans to ranges in [0,1]
 	public double[][] domainRanges() {
-		Collections.sort(spans);                            // Sort into order
-		double[][] results = new double[spans.size()][];
-		double sizeTotal = 0.1 * (spans.size() - 1);                    // Start with the gaps, of size 0.1
-		for (DomainSpan span : spans) sizeTotal += span.relativeSize();
+		double[][] results = new double[merged.size()][];
+		double sizeTotal = 0.1 * (merged.size() - 1);                    // Start with the gaps, of size 0.1
+		for (DomainSpan span : merged) sizeTotal += span.relativeSize();
 		double at = 0.0;
 		for (int i = 0; i < results.length; i++) {
-			double size = spans.get(i).relativeSize();
+			double size = merged.get(i).relativeSize();
 			results[i] = new double[]{at / sizeTotal, (at + size) / sizeTotal};
 			at += size + 0.1;
 

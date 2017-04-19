@@ -230,6 +230,10 @@ public class TestData {
         assertEquals("'slashes: \\\\'", Data.quote("slashes: \\"));
         assertEquals("\"\\\"'Quotes mismatched\\\"'\"", Data.quote("\"'Quotes mismatched\"'"));
         assertEquals("\"\\\\Nasty:\\\"'\\\\'\\\"\"", Data.quote("\\Nasty:\"'\\'\""));               // "\\Nasty:\"'\\'\""
+
+        assertEquals("'hey \\u2017'", Data.quote("hey \u2017"));
+
+
     }
 
 }
