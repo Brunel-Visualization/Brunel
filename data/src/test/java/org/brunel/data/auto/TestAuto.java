@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package org.brunel.data.modify;
+package org.brunel.data.auto;
 
 import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.data.Fields;
-import org.brunel.data.auto.Auto;
-import org.brunel.data.auto.NumericScale;
 import org.brunel.data.util.ItemsList;
 import org.junit.Test;
 
