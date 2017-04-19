@@ -38,7 +38,7 @@ public class Domain {
 		merge();
 		Object[][] result = new Object[merged.size()][];
 		for (int i = 0; i < result.length; i++)
-			result[i] = merged.get(i).content();
+			result[i] = merged.get(i).content(preferContinuous);
 		return result;
 	}
 

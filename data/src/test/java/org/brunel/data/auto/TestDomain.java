@@ -228,12 +228,11 @@ public class TestDomain {
 		assertEquals("20\u202640", Data.format(domains[0][1],false));
 		assertEquals("40\u202660", Data.format(domains[0][2],false));
 
-		domains = new Domain(false).include(binnedA).domains();
+		domains = new Domain(true).include(binnedA).domains();
 		assertEquals(1, domains.length);
-		assertEquals(3, domains[0].length);
-		assertEquals("0\u202620", Data.format(domains[0][0],false));
-		assertEquals("20\u202640", Data.format(domains[0][1],false));
-		assertEquals("40\u202660", Data.format(domains[0][2],false));
+		assertEquals(2, domains[0].length);
+		assertEquals(0.0, domains[0][0]);
+		assertEquals(60.0, domains[0][1]);
 
 	}
 

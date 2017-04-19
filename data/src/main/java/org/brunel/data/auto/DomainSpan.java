@@ -65,10 +65,14 @@ public class DomainSpan implements Comparable<DomainSpan> {
 		return 5;                                                    // Purely categorical is last
 	}
 
-	public Object[] content() {
-		if (categories != null) return categories;
-		if (isDate) return new Object[]{Data.asDate(low), Data.asDate(high)};
-		return new Object[]{low, high};
+	public Object[] content(boolean preferContinuous) {
+		// we return numeric data if no categorical data, or we prefer the numeric data
+		if (categories == null || preferContinuous && !Double.isNaN(low)) {
+			if (isDate) return new Object[]{Data.asDate(low), Data.asDate(high)};
+			return new Object[]{low, high};
+		} else {
+			return categories;
+		}
 	}
 
 	/**
