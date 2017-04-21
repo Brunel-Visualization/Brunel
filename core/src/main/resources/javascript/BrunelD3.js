@@ -1055,7 +1055,9 @@ var BrunelD3 = (function () {
         var d = item.__data__;
         if (d.data && d.data.row != undefined) d = d.data;  // For hierarchies and structures where the data is a layer down
         var content = labeling.content(d);
-        if (!content) return;                               // If there is no content, we are done
+        if (!content || !item.parentNode) return;                               // If there is no content, we are done
+        																		// If no parent item then we are likely in a transition state
+                                                                                // which can cause failures in FF for bbox calculations.
 
         if (!labeling.align) labeling.align = "middle";
 
