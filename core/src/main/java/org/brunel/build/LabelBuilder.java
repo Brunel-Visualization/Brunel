@@ -153,11 +153,11 @@ public class LabelBuilder {
 	public void addTreeInternalLabelsOutsideNode(String vertical) {
 		String dy = vertical.equals("bottom") ? "0.75" : "0.25";
 		out.add("diagramLabels.attr('class', 'axis diagram tree hierarchy')").endStatement()
-				.add("var treeLabeling = { location:['center', '" + vertical + "'], fit:false, dy:" + dy + ", align:'middle', granularity:1, ")
+				.add("var treeLabeling = [{ location:['center', '" + vertical + "'], fit:false, dy:" + dy + ", align:'middle', granularity:1, ")
 				.indentMore()
 				.onNewLine().add("content:  function(d) { return d.data.innerNodeName },")
 				.onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height } ")
-				.indentLess().onNewLine().add("}").endStatement();
+				.indentLess().onNewLine().add("}]").endStatement();
 		out.add("BrunelD3.label(selection.filter(function(d) {return d.data.innerNodeName}), diagramLabels, transitionMillis, geom, treeLabeling)").endStatement();
 	}
 

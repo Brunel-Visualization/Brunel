@@ -1,0 +1,125 @@
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<html>
+<head>
+    <title>Bounds Tests</title>
+    <style>
+        svg * {
+            fill-opacity: 0.5
+        }
+
+        #a * {
+            fill: red
+        }
+
+        #b * {
+            fill: blue
+        }
+
+        #c * {
+            fill: orange
+        }
+
+        #d * {
+            fill: green
+        }
+
+        #e * {
+            fill: pink
+        }
+
+        #f * {
+            fill: yellow
+        }
+
+        #g * {
+            fill: cyan
+        }
+    </style>
+</head>
+
+<body>
+<H1>Tests for Bounds</H1>
+
+<p>
+    This tests a number of conditions on bounding rectangles in SVG and is intended to be run on different browsers.
+    Overall, the goal is for each test to return the same results.
+</p>
+<p>
+    However, there is one difference we don't care about. An element that has a parent that has been set to display:none
+    returns a valid bounding box in every browser except Firefox, which returns null. This seems wrong, as if the element
+    itself has display:none, all browsers give a bad bounding box for it. So, not worrying about this inconsistency.
+</p>
+
+<P>Test Code: <a href="BoundsTest.js">BoundsTest.js</a></P>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min.js" charset="utf-8"></script>
+<script src="BoundsTest.js" charset="UTF-8"></script>
+
+
+<H2>Test Environment</H2>
+
+<svg id="svgA" width="400" height="200">
+    <defs>
+        <g>
+            <symbol id="symCircle" viewBox="0 0 24 24">
+                <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"></path>
+            </symbol>
+        </g>
+    </defs>
+    <g id="a">
+        <rect id="ra1" x="20" y="30" width="50" height="60"></rect>
+        <rect id="ra2" x="20" y="30" width="50" height="60" style="display:none"></rect>
+        <rect id="ra3" x="20" y="30" width="50" height="60" style="visibility:hidden"></rect>
+    </g>
+    <g id="b" transform="translate(7,9)">
+        <rect id="rb1" x="20" y="30" width="50" height="60"></rect>
+        <rect id="rb2" x="20" y="30" width="50" height="60" style="display:none"></rect>
+        <rect id="rb3" x="20" y="30" width="50" height="60" style="visibility:hidden"></rect>
+    </g>
+    <g id="c">
+        <use id="sa1" xlink:href="#symCircle" x=90 y=20 width=30 height=30></use>
+    </g>
+    <g id="d" transform="translate(3,-4)">
+        <use id="sb1" xlink:href="#symCircle" x=90 y=20 width=30 height=30></use>
+        <use id="sb2" xlink:href="#symCircle" x=90 y=20 width=30 height=30 style="display:none"></use>
+        <use id="sb3" xlink:href="#symCircle" x=90 y=20 width=30 height=30 style="visibility:hidden"></use>
+    </g>
+    <g id="e" style="display:none">
+        <rect id="rc1" x="20" y="30" width="50" height="60"></rect>
+        <use id="sc1" xlink:href="#symCircle" x=90 y=20 width=30 height=30></use>
+    </g>
+
+    <g id="f">
+        <rect id="rd1" x="20" y="30" width="50" height="60"></rect>
+    </g>
+</svg>
+
+<H2>Results:</H2>
+
+<p>
+<pre>
+<script type="text/javascript">
+    var result = report();
+    document.write(result);
+</script>
+</pre>
+
+
+</body>
+</html>

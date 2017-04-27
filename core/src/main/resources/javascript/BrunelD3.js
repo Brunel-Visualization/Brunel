@@ -21,8 +21,9 @@ var BrunelD3 = (function () {
     if (typeof topojson === 'undefined' && typeof require === 'function') topojson = require('topojson');
     if (typeof d3 === 'undefined' && typeof require === 'function') d3 = require('d3');
 
-    // Sadly we need slightly different code for the bounding box of a symbol ('use')
-    var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    // Detect if this is NOT a chromium browser we are in
+    // Chrome browsers add in the symbol offset to the symbols bounding box; other browsers do not
+    var notChrome = window.navigator.userAgent.toLowerCase().indexOf("chrome") === -1;
 
     var tooltip, lastTime, lastTimeDescr;
     // Return geometries for the given target given the desired margins
@@ -94,6 +95,52 @@ var BrunelD3 = (function () {
         var d = BrunelData.Dataset.makeTyped(data.names, data.options, data.rows);
         d.set("summarized", data.summarized);        // Preserve the status in the info
         return d;
+    }
+
+
+    /**
+     * Returns the bounding box for an item, or null if the bounding box is invalid.
+     * An invalid rect is one which has no size, or when the svg ite is not displayed and
+     * so the call to getBBox() throws a failure. Different browsers handle things differently,
+     * and this routine is intended to abstract that out.
+     * @param item the svg item to get the box for
+     * @returns rect (x,y, width, height), or null
+     */
+    function getBBox(item) {
+        try {
+            var box = item.getBBox();
+        } catch (e) {
+            return null;
+        }
+
+        if (notChrome && item.tagName === 'use') {
+            // Chrome adds the parent coordinate system into the mix already
+            // for every other browser, we have to manually add it
+            box.x += +item.getAttribute("x");
+            box.y += +item.getAttribute("y");
+        }
+
+        // Empty boxes are either useless or an indicator the element is not visible
+        return box.width || box.height ? box : null;
+    }
+
+    /**
+     * Transform a rectangle (usually calculated from the bounding box)
+     * @param box box to transform (null is allowed and will return null)
+     * @param item the svg item to get the transform from
+     * @returns transformed box -- will always be valid if input box was valid
+     */
+    function transformBox(box, item) {
+        var m = item.getCTM();
+        if (m && box)
+            return {
+                x: m.a * box.x + m.c * box.y + m.e,
+                y: m.b * box.x + m.d * box.y + m.f,
+                width: m.a * box.width + m.c * box.height,
+                height: m.b * box.width + m.d * box.height
+            };
+        else
+            return box;
     }
 
     /**
@@ -214,6 +261,7 @@ var BrunelD3 = (function () {
     }
 
     function shrink(rect, sx, sy) {
+        if (!rect) return null;
         sx = sx || 1 / 3;
         sy = sy || 1 / 3;
         var w = rect.width * sx;
@@ -237,18 +285,28 @@ var BrunelD3 = (function () {
         return {x: x, y: y, box: {x: x - r, y: y - r, width: 2 * r, height: 2 * r}}
     }
 
+    /**
+     * Create a location (x,y for target position and the bounding box) using the centroid algorithm
+     * @param path D3 path to use
+     * @param d datum for the path
+     * @param svgItem item to get the box for
+     * @returns {{x: *, y: *, box: ({x, y, width, height}|*)}}
+     */
     function centroidLoc(path, d, svgItem) {
-        // Find the centroid
         var c = path.centroid(d);
-        var b = svgItem.getBBox();
-        return {x: c[0], y: c[1], box: shrink(b)}
+        return {x: c[0], y: c[1], box: shrink(getBBox(svgItem))}
     }
 
-    function pathLoc(svgItem) {
+    /**
+     * Create a location (x,y for target position and the bounding box) along path
+     * @param svgItem item to get the box for
+     * @param fraction - how far along path to determine
+     * @returns {{x: *, y: *, box: ({x, y, width, height}|*)}}
+     */
+    function pathLoc(svgItem, fraction) {
         // Find a point half way along
-        var c = svgItem.getPointAtLength(svgItem.getTotalLength() / 2);
-        var b = svgItem.getBBox();
-        return {x: c.x, y: c.y, box: shrink(b, 1, 1 / 3)}
+        var c = svgItem.getPointAtLength(svgItem.getTotalLength() * fraction);
+        return {x: c.x, y: c.y, box: shrink(getBBox(svgItem), 1, 1 / 3)}
     }
 
     function polyLoc(svgItem) {
@@ -256,13 +314,13 @@ var BrunelD3 = (function () {
         var len = svgItem.getTotalLength();
         var a = svgItem.getPointAtLength(len / 4);
         var b = svgItem.getPointAtLength(3 * len / 4);
-        var box = svgItem.getBBox();
-        return {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, box: shrink(box)}
+        return {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, box: shrink(getBBox(svgItem))}
     }
 
     function areaLoc(svgItem, margin) {
+        var box = getBBox(svgItem);
+        if (!box) return null;
         var len = svgItem.getTotalLength();
-        var box = svgItem.getBBox();
 
         var dx = Math.max(6, box.width / 40),               // We discretize to steps of 'dx' amounts
             M = Math.max(len / dx, 200),                    // We examine this many points along the path
@@ -307,23 +365,11 @@ var BrunelD3 = (function () {
         }
     }
 
-    function apply(m, x, y) {
-        return [m.a * x + m.c * y + m.e, m.b * x + m.d * y + m.f];
-    }
-
-    function transformBox(box, matrix) {
-        if (!matrix) return box;
-        var p = apply(matrix, box.x, box.y),
-            w = matrix.a * box.width + matrix.c * box.height,
-            h = matrix.b * box.width + matrix.d * box.height;
-        return {x: p[0], y: p[1], width: w, height: h};
-    }
-
-    function transformLoc(loc, matrix) {
-        if (!matrix) return loc;
-        var c = apply(matrix, loc.x, loc.y),
-            b = transformBox(loc.box, matrix);
-        return {x: c[0], y: c[1], box: b};
+    function transformLoc(loc, item) {
+        if (!loc) return null;
+        var a = transformBox({x: loc.x, y: loc.y, width: 1, height: 1}, item),
+            b = transformBox(loc.box, item);
+        return a && b ? {x: a.x, y: a.y, box: b} : null;
     }
 
     // Returns an object with 'x', 'y' and 'box' that "surrounds" the text
@@ -332,7 +378,8 @@ var BrunelD3 = (function () {
         var datum = target.__data__, pad = labeling.pad || 2,
             box, loc, method = labeling.method, pos = labeling.location;
         if (labeling.where) {
-            box = target.getBBox();
+            box = getBBox(target);
+            if (!box) return null;
             var p = labeling.where(box, s, datum);
             loc = {x: p.x, y: p.y, box: box};
         } else if (method == 'wedge')
@@ -344,20 +391,19 @@ var BrunelD3 = (function () {
         else if (method == 'path') {
             if (labeling.path.centroid)
                 loc = centroidLoc(labeling.path, datum, target);
-            else
-                loc = pathLoc(target);
+            else {
+                var fraction = 0.5;
+                if (labeling.align == 'start') fraction = 0;
+                else if (labeling.align == 'end') fraction = 1;
+                loc = pathLoc(target, fraction);
+            }
         } else {
 
-            box = target.getBBox();
-            // A target defined by a "use" has a BBox that is the symbol inside its viewport,
-            // so we need to offset by that when in Safari, which gets the BBox wrong
-            if (isSafari && target.tagName == 'use') {
-                box.x += +target.getAttribute("x");
-                box.y += +target.getAttribute("y");
-            }
+            box = getBBox(target);
+            if (!box) return null;
 
             // Adjust for target transform
-            box = transformBox(box, target.getCTM());
+            box = transformBox(box, target);
 
             var hPad = labeling.align == 'start' ? pad : -pad;
             var vPad = labeling.inside ? -pad : pad;
@@ -367,8 +413,12 @@ var BrunelD3 = (function () {
             var dy = pos[1] == 'top' ? -vPad : (pos[1] == 'bottom' ? box.height + vPad : box.height / 2);
             return {x: box.x + dx, y: box.y + dy, box: box}
         }
+
+        // If we faield to get a location
+        if (!loc || !loc.box) return null;
+
         // Modify for the transform
-        return transformLoc(loc, target.getCTM());
+        return transformLoc(loc, target);
     }
 
 
@@ -783,8 +833,24 @@ var BrunelD3 = (function () {
         function prepare(d, index) {
             var d3this = d3.select(this);
             d3this.style('alignment-baseline', 'auto');
-            if (this._originalSize) d3this.style('font-size', this._originalSize);  // restore original size
-            var r = this.getBBox(), asc = r.height + r.y, desc = asc * 0.9,
+
+            if (this._originalSize) {
+                // Restore the original size
+                d3this.style('font-size', this._originalSize);
+            } else {
+                // Ensure we have a size >= 1px and store it so that if we are called again
+                // we use the original size for calculations
+                var fontSize = getComputedStyle(this).fontSize;
+                if (fontSize.startsWith("0.")) {
+                    fontSize = "1.0";
+                    d3this.style('font-size', fontSize);
+                }
+                this._originalSize = d3this.style('font-size');
+            }
+            var r = getBBox(this);
+            if (!r) return;
+
+            var asc = r.height + r.y, desc = asc * 0.9,
                 ht = r.height, wd = r.width + 2, oy = 0,
                 ascDesc = ascender(this.textContent);
 
@@ -807,7 +873,6 @@ var BrunelD3 = (function () {
             item._txt = this;
             items[index] = item;
 
-            if (!this._originalSize) this._originalSize = d3this.style('font-size');
 
             totalArea += item.height * item.width;
         }
@@ -1027,7 +1092,8 @@ var BrunelD3 = (function () {
 
     // Moves a label (text) inside the space defined by geom so long as part of it would overlap
     function nudgeInside(text, labeling, geom) {
-        var o, b = text.getBBox(), D = 2;                                      // D is the pad distance
+        var o, b = getBBox(text), D = 2;                                      // D is the pad distance
+        if (!b) return b;
         if (!labeling.fit) {
             var L = geom.inner_left, R = L + geom.inner_rawWidth,              // left and right of the space
                 l = b.x, r = l + b.width;                                   // box left and right
@@ -1087,6 +1153,9 @@ var BrunelD3 = (function () {
             style = getComputedStyle(textNode),             // SVG style
             posV = style.verticalAlign,                     // positioning
             loc = makeLoc(item, labeling, content);         // Get center point (x,y) and surrounding box (box)
+
+        // Idf we cannot find a location, no need to do anyhtign else
+        if (!loc || !loc.box) return;
 
         if (posV.endsWith("px"))
             loc.y += Number(posV.substring(0, posV.length - 2));
@@ -1520,8 +1589,11 @@ var BrunelD3 = (function () {
             }
 
             mergedNodes.each(function (d) {
+                    var box = getBBox(this);
+                    if (!box) return;
+
                     // Set the known radius on the data
-                    d.radius = +this.getAttribute("r") || this.getBBox().getWidth();
+                    d.radius = +this.getAttribute("r") || box.getWidth();
                     // Adjust placement of labels
                     var i, txt, L = this.__labels__;
                     if (L)for (i in L) {
@@ -1766,7 +1838,8 @@ var BrunelD3 = (function () {
                         }
                     });
             } else {
-                t = this.getBBox();
+                t = getBBox(t);
+                if (!t) return null;
                 x = t.x + t.width / 2;
                 y = t.y + t.height / 2;
                 v = 0;
@@ -1824,7 +1897,8 @@ var BrunelD3 = (function () {
             px = p.x;
             py = p.y;
         } else {
-            var box = target.getBBox();
+            var box = getBBox(target);
+            if (!box) return;
             px = box.x + box.width / 2;
             py = box.y + box.height / 2;
         }
