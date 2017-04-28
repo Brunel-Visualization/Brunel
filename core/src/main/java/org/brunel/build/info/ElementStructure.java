@@ -79,6 +79,12 @@ public class ElementStructure {
 		return vis.tElement == Element.edge && isDependent();
 	}
 
+	public boolean isSourceForDependent() {
+		for (Dependency dependency : dependencies)
+			if (dependency.base == this) return true;
+		return false;
+	}
+
 	public String[] makeReferences(Field[] keys) {
 		String idToPointName = "elements[" + getDependencyBase().index + "].internal()._idToPoint(";
 		String[] references = new String[keys.length];

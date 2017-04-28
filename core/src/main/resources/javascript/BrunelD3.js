@@ -1467,7 +1467,7 @@ var BrunelD3 = (function () {
 
                             }
                         });
-                        if (!--remaining) element.build(millis);    // When data ready, build again
+                        if (!--remaining) element.chart().build(millis);    // When data ready, build again
                     });
                 }(src, locations[src], fileIndex++);
             }
@@ -1506,10 +1506,43 @@ var BrunelD3 = (function () {
      * @param curved if true, a curve is drawn, otherwise a straight line is
      * @returns
      */
-    function makeEdge(p, curved) {
+    function makeEdgeShape(p, curved) {
         return "M" + p.x1 + "," + p.y1 +
             (curved ? "A" + 2 * p.d + "," + 2 * p.d + " 0 0,1 " : "L")
             + p.x2 + "," + p.y2;
+    }
+
+    /**
+     * Create a node object for the svgItem
+     * @param svgItem
+     * @return the node item
+     */
+    function makeNode(svgItem) {
+        var b = getBBox(svgItem);                   // bounds of the item
+        if (!b) return null;                        // Not displayed -- ignore this
+        var r = Math.max(b.width, b.height) / 2;    // good for circles, symbols, rects
+
+        if (svgItem.tagName == 'path' || svgItem.tagName == 'poly')
+            r  = Math.min(20, r/3);                 // Arbitrary shape, so inset a lot
+
+        return {
+            x: b.x + b.width / 2,                         // The shape center
+            y: b.y + b.height / 2,                        // The shape center
+            radius: r                                     // calculated radius
+        }
+    }
+
+    /**
+     * Create an edge between two nodes
+     * @param d -- data item with string key in format "key1|key2" and row
+     * @param nodes -- map from keys to nodes
+     * @return the edge joining the two nodes, or null on any failure
+     */
+    function makeEdge(d, nodes) {
+        var keys = d.key.split("|");
+        if (keys.length != 2) return null;
+        var a = nodes[keys[0]], b = nodes[keys[1]];
+        return a && b ? {source: a, target: b, key: d.key, row: d.row} : null;
     }
 
     /**
@@ -1520,7 +1553,7 @@ var BrunelD3 = (function () {
      * @param graph the graph structure (data)
      * @param nodes selection for the nodes
      * @param edges selection for the links
-     * @param zoomNode defiens the zoom factors
+     * @param zoomNode defines the zoom factors
      * @param geom space to lay out in
      * @param curved true for curved (arc) edges
      * @param density a positive value stating how packed the resulting graph should be (default == 1)
@@ -1621,7 +1654,7 @@ var BrunelD3 = (function () {
                     scaleX(d.target.x), scaleY(d.target.y), d.target);
 
                 // Then we return the path description for a curve or a straight line
-                return makeEdge(p, curved);
+                return makeEdgeShape(p, curved);
             });
 
         }
@@ -2229,9 +2262,11 @@ var BrunelD3 = (function () {
         'sizedPath': sizedPath,
         'tween': transitionTween,
         'addFeatures': makeMap,
-        'edge': makeEdge,
+        'edge': makeEdgeShape,
         'insetEdge': insetEdge,
         'network': makeNetworkLayout,
+        'makeNode': makeNode,
+        'makeEdge': makeEdge,
         'facet': facet,
         'time': time,
         'interpolate': interpolate,

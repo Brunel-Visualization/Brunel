@@ -331,6 +331,7 @@ public abstract class ElementBuilder {
 		if (structure.isDependent()) {
 			defineReferenceFunctions(e, keys);
 			DefineLocations.setDependentLocations(structure, e);
+			return;
 		}
 
 		if (structure.chart.geo != null) {
@@ -563,9 +564,6 @@ public abstract class ElementBuilder {
 		int n = x.length;
 		if (y.length != n)
 			throw new IllegalStateException("X and Y dimensions do not match in geographic maps");
-		if (structure.isDependentEdge()) {
-			throw new IllegalStateException("Cannot handle edged dependencies in geographic maps");
-		}
 
 		// Already defined
 		if (structure.isDependent()) return;
@@ -601,6 +599,19 @@ public abstract class ElementBuilder {
 			def.y.left = GeomAttribute.makeFunction("projection([" + xLow + "," + yLow + "])[1]");
 			def.y.right = GeomAttribute.makeFunction("projection([" + xHigh + "," + yHigh + "])[1]");
 		}
+	}
+
+	/**
+	 * When we are a source for edges, we must write node definitions into the chart's "graph" structure
+	 * so that links can be defined using it
+	 */
+	protected void writeDependencyHookups() {
+		if (structure.isSourceForDependent() && !structure.chart.diagramDefinesGraph()) {
+			out.addChained("call(function() { graph.nodes={} })")
+					.addChained("each(function(d) { graph.nodes[d.key] = BrunelD3.makeNode(this) })")
+					.comment("Add nodes to the graph");
+		}
+		out.endStatement();
 	}
 
 	/**

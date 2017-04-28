@@ -75,7 +75,7 @@ class CoordinateElementBuilder extends ElementBuilder {
 				.onNewLine().add("selection").onNewLine();
 		writeCoordinateDefinition(details);
 		writeElementAesthetics(details, true, vis, out);
-		out.endStatement();
+		writeDependencyHookups();
 
 		out.indentLess().onNewLine().add("}").ln();
 	}

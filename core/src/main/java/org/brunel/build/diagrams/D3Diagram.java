@@ -40,9 +40,8 @@ public abstract class D3Diagram {
 		// The simple case -- coordinates
 		if (vis.tDiagram == null) return null;
 
-		// Dependent edges are only handled as a diagram if they are attached to a diagram
-		if (vis.tDiagram == Diagram.dependentEdge)
-			return structure.chart.diagram == null ? null : new DependentEdge(structure);
+		// Dependent edges are used even when a diagram is not defined
+		if (vis.tDiagram == Diagram.dependentEdge) return new DependentEdge(structure);
 
 		// Normal diagrams
 		if (vis.tDiagram == Diagram.bubble) return new Bubble(structure);

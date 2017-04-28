@@ -103,6 +103,15 @@ public class ChartStructure {
 		return makeChartID(chartIndex);
 	}
 
+	/**
+	 * Returns true if the diagram defines a graph layout.
+	 * Hierarchical layouts and network diagrams define graphs
+	 * @return true or false
+	 */
+	public boolean diagramDefinesGraph() {
+		return diagram != null && diagram.isHierarchical || diagram == Diagram.network;
+	}
+
 	public Integer[] elementBuildOrder() {
 		// Start with the default order
 		Integer[] order = new Integer[elements.length];
@@ -112,13 +121,13 @@ public class ChartStructure {
 			public int compare(Integer a, Integer b) {
 				VisElement aa = elements[a], bb = elements[b];
 
-				// Diagrams go first
-				if (aa.tDiagram != null && bb.tDiagram == null) return -1;
-				if (aa.tDiagram == null && bb.tDiagram != null) return 1;
-
 				// Edges go last
 				if (aa.tElement == Element.edge && bb.tElement != Element.edge) return 1;
 				if (aa.tElement != Element.edge && bb.tElement == Element.edge) return -1;
+
+				// Diagrams go first
+				if (aa.tDiagram != null && bb.tDiagram == null) return -1;
+				if (aa.tDiagram == null && bb.tDiagram != null) return 1;
 
 				// Otherwise the more keys you have, the later you are built
 				return aa.fKeys.size() - bb.fKeys.size();

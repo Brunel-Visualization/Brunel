@@ -96,6 +96,7 @@ class DiagramElementBuilder extends ElementBuilder {
 			writeElementAesthetics(details, true, vis, out);
 		}
 		diagram.writeDiagramUpdate(details, out);
+		writeDependencyHookups();
 		out.endStatement();
 		out.indentLess().onNewLine().add("}").ln();
 	}
