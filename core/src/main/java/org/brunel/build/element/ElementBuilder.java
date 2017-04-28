@@ -4,6 +4,7 @@ import org.brunel.build.InteractionDetails;
 import org.brunel.build.LabelBuilder;
 import org.brunel.build.ScaleBuilder;
 import org.brunel.build.ScalePurpose;
+import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.Accessibility;
 import org.brunel.build.util.BuildUtil;
@@ -570,9 +571,12 @@ public abstract class ElementBuilder {
 	 * so that links can be defined using it
 	 */
 	protected void writeDependencyHookups() {
-		if (structure.isSourceForDependent() && !structure.chart.diagramDefinesGraph()) {
+		ChartStructure chart = structure.chart;
+		if (structure.isSourceForDependent() && !chart.diagramDefinesGraph()) {
+			// Hierarchical items embed the data one level deeper
+			String key = chart.diagram != null && chart.diagram.isHierarchical ? "d.data.key" : "d.key";
 			out.addChained("call(function() { edgeGraph.nodes={} })")
-					.addChained("each(function(d) { edgeGraph.nodes[d.key || d.data.key] = BrunelD3.makeNode(this) })")
+					.addChained("each(function(d) { edgeGraph.nodes[" + key + " ] = BrunelD3.makeNode(this) })")
 					.comment("Define nodes for the edge graph");
 		}
 		out.endStatement();

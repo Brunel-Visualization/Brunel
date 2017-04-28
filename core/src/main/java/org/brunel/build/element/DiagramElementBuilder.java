@@ -98,6 +98,7 @@ class DiagramElementBuilder extends ElementBuilder {
 		diagram.writeDiagramUpdate(details, out);
 		writeDependencyHookups();
 		out.endStatement();
+		diagram.writeAdditionalUpdateStatements(details, out);
 		out.indentLess().onNewLine().add("}").ln();
 	}
 

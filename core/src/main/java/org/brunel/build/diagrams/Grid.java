@@ -77,11 +77,13 @@ class Grid extends Bubble {
 		// Classes defined for CSS
 		out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 
-		LabelBuilder labelBuilder = new LabelBuilder(structure, out);
 		ElementBuilder.definePointLikeMark(details, structure, out);
 		ElementBuilder.writeElementAesthetics(details, true, vis, out);
+	}
+
+	public void writeAdditionalUpdateStatements(ElementDetails details, ScriptWriter out) {
+		LabelBuilder labelBuilder = new LabelBuilder(structure, out);
 		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
-		out.endStatement();
 		labelBuilder.addGridLabels();
 	}
 

@@ -116,6 +116,10 @@ public abstract class D3Diagram {
 		// By default, do nothing
 	}
 
+	public void writeAdditionalUpdateStatements(ElementDetails details, ScriptWriter out){
+		// By default, do nothing
+	}
+
 	public void writeBuildCommands(ScriptWriter out) {
 		// By default, do nothing
 	}
