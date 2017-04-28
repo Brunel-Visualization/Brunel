@@ -48,32 +48,6 @@ class DefineLocations {
 		return s != null && (s.equals("iqr") || s.equals("range") || s.equals("stderr"));
 	}
 
-	static void setDependentLocations(ElementStructure structure, ElementDetails details) {
-		// The referenced locations will be added as a parameters to the object, so we need only access them
-
-		// Geo elements do not need scaling -- the projection takes care of it
-		boolean geo = structure.chart.geo != null;
-
-        /* Example Dependent Geo:
-
-                map('usa')
-                + data('edges.csv') edge color(flights:blues) key(origin, dest) top(flights:500)
-                + data('nodes.csv') x(long) y(lat) size(flights:400%) key(iata) tooltip(airport)
-
-         */
-
-		if (details.representation == ElementRepresentation.segment) {
-			// Need four coordinates
-			details.x.left = GeomAttribute.makeFunction(geo ? "this.r[0][0]" : "scale_x(this.r[0][0])");
-			details.x.right = GeomAttribute.makeFunction(geo ? "this.r[1][0]" : "scale_x(this.r[1][0])");
-			details.y.left = GeomAttribute.makeFunction(geo ? "this.r[0][1]" : "scale_y(this.r[0][1])");
-			details.y.right = GeomAttribute.makeFunction(geo ? "this.r[1][1]" : "scale_y(this.r[1][1])");
-		} else {
-			details.x.center = GeomAttribute.makeFunction(geo ? "this.r[0][0]" : "scale_x(this.r[0][0])");
-			details.y.center = GeomAttribute.makeFunction(geo ? "this.r[0][1]" : "scale_y(this.r[0][1])");
-		}
-	}
-
 	static void setLocations(ElementRepresentation rep, ElementStructure structure, ElementDimension dim, String dimName, Field[] fields, boolean categorical) {
 		String scaleName = "scale_" + dimName;
 

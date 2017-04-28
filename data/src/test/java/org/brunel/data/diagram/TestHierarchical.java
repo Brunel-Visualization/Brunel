@@ -84,22 +84,22 @@ public class TestHierarchical {
 
 	@Test
 	public void testOneLevel() {
-		Node data = Hierarchical.makeByNestingFields(treeFieldData, "D", "A").root;
+		Node data = Hierarchical.makeByNestingFields(treeFieldData, null, "D", "A").root;
 		Assert.assertEquals("((0-4) (1-3) (2-2 3-1 4-1))", dumpTree(data));
 
-		data = Hierarchical.makeByNestingFields(treeFieldData, "D", "B").root;
+		data = Hierarchical.makeByNestingFields(treeFieldData, null, "D", "B").root;
 		Assert.assertEquals("((0-4 1-3 3-1) (2-2 4-1))", dumpTree(data));
 	}
 
 	@Test
 	public void testTwoLevels() {
-		Node data = Hierarchical.makeByNestingFields(treeFieldData, "D", "A", "B").root;
+		Node data = Hierarchical.makeByNestingFields(treeFieldData, null, "D", "A", "B").root;
 		Assert.assertEquals("(((0-4)) ((1-3)) ((2-2 4-1) (3-1)))", dumpTree(data));
 	}
 
 	@Test
 	public void testZeroLevel() {
-		Node data = Hierarchical.makeByNestingFields(treeFieldData, "D").root;
+		Node data = Hierarchical.makeByNestingFields(treeFieldData, null, "D").root;
 		Assert.assertEquals("(0-4 1-3 2-2 3-1 4-1)", dumpTree(data));
 	}
 

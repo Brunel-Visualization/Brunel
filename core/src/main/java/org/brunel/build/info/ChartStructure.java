@@ -105,11 +105,11 @@ public class ChartStructure {
 
 	/**
 	 * Returns true if the diagram defines a graph layout.
-	 * Hierarchical layouts and network diagrams define graphs
+	 * tree layouts and network diagrams define graphs
 	 * @return true or false
 	 */
 	public boolean diagramDefinesGraph() {
-		return diagram != null && diagram.isHierarchical || diagram == Diagram.network;
+		return diagram == Diagram.tree ||  diagram == Diagram.network;
 	}
 
 	public Integer[] elementBuildOrder() {

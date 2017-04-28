@@ -90,12 +90,12 @@ class DependentEdge extends D3Diagram {
 	DependentEdge(ElementStructure structure) {
 		super(structure);
 		VisTypes.Diagram diagram = structure.chart.diagram;
-		this.isTree = diagram != null && diagram.isHierarchical;
+		this.isTree = diagram == VisTypes.Diagram.tree;
 		String symbol = structure.styleSymbol;
 		if (symbol == null) {
 			// The default is to show arrows, but only curved lines for hierarchies
 			this.arrow = true;
-			this.curved = diagram != null && diagram.isHierarchical;
+			this.curved = diagram == VisTypes.Diagram.tree;
 		} else {
 			this.arrow = symbol.toLowerCase().contains("arrow");
 			this.curved = symbol.toLowerCase().contains("curved") || symbol.toLowerCase().contains("arc");
@@ -111,7 +111,13 @@ class DependentEdge extends D3Diagram {
 	}
 
 	public ElementDetails makeDetails() {
-		String dataDef = isTree ? "validEdges(tree, graph.links)" : "graph.links";
+		String dataDef;
+		if (isTree)
+			dataDef = "validEdges(tree, graph.links)";
+		else if (!structure.chart.diagramDefinesGraph())
+			dataDef = "edgeGraph.links";
+		else
+			dataDef = "graph.links";
 		return ElementDetails.makeForDiagram(structure, ElementRepresentation.curvedPath, "edge", dataDef);
 	}
 
@@ -119,7 +125,7 @@ class DependentEdge extends D3Diagram {
 		if (!structure.chart.diagramDefinesGraph()) {
 
 			// The diagram does not build nodes, so we must do so by manually building edges that link two nodes
-			out.add("graph.links = data._rows.map(function(d) { return BrunelD3.makeEdge(d, graph.nodes) })")
+			out.add("edgeGraph.links = data._rows.map(function(d) { return BrunelD3.makeEdge(d, edgeGraph.nodes) })")
 					.addChained("filter(function(x) { return x != null})")
 					.comment("Add links to the nodes for each row");
 		}
@@ -152,7 +158,7 @@ class DependentEdge extends D3Diagram {
 		// If a graph has not been defined by a diagram, we must make one
 		// This defines the structure; the node element will define nodes and this element will build links
 		if (!structure.chart.diagramDefinesGraph())
-			out.add("var graph = { nodes:{}, edges:[] };")
+			out.add("var edgeGraph = { nodes:{}, edges:[] };")
 					.comment("Filled in by element build calls");
 
 		// ensure an arrowhead is defined

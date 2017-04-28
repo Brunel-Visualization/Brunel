@@ -47,7 +47,7 @@ public class Chord {
 		Field fB = data.field(fieldB);
 
 		// First, we make a hierarchical that nests all 'B' values within 'A' values, and use the 'A' values
-		Hierarchical H = Hierarchical.makeByNestingFields(data, fieldSize, fieldA, fieldB);
+		Hierarchical H = Hierarchical.makeByNestingFields(data, null, fieldSize, fieldA, fieldB);
 
 		// Capture the group information (list and map of objects)
 		List<ChordGroup> groupA = new ArrayList<>();

@@ -33,11 +33,12 @@ import java.util.Set;
  */
 public class Hierarchical {
 
-	public static Hierarchical makeByNestingFields(Dataset data, String sizeField, String... fieldNames) {
+	public static Hierarchical makeByNestingFields(Dataset data, String keyField, String sizeField, String... fieldNames) {
 		Hierarchical result = new Hierarchical();
 		Field size = sizeField == null ? null : data.field(sizeField);
+		Field key = keyField == null ? null : data.field(keyField);
 		Field[] fields = toFields(data, fieldNames);
-		result.makeNodesUsingFields(data, size, fields);
+		result.makeNodesUsingFields(data, key, size, fields);
 		result.fixChildren();
 		return result;
 	}
@@ -92,7 +93,7 @@ public class Hierarchical {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void makeNodesUsingFields(Dataset data, Field size, Field[] fields) {
+	private void makeNodesUsingFields(Dataset data, Field key, Field size, Field[] fields) {
 		this.root = makeInternalNode("");            // General root node
 
 		for (int row = 0; row < data.rowCount(); row++) {
@@ -114,6 +115,7 @@ public class Hierarchical {
 				}
 			}
 			Node child = new Node(row, d, null, null);
+			if (key != null) child.key = key.value(row);
 			((List<Node>) current.children).add(child);
 			child.parent = current;
 		}

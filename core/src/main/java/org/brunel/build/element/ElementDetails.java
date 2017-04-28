@@ -19,7 +19,6 @@ package org.brunel.build.element;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ModelUtil;
-import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes;
@@ -114,7 +113,6 @@ public class ElementDetails {
 	private final double labelPadding;                  // How much to pad labels by
 	private final String labelAlignment;                // User defined label alignment (may be null)
 	public GeomAttribute overallSize;                   // A general size for the whole item
-	private GeomAttribute refLocation;                  // Defines the location using a reference to another element
 
 	public ElementDetails(VisElement vis, ElementRepresentation representation, String className, String dataSource, boolean filled) {
 		if (className == null || className.contains(" "))
@@ -139,10 +137,6 @@ public class ElementDetails {
 		return labelPadding;
 	}
 
-	public GeomAttribute getRefLocation() {
-		return refLocation;
-	}
-
 	public String getTextMethod() {
 		return userDefinedLabelPosition != null ? userDefinedLabelPosition : representation.getDefaultTextMethod();
 	}
@@ -157,10 +151,6 @@ public class ElementDetails {
 
 	public boolean requiresSplitting() {
 		return dataSource.equals("splits");
-	}
-
-	public void setReferences(String[] references) {
-		this.refLocation = GeomAttribute.makeFunction("[" + Data.join(references) + "]");
 	}
 
 	public boolean textCanOverlap() {

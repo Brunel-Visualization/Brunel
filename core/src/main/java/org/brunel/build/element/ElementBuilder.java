@@ -15,10 +15,8 @@ import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes;
 import org.brunel.model.style.StyleTarget;
 
-import static org.brunel.model.VisTypes.Diagram.tree;
-
 /**
- * Created by graham on 2/21/17.
+ * Routines for building element-level info
  */
 public abstract class ElementBuilder {
 	private static final String BAR_SPACING = "0.9";            // Spacing between categorical bars
@@ -328,11 +326,8 @@ public abstract class ElementBuilder {
 		Field[] keys = new Field[vis.fKeys.size()];
 		for (int i = 0; i < keys.length; i++) keys[i] = structure.data.field(vis.fKeys.get(i).asField());
 
-		if (structure.isDependent()) {
-			defineReferenceFunctions(e, keys);
-			DefineLocations.setDependentLocations(structure, e);
-			return;
-		}
+		// Dependent structures do not need geometry as they depend on another element to provide that for them
+		if (structure.isDependent()) return;
 
 		if (structure.chart.geo != null) {
 			e.x.size = getSize(new Field[0], "geom.default_point_size", null, e.x, e.representation);
@@ -366,12 +361,6 @@ public abstract class ElementBuilder {
 	}
 
 	protected void writeCoordinateDefinition(ElementDetails details) {
-		// If we need reference locations, write them in first
-		if (details.getRefLocation() != null) {
-			out.addChained("each(function(d) { this.r = " + details.getRefLocation().definition() + "})");
-			out.addChained("style('visibility', function() { return validReference(this.r) ? 'visible' : 'hidden'})");
-		}
-
 		if (details.requiresSplitting())
 			out.addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
 		else if (details.isPath()) {
@@ -402,19 +391,8 @@ public abstract class ElementBuilder {
 					GeomAttribute.makeFunction("w(d)")
 					: GeomAttribute.makeConstant("w");
 		}
-
 		writeDimLocations(details.x, "x", "w");
 		writeDimLocations(details.y, "y", "h");
-
-		if (details.getRefLocation() != null) {
-			// This will be used to ensure missing references are not displayed with junk locations
-			out.add("function validReference(r) {");
-			if (details.representation == ElementRepresentation.segment)
-				out.add("return r[0][0] != null && r[0][1] != null && r[1][0] != null && r[1][1] != null");
-			else
-				out.add("return r[0][0] != null && r[0][1] != null");
-			out.add("}").endStatement();
-		}
 	}
 
 	private void addStylingForRoundRectangle() {
@@ -445,20 +423,6 @@ public abstract class ElementBuilder {
 			out.addChained("style('pointer-events', 'none')");
 		Accessibility.addAccessibilityLabels(structure, out, labelBuilder);
 		out.indentLess().onNewLine().add("}").ln();
-	}
-
-	private void defineReferenceFunctions(ElementDetails e, Field[] keys) {
-		// This element's locations depends on another element
-		String[] references = structure.makeReferences(keys);
-		if (structure.chart.geo != null) {
-			// Wrap the locations in the projection
-			for (int i = 0; i < references.length; i++)
-				references[i] = "projection(" + references[i] + ")";
-			e.setReferences(references);
-		} else if (structure.chart.diagram != VisTypes.Diagram.network && structure.chart.diagram != tree) {
-			// Trees and Networks do their own thing
-			e.setReferences(references);
-		}
 	}
 
 	private void defineText(ElementDetails elementDef, VisElement vis) {
@@ -607,9 +571,9 @@ public abstract class ElementBuilder {
 	 */
 	protected void writeDependencyHookups() {
 		if (structure.isSourceForDependent() && !structure.chart.diagramDefinesGraph()) {
-			out.addChained("call(function() { graph.nodes={} })")
-					.addChained("each(function(d) { graph.nodes[d.key] = BrunelD3.makeNode(this) })")
-					.comment("Add nodes to the graph");
+			out.addChained("call(function() { edgeGraph.nodes={} })")
+					.addChained("each(function(d) { edgeGraph.nodes[d.key || d.data.key] = BrunelD3.makeNode(this) })")
+					.comment("Define nodes for the edge graph");
 		}
 		out.endStatement();
 	}

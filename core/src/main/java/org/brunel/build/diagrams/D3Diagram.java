@@ -229,17 +229,28 @@ public abstract class D3Diagram {
 		String[] positionFields = vis.positionFields();
 		String sizeParam = size == null ? null : Data.quote(size.asField());
 
-		if (positionFields.length != 0 || vis.fKeys.isEmpty()) {
+		ElementStructure edges = getDependentEdges();
+
+		boolean nestFieldsToMakeHierarchy = positionFields.length != 0 || vis.fKeys.isEmpty();
+		if (!definedHierarchy) {
+			// If we do not have a defined hierarchy and have no edges, we have no choice but to use nesting
+			nestFieldsToMakeHierarchy = true;
+		}
+
+		if (nestFieldsToMakeHierarchy) {
 			// Positions have been defined using fields, so we create a hierarchy by treating them as categories
 			// and nesting categories of one field within the field at the next level up.
+
+			String keyField =
+					vis.fKeys.isEmpty() ? "null" : Data.quote(vis.fKeys.get(0).asField());
+
 			String fieldsList = positionFields.length == 0 ? "" : ", " + quoted(positionFields);
 			defineOrDeclareHierarchy(definedHierarchy, out);
 			out.add("graph = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, "
-					+ sizeParam + fieldsList + ")")
+					+ keyField + ", " + sizeParam + fieldsList + ")")
 					.endStatement();
 		} else {
 			// We have no positions, so we must find a dependent element with keys that define edges building the hierarchy
-			ElementStructure edges = getDependentEdges();
 
 			if (vis.fKeys.isEmpty()) throw new IllegalStateException("Tree needs keys for ids");
 			if (edges == null)
