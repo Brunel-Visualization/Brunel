@@ -154,7 +154,7 @@ public class ChartCoordinates {
 		double min = Double.MAX_VALUE;
 		for (Field f : fields) {
 			if (f.min() == null) continue;
-			Auto.setTransform(f);
+			Auto.defineTransform(f);
 			String s = f.strProperty("transform");
 			if ("log".equals(s)) best = "log";
 			else if ("root".equals(s) && !best.equals("log")) best = "root";

@@ -226,7 +226,7 @@ public class Palette {
     }
 
     public static Object[] fieldSplits(Field f, int n) {
-        Auto.setTransform(f);
+        Auto.defineTransform(f);
         String t = f.strProperty("transform");
         Object[] objects = new Object[n];
         double min = f.min();

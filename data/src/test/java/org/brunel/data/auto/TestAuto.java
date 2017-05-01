@@ -125,13 +125,13 @@ public class TestAuto {
         Field f = Fields.makeColumnField("f", "label", new Object[]{0, 1, 1, 1, 1, 2, 2, 2, 5, 10, 100, 1000});
         Field g = Fields.makeColumnField("g", "label", new Object[]{-1, 1, 1, 1, 1, 2, 2, 2, 5, 10, 100, 1000});
 
-        Auto.setTransform(a);
-        Auto.setTransform(b);
-        Auto.setTransform(c);
-        Auto.setTransform(d);
-        Auto.setTransform(e);
-        Auto.setTransform(f);
-        Auto.setTransform(g);
+        Auto.defineTransform(a);
+        Auto.defineTransform(b);
+        Auto.defineTransform(c);
+        Auto.defineTransform(d);
+        Auto.defineTransform(e);
+        Auto.defineTransform(f);
+        Auto.defineTransform(g);
 
         assertEquals("linear", a.strProperty("transform"));
         assertEquals("linear", b.strProperty("transform"));
@@ -272,7 +272,7 @@ public class TestAuto {
 
         a = Fields.makeColumnField("a", "label", new Object[]{0.0});
         a = Data.toNumeric(a);
-        Auto.setTransform(a);
+        Auto.defineTransform(a);
         assertEquals("linear : 0 1 : |0|0.5|1", asString(NumericScale.makeLinearScale(a, true, 0.99, pad, 4, false), a));
     }
 

@@ -12,7 +12,7 @@ import java.util.Set;
 /**
  * A single span of domains
  */
-class DomainSpan implements Comparable<DomainSpan> {
+public class DomainSpan implements Comparable<DomainSpan> {
 
 	/**
 	 * Build a domain from a numeric range
@@ -20,30 +20,27 @@ class DomainSpan implements Comparable<DomainSpan> {
 	 * @param f the field to use
 	 * @return (numeric) domain span
 	 */
-	static DomainSpan make(Field f, int index) {
+	static DomainSpan make(Field f, int index, boolean preferContinuous) {
 		if (f.isNumeric()) {
 			// If any position are counts or sums, we want to include zero
 			boolean needZero = f.name.equals("#count") || "sum".equals(f.strProperty("summary"));
-			return new DomainSpan(f.preferCategorical() ? f.categories() : null, f.min(), f.max(), f.isDate(), index, needZero);
+			SpanNumericInfo numeric = new SpanNumericInfo(f.min(), f.max(), f.isDate(), needZero);
+			return new DomainSpan(index, preferContinuous, f.preferCategorical() ? f.categories() : null, numeric);
 		} else {
-			return new DomainSpan(f.categories(), Double.NaN, Double.NaN, false, index, false);
+			return new DomainSpan(index, preferContinuous, f.categories(), null);
 		}
 	}
 
+	public final int index;                    // To preserve the order we added them in
+	private final boolean preferContinuous;
 	final Object[] categories;          // Categorical data
-	final double low;                   // Numeric low value
-	final double high;                  // Numeric high value
-	final boolean isDate;               // Is this a (numeric) date range?
-	final int index;                    // To preserve the order we added them in
-	final boolean includeZeroDesired;   // if true, we really want to include zero in this span
+	final SpanNumericInfo numeric;        // Numeric info
 
-	private DomainSpan(Object[] categories, double low, double high, boolean isDate, int index, boolean includeZeroDesired) {
-		this.categories = categories;
-		this.low = low;
-		this.high = high;
-		this.isDate = isDate;
+	private DomainSpan(int index, boolean preferContinuous, Object[] categories, SpanNumericInfo numeric) {
 		this.index = index;
-		this.includeZeroDesired = includeZeroDesired;
+		this.preferContinuous = preferContinuous;
+		this.categories = categories;
+		this.numeric = numeric;
 	}
 
 	/**
@@ -60,21 +57,25 @@ class DomainSpan implements Comparable<DomainSpan> {
 		if (d != 0) return d;
 
 		// Order by low value, or nothing for non-numeric
-		if (categories == null) return Data.compare(low, o.low);
+		if (categories == null) return Data.compare(numeric.low, o.numeric.low);
 		return index - o.index;
 	}
 
-	private int typeScore() {
-		if (isDate) return categories == null ? 1 : 2;                // Dates first, with binned dates second
-		if (!Double.isNaN(low)) return categories == null ? 3 : 4;    // Numeric next, with binned numerics after
-		return 5;                                                    // Purely categorical is last
+	public boolean desiresZero() {
+		return numeric != null && numeric.includeZeroDesired;
 	}
 
-	public Object[] content(boolean preferContinuous) {
+	private int typeScore() {
+		// Purely categorical goes last
+		if (numeric == null) return 5;
+		// Then time (preferring pure form first) followed by general numeric (preferring pure form)
+		return (numeric.isDate ? 1 : 3) + (categories == null ? 0 : 1);
+	}
+
+	public Object[] content() {
 		// we return numeric data if no categorical data, or we prefer the numeric data
-		if (categories == null || preferContinuous && !Double.isNaN(low)) {
-			if (isDate) return new Object[]{Data.asDate(low), Data.asDate(high)};
-			return new Object[]{low, high};
+		if (categories == null || preferContinuous && numeric != null) {
+			return numeric.range();
 		} else {
 			return categories;
 		}
@@ -87,16 +88,18 @@ class DomainSpan implements Comparable<DomainSpan> {
 	 * @return the merged domain, or null if nothing could be done
 	 */
 	public DomainSpan merge(DomainSpan o) {
-		if (o.isDate != isDate) return null;                    // Only match dates with dates
-
 		Object[] mCats = mergeCategories(categories, o.categories);
-		double a = Math.min(low, o.low);
-		double b = Math.max(high, o.high);
+		SpanNumericInfo mNum = numeric == null ? null : numeric.merge(o.numeric);
 
-		if (mCats == null && Double.isNaN(a)) return null;        // No match either for continuous or categories
+		if (mCats == null && mNum == null)                        // No match either for continuous or categories
+			return null;
 
-		// Successful match
-		return new DomainSpan(mCats, a, b, isDate, Math.min(index, o.index), includeZeroDesired || o.includeZeroDesired);
+		// Successfully merged domain span
+		return new DomainSpan(Math.min(index, o.index), preferContinuous && o.preferContinuous, mCats, mNum);
+	}
+
+	public boolean isDate() {
+		return numeric != null && numeric.isDate;
 	}
 
 	private static Object[] mergeCategories(Object[] a, Object[] b) {

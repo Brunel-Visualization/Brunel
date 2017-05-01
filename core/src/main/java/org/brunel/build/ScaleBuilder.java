@@ -29,6 +29,7 @@ import org.brunel.data.Field;
 import org.brunel.data.Fields;
 import org.brunel.data.auto.Auto;
 import org.brunel.data.auto.Domain;
+import org.brunel.data.auto.DomainSpan;
 import org.brunel.data.auto.NumericScale;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
@@ -105,14 +106,14 @@ public class ScaleBuilder {
 		 * The domain is built up and understands mixed numeric and categorical domains, but
 		 * in the following code we ignore that and just use the first in the list
 		 */
-		Object[] content = domain.domains()[0];
+		DomainSpan span = domain.getSpan(0);
 
 		// Categorical is relatively easy
 		if (domain.isCategorical(0))
-			return makeCategoricalScale(content, purpose, reverse);
+			return makeCategoricalScale(span.content(), purpose, reverse);
 
 		// Determine how much we want to include zero
-		double includeZero = getIncludeZeroFraction(purpose, domain.includeZero(0));
+		double includeZero = getIncludeZeroFraction(purpose, domain.getSpan(0).desiresZero());
 
 		boolean isX = purpose == ScalePurpose.x, isY = purpose == ScalePurpose.y;
 

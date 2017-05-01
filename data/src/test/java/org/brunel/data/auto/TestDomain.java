@@ -32,7 +32,7 @@ public class TestDomain {
 	@Test
 	public void emptyTest() {
 		Domain domain = new Domain(true);
-		assertEquals(0, domain.domains().length);
+		assertEquals(0, domain.spanCount());
 		assertEquals(0, domain.domainRanges().length);
 	}
 
@@ -43,16 +43,16 @@ public class TestDomain {
 		Field f = Fields.makeColumnField("field", null, new Object[]{"a", "c", "f"});
 
 		domain.include(f);
-		Object[][] domains = domain.domains();
 		double[][] ranges = domain.domainRanges();
 
-		assertEquals(1, domains.length);
+		assertEquals(1, domain.spanCount());
 		assertEquals(1, ranges.length);
 
-		assertEquals(3, domains[0].length);
-		assertEquals("a", domains[0][0]);
-		assertEquals("c", domains[0][1]);
-		assertEquals("f", domains[0][2]);
+		Object[] content = domain.getSpan(0).content();
+		assertEquals(3, content.length);
+		assertEquals("a", content[0]);
+		assertEquals("c", content[1]);
+		assertEquals("f", content[2]);
 
 		assertEquals(2, ranges[0].length);
 		assertEquals(0.0, ranges[0][0], 1e-9);
@@ -66,15 +66,15 @@ public class TestDomain {
 		Field f = Data.toNumeric(Fields.makeColumnField("field", null, new Object[]{40, 3}));
 
 		domain.include(f);
-		Object[][] domains = domain.domains();
 		double[][] ranges = domain.domainRanges();
 
-		assertEquals(1, domains.length);
+		assertEquals(1, domain.spanCount());
 		assertEquals(1, ranges.length);
 
-		assertEquals(2, domains[0].length);
-		assertEquals(3.0, domains[0][0]);
-		assertEquals(40.0, domains[0][1]);
+		Object[] content = domain.getSpan(0).content();
+		assertEquals(2, content.length);
+		assertEquals(3.0, content[0]);
+		assertEquals(40.0, content[1]);
 
 		assertEquals(2, ranges[0].length);
 		assertEquals(0.0, ranges[0][0], 1e-9);
@@ -93,15 +93,15 @@ public class TestDomain {
 		Field f = Data.toDate(Fields.makeColumnField("field", null, new Object[]{d1, d2, d3}));
 
 		domain.include(f);
-		Object[][] domains = domain.domains();
 		double[][] ranges = domain.domainRanges();
 
-		assertEquals(1, domains.length);
+		assertEquals(1, domain.spanCount());
 		assertEquals(1, ranges.length);
 
-		assertEquals(2, domains[0].length);
-		assertEquals("Jan 3, 1971", DateFormat.YearMonthDay.format((Date) domains[0][0]));
-		assertEquals("Jan 31, 1971", DateFormat.YearMonthDay.format((Date) domains[0][1]));
+		Object[] content = domain.getSpan(0).content();
+		assertEquals(2, content.length);
+		assertEquals("Jan 3, 1971", DateFormat.YearMonthDay.format((Date) content[0]));
+		assertEquals("Jan 31, 1971", DateFormat.YearMonthDay.format((Date) content[1]));
 
 		assertEquals(2, ranges[0].length);
 		assertEquals(0.0, ranges[0][0], 1e-9);
@@ -117,18 +117,18 @@ public class TestDomain {
 
 		domain.include(f);
 		domain.include(g);
-		Object[][] domains = domain.domains();
 		double[][] ranges = domain.domainRanges();
 
-		assertEquals(1, domains.length);
+		assertEquals(1, domain.spanCount());
 		assertEquals(1, ranges.length);
 
-		assertEquals(5, domains[0].length);
-		assertEquals("a", domains[0][0]);
-		assertEquals("c", domains[0][1]);
-		assertEquals("f", domains[0][2]);
-		assertEquals("d", domains[0][3]);
-		assertEquals("h", domains[0][4]);
+		Object[] content = domain.getSpan(0).content();
+		assertEquals(5, content.length);
+		assertEquals("a", content[0]);
+		assertEquals("c", content[1]);
+		assertEquals("f", content[2]);
+		assertEquals("d", content[3]);
+		assertEquals("h", content[4]);
 
 		assertEquals(2, ranges[0].length);
 		assertEquals(0.0, ranges[0][0], 1e-9);
@@ -144,15 +144,14 @@ public class TestDomain {
 
 		domain.include(f);
 		domain.include(g);
-		Object[][] domains = domain.domains();
 		double[][] ranges = domain.domainRanges();
 
-		assertEquals(1, domains.length);
+		assertEquals(1, domain.spanCount());
 		assertEquals(1, ranges.length);
 
-		assertEquals(2, domains[0].length);
-		assertEquals(3.0, domains[0][0]);
-		assertEquals(50.0, domains[0][1]);
+		assertEquals(2, domain.getSpan(0).content().length);
+		assertEquals(3.0, domain.getSpan(0).content()[0]);
+		assertEquals(50.0, domain.getSpan(0).content()[1]);
 
 		assertEquals(2, ranges[0].length);
 		assertEquals(0.0, ranges[0][0], 1e-9);
@@ -175,30 +174,32 @@ public class TestDomain {
 		// Include in mixed order
 		Domain domain = new Domain(true).include(n1).include(c1).include(d).include(n2).include(c2);
 
-		Object[][] domains = domain.domains();
 		double[][] ranges = domain.domainRanges();
 
 		// Three separate spans
-		assertEquals(3, domains.length);
+		assertEquals(3, domain.spanCount());
 		assertEquals(3, ranges.length);
 
 		// First span: time
-		assertEquals(2, domains[0].length);
-		assertEquals("Jan 3, 1971", DateFormat.YearMonthDay.format((Date) domains[0][0]));
-		assertEquals("Jan 31, 1971", DateFormat.YearMonthDay.format((Date) domains[0][1]));
+		Object[] content1 = domain.getSpan(0).content();
+		assertEquals(2, content1.length);
+		assertEquals("Jan 3, 1971", DateFormat.YearMonthDay.format((Date) content1[0]));
+		assertEquals("Jan 31, 1971", DateFormat.YearMonthDay.format((Date) content1[1]));
 
 		// Second span: numeric
-		assertEquals(2, domains[1].length);
-		assertEquals(3.0, domains[1][0]);
-		assertEquals(50.0, domains[1][1]);
+		Object[] content2 = domain.getSpan(1).content();
+		assertEquals(2, content2.length);
+		assertEquals(3.0, content2[0]);
+		assertEquals(50.0, content2[1]);
 
 		// Third span: categorical
-		assertEquals(5, domains[2].length);
-		assertEquals("a", domains[2][0]);
-		assertEquals("c", domains[2][1]);
-		assertEquals("f", domains[2][2]);
-		assertEquals("d", domains[2][3]);
-		assertEquals("h", domains[2][4]);
+		Object[] content3 = domain.getSpan(2).content();
+		assertEquals(5, content3.length);
+		assertEquals("a", content3[0]);
+		assertEquals("c", content3[1]);
+		assertEquals("f", content3[2]);
+		assertEquals("d", content3[3]);
+		assertEquals("h", content3[4]);
 
 		double R = 1.0 / (1 + 1 + 0.2 + 5.0 / 8);        // The size we expect for a numeric span
 
@@ -221,18 +222,18 @@ public class TestDomain {
 		Field binnedA = Transform.bin(a, 3);
 
 		// Binning when we prefer categorical output
-		Object[][] domains = new Domain(false).include(binnedA).domains();
-		assertEquals(1, domains.length);
-		assertEquals(3, domains[0].length);
-		assertEquals("0\u202620", Data.format(domains[0][0],false));
-		assertEquals("20\u202640", Data.format(domains[0][1],false));
-		assertEquals("40\u202660", Data.format(domains[0][2],false));
+		Domain domain = new Domain(false).include(binnedA);
+		assertEquals(1, domain.spanCount());
+		assertEquals(3, domain.getSpan(0).content().length);
+		assertEquals("0\u202620", Data.format(domain.getSpan(0).content()[0], false));
+		assertEquals("20\u202640", Data.format(domain.getSpan(0).content()[1], false));
+		assertEquals("40\u202660", Data.format(domain.getSpan(0).content()[2], false));
 
-		domains = new Domain(true).include(binnedA).domains();
-		assertEquals(1, domains.length);
-		assertEquals(2, domains[0].length);
-		assertEquals(0.0, domains[0][0]);
-		assertEquals(60.0, domains[0][1]);
+		domain = new Domain(true).include(binnedA);
+		assertEquals(1, domain.spanCount());
+		assertEquals(2, domain.getSpan(0).content().length);
+		assertEquals(0.0, domain.getSpan(0).content()[0]);
+		assertEquals(60.0, domain.getSpan(0).content()[1]);
 
 	}
 
@@ -246,24 +247,23 @@ public class TestDomain {
 		Field binnedA = Transform.bin(a, 3);
 
 		// Binned with categorical data -- one set of categories, ranges first
-		Object[][] domains = new Domain(true).include(c).include(binnedA).domains();
-		assertEquals(1, domains.length);
-		assertEquals(6, domains[0].length);
-		assertEquals("0\u202620", Data.format(domains[0][0],false));
-		assertEquals("20\u202640", Data.format(domains[0][1],false));
-		assertEquals("40\u202660", Data.format(domains[0][2],false));
-		assertEquals("a", domains[0][3]);
-		assertEquals("c", domains[0][4]);
-		assertEquals("f", domains[0][5]);
+		Domain domain = new Domain(true).include(c).include(binnedA);
+		assertEquals(1, domain.spanCount());
+		assertEquals(6, domain.getSpan(0).content().length);
+		assertEquals("0\u202620", Data.format(domain.getSpan(0).content()[0], false));
+		assertEquals("20\u202640", Data.format(domain.getSpan(0).content()[1], false));
+		assertEquals("40\u202660", Data.format(domain.getSpan(0).content()[2], false));
+		assertEquals("a", domain.getSpan(0).content()[3]);
+		assertEquals("c", domain.getSpan(0).content()[4]);
+		assertEquals("f", domain.getSpan(0).content()[5]);
 
 		// Binned with numeric data -- one set of numeric range
-		domains = new Domain(true).include(b).include(binnedA).domains();
-		assertEquals(1, domains.length);
-		assertEquals(2, domains[0].length);
-		assertEquals(-45.0, domains[0][0]);
-		assertEquals(60.0, domains[0][1]);
+		domain = new Domain(true).include(b).include(binnedA);
+		assertEquals(1, domain.spanCount());
+		assertEquals(2, domain.getSpan(0).content().length);
+		assertEquals(-45.0, domain.getSpan(0).content()[0]);
+		assertEquals(60.0, domain.getSpan(0).content()[1]);
 
 	}
-
 
 }

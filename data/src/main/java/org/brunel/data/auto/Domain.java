@@ -13,8 +13,8 @@ import java.util.List;
  */
 public class Domain {
 
-	private final List<DomainSpan> raw;                        // Added one at a time
-	private final boolean preferContinuous;
+	private final List<DomainSpan> raw;                   	// Added one at a time
+	private final boolean preferContinuous;					// If true, we prefer continuous output
 	private List<DomainSpan> merged;                        // When called, merges compatible domains
 
 	/**
@@ -28,32 +28,17 @@ public class Domain {
 	}
 
 	public Domain include(Field f) {
-		raw.add(DomainSpan.make(f, raw.size()));              // Add it in (indexing to preserve sort order)
-		merged = null;                                        // invalidate merging
+		raw.add(DomainSpan.make(f, raw.size(), preferContinuous));  	// Add it in (indexing to preserve sort order)
+		merged = null;                                        			// invalidate merging
 		return this;
 	}
 
-	/**
-	 * get the domain contents
-	 *
-	 * @return array of items for the domains
-	 */
-	public Object[][] domains() {
-		merge();
-		Object[][] result = new Object[merged.size()][];
-		for (int i = 0; i < result.length; i++)
-			result[i] = merged.get(i).content(preferContinuous);
-		return result;
+	public int spanCount() {
+		return merge().size();
 	}
 
-	/**
-	 * Return true if the span is time data
-	 *
-	 * @param index span index to check
-	 * @return true if it is a numeric time span
-	 */
-	public boolean isDate(int index) {
-		return merge().get(index).isDate;
+	public DomainSpan getSpan(int index) {
+		return merge().get(index);
 	}
 
 	public boolean isEmpty() {
@@ -67,8 +52,8 @@ public class Domain {
 	 * @return true if it is a numeric (which includes date) span
 	 */
 	public boolean isNumeric(int index) {
-		DomainSpan span = merge().get(index);
-		return span.categories == null || !Double.isNaN(span.low) && preferContinuous;
+		DomainSpan span = getSpan(index);
+		return span.categories == null || span.numeric != null && preferContinuous;
 	}
 
 	/**
@@ -79,16 +64,6 @@ public class Domain {
 	 */
 	public boolean isCategorical(int index) {
 		return !isNumeric(index);
-	}
-
-	/**
-	 * Return true if the span wants to include zero
-	 *
-	 * @param index span index to check
-	 * @return true if it is a categorical  span
-	 */
-	public boolean includeZero(int index) {
-		return merge().get(index).includeZeroDesired;
 	}
 
 	// Process the raw fields into a minimal ordered list
@@ -117,6 +92,7 @@ public class Domain {
 
 	// Allocate the spans to ranges in [0,1]
 	public double[][] domainRanges() {
+		merge();
 		double[][] results = new double[merged.size()][];
 		double sizeTotal = 0.1 * (merged.size() - 1);                    // Start with the gaps, of size 0.1
 		for (DomainSpan span : merged) sizeTotal += span.relativeSize();
