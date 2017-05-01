@@ -21,7 +21,6 @@ import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.BuildUtil;
-import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.color.ColorMapping;
 import org.brunel.color.Palette;
@@ -29,6 +28,7 @@ import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.data.Fields;
 import org.brunel.data.auto.Auto;
+import org.brunel.data.auto.Domain;
 import org.brunel.data.auto.NumericScale;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
@@ -89,25 +89,35 @@ public class ScaleBuilder {
 	 */
 	public int defineScaleWithDomain(String name, Field[] fields, ScalePurpose purpose, int numericDomainDivs,
 									 String defaultTransform, Object[] partitionPoints, boolean reverse) {
+		// Scales are generally named by their type ("x", "color", etc.) and a suffix "_scale"
+		if (name != null) out.onNewLine().add("var scale_" + name, "= ");
+
+		// Build a domain for the fields. If we have a mix of fields that can support either continuous or
+		// categorical entries (e.g. binned data), let the purpose define the preference
+		Domain domain = new Domain(purpose.preferContinuous());
+		for (Field field : fields) domain.include(field);
+
+		// Easy case -- no domains at all
+		if (domain.isEmpty()) return makeEmptyZeroOneScale();
+
+		/*
+		 * TODO: Handle mixed domains
+		 * The domain is built up and understands mixed numeric and categorical domains, but
+		 * in the following code we ignore that and just use the first in the list
+		 */
+		Object[] content = domain.domains()[0];
+
+		// Categorical is relatively easy
+		if (domain.isCategorical(0))
+			return makeCategoricalScale(content, purpose, reverse);
+
+		// Determine how much we want to include zero
+		double includeZero = getIncludeZeroFraction(purpose, domain.includeZero(0));
+
 		boolean isX = purpose == ScalePurpose.x, isY = purpose == ScalePurpose.y;
 
-		if (name != null)
-			out.onNewLine().add("var scale_" + name, "= ");
-
-		// No position for this dimension, so util a default [0,1] scale
-		if (fields.length == 0) return makeEmptyZeroOneScale();
-
-		// Categorical field (includes binned data)
-		if (ModelUtil.combinationIsCategorical(fields, purpose.isCoord))
-			return makeCategoricalScale(fields, purpose, reverse);
-
-		Field field = fields[0];
-
-		// Determine how much we want to include zero (for size scale we always want it)
-		double includeZero = getIncludeZeroFraction(fields, purpose);
-		if (purpose == ScalePurpose.sizeAesthetic) includeZero = 1.0;
-
 		// Build a combined scale field and force the desired transform on it for x and y dimensions
+		Field field = fields[0];
 		Field scaleField = fields.length == 1 ? field : combineNumericFields(fields);
 		ChartCoordinates coordinates = structure.coordinates;
 		if (isX) {
@@ -202,8 +212,8 @@ public class ScaleBuilder {
 			divs = l.toArray();
 		}
 
-		String domain = Data.join(divs);
-		out.add(".domain([").add(domain).add("])");
+		String domainDivs = Data.join(divs);
+		out.add(".domain([").add(domainDivs).add("])");
 		return -1;
 	}
 
@@ -461,26 +471,31 @@ public class ScaleBuilder {
 		return vis.fColor.isEmpty() ? null : vis.fColor.get(0);
 	}
 
-	private double getIncludeZeroFraction(Field[] fields, ScalePurpose purpose) {
+	/**
+	 * This returns the fraction of the scale we are happy to be empty to ensure zero is on the scale
+	 *
+	 * @param purpose                 scale purpose
+	 * @param domainWantsZeroIncluded if the domain knows it wants it
+	 * @return the percentage white space we are willing to tolerate
+	 */
+	private double getIncludeZeroFraction(ScalePurpose purpose, boolean domainWantsZeroIncluded) {
 
-		if (purpose == ScalePurpose.x) return 0.1;              // Really do not want much empty space on axes
-		if (purpose == ScalePurpose.sizeAesthetic) return 0.98;            // Almost always want to go to zero
-		if (purpose == ScalePurpose.continuousAesthetic) return 0.2;            // Color
+		if (purpose == ScalePurpose.sizeAesthetic) return 1.0;        // Size always goes to zero
+		if (purpose == ScalePurpose.x) return 0.1;                    // Do not want much empty space on x axis
+		if (domainWantsZeroIncluded) return 1.0;
 
-		// For 'Y'
+		// Count number of bar elements that stretch to the lower axis
+		if (purpose.isCoord) {
+			int nBarArea = 0;
+			for (VisElement e : elements)
+				if ((e.tElement == Element.bar || e.tElement == Element.area)
+						&& e.fRange == null) nBarArea++;
 
-		// If any position are  counts or sums, always include zero
-		for (Field f : fields)
-			if (f.name.equals("#count") || "sum".equals(f.strProperty("summary"))) return 1.0;
+			if (nBarArea == elements.length) return 1.0;    // All bars?  Always go to zero
+			if (nBarArea > 0) return 0.8;                   // Some bars?  Strongly want to go to zero
+		}
 
-		int nBarArea = 0;       // Count elements that are bars or areas
-		for (VisElement e : elements)
-			if ((e.tElement == Element.bar || e.tElement == Element.area)
-					&& e.fRange == null) nBarArea++;
-
-		if (nBarArea == elements.length) return 1.0;        // All bars?  Always go to zero
-		if (nBarArea > 0) return 0.8;                       // Some bars?  Strongly want to go to zero
-		return 0.2;                                         // By default, only if we have 20% extra space
+		return 0.2;                                         // 20% is the default
 	}
 
 	private double[] getNumericPaddingFraction(ScalePurpose purpose) {
@@ -547,25 +562,23 @@ public class ScaleBuilder {
 		return "[geom.inner_height, 0]";
 	}
 
-	private int makeCategoricalScale(Field[] fields, ScalePurpose purpose, boolean reverse) {
-		// Combine all categories in the position after each color
-		// We use all the categories in the data; we do not need the partition points
-		List<Object> list = getCategories(fields);
-		if (reverse) Collections.reverse(list);
+	private int makeCategoricalScale(Object[] items, ScalePurpose purpose, boolean reverse) {
 		if (purpose == ScalePurpose.parallel)
 			out.add("d3.scalePoint()");
 		else
 			out.add(purpose.isCoord ? "d3.scalePoint().padding(0.5)" : "d3.scaleOrdinal()");
 		out.addChained("domain([");
-		// Write numbers as numbers, everything else becomes a string
-		for (int i = 0; i < list.size(); i++) {
-			Object o = list.get(i);
+
+		int n = items.length;
+		for (int i = 0; i < n; i++) {
+			Object o = items[reverse ? n - 1 - i : i];
 			if (i > 0) out.add(", ");
 			if (o instanceof Number) out.add(Data.format(o, false));
 			else out.add(Data.quote(o.toString()));
 		}
 		out.add("])");
-		return list.size();
+
+		return items.length;
 	}
 
 	// Create the D3 scale name

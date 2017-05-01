@@ -12,7 +12,7 @@ import java.util.Set;
 /**
  * A single span of domains
  */
-public class DomainSpan implements Comparable<DomainSpan> {
+class DomainSpan implements Comparable<DomainSpan> {
 
 	/**
 	 * Build a domain from a numeric range
@@ -20,25 +20,30 @@ public class DomainSpan implements Comparable<DomainSpan> {
 	 * @param f the field to use
 	 * @return (numeric) domain span
 	 */
-	public static DomainSpan make(Field f, int index) {
-		if (f.isNumeric())
-			return new DomainSpan(f.preferCategorical() ? f.categories() : null, f.min(), f.max(), f.isDate(), index);
-		else
-			return new DomainSpan(f.categories(), Double.NaN, Double.NaN, false, index);
+	static DomainSpan make(Field f, int index) {
+		if (f.isNumeric()) {
+			// If any position are counts or sums, we want to include zero
+			boolean needZero = f.name.equals("#count") || "sum".equals(f.strProperty("summary"));
+			return new DomainSpan(f.preferCategorical() ? f.categories() : null, f.min(), f.max(), f.isDate(), index, needZero);
+		} else {
+			return new DomainSpan(f.categories(), Double.NaN, Double.NaN, false, index, false);
+		}
 	}
 
-	private final Object[] categories;       // Categorical data
-	private final double low;                // Numeric low value
-	private final double high;               // Numeric high value
-	private final boolean isDate;            // Is this a (numeric) date range?
-	private final int index;                // To preserve the order we added them in
+	final Object[] categories;          // Categorical data
+	final double low;                   // Numeric low value
+	final double high;                  // Numeric high value
+	final boolean isDate;               // Is this a (numeric) date range?
+	final int index;                    // To preserve the order we added them in
+	final boolean includeZeroDesired;   // if true, we really want to include zero in this span
 
-	private DomainSpan(Object[] categories, double low, double high, boolean isDate, int index) {
+	private DomainSpan(Object[] categories, double low, double high, boolean isDate, int index, boolean includeZeroDesired) {
 		this.categories = categories;
 		this.low = low;
 		this.high = high;
 		this.isDate = isDate;
 		this.index = index;
+		this.includeZeroDesired = includeZeroDesired;
 	}
 
 	/**
@@ -89,7 +94,9 @@ public class DomainSpan implements Comparable<DomainSpan> {
 		double b = Math.max(high, o.high);
 
 		if (mCats == null && Double.isNaN(a)) return null;        // No match either for continuous or categories
-		return new DomainSpan(mCats, a, b, isDate, Math.min(index, o.index));    // Matched result
+
+		// Successful match
+		return new DomainSpan(mCats, a, b, isDate, Math.min(index, o.index), includeZeroDesired || o.includeZeroDesired);
 	}
 
 	private static Object[] mergeCategories(Object[] a, Object[] b) {

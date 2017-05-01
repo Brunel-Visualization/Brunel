@@ -33,4 +33,8 @@ public enum ScalePurpose {
 		this.isCoord = isCoord;
 		this.isNominal = isNominal;
 	}
+
+	public boolean preferContinuous() {
+		return isCoord;    // Only coordinates prefer continuous
+	}
 }

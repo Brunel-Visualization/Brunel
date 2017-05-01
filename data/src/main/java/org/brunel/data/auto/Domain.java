@@ -33,7 +33,11 @@ public class Domain {
 		return this;
 	}
 
-	// Get the domain contents to use
+	/**
+	 * get the domain contents
+	 *
+	 * @return array of items for the domains
+	 */
 	public Object[][] domains() {
 		merge();
 		Object[][] result = new Object[merged.size()][];
@@ -42,26 +46,73 @@ public class Domain {
 		return result;
 	}
 
+	/**
+	 * Return true if the span is time data
+	 *
+	 * @param index span index to check
+	 * @return true if it is a numeric time span
+	 */
+	public boolean isDate(int index) {
+		return merge().get(index).isDate;
+	}
+
+	public boolean isEmpty() {
+		return merge().isEmpty();
+	}
+
+	/**
+	 * Return true if the span is numeric (this includes dates)
+	 *
+	 * @param index span index to check
+	 * @return true if it is a numeric (which includes date) span
+	 */
+	public boolean isNumeric(int index) {
+		DomainSpan span = merge().get(index);
+		return span.categories == null || !Double.isNaN(span.low) && preferContinuous;
+	}
+
+	/**
+	 * Return true if the span is categorical
+	 *
+	 * @param index span index to check
+	 * @return true if it is a categorical  span
+	 */
+	public boolean isCategorical(int index) {
+		return !isNumeric(index);
+	}
+
+	/**
+	 * Return true if the span wants to include zero
+	 *
+	 * @param index span index to check
+	 * @return true if it is a categorical  span
+	 */
+	public boolean includeZero(int index) {
+		return merge().get(index).includeZeroDesired;
+	}
+
 	// Process the raw fields into a minimal ordered list
-	private void merge() {
-		Collections.sort(raw);                                        // Sort into order
-		merged = new ArrayList<>();
-		DomainSpan current = null;                                // Try to merge into this
-		for (DomainSpan span : raw) {
-			if (current == null)
-				current = span;                                        // The first span
-			else {
-				DomainSpan next = current.merge(span);               // Merge this with the current span
-				if (next == null) {                                // Could not merge, so:
-					merged.add(current);                            // Add the old one in
-					current = span;                                    // This span is the new one to attempt to merge to
-				} else {
-					current = next;                                    // This is a successful merge
+	private List<DomainSpan> merge() {
+		if (merged == null) {
+			Collections.sort(raw);                                        // Sort into order
+			merged = new ArrayList<>();
+			DomainSpan current = null;                                // Try to merge into this
+			for (DomainSpan span : raw) {
+				if (current == null)
+					current = span;                                        // The first span
+				else {
+					DomainSpan next = current.merge(span);               // Merge this with the current span
+					if (next == null) {                                // Could not merge, so:
+						merged.add(current);                            // Add the old one in
+						current = span;                                    // This span is the new one to attempt to merge to
+					} else {
+						current = next;                                    // This is a successful merge
+					}
 				}
 			}
+			if (current != null) merged.add(current);                // Add the current span
 		}
-		if (current != null) merged.add(current);                // Add the current span
-
+		return merged;
 	}
 
 	// Allocate the spans to ranges in [0,1]
