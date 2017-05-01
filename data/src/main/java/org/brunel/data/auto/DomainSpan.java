@@ -21,14 +21,8 @@ public class DomainSpan implements Comparable<DomainSpan> {
 	 * @return (numeric) domain span
 	 */
 	static DomainSpan make(Field f, int index, boolean preferContinuous) {
-		if (f.isNumeric()) {
-			// If any position are counts or sums, we want to include zero
-			boolean needZero = f.name.equals("#count") || "sum".equals(f.strProperty("summary"));
-			SpanNumericInfo numeric = new SpanNumericInfo(f.min(), f.max(), f.isDate(), needZero);
-			return new DomainSpan(index, preferContinuous, f.preferCategorical() ? f.categories() : null, numeric);
-		} else {
-			return new DomainSpan(index, preferContinuous, f.categories(), null);
-		}
+		return new DomainSpan(index, preferContinuous, f.preferCategorical() ? f.categories() : null,
+				SpanNumericInfo.makeForField(f));
 	}
 
 	public final int index;                    // To preserve the order we added them in
@@ -69,13 +63,13 @@ public class DomainSpan implements Comparable<DomainSpan> {
 		// Purely categorical goes last
 		if (numeric == null) return 5;
 		// Then time (preferring pure form first) followed by general numeric (preferring pure form)
-		return (numeric.isDate ? 1 : 3) + (categories == null ? 0 : 1);
+		return (numeric.dateUnit != null ? 1 : 3) + (categories == null ? 0 : 1);
 	}
 
 	public Object[] content() {
 		// we return numeric data if no categorical data, or we prefer the numeric data
 		if (categories == null || preferContinuous && numeric != null) {
-			return numeric.range();
+			return numeric.content();
 		} else {
 			return categories;
 		}
@@ -99,7 +93,7 @@ public class DomainSpan implements Comparable<DomainSpan> {
 	}
 
 	public boolean isDate() {
-		return numeric != null && numeric.isDate;
+		return numeric != null && numeric.dateUnit != null;
 	}
 
 	private static Object[] mergeCategories(Object[] a, Object[] b) {

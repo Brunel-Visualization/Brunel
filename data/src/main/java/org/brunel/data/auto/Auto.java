@@ -43,25 +43,26 @@ public class Auto {
 	 * @return the util on the scale
 	 */
 	public static NumericScale makeNumericScale(Field f, boolean nice, double[] padFraction, double includeZeroTolerance, int desiredTickCount, boolean forBinning) {
-		String p = defineTransform(f);
+		SpanNumericInfo info = SpanNumericInfo.makeForField(f);
 
 		// If the tick count is not set, calculate the optimal value, but no more than 20 bins
-		if (desiredTickCount < 1) desiredTickCount = Math.min(optimalBinCount(f), 20) + 1;
-		if (f.isDate()) return NumericScale.makeDateScale(f, nice, padFraction, desiredTickCount);
-		if (p.equals("log"))
-			return NumericScale.makeLogScale(f, nice, padFraction, includeZeroTolerance, desiredTickCount);
+		if (desiredTickCount < 1) desiredTickCount = Math.min(info.optimalBinCount, 20) + 1;
+		if (f.isDate()) return NumericScale.makeDateScale(SpanNumericInfo.makeForField(f), nice, padFraction, desiredTickCount);
+
+		if (info.transform.equals("log"))
+			return NumericScale.makeLogScale(info, nice, padFraction, includeZeroTolerance, desiredTickCount);
 
 		// We need to modify the scale for a root transform, as we need a smaller pad fraction near zero
 		// as that will show more space than expected
-		if (p.equals("root")) {
-			if (f.min() > 0) {
-				double scaling = (f.min() / f.max()) / (Math.sqrt(f.min()) / Math.sqrt(f.max()));
+		if (info.transform.equals("root")) {
+			if (info.low > 0) {
+				double scaling = (info.low / info.high) / (Math.sqrt(info.low) / Math.sqrt(info.high));
 				includeZeroTolerance *= scaling;
 				padFraction[0] *= scaling;
 			}
 		}
 
-		return NumericScale.makeLinearScale(f, nice, includeZeroTolerance, padFraction, desiredTickCount, forBinning);
+		return NumericScale.makeLinearScale(info, nice, includeZeroTolerance, padFraction, desiredTickCount, forBinning);
 	}
 
 	public static String defineTransform(Field f) {
@@ -90,13 +91,12 @@ public class Auto {
 	}
 
 	public static int optimalBinCount(Field f) {
-		// For non-numeric data
-		if (!f.isNumeric()) return Math.min(7, f.categories().length);
-
 		// Using Freedman-Diaconis for the optimal bin width OR Scott's normal reference rule
 		// Whichever has a large bin size
+		Double stddev = f.numProperty("stddev");
+		if (stddev == null) return 1;				// Guard against single-valued data
 		double h1 = 2 * (f.numProperty("q3") - f.numProperty("q1")) / Math.pow(f.valid(), 0.33333);
-		double h2 = 3.5 * f.numProperty("stddev") / Math.pow(f.valid(), 0.33333);
+		double h2 = 3.5 * stddev / Math.pow(f.valid(), 0.33333);
 		double h = Math.max(h1, h2);
 		if (h == 0)
 			return 1;
