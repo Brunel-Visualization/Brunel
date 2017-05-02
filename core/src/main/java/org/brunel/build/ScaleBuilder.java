@@ -30,6 +30,7 @@ import org.brunel.data.Fields;
 import org.brunel.data.auto.Auto;
 import org.brunel.data.auto.Domain;
 import org.brunel.data.auto.DomainSpan;
+import org.brunel.data.auto.NumericExtentDetail;
 import org.brunel.data.auto.NumericScale;
 import org.brunel.data.util.DateFormat;
 import org.brunel.data.util.Range;
@@ -99,21 +100,21 @@ public class ScaleBuilder {
 		for (Field field : fields) domain.include(field);
 
 		// Easy case -- no domains at all
-		if (domain.isEmpty()) return makeEmptyZeroOneScale();
+		if (domain.spanCount() == 0) return makeEmptyZeroOneScale();
 
 		/*
 		 * TODO: Handle mixed domains
 		 * The domain is built up and understands mixed numeric and categorical domains, but
 		 * in the following code we ignore that and just use the first in the list
 		 */
-		DomainSpan span = domain.getSpan(0);
+		DomainSpan span = domain.span(0);
 
 		// Categorical is relatively easy
-		if (domain.isCategorical(0))
+		if (!domain.span(0).isNumeric())
 			return makeCategoricalScale(span.content(), purpose, reverse);
 
 		// Determine how much we want to include zero
-		double includeZero = getIncludeZeroFraction(purpose, domain.getSpan(0).desiresZero());
+		double includeZero = getIncludeZeroFraction(purpose, domain.span(0).desiresZero());
 
 		boolean isX = purpose == ScalePurpose.x, isY = purpose == ScalePurpose.y;
 
@@ -142,7 +143,7 @@ public class ScaleBuilder {
 			includeZero = 0;
 		}
 
-		NumericScale detail = Auto.makeNumericScale(scaleField, nice, padding, includeZero, 9, false);
+		NumericScale detail = Auto.makeNumericScale(NumericExtentDetail.makeForField(scaleField), nice, padding, includeZero, 9, false);
 		double min = detail.min;
 		double max = detail.max;
 

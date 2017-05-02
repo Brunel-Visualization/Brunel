@@ -24,6 +24,7 @@ import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
+import org.brunel.data.auto.NumericExtentDetail;
 import org.brunel.data.auto.NumericScale;
 import org.brunel.data.stats.DateStats;
 import org.brunel.data.util.DateFormat;
@@ -177,7 +178,7 @@ public class LegendBuilder {
 				legendTicks += ".reverse()";
 		} else {
 			// Numeric must calculate a nice range
-			NumericScale details = Auto.makeNumericScale(field, true, new double[]{0, 0}, 0.25, 7, false);
+			NumericScale details = Auto.makeNumericScale(NumericExtentDetail.makeForField(field), true, new double[]{0, 0}, 0.25, 7, false);
 			Double[] divisions = details.divisions;
 			if (details.granular) {
 				// Granular data has divisions BETWEEN the values, not at them, so need to fix that

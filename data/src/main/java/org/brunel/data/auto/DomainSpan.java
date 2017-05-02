@@ -22,15 +22,15 @@ public class DomainSpan implements Comparable<DomainSpan> {
 	 */
 	static DomainSpan make(Field f, int index, boolean preferContinuous) {
 		return new DomainSpan(index, preferContinuous, f.preferCategorical() ? f.categories() : null,
-				SpanNumericInfo.makeForField(f));
+				NumericExtentDetail.makeForField(f));
 	}
 
-	public final int index;                    // To preserve the order we added them in
+	private final int index;                    // To preserve the order we added them in
 	private final boolean preferContinuous;
-	final Object[] categories;          // Categorical data
-	final SpanNumericInfo numeric;        // Numeric info
+	private final Object[] categories;          // Categorical data
+	private final NumericExtentDetail numeric;        // Numeric info
 
-	private DomainSpan(int index, boolean preferContinuous, Object[] categories, SpanNumericInfo numeric) {
+	private DomainSpan(int index, boolean preferContinuous, Object[] categories, NumericExtentDetail numeric) {
 		this.index = index;
 		this.preferContinuous = preferContinuous;
 		this.categories = categories;
@@ -59,6 +59,14 @@ public class DomainSpan implements Comparable<DomainSpan> {
 		return numeric != null && numeric.includeZeroDesired;
 	}
 
+	/**
+	 * The span is numeric if it cannot be categorical, or if it can be both and prefers continuous
+	 * @return how to treat the span
+	 */
+	public boolean isNumeric() {
+		return categories == null || numeric != null && preferContinuous;
+	}
+
 	private int typeScore() {
 		// Purely categorical goes last
 		if (numeric == null) return 5;
@@ -83,7 +91,7 @@ public class DomainSpan implements Comparable<DomainSpan> {
 	 */
 	public DomainSpan merge(DomainSpan o) {
 		Object[] mCats = mergeCategories(categories, o.categories);
-		SpanNumericInfo mNum = numeric == null ? null : numeric.merge(o.numeric);
+		NumericExtentDetail mNum = numeric == null ? null : numeric.merge(o.numeric);
 
 		if (mCats == null && mNum == null)                        // No match either for continuous or categories
 			return null;
@@ -96,7 +104,7 @@ public class DomainSpan implements Comparable<DomainSpan> {
 		return numeric != null && numeric.dateUnit != null;
 	}
 
-	private static Object[] mergeCategories(Object[] a, Object[] b) {
+	private Object[] mergeCategories(Object[] a, Object[] b) {
 		if (a == null || b == null) return null;
 
 		Set<Object> all = new HashSet<>();

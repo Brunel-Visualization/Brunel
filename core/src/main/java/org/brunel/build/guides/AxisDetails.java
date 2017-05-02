@@ -23,6 +23,7 @@ import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
+import org.brunel.data.auto.NumericExtentDetail;
 import org.brunel.data.util.Range;
 import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes;
@@ -190,7 +191,7 @@ public class AxisDetails {
 				}
 			} else {
 				// If we have numeric data, we use our scaling to guess the divisions needed
-				Object[] sampleTicks = Auto.makeNumericScale(f, true, new double[]{0, 0}, 0, 5, false).divisions;
+				Object[] sampleTicks = Auto.makeNumericScale(NumericExtentDetail.makeForField(f), true, new double[]{0, 0}, 0, 5, false).divisions;
 				for (Object s : sampleTicks)
 					maxCharCount = Math.max(maxCharCount, f.format(s).length());
 				// Always allow room for three characters. We need this because D3 often

@@ -20,6 +20,7 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
+import org.brunel.data.auto.NumericExtentDetail;
 import org.brunel.data.auto.NumericScale;
 import org.brunel.data.summary.FieldRowComparison;
 import org.brunel.data.util.DateFormat;
@@ -146,7 +147,7 @@ public class Transform extends DataOperation {
     }
 
     private static Field binNumeric(Field f, int desiredBinCount) {
-        NumericScale scale = Auto.makeNumericScale(f, true, new double[]{0, 0}, 0.0, desiredBinCount + 1, true);
+        NumericScale scale = Auto.makeNumericScale(NumericExtentDetail.makeForField(f), true, new double[]{0, 0}, 0.0, desiredBinCount + 1, true);
         Double[] divisions = scale.divisions;
         boolean isDate = f.isDate();
         DateFormat dateFormat = isDate ? (DateFormat) f.property("dateFormat") : null;

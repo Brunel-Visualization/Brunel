@@ -35,34 +35,34 @@ public class Auto {
 	 * would add to the chart is less than a fraction p.
 	 * Thus 0 will mean "never", 1 will mean "always"
 	 *
-	 * @param f                    the scale to use
+	 * @param extentDetail         the information to build a scale for
 	 * @param nice                 whether to make the limits a nice number
 	 * @param padFraction          amount to pad the raw range by (upper and lower values)
 	 * @param includeZeroTolerance include zero if it does not make "white space" more than this fraction
 	 * @param desiredTickCount     number of ticks it would be nice to get (&lt;= 0 for auto)
-	 * @return the util on the scale
+	 * @return the info on the scale
 	 */
-	public static NumericScale makeNumericScale(Field f, boolean nice, double[] padFraction, double includeZeroTolerance, int desiredTickCount, boolean forBinning) {
-		SpanNumericInfo info = SpanNumericInfo.makeForField(f);
+	public static NumericScale makeNumericScale(NumericExtentDetail extentDetail, boolean nice, double[] padFraction, double includeZeroTolerance, int desiredTickCount, boolean forBinning) {
 
 		// If the tick count is not set, calculate the optimal value, but no more than 20 bins
-		if (desiredTickCount < 1) desiredTickCount = Math.min(info.optimalBinCount, 20) + 1;
-		if (f.isDate()) return NumericScale.makeDateScale(SpanNumericInfo.makeForField(f), nice, padFraction, desiredTickCount);
+		if (desiredTickCount < 1) desiredTickCount = Math.min(extentDetail.optimalBinCount, 20) + 1;
+		if (extentDetail.dateUnit != null)
+			return NumericScale.makeDateScale(extentDetail, nice, padFraction, desiredTickCount);
 
-		if (info.transform.equals("log"))
-			return NumericScale.makeLogScale(info, nice, padFraction, includeZeroTolerance, desiredTickCount);
+		if (extentDetail.transform.equals("log"))
+			return NumericScale.makeLogScale(extentDetail, nice, padFraction, includeZeroTolerance, desiredTickCount);
 
 		// We need to modify the scale for a root transform, as we need a smaller pad fraction near zero
 		// as that will show more space than expected
-		if (info.transform.equals("root")) {
-			if (info.low > 0) {
-				double scaling = (info.low / info.high) / (Math.sqrt(info.low) / Math.sqrt(info.high));
+		if (extentDetail.transform.equals("root")) {
+			if (extentDetail.low > 0) {
+				double scaling = (extentDetail.low / extentDetail.high) / (Math.sqrt(extentDetail.low) / Math.sqrt(extentDetail.high));
 				includeZeroTolerance *= scaling;
 				padFraction[0] *= scaling;
 			}
 		}
 
-		return NumericScale.makeLinearScale(info, nice, includeZeroTolerance, padFraction, desiredTickCount, forBinning);
+		return NumericScale.makeLinearScale(extentDetail, nice, includeZeroTolerance, padFraction, desiredTickCount, forBinning);
 	}
 
 	public static String defineTransform(Field f) {
@@ -94,7 +94,7 @@ public class Auto {
 		// Using Freedman-Diaconis for the optimal bin width OR Scott's normal reference rule
 		// Whichever has a large bin size
 		Double stddev = f.numProperty("stddev");
-		if (stddev == null) return 1;				// Guard against single-valued data
+		if (stddev == null) return 1;                // Guard against single-valued data
 		double h1 = 2 * (f.numProperty("q3") - f.numProperty("q1")) / Math.pow(f.valid(), 0.33333);
 		double h2 = 3.5 * stddev / Math.pow(f.valid(), 0.33333);
 		double h = Math.max(h1, h2);

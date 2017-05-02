@@ -148,50 +148,54 @@ public class TestAuto {
 
         Field a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 9, 2010", "January 9, 2010"}));
         assertEquals("date : 2000 2020 : |2005|2010|2015|2020",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), false, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), false, pad, 5), a));
 
         a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 9, 2010", "January 10, 2010"}));
         assertEquals("date : 00:00 00:00 : |00:00|06:00|12:00|18:00|00:00",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), false, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), false, pad, 5), a));
 
         a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 9, 2010", "January 14, 2010"}));
         assertEquals(
                 "date : Jan 9, 2010 Jan 14, 2010 : |Jan 9, 2010|Jan 10, 2010|Jan 11, 2010|Jan 12, 2010|Jan 13, 2010|Jan 14, 2010",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), false, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), false, pad, 5), a));
 
         a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 9, 2010", "January 14, 2010"}));
         assertEquals(
                 "date : Jan 9, 2010 Jan 14, 2010 : |Jan 9, 2010|Jan 10, 2010|Jan 11, 2010|Jan 12, 2010|Jan 13, 2010|Jan 14, 2010",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), true, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), true, pad, 5), a));
 
         a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 9, 2010", "August 9, 2010"}));
         assertEquals("date : Jan 2010 Aug 2010 : |Mar 2010|May 2010|Jul 2010",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), false, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), false, pad, 5), a));
 
         a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 9, 2010", "August 9, 2010"}));
         assertEquals("date : Jan 2010 Sep 2010 : |Jan 2010|Mar 2010|May 2010|Jul 2010|Sep 2010",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), true, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), true, pad, 5), a));
 
         a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 9, 2010", "August 9, 2011"}));
         assertEquals("date : Jan 2010 Jan 2012 : |Jan 2010|Jul 2010|Jan 2011|Jul 2011|Jan 2012",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), true, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), true, pad, 5), a));
 
         a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 9, 2010", "August 9, 2014"}));
         assertEquals("date : Jan 2010 Jan 2015 : |Jan 2010|Jan 2011|Jan 2012|Jan 2013|Jan 2014|Jan 2015",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), true, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), true, pad, 5), a));
 
         a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 9, 2010", "August 9, 2024"}));
         assertEquals("date : 2010 2025 : |2010|2015|2020|2025",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), true, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), true, pad, 5), a));
 
         a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 9, 2010", "August 9, 2124"}));
         assertEquals("date : 2000 2140 : |2000|2020|2040|2060|2080|2100|2120|2140",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), true, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), true, pad, 5), a));
 
         a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"January 9, 2010", "August 9, 6124"}));
         assertEquals("date : 2000 6500 : |2000|2500|3000|3500|4000|4500|5000|5500|6000|6500",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), true, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), true, pad, 5), a));
 
+    }
+
+    private NumericExtentDetail spanOf(Field a) {
+        return NumericExtentDetail.makeForField(a);
     }
 
     @Test
@@ -201,29 +205,29 @@ public class TestAuto {
 
         a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"09:45:22", "09:45:24"}));
         assertEquals("date : 09:45:22 09:45:24 : |09:45:22|09:45:23|09:45:24",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), false, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), false, pad, 5), a));
 
         a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"09:45:22", "09:45:54"}));
         assertEquals(0.40650462963, a.min(), 1e-9);
         assertEquals(0.406875, a.max(), 1e-9);
         assertEquals("date : 09:45:22 09:45:54 : |09:45:30|09:45:40|09:45:50",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), false, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), false, pad, 5), a));
 
         a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"09:45:22", "09:45:54"}));
         assertEquals("date : 09:45:20 09:46:00 : |09:45:20|09:45:30|09:45:40|09:45:50|09:46:00",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), true, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), true, pad, 5), a));
 
         a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"09:45:22", "10:01:54"}));
         assertEquals("date : 09:45 10:05 : |09:45|09:50|09:55|10:00|10:05",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), true, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), true, pad, 5), a));
 
         a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"09:45:22", "12:01:54"}));
         assertEquals("date : 09:30 12:30 : |09:30|10:00|10:30|11:00|11:30|12:00|12:30",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), true, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), true, pad, 5), a));
 
         a = Data.toDate(Fields.makeColumnField("a", "label", new Object[]{"09:45:22", "23:01:54"}));
         assertEquals("date : 09:00 00:00 : |09:00|12:00|15:00|18:00|21:00|00:00",
-                asString(NumericScale.makeDateScale(SpanNumericInfo.makeForField(a), true, pad, 5), a));
+                asString(NumericScale.makeDateScale(spanOf(a), true, pad, 5), a));
 
     }
 
@@ -260,13 +264,13 @@ public class TestAuto {
         a = Fields.makeColumnField("a", "label", new Object[]{-22.2, -22.201, -22.9, -22.7});
         a = Data.toNumeric(a);
         assertEquals("linear : -23 -22 : |-23|-22.8|-22.6|-22.4|-22.2|-22",
-                asString(Auto.makeNumericScale(a, true, pad, 0.0, 5, false), a));
+                asString(Auto.makeNumericScale(NumericExtentDetail.makeForField(a), true, pad, 0.0, 5, false), a));
         assertEquals("linear : -22.9 -22.2 : |-22.8|-22.6|-22.4|-22.2",
                 asString(NumericScale.makeLinearScale(spanOf(a), false, 0.0, pad, 4, false), a));
         assertEquals("linear : -23 -22 : |-23|-22.5|-22",
-                asString(Auto.makeNumericScale(a, true, pad, 0.0, 4, false), a));
+                asString(Auto.makeNumericScale(NumericExtentDetail.makeForField(a), true, pad, 0.0, 4, false), a));
         assertEquals("linear : -23 -22 : |-23|-22.5|-22",
-                asString(Auto.makeNumericScale(a, true, pad, 0.95, 4, false), a));
+                asString(Auto.makeNumericScale(NumericExtentDetail.makeForField(a), true, pad, 0.95, 4, false), a));
         assertEquals("linear : -30 0 : |-30|-20|-10|0", asString(NumericScale.makeLinearScale(spanOf(a), true, 0.99, pad, 4, false), a));
 
 
@@ -276,9 +280,6 @@ public class TestAuto {
         assertEquals("linear : 0 1 : |0|0.5|1", asString(NumericScale.makeLinearScale(spanOf(a), true, 0.99, pad, 4, false), a));
     }
 
-    private SpanNumericInfo spanOf(Field a) {
-        return SpanNumericInfo.makeForField(a);
-    }
 
     @Test
     public void testLogScale() {

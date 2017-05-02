@@ -36,7 +36,7 @@ public class NumericScale {
 
 	private static final double HALF_LOG = 3;
 
-	public static NumericScale makeDateScale(SpanNumericInfo info, boolean nice, double[] padFraction, int desiredTickCount) {
+	public static NumericScale makeDateScale(NumericExtentDetail info, boolean nice, double[] padFraction, int desiredTickCount) {
 
 		double a = info.low;
 		double b = info.high;
@@ -93,7 +93,7 @@ public class NumericScale {
 		return multiple;
 	}
 
-	public static NumericScale makeLinearScale(SpanNumericInfo info, boolean nice, double includeZeroTolerance, double[] padFraction, int desiredTickCount, boolean forBinning) {
+	public static NumericScale makeLinearScale(NumericExtentDetail info, boolean nice, double includeZeroTolerance, double[] padFraction, int desiredTickCount, boolean forBinning) {
 
 		// Guard against having no data
 		if (info == null) return new NumericScale("linear", 0, 1, new Double[]{0.0, 1.0}, false);
@@ -188,7 +188,7 @@ public class NumericScale {
 		return div.toArray(new Double[div.size()]);
 	}
 
-	public static NumericScale makeLogScale(SpanNumericInfo info, boolean nice, double[] padFraction, double includeZeroTolerance, int desiredTickCount) {
+	public static NumericScale makeLogScale(NumericExtentDetail info, boolean nice, double[] padFraction, double includeZeroTolerance, int desiredTickCount) {
 		double a = Math.log(info.low) / Math.log(10);
 		double b = Math.log(info.high) / Math.log(10);
 
