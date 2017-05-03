@@ -89,7 +89,7 @@ import java.awt.*;
 			LibraryAction a = (LibraryAction) value;
 			JLabel c = (JLabel) super.getListCellRendererComponent(list, a.getName(), index, isSelected, cellHasFocus);
 			c.setToolTipText(a.getDescription());
-			if (a.getScore() > 0.75)
+			if (a.getScore() > 0.7)
 				c.setFont(Common.MEDIUM_BOLD);
 			else if (a.getScore() < 0.5)
 				c.setFont(Common.MEDIUM_ITALIC);

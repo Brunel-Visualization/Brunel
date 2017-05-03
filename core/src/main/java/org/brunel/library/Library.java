@@ -20,9 +20,7 @@ package org.brunel.library;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.brunel.action.Action;
 import org.brunel.data.Field;
-import org.brunel.maps.GeoInformation;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -147,81 +145,5 @@ public class Library {
 		return result;
 	}
 
-	private Action chooseBivariate(Field a, Field b) {
-		// Ensure that if they are of different types, the categorical one is first
-		if (b.preferCategorical() && !a.preferCategorical()) return chooseBivariate(b, a);
-
-		// Dates need line charts
-		if (a.isDate() && !b.isDate()) return makeLineChart(a, b);
-		if (b.isDate() && !a.isDate() && !a.preferCategorical()) return makeLineChart(b, a);
-
-		// See if a choropleth will work
-		if (goodForMapNames(a)) return get("colorMap").apply(a, b);
-		if (goodForMapNames(b)) return get("colorMap").apply(b, a);
-
-		// Heatmaps if either is categorical
-		if (a.preferCategorical() || b.preferCategorical())
-			return get("heatmap").apply(orderByCoarseness(a, b));
-
-		// Default to scatter
-		return get("scatter").apply(orderByCoarseness(a, b));
-	}
-
-	private boolean goodForLongitude(Field f) {
-		return f.min() > -181 && f.max() <= 181;
-	}
-
-	private boolean goodForLatitude(Field f) {
-		return f.min() > -91 && f.max() < 91;
-	}
-
-	private Action chooseMultivariate(Field... fields) {
-		Field[] ordered = orderByCoarseness(fields);
-		if (fields.length == 3) {
-			Field a = ordered[0];
-			Field b = ordered[1];
-			Field c = ordered[2];
-			if (!a.preferCategorical() && !b.preferCategorical() && !c.preferCategorical()) {
-				return get("bubble").apply(ordered);
-			}
-
-		}
-		return get("treemap").apply(ordered);
-	}
-
-	private Action chooseUnivariate(Field f) {
-		if (goodForMapNames(f))
-			return get("map").apply(f);
-		else if (goodForWordle(f))
-			return get("wordle").apply(f);
-		else
-			return get("barOfCounts").apply(f);
-	}
-
-	private boolean goodForMapNames(Field f) {
-		return GeoInformation.fractionGeoNames(f) > 0.5;
-	}
-
-	private boolean goodForWordle(Field f) {
-		if (!f.preferCategorical()) return false;
-		if (f.numProperty("unique") > 100 || f.numProperty("unique") < 7) return false;
-		// Too long names are not good
-		for (Object c : f.categories())
-			if (c.toString().length() > 20) return false;
-		return true;
-	}
-
-	private Action makeLineChart(Field x, Field y) {
-		// If there is close to one data point per x coordinate just use lines
-		if (x.numProperty("unique") > 0.95 * x.numProperty("validNumeric"))
-			return get("line").apply(x, y);
-		// Otherwise show lines and points
-		return get("lineWithPoints").apply(x, y);
-	}
-
-	private Field[] orderByCoarseness(Field... fields) {
-		FieldCoarseness.sort(fields);
-		return fields;
-	}
 
 }

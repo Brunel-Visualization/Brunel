@@ -78,7 +78,7 @@ public class ScaleBuilder {
 	}
 
 	/**
-	 * Defines a scale,a dding the domain info but not the range
+	 * Defines a scale, adding the domain info but not the range
 	 *
 	 * @param name              if not null, define a new variable for the scale, otehrwise assume it has been done
 	 * @param fields            one or more fields for this scale
@@ -116,17 +116,15 @@ public class ScaleBuilder {
 		// Determine how much we want to include zero
 		double includeZero = getIncludeZeroFraction(purpose, domain.span(0).desiresZero());
 
-		boolean isX = purpose == ScalePurpose.x, isY = purpose == ScalePurpose.y;
-
 		// Build a combined scale field and force the desired transform on it for x and y dimensions
 		Field field = fields[0];
 		Field scaleField = fields.length == 1 ? field : combineNumericFields(fields);
 		ChartCoordinates coordinates = structure.coordinates;
-		if (isX) {
+		if (purpose == ScalePurpose.x) {
 			// We need to copy it as we are modifying it
 			if (scaleField == field) scaleField = field.rename(field.name, field.label);
 			scaleField.set("transform", coordinates.xTransform);
-		} else if (isY) {
+		} else if (purpose == ScalePurpose.y) {
 			// We need to copy it as we are modifying it
 			if (scaleField == field) scaleField = field.rename(field.name, field.label);
 			scaleField.set("transform", coordinates.yTransform);
@@ -137,7 +135,7 @@ public class ScaleBuilder {
 		double[] padding = getNumericPaddingFraction(purpose);
 
 		// Areas and line should fill the horizontal dimension, as should any binned field
-		if (scaleField.isBinned() || isX && elementsFillHorizontal(ScalePurpose.x)) {
+		if (scaleField.isBinned() || purpose == ScalePurpose.x && elementsFillHorizontal(ScalePurpose.x)) {
 			nice = false;
 			padding = new double[]{0, 0};
 			includeZero = 0;
@@ -147,15 +145,15 @@ public class ScaleBuilder {
 		double min = detail.min;
 		double max = detail.max;
 
-		Double[] extent = isX ? coordinates.xExtent : coordinates.yExtent;
+		Double[] extent = purpose == ScalePurpose.x ? coordinates.xExtent : coordinates.yExtent;
 		if (extent != null && extent[0] != null) min = extent[0];
 		if (extent != null && extent[1] != null) max = extent[1];
 
 		Object[] divs = new Object[numericDomainDivs];
 		if (field.isDate()) {
 			DateFormat dateFormat = (DateFormat) field.property("dateFormat");
-			if (isX) dateFormat = coordinates.xDateFormat;
-			if (isY) dateFormat = coordinates.yDateFormat;
+			if (purpose == ScalePurpose.x) dateFormat = coordinates.xDateFormat;
+			if (purpose == ScalePurpose.y) dateFormat = coordinates.yDateFormat;
 
 			BuildUtil.DateBuilder dateBuilder = new BuildUtil.DateBuilder();
 			for (int i = 0; i < divs.length; i++) {
@@ -172,8 +170,8 @@ public class ScaleBuilder {
 			// Some scales (like for an area size) have a default transform (e.g. root) and we
 			// util that if the field wants a linear scale.
 			String transform = null;
-			if (isX) transform = coordinates.xTransform;
-			if (isY) transform = coordinates.yTransform;
+			if (purpose == ScalePurpose.x) transform = coordinates.xTransform;
+			if (purpose == ScalePurpose.y) transform = coordinates.yTransform;
 
 			// Size must not get a transform as it will seriously distort things
 			if (purpose == ScalePurpose.sizeAesthetic) transform = defaultTransform;

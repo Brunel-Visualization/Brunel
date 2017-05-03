@@ -103,7 +103,7 @@ public class Palette {
     }
 
     public static ColorMapping makeColorMapping(Field f, Param[] modifiers, boolean largeElement) {
-        int mutingLevel = largeElement && f.preferCategorical() && !f.isBinned() ? 1 : 0;
+        int mutingLevel = largeElement && f.preferCategorical() && !f.isNumeric() ? 1 : 0;
         ColorMapping base;
 
         if (modifiers.length == 0) {
@@ -122,7 +122,7 @@ public class Palette {
 
         // For binning the palette is based on the numeric values, but the categories
         // are not numeric, so we need to adapt the colors to fit the categories
-        if (f.isBinned())
+        if (f.isBinned() && f.isNumeric())
             base = base.fitColorsToCategories(f);
 
         // Mute the colors of the result if necessary

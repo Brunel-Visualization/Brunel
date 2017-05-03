@@ -3,27 +3,47 @@
   "description": "A standard library of actions that provides 'chart types' using the Brunel Library feature",
   "items": [
     {
-      "name": "Bar Of Counts",
+      "name": "Bar / Histogram",
       "description": "A bar chart showing counts for a single field. Numeric data is binned to form a histogram",
       "action": "bar x($1) y(#count) tooltip(#all) sort(#count)",
       "desirability": 0.8,
       "fields": [
-        "categorical"
+        "categorical-or-bin"
+      ]
+    },
+    {
+      "name": "Bar of Values",
+      "description": "A bar chart showing summed values by a field. Numeric data is binned to form a histogram",
+      "action": "bar x($1) y($2) tooltip(#all) sum($2) sort(#count)",
+      "desirability": 0.82,
+      "fields": [
+        "categorical-medium",
+        "numeric"
       ]
     },
     {
       "name": "Pie Of Counts",
       "description": "A pie chart showing counts for a single field. Numeric data is binned to form a histogram",
-      "action": "bar polar color($1) y(#count) tooltip(#all) label($1, ' (', #count, '%)') tooltip(#all) percent(#count) sort(#count) stack legends(none)",
+      "action": "bar polar color($1) y(#count)  label($1, ' (', #count, '%)') tooltip(#all) percent(#count) sort(#count) stack legends(none)",
       "desirability": 0.9,
       "fields": [
         "categorical-few"
       ]
     },
     {
+      "name": "Pie Of Values",
+      "description": "A pie chart showing summed values by a field. Numeric data is binned to form a histogram",
+      "action": "bar polar color($1) y($2) sum($2) label($1, ' (', #count, '%)') tooltip(#all) percent($2) sort($2) stack legends(none)",
+      "desirability": 0.92,
+      "fields": [
+        "categorical-few",
+        "numeric-positive"
+      ]
+    },
+    {
       "name": "Dot Plot",
       "description": "A set of dots on the X axis showing counts",
-      "action": "x($1) size(#count) tooltip(#all)",
+      "action": "point x($1) size(#count) tooltip(#all) style('symbol:circle')",
       "desirability": 0.4,
       "fields": [
         "any"
@@ -32,10 +52,169 @@
     {
       "name": "Word Cloud",
       "description": "Sized text items",
-      "action": "cloud label($1) size(#count) color($1)",
+      "action": "cloud label($1) size(#count) color($1) sort(#count)",
       "desirability": 0.8,
       "fields": [
         "categorical-many"
+      ]
+    },
+    {
+      "name": "Map",
+      "description": "A basic map",
+      "action": "map key($1) color(#count:gray) label($1) tooltip($1) legends(none)",
+      "desirability": 1.0,
+      "fields": [
+        "geo"
+      ]
+    },
+    {
+      "name": "Map of Values",
+      "description": "A map colored by sums of a numeric field",
+      "action": "map key($1) color($2) label($1) tooltip($1) sum($2)",
+      "desirability": 1.0,
+      "fields": [
+        "geo",
+        "numeric"
+      ]
+    },
+    {
+      "name": "Map of Categories",
+      "description": "A map colored by mode of a categorical field",
+      "action": "map key($1) color($2) label($1) tooltip($1) mode($2)",
+      "desirability": 0.99,
+      "fields": [
+        "geo",
+        "categorical-or-bin"
+      ]
+    },
+    {
+      "name": "Heat Map",
+      "description": "A table of two fields, showing counts",
+      "action": "x($1) y($2) color(#count) sort(#count) tooltip(#all)",
+      "desirability": 0.8,
+      "fields": [
+        "categorical-or-bin",
+        "categorical-or-bin"
+      ]
+    },
+    {
+      "name": "Clustered Counts",
+      "description": "A bar chart of counts, clustered by a second field",
+      "action": "bar x($1,$2) y(#count) tooltip(#all) color($2)",
+      "desirability": 0.8,
+      "fields": [
+        "categorical-medium",
+        "categorical-few"
+      ]
+    },
+    {
+      "name": "Stacked Counts",
+      "description": "A bar chart of counts, stacked by a second field",
+      "action": "bar x($1) y(#count) stack tooltip(#all) color($2)",
+      "desirability": 0.81,
+      "fields": [
+        "categorical-medium",
+        "categorical-few"
+      ]
+    },
+    {
+      "name": "Scatterplot",
+      "description": "Two fields plotted against each other",
+      "action": "point x($1) y($2) tooltip(#all)",
+      "desirability": 0.75,
+      "fields": [
+        "any",
+        "any"
+      ]
+    },
+    {
+      "name": "Line Chart",
+      "description": "Two fields plotted against each other",
+      "action": "line x($1) y($2) tooltip(#all)",
+      "desirability": 0.9,
+      "fields": [
+        "time",
+        "any"
+      ]
+    },
+    {
+      "name": "Area Chart",
+      "description": "Two fields plotted against each other",
+      "action": "area x($1) y($2) tooltip(#all) sum($2)",
+      "desirability": 0.88,
+      "fields": [
+        "time",
+        "numeric"
+      ]
+    },
+    {
+      "name": "Stacked Area",
+      "description": "Two fields plotted against each other, stacked by a third",
+      "action": "area x($1) y($2) color($3) stack tooltip(#all)",
+      "desirability": 0.88,
+      "fields": [
+        "time",
+        "numeric",
+        "categorical-few"
+      ]
+    },
+    {
+      "name": "Bubble Plot",
+      "description": "A scatter plot with sized bubbles",
+      "action": "point x($1) y($2) size($3:200%) tooltip(#all)",
+      "desirability": 0.75,
+      "fields": [
+        "any",
+        "any",
+        "numeric-positive"
+      ]
+    },
+    {
+      "name": "Symbol Plot",
+      "description": "A scatter plot with sized bubbles",
+      "action": "point x($1) y($2) symbol($3) color($3) tooltip(#all)",
+      "desirability": 0.75,
+      "fields": [
+        "any",
+        "any",
+        "categorical-few"
+      ]
+    },
+    {
+      "name": "Treemap",
+      "description": "A treemap of Counts",
+      "action": "treemap x($2) color($2[-0]) size(#count) label($1) tooltip(#all)",
+      "desirability": 0.8,
+      "fields": [
+        "any", "multiple-categorical"
+      ]
+    },
+    {
+      "name": "Tree",
+      "description": "A treemap of Counts",
+      "action": "tree x($2) size(#count) label($1) tooltip(#all)",
+      "desirability": 0.77,
+      "fields": [
+        "any", "multiple-categorical"
+      ]
+    },
+    {
+      "name": "Packed Bubble",
+      "description": "A packed bubble chart",
+      "action": "bubble color($1) size($2) tooltip(#all) label($1) sort($2)",
+      "desirability": 0.9,
+      "fields": [
+        "categorical-many",
+        "numeric-positive"
+      ]
+    },
+    {
+      "name": "Parallel Axes",
+      "description": "A chart with axes parallel",
+      "action": "parallel y($3,$2,$1) opacity(#selection:0.4)",
+      "desirability": 0.77,
+      "fields": [
+        "any", "any", "multiple"
       ]
     }
   ]
