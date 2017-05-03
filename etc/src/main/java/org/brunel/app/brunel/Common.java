@@ -27,6 +27,8 @@ public class Common {
 
     /* Font */
     public static final Font MEDIUM = new Font("Inconsolata, Arial", Font.PLAIN, 12);
+    public static final Font MEDIUM_BOLD = new Font("Inconsolata, Arial", Font.BOLD, 12);
+    public static final Font MEDIUM_ITALIC = new Font("Inconsolata, Arial", Font.ITALIC, 12);
 
     /* Watson colors */
     public static final Color BLUE3 = new Color(0, 178, 239);

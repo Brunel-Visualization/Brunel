@@ -27,7 +27,6 @@ import org.brunel.data.Field;
 import org.brunel.match.BestMatch;
 import org.brunel.model.VisException;
 import org.brunel.model.VisItem;
-import org.brunel.util.Library;
 import org.brunel.util.LocalOutputFiles;
 import org.brunel.util.PageOutput;
 
@@ -49,289 +48,298 @@ import java.util.List;
 @SuppressWarnings("serial")
 public class BrunelPad extends JFrame implements AppEventListener, Droppable {
 
-    /* use '-v version' to use a minified online library version */
-    public static void main(String[] args) {
-        BuilderOptions options = BuilderOptions.make(args);
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {
-            // I guess we won't have anything nice
-        }
+	/* use '-v version' to use a minified online library version */
+	public static void main(String[] args) {
+		BuilderOptions options = BuilderOptions.make(args);
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception ignored) {
+			// I guess we won't have anything nice
+		}
 
-        new BrunelPad(options).start();
-    }
+		new BrunelPad(options).start();
+	}
+
+	private final Settings settings;
+	private final ActionEditorPane actionEditor;
+	private final SourcePanel sourcePanel;
+	private final LibraryPanel libraryPanel;
+	private final List<String> history = new ArrayList<>();
+	private final BuilderOptions options;
+	private Dataset base;
+	private Action action;
+	private Action transitory;
+
+	private BrunelPad(BuilderOptions options) {
+		super("BrunelPad");
+		this.options = options;
+		settings = new Settings("BrunelPad");
+		settings.persistWindowLocation(this, "main", 50, 50, 800, 800);
+		setTitle(null);
+		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+		actionEditor = new ActionEditorPane(this);
+		sourcePanel = new SourcePanel(this);
+		libraryPanel = new LibraryPanel(this);
+		try {
+			buildGUI();
+		} catch (Throwable t) {
+			t.printStackTrace();
+			System.exit(-1);
+		}
+
+		String historyStored = settings.getString("history");
+		if (historyStored != null) history.addAll(Arrays.asList(historyStored.split("\\|\\+\\|")));
+
+	}
+
+	public void handleEvent(String tag, Object source, Object item) {
+		switch (tag) {
+			case "select fields":
+				showFields((Field[]) item);
+				break;
+			case "select source":
+				useSource((Dataset) item);
+				break;
+			case "select action":
+				setAction((Action) item);
+				break;
+			case "error":
+				error((Throwable) item);
+				break;
+			case "define action":
+				setAction((String) item);
+				break;
+		}
+	}
+
+	public boolean handleFile(File file) {
+		try {
+			byte[] text = Files.readAllBytes(file.toPath());
+			return handleText(new String(text));
+		} catch (Exception ex) {
+			error(ex);
+			return false;
+		}
+	}
+
+	public boolean handleText(String text) {
+		try {
+			actionEditor.setText(action.toString());
+			setAction(actionEditor.getText());
+
+			return true;
+		} catch (Exception ex) {
+			error(ex);
+			return false;
+		}
+
+	}
+
+	private void initialize() {
+		String s = settings.getString("last-source");
+		if (s != null) {
+			URI u = URI.create(s);
+			sourcePanel.handleFile(new File(u));
+		}
+	}
+
+	public void setTitle(String title) {
+		if (title == null)
+			super.setTitle(settings.name);
+		else
+			super.setTitle(settings.name + ": " + title);
+	}
+
+	private void error(Throwable e) {
+		ExceptionDialog.showError(e, this);
+	}
+
+	private void start() {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				setVisible(true);
+				initialize();
+			}
+		});
+	}
+
+	private void addToHistory(String descr) {
+		history.remove(descr);
+		history.add(0, descr);
+		String value = historyAsString();
+
+		while (history.size() > 15 || value.length() > 8000) {
+			history.remove(history.size() - 1);
+			value = historyAsString();
+		}
+
+		settings.putString("history", value);
+	}
+
+	private String historyAsString() {
+		StringBuilder b = new StringBuilder();
+		for (String s : history) {
+			if (b.length() > 0) b.append("|+|");
+			b.append(s);
+		}
+		return b.toString();
+	}
+
+	private void buildDescription() {
+		actionEditor.getActionMap().put(actionEditor.getInputMap().get(KeyStroke.getKeyStroke("ENTER")), new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				String text = actionEditor.getText();
+				setAction(text);
+				history.add(text);
+			}
+		});
+	}
+
+	private void buildGUI() {
 
 
-    private final Settings settings;
-    private final ActionEditorPane actionEditor;
-    private final SourcePanel sourcePanel;
-    private final List<String> history = new ArrayList<>();
-    private final BuilderOptions options;
-    private Dataset base;
-    private Action action;
-    private Action transitory;
+		JPanel top = new JPanel(new BorderLayout(5,5));
+		top.add(sourcePanel, BorderLayout.CENTER);
+		top.add(libraryPanel, BorderLayout.EAST);
 
-    private BrunelPad(BuilderOptions options) {
-        super("BrunelPad");
-        this.options = options;
-        settings = new Settings("BrunelPad");
-        settings.persistWindowLocation(this, "main", 50, 50, 800, 800);
-        setTitle(null);
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        actionEditor = new ActionEditorPane(this);
-        sourcePanel = new SourcePanel(this);
-        try {
-            buildGUI();
-        } catch (Throwable t) {
-            t.printStackTrace();
-            System.exit(-1);
-        }
 
-        String historyStored = settings.getString("history");
-        if (historyStored != null) history.addAll(Arrays.asList(historyStored.split("\\|\\+\\|")));
+		GridBagConstraints cons = new GridBagConstraints();
+		cons.weightx = 1.0;
+		cons.weighty = 1.0;
+		cons.fill = GridBagConstraints.BOTH;
+		JPanel bottom = new JPanel(new GridBagLayout());
+		bottom.setMinimumSize(new Dimension(200, 50));
+		bottom.setPreferredSize(new Dimension(2000, 50));
+		bottom.add(actionEditor, cons);
+		cons.weightx = 0.0;
+		JComponent historyButton = Common.makeIconButton(Common.make("copytext"), "History");
+		historyButton.addMouseListener(new MouseAdapter() {
 
-    }
+			public void mouseClicked(MouseEvent e) {
+				JPopupMenu p = new JPopupMenu("History");
+				p.setBackground(Common.BLUE8);
+				for (final String s : history)
+					p.add(Common.makeMenuItem(s, new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							setAction(s);
+						}
+					}));
+				p.show(e.getComponent(), e.getX(), e.getY());
+			}
+		});
+		bottom.add(historyButton, cons);
 
-    public void handleEvent(String tag, Object source, Object item) {
-        switch (tag) {
-            case "select fields":
-                showFields((Field[]) item);
-                break;
-            case "select source":
-                useSource((Dataset) item);
-                break;
-            case "error":
-                error((Throwable) item);
-                break;
-            case "define action":
-                setAction((String) item);
-                break;
-        }
-    }
+		buildDescription();
+		bottom.setOpaque(false);
 
-    public boolean handleFile(File file) {
-        try {
-            byte[] text = Files.readAllBytes(file.toPath());
-            return handleText(new String(text));
-        } catch (Exception ex) {
-            error(ex);
-            return false;
-        }
-    }
+		JSplitPane content = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+		content.setDividerLocation(0.6666);
+		content.setResizeWeight(0.6666);
+		setContentPane(content);
 
-    public boolean handleText(String text) {
-        try {
-            actionEditor.setText(action.toString());
-            setAction(actionEditor.getText());
+		content.setBorder(BorderFactory.createMatteBorder(Common.BORDER, Common.BORDER,
+				Common.BORDER, Common.BORDER, Color.black));
+		content.setBackground(Color.black);
+		content.add(top);
+		content.add(bottom);
+	}
 
-            return true;
-        } catch (Exception ex) {
-            error(ex);
-            return false;
-        }
+	private void setAction(String text) {
+		try {
+			action = Action.parse(text);
+			transitory = null;
+			updateVis();
+		} catch (Throwable ex) {
+			error(ex);
+		}
 
-    }
+	}
 
-    private void initialize() {
-        String s = settings.getString("last-source");
-        if (s != null) {
-            URI u = URI.create(s);
-            sourcePanel.handleFile(new File(u));
-        }
-    }
+	private void setAction(Action a) {
+		try {
+			action = a;
+			transitory = null;
+			updateVis();
+		} catch (Throwable ex) {
+			error(ex);
+		}
 
-    public void setTitle(String title) {
-        if (title == null)
-            super.setTitle(settings.name);
-        else
-            super.setTitle(settings.name + ": " + title);
-    }
+	}
 
-    private void error(Throwable e) {
-        ExceptionDialog.showError(e, this);
-    }
+	private void showFields(Field[] fields) {
+		// Send to the library view
+		libraryPanel.setTargetFields(fields);
+	}
 
-    private void start() {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                setVisible(true);
-                initialize();
-            }
-        });
-    }
+	private void updateVis() {
+		if (base == null || action == null) return;
+		try {
+			Action a = action;
+			if (transitory != null) a = a.append(transitory);
+			VisItem item = a.apply(base);
 
-    private void addToHistory(String descr) {
-        history.remove(descr);
-        history.add(0, descr);
-        String value = historyAsString();
+			String error = item.validate();
+			if (error != null) {
+				throw VisException.makeApplying(new IllegalStateException(error), action.toString());
+			}
 
-        while (history.size() > 15 || value.length() > 8000) {
-            history.remove(history.size() - 1);
-            value = historyAsString();
-        }
+			Action action = a.simplify();
+			actionEditor.setText(action.toString());
 
-        settings.putString("history", value);
-    }
+			showVis(item, a);
 
-    private String historyAsString() {
-        StringBuilder b = new StringBuilder();
-        for (String s : history) {
-            if (b.length() > 0) b.append("|+|");
-            b.append(s);
-        }
-        return b.toString();
-    }
+			if (transitory == null) addToHistory(action.toString());
+		} catch (Throwable e) {
+			error(e);
+		}
+	}
 
-    private void buildDescription() {
-        actionEditor.getActionMap().put(actionEditor.getInputMap().get(KeyStroke.getKeyStroke("ENTER")), new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
-                String text = actionEditor.getText();
-                setAction(text);
-                history.add(text);
-            }
-        });
-    }
+	private void showVis(VisItem item, Action a) {
+		LocalOutputFiles.install();
 
-    private void buildGUI() {
+		int width = getWidth() - 30;
 
-        GridBagConstraints cons = new GridBagConstraints();
-        cons.weightx = 1.0;
-        cons.weighty = 1.0;
-        cons.fill = GridBagConstraints.BOTH;
-        JPanel bottom = new JPanel(new GridBagLayout());
-        bottom.setMinimumSize(new Dimension(200, 50));
-        bottom.setPreferredSize(new Dimension(2000, 50));
-        bottom.add(actionEditor, cons);
-        cons.weightx = 0.0;
-        JComponent historyButton = Common.makeIconButton(Common.make("copytext"), "History");
-        historyButton.addMouseListener(new MouseAdapter() {
+		VisualizationBuilder builder = VisualizationBuilder.make(options);
+		builder.build(item, width, (int) (width / 1.618));
 
-            public void mouseClicked(MouseEvent e) {
-                JPopupMenu p = new JPopupMenu("History");
-                p.setBackground(Common.BLUE8);
-                for (final String s : history)
-                    p.add(Common.makeMenuItem(s, new ActionListener() {
-                        public void actionPerformed(ActionEvent e) {
-                            setAction(s);
-                        }
-                    }));
-                p.show(e.getComponent(), e.getX(), e.getY());
-            }
-        });
-        bottom.add(historyButton, cons);
-
-        buildDescription();
-        bottom.setOpaque(false);
-
-        JSplitPane content = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        content.setDividerLocation(0.6666);
-        content.setResizeWeight(0.6666);
-        setContentPane(content);
-
-        content.setBorder(BorderFactory.createMatteBorder(Common.BORDER, Common.BORDER,
-                Common.BORDER, Common.BORDER, Color.black));
-        content.setBackground(Color.black);
-        content.add(sourcePanel);
-        content.add(bottom);
-    }
-
-    private void setAction(String text) {
-        try {
-            action = Action.parse(text);
-            transitory = null;
-            updateVis();
-        } catch (Throwable ex) {
-            error(ex);
-        }
-
-    }
-
-    private void setAction(Action a) {
-        try {
-            action = a;
-            transitory = null;
-            updateVis();
-        } catch (Throwable ex) {
-            error(ex);
-        }
-
-    }
-
-    private void showFields(Field[] fields) {
-        Action a = Library.choose(fields);
-        setAction(a);
-
-    }
-
-    private void updateVis() {
-        if (base == null || action == null) return;
-        try {
-            Action a = action;
-            if (transitory != null) a = a.append(transitory);
-            VisItem item = a.apply(base);
-
-            String error = item.validate();
-            if (error != null) {
-                throw VisException.makeApplying(new IllegalStateException(error), action.toString());
-            }
-
-            Action action = a.simplify();
-            actionEditor.setText(action.toString());
-
-            showVis(item, a);
-
-            if (transitory == null) addToHistory(action.toString());
-        } catch (Throwable e) {
-            error(e);
-        }
-    }
-
-    private void showVis(VisItem item, Action a) {
-        LocalOutputFiles.install();
-
-        int width = getWidth() - 30;
-
-        VisualizationBuilder builder = VisualizationBuilder.make(options);
-        builder.build(item, width, (int) (width / 1.618));
-
-        Writer writer = LocalOutputFiles.makeFileWriter("BrunelPad/index.html");
-        new PageOutput(builder, writer)
-                .pageTitle("Brunel: " + shortForm(a))
-                .addTitles("<h2 style='text-align:center'>" + a + "</h2>")
+		Writer writer = LocalOutputFiles.makeFileWriter("BrunelPad/index.html");
+		new PageOutput(builder, writer)
+				.pageTitle("Brunel: " + shortForm(a))
+				.addTitles("<h2 style='text-align:center'>" + a + "</h2>")
 //                .addExecutionScript(handleSelection())
-                .write();
+				.write();
 
-        try {
+		try {
 //            writer.append("<p>\n<button onclick='var c = v.charts[0]; c.zoom(c.zoom().translate(100, 0), 1000)'>RIGHT</button>\n");
 //            writer.append("<button onclick='v.charts[0].zoom(d3.zoomIdentity, 1000)'>HOME</button>\n</p>\n");
-            writer.close();
-        } catch (IOException ignored) {
-        }
-        LocalOutputFiles.showInBrowser("BrunelPad/index.html");
-    }
+			writer.close();
+		} catch (IOException ignored) {
+		}
+		LocalOutputFiles.showInBrowser("BrunelPad/index.html");
+	}
 
-    private String shortForm(Action a) {
-        String all = a.toString();
-        if (all.length() < 46) return all;
-        StringBuilder b = new StringBuilder();
-        for (ActionStep step : a.steps) {
-            b.append(step.toString()).append(" ");
-            if (b.length() > 40) break;
-        }
-        b.append("...");
-        return b.toString();
-    }
+	private String shortForm(Action a) {
+		String all = a.toString();
+		if (all.length() < 46) return all;
+		StringBuilder b = new StringBuilder();
+		for (ActionStep step : a.steps) {
+			b.append(step.toString()).append(" ");
+			if (b.length() > 40) break;
+		}
+		b.append("...");
+		return b.toString();
+	}
 
-    private void useSource(Dataset source) {
-        if (action != null && base != null)
-            action = BestMatch.match(base, source, action);
-        transitory = null;
-        base = source;
-        sourcePanel.setSource(source);
-        if (source.strProperty("uri") != null) settings.putString("last-source", source.strProperty("uri"));
-        setTitle(source.name());
-        updateVis();
-    }
+	private void useSource(Dataset source) {
+		if (action != null && base != null)
+			action = BestMatch.match(base, source, action);
+		transitory = null;
+		base = source;
+		sourcePanel.setSource(source);
+		if (source.strProperty("uri") != null) settings.putString("last-source", source.strProperty("uri"));
+		setTitle(source.name());
+		updateVis();
+	}
 
 //    public String[] handleSelection() {
 //        return new String[] {

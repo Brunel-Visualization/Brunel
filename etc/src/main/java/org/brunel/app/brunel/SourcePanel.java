@@ -48,7 +48,7 @@ import java.util.TooManyListenersException;
             boolean ignoreEvent;
 
             public void valueChanged(ListSelectionEvent e) {
-                if (ignoreEvent) return;
+                if (ignoreEvent || e.getValueIsAdjusting()) return;
                 Point p = MouseInfo.getPointerInfo().getLocation();
                 SwingUtilities.convertPointFromScreen(p, list);
                 if (!list.contains(p)) {

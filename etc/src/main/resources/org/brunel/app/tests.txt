@@ -1,15 +1,14 @@
-#### Action library to be used
+#### Action library to be used, old style format
 
 clusterBarCount :: bar x($1,$2) y(#count) color($2)                         :: categorical, categorical
-clusterLine     :: line x($1,$2) y($3) color($1) smooth($3)                 :: categorical, field, field
-colorScatter	:: x($1) y($2) color($3)                                    :: field, field, categorical
-line	        :: line x($1) y($2) color($3)                               :: field, field, categorical
+clusterLine     :: line x($1,$2) y($3) color($1) smooth($3)                 :: categorical, any, any
+colorScatter	:: x($1) y($2) color($3)                                    :: any, any, categorical
+line	        :: line x($1) y($2) color($3)                               :: any, any, categorical
 cloud           :: x($1) cloud size($2) color($2) sort($2) mean($2)         :: categorical, numeric
-multiline       :: line x($1) y($2) color(#series) mean($2)                 :: field, multiple
-tree            :: tree x($2) size($1:200%) color($1) sort($2)              :: numeric, multiCategorical
-treemap         :: treemap x($2) size(#count) label($1) list($1:50)         :: field, categorical
-sizedBar	    :: bar x($1) y(#count) size($2:100) color($2:blue) mean($2) sort(#count)
-                :: categorical, field
+multiline       :: line x($1) y($2) color(#series) mean($2)                 :: any, multiple
+tree            :: tree x($2) size($1:200%) color($1) sort($2)              :: numeric, multicategorical
+treemap         :: treemap x($2) size(#count) label($1) list($1:50)         :: any, categorical
+sizedBar	    :: bar x($1) y(#count) size($2:100) color($2:blue) mean($2) sort(#count)    :: categorical, any
 
 #### The Tests
 

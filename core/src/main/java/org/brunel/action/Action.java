@@ -54,7 +54,7 @@ public class Action implements Comparable<Action> {
     public final ActionStep[] steps;
 
     /* Basic Constructor */
-    Action(ActionStep... actions) {
+    protected Action(ActionStep... actions) {
         this.steps = actions;
     }
 

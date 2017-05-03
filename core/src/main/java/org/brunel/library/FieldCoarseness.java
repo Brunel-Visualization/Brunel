@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.brunel.util;
+package org.brunel.library;
 
 import org.brunel.data.Field;
 
