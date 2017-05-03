@@ -162,8 +162,10 @@ public abstract class D3Diagram {
 
 		String def = details.overallSize.definition();
 		String newDef = def.replace("geom.default_point_size", "(" + r + ")");
-		if (def.equals(newDef)) {
-			// Replacement failed -- just use the new def
+
+		// Replacement failed -- just use the new def
+		// Fails if nothing changed OR we have a  special definition using the equals sign
+		if (r.contains("=") || def.equals(newDef)) {
 			newDef = r;
 		}
 

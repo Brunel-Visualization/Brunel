@@ -290,7 +290,12 @@ public class ScaleBuilder {
 					? "sqrt" : "linear";
 			addSizeScale("size", size[0], vis, defaultTransform);
 			Field field = fieldById(size[0], vis);
-			out.onNewLine().add("var size = function(d) { return scale_size(" + BuildUtil.writeCall(field, dataInside) + ") }").endStatement();
+
+			// Trees built without edges have their sizes calculated as the "value"
+			String value = vis.tDiagram == Diagram.tree && !structure.isSourceForDependent()
+					? "d.value" : BuildUtil.writeCall(field, dataInside);
+
+			out.onNewLine().add("var size = function(d) { return scale_size(" + value + ") }").endStatement();
 		} else if (size.length > 1) {
 			// We have two field and util them for height and width
 			addSizeScale("width", size[0], vis, "linear");
