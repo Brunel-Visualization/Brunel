@@ -3,6 +3,17 @@
 ### Tooltips on Cloud and Text charts
 Now supported.
 
+### Library functionality expanded
+The Java `Library` class is intended to provide a chart-type style interface to Brunel; it has a
+configurable set of descriptions and allows actions to display Fields to be recommend using a 
+very simple recommendation engine based on properties of the fields. For this release we improved
+the API:
+
+ * configurable descriptions format changed to JSON making it much clearer
+ * added support for new chart styles and features in the default Library
+ * now returns scored, named library actions as an array for a richer UI interface
+ * updated the `BrunelPad` sample application to use the new system.
+
 # 2.3 Release Notes
 
 ## Data Pipeline Change
