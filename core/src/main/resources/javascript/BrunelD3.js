@@ -1201,19 +1201,12 @@ var BrunelD3 = (function () {
      * @param labelingArray array of labeling definitions to use
      */
     function applyLabeling(element, group, time, geom, labelingArray) {
-        function makeHits() {                                               // Keeps track of hit items
+
+        function makeHits() {                        // Keeps track of hit items
             return {D: labelingArray[0].granularity}
         }
 
-        var hits = makeHits();                               // Hit items for one pass
-
-        element.each(function (d, i) {                                      // index in order
-            d._ix = i
-        });
-        var sorted = element.sort(function (a, b) {                         // sorted by reverse order
-            return b._ix - a._ix
-        });
-        element.order();                                                    // restore element order
+        var hits = makeHits();                          // Hit items for one pass
 
         function doLabeling(item) {
             labelingArray.forEach(function (labeling) {
@@ -1221,8 +1214,9 @@ var BrunelD3 = (function () {
             });
         }
 
+
         if (time > 0)
-            return sorted.transition("labels").duration(time).tween('func', function (d, i) {
+            return element.transition("labels").duration(time).tween('func', function (d, i) {
                 var item = this;
                 return function () {
                     if (!i) hits = makeHits();                              // Every time we start a pass
@@ -1230,7 +1224,7 @@ var BrunelD3 = (function () {
                 }
             });
         else
-            return sorted.each(
+            return element.each(
                 function () {
                     doLabeling(this);
                 }
@@ -1523,7 +1517,7 @@ var BrunelD3 = (function () {
         var r = Math.max(b.width, b.height) / 2;    // good for circles, symbols, rects
 
         if (svgItem.tagName == 'path' || svgItem.tagName == 'poly')
-            r  = Math.min(20, r/3);                 // Arbitrary shape, so inset a lot
+            r = Math.min(20, r / 3);                 // Arbitrary shape, so inset a lot
 
         return {
             x: b.x + b.width / 2,                         // The shape center
