@@ -32,17 +32,20 @@ public class Domain {
 
 	/**
 	 * Add the field into the domain
+	 *
 	 * @param f field to add
 	 * @return this
 	 */
 	public Domain include(Field f) {
-		raw.add(DomainSpan.make(f, raw.size(), preferContinuous));    // Add it in (indexing to preserve sort order)
+		DomainSpan span = DomainSpan.make(f, raw.size(), preferContinuous);
+		if (span != null) raw.add(span);                              // Add it in
 		merged = null;                                                // invalidate merging
 		return this;
 	}
 
 	/**
 	 * Get the space on the [0,1] unit that we should allocate to a given span
+	 *
 	 * @param index the span to get the range for
 	 * @return span extent
 	 */
@@ -53,6 +56,7 @@ public class Domain {
 
 	/**
 	 * Count the built spans
+	 *
 	 * @return spans
 	 */
 	public int spanCount() {
@@ -63,6 +67,7 @@ public class Domain {
 	 * Get the span at the given position.
 	 * This is called after the raw spans have possibly been merged, so it is possible (indeed, likely)
 	 * that there are fewer resutl spans than input ones
+	 *
 	 * @param index position to get span for
 	 * @return span
 	 */

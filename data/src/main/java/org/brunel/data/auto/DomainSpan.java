@@ -18,11 +18,13 @@ public class DomainSpan implements Comparable<DomainSpan> {
 	 * Build a domain from a numeric range
 	 *
 	 * @param f the field to use
-	 * @return (numeric) domain span
+	 * @return Domain span, or null if the domain is undefined
 	 */
 	static DomainSpan make(Field f, int index, boolean preferContinuous) {
-		return new DomainSpan(index, preferContinuous, f.preferCategorical() ? f.categories() : null,
-				NumericExtentDetail.makeForField(f));
+		Object[] categories = f.preferCategorical() ? f.categories() : null;
+		NumericExtentDetail numeric = NumericExtentDetail.makeForField(f);
+		return numeric == null && categories == null ? null :
+				new DomainSpan(index, preferContinuous, categories, numeric);
 	}
 
 	private final int index;                    // To preserve the order we added them in
@@ -51,7 +53,11 @@ public class DomainSpan implements Comparable<DomainSpan> {
 		if (d != 0) return d;
 
 		// Order by low value, or nothing for non-numeric
-		if (categories == null) return Data.compare(numeric.low, o.numeric.low);
+		try {
+			if (categories == null) return Data.compare(numeric.low, o.numeric.low);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return index - o.index;
 	}
 
@@ -61,6 +67,7 @@ public class DomainSpan implements Comparable<DomainSpan> {
 
 	/**
 	 * The span is numeric if it cannot be categorical, or if it can be both and prefers continuous
+	 *
 	 * @return how to treat the span
 	 */
 	public boolean isNumeric() {
