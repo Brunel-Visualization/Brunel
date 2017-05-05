@@ -799,7 +799,7 @@ var BrunelD3 = (function () {
         // It is also the distance between curves of the spiral.
         // dx and dy are delta, but spread out to fit the space better for non-square results
         // When we start searching out from the center in the spiral, we look for anything larger than us
-        // and start outside that. 'precision' reduces the concept of 'larger' so we search less space0
+        // and start outside that. 'precision' reduces the concept of 'larger' so we search less space
 
         var delta = 1;
         var precision = Math.pow(0.8, Math.sqrt(data.rowCount() / 200));
@@ -824,64 +824,76 @@ var BrunelD3 = (function () {
             for (i = 0; i < txt.length; i++) {
                 c = txt.charAt(i);
                 if ("bdfhiklt1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(c) >= 0) type |= 1;
-                else if ("gjpqy,".indexOf(c) >= 0) type |= 2;
-                else if ("acemnorsuvwxz.-".indexOf(c) < 0) return 3;
+                else if ("gjpqy".indexOf(c) >= 0) type |= 2;
+                else if (" \nacemnorsuvwxz.,-".indexOf(c) < 0) return 3;
             }
             return type;
         }
 
-        function prepare(d) {
-            var d3this = d3.select(this);
-            d3this.style('alignment-baseline', 'auto');
 
-            if (this._originalSize) {
+        // Prepare the item, setting necessary information
+        function prepItem(x) {
+            var d3this = d3.select(x);
+
+            if (x._originalSize) {
                 // Restore the original size
-                d3this.style('font-size', this._originalSize);
+                d3this.style('font-size', x._originalSize);
             } else {
+                // Set baseline style
+                d3this.style('alignment-baseline', 'auto');
+
                 // Ensure we have a size >= 1px and store it so that if we are called again
                 // we use the original size for calculations
-                var fontSize = getComputedStyle(this).fontSize;
+                var fontSize = getComputedStyle(x).fontSize;
                 if (fontSize.startsWith("0.")) {
                     fontSize = "1.0";
                     d3this.style('font-size', fontSize);
                 }
-                this._originalSize = d3this.style('font-size');
+                x._originalSize = d3this.style('font-size');             // Store the original font size
+                x._ascDesc = ascender(x.textContent);                 // Store info on ascender / descender
             }
-            var r = getBBox(this);
-            if (!r) return;
+        }
 
-            var asc = r.height + r.y, desc = asc * 0.9,
-                ht = r.height, wd = r.width + 2, oy = 0,
-                ascDesc = ascender(this.textContent);
+        function buildItem(x) {
+            var r = getBBox(x);
+            if (r) {
+                var asc = r.height + r.y, desc = asc * 0.9,
+                    ht = r.height, wd = r.width + 2, oy = 0;
 
-            if (ascDesc == 0) {
-                // Neither ascenders nor descenders
-                ht -= (asc + desc);
-            } else if (ascDesc == 1) {
-                // Only ascenders
-                ht -= desc;
-                oy += desc / 2;
-            } else if (ascDesc == 2) {
-                // Only descenders
-                ht -= asc;
-                oy -= asc / 2;
+                if (x._ascDesc == 0) {
+                    // Neither ascenders nor descenders
+                    ht -= (asc + desc);
+                } else if (x._ascDesc == 1) {
+                    // Only ascenders
+                    ht -= desc;
+                    oy += desc / 2;
+                } else if (x._ascDesc == 2) {
+                    // Only descenders
+                    ht -= asc;
+                    oy -= asc / 2;
+                }
+
+                var item = {width: wd, height: ht, ox: 0, oy: oy},                // Our trial item (with slight x padding)
+                    index = items.length,
+                    rotated = (index % 5) % 2 == 1;
+                if (rotated) item = {height: item.width, width: item.height, oy: 0, ox: oy, _rotated: true};
+                item._txt = x;
+                items[index] = item;
+
+                totalArea += item.height * item.width;
             }
-
-            var item = {width: wd, height: ht, ox: 0, oy: oy},                // Our trial item (with slight x padding)
-                index = items.length,
-                rotated = (index % 5) % 2 == 1;
-            if (rotated) item = {height: item.width, width: item.height, oy: 0, ox: oy, _rotated: true};
-            item._txt = this;
-            items[index] = item;
+        }
 
 
-            totalArea += item.height * item.width;
+        function prepare() {
+            prepItem(this);
+            buildItem(this);
         }
 
         function build() {
 
             var k, item, scaling = Math.sqrt(ext[0] * ext[1] / totalArea / 2), ii = items;
-                parent = items[0]._txt.parentNode;
+            parent = items[0]._txt.parentNode;
 
             // remove old scaling
             parent.removeAttribute('transform');
@@ -895,7 +907,7 @@ var BrunelD3 = (function () {
                     post = size.substring(size.length - 2),
                     value = Math.round(num * scaling) + post;
                 sel.style('font-size', value);
-                prepare.call(ii[k]._txt);
+                buildItem(ii[k]._txt);
             }
 
             for (k = 0; k < items.length; k++) {
@@ -927,8 +939,8 @@ var BrunelD3 = (function () {
                     theta += delta / Math.max(delta, Math.sqrt(item.x * item.x + item.y * item.y));
                 }
 
-                //// Debugging text box surrounding the text
-                //d3.select(item._txt.parentNode).append('rect')
+                // // Debugging text box surrounding the text
+                // d3.select(item._txt.parentNode).append('rect')
                 //    .attr('x', item.x - item.width / 2).attr('y', item.y - item.height / 2).attr('width', item.width).attr('height', item.height)
                 //    .style('fill', 'red').style('fill-opacity', '0.2').style('stroke', 'red').style('stroke-width', '0.5px');
 

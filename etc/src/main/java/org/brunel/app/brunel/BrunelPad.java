@@ -305,9 +305,11 @@ public class BrunelPad extends JFrame implements AppEventListener, Droppable {
 		Writer writer = LocalOutputFiles.makeFileWriter("BrunelPad/index.html");
 		new PageOutput(builder, writer)
 				.pageTitle("Brunel: " + shortForm(a))
-				.addTitles("<h2 style='text-align:center'>" + a + "</h2>")
+				.addTitles("<center>", "<h2 style='text-align:center'>" + a + "</h2>",
+						"<div style='display:inline-block;border:solid 1px #888888; padding:5px;margin:5px; box-shadow: 3px 3px 3px #cccccc;'>")
 //                .addExecutionScript(handleSelection())
-				.write();
+				.write()
+				.addFooters("</div>", "</center>");
 
 		try {
 //            writer.append("<p>\n<button onclick='var c = v.charts[0]; c.zoom(c.zoom().translate(100, 0), 1000)'>RIGHT</button>\n");

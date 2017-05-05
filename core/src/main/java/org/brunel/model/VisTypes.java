@@ -43,6 +43,8 @@ public class VisTypes {
 		bubble(Element.point, true), chord(Element.edge, false), cloud(Element.text, false), tree(Element.point, true),
 		treemap(Element.bar, true), network(Element.point, false), map(Element.polygon, false),
 		parallel(Element.path, false), table(Element.point, false), gridded(Element.point, true),
+		pack(Element.point, true),
+
 		dependentEdge(Element.edge, false);
 
 		public final Element defaultElement;
