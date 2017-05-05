@@ -359,7 +359,7 @@ public class Data {
         for (int i = 0; i < n; i++) {
             char c = s.charAt(i);
             if (c == '\n') text += "\\n";
-            if (c == '\r') text += " ";
+            else if (c == '\r') text += " ";
             else if (c == '\t') text += "\\t";
             else if (c == '\\') text += "\\\\";
             else if (c == quoteChar) text += "\\" + c;

@@ -16,6 +16,7 @@
 
 package org.brunel.build.diagrams;
 
+import org.brunel.action.Param;
 import org.brunel.build.LabelBuilder;
 import org.brunel.build.element.ElementBuilder;
 import org.brunel.build.element.ElementDetails;
@@ -25,13 +26,23 @@ import org.brunel.build.util.ScriptWriter;
 
 class Cloud extends D3Diagram {
 
+	private final boolean rectangular;
+
 	public Cloud(ElementStructure vis) {
 		super(vis);
+		this.rectangular = hasParam("rectangular");
+	}
+
+	private boolean hasParam(String s) {
+		for (Param parameter : vis.tDiagramParameters)
+			if (parameter.asString().equals(s)) return true;
+		return false;
 	}
 
 	public void writeDataStructures(ScriptWriter out) {
 		out.comment("Build the cloud layout");
-		out.add("var cloud = BrunelD3.cloudLayout(processed, [geom.inner_width, geom.inner_height], zoomNode)").endStatement();
+		String rectParam = rectangular ? ", true" : "";
+		out.add("var cloud = BrunelD3.cloudLayout(processed, [geom.inner_width, geom.inner_height]" + rectParam + ")").endStatement();
 		out.add("function keyFunction(d) { return d.key }").endStatement();
 	}
 

@@ -794,7 +794,7 @@ var BrunelD3 = (function () {
 
 
     // Cloud layout -- pass in the dataset, the extent as [width, height]
-    function cloud(data, ext) {
+    function cloud(data, ext, rectangular) {
         // Delta is the distance between locations as we step along the spiral to place items
         // It is also the distance between curves of the spiral.
         // dx and dy are delta, but spread out to fit the space better for non-square results
@@ -874,14 +874,28 @@ var BrunelD3 = (function () {
                 }
 
                 var item = {width: wd, height: ht, ox: 0, oy: oy},                // Our trial item (with slight x padding)
-                    index = items.length,
-                    rotated = (index % 5) % 2 == 1;
-                if (rotated) item = {height: item.width, width: item.height, oy: 0, ox: oy, _rotated: true};
+                    index = items.length;
                 item._txt = x;
                 items[index] = item;
 
                 totalArea += item.height * item.width;
             }
+        }
+
+        function spinItems() {
+            var i, t, o, ordered = items.slice();
+            ordered.sort(function (a, b) {
+                return a.width / a.height - b.width / b.height
+            });
+            for (i = 0; i < ordered.length / 3; i++) {
+                o = ordered[i];
+                t = o.height;
+                o.height = o.width;
+                o.width = t;
+                o._rotated = true;
+            }
+
+
         }
 
 
@@ -910,6 +924,8 @@ var BrunelD3 = (function () {
                 buildItem(ii[k]._txt);
             }
 
+            spinItems();
+
             for (k = 0; k < items.length; k++) {
                 item = items[k];
                 var i, hit = true, theta = 0;                                      // Start at center and ensure we loop
@@ -925,8 +941,26 @@ var BrunelD3 = (function () {
 
                 while (hit) {
                     // Set trial center location
-                    item.x = Math.cos(theta) * theta * dx;
-                    item.y = Math.sin(theta) * theta * dy;
+                    var cos = Math.cos(theta);
+                    var sin = Math.sin(theta);
+
+                    // Oval layout
+                    item.x = cos * theta * dx;
+                    item.y = sin * theta * dy;
+
+
+                    if (rectangular) {
+                        if (Math.abs(cos) > Math.abs(sin)) {
+                            // On the left or right sides of the box
+                            item.x = cos > 0 ? theta * dx : -theta * dx;
+                            item.y *= Math.SQRT2;
+                        } else {
+                            // On the top or bottom
+                            item.y = sin > 0 ? theta * dy : -theta * dy;
+                            item.x *= Math.SQRT2;
+                        }
+                    }
+
                     item.theta = theta;
                     hit = false;
                     for (i = k - 1; i >= 0; i--)

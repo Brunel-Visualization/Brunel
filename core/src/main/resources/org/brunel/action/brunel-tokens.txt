@@ -18,8 +18,7 @@ polygon element
 ## Diagrams
 bubble diagram - prune
 chord diagram
-cloud diagram
-pack diagram
+cloud diagram - rectangular
 gridded diagram - rows columns aspect
 table diagram
 parallel diagram - NUMBER

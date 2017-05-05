@@ -28,8 +28,8 @@ line whiskey Rating Age Category / transpose        :: pass     :: Note: transpo
 line cpi Date ALL 'overall' / transpose             :: pass     :: Note: transposed
 
 cloud whiskey category rating / style("font-family:Impact, Charcoal, sans-serif")               :: pass
-cloud whiskey brand rating                          :: pass
-cloud whiskey name rating                           :: pass     :: Slow, but should not feel like it has hanged
+cloud whiskey brand rating   / cloud(rectangular)     :: pass     :: Rectangular layout
+cloud whiskey name rating  :: pass
 cloud baseball age Salary                           :: pass
 
 sizedBar baseball age salary  / interaction(panzoom:x)              :: pass     :: Can pan/zoom on x only
