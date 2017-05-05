@@ -830,7 +830,7 @@ var BrunelD3 = (function () {
             return type;
         }
 
-        function prepare(d, index) {
+        function prepare(d) {
             var d3this = d3.select(this);
             d3this.style('alignment-baseline', 'auto');
 
@@ -867,8 +867,9 @@ var BrunelD3 = (function () {
                 oy -= asc / 2;
             }
 
-            var item = {width: wd, height: ht, ox: 0, oy: oy};                // Our trial item (with slight x padding)
-            var rotated = (index % 5) % 2 == 1;
+            var item = {width: wd, height: ht, ox: 0, oy: oy},                // Our trial item (with slight x padding)
+                index = items.length,
+                rotated = (index % 5) % 2 == 1;
             if (rotated) item = {height: item.width, width: item.height, oy: 0, ox: oy, _rotated: true};
             item._txt = this;
             items[index] = item;
@@ -879,22 +880,22 @@ var BrunelD3 = (function () {
 
         function build() {
 
-            var k, item, scaling = Math.sqrt(ext[0] * ext[1] / totalArea / 2),
+            var k, item, scaling = Math.sqrt(ext[0] * ext[1] / totalArea / 2), ii = items;
                 parent = items[0]._txt.parentNode;
 
             // remove old scaling
             parent.removeAttribute('transform');
 
-            // Resize everything
-            for (k = 0; k < items.length; k++) {
-                item = items[k];
-                var sel = d3.select(item._txt);
-                var size = sel.style('font-size');
-                var num = size.substring(0, size.length - 2);
-                var post = size.substring(size.length - 2);
-                var value = Math.round(num * scaling) + post;
+            // Resize everything, rebuilding items;
+            items = [];
+            for (k = 0; k < ii.length; k++) {
+                var sel = d3.select(ii[k]._txt),
+                    size = sel.style('font-size'),
+                    num = size.substring(0, size.length - 2),
+                    post = size.substring(size.length - 2),
+                    value = Math.round(num * scaling) + post;
                 sel.style('font-size', value);
-                prepare.call(item._txt, null, k);
+                prepare.call(ii[k]._txt);
             }
 
             for (k = 0; k < items.length; k++) {
