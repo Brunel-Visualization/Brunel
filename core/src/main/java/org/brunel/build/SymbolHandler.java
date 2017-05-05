@@ -145,6 +145,7 @@ public class SymbolHandler {
 	 */
 	public String[] getSymbolIDs(ElementStructure element, String[] requested) {
 		URI uri = getSymbolURI(element);                                // The URI for this element
+		if (uri == null) uri = BASIC_SYMBOLS_URI;						// FOr anything odd, treat as basic symbol
 		Map<String, Element> elements = getSymbolDefinitions(uri);      // The symbols for this uri
 
 		if (requested != null && requested.length > 0) {
