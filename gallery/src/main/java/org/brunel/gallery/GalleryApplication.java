@@ -40,7 +40,7 @@ import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.io.CSV;
-import org.brunel.util.Library;
+import org.brunel.library.Library;
 
 import com.ibm.json.java.JSONObject;
 
@@ -149,7 +149,7 @@ public class GalleryApplication extends Application {
 		JSONObject results = new JSONObject();
 		if (d != null) {
 			for (Field f : d.fields) {
-				if (!f.isSynthetic()) results.put(f.label, Library.choose(f).toString());
+				if (!f.isSynthetic()) results.put(f.label, Library.standard().chooseAction(f)[0].toString());
 			}			
 		}
 		return results;
