@@ -118,4 +118,14 @@ public class TestFilter {
         assertEquals("A|B|C|D|#count|#row -- b|x|2|3|1|2 -- c|y|1|2|1|3", CannedData.dumpData(a));
     }
 
+
+    @Test
+    public void testFilterWithMissing() {
+        Dataset a = simple.filter("B is y");
+        assertEquals("A|B|C|D|#count|#row -- c|y|1|2|1|3", CannedData.dumpData(a));
+
+        a = simple.filter("B is y || missing");
+        assertEquals("A|B|C|D|#count|#row -- c|y|1|2|1|3 -- c|?|2|1|1|4", CannedData.dumpData(a));
+    }
+
 }

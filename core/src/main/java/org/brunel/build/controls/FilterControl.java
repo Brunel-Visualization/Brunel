@@ -36,13 +36,22 @@ public class FilterControl {
 	/**
 	 * Given a field, make the information for a valid filter for it
 	 *
-	 * @param data     base data to filter
-	 * @param fieldID  identifier of the field to filter using
-	 * @param modifier the modifier Param for the filter field which is expected to contain default values.
+	 * @param data      base data to filter
+	 * @param parameter contains the field and modifiers on how to use it
 	 * @return built Filter description
 	 */
-	public static FilterControl makeForFilterField(Dataset data, int datasetIndex, String fieldID, Param modifier) {
-		Field field = data.field(fieldID);
+	public static FilterControl makeForFilterField(Dataset data, int datasetIndex, Param parameter) {
+		Field field = data.field(parameter.asField(data));        // The field to use
+		Param modifier = null;                                    // Defines starting values
+		boolean keepMissing = false;                            // If true, include missing values
+
+		for (Param p : parameter.modifiers()) {
+			if (p.type() == Type.option && (p.toString().equals("keep") || p.toString().equals("keepmissing")))
+				keepMissing = true;
+			else
+				modifier = p;
+		}
+
 		if (field.preferCategorical()) {
 			String[] selectedCategories = null;
 
@@ -58,7 +67,7 @@ public class FilterControl {
 
 				}
 			}
-			return new FilterControl(datasetIndex, fieldID, field.label, field.categories(), null, null, null, null, selectedCategories, false, null, null);
+			return new FilterControl(datasetIndex, field.name, field.label, keepMissing, field.categories(), null, null, null, null, selectedCategories, false, null, null);
 		} else {
 			Double low = null;
 			Double high = null;
@@ -76,7 +85,7 @@ public class FilterControl {
 
 			}
 
-			return new FilterControl(datasetIndex, fieldID, field.label, null, field.min(), field.max(), low, high, null, false, null, null);
+			return new FilterControl(datasetIndex, field.name, field.label, keepMissing, null, field.min(), field.max(), low, high, null, false, null, null);
 
 		}
 
@@ -103,7 +112,7 @@ public class FilterControl {
 		}
 
 		if (fieldId == null) return null;
-		return new FilterControl(datasetIndex, fieldId, field.label, null, field.min(), field.max(), null, null, null, true, animateSpeed, animateFrames);
+		return new FilterControl(datasetIndex, fieldId, field.label, false, null, field.min(), field.max(), null, null, null, true, animateSpeed, animateFrames);
 
 	}
 
@@ -111,31 +120,28 @@ public class FilterControl {
 		JsonObject jobj = new JsonObject();
 
 		for (FilterControl f : filterControls) {
+			JsonObject aFilter = new JsonObject();
 			if (f.categories != null) {
-				JsonObject aFilter = new JsonObject();
 				aFilter.addProperty("filter_type", "category");
-				aFilter.addProperty("datasetIndex", f.datasetIndex);
 				JsonArray jarray = new JsonArray();
 				Object[] cats = f.selectedCategories != null ? f.selectedCategories : f.categories;
 				for (Object o : cats) {
 					jarray.add(new JsonPrimitive(o.toString()));
 				}
 				aFilter.add("filter", jarray);
-				jobj.add(f.id, aFilter);
-
 			} else {
-				JsonObject aFilter = new JsonObject();
 				aFilter.addProperty("filter_type", "range");
-				aFilter.addProperty("datasetIndex", f.datasetIndex);
 				JsonObject range = new JsonObject();
 				Double low = f.lowValue == null ? f.min : f.lowValue;
 				range.addProperty("min", low);
 				Double high = f.highValue == null ? f.max : f.highValue;
 				range.addProperty("max", high);
 				aFilter.add("filter", range);
-				jobj.add(f.id, aFilter);
 
 			}
+			aFilter.addProperty("datasetIndex", f.datasetIndex);
+			aFilter.addProperty("keepMissing", f.keepMissing);
+			jobj.add(f.id, aFilter);
 		}
 
 		return jobj;
@@ -144,6 +150,7 @@ public class FilterControl {
 	public final int datasetIndex;
 	public final String id;
 	public final String label;
+	public final boolean keepMissing;                        // if true, missing values are kept, rather than omitted
 	public final Object[] categories;
 	public final Double min;
 	public final Double max;
@@ -154,11 +161,12 @@ public class FilterControl {
 	public final Double animateFrames;
 	public final boolean animate;
 
-	private FilterControl(int dataIndex, String id, String label, Object[] categories, Double min, Double max,
+	private FilterControl(int dataIndex, String id, String label, boolean keepMissing, Object[] categories, Double min, Double max,
 						  Double lowValue, Double highValue, Object[] selectedCategories, boolean animate, Double animateSpeed, Double animateFrames) {
 		this.datasetIndex = dataIndex;
 		this.id = id;
 		this.label = label;
+		this.keepMissing = keepMissing;
 		this.categories = categories;
 		this.min = min;
 		this.max = max;
@@ -180,10 +188,10 @@ public class FilterControl {
 	private void substituteExactCase() {
 		if (selectedCategories != null) {
 			for (int i = 0; i < selectedCategories.length; i++) {
-				for (int j = 0; j < categories.length; j++) {
-					if (selectedCategories[i] instanceof String && categories[j] instanceof String) {
+				for (Object category : categories) {
+					if (selectedCategories[i] instanceof String && category instanceof String) {
 						String selected = (String) selectedCategories[i];
-						String main = (String) categories[j];
+						String main = (String) category;
 						if (selected.equalsIgnoreCase(main)) selectedCategories[i] = main;
 					}
 				}

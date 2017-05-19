@@ -48,7 +48,7 @@ public class Controls {
 		Dataset data = element.data.getSource();                // Original (pre-transform) data
 		int datasetIndex = element.data.intProperty("index");    // Index of the original data set within all datasets
 		for (Param f : vis.fFilter) {
-			filters.add(FilterControl.makeForFilterField(data, datasetIndex, f.asField(data), f.firstModifier()));
+			filters.add(FilterControl.makeForFilterField(data, datasetIndex, f));
 		}
 		FilterControl animationControl = FilterControl.makeForAnimation(data, datasetIndex, vis.fAnimate);
 		if (animationControl != null) filters.add(animationControl);
@@ -84,18 +84,19 @@ public class Controls {
 			Double animateFrames = filter.animateFrames;
 			boolean animate = filter.animate;
 			int datasetIndex = filter.datasetIndex;
+			boolean keepMissing = filter.keepMissing;
 
 			//Range filter
 			if (categories == null) {
 				out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_range_slider(", out.quote(options.visIdentifier), ",", datasetIndex, ",",
-						out.quote(fieldId), ",", out.quote(label), ",", low, ",", high, ",",
+						out.quote(fieldId), ",", out.quote(label), ",", keepMissing, ",", low, ",", high, ",",
 						visInstance + ".data(null,", datasetIndex, ").field(", out.quote(fieldId), "),", animate, ",", animateFrames, ",", animateSpeed, "))").endStatement();
 			}
 
 			//Category filter
 			else {
 				out.add("$(", out.quote("#" + controlId), ").append(", uiFactoryClass, ".make_category_filter(", out.quote(options.visIdentifier), ",", datasetIndex, ",",
-						out.quote(fieldId), ",", out.quote(label), ",", gson.toJson(categories), ",", gson.toJson(selectedCategories), "))").endStatement();
+						out.quote(fieldId), ",", out.quote(label), ",", keepMissing, ",", gson.toJson(categories), ",", gson.toJson(selectedCategories), "))").endStatement();
 			}
 
 		}

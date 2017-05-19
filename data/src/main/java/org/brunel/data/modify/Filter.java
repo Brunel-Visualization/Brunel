@@ -50,10 +50,10 @@ public class Filter extends DataOperation {
         if (N == 0) return base;
 
         // Parse and assemble info for the commands
-
         Field[] field = new Field[N];
         int[] type = new int[N];
         Object[][] params = new Object[N][];
+        boolean[] keepMissing = new boolean[N];
 
         for (int i = 0; i < N; i++) {
             String c = commands[i].trim();
@@ -62,6 +62,14 @@ public class Filter extends DataOperation {
             if (q < 0) q = c.length();
             field[i] = base.field(c.substring(0, p).trim());
             int t = getType(c.substring(p, q).trim());
+
+            // Detect that we want to keep missing values
+            int m = c.indexOf("|| missing");
+            if (m>0) {
+                c = c.substring(0, m);
+                keepMissing[i] = true;
+            }
+
             Object[] par = getParams(c.substring(q).trim(), field[i].preferCategorical(), field[i].isDate());
             if (t == 4 || t == -4) {
                 // Convert the parameters to objects at the requested edge points and then use "in"
@@ -73,7 +81,7 @@ public class Filter extends DataOperation {
         }
 
         // Returns null when indexing is the same as the whole data
-        int[] keep = makeRowsToKeep(field, type, params);
+        int[] keep = makeRowsToKeep(field, type, params, keepMissing);
 
         return keep == null ? base : base.retainRows(keep);
 
@@ -122,7 +130,7 @@ public class Filter extends DataOperation {
         return result;
     }
 
-    private static int[] makeRowsToKeep(Field[] field, int[] type, Object[][] params) {
+    private static int[] makeRowsToKeep(Field[] field, int[] type, Object[][] params, boolean[] keepMissing) {
         List<Integer> rows = new ArrayList<>();
         int n = field[0].rowCount();
         for (int row = 0; row < n; row++) {
@@ -130,8 +138,7 @@ public class Filter extends DataOperation {
             for (int i = 0; i < field.length; i++) {
                 Object v = field[i].value(row);
                 if (v == null) {
-                    // Missing values always fail the test, no matter what
-                    bad = true;
+                    bad = !keepMissing[i];           // Kept if so desired
                     break;
                 }
 

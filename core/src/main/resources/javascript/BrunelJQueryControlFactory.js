@@ -37,7 +37,7 @@ var BrunelJQueryControlFactory = (function () {
      * animateFrames:  The desired number of animation frames
      * animateSpeed:  The desired animation speed
      */
-    function makeRangeSlider(visid, datasetIndex, fieldid, fieldLabel, low, high, field, animate, animateFrames, animateSpeed) {
+    function makeRangeSlider(visid, datasetIndex, fieldid, fieldLabel, keepMissing, low, high, field, animate, animateFrames, animateSpeed) {
 
         if (animateSpeed == null) animateSpeed = 500;
         if (animateFrames == null) animateFrames = 4;
@@ -115,7 +115,8 @@ var BrunelJQueryControlFactory = (function () {
                     var filter = {
                         "filter": {"min": ui.values[0], "max": ui.values[1]},
                         "filter_type": "range",
-                        "datasetIndex": datasetIndex
+                        "datasetIndex": datasetIndex,
+                        "keepMissing" : keepMissing
                     };
                     $.publish('filter.' + visid, [fieldid, filter], 0.9 * animateSpeed);
                 }
@@ -188,7 +189,7 @@ var BrunelJQueryControlFactory = (function () {
      * fieldLabel:  The display value for the field
      * categories:  The set of unique categories for the field
      */
-    function makeCategoryFilter(visid, datasetIndex, fieldid, fieldLabel, categories, selectedCategories) {
+    function makeCategoryFilter(visid, datasetIndex, fieldid, fieldLabel, keepMissing, categories, selectedCategories) {
 
         var select = $('<select />', {multiple: "multiple"}).addClass("select-filter");
         var id = select.uniqueId().attr('id');
@@ -214,7 +215,8 @@ var BrunelJQueryControlFactory = (function () {
             var filter = {
                 "filter": selected,
                 "filter_type": "category",
-                "datasetIndex": datasetIndex
+                "datasetIndex": datasetIndex,
+                "keepMissing" : keepMissing
             };
             $.publish('filter.' + visid, [fieldid, filter]);
         });
@@ -253,4 +255,3 @@ var BrunelJQueryControlFactory = (function () {
     }
 
 })();
-

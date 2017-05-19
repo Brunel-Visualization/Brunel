@@ -38,11 +38,11 @@
 
 function BrunelEventHandlers (brunel) {
 
-	var brunel = brunel;			//The Brunel visualization to operate on 
+	var brunel = brunel;			//The Brunel visualization to operate on
 	var filterHandler;				//Handles all filter requests (multiple filters)
-	
+
 	/**
-	 * A simple filter handler.  
+	 * A simple filter handler.
 	 *
 	 * Example Filter event:
 	 *
@@ -55,7 +55,7 @@ function BrunelEventHandlers (brunel) {
         }
 
 	 *
-	 */	
+	 */
 	function FilterHandler(defaultFilter)   {
 
 
@@ -66,38 +66,39 @@ function BrunelEventHandlers (brunel) {
 
         	var filterStatement = "";
         	for (var field in filterState) {
-        		
+                var state = filterState[field];
+
         		//Only filter on fields known to be in the particular dataset
-        		if (data === brunel.data(null,filterState[field].datasetIndex)) {
-	        		if (filterState[field].filter_type === 'range') {
-	        			filterStatement += makeRangeFilter(field, filterState[field].filter);
+                if (data === brunel.data(null,state.datasetIndex)) {
+	        		if (state.filter_type === 'range') {
+	        			filterStatement += makeRangeFilter(field, state.filter, state.keepMissing);
 	        		}
-	        		else if (filterState[field].filter_type === 'category') {
-	        			filterStatement += makeCategoryFilter(field, filterState[field].filter);
+	        		else if (state.filter_type === 'category') {
+	        			filterStatement += makeCategoryFilter(field, state.filter, state.keepMissing);
 	        		}
 	        		filterStatement += ";";
 //	        		console.log("Appended Filter Statement for dataset (" + filterState[field].datasetIndex + "): " + filterStatement )
         		}
 
 			}
-        	       	
+
         	return filterStatement.substring(0,filterStatement.length-1);
         }
 
-        function makeRangeFilter(field, filter) {
-        	return field + " in " + filter.min + ", " + filter.max;
+        function makeRangeFilter(field, filter, keepMissing) {
+        	return field + " in " + filter.min + ", " + filter.max + (keepMissing ? " || missing" : "");
         }
 
-        function makeCategoryFilter(field, filter) {
+        function makeCategoryFilter(field, filter, keepMissing) {
         	var filterCommand = field + " is ";
         	for (var filterVal in filter) {
         		filterCommand += filter[filterVal] + ", ";
 			}
-        	return filterCommand.substring(0,filterCommand.length-1);
+        	return filterCommand.substring(0,filterCommand.length-1) + (keepMissing ? " || missing" : "");
 		}
 
 		return {
-			
+
 			//Executes a request to filter
 			filter: function (filterField, filterValue, animationSpeed) {
 				 if (animationSpeed == null) animationSpeed = 500;
@@ -106,14 +107,14 @@ function BrunelEventHandlers (brunel) {
 					 buildVisualization(animationSpeed);
 	             }
 			},
-			
+
 			//Generates a single filter statment for all filter controls
 			makeFilterStatement:  makeFilterStatement
 		}
 	}
 
 	function createFilterHandlerAndSubscribe(defaultFilter) {
-		
+
 		if (!defaultFilter) defaultFilter = {};
     	filterHandler = FilterHandler(defaultFilter);
         addDataProcess();
@@ -122,18 +123,18 @@ function BrunelEventHandlers (brunel) {
 			filterHandler.filter(a, b, c);
 		});
      }
-	
+
 	//All data pre & post processing needed should be coordinated here.
 	//Currently this is just processing the filtering
 	function addDataProcess() {
-		
+
 		brunel.dataPreProcess(function (data) {
 			return data.filter(filterHandler.makeFilterStatement(data))
 		});
 	}
-	
+
 	//Rebuild a visualization including any data processing.
-	function buildVisualization(animationSpeed) {		
+	function buildVisualization(animationSpeed) {
 		addDataProcess();
     	brunel.rebuild(animationSpeed);
 	}
