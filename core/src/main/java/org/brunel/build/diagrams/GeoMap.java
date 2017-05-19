@@ -16,13 +16,6 @@
 
 package org.brunel.build.diagrams;
 
-import static org.brunel.model.VisTypes.Element.point;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
 import org.brunel.action.Param;
 import org.brunel.build.LabelBuilder;
 import org.brunel.build.element.ElementBuilder;
@@ -37,6 +30,13 @@ import org.brunel.geom.Rect;
 import org.brunel.maps.GeoInformation;
 import org.brunel.maps.GeoMapping;
 import org.brunel.model.VisTypes.Element;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+
+import static org.brunel.model.VisTypes.Element.point;
 
 public class GeoMap extends D3Diagram {
 
@@ -100,9 +100,9 @@ public class GeoMap extends D3Diagram {
 		out.add("function projection(p) {")
 				.indentMore().indentMore().onNewLine()
 				.add("var q = base(p), t = d3.zoomTransform(zoomNode)").endStatement()
-				.add("return q ? [t.k*q[0]+t.x, t.k*q[1]+t.y] : null").endStatement()
+				.add("return q ? [t.k*q[0]+t.x, t.k*q[1]+t.y] : [-9e99,-9e99]").endStatement()
 				.indentLess().indentLess().add("}").endStatement();
-		out.add("function project_center(v) { return (v ? projection([v.c, v.d]) : null) || [-9e6, -9e6] }")
+		out.add("function project_center(v) { return v ? projection([v.c, v.d]) : [-9e99,-9e99] }")
 				.endStatement();
 
 		out.add("var path = d3.geoPath().projection(BrunelD3.geoStream(projection))").endStatement();
