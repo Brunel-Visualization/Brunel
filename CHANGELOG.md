@@ -20,6 +20,13 @@ the API:
  * now returns scored, named library actions as an array for a richer UI interface
  * updated the `BrunelPad` sample application to use the new system.
 
+### Small map improvements
+
+ * The small island of wake is no longer considered as part of North America for the purposes of
+   defining a view and projection. It's still there, but zoomed off the view.
+ * Fixed an error where, if the 'usa' projection was used with data that lay outside the USA, bad things
+   would happen. Now, those items are hidden.
+
 # 2.3 Release Notes
 
 ## Data Pipeline Change
