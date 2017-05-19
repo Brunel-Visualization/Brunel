@@ -26,6 +26,7 @@ class WinkelTripel extends Projection {
     public String d3Definition(Rect bounds) {
         Rect ext = transform(bounds);
 
+
         // Finding the center is tricky because we cannot invert the transform so we have to search for it
         // We just do a grid search; Slow, but simple. First by y (using the center as the x, then by x
         double y = 0, dy = 9e99;

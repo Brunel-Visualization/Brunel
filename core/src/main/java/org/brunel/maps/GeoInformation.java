@@ -123,18 +123,18 @@ public class GeoInformation {
 
 		this.projection = ProjectionBuilder.makeProjection(getProjectionBounds());
 	}
-	
+
 	/**
 	 * Sets the projection and bounds using the supplied rectangle.  Used for user provided maps.
-	 * 
+	 *
 	 * @param newBounds
 	 */
 	public void setProjectionBounds(Rect newBounds) {
 
-		this.projection = ProjectionBuilder.makeProjection(newBounds);		
-		List<Point> boundary = new ArrayList<Point>(Arrays.asList(newBounds.makeBoundaryPoints()));		
+		this.projection = ProjectionBuilder.makeProjection(newBounds);
+		List<Point> boundary = new ArrayList<>(Arrays.asList(newBounds.makeBoundaryPoints()));
 		this.hull = Geom.makeConvexHull(boundary);
-		
+
 	}
 
 	private boolean includesAxes(VisElement[] elements) {
@@ -155,6 +155,7 @@ public class GeoInformation {
 		Rect hawaii = new Rect(-181, -154, 18, 30);
 		Rect alaskanIslandsA = new Rect(-181, -165, 50, 55);
 		Rect alaskanIslandsB = new Rect(170, 181, 50, 55);
+		Rect wake = new Rect(166, 167, 19.25, 19.33);
 
 		Rect bounds = hull.bounds;
 
@@ -163,12 +164,12 @@ public class GeoInformation {
 		if (positionFields.yExtent != null)
 			bounds = new Rect(bounds.left, bounds.right, positionFields.yExtent[0], positionFields.yExtent[1]);
 
-		// Do the points wrap around the globe, but only because of alaskan islands?
-		if (bounds.left < -179 && bounds.right > 179) {
+		// Do the points wrap around the globe, but only because of small islands?
+		if (bounds.left < -160 && bounds.right > 160) {
 			double minX = Double.POSITIVE_INFINITY, maxX = Double.NEGATIVE_INFINITY;
 			for (Point p : hull.points) {
 				// Skip points in areas we do not want to consider for the projection
-				if (hawaii.contains(p) || alaskanIslandsA.contains(p) || alaskanIslandsB.contains(p)) continue;
+				if (hawaii.contains(p) || alaskanIslandsA.contains(p) || alaskanIslandsB.contains(p)|| wake.contains(p)) continue;
 				minX = Math.min(minX, p.x);
 				maxX = Math.max(maxX, p.x);
 			}
