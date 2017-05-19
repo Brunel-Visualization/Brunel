@@ -1,5 +1,11 @@
 # 2.4 Release Notes
 
+### "keepmissing" option on filters
+Filters can now take an additional parameter `keepmissing` that changes the default behavior for
+missing values in filters. When this parameter is specified, missing values are treated as if they
+were inside the range. Without this parameter, they are treated as lying outside the range, causing that
+row to be filtered out.
+
 ### Tooltips on Cloud and Text charts
 Now supported.
 
