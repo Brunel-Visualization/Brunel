@@ -264,19 +264,19 @@ public class ScaleBuilder {
 			addColorScale(color, vis);
 			Field field = fieldById(color, vis);
 			out.onNewLine().add("var color = function(d) { var c = " + BuildUtil.writeCall(field, dataInside)
-					+ "; return c ? scale_color(c) : null }").endStatement();
+					+ "; return c!=null ? scale_color(c) : null }").endStatement();
 		}
 		if (opacity != null) {
 			addOpacityScale(opacity, vis);
 			Field field = fieldById(opacity, vis);
 			out.onNewLine().add("var opacity = function(d) { var c = " + BuildUtil.writeCall(field, dataInside)
-					+ "; return c ? scale_opacity(c) : null }").endStatement();
+					+ "; return c!=null ? scale_opacity(c) : null }").endStatement();
 		}
 		if (symbol != null) {
 			addSymbolScale(symbol, structure);
 			Field field = fieldById(symbol, vis);
 			out.onNewLine().add("var symbolID = function(d) { var s =" + BuildUtil.writeCall(field, dataInside)
-					+ "; return s ? scale_symbol(s) : '_sym_circle' }").endStatement();
+					+ "; return s!=null ? scale_symbol(s) : '_sym_circle' }").endStatement();
 		}
 		for (int i = 0; i < css.length; i++) {
 			Param p = css[i];
@@ -295,7 +295,7 @@ public class ScaleBuilder {
 			String value = vis.tDiagram == Diagram.tree && !structure.isSourceForDependent()
 					? "d.value" : BuildUtil.writeCall(field, dataInside);
 
-			out.onNewLine().add("var size = function(d) { var s = " + value + "; return s ? scale_size(s) : null }").endStatement();
+			out.onNewLine().add("var size = function(d) { var s = " + value + "; return s!=null ? scale_size(s) : null }").endStatement();
 		} else if (size.length > 1) {
 			// We have two field and util them for height and width
 			addSizeScale("width", size[0], vis, "linear");
