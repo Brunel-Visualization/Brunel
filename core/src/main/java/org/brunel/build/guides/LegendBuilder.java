@@ -159,8 +159,10 @@ public class LegendBuilder {
 			if (aesthetic == null) continue;                            // No aesthetic means no  legend
 			if (auto && aesthetic.name.equals("#selection")) continue;  // No automatic legend for selection
 
+			if (aestheticName.equals(vis.tLegends.name())) return aesthetic;	// Specific request
+
 			// If we match other found fields and the required match, we are good. Otherwise no match possible
-			if (same(aesthetic, result) && same(aesthetic, requiredSameAs))
+			if (auto && same(aesthetic, result) && same(aesthetic, requiredSameAs))
 				result = aesthetic;
 			else
 				return null;
