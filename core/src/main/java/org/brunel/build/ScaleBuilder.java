@@ -420,7 +420,7 @@ public class ScaleBuilder {
 
 		if (field.preferCategorical()) {
 			// Each category is mapped to 1,2,3, etc.
-			int categories = makeCategoricalScale(new Field[]{field}, ScalePurpose.nominalAesthetic, false);
+			int categories = makeCategoricalScale(field.categories(), ScalePurpose.nominalAesthetic, false);
 			String[] indices = new String[categories];
 			for (int i = 0; i < indices.length; i++) indices[i] = Data.quote(cssPrefix + (i + 1));
 			out.addChained("range(" + Arrays.toString(indices) + ")");
