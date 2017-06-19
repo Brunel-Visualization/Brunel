@@ -360,11 +360,11 @@ public class ScaleBuilder {
 
 	private void addSizeScale(String name, Param p, VisElement vis, String defaultTransform) {
 
-		Object[] sizes;
+		Double[] sizes;
 		if (p.hasModifiers()) {
 			sizes = getSizes(p.modifiers()[0].asList());
 		} else {
-			sizes = new Object[]{MIN_SIZE_FACTOR, 1.0};
+			sizes = new Double[]{MIN_SIZE_FACTOR, 1.0};
 		}
 
 		Field f = fieldById(p, vis);
@@ -537,7 +537,7 @@ public class ScaleBuilder {
 		return fSize.toArray(new Param[fSize.size()]);
 	}
 
-	private Object[] getSizes(List<Param> params) {
+	public static Double[] getSizes(List<Param> params) {
 		// The parameters define the lists we want
 		List<Double> result = new ArrayList<>();
 		for (Param p : params) {
@@ -546,9 +546,9 @@ public class ScaleBuilder {
 			Double d = Data.asNumeric(s);
 			if (d != null) result.add(d / 100);
 		}
-		if (result.isEmpty()) return new Object[]{MIN_SIZE_FACTOR, 1.0};
+		if (result.isEmpty()) return new Double[]{MIN_SIZE_FACTOR, 1.0};
 		if (result.size() == 1) result.add(0, MIN_SIZE_FACTOR);
-		return result.toArray(new Object[result.size()]);
+		return result.toArray(new Double[result.size()]);
 	}
 
 	private Param getSymbol(VisElement vis) {

@@ -103,13 +103,18 @@ public class ChartStructure {
 		return makeChartID(chartIndex);
 	}
 
+	public double defaultPointSize() {
+		return Math.max(6, Math.min(location.width, location.height) / 2 * 0.035);
+	}
+
 	/**
 	 * Returns true if the diagram defines a graph layout.
 	 * tree layouts and network diagrams define graphs
+	 *
 	 * @return true or false
 	 */
 	public boolean diagramDefinesGraph() {
-		return diagram == Diagram.tree ||  diagram == Diagram.network;
+		return diagram == Diagram.tree || diagram == Diagram.network;
 	}
 
 	public Integer[] elementBuildOrder() {

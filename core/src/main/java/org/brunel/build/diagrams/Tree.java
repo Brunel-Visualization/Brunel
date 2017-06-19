@@ -16,7 +16,9 @@
 
 package org.brunel.build.diagrams;
 
+import org.brunel.action.Param;
 import org.brunel.build.LabelBuilder;
+import org.brunel.build.ScaleBuilder;
 import org.brunel.build.element.ElementBuilder;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.element.ElementRepresentation;
@@ -27,11 +29,14 @@ import org.brunel.build.util.ScriptWriter;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.style.StyleTarget;
 
+import java.util.List;
+
 class Tree extends D3Diagram {
 
 	private final Method method;                                    // How to draw it
 	private final int labelSize;                                    // Size to leave for labels
-	private int pad;                                            // Pad size
+	private final double sizeFactor;                                // Scaling for node sizes
+	private int pad;                                            	// Pad size
 	private final boolean usesSize;                                 // True is size is used
 
 	public Tree(ElementStructure structure) {
@@ -39,13 +44,25 @@ class Tree extends D3Diagram {
 		if (vis.coords == Coordinates.polar) method = Method.polar;
 		else method = Method.leftRight;
 
-		labelSize = LabelBuilder.estimateLabelLength(structure.vis.itemsLabel, structure.data) * 6;
 		usesSize = !vis.fSize.isEmpty();
+		labelSize = LabelBuilder.estimateLabelLength(structure.vis.itemsLabel, structure.data) * 6;
+		sizeFactor = getSize(vis.fSize);
 
 		StyleTarget target = StyleTarget.makeElementTarget("point", "element");
 		ModelUtil.Size size = ModelUtil.getSize(vis, target, "size");
-		pad = size == null ? 10 : (int) size.value(10) / 2 + 3;
-		if (usesSize) pad = pad * 2;
+		pad = (int) Math.ceil(size == null ? structure.chart.defaultPointSize() : size.value(10) / 2);
+		if (usesSize) pad = (int) Math.ceil(pad * sizeFactor);
+		pad += 3;			// A little extra for borders etc.
+	}
+
+	private double getSize(List<Param> fSize) {
+		// Guesses the maximum size a node might be for the size aesthetic
+		if (fSize.isEmpty()) return 1;							// No scaling
+		if (!fSize.get(0).hasModifiers()) return 1;				// range is [0,1] so max is one
+
+		// we have a defined maximum size, so return it
+		Double[] sizes = ScaleBuilder.getSizes(fSize.get(0).modifiers()[0].asList());
+		return sizes[sizes.length-1];
 	}
 
 	public void defineCoordinateFunctions(ElementDetails details, ScriptWriter out) {
@@ -76,8 +93,13 @@ class Tree extends D3Diagram {
 			out.addChained("size([2*Math.PI, geom.inner_radius-" + (pad + labelSize) + "])")
 					.addChained("separation(function(a,b) { return (a.parent == b.parent ? 1 : 2) / a.depth })");
 		} else {
+
+			// Horizontal trees need extra space for labels and potentially a large root node
+			int adjustedWidth = 2 * pad + labelSize;
+
+
 			// Trees default to top-bottom, hence the reversal of coordinates
-			out.addChained("size([geom.inner_height-" + 2 * pad + ", geom.inner_width-" + (2 * pad + labelSize) + "])");
+			out.addChained("size([geom.inner_height-" + 2 * pad + ", geom.inner_width-" + adjustedWidth + "])");
 		}
 
 		out.endStatement();
