@@ -35,7 +35,6 @@ class Tree extends D3Diagram {
 
 	private final Method method;                                    // How to draw it
 	private final int labelSize;                                    // Size to leave for labels
-	private final double sizeFactor;                                // Scaling for node sizes
 	private int pad;                                            	// Pad size
 	private final boolean usesSize;                                 // True is size is used
 
@@ -46,7 +45,7 @@ class Tree extends D3Diagram {
 
 		usesSize = !vis.fSize.isEmpty();
 		labelSize = LabelBuilder.estimateLabelLength(structure.vis.itemsLabel, structure.data) * 6;
-		sizeFactor = getSize(vis.fSize);
+		double sizeFactor = getSize(vis.fSize);
 
 		StyleTarget target = StyleTarget.makeElementTarget("point", "element");
 		ModelUtil.Size size = ModelUtil.getSize(vis, target, "size");
