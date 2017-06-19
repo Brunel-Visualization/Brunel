@@ -65,7 +65,7 @@ public abstract class ElementBuilder {
 
 		// Define line width if needed
 		if (showsStrokeSize)
-			out.addChained("style('stroke-width', size)");
+			out.addChained("style('stroke-width', function(d) { var v = size(d); return v == null ? null : v + 'px'})");
 
 		// Define symbols
 		if (showsSymbol)
