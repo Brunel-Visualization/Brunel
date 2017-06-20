@@ -360,11 +360,11 @@ public class ScaleBuilder {
 
 	private void addSizeScale(String name, Param p, VisElement vis, String defaultTransform) {
 
-		Double[] sizes;
+		Object[] sizes;
 		if (p.hasModifiers()) {
 			sizes = getSizes(p.modifiers()[0].asList());
 		} else {
-			sizes = new Double[]{MIN_SIZE_FACTOR, 1.0};
+			sizes = new Object[]{MIN_SIZE_FACTOR, 1.0};
 		}
 
 		Field f = fieldById(p, vis);
@@ -406,7 +406,7 @@ public class ScaleBuilder {
 		String cssPrefix = p.hasModifiers() ? p.firstModifier().asString() : "brunel_class_";
 
 		// Only use names if specifically requested
-		boolean useNames = p.modifiers().length > 1 && p.modifiers()[1].asString().equals("names");
+		boolean useNames = p.hasModifierOption("names");
 
 		if (useNames) {
 			// This is easy as we have no need for a scale -- we just use the raw values coming from the field
@@ -425,8 +425,12 @@ public class ScaleBuilder {
 			for (int i = 0; i < indices.length; i++) indices[i] = Data.quote(cssPrefix + (i + 1));
 			out.addChained("range(" + Arrays.toString(indices) + ")");
 		} else {
-			// Divide into two categories
-			out.add("d3.scaleQuantize().domain([" + field.min() + ", " + field.max() + "]).range(["
+			// Quantize the scale
+			List<? extends Object> divisions = p.firstListModifier();
+			if (divisions == null)
+				divisions = Arrays.asList(field.min(), (Object) field.max());
+
+			out.add("d3.scaleQuantize().domain([" + Data.join(divisions) + "]).range(["
 					+ Data.quote(cssPrefix + "1") + ", " + Data.quote(cssPrefix + "2") + "])");
 		}
 

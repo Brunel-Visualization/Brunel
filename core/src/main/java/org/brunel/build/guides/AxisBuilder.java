@@ -69,7 +69,7 @@ public class AxisBuilder {
 		// Order is T L B R
 		location.setAxisMargins(
 				vAxis.topGutter,                                // Only the vAxis needs space here
-				Math.max(vAxis.size, hAxis.leftGutter),    		// Height of vAxis, or gutter for hAxis
+				Math.max(vAxis.size, hAxis.leftGutter),            // Height of vAxis, or gutter for hAxis
 				Math.max(hAxis.size, vAxis.bottomGutter),       // Height of hAxis, or gutter for vAxis
 				hAxis.rightGutter                               // Only the hAxis needs space here
 		);
@@ -125,11 +125,6 @@ public class AxisBuilder {
 		defineAxesBuild();
 	}
 
-	private void addGrid(String scaleName, String extent, boolean isX) {
-		out.onNewLine().add("BrunelD3.makeGrid(gridGroup, " + scaleName + ", " + extent + ", " + isX + " )")
-				.endStatement();
-	}
-
 	private void addRotateTicks() {
 		out.add(".selectAll('.tick text')")
 				.addChained("attr('transform', function() {")
@@ -168,20 +163,14 @@ public class AxisBuilder {
 			out.endStatement();
 		}
 
-		// The gridlines are with an untransposed group, which makes this logic
-		// much harder -- the 'hAxis' is on the horizontal, but it could be for the
-		// 'y' scale, and the widths are transposed, so they need inverting (when
-		// we want the transposed height, we as for the width)
-
-		if (hAxis.hasGrid) {
-			if (hAxis.dimension == VisTypes.Axes.x) addGrid("scale_x", "geom.inner_height", true);
-			else addGrid("scale_y", "geom.inner_width", true);
-		}
-		if (vAxis.hasGrid) {
-			if (vAxis.dimension == VisTypes.Axes.x) addGrid("scale_x", "geom.inner_height", false);
-			else addGrid("scale_y", "geom.inner_width", false);
-		}
-
+		if (hAxis.hasGrid)
+			out.onNewLine()
+					.add("BrunelD3.makeGrid(gridGroup, " + hAxis.scaleName + ", geom.inner_rawHeight, " + true + " )")
+					.endStatement();
+		if (vAxis.hasGrid)
+			out.onNewLine()
+					.add("BrunelD3.makeGrid(gridGroup, " + vAxis.scaleName + ", geom.inner_rawWidth, " + false + " )")
+					.endStatement();
 		out.indentLess().add("}").ln();
 	}
 
@@ -202,9 +191,9 @@ public class AxisBuilder {
 			if (axis.tickCount != null) {
 				ticks = Integer.toString(axis.tickCount);
 			} else if (horizontal) {
-				ticks = "Math.min(10, Math.round(geom.inner_width / " + (1.5 * axis.maxCategoryWidth()) + "))";
+				ticks = "Math.min(10, Math.round(geom.inner_rawWidth / " + (1.5 * axis.maxCategoryWidth()) + "))";
 			} else {
-				ticks = "Math.min(10, Math.round(geom.inner_width / 20))";
+				ticks = "Math.min(10, Math.round(geom.inner_rawHeight / 20))";
 			}
 
 			out.add(basicDefinition).add("(" + axis.scaleName + ").ticks(" + ticks);

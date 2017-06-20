@@ -166,7 +166,7 @@ public class AxisDetails {
 		if (categorical) {
 			tickValues = makeSkippingTickValues(availableSpace, tickCount);
 		} else {
-			int tickHeight = fontSize * 3 / 4;
+			int tickHeight = fontSize * 4 / 5;
 			if (tickHeight * tickCount > availableSpace && this.tickCount == null) {
 				this.tickCount = (int) (availableSpace / tickHeight);
 			}
