@@ -73,7 +73,7 @@ class CoordinateElementBuilder extends ElementBuilder {
 		out.onNewLine().ln().comment("Define selection update operations on merged data")
 				.onNewLine().add("function updateState(selection) {").indentMore()
 				.onNewLine().add("selection").onNewLine();
-		writeCoordinateDefinition(details);
+		writeCoordinateDefinition(details, false);
 		writeElementAesthetics(details, true, vis, out);
 		writeDependencyHookups();
 

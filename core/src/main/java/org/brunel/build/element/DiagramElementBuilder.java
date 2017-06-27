@@ -92,7 +92,7 @@ class DiagramElementBuilder extends ElementBuilder {
 				.onNewLine().add("function updateState(selection) {").indentMore()
 				.onNewLine().add("selection").onNewLine();
 		if (diagram instanceof GeoMap) {
-			writeCoordinateDefinition(details);
+			writeCoordinateDefinition(details, false);
 			writeElementAesthetics(details, true, vis, out);
 		}
 		diagram.writeDiagramUpdate(details, out);

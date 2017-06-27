@@ -52,7 +52,7 @@ class Bubble extends D3Diagram {
 		// Classes defined for CSS
 		out.addChained("attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element " + element.name() + "') })");
 
-		ElementBuilder.definePointLikeMark(details, structure, out);
+		ElementBuilder.definePointLikeMark(details, structure, out, false);
 		ElementBuilder.writeElementAesthetics(details, true, vis, out);
 	}
 

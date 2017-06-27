@@ -132,7 +132,7 @@ class Tree extends D3Diagram {
 
 	public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
 		writeHierarchicalClass(out);
-		ElementBuilder.definePointLikeMark(details, structure, out);
+		ElementBuilder.definePointLikeMark(details, structure, out, false);
 		ElementBuilder.writeElementAesthetics(details, true, vis, out);
 
 		// If we have edges defined as an element, we use those, otherwise add the following

@@ -1101,12 +1101,16 @@ var BrunelD3 = (function () {
      * Creates a transition for a selection, if it is needed
      * @param selection the selection to base this on
      * @param time time to animate (if <=0, no animation will be done)
+     * @param endFunction a function to call on the selection after everything has been done
      * @returns the transition or simple selection
      */
-    function transition(selection, time) {
+    function transition(selection, time, endFunction) {
         if (time > 0) {
-            return selection.transition().duration(time);
+            var t = selection.transition().duration(time);
+            if (endFunction) t.on('end', endFunction);
+            return t;
         } else {
+            if (endFunction) selection.each(endFunction);
             return selection
         }
     }

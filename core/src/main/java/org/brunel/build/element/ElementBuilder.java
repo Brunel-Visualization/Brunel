@@ -25,12 +25,8 @@ public abstract class ElementBuilder {
 	public static void writeRemovalOnExit(ScriptWriter out, String selection) {
 		// This fires when items leave the system
 		// It removes the item and any associated labels
-		out.onNewLine().ln().add("BrunelD3.transition(" + selection + ".exit(), transitionMillis/3)");
-		out.addChained("style('opacity', 0.5).each( function() {")
-				.indentMore().indentMore().onNewLine()
-				.add("this.remove(); BrunelD3.removeLabels(this); ")
-				.indentLess().indentLess().onNewLine()
-				.add("})").endStatement();
+		out.onNewLine().ln().add(selection + ".exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} )")
+				.endStatement();
 	}
 
 	public static void writeElementLabelsAndTooltips(ElementDetails details, LabelBuilder labelBuilder) {
@@ -78,20 +74,30 @@ public abstract class ElementBuilder {
 		}
 	}
 
-	public static void definePointLikeMark(ElementDetails elementDef, ElementStructure structure, ScriptWriter out) {
+	/**
+	 * Create a circle or symbol shape
+	 *
+	 * @param elementDef   definition of the element to use
+	 * @param structure    the structure it lives in
+	 * @param out          output
+	 * @param initialState if true, the state before we animate to a final location
+	 */
+	public static void definePointLikeMark(ElementDetails elementDef, ElementStructure structure,
+										   ScriptWriter out, boolean initialState) {
 		if (elementDef.representation == ElementRepresentation.symbol)
-			defineSymbol(elementDef, structure, out);
+			defineSymbol(elementDef, structure, out, initialState);
 		else
-			defineCircle(elementDef, out);
+			defineCircle(elementDef, out, initialState);
 	}
 
 	/**
 	 * Define geometry for a rectangular shape
 	 *
-	 * @param details how to draw the element
-	 * @param out     where to write to
+	 * @param details      how to draw the element
+	 * @param out          where to write to
+	 * @param initialState when true, define it before a "grow" operation
 	 */
-	private static void defineRect(ElementDetails details, ScriptWriter out) {
+	private static void defineRect(ElementDetails details, ScriptWriter out, boolean initialState) {
 
 		// Rectangles must have extents > 0 to display, so we need to write that code in
 		out.addChained("each(function(d) {").indentMore().indentMore().onNewLine();
@@ -113,12 +119,19 @@ public abstract class ElementBuilder {
 		out.onNewLine().add("this.r = {x:left, y:top, w:width, h:height}").endStatement().indentLess()
 				.onNewLine().add("})").indentLess();
 
-		// Sadly, browsers are inconsistent in how they handle width. It can be considered either a style or a
-		// positional attribute, so we need to specify as both to make all browsers happy
-		out.addChained("attr('x', function(d) { return this.r.x })")
-				.addChained("attr('y', function(d) { return this.r.y })")
-				.addChained("attr('width', function(d) { return this.r.w })")
-				.addChained("attr('height', function(d) { return this.r.h })");
+		if (initialState) {
+			// We draw the bar as it is before animation
+			// From the center
+			out.addChained("attr('x', function(d) { return this.r.x })")
+					.addChained("attr('y', function(d) { return this.r.y + this.r.h/2 })")
+					.addChained("attr('width', function(d) { return this.r.w })")
+					.addChained("attr('height',0)");
+		} else {
+			out.addChained("attr('x', function(d) { return this.r.x })")
+					.addChained("attr('y', function(d) { return this.r.y })")
+					.addChained("attr('width', function(d) { return this.r.w })")
+					.addChained("attr('height', function(d) { return this.r.h })");
+		}
 	}
 
 	public static ElementBuilder make(ElementStructure structure, ScriptWriter out, ScaleBuilder scalesBuilder) {
@@ -133,16 +146,21 @@ public abstract class ElementBuilder {
 		return elementDef.x.center != null && elementDef.y.center != null;
 	}
 
-	private static void defineCircle(ElementDetails elementDef, ScriptWriter out) {
+	private static void defineCircle(ElementDetails elementDef, ScriptWriter out, boolean initialState) {
 		// If the center is not defined, this has been placed using a translation transform
 		if (centerDefined(elementDef)) {
 			out.addChained("attr('cx'," + elementDef.x.center + ")")
 					.addChained("attr('cy'," + elementDef.y.center + ")");
 		}
-		out.addChained("attr('r'," + elementDef.overallSize.halved() + ")");
+
+		// Deifne the size as zero initially and grow to the fill size
+		if (initialState)
+			out.addChained("attr('r',0)");
+		else
+			out.addChained("attr('r'," + elementDef.overallSize.halved() + ")");
 	}
 
-	private static void defineSymbol(ElementDetails elementDef, ElementStructure structure, ScriptWriter out) {
+	private static void defineSymbol(ElementDetails elementDef, ElementStructure structure, ScriptWriter out, boolean initialState) {
 		// If the center is not defined, this has been placed using a translation transform already
 		if (centerDefined(elementDef)) {
 			if (structure.vis.fSymbol.isEmpty()) {
@@ -151,7 +169,7 @@ public abstract class ElementBuilder {
 			} else {
 				out.addChained("attr('xlink:href', function(d) { return '#' + symbolID(d) })");
 			}
-			defineRect(elementDef, out);
+			defineRect(elementDef, out, initialState);
 		}
 	}
 
@@ -361,7 +379,7 @@ public abstract class ElementBuilder {
 		e.overallSize = getOverallSize(vis, e);
 	}
 
-	protected void writeCoordinateDefinition(ElementDetails details) {
+	protected void writeCoordinateDefinition(ElementDetails details, boolean initialState) {
 		if (details.requiresSplitting())
 			out.addChained("attr('d', function(d) { return d.path })");     // Split path -- get it from the split
 		else if (details.isPath()) {
@@ -371,17 +389,17 @@ public abstract class ElementBuilder {
 			else
 				out.addChained("attr('d', path)");
 		} else if (details.representation == ElementRepresentation.rect)
-			defineRect(details, out);
+			defineRect(details, out, initialState);
 		else if (details.representation == ElementRepresentation.segment) {
 			out.addChained("attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)");
 		} else if (details.representation == ElementRepresentation.text)
-			defineText(details, vis);
+			defineText(details, vis, initialState);
 		else if (details.representation == ElementRepresentation.symbol) {
-			defineSymbol(details, structure, out);
+			defineSymbol(details, structure, out, initialState);
 		} else if (details.representation == ElementRepresentation.pointLikeCircle
 				|| details.representation == ElementRepresentation.spaceFillingCircle
 				|| details.representation == ElementRepresentation.largeCircle)
-			defineCircle(details, out);
+			defineCircle(details, out, initialState);
 	}
 
 	protected void writeCoordinateFunctions(ElementDetails details) {
@@ -423,10 +441,11 @@ public abstract class ElementBuilder {
 		if (!interaction.hasElementInteraction(structure))
 			out.addChained("style('pointer-events', 'none')");
 		Accessibility.addAccessibilityLabels(structure, out, labelBuilder);
+		if (structure.diagram == null) writeCoordinateDefinition(details, true);
 		out.indentLess().onNewLine().add("}").ln();
 	}
 
-	private void defineText(ElementDetails elementDef, VisElement vis) {
+	private void defineText(ElementDetails elementDef, VisElement vis, boolean initialState) {
 		// If the center is not defined, this has been placed using a translation transform
 		if (elementDef.x.center != null) out.addChained("attr('x'," + elementDef.x.center + ")");
 		if (elementDef.y.center != null) out.addChained("attr('y'," + elementDef.y.center + ")");
