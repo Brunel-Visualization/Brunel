@@ -115,21 +115,6 @@ public class LabelBuilder {
 			out.add("BrunelD3.label(selection, labels, transitionMillis, geom, labeling)").endStatement();
 	}
 
-	/* Call to add labels for the rough centers to a grid layout */
-	public void addGridLabels() {
-
-		out.add("var gridLabelSel = diagramExtras.selectAll('text.title').data(gridLabels, function(d) { return d.label })")
-				.endStatement();
-
-		out.add("var gridLabelAdd = gridLabelSel.enter().append('text').attr('class', 'diagram gridded hierarchy title')")
-				.addChained("text(function(d) { return d.label }).attr('dy', '0.3em').style('text-anchor', 'middle')")
-				.endStatement();
-
-		out.add("BrunelD3.transition(gridLabelAdd.merge(gridLabelSel))")
-				.addChained("attr('x', function(d) { return scale_x(d.x) } ).attr('y', function(d) { return scale_y(d.y) } )")
-				.endStatement();
-	}
-
 	public void addTooltips(ElementDetails details) {
 		if (!structure.needsTooltips()) return;
 		out.onNewLine().ln();
