@@ -95,7 +95,7 @@ task brunelJavadoc(type: Javadoc) {
     options.encoding = "UTF-8"
 }
 
-task brunelJS(type: Copy, dependsOn: [project(':core').build, project(':data').build]) {
+task brunelJS(type: Copy, dependsOn: [project(':core').build, project(':data').build, ':data:doTranslate']) {
     from webFiles
     exclude '*Test*'
     into 'out/javascript'
@@ -114,7 +114,7 @@ task brunelGeoFiles(type: Copy) {
 }
 
 
-task makeMinified(type: JavaExec) {
+task makeMinified(type: JavaExec, dependsOn: [project(':core').build, ':data:doTranslate', brunelJS, brunelGeoFiles]) {
     print new File(".").absolutePath
     classpath configurations.minification
     main = 'com.google.javascript.jscomp.CommandLineRunner'
