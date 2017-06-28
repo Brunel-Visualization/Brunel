@@ -6,6 +6,7 @@
       "name": "Bar / Histogram",
       "description": "A bar chart showing counts for a single field. Numeric data is binned to form a histogram",
       "action": "bar x($1) y(#count) tooltip(#all) sort(#count)",
+      "action": "bar x($1) y(#count) tooltip(#all) sort(#count)",
       "desirability": 0.8,
       "fields": [
         "categorical-or-bin"
@@ -191,7 +192,7 @@
     },
     {
       "name": "Tree",
-      "description": "A decision tree visualization",
+      "description": "A tree visualization",
       "action": "tree x($2) size(#count) label($1) tooltip(#all)",
       "desirability": 0.77,
       "fields": [
