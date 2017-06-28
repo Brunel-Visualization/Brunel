@@ -171,7 +171,7 @@
     },
     {
       "name": "Symbol Plot",
-      "description": "A scatter plot with sized bubbles",
+      "description": "A scatter plot split by symbol type and color",
       "action": "point x($1) y($2) symbol($3) color($3) tooltip(#all)",
       "desirability": 0.75,
       "fields": [
@@ -191,7 +191,7 @@
     },
     {
       "name": "Tree",
-      "description": "A treemap of Counts",
+      "description": "A decision tree visualization",
       "action": "tree x($2) size(#count) label($1) tooltip(#all)",
       "desirability": 0.77,
       "fields": [
