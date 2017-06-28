@@ -17,7 +17,8 @@
 dependencies {
     compile project(':data')
     compile group: 'com.google.code.gson', name: 'gson', version: '2.3.1'
-    testRuntime project(':data').sourceSets.test.output
+
+    // We depend on the data project test output for data to us in testing
     testCompile project(':data').sourceSets.test.output
 }
 

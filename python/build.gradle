@@ -23,10 +23,9 @@ def nosetestsCommand = System.properties['nosetestsCommand'] ?: "nosetests"
 
 //Note:  Generated Javascript is combined with python-specific javascript and all are included in git
 //which allows the pip installer to operate directly from git.
-task copyWebFiles(type: Copy) {
+task copyWebFiles(type: Copy, dependsOn: rootProject.assembleWebFiles) {
     description 'Copy Required Web Support Files To Brunel Python'
-    from project(':service').webFiles
-    exclude '*Test*'
+    from '../out/javascript/readable'
     into 'brunel/brunel_ext'
 }
 
@@ -34,13 +33,12 @@ task copyWebFiles(type: Copy) {
 task copyWebFilesToNbextensions(type: Copy, dependsOn: copyWebFiles) {
     description 'Copy Required Web Support Files Directly To IPython (presumes ipython in $HOME/.ipython).  Convenience for developing.'
     from 'brunel/brunel_ext'
-    exclude '*Test*'
     into nbextensionsPath + '/brunel_ext'
 }
 
 task copyJarFiles(type: Copy, dependsOn: [project(':core').build, project(':data').build]) {
     description 'Copies required .jar files needed for execution'
-    from (project(':core').configurations.compile.files { it.name == "gson" }) 
+    from (project(':core').configurations.compile.files { it.name == "gson" })
     from project(':core').jar.archivePath
     from project(':data').jar.archivePath
     into 'brunel/lib'

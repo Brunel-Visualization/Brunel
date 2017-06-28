@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2015 IBM Corporation and others.
  *
@@ -24,11 +25,7 @@ println 'BRUNEL_SERVER is ' + brunelServer
 if (tomcatHome == null) tomcatHome = "tomcat"
 if (brunelServer == null) brunelServer = "http://locahost:8080/brunel-service"
 
-//All JS/CSS files needed to run Brunel under the assumption the translator has been run
-ext.webFiles = files(project(':core').file('src/main/resources/javascript'), project(':data').file('build/translated'))
 def distName = 'brunel-all'
-
-
 
 version = '2.4'
 
@@ -84,7 +81,7 @@ dependencies {
     minification 'com.google.javascript:closure-compiler:r2388'
 }
 
-//Aggregated Javadocs
+// Aggregated Javadocs
 task brunelJavadoc(type: Javadoc) {
     description 'Create aggregated javadocs for all Java projects'
     def doccing = [project(':core'), project(':data'), project(':etc'), project(':service')]
@@ -95,41 +92,30 @@ task brunelJavadoc(type: Javadoc) {
     options.encoding = "UTF-8"
 }
 
-task brunelJS(type: Copy, dependsOn: [project(':core').build, project(':data').build, ':data:doTranslate']) {
-    from webFiles
-    exclude '*Test*'
-    into 'out/javascript'
+
+// Copy the javascript resources and translated data files to a central location
+task assembleWebFiles(type: Copy, dependsOn: ':data:doTranslate') {
+    from project(':core').project(':core').file('src/main/resources/javascript')
+    from project(':data').file('build/translated/BrunelData.js')
+    into 'out/javascript/readable'
 }
 
-task brunelSyntaxDoc(type: Copy) {
-    from project(':gallery').file('src/main/webapp/docs/Brunel Documentation.pdf')
-    exclude '*Test*'
-    into 'out'
-}
-
-
-task brunelGeoFiles(type: Copy) {
-    from project(':core').file('etc/geo files 2.4.zip')
-    into 'out'
-}
-
-
-task makeMinified(type: JavaExec, dependsOn: [project(':core').build, ':data:doTranslate', brunelJS, brunelGeoFiles]) {
+task makeMinified(type: JavaExec, dependsOn: 'assembleWebFiles') {
     print new File(".").absolutePath
     classpath configurations.minification
     main = 'com.google.javascript.jscomp.CommandLineRunner'
     def closureArgs = []
     closureArgs << "--charset" << "utf-8"
     closureArgs << "--compilation_level" << "SIMPLE_OPTIMIZATIONS"
-    closureArgs << "--js_output_file" << "out/javascript/brunel." + version + ".min.js"
-    closureArgs << "out/javascript/BrunelD3.js"
-    closureArgs << "out/javascript/BrunelData.js"
+    closureArgs << "--js_output_file" << "out/javascript/minified/brunel." + version + ".min.js"
+    closureArgs << "out/javascript/readable/BrunelD3.js"
+    closureArgs << "out/javascript/readable/BrunelData.js"
     args closureArgs
 }
 
 task makeCSS(type: Copy) {
-    from('out/javascript')
-    into('out/javascript')
+    from('out/javascript/readable')
+    into('out/javascript/minified')
     include('Brunel.css')
     rename('Brunel.css', 'brunel.' + version + '.css')
 }
@@ -141,10 +127,10 @@ task makeMinifiedControls(type: JavaExec) {
     def closureArgs = []
     closureArgs << "--charset" << "utf-8"
     closureArgs << "--compilation_level" << "SIMPLE_OPTIMIZATIONS"
-    closureArgs << "--js_output_file" << "out/javascript/brunel.controls." + version + ".min.js"
-    closureArgs << "out/javascript/sumoselect/jquery.sumoselect.min.js"
-    closureArgs << "out/javascript/BrunelEventHandlers.js"
-    closureArgs << "out/javascript/BrunelJQueryControlFactory.js"
+    closureArgs << "--js_output_file" << "out/javascript/minified/brunel.controls." + version + ".min.js"
+    closureArgs << "out/javascript/readable/sumoselect/jquery.sumoselect.min.js"
+    closureArgs << "out/javascript/readable/BrunelEventHandlers.js"
+    closureArgs << "out/javascript/readable/BrunelJQueryControlFactory.js"
     args closureArgs
 }
 
@@ -155,17 +141,26 @@ task makePythonJS (type: Copy, dependsOn: [makeMinified, makeMinifiedControls, m
     include ('brunel*.' + version + '*', 'sumoselect.css' )
 }
 
-task build(dependsOn: [project(':core').brunelJar, project(':etc').brunelJar, project(':data').brunelJar, makePythonJS, 'scala:uploadArchives',
-                       project(':service').brunelJar, 'spark-kernel:uploadArchives', brunelJS, brunelJavadoc, brunelSyntaxDoc, brunelGeoFiles ]) {
+task createOutputDir(dependsOn: [makeMinified, makeMinifiedControls, makeCSS, brunelJavadoc]) {
+
+    copy {
+        from project(':core').file('etc/geo files 2.4.zip')
+        into 'out'
+    }
+
+    copy {
+        from project(':gallery').file('src/main/webapp/docs/Brunel Documentation.pdf')
+        into 'out'
+    }
 }
 
-task makeZip(type: Zip, dependsOn: [build, makeMinified, makeMinifiedControls, makeCSS]) {
+task makeZip(type: Zip, dependsOn: createOutputDir) {
     description 'Create a .zip of the contents of the build output (/out)'
     from('out/')
     archiveName distName + ".zip"
 }
 
-task makeTar(type: Tar, dependsOn: [build, makeMinified, makeMinifiedControls, makeCSS]) {
+task makeTar(type: Tar, dependsOn: createOutputDir) {
     description 'Create a compressed tar of the contents of the build output (/out)'
     from('out/')
     compression = Compression.GZIP
@@ -174,7 +169,8 @@ task makeTar(type: Tar, dependsOn: [build, makeMinified, makeMinifiedControls, m
 
 task makeArchives(dependsOn: [makeZip, makeTar]) {
     description 'Create both .zip and compressed tar of the contents of the build output (/out)'
-
 }
 
-
+task build(dependsOn: [project(':core').brunelJar, project(':etc').brunelJar, project(':data').brunelJar, makePythonJS, 'scala:uploadArchives',
+                       project(':service').brunelJar, 'spark-kernel:uploadArchives', assembleWebFiles, createOutputDir ]) {
+}

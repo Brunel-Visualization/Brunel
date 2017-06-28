@@ -50,10 +50,9 @@ configurations {
 }
 
 //For development only
-task copyWebFiles(type: Copy) {
+task copyWebFiles(type: Copy, dependsOn: rootProject.assembleWebFiles) {
     description 'Copy Required Web Support Files To Development WebApp Folder'
-    from webFiles
-    exclude '*Test*'
+    from '../out/javascript/readable'
     into 'src/main/webapp/brunelsupport'
 }
 
@@ -65,9 +64,8 @@ task cleanWebFiles(type: Delete) {
 // The war file will include the needed JS support
 war {
     archiveName con + '.war'
-    from(webFiles) {
+    from('../out/javascript/readable') {
         into('/brunelsupport')
-        exclude '*Test*'
     }
 }
 

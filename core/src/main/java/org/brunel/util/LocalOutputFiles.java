@@ -94,15 +94,13 @@ public class LocalOutputFiles {
     }
 
     private void ensureResourceExists(String resourceName) {
-        // Copy required static JS from Brunel project
         try {
-            InputStream is = VisualizationBuilder.class.getResourceAsStream("/javascript/" + resourceName);
-            // If the file is a translated file, we look for it in either a jar location or in the file system
-            if (is == null)
-                is = VisualizationBuilder.class.getResourceAsStream("/translated/" + resourceName);
+			// Either we are running form the IDE, in which case we find the file in the file system,
+			// Or we are in a jar, in which case it should be in the indicated directory
+			InputStream is = VisualizationBuilder.class.getResourceAsStream("/javascript/" + resourceName);
             if (is == null) {
-                File file = new File("data/build/translated/");
-                if (!file.exists()) file = new File("../data/build/translated/");
+                File file = new File("out/javascript/readable");
+                if (!file.exists()) file = new File("../out/javascript/readable");
                 is = new FileInputStream(new File(file, resourceName));
             }
             Files.copy(is, new File(out, resourceName).toPath(), StandardCopyOption.REPLACE_EXISTING);
