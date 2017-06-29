@@ -17,6 +17,7 @@
 package org.brunel.build;
 
 import org.brunel.action.Param;
+import org.brunel.action.Param.Type;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.BuildUtil;
@@ -30,6 +31,7 @@ import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 import org.brunel.model.style.StyleTarget;
+import org.brunel.util.Bidi;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,9 +76,11 @@ public class LabelBuilder {
 	 * @param vis the vis containing the items and the size info
 	 */
 	public void setTextContentAndFontSize(ScriptWriter out, VisElement vis) {
+		setBidi();
+		
 		// Define the text
 		out.addChained("text(function(d) { return ");
-		writeContent(vis.itemsLabel, false);
+		writeContent(vis.itemsLabel, false, vis.fTextDir, vis.fGuiDir);
 		out.add(" })");
 
 		// Only add sie info if we need to
@@ -99,6 +103,27 @@ public class LabelBuilder {
 		this.structure = structure;
 		this.vis = structure.vis;
 		this.out = out;
+		setBidi();
+	}
+
+	boolean mirror = false;	
+	String numshape = "none";
+	String guidir = "ltr";
+	String textdir;
+	String locale;
+	StringBuffer spanBuf;
+
+	private void setBidi() {
+		if (vis.fGuiDir !=null)
+			mirror = "rtl".equals(vis.fGuiDir);
+		if (vis.fNumShape != null)
+			numshape = vis.fNumShape;
+		guidir = mirror ? "rtl" : "ltr";
+		textdir = null;
+		if (vis.fTextDir != null)
+			textdir = vis.fTextDir;
+		if (vis.fLocale != null)
+			locale = vis.fLocale;
 	}
 
 	public void addElementLabeling() {
@@ -133,7 +158,7 @@ public class LabelBuilder {
 	public void addTooltips(ElementDetails details) {
 		if (!structure.needsTooltips()) return;
 		out.onNewLine().ln();
-		defineLabeling(prettify(vis.itemsTooltip, true), details.representation.getTooltipTextMethod(), true, true, null, 0, Collections.<Param>emptyList(), 0);
+		defineLabeling(prettify(vis.itemsTooltip, true, true), details.representation.getTooltipTextMethod(), true, true, null, 0, Collections.<Param>emptyList(), 0);
 		out.add("BrunelD3.addTooltip(selection, tooltipLabeling, geom)").endStatement();
 	}
 
@@ -153,11 +178,11 @@ public class LabelBuilder {
 	public void addTreeInternalLabelsOutsideNode(String vertical) {
 		String dy = vertical.equals("bottom") ? "0.75" : "0.25";
 		out.add("diagramLabels.attr('class', 'axis diagram tree hierarchy')").endStatement()
-				.add("var treeLabeling = [{ location:['center', '" + vertical + "'], fit:false, dy:" + dy + ", align:'middle', granularity:1, ")
+				.add("var treeLabeling = { location:['center', '" + vertical + "'], fit:false, dy:" + dy + ", align:'middle', granularity:1, ")
 				.indentMore()
 				.onNewLine().add("content:  function(d) { return d.data.innerNodeName },")
 				.onNewLine().add("cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height } ")
-				.indentLess().onNewLine().add("}]").endStatement();
+				.indentLess().onNewLine().add("}").endStatement();
 		out.add("BrunelD3.label(selection.filter(function(d) {return d.data.innerNodeName}), diagramLabels, transitionMillis, geom, treeLabeling)").endStatement();
 	}
 
@@ -270,7 +295,22 @@ public class LabelBuilder {
 		else
 			out.onNewLine().add("return ");
 
-		writeContent(items, index < 0);                        // Index == -1 for tooltips
+		if ("none".equals(numshape)) {
+			writeContent(items, index < 0);  // Index == -1 for tooltips
+		} else {
+			out.add("Shaper.reshapeString(");
+			writeContent(items, index < 0);  // Index == -1 for tooltips
+			out.add(", '"); 
+			out.add(numshape);
+			out.add("',  '");
+			out.add(locale);
+			out.add("', '"); 
+			out.add(guidir); 
+			out.add("', '"); 
+			out.add(guidir); 
+			out.add("');\n");
+		}
+
 		out.indentLess().onNewLine().add("}");
 		out.indentLess().onNewLine().add("}");
 	}
@@ -294,7 +334,14 @@ public class LabelBuilder {
 		return map.values();
 	}
 
-	public void writeContent(List<Param> items, boolean forTooltip) {
+	public void writeContent(List<Param> items, boolean forTooltip, String bidiTextDir, String guidir) {
+		if (bidiTextDir != null)
+			writeContent(Bidi.applyBidiParam(items, bidiTextDir, guidir), forTooltip);
+		else 
+			writeContent(items, forTooltip);
+	}
+	
+	private void writeContent(List<Param> items, boolean forTooltip) { 
 		// We must have some content
 		if (items.isEmpty()) {
 			// The position fields for a diagram
@@ -376,7 +423,7 @@ public class LabelBuilder {
 			if (p.isField()) return true;
 		return false;
 	}
-
+	
 	private List<Param> prettify(List<Param> items, boolean longForm) {
 
 		// If we have nothing but field names, and at least two, we add separators
@@ -392,6 +439,75 @@ public class LabelBuilder {
 				result.add(Param.makeString("<span class=\"title\">" + f.label + ": </span>"));
 			result.add(p);
 		}
+		return result;
+	} 
+
+	private List<Param> prettify(List<Param> items, boolean longForm, boolean bidiHTML) {
+		// If we have nothing but field names, and at least two, we add separators
+		if (items.size() < 2) return items;    // One item does not get prettified
+
+		ArrayList<Param> result = new ArrayList<>();
+
+		if (!bidiHTML)
+			return prettify(items, longForm);
+
+		//Use div and span for mirroring and BTD
+
+		if (mirror)
+			result.add(Param.makeString("<div dir=\"rtl\">"));
+		String label;
+
+		for (int i = 0; i < items.size(); i++) {
+			Param p = items.get(i);
+			label = p.asString();
+			if (label != null)
+				if (label.startsWith("<div dir") || label.startsWith("<span dir"))
+					return items; 
+
+			if (!p.isField()) {
+				if (textdir != null) {
+					if (p.type() != Type.string) {
+						result.add(p);
+						continue;
+					}
+					if (label == null)
+						continue;
+					if (label.isEmpty())
+						continue;
+					spanBuf = new StringBuffer();
+					spanBuf.append("<span dir=\"");
+					spanBuf.append(textdir);
+					spanBuf.append("\">");
+					result.add(Param.makeString(spanBuf.toString()));
+					result.add(p);
+					result.add(Param.makeString("</span>"));
+					continue;
+				} else {
+					return items;            // Any non-field and we do not prettify
+				}
+			}
+			Field f = structure.data.field(p.asField());
+			if (i > 0) result.add(Param.makeString(longForm ? "<br/>" : ", "));
+
+			if (longForm) {
+				spanBuf = new StringBuffer();
+				spanBuf.append("<span");
+				if (textdir != null) {
+					spanBuf.append(" dir=\"");
+					spanBuf.append(textdir);
+					spanBuf.append("\"");
+				}
+				spanBuf.append(" class=\"title\">");
+				spanBuf.append(f.label);
+				spanBuf.append(": </span>");
+				result.add(Param.makeString(spanBuf.toString()));
+			}
+			result.add(p);
+		}
+
+		if (mirror)
+			result.add(Param.makeString("</div>"));
+
 		return result;
 	}
 

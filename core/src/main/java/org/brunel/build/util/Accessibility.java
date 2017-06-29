@@ -20,6 +20,7 @@ import org.brunel.build.LabelBuilder;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.data.Data;
 import org.brunel.model.VisElement;
+import org.brunel.util.Bidi;
 
 /**
  * This class contains static methods that create content to enhance accessibility
@@ -83,9 +84,9 @@ public class Accessibility {
 		VisElement vis = structure.vis;
 		out.onNewLine().add("function(d) { return ");
 		if (!vis.itemsTooltip.isEmpty())
-			labelBuilder.writeContent(vis.itemsTooltip, false);
+			labelBuilder.writeContent(vis.itemsTooltip, false, vis.fTextDir, vis.fGuiDir);
 		else if (!vis.itemsLabel.isEmpty())
-			labelBuilder.writeContent(vis.itemsLabel, false);
+			labelBuilder.writeContent(vis.itemsLabel, false, vis.fTextDir, vis.fGuiDir);
 		else {
 			out.add("data._key(d.row)");
 		}

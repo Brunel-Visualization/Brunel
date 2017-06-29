@@ -31,6 +31,8 @@ public class ChartBuilder {
 	private final BuilderOptions options;               // options for building
 	private final ChartLocation location;                 // where to place the chart
 	private final ScriptWriter out;                     // where to write to
+	
+	private boolean isMirror = false;
 
 	private ElementBuilder[] elementBuilders;           // Builder for each element
 	private ScaleBuilder scalesBuilder;                 // The scales for the current chart
@@ -109,9 +111,10 @@ public class ChartBuilder {
 
 	private void addElementGroups(ElementBuilder builder, ElementStructure structure) {
 		String elementTransform = makeElementTransform(structure.chart.coordinates.type);
-
+		
 		// The overall group for this element, with accessibility and transforms
 		out.add("var elementGroup = interior.append('g').attr('class', 'element" + structure.elementID() + "')");
+
 		Accessibility.addElementInformation(structure, out);
 		if (elementTransform != null) out.addChained(elementTransform);
 
@@ -337,6 +340,10 @@ public class ChartBuilder {
 		return "attr('transform','translate(' + " + dx + " + ',' + " + dy + " + ')')";
 	}
 
+	private String makeTranslateTransformWithMirroring(String dx, String dy) {
+		return "attr('transform','translate(' + " + dx + " + ',' + " + dy + " + ') scale (-1,1)')";
+	}
+	
 	/**
 	 * Write a set of field names as properties
 	 *
@@ -377,8 +384,13 @@ public class ChartBuilder {
 
 		// Only write group info if we have multiple elements within the chart
 		if (structure.elements.length > 1) groupUtil.addAccessibleChartInfo();
-
-		out.addChained(makeTranslateTransform("geom.chart_left", "geom.chart_top")).endStatement();
+		
+		String sTranslate;
+		if ("rtl".equals(structure.elements[0].fGuiDir))
+			sTranslate = makeTranslateTransformWithMirroring("geom.chart_right", "0");
+		else
+			sTranslate = makeTranslateTransform("geom.chart_left", "geom.chart_top");
+		out.addChained(sTranslate).endStatement();
 
 		structure.interaction.addOverlayForZoom(structure.diagram, out);
 
@@ -386,7 +398,11 @@ public class ChartBuilder {
 				.add(".attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top)")
 				.endStatement();
 
-		String axesTransform = makeTranslateTransform("geom.inner_left", "geom.inner_top");
+		String axesTransform;
+		//if (isMirror)
+		//	axesTransform = makeTranslateTransformWithMirroring("(geom.inner_left + geom.inner_width)", "geom.inner_top");
+		//else
+			axesTransform = makeTranslateTransform("geom.inner_left", "geom.inner_top");
 
 		// Note we write the initial zoom level of "None" in here
 		out.add("var interior = chart.append('g').attr('class', 'interior zoomNone')")
@@ -405,9 +421,9 @@ public class ChartBuilder {
 		if (axisBuilder.needsAxes())
 			out.add("var axes = chart.append('g').attr('class', 'axis')")
 					.addChained(axesTransform).endStatement();
-		if (legendBuilder.needsLegends()) {
-			out.add("var legends = chart.append('g').attr('class', 'legend')")
-					.addChained(makeTranslateTransform("(geom.chart_right-geom.chart_left - 3)", "0"));
+		if (legendBuilder.needsLegends()) {			
+			sTranslate = makeTranslateTransform("(geom.chart_right-geom.chart_left - 3)", "0"); 
+			out.add("var legends = chart.append('g').attr('class', 'legend')").addChained(sTranslate);
 			groupUtil.addAccessibleTitle("Legend");
 			out.endStatement();
 		}
