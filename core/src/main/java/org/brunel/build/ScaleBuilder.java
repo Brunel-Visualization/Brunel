@@ -164,7 +164,7 @@ public class ScaleBuilder {
 					v = partitionPoints[i];
 				divs[i] = dateBuilder.make(Data.asDate(v), dateFormat, true);
 			}
-			out.add("d3.scaleTime()");
+			out.add("d3.scaleUtc()");
 		} else {
 			// If requested to have a specific transform, util that. Otherwise util the one the field suggests.
 			// Some scales (like for an area size) have a default transform (e.g. root) and we
