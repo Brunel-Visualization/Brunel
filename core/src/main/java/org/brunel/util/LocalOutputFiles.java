@@ -97,7 +97,7 @@ public class LocalOutputFiles {
         try {
 			// Either we are running form the IDE, in which case we find the file in the file system,
 			// Or we are in a jar, in which case it should be in the indicated directory
-			InputStream is = VisualizationBuilder.class.getResourceAsStream("/javascript/" + resourceName);
+			InputStream is = VisualizationBuilder.class.getResourceAsStream("/readable/" + resourceName);
             if (is == null) {
                 File file = new File("out/javascript/readable");
                 if (!file.exists()) file = new File("../out/javascript/readable");

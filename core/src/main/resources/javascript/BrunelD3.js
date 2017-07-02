@@ -718,78 +718,35 @@ var BrunelD3 = (function () {
      * @param rows desired rows (may be falsey)
      * @param columns desired columns (may be falsey)
      * @param aspect the desired aspect ratio of each cell (y:x)
-     * @return an array of {x,y, label} objects to give major labels
      */
     function gridLayout(tree, extent, rows, columns, aspect) {
-        extent[1] -= 10;                                // leave room for labels
-
-        var i, j, r, p,
-            maxCol = 0,                                 // Furthest column used
-            leaves = tree.leaves(),                     // we only use the tree leaves
-            rowColumn = [],                             // The next free column for this row
-            rowParent = [];                             // Parent of the last item shown on the row
-
+        var i, j, r, ri, ci,
+            leaves = tree.leaves();                     // we only use the tree leaves
 
         // Calculate the best number of rows using the relative aspect
         rows = rows || chooseRows(leaves.length, columns, extent[1] / extent[0] / aspect);
 
-        for (j = 0; j < rows; j++) rowColumn[j] = 0;                    // All rows will start in column zero
 
+        ri = -1;
+        ci = 0;
         for (i = 0; i < leaves.length; i++) {
-            p = leaves[i].parent;                                       // The parent for this node
-
-            for (j = rows - 1; j >= 0; j--) {
-                // When the cell above or to the left has a different parent
-                // we must put an empty space in this cell
-                if (differ(rowParent[j], p)) {
-                    rowParent[j] = null;
-                    rowColumn[j]++;
-                }
+            if (++ri >= rows) {
+                ri = 0;
+                ci++;
             }
-
-            r = 0;                                                      // Choose row with least left position
-            for (j = 1; j < rows; j++)
-                if (rowColumn[j] < rowColumn[r]) r = j;
-            rowParent[r] = p;
-            maxCol = Math.max(leaves[i].x = rowColumn[r]++, maxCol);   // Set the x and increment the counter
-            leaves[i].y = (r + 0.5) * extent[1] / rows;
+            leaves[i].x = ci;
+            leaves[i].y = ri;
         }
 
-        maxCol++;
+        var cols = ci + 1,
+            radius = Math.min(extent[0] / cols, extent[1] / rows) / 2;
 
-        var radius = Math.min(extent[0] / maxCol, extent[1] / rows) / 2;
-
-        // Rescale x space and set the radius
+        // Rescale space and set the radius
         for (i = 0; i < leaves.length; i++) {
-            leaves[i].x = (leaves[i].x + 0.5) * extent[0] / maxCol;
+            leaves[i].x = (leaves[i].x + 0.5) * extent[0] / cols;
+            leaves[i].y = (leaves[i].y + 0.5) * extent[1] / rows;
             leaves[i].r = radius;
         }
-
-        var low, x, y, m, n, labels = [];                           // The labels for the areas
-        var halfHeight = extent[1] / rows / 2;              // Half a height
-        tree.each(function (v) {
-            if (!v.depth || v.height != 1) return;          // Label for one above leaves only (and not root)
-            n = v.children.length;
-
-            low = -9e9;                                 // Low point for the items with this parent
-            for (i = 0; i < n; i++) {
-                y = v.children[i].y;
-                if (y > low) {
-                    low = y;
-                    x = m = 0;                          // reset the average for the x's
-                }
-                if (y == low) {
-                    x += v.children[i].x;
-                    m++;
-                }
-            }
-
-            labels.push({
-                label: v.data.key.substring(1).replace('|', ' '), x: x / m, y: low + halfHeight
-            });
-        });
-
-        return labels;
     }
 
 
@@ -1182,8 +1139,8 @@ var BrunelD3 = (function () {
         if (d.data && d.data.row != undefined) d = d.data;  // For hierarchies and structures where the data is a layer down
         var content = labeling.content(d);
         if (!content || !item.parentNode) return;                               // If there is no content, we are done
-        																		// If no parent item then we are likely in a transition state
-                                                                                // which can cause failures in FF for bbox calculations.
+        // If no parent item then we are likely in a transition state
+        // which can cause failures in FF for bbox calculations.
 
         if (!labeling.align) labeling.align = "middle";
 

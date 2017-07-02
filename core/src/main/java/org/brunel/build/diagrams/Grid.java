@@ -84,7 +84,6 @@ class Grid extends Bubble {
 	public void writeAdditionalUpdateStatements(ElementDetails details, ScriptWriter out) {
 		LabelBuilder labelBuilder = new LabelBuilder(structure, out);
 		ElementBuilder.writeElementLabelsAndTooltips(details, labelBuilder);
-		labelBuilder.addGridLabels();
 	}
 
 	public boolean needsDiagramExtras() {

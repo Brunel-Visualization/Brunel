@@ -21,3 +21,29 @@ dependencies {
 }
 
 archivesBaseName = 'brunel-etc'
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
+    }
+}
+
+
+apply plugin: 'com.github.johnrengelman.shadow'
+
+
+shadowJar {
+    baseName = 'Brunel'
+    destinationDir = file("../out/application")
+
+    manifest {
+        attributes 'Main-Class':'org.brunel.app.brunel.BrunelPad'
+    }
+
+    from("../out/javascript") {
+        include 'readable/**'
+    }
+}
