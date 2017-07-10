@@ -100,7 +100,7 @@ task assembleWebFiles(type: Copy, dependsOn: ':data:doTranslate') {
     into 'out/javascript/readable'
 }
 
-task makeMinified(type: JavaExec, dependsOn: 'assembleWebFiles') {
+task makeMinified(type: JavaExec, dependsOn: ['assembleWebFiles', 'makeCSS']) {
     print new File(".").absolutePath
     classpath configurations.minification
     main = 'com.google.javascript.jscomp.CommandLineRunner'
@@ -120,7 +120,7 @@ task makeCSS(type: Copy) {
     rename('Brunel.css', 'brunel.' + version + '.css')
 }
 
-task makeMinifiedControls(type: JavaExec) {
+task makeMinifiedControls(type: JavaExec, dependsOn: 'makeCSS') {
     print new File(".").absolutePath
     classpath configurations.minification
     main = 'com.google.javascript.jscomp.CommandLineRunner'
