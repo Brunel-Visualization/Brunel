@@ -91,7 +91,8 @@ public class TestData {
         assertEquals(0.25, Data.asNumeric(Data.asDate("January 1, 1970 6:00:00")), 0.001);
         assertEquals(0.125, Data.asNumeric(Data.asDate("January 1, 1970 3:00:00")), 0.001);
         assertEquals(1.0 / 3600 / 24, Data.asNumeric(Data.asDate("1970-01-01T00:00:01")), 0.000001);
-        assertEquals(1.0 / 3600 / 24, Data.asNumeric(Data.asDate("00:00:01")), 0.000001);
+		assertEquals(1.0 / 3600 / 24, Data.asNumeric(Data.asDate("00:00:01")), 0.000001);
+		assertEquals((11*60+50) / 60.0 / 24, Data.asNumeric(Data.asDate("11:50")), 0.000001);
         assertEquals((7 + 45 / 60.0 + 22 / 3600.0) / 24.0, Data.asNumeric(Data.asDate("07:45:22")), 0.000001);
         assertEquals((10 + 45 / 60.0 + 22 / 3600.0) / 24.0, Data.asNumeric(Data.asDate("10:45:22")), 0.000001);
         assertEquals(null, Data.asDate(null));

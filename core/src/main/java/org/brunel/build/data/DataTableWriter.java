@@ -58,7 +58,7 @@ public class DataTableWriter {
 		this.options = options;
 		dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
 		dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-		dateTimeFormatter = new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss");
+		dateTimeFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 		dateTimeFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
 

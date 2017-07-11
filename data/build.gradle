@@ -47,6 +47,3 @@ task(doTranslate, dependsOn: ['classes', testTranslate], type: JavaExec) {
 // Whenever we build the data, we ensure that we do the translation step also
 
 build.finalizedBy(doTranslate)
-
-
-
