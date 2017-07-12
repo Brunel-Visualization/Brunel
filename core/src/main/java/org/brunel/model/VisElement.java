@@ -258,14 +258,14 @@ public class VisElement extends VisItem implements Cloneable {
 	public VisItem[] children() {
 		return null;
 	}
-	
-	public boolean outputParams(Param... parameters) {
+
+	public void outputParams(Param... parameters) {
 		String str;
 		String val;
 		for (int i = 0; i < parameters.length; i++) {
 			str = parameters[i].asString();
 			if (parameters[i].firstModifier() == null)
-				return false;
+				throw new IllegalArgumentException("Unsupported output parameter: " + str);
 			val = parameters[i].firstModifier().asString();
 			if ("textdir".equals(str))
 				fTextDir = val;
@@ -277,15 +277,15 @@ public class VisElement extends VisItem implements Cloneable {
 				fLocale = val;
 		}
 
-		if (!("ltr".equals(fTextDir) || "rtl".equals(fTextDir) || "auto".equals(fTextDir)))
-			return false;
+		if (!(fTextDir == null || "ltr".equals(fTextDir) || "rtl".equals(fTextDir) || "auto".equals(fTextDir)))
+			throw new IllegalArgumentException("Unsupported output text direction: " + fTextDir);
 
-		if (!("ltr".equals(fGuiDir) || "rtl".equals(fGuiDir)))
-			return false;
-		
-		if (!("none".equals(fNumShape) || "national".equals(fNumShape) || "europian".equals(fNumShape)
+		if (!(fGuiDir == null || "ltr".equals(fGuiDir) || "rtl".equals(fGuiDir)))
+			throw new IllegalArgumentException("Unsupported GUI direction: " + fGuiDir);
+
+		if (!(fNumShape == null || "none".equals(fNumShape) || "national".equals(fNumShape) || "europian".equals(fNumShape)
 				|| "indic".equals(fNumShape) || "contextual".equals(fNumShape)))
-			return false;
+			throw new IllegalArgumentException("Unsupported numeric shaping: " + fNumShape);
 
 		if (fLocale != null) {
 			if (!fLocale.isEmpty()) {
@@ -308,8 +308,6 @@ public class VisElement extends VisItem implements Cloneable {
 					fTextDir = "rtl";
 			}
 		}
-
-		return true;
 	}
 
 	public String validate() {
@@ -493,7 +491,7 @@ public class VisElement extends VisItem implements Cloneable {
 
 		// Collect a replacement for the "#all" field, if needed
 		LinkedHashSet<String> replacement = new LinkedHashSet<>();
-		for (String f : used) if (!f.equals("#all")) replacement.add(f);
+		for (String f : used) if (!f.equals("#all") && !f.equals("#selection")) replacement.add(f);
 		boolean containsAll = replacement.size() != used.length;
 
 		boolean addSeriesSplit = requiresSplitForSeries();

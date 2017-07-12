@@ -18,8 +18,7 @@ polygon element
 ## Diagrams
 bubble diagram - prune
 chord diagram
-cloud diagram
-pack diagram
+cloud diagram - rectangular
 gridded diagram - rows columns aspect
 table diagram
 parallel diagram - NUMBER
@@ -91,9 +90,8 @@ smooth data FIELD+
 # Miscellaneous
 using other dodge interpolate
 axes other + none x y
-axes other + none x y
 guide other + x y
-legends other auto none all color size
+legends other auto none all color size symbol
 at other NUMBER+
 style other STRING
 effect other enter
@@ -106,5 +104,5 @@ title other STRING+ FIELD+ NUMBER+
 > combination
 >> combination
 
-##Bidi
+## Bidi
 output other + textdir guidir numshape locale

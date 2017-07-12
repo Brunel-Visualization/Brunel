@@ -20,7 +20,6 @@ import org.brunel.build.LabelBuilder;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.data.Data;
 import org.brunel.model.VisElement;
-import org.brunel.util.Bidi;
 
 /**
  * This class contains static methods that create content to enhance accessibility

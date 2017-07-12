@@ -50,7 +50,6 @@ public class BuilderOptions {
 			if (keyVal[0].trim().equalsIgnoreCase("locJavaScript")) options.locJavaScript = keyVal[1].trim();
 			else if (keyVal[0].trim().equalsIgnoreCase("locMaps")) options.locMaps = keyVal[1].trim();
 			else if (keyVal[0].trim().equalsIgnoreCase("locD3")) options.locD3 = keyVal[1].trim();
-			else if (keyVal[0].trim().equalsIgnoreCase("locBidi")) options.locBidi = keyVal[1].trim();
 			else if (keyVal[0].trim().equalsIgnoreCase("locTopoJson")) options.locTopoJson = keyVal[1].trim();
 		}
 
@@ -73,7 +72,6 @@ public class BuilderOptions {
 	public String locJavaScript = "https://brunelvis.org/js";   // The location of the javascript libraries
 	public String locMaps = "https://brunelvis.org/geo";        // The location of the mapping resources
 	public String locD3 = "//cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min";            //Location of D3 in require-friendly pattern
-	public String locBidi = "BrunelBidi.js";
 	public String locTopoJson = "//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min";  //Location of D3's TopoJson support in require friendly pattern
 	public String version = "2.4";                              // Which online version to use
 

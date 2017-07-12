@@ -123,6 +123,10 @@ public class VisualizationBuilder {
 		writeEnd(main);
 	}
 
+	public String getLanguage() {
+		return visStructure.getLanguage();
+	}
+
 	private VisElement[] asSingle(VisItem[] children) {
 		VisElement[] items = new VisElement[children.length];
 		for (int i = 0; i < items.length; i++) items[i] = (VisElement) children[i];
@@ -168,7 +172,6 @@ public class VisualizationBuilder {
 
 		String base = COPYRIGHT_COMMENTS +
 				String.format(pattern, BuilderOptions.fullLocation(options.locD3))
-				+ String.format(pattern, BuilderOptions.fullLocation(options.locBidi))
 				+ String.format(pattern, BuilderOptions.fullLocation(options.locTopoJson));
 
 		if (controls.isNeeded()) {
@@ -343,21 +346,24 @@ public class VisualizationBuilder {
 		visStructure.controls.writeControls(out, options.visObject);
 
 	}
-	
-	private void writeBidiEnd(VisItem main) {
-		if (! (main instanceof VisElement)) 
-			return;
 
-		if (((VisElement)main).fLocale == null 
-				&& ((VisElement)main).fTextDir == null 
-				&& ((VisElement)main).fGuiDir == null 
-				&& ((VisElement)main).fNumShape == null 
+	private void writeBidiEnd(VisItem main) {
+		if (! (main instanceof VisElement))
+			return;
+		VisElement element = (VisElement) main;
+
+		if (element.fLocale == null
+				&& element.fTextDir == null
+				&& element.fGuiDir == null
+				&& element.fNumShape == null
 				)
 			return;
 
 		out.add("var BrunelD3Locale;\n");
-		out.add("bidiProcessing('" + ((VisElement)main).fLocale + "', '" + ((VisElement)main).fTextDir + "', '"
-				+ ((VisElement)main).fGuiDir + "', '" + ((VisElement)main).fNumShape + "');");
+		out.add("bidiProcessing('"
+				+ options.visIdentifier + "', '"
+				+ element.fLocale + "', '" + element.fTextDir + "', '"
+				+ element.fGuiDir + "', '" + element.fNumShape + "');");
 
 	}
 

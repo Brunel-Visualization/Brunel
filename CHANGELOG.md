@@ -1,3 +1,12 @@
+# 2.5 Release Notes
+
+Bidi support has been added with the `output` command, which takes the following options: 
+
+ * **textdir**
+ * **guidir**
+ * **numshape**
+ * **locale**
+
 # 2.4 Release Notes
 
 ### "keepmissing" option on filters
