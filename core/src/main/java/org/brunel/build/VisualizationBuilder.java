@@ -168,6 +168,7 @@ public class VisualizationBuilder {
 
 		String base = COPYRIGHT_COMMENTS +
 				String.format(pattern, BuilderOptions.fullLocation(options.locD3))
+				+ String.format(pattern, BuilderOptions.fullLocation(options.locBidi))
 				+ String.format(pattern, BuilderOptions.fullLocation(options.locTopoJson));
 
 		if (controls.isNeeded()) {
@@ -178,7 +179,8 @@ public class VisualizationBuilder {
 		if (options.locJavaScript.startsWith("file")) {
 			base = base
 					+ String.format(pattern, options.locJavaScript + "/BrunelData.js")
-					+ String.format(pattern, options.locJavaScript + "/BrunelD3.js");
+					+ String.format(pattern, options.locJavaScript + "/BrunelD3.js")
+					+ String.format(pattern, options.locJavaScript + "/BrunelBidi.js");
 			if (controls.isNeeded()) base = base
 					+ String.format(pattern, options.locJavaScript + "/BrunelEventHandlers.js")
 					+ String.format(pattern, options.locJavaScript + "/BrunelJQueryControlFactory.js")
@@ -333,11 +335,29 @@ public class VisualizationBuilder {
 					out.add(String.format(options.dataName, i + 1));
 				}
 				out.add(")").endStatement();
+				writeBidiEnd(main);
 			}
 		}
 
 		// Add controls code
 		visStructure.controls.writeControls(out, options.visObject);
+
+	}
+	
+	private void writeBidiEnd(VisItem main) {
+		if (! (main instanceof VisElement)) 
+			return;
+
+		if (((VisElement)main).fLocale == null 
+				&& ((VisElement)main).fTextDir == null 
+				&& ((VisElement)main).fGuiDir == null 
+				&& ((VisElement)main).fNumShape == null 
+				)
+			return;
+
+		out.add("var BrunelD3Locale;\n");
+		out.add("bidiProcessing('" + ((VisElement)main).fLocale + "', '" + ((VisElement)main).fTextDir + "', '"
+				+ ((VisElement)main).fGuiDir + "', '" + ((VisElement)main).fNumShape + "');");
 
 	}
 

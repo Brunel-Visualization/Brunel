@@ -110,6 +110,7 @@ task makeMinified(type: JavaExec, dependsOn: ['assembleWebFiles', 'makeCSS']) {
     closureArgs << "--js_output_file" << "out/javascript/minified/brunel." + version + ".min.js"
     closureArgs << "out/javascript/readable/BrunelD3.js"
     closureArgs << "out/javascript/readable/BrunelData.js"
+    closureArgs << "out/javascript/readable/BrunelBidi.js"
     args closureArgs
 }
 
