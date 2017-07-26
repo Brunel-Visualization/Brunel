@@ -118,7 +118,7 @@ public class Data {
         if (Math.abs(d) <= 1e-6 || Math.abs(d) >= 1e8)
             return scientificFormat.format(d).replace('E', 'e');
         else if (Math.abs((d - Math.round(d)) / d) < 1e-9)
-            return Math.abs(d) >= 1e4 && useGrouping ? bigIntegerFormat.format(d) : integerFormat.format(d);
+            return Math.abs(d) >= 1e3 && useGrouping ? bigIntegerFormat.format(d) : integerFormat.format(d);
         else {
 
             int place = (decimalPlaces != null) ? decimalPlaces.intValue() :

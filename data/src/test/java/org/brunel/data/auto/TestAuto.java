@@ -235,11 +235,11 @@ public class TestAuto {
     public void testPadding() {
         Field a = Data.toNumeric(Fields.makeColumnField("a", "label", new Object[]{100, 200, 120, 200, 3100}));
         a.set("transform", "linear");
-        assertEquals("linear : 70 3130 : |500|1000|1500|2000|2500|3000",
+        assertEquals("linear : 70 3,130 : |500|1,000|1,500|2,000|2,500|3,000",
                 asString(NumericScale.makeLinearScale(spanOf(a), false, 0.0, new double[]{0.01, 0.01}, 5, false), a));
 
         // Does not pad past zero
-        assertEquals("linear : -200 3400 : |0|1000|2000|3000",
+        assertEquals("linear : -200 3,400 : |0|1,000|2,000|3,000",
                 asString(NumericScale.makeLinearScale(spanOf(a), false, 0.0, new double[]{0.1, 0.1}, 5, false), a));
     }
 
@@ -250,15 +250,15 @@ public class TestAuto {
         Field a = Fields.makeColumnField("a", "label", new Object[]{2, 4, 7, 120, 45, 120, 200, 3345});
         a = Data.toNumeric(a);
         a.set("transform", "linear");
-        assertEquals("linear : 2 3345 : |500|1000|1500|2000|2500|3000",
+        assertEquals("linear : 2 3,345 : |500|1,000|1,500|2,000|2,500|3,000",
                 asString(NumericScale.makeLinearScale(spanOf(a), false, 0.0, pad, 5, false), a));
-        assertEquals("linear : 2 3345 : |200|400|600|800|1000|1200|1400|1600|1800|2000|2200|2400|2600|2800|3000|3200",
+        assertEquals("linear : 2 3,345 : |200|400|600|800|1,000|1,200|1,400|1,600|1,800|2,000|2,200|2,400|2,600|2,800|3,000|3,200",
                 asString(NumericScale.makeLinearScale(spanOf(a), false, 0.0, pad, 15, false), a));
-        assertEquals("linear : 2 3345 : |1000|2000|3000", asString(NumericScale.makeLinearScale(spanOf(a), false, 0.0, pad, 2, false), a));
-        assertEquals("linear : 2 3345 : |2000", asString(NumericScale.makeLinearScale(spanOf(a), false, 0.0, pad, 1, false), a));
-        assertEquals("linear : 0 3345 : |0|500|1000|1500|2000|2500|3000",
+        assertEquals("linear : 2 3,345 : |1,000|2,000|3,000", asString(NumericScale.makeLinearScale(spanOf(a), false, 0.0, pad, 2, false), a));
+        assertEquals("linear : 2 3,345 : |2,000", asString(NumericScale.makeLinearScale(spanOf(a), false, 0.0, pad, 1, false), a));
+        assertEquals("linear : 0 3,345 : |0|500|1,000|1,500|2,000|2,500|3,000",
                 asString(NumericScale.makeLinearScale(spanOf(a), false, 0.01, pad, 7, false), a));
-        assertEquals("linear : 0 3500 : |0|500|1000|1500|2000|2500|3000|3500",
+        assertEquals("linear : 0 3,500 : |0|500|1,000|1,500|2,000|2,500|3,000|3,500",
                 asString(NumericScale.makeLinearScale(spanOf(a), true, 0.0, pad, 7, false), a));
 
         a = Fields.makeColumnField("a", "label", new Object[]{-22.2, -22.201, -22.9, -22.7});
@@ -286,18 +286,18 @@ public class TestAuto {
         Field a = Fields.makeColumnField("a", "label", new Object[]{2, 4, 7, 120, 45, 120, 200, 3345});
         a = Data.toNumeric(a);
         double[] pad = {0, 0};
-        assertEquals("log : 2 3345 : |10|100|1000", asString(NumericScale.makeLogScale(spanOf(a), false, pad, 0.0, 3), a));
-        assertEquals("log : 1 3345 : |1|10|100|1000", asString(NumericScale.makeLogScale(spanOf(a), false, pad, 0.2, 3), a));
+        assertEquals("log : 2 3,345 : |10|100|1,000", asString(NumericScale.makeLogScale(spanOf(a), false, pad, 0.0, 3), a));
+        assertEquals("log : 1 3,345 : |1|10|100|1,000", asString(NumericScale.makeLogScale(spanOf(a), false, pad, 0.2, 3), a));
         assertEquals("log : 1 10,000 : |1|100|10,000", asString(NumericScale.makeLogScale(spanOf(a), true, pad, 0.0, 3), a));
-        assertEquals("log : 1 10,000 : |1|10|100|1000|10,000", asString(NumericScale.makeLogScale(spanOf(a), true, pad, 0.0, 5), a));
-        assertEquals("log : 1 5000 : |1|3|10|30|100|300|1000|3000", asString(NumericScale.makeLogScale(spanOf(a), true, pad, 0.0, 10), a));
+        assertEquals("log : 1 10,000 : |1|10|100|1,000|10,000", asString(NumericScale.makeLogScale(spanOf(a), true, pad, 0.0, 5), a));
+        assertEquals("log : 1 5,000 : |1|3|10|30|100|300|1,000|3,000", asString(NumericScale.makeLogScale(spanOf(a), true, pad, 0.0, 10), a));
 
         a = Fields.makeColumnField("a", "label", new Object[]{45, 120, 200, 3345});
         a = Data.toNumeric(a);
-        assertEquals("log : 45 3345 : |100|1000", asString(NumericScale.makeLogScale(spanOf(a), false, pad, 0.0, 3), a));
-        assertEquals("log : 45 3345 : |100|1000", asString(NumericScale.makeLogScale(spanOf(a), false, pad, 0.2, 3), a));
-        assertEquals("log : 1 3345 : |1|10|100|1000", asString(NumericScale.makeLogScale(spanOf(a), false, pad, 0.75, 3), a));
-        assertEquals("log : 10 10,000 : |10|100|1000|10,000", asString(NumericScale.makeLogScale(spanOf(a), true, pad, 0.0, 3), a));
+        assertEquals("log : 45 3,345 : |100|1,000", asString(NumericScale.makeLogScale(spanOf(a), false, pad, 0.0, 3), a));
+        assertEquals("log : 45 3,345 : |100|1,000", asString(NumericScale.makeLogScale(spanOf(a), false, pad, 0.2, 3), a));
+        assertEquals("log : 1 3,345 : |1|10|100|1,000", asString(NumericScale.makeLogScale(spanOf(a), false, pad, 0.75, 3), a));
+        assertEquals("log : 10 10,000 : |10|100|1,000|10,000", asString(NumericScale.makeLogScale(spanOf(a), true, pad, 0.0, 3), a));
 
         a = Fields.makeColumnField("a", "label", new Object[]{0.04, 0.2, 5});
         a = Data.toNumeric(a);
