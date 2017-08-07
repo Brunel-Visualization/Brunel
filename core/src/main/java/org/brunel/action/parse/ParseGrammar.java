@@ -55,6 +55,7 @@ public class ParseGrammar {
             if (words[1].equals("data")) summaryMethods.add(words[0]);
             if (words[1].equals("transform")) transformMethods.add(words[0]);
         }
+        scanner.close();
     }
 
     public GrammarItem get(String command) {

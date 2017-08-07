@@ -67,13 +67,13 @@ public class TestBin {
 		Field binned;
 
 		binned = Transform.bin(f, 4);
-		assertEquals("1|10|100|1000|10,000", binsToString(binned));
+		assertEquals("1|10|100|1,000|10,000", binsToString(binned));
 
 		binned = Transform.bin(f, 2);
 		assertEquals("1|100|10,000", binsToString(binned));
 
 		binned = Transform.bin(f, 8);
-		assertEquals("1|3|10|30|100|300|1000|3000", binsToString(binned));
+		assertEquals("1|3|10|30|100|300|1,000|3,000", binsToString(binned));
 
 	}
 

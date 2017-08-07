@@ -132,15 +132,15 @@ var BrunelD3 = (function () {
      */
     function transformBox(box, item) {
         var m = item.getCTM();
-        if (m && box)
-            return {
+        if (m && box) {
+            box = {
                 x: m.a * box.x + m.c * box.y + m.e,
                 y: m.b * box.x + m.d * box.y + m.f,
                 width: m.a * box.width + m.c * box.height,
                 height: m.b * box.width + m.d * box.height
             };
-        else
-            return box;
+        }
+        return box;
     }
 
     /**
@@ -414,7 +414,7 @@ var BrunelD3 = (function () {
             return {x: box.x + dx, y: box.y + dy, box: box}
         }
 
-        // If we faield to get a location
+        // If we failed to get a location
         if (!loc || !loc.box) return null;
 
         // Modify for the transform

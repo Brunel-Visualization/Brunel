@@ -172,15 +172,15 @@ public class TestData {
         double d10 = -22.000100000001;
         assertEquals("-22.0001", Data.formatNumeric(d10, null, true));
 
-        assertEquals("1500", Data.formatNumeric((double) 1500, null, true));
+        assertEquals("1,500", Data.formatNumeric((double) 1500, null, true));
         double d9 = -1500.000001;
-        assertEquals("-1500", Data.formatNumeric(d9, null, true));
+        assertEquals("-1,500", Data.formatNumeric(d9, null, true));
         double d8 = -1499.999999;
-        assertEquals("-1500", Data.formatNumeric(d8, null, true));
+        assertEquals("-1,500", Data.formatNumeric(d8, null, true));
 
         assertEquals("15,000", Data.formatNumeric((double) 15000, null, true));
         assertEquals("10,000", Data.formatNumeric((double) 10000, null, true));
-        assertEquals("9999", Data.formatNumeric((double) 9999, null, true));
+        assertEquals("9,999", Data.formatNumeric((double) 9999, null, true));
 
         assertEquals("0.00001", Data.formatNumeric(0.00001, null, true));
         assertEquals("1.0e-6", Data.formatNumeric(0.000001, null, true));
