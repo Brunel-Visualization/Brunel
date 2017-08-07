@@ -250,5 +250,33 @@ public class ParseTest {
         assertEquals("red, green, blue", Data.join(items));
     }
 
+    @Test
+    public void testEmptyListCommand() {
+        List<ActionStep> actions = new Parser().getActionSteps(new Parser().tokenize("color(a:[])"));
+        Param[] mods = actions.get(0).parameters[0].modifiers();
+        assertEquals(1, mods.length);
+        assertEquals(Type.list, mods[0].type());
+        List<Param> items = mods[0].asList();
+        assertEquals(0, items.size());
+    }
+
+	@Test
+	public void testMissingValuesListCommand() {
+		List<ActionStep> actions = new Parser().getActionSteps(new Parser().tokenize("color(a:[,6,,8,,])"));
+		Param[] mods = actions.get(0).parameters[0].modifiers();
+		assertEquals(1, mods.length);
+		assertEquals(Type.list, mods[0].type());
+		List<Param> items = mods[0].asList();
+		assertEquals(6, items.size());
+
+		assertEquals(null, items.get(0));
+		assertEquals(6, items.get(1).asInteger());
+		assertEquals(null, items.get(2));
+		assertEquals(8, items.get(3).asInteger());
+		assertEquals(null, items.get(4));
+		assertEquals(null, items.get(5));
+	}
+
+
 
 }
