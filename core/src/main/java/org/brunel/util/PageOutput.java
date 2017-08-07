@@ -102,7 +102,8 @@ public class PageOutput {
         // Assemble the pieces we need
         String css = builder.getStyleOverrides();
 
-        writeSection(documentStart, "<!DOCTYPE html>", "<html lang=\"en\">");
+
+        writeSection(documentStart, "<!DOCTYPE html>", "<html lang=\"" + builder.getLanguage() + "\">");
         writeSection(headStart, "<head>",
                 "\t<meta charset=\"UTF-8\">",
                 "\t<meta http-Equiv=\"Cache-Control\" Content=\"no-cache\">",

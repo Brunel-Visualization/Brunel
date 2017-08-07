@@ -83,6 +83,11 @@ public class VisElement extends VisItem implements Cloneable {
 	private String[] pos;                   // Position fields only
 	private String[] nonPos;                // non-position fields (but not filters)
 
+	public String fTextDir;                 //Base text direction
+	public String fGuiDir;                  //UI direction (ltr or rtl)
+	public String fNumShape;                //Arabic numeric shaping
+	public String fLocale;                  //Default locale for Bidi layout transformations
+
 	public VisElement() {
 		this(null);
 	}
@@ -252,6 +257,57 @@ public class VisElement extends VisItem implements Cloneable {
 
 	public VisItem[] children() {
 		return null;
+	}
+
+	public void outputParams(Param... parameters) {
+		String str;
+		String val;
+		for (int i = 0; i < parameters.length; i++) {
+			str = parameters[i].asString();
+			if (parameters[i].firstModifier() == null)
+				throw new IllegalArgumentException("Unsupported output parameter: " + str);
+			val = parameters[i].firstModifier().asString();
+			if ("textdir".equals(str))
+				fTextDir = val;
+			else if ("numshape".equals(str))
+				fNumShape = val;
+			else if ("guidir".equals(str))
+				fGuiDir = val;
+			else if ("locale".equals(str))
+				fLocale = val;
+		}
+
+		if (!(fTextDir == null || "ltr".equals(fTextDir) || "rtl".equals(fTextDir) || "auto".equals(fTextDir)))
+			throw new IllegalArgumentException("Unsupported output text direction: " + fTextDir);
+
+		if (!(fGuiDir == null || "ltr".equals(fGuiDir) || "rtl".equals(fGuiDir)))
+			throw new IllegalArgumentException("Unsupported GUI direction: " + fGuiDir);
+
+		if (!(fNumShape == null || "none".equals(fNumShape) || "national".equals(fNumShape) || "europian".equals(fNumShape)
+				|| "indic".equals(fNumShape) || "contextual".equals(fNumShape)))
+			throw new IllegalArgumentException("Unsupported numeric shaping: " + fNumShape);
+
+		if (fLocale != null) {
+			if (!fLocale.isEmpty()) {
+				boolean isBidi = fLocale.startsWith("he") || fLocale.startsWith("iw") || fLocale.startsWith("ar");
+				if (fGuiDir == null) {
+					if (isBidi)
+						fGuiDir = "rtl";
+					else
+						fGuiDir = "ltr";
+				}
+
+				if (fLocale.startsWith("ar")) {
+					if (fNumShape == null)
+						fNumShape = "contextual";
+				}
+				else
+					fNumShape = "europian";
+
+				if (fTextDir == null && isBidi)
+					fTextDir = "rtl";
+			}
+		}
 	}
 
 	public String validate() {

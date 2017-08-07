@@ -83,9 +83,9 @@ public class Accessibility {
 		VisElement vis = structure.vis;
 		out.onNewLine().add("function(d) { return ");
 		if (!vis.itemsTooltip.isEmpty())
-			labelBuilder.writeContent(vis.itemsTooltip, false);
+			labelBuilder.writeContent(vis.itemsTooltip, false, vis.fTextDir, vis.fGuiDir);
 		else if (!vis.itemsLabel.isEmpty())
-			labelBuilder.writeContent(vis.itemsLabel, false);
+			labelBuilder.writeContent(vis.itemsLabel, false, vis.fTextDir, vis.fGuiDir);
 		else {
 			out.add("data._key(d.row)");
 		}

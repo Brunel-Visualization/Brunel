@@ -37,7 +37,7 @@ import java.util.List;
 public class LocalOutputFiles {
 
     private static final List<String> RESOURCES = Arrays.asList(
-            "BrunelD3.js", "BrunelData.js", "Brunel.css",
+            "BrunelD3.js", "BrunelData.js", "BrunelBidi.js", "Brunel.css",
             "BrunelEventHandlers.js", "BrunelJQueryControlFactory.js",
             "sumoselect/jquery.sumoselect.min.js", "sumoselect/sumoselect.css");
 

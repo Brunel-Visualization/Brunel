@@ -7,6 +7,7 @@ import org.brunel.model.style.StyleSheet;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,5 +28,13 @@ class VisInfo {
 		nesting = new LinkedHashMap<>();
 		controls = new Controls(options);
 		visStyles = new StyleSheet();
+	}
+
+	public String getLanguage() {
+		for (ElementStructure e : allElements) {
+			String locale = e.vis.fLocale;
+			if (locale != null) return locale;
+		};
+		return Locale.getDefault().getLanguage();
 	}
 }
