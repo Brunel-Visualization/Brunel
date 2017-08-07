@@ -69,7 +69,7 @@ public class ScriptWriter {
 			} else {
 				s = Data.format(item, false);
 			}
-			if (i > 0 && !NO_SPACE_BEFORE.contains(s.charAt(0))) out.print(" ");
+			if (i > 0 && (s.length() == 0 || !NO_SPACE_BEFORE.contains(s.charAt(0)))) out.print(" ");
 			out.print(s);
 		}
 		consecutiveNewLines = 0;
