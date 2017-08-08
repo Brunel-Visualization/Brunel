@@ -46,7 +46,7 @@ dependencies {
 configurations {
     all*.exclude group: 'rhino'
     all*.exclude group: 'org.eclipse.jdt'
-    all*.exclude module: 'translator-0.0.3'
+    all*.exclude module: 'translator-0.5'
 }
 
 //For development only
