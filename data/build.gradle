@@ -15,7 +15,7 @@
  */
 
 dependencies {
-    compile name: 'translator-0.4'
+    compile name: 'translator-0.5'
     runtime group: 'rhino', name: 'js', version: '1.7+'
     runtime group: 'org.eclipse.jdt', name: 'org.eclipse.jdt.core', version: '3.10.0'
 }
