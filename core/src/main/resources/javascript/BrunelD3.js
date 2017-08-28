@@ -1856,16 +1856,18 @@ var BrunelD3 = (function () {
     // selection is the items to search for; maxDistance is the furthest distance out to accept
     // distanceMethod is one of "x", "y", or "xy"
     function closestItem(selection, distanceMethod, maxDistance) {
-        var pp, v, x, y, t, that, result = {distance: 9e99};
+        var pp, v, x, y, t, xx, yy, that, result = {distance: 9e99};
         selection.each(function (d) {
             that = this;
             pp = pp || d3.mouse(this);                        // Define the mouse location relative to the selection
+            xx = pp[0];
+            yy = pp[1];
             if (d.points) {
                 d.points.forEach(
                     function (t) {
                         v = 0;
-                        if (distanceMethod != "y") v += (t.x - pp[0]) * (t.x - pp[0]);
-                        if (distanceMethod != "x") v += (t.y - pp[1]) * (t.y - pp[1]);
+                        if (distanceMethod != "y") v += (t.x - xx) * (t.x - xx);
+                        if (distanceMethod != "x") v += (t.y - yy) * (t.y - yy);
                         if (v < result.distance) {
                             result.distance = v;
                             result.item = d;
@@ -1876,12 +1878,20 @@ var BrunelD3 = (function () {
                     });
             } else {
                 t = getBBox(this);
-                if (!t) return null;
-                x = t.x + t.width / 2;
-                y = t.y + t.height / 2;
-                v = 0;
-                if (distanceMethod != "y") v += (x - pp[0]) * (x - pp[0]);
-                if (distanceMethod != "x") v += (y - pp[1]) * (y - pp[1]);
+                if (!t) return;
+                var xP = xx < t.x ? -1 : (xx > t.x + t.width ? 1 : 0);          // point is left, inside, right
+                var yP = yy < t.y ? -1 : (yy > t.y + t.height ? 1 : 0);         // point is top, inside, bottom
+
+                if (xP == 0 && yP == 0) {
+                    // The point is inside the rectangle
+                    v = 0;
+                } else {
+                    x = xP < 0 ? t.x : (xP > 0 ? t.x + t.width : xx);           // closest corner (or point on side)
+                    y = yP < 0 ? t.y : (yP > 0 ? t.y + t.height : yy);          // closest corner (or point on side)
+                    v = 0;
+                    if (distanceMethod != "y") v += (x - xx) * (x - xx);
+                    if (distanceMethod != "x") v += (y - yy) * (y - yy);
+                }
                 if (v < result.distance) {
                     result.distance = v;
                     result.item = d;
