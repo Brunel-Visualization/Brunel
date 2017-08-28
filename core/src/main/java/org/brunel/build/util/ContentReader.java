@@ -16,18 +16,17 @@
 
 package org.brunel.build.util;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import org.brunel.geom.Rect;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
-
-import org.brunel.geom.Rect;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 public class ContentReader {
 	public static String readContentFromUrl(URI uri) throws IOException {
@@ -54,7 +53,7 @@ public class ContentReader {
 
 		return builder.toString();
 	}
-	
+
 	public static JsonElement readJsonContentFromUrl(String url) {
 		try {
 			String json = readContentFromUrl(new URI(url));
@@ -64,28 +63,28 @@ public class ContentReader {
 			throw new IllegalArgumentException("Unable to read json at: " + url);
 		} catch (URISyntaxException e) {
 			throw new IllegalArgumentException("URL for json malformed: " + url);
-		} 
+		}
 	}
-	
+
 	/**
 	 * Convenience method to extract bounds from a topojson file
 	 * @param url
-	 * @return
+	 * @return the bounds stored in the topo json
 	 */
 	public static Rect extractBoundsFromTopoJson(String url) {
-		
+
 		try {
 			JsonElement parsed = readJsonContentFromUrl(url);
 			JsonObject root = parsed.getAsJsonObject();
 			JsonArray bbox = root.getAsJsonArray("bbox");
-			Rect bounds = new Rect(bbox.get(0).getAsDouble(), bbox.get(2).getAsDouble(), bbox.get(1).getAsDouble(), bbox.get(3).getAsDouble());			
+			Rect bounds = new Rect(bbox.get(0).getAsDouble(), bbox.get(2).getAsDouble(), bbox.get(1).getAsDouble(), bbox.get(3).getAsDouble());
 			return bounds;
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new IllegalArgumentException("Unable to locate map bounds in topojson at : " + url);
 
 		}
-		
+
 	}
 
 }

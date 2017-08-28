@@ -574,7 +574,7 @@ var BrunelD3 = (function () {
 
     // Calls the function when the target is ready
     function callWhenReady(func, target) {
-        if (target.__transition__)
+        if (target && target.__transition__)
             setTimeout(function () {
                 callWhenReady(func, target)
             }, 100);
@@ -1875,7 +1875,7 @@ var BrunelD3 = (function () {
                         }
                     });
             } else {
-                t = getBBox(t);
+                t = getBBox(this);
                 if (!t) return null;
                 x = t.x + t.width / 2;
                 y = t.y + t.height / 2;

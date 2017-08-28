@@ -77,7 +77,7 @@ public class LabelBuilder {
 	 */
 	public void setTextContentAndFontSize(ScriptWriter out, VisElement vis) {
 		setBidi();
-		
+
 		// Define the text
 		out.addChained("text(function(d) { return ");
 		writeContent(vis.itemsLabel, false, vis.fTextDir, vis.fGuiDir);
@@ -106,7 +106,7 @@ public class LabelBuilder {
 		setBidi();
 	}
 
-	boolean mirror = false;	
+	boolean mirror = false;
 	String numshape = "none";
 	String guidir = "ltr";
 	String textdir;
@@ -180,7 +180,7 @@ public class LabelBuilder {
 	 * @param fitsShape            true if the text is to fit inside the shape (if the shape wants it)
 	 * @param alignment            left | right | center
 	 * @param padding              numeric amount
-	 * @param cssFunctions,        list of functions to use for css class
+	 * @param cssFunctions        list of functions to use for css class
 	 * @param hitDetectGranularity if strictly positive, the pixel level granularity to use for hit detection. If zero, none will be done
 	 */
 	public void defineLabeling(List<Param> items, String textMethod, boolean forTooltip,
@@ -285,14 +285,14 @@ public class LabelBuilder {
 		} else {
 			out.add("Shaper.reshapeString(");
 			writeContent(items, index < 0);  // Index == -1 for tooltips
-			out.add(", '"); 
+			out.add(", '");
 			out.add(numshape);
 			out.add("',  '");
 			out.add(locale);
-			out.add("', '"); 
-			out.add(guidir); 
-			out.add("', '"); 
-			out.add(guidir); 
+			out.add("', '");
+			out.add(guidir);
+			out.add("', '");
+			out.add(guidir);
 			out.add("');\n");
 		}
 
@@ -322,11 +322,11 @@ public class LabelBuilder {
 	public void writeContent(List<Param> items, boolean forTooltip, String bidiTextDir, String guidir) {
 		if (bidiTextDir != null)
 			writeContent(Bidi.applyBidiParam(items, bidiTextDir, guidir), forTooltip);
-		else 
+		else
 			writeContent(items, forTooltip);
 	}
-	
-	private void writeContent(List<Param> items, boolean forTooltip) { 
+
+	private void writeContent(List<Param> items, boolean forTooltip) {
 		// We must have some content
 		if (items.isEmpty()) {
 			// The position fields for a diagram
@@ -408,7 +408,7 @@ public class LabelBuilder {
 			if (p.isField()) return true;
 		return false;
 	}
-	
+
 	private List<Param> prettify(List<Param> items, boolean longForm) {
 
 		// If we have nothing but field names, and at least two, we add separators
@@ -425,7 +425,7 @@ public class LabelBuilder {
 			result.add(p);
 		}
 		return result;
-	} 
+	}
 
 	private List<Param> prettify(List<Param> items, boolean longForm, boolean bidiHTML) {
 		// If we have nothing but field names, and at least two, we add separators
@@ -447,7 +447,7 @@ public class LabelBuilder {
 			label = p.asString();
 			if (label != null)
 				if (label.startsWith("<div dir") || label.startsWith("<span dir"))
-					return items; 
+					return items;
 
 			if (!p.isField()) {
 				if (textdir != null) {
