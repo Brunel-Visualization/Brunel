@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from __future__ import absolute_import
+
 
 import json
 import io
@@ -70,11 +70,11 @@ def to_csv(df):
         # CSV to pass to service
         # Code is different in python 2 vs. 3
         if sys.version_info < (3,0):
-            import StringIO
-            csvIO = StringIO.StringIO()
+            import io
+            csvIO = io.StringIO()
             df.to_csv(csvIO, index=use_index, encoding='utf-8')
             csv = csvIO.getvalue()
-            return unicode(csv, errors="ignore")
+            return str(csv, errors="ignore")
         else:
             csvIO = io.StringIO()
             df.to_csv(csvIO, index=use_index)
