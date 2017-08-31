@@ -93,15 +93,17 @@ public class Auto {
 	public static int optimalBinCount(Field f) {
 		// Using Freedman-Diaconis for the optimal bin width OR Scott's normal reference rule
 		// Whichever has a large bin size
+
+		// HOWEVER: We never want a single field to bin into, so no matter what, always look for at least 2 bins
+
 		Double stddev = f.numProperty("stddev");
-		if (stddev == null) return 1;                // Guard against single-valued data
+		if (stddev == null) return 2;                // Guard against single-valued data
 		double h1 = 2 * (f.numProperty("q3") - f.numProperty("q1")) / Math.pow(f.valid(), 0.33333);
 		double h2 = 3.5 * stddev / Math.pow(f.valid(), 0.33333);
 		double h = Math.max(h1, h2);
-		if (h == 0)
-			return 1;
-		else
-			return (int) Math.round((f.max() - f.min()) / h + 0.499);
+
+		if (h == 0) return 2;
+		return Math.max(2, (int) Math.round((f.max() - f.min()) / h + 0.499));
 	}
 
 	public static Field convert(Field base) {
