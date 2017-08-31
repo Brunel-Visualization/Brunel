@@ -130,6 +130,18 @@ public class TestBin {
 	}
 
 	@Test
+	public void testBinningOnFewItems() {
+		Field f = Auto.convert(Fields.makeColumnField("a", null, new Object[]{1, 2, 3}));
+		Field binned = Transform.bin(f, -1);
+		assertEquals("0.5|1.5|2.5|3.5", binsToString(binned));
+
+		f = Auto.convert(Fields.makeColumnField("a", null, new Object[]{1, 2, 99}));
+		binned = Transform.bin(f, -1);
+		assertEquals("0|50|100", binsToString(binned));
+
+	}
+
+	@Test
 	public void testBinningNumericGranular() {
 		Field binned;
 
