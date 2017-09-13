@@ -57,6 +57,10 @@ public class Dataset extends Informative implements Serializable {
 	}
 
 	public static Dataset makeTyped(String[] names, String[] options, Object[][] rows) {
+		return Dataset.makeTyped(names, null, options, rows);
+	}
+
+	public static Dataset makeTyped(String[] names, String[] labels, String[] options, Object[][] rows) {
 		Field[] fields = new Field[names.length];
 
 		for (int k = 0; k < fields.length; k++) {
@@ -86,7 +90,8 @@ public class Dataset extends Informative implements Serializable {
 					values[i] = x.toString();
 				}
 			}
-			fields[k] = new Field(names[k], null, new ColumnProvider(values));
+			String label = labels != null ? labels[k] : null;
+			fields[k] = new Field(names[k], label, new ColumnProvider(values));
 			if (type.equals("numeric")) fields[k].setNumeric();
 			if (type.equals("date")) {
 				fields[k].set("date", true);
