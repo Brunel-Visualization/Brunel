@@ -17,7 +17,7 @@ public class TestFontAssumptions {
 
 	@Test
 	public void testFontMeasurements() {
-		String[] names = "Helvetica;Arial;Times;Times New Roman;Courier;Courier New;Verdana;Tahoma;Palatino;Garamond;Georgia;Impact".split(";");
+		String[] names = "Foo;Helvetica;Arial;Times;Times New Roman;Courier;Courier New;Verdana;Tahoma;Palatino;Garamond;Georgia;Impact".split(";");
 		String[] phrases = "0123456;1.1;hello;MASSES;Once upon a time, in a far away land".split(";");
 
 		FontRenderContext frc = new FontRenderContext(null, true, true);
@@ -26,8 +26,6 @@ public class TestFontAssumptions {
 		for (String n : names) {
 			for (int i = 12; i < 20; i += 2) {
 				Font f = new Font(n, Font.PLAIN, i);
-				if (!n.equalsIgnoreCase(f.getFamily())) continue;
-				double r = 0;
 				for (String phrase : phrases) {
 					double width = f.getStringBounds(phrase, frc).getWidth();
 					double charAspect = width / phrase.length() / i;
