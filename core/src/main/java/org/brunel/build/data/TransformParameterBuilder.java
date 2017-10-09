@@ -129,8 +129,8 @@ class TransformParameterBuilder {
 				else if (operation.equals("bottom")) operation = "top";
 			}
 
-			int n1 = 1;  	// By default start at the first item
-			int n2 = 10;	// By default go to the 10th item
+			int n1 = 1;    // By default start at the first item
+			int n2 = 10;    // By default go to the 10th item
 
 			Param[] mods = key.modifiers();
 			if (mods.length == 1) {
@@ -145,7 +145,7 @@ class TransformParameterBuilder {
 					commands.add(name + " ranked " + n1 + "," + n2);
 					break;
 				case "bottom":
-					commands.add(name + " ranked " + (N - n2 + 1) + "," + (N-n1-1));
+					commands.add(name + " ranked " + (N - n2 - 1) + "," + (N - n1 - 1));
 					break;
 				case "inner":
 					commands.add(name + " ranked " + n2 + "," + (N - n2));

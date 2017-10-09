@@ -69,7 +69,6 @@ public class BuildTests {
 		builder.build(vis, 200, 140);
 		String javascript = builder.getVisualization();
 		// Should limit the number of ticks
-		System.out.println(javascript);
 		assertTrue(javascript.contains(".ticks(3)"));
 	}
 

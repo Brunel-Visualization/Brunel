@@ -26,102 +26,122 @@ import java.util.List;
 
 public class NumericStats {
 
-    public static void populate(Field f) {
-        int n = f.rowCount();
+	public static void populate(Field f) {
+		int n = f.rowCount();
 
-        // Extract valid numeric data
-        List<Double> valid = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
-            Object item = f.value(i);
-            if (item != null) {
-                if (item instanceof Range) {
-                    Object low = ((Range) item).low;
-                    Object high = ((Range) item).high;
-                    valid.add(Data.asNumeric(low));
-                    valid.add(Data.asNumeric(high));
-                } else {
-                    Double d = Data.asNumeric(item);
-                    if (d != null) valid.add(d);
-                }
-            }
-        }
-        Double[] data = valid.toArray(new Double[valid.size()]);
+		// Extract valid numeric data
+		List<Double> valid = new ArrayList<>();
+		for (int i = 0; i < n; i++) {
+			Object item = f.value(i);
+			if (item != null) {
+				if (item instanceof Range) {
+					Object low = ((Range) item).low;
+					Object high = ((Range) item).high;
+					valid.add(Data.asNumeric(low));
+					valid.add(Data.asNumeric(high));
+				} else {
+					Double d = Data.asNumeric(item);
+					if (d != null) valid.add(d);
+				}
+			}
+		}
+		Double[] data = valid.toArray(new Double[valid.size()]);
 
-        n = data.length;
-        f.set("validNumeric", n);
+		n = data.length;
+		f.set("validNumeric", n);
 
-        // No numeric data -- give up and go home
-        if (n == 0) return;
+		// No numeric data -- give up and go home
+		if (n == 0) return;
 
-        // Calculate the moments, used for standard statistics
-        double m1 = moment(data, 0, 1, n);
-        double m2 = moment(data, m1, 2, n - 1);
-        double m3 = moment(data, m1, 3, n - 1);
-        double m4 = moment(data, m1, 4, n - 1);
-        f.set("mean", m1);
-        f.set("stddev", Math.sqrt(m2));
-        f.set("variance", m2);
-        f.set("skew", m3 / m2 / Math.sqrt(m2));
-        f.set("kurtosis", m4 / m2 / m2 - 3.0);
+		// Calculate the moments, used for standard statistics
+		double m1 = moment(data, 0, 1, n);
+		double m2 = moment(data, m1, 2, n - 1);
+		double m3 = moment(data, m1, 3, n - 1);
+		double m4 = moment(data, m1, 4, n - 1);
+		f.set("mean", m1);
+		f.set("stddev", Math.sqrt(m2));
+		f.set("variance", m2);
+		f.set("skew", m3 / m2 / Math.sqrt(m2));
+		f.set("kurtosis", m4 / m2 / m2 - 3.0);
 
-        Arrays.sort(data);
-        double min = data[0];
-        double max = data[n - 1];
-        f.set("min", min);
-        f.set("max", max);
+		Arrays.sort(data);
+		double min = data[0];
+		double max = data[n - 1];
+		f.set("min", min);
+		f.set("max", max);
 
-        // Order statistics: using the Tukey hinge definition
-        f.set("median", av(data, (n - 1) * 0.5));
-        if (n % 2 == 0) {
-            // Even data, include the median in upper and lower
-            f.set("q1", av(data, (n / 2 - 1) * 0.5));
-            f.set("q3", av(data, n / 2 + (n / 2 - 1) * 0.5));
-        } else {
-            // Odd data, do not include the median in upper and lower
-            f.set("q1", av(data, (n - 1) * 0.25));
-            f.set("q3", av(data, (n - 1) / 2 + (n - 1) * 0.25));
-        }
+		// Order statistics: using the Tukey hinge definition
+		f.set("median", av(data, (n - 1) * 0.5));
+		if (n % 2 == 0) {
+			// Even data, include the median in upper and lower
+			f.set("q1", av(data, (n / 2 - 1) * 0.5));
+			f.set("q3", av(data, n / 2 + (n / 2 - 1) * 0.5));
+		} else {
+			// Odd data, do not include the median in upper and lower
+			f.set("q1", av(data, (n - 1) * 0.25));
+			f.set("q3", av(data, (n - 1) / 2 + (n - 1) * 0.25));
+		}
 
-        double granularity = max - min;
-        boolean allInteger = true;
-        if (granularity == 0) granularity = Math.abs(max);
-        for (int i = 1; i < data.length; i++) {
-            double d = data[i] - data[i - 1];
-            if (d > 0) granularity = Math.min(granularity, d);
-            if (allInteger && data[i] != Math.round(data[i])) allInteger = false;
-        }
-        f.set("granularity", granularity);
+		double minD = max - min;
+		boolean allInteger = true;
+		if (minD == 0) minD = Math.abs(max);
+		for (int i = 1; i < data.length; i++) {
+			double d = data[i] - data[i - 1];
+			if (d > 0) minD = Math.min(minD, d);
+			if (allInteger && data[i] != Math.round(data[i])) allInteger = false;
+		}
 
-        double range = max == min ? (max == 0 ? 1 : max) : max - min;
-        double places = Math.max(0, Math.round(4 - Math.log(range)/Math.log(10)));         // decimal places to show range
-        f.set("decimalPlaces", allInteger && max - min > 5 ? 0 : places);
-    }
+		f.set("minDelta", minD);
 
-    /*
-     * Calculates the centralized moment where
-     * c is the center,
-     * p is the power to raise to,
-     * N is the total weight (the amount to divide by)
-     */
-    private static double moment(Double[] data, double c, int p, double N) {
-        if (N <= 0) return Double.NaN;
-        double sum = 0.0;
-        for (Double element : data)
-            sum += Math.pow(element - c, p);
-        return sum / N;
-    }
+		// minD is the minimum difference between items; now calculate the granularity by updating it so it
+		// divides in evenly into all the differences
+		double granularity = minD;
+		for (int i = 1; i < data.length; i++) {
+			double d = data[i] - data[i - 1];
+			double extra = d % granularity;
+			if (extra > 0) {
+				if (granularity % extra == 0) granularity = extra;
+				else {
+					// Can't do it easily
+					granularity = 0;
+					break;
+				}
+			}
+		}
 
-    private static double av(Double[] v, double index) {
-        return (v[(int) Math.floor(index)] + v[(int) Math.ceil(index)]) / 2.0;
-    }
+		f.set("minDelta", minD);
+		f.set("granularity", granularity);
 
-    public static boolean creates(String key) {
-        return "validNumeric".equals(key) || "mean".equals(key)
-                || "stddev".equals(key) || "variance".equals(key)
-                || "skew".equals(key) || "kurtosis".equals(key)
-                || "min".equals(key) || "max".equals(key)
-                || "q1".equals(key) || "q3".equals(key)
-                || "median".equals(key) || "granularity".equals(key)
-                || "decimalPlaces".equals(key);
-    }
+		double range = max == min ? (max == 0 ? 1 : max) : max - min;
+		double places = Math.max(0, Math.round(4 - Math.log(range) / Math.log(10)));         // decimal places to show range
+		f.set("decimalPlaces", allInteger && max - min > 5 ? 0 : places);
+	}
+
+	/*
+	 * Calculates the centralized moment where
+	 * c is the center,
+	 * p is the power to raise to,
+	 * N is the total weight (the amount to divide by)
+	 */
+	private static double moment(Double[] data, double c, int p, double N) {
+		if (N <= 0) return Double.NaN;
+		double sum = 0.0;
+		for (Double element : data)
+			sum += Math.pow(element - c, p);
+		return sum / N;
+	}
+
+	private static double av(Double[] v, double index) {
+		return (v[(int) Math.floor(index)] + v[(int) Math.ceil(index)]) / 2.0;
+	}
+
+	public static boolean creates(String key) {
+		return "validNumeric".equals(key) || "mean".equals(key)
+				|| "stddev".equals(key) || "variance".equals(key)
+				|| "skew".equals(key) || "kurtosis".equals(key)
+				|| "min".equals(key) || "max".equals(key)
+				|| "q1".equals(key) || "q3".equals(key)
+				|| "median".equals(key) || "granularity".equals(key)
+				|| "decimalPlaces".equals(key);
+	}
 }
