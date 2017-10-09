@@ -88,9 +88,14 @@
     and the default number being 10. The data is then filtered to show only the desired top, bottom, inner or outer
     values for that number of items.
 </p>
+<p>
+    If two parameters are passed to `top` or `bottom` then the first is the rank of the item to start with,
+    and the second is the rank to finish with. This means that `top(field:5)` is the same as `top(field:1:5)` and
+    bottom(field:33) is the same as bottom(field:1:33).
+</p>
 <p class="examples"><a onClick="showAction(this.text)">stack top(population:5) label(state, " (", population, ")")
     color(population) legends(none)</a></p>
-<p class="examples"><a onClick="showAction(this.text)">stack bottom(population:5) label(state, " (", population, ")")
+<p class="examples"><a onClick="showAction(this.text)">stack bottom(population:5:10) label(state, " (", population, ")")
     color(population) legends(none)</a></p>
 <p class="examples"><a onClick="showAction(this.text)">bar x(region) yrange(income) range(income) inner(income:10) +
     text x(region) y(income) outer(income:10) label(abbr)</a></p>

@@ -3,6 +3,7 @@ package org.brunel.build.guides;
 import org.brunel.action.Param;
 import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
+import org.brunel.data.Field;
 import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes.Axes;
 
@@ -58,10 +59,24 @@ public final class AxisRequirement {
 
 	// The default is unbounded ticks, no required title and no grid
 	private static AxisRequirement makeDefault(Axes which, ChartCoordinates coordinates) {
-		// No default axis if no fields for that dimension
-		if (which == Axes.x && coordinates.allXFields.length == 0) return null;
-		if (which == Axes.y && coordinates.allYFields.length == 0) return null;
+		// No default axis if no real fields for that dimension
+
+		if (which == Axes.x && ignoreForAxis(coordinates.allXFields)) return null;
+		if (which == Axes.y && ignoreForAxis(coordinates.allYFields)) return null;
 		return new AxisRequirement(which, -1);
+	}
+
+	private static boolean ignoreForAxis(Field[] fields) {
+		// Synthetic fields (starting with #) and 1.0 are not good for us
+		for (Field field : fields) {
+			if (field.isConstant()) continue;			// Do not want axes for constant fields
+			if (field.name.equals("#row")) continue;	// Do not want rows
+			if (field.name.equals("#selection")) continue;	// Do not want selection
+
+			// If we made it this far, it's a good field
+			return false;
+		}
+		return true;
 	}
 
 	final Axes dimension;                // Which dimension

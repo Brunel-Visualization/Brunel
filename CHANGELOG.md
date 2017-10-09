@@ -1,4 +1,10 @@
-# 2.4 Release Notes
+# 2.5 Release Notes
+
+### Defect fixes for labels, axes and spacing
+Various minor fixes
+
+
+# 2.5 Release Notes
 
 ### "keepmissing" option on filters
 Filters can now take an additional parameter `keepmissing` that changes the default behavior for

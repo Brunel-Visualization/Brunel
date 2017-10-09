@@ -61,6 +61,7 @@ outer transform FIELD+
 each transform FIELD+
 top transform FIELD+
 bottom transform FIELD+
+slice transform FIELD+
 rows transform - FIELD NUMBER
 
 ## Data summary operations
