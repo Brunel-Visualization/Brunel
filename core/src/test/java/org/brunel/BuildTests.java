@@ -66,10 +66,11 @@ public class BuildTests {
 	public void testSmallAxes() throws Exception {
 		Action action = Action.parse("x(winter) y(summer)");
 		VisItem vis = action.apply(data);
-		builder.build(vis, 200, 200);
+		builder.build(vis, 200, 140);
 		String javascript = builder.getVisualization();
 		// Should limit the number of ticks
-		assertTrue(javascript.contains(".ticks(4)"));
+		System.out.println(javascript);
+		assertTrue(javascript.contains(".ticks(3)"));
 	}
 
 	@Test

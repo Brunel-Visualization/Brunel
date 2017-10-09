@@ -38,6 +38,9 @@ import java.util.List;
  */
 public class AxisDetails {
 
+	/* This is the value we will use to multiple by the font height to guess the width of a single average character */
+	private static final double CHARACTER_ASPECT = 0.666;
+
 	/* Return the title for the axis */
 	private static String title(Field[] fields) {
 
@@ -55,6 +58,7 @@ public class AxisDetails {
 		if (originalTitles.size() < titles.size()) titles = originalTitles;     // If shorter, use that
 		return titles.isEmpty() ? null : Data.join(titles);
 	}
+
 	public final boolean exists;                        // Is it needed?
 	public final VisTypes.Axes dimension;              // Dimension
 	public final String title;                         // Title for the axis
@@ -149,6 +153,7 @@ public class AxisDetails {
 			if (availableSpace < tickWidth * tickCount && this.tickCount == null) {
 				// Must be numeric in this case, so reduce the desired number of ticks for that axis
 				this.tickCount = (int) (availableSpace / (tickWidth + 5));
+				if (this.tickCount == 1) this.tickCount = 2;
 			}
 		}
 	}
@@ -166,9 +171,9 @@ public class AxisDetails {
 		if (categorical) {
 			tickValues = makeSkippingTickValues(availableSpace, tickCount);
 		} else {
-			int tickHeight = fontSize * 4 / 5;
-			if (tickHeight * tickCount > availableSpace && this.tickCount == null) {
-				this.tickCount = (int) (availableSpace / tickHeight);
+			if (fontSize * 4 / 5 * tickCount > availableSpace && this.tickCount == null) {
+				// Reduce by a fraction because d3 will not exactly honor the results, and this prevents overcrowd
+				this.tickCount = (int) (availableSpace / fontSize);
 			}
 
 		}
@@ -192,8 +197,14 @@ public class AxisDetails {
 			} else {
 				// If we have numeric data, we use our scaling to guess the divisions needed
 				Object[] sampleTicks = Auto.makeNumericScale(NumericExtentDetail.makeForField(f), true, new double[]{0, 0}, 0, 5, false).divisions;
-				for (Object s : sampleTicks)
-					maxCharCount = Math.max(maxCharCount, f.format(s).length());
+				boolean inMillions = this.isInMillions(fields);
+				for (Object s : sampleTicks) {
+					// If the data is in millions, we use the "M" format after the number on the scale, so we need to
+					// measure that format rather than the much longer raw format.
+					// For example "18M" instead of "18,000,000"
+					String format = inMillions ? f.format(Math.round(((Number) s).doubleValue() / 1e6)) + "M" : f.format(s);
+					maxCharCount = Math.max(maxCharCount, format.length());
+				}
 				// Always allow room for three characters. We need this because D3 often
 				// adds fractions to what should be integer scales
 				maxCharCount = Math.max(maxCharCount, 3);
@@ -241,12 +252,12 @@ public class AxisDetails {
 
 	private int estimatedTickLength(int maxCharCount) {
 		// Assume a font with about this character width
-		return tickPadding.horizontal() + maxCharCount * (fontSize + 1) / 2;
+		return (int) Math.ceil(tickPadding.horizontal() + maxCharCount * fontSize * CHARACTER_ASPECT);
 	}
 
 	/* Space needed for title */
 	private int estimatedTitleHeight() {
-		return (int) titleBuilder.verticalSpace();
+		return titleBuilder.verticalSpace();
 	}
 
 	/**
