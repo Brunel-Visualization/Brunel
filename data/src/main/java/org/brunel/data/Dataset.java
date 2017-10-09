@@ -57,10 +57,10 @@ public class Dataset extends Informative implements Serializable {
 	}
 
 	public static Dataset makeTyped(String[] names, String[] options, Object[][] rows) {
-		return Dataset.makeTyped(names, null, options, rows);
+		return Dataset.makeFullyDescribed(names, null, options, rows);
 	}
 
-	public static Dataset makeTyped(String[] names, String[] labels, String[] options, Object[][] rows) {
+	public static Dataset makeFullyDescribed(String[] names, String[] labels, String[] options, Object[][] rows) {
 		Field[] fields = new Field[names.length];
 
 		for (int k = 0; k < fields.length; k++) {
