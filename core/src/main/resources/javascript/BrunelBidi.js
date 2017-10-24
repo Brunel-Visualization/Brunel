@@ -398,10 +398,10 @@ var Shaper = (function() {
         isBidiLocale: function(locale) {
             if (!locale)
                 return false;
-            if (locale.length() < 2)    
+            if (locale.length < 2)
                 return false;
             lang = locale.substring(0,2);
-            return lang == "he" || lang == "iw" || lang == "ar";
+            return lang === "he" || lang === "iw" || lang === "ar";
         },
         
         isArabicLocale: function(locale) {
