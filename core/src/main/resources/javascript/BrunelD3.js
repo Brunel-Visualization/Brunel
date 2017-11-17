@@ -219,14 +219,15 @@ var BrunelD3 = (function () {
             return pts;
         }
 
-        // Define a function for each category that extracts the rows and sorts them into x order
+        // Define a function for each category that extracts the rows
         // It returns a structure for use in the element containing sample row, key and path
         function f(category) {
             var d = data._rows.filter(function (d) {
                 return data._split(d) == category;
             });
             if (xFunction) d.sort(function (a, b) {
-                return xFunction(a) - xFunction(b)
+                // If tied for x, respect row order
+                return xFunction(a) - xFunction(b) || a.row - b.row;
             });
             return {'path': path(d), 'key': d[0].key, 'row': d[0].row, 'points': makePoints(path, d)}
         }

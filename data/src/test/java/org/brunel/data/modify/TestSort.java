@@ -52,6 +52,13 @@ public class TestSort {
 
     }
 
+    @Test
+    public void testRowOrderPreservedForTies() {
+        Dataset data = Dataset.make(CSV.read("A\n2\n2\n2\n3\n3\n3\n1\n1\n1\n4\n4\n4"));
+        Dataset sorted = data.sortRows("A");
+        assertEquals("A|#count|#row -- 4|1|10 -- 4|1|11 -- 4|1|12 -- 3|1|4 -- 3|1|5 -- 3|1|6 -- 2|1|1 -- 2|1|2 -- 2|1|3 -- 1|1|7 -- 1|1|8 -- 1|1|9", CannedData.dumpData(sorted));
+    }
+
 
     @Test
     public void testSortRanking() {
