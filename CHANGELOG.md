@@ -6,6 +6,9 @@ Various minor fixes
 
 # 2.5 Release Notes
 
+### Add "same" option on rectangular coordinates
+This option is the same as <code>aspect:1</code> except that it also ensures the axes span the same range. 
+
 ### "keepmissing" option on filters
 Filters can now take an additional parameter `keepmissing` that changes the default behavior for
 missing values in filters. When this parameter is specified, missing values are treated as if they

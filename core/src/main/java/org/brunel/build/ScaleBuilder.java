@@ -309,9 +309,25 @@ public class ScaleBuilder {
 
 	public void writeCoordinateScales() {
 		ChartCoordinates coordinates = structure.coordinates;
-		writePositionScale(ScalePurpose.x, coordinates.allXFields, getXRange(), elementsFillHorizontal(ScalePurpose.x), coordinates.xReversed);
+		Field[] xFields = coordinates.allXFields;
+		Field[] yFields = coordinates.allYFields;
+
+		// Look through our coordinate parameters and find if we want the X and Y scales to span the same content
+		boolean sameScales = false;
+		for (Param p : allCoordParams()) {
+			if (p.asString().equals("same")) sameScales = true;
+		}
+
+		if (sameScales) {
+			Field[] combined = Arrays.copyOf(xFields, xFields.length + yFields.length);
+			System.arraycopy(yFields, 0, combined, xFields.length, yFields.length);
+			xFields = combined;
+			yFields = combined;
+		}
+
+		writePositionScale(ScalePurpose.x, xFields, getXRange(), elementsFillHorizontal(ScalePurpose.x), coordinates.xReversed);
 		writePositionScale(ScalePurpose.inner, coordinates.allXClusterFields, "[-0.5, 0.5]", elementsFillHorizontal(ScalePurpose.inner), coordinates.xReversed);
-		writePositionScale(ScalePurpose.y, coordinates.allYFields, getYRange(), false, coordinates.yReversed);
+		writePositionScale(ScalePurpose.y, yFields, getYRange(), false, coordinates.yReversed);
 		writeScaleExtras();
 	}
 
@@ -456,17 +472,22 @@ public class ScaleBuilder {
 
 	private Double getAspect() {
 		//Find Param with "aspect" and return its value
-		for (VisElement e : elements) {
-			for (Param p : e.fCoords) {
-				if (p.asString().equals("aspect")) {
-					Param m = p.firstModifier();
-					//Use "square" for 1.0 aspect ratio
-					if (m.asString().equals("square")) return 1.0;
-					else return m.asDouble();
-				}
+		for (Param p : allCoordParams()) {
+			if (p.asString().equals("same")) return 1.0;
+			if (p.asString().equals("aspect")) {
+				Param m = p.firstModifier();
+				//Use "square" for 1.0 aspect ratio
+				if (m.asString().equals("square")) return 1.0;
+				else return m.asDouble();
 			}
 		}
 		return null;
+	}
+
+	private List<Param> allCoordParams() {
+		List<Param> all = new ArrayList<>();
+		for (VisElement e : elements) all.addAll(e.fCoords);
+		return all;
 	}
 
 	/**

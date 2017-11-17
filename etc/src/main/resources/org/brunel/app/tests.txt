@@ -123,6 +123,10 @@ colorScatter whiskey rating price Category / size(Category:[200%,100%,100%]) key
 - whiskey / bubble x(rating) bin(rating:20) sort(price) size(price) symbol(category) key(#row) + style('symbol:curved') data('raw:a,b;0,1;1,2;2,4;4,8;8,16;16,32;32,64') edge key(a,b) color(#row:nominal) label(#row)  :: pass
 - whiskey / map  key(country) + data('raw:a,b;Canada,France;France,India;India,Japan') edge key(a,b) style('symbol:curved') color(#row:nominal) label(#row)  :: pass
 - baseball / x('Top 5') y(age) top(age:5) + x('Top 6-10') y(age) top(age:6:10) + x('Bottom 6-10') y(age) bottom(age:6:10) axes(x, y) + x('Bottom 5') y(age) bottom(age:5) :: pass
+
+colorScatter cpi CLOTHING HEALTH Date / rectangular(same) :: pass :: note axes have same span
+colorScatter cpi CLOTHING HEALTH Date / rectangular(same, square) :: pass :: note chart has square inner
+
 #### Note
 
 baseball:   Age Weight Height BattingAvg OnBasePct HomeRunRate SlugRate RBIRate WalkRate
