@@ -124,8 +124,8 @@ colorScatter whiskey rating price Category / size(Category:[200%,100%,100%]) key
 - whiskey / map  key(country) + data('raw:a,b;Canada,France;France,India;India,Japan') edge key(a,b) style('symbol:curved') color(#row:nominal) label(#row)  :: pass
 - baseball / x('Top 5') y(age) top(age:5) + x('Top 6-10') y(age) top(age:6:10) + x('Bottom 6-10') y(age) bottom(age:6:10) axes(x, y) + x('Bottom 5') y(age) bottom(age:5) :: pass
 
-colorScatter cpi CLOTHING HEALTH Date / rectangular(same) :: pass :: note axes have same span
-colorScatter cpi CLOTHING HEALTH Date / rectangular(same, square) :: pass :: note chart has square inner
+colorScatter cpi CLOTHING HEALTH Date / rectangular(same) + guide(y:x):: pass :: note axes have same span
+colorScatter cpi CLOTHING HEALTH Date / rectangular(same, square) + guide(y:x) :: pass :: note chart has square inner
 
 #### Note
 
