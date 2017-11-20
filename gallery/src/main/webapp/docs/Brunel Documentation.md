@@ -228,7 +228,10 @@ In addition, `rectangular` and `transpose` support the `square` parameter which 
 space for the chart to be square. The chart is positioned at the upper left of any space allocated
 for it, with the space inside the axes guaranteed to be square. You can use a combination of setting `square`
 with `aspect` and setting the X and Y ranges explicitly. In case of conflict, the `square` and `aspect`
-settigns will be honored and the ranges will be expanded to suit the other settings.
+settings will be honored and the ranges will be expanded to suit the other settings.
+
+Instead of `aspect` you can specify the keyword `same` which ensures both axes are indentical in
+range
 
 Currently, polar is poorly supported; stacked polar bars (pie charts) work, and you can set the size
 on them to do a Rose Diagram (a pie chart with different radii for each wedge). Little else works.
@@ -483,7 +486,7 @@ on areas and polygons.
 
 <!-- examples -->
 
-    point x(state) y(density) size(density)
+    map + point map color(region) size(population:200%) symbol(region) key(state) legends(none)
 
     bar x(region) y(density) size(#count) mean(density) label(#count)
 
@@ -497,6 +500,35 @@ way of specifying size is most suited to a point element with a rectangle type.
 <!-- examples -->
 
     x(longitude) y(latitude) size(population, density) style('symbol:rect; size:300%')
+
+
+### Symbol
+This aesthetic is used only for point elements, and replaces the default circle with a glyph, drawn
+as a path. Brunel defines two sets of symbols, a **basic** and an **extended** set. Basic symbols are: `circle, square, triangle, diamond, cross, pentagon, star, hexagon`
+, and extended symbols include the basic symbols and `plus, alert, arrowup, arrowdown, chart, circleOutline, database, person, question, happy, neutral, sad, thumbup, thumbdown, lightbulb, flag, female, male, heart, pencil, info`
+.
+
+The basic set are the ones used if no parameters are specified in the aesthetic syntax. The extended
+ones are used only if specifically requested. The icons have been taken from the open source
+collection "Google Material Designs". Symbol names can also be used in the style syntax to apply
+across a whole element.
+
+The full syntax for `symbol` is: `symbol(field:[name1, name2,...]:uri)` When a set of names are
+given, then only the named symbols are used in the symbol mapping, with the given order. If the URI
+is given, then the given URI should contain an SVG file containing a list of valid SVG `symbol`
+definitions, each with a unique ID. If the IDs all have an identical prefix or suffix, those are
+stripped. Here are some examples of symbols; also included is the URL of a set of test symbols
+
+<!-- examples -->
+
+    point x(state) y(density) size(population:300%) symbol(density)
+
+    bubble x(region) symbol(presidential_choice:[heart, flag]) label(abbr)
+
+    x(region) y(girls_name) size(#count) style('symbol:female') + x(region) y(boys_name) size(#count)
+    style('symbol:male')
+
+    x(summer) y(winter) symbol(region:'http://brunelvis.org/test/testsym.svg')
 
 
 ### CSS
@@ -607,11 +639,15 @@ a field and a number as parameters, with the default field being the Y field, or
 if no Y field exists, and the default number being 10. The data is then filtered to show only the
 desired top, bottom, inner or outer values for that number of items.
 
+If two parameters are passed to `top` or `bottom` then the first is the rank of the item to start
+with, and the second is the rank to finish with. This means that `top(field:5)` is the same as
+`top(field:1:5)` and bottom(field:33) is the same as bottom(field:1:33).
+
 <!-- examples -->
 
     stack top(population:5) label(state, " (", population, ")") color(population) legends(none)
 
-    stack bottom(population:5) label(state, " (", population, ")") color(population) legends(none)
+    stack bottom(population:5:10) label(state, " (", population, ")") color(population) legends(none)
 
     bar x(region) yrange(income) range(income) inner(income:10) + text x(region) y(income)
     outer(income:10) label(abbr)
@@ -1025,6 +1061,21 @@ both the number of list items produced and the number of characters to show in t
 
     treemap size(population) color(region) label(state:40) list(state:5) sum(population) tooltip(state)
 
+When items are small, tooltips can be hard to get for items as you need to be directly over the
+item. To help with there is an optional `snap` parameter that can be added to the tooltip and makes
+tooltips work when the mouse is within a given distance of the item, rather than just directly on
+top of the item. If _any_ of the tooltip options have a snap option, snap will be applied to the
+entire tooltip. Snap has a small fixed distance at which it takes effect, but an optional numeric
+parameter allows you to define that distance in pixels.
+
+<!-- examples -->
+
+    treemap label(state:3) tooltip(#all:snap) color(violent_crimes) size(population)
+    sort(population:ascending)
+
+    treemap size(population) color(region) label(state:50) list(state) sum(population)
+    tooltip(state:snap:100)
+
 
 
 Titles, Guides and Style
@@ -1185,21 +1236,14 @@ you to change where a label is located relative to the shape. The valid values a
     line x(state) y(summer) style('stroke:red') + line x(state) y(winter) style('stroke:blue')
 
 
-### Point Symbol Style
-If the "symbol" style is set for an element and that element is shown as a point, the requested
-symbol will be drawn instead of a circle. Valid symbols are all d3 symbols ( `circle`, `cross`, `diamond`
-, `square`, `Wye`, `triangle`) together with the following brunel extensions:
+### Limited gradient support
+Brunel defines four gradients which can be used in style statements. A typical use might be: `style('fill:url(#_gradient_radial_red);stroke:none')`
 
-`star-N` request an 'N' pointed star (N is a number > = 3). `star` defaults to a 5-pointed star.
+The four gradients are `_gradient_linear_blue`, `_gradient_linear_red`, `_gradient_radial_blue`,
+`_gradient_radial_red`. As you might guess form the names, two are linear and two are radial. The
+colors have been chosen to match the first two default brunel element colors.
 
-`poly-N` request an 'N' sided polygon (N is a number > = 3). `poly` defaults to a pentagram.
-
-`person` request an outline of a person as a symbol
-
-<!-- examples -->
-
-    data("sample:US States.csv") x(summer) y(winter) style("symbol:person") size(population:1000%)
-    label(abbr) style("label-location:center")
+Note that use of gradient styles overrides any color or opacity aesthetic on the element.
 
 
 ### Group Hierarchy for CSS
@@ -1321,8 +1365,9 @@ The `item` contains a set of fields used to define the target of the event. They
 
  * **row** -- A row of the processed table that was used to make this element. For a simple chart such as
 a scatterplot, that is the same as the row in the original data passed in. For an aggregated table,
-or for the data froma diagram like a treemap or chord chart, it might not be so. It is also possible
-for this to be null, if a non-data item was selected (such as an interior node in a bubble chart).
+or for the data from a diagram like a treemap or chord chart, it might not be so. It is also
+possible for this to be null, if a non-data item was selected (such as an interior node in a bubble
+chart).
  * **key** -- Most elements define a key. This is a value or set of values that identifies the data items
 as being the same for the purposes of updates (including filters and animation). It can be a useful
 name for the item, or a debugging hint.
