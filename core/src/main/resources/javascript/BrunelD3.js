@@ -1762,9 +1762,10 @@ var BrunelD3 = (function () {
     }
 
     function facet(chart, parentElement, time) {
-        parentElement.selection().each(function (d, i) {
-            if (d.row == null) return;
-            var value = parentElement.data().field("#row").value(d.row);
+        parentElement.selection().each(function (d) {
+            var row = d.row >=0 ? d.row : (d.data ? d.data.row : null);
+            if (row == null) return;
+            var value = parentElement.data().field("#row").value(row);
             var items = value.items ? value.items : [value];          // If just a single row, make it into an array
             var c = chart(this, items.map(function (v) {
                 return v - 1

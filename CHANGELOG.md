@@ -3,9 +3,6 @@
 ### Defect fixes for labels, axes and spacing
 Various minor fixes
 
-
-# 2.5 Release Notes
-
 ### Add "same" option on rectangular coordinates
 This option is the same as <code>aspect:1</code> except that it also ensures the axes span the same range. 
 
