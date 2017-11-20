@@ -985,7 +985,7 @@ var BrunelD3 = (function () {
             pt = svg.createSVGPoint();                                          // For matrix calculations
 
 
-        d3Target.on('mousemove', function (d) {
+        var showTooltipForItem = function (d) {
             if (!d) return;
             if (d.data && d.data.row != undefined) d = d.data;       // Complex structures embed the data a level
 
@@ -1045,12 +1045,45 @@ var BrunelD3 = (function () {
 
             tooltip.style.left = (p.x - tooltip.offsetWidth / 2) + 'px';    // Set to be centered on target
             tooltip.style.top = top + 'px';   // locate relative to the div center notch
-        });
+        };
 
-        d3Target.on('mouseout', function () {
+        var hideTooltip = function () {
             if (tooltip) tooltip.style.visibility = 'hidden';
-        });   // hide it
+        };
 
+        function installStandardTooltip() {
+            d3Target.on('mousemove', showTooltipForItem);
+            d3Target.on('mouseout', hideTooltip);   // hide it
+        }
+
+        /**
+         * Install a tooltip that snaps to the given distance
+         * @param chart the D3 selection for the chart that contains this
+         * @param distance the distance to snap to
+         */
+        function installSnap(chart, distance) {
+            d3Target.on('mousemove', showTooltipForItem);               // Show tooltip when directly over item
+
+            // Add handlers to the overlay for when the mouse is not directly over an item
+            chart.select('rect.overlay')
+                .on('mousemove.tooltip_snap', function() {
+                    var c = closestItem(d3Target, 'xy', distance );
+                    if (c.item)
+                        showTooltipForItem.call(c.target, c.item);
+                    else
+                        hideTooltip();
+                })
+                .on('mouseout.tooltip_snap', function() {
+                    hideTooltip();
+                });
+        }
+
+        return {
+            install: installStandardTooltip,
+            installSnap: installSnap,
+            showFor: showTooltipForItem,
+            hide: hideTooltip
+        }
 
     }
 

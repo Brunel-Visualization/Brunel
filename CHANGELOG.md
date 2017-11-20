@@ -9,6 +9,17 @@ Various minor fixes
 ### Add "same" option on rectangular coordinates
 This option is the same as <code>aspect:1</code> except that it also ensures the axes span the same range. 
 
+### "snap" option on tooltips
+When items are small, tooltips can be hard to get for items as you need to be directly over the item. To help
+with this we have extended the snap option to work for tooltips also. The syntax is:
+ 
+    tooltip(#all:snap)
+    tooltip(a:snap:50, b, c)
+    
+If *any* of the tooltip options have a snap option, snap will be applied to the entire tooltip. Snap has a small
+fixed distance at which it takes effect, but an optional numeric parameter allows you to define that 
+distance in pixels. 
+
 ### "keepmissing" option on filters
 Filters can now take an additional parameter `keepmissing` that changes the default behavior for
 missing values in filters. When this parameter is specified, missing values are treated as if they

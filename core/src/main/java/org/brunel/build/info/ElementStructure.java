@@ -16,6 +16,7 @@
 
 package org.brunel.build.info;
 
+import org.brunel.action.Param;
 import org.brunel.build.data.TransformedData;
 import org.brunel.build.diagrams.D3Diagram;
 import org.brunel.build.element.ElementDetails;
@@ -100,6 +101,20 @@ public class ElementStructure {
 
 	public boolean needsTooltips() {
 		return !vis.itemsTooltip.isEmpty();
+	}
+
+	/**
+	 * Return the distance at which we want snap for tooltips to operate.
+	 * @return a distance in pixels, with <= 0 meaning no snap is required.
+	 */
+	public int tooltipSnapDistance() {
+		for (Param param : vis.itemsTooltip) {
+			if ("snap".equals(param.firstTextModifier())) {
+				Double d = param.firstNumericModifier();
+				return d == null ? 20 : d.intValue();
+			}
+		}
+		return 0;
 	}
 
 	// Returns the element we depend on
