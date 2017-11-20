@@ -75,7 +75,7 @@ public class SymbolHandler {
 		}
 	}
 
-	/**
+	/*
 	 * Call this to write symbol definitions into the defs element of the SVG
 	 */
 	public void addDefinitions(ScriptWriter out) {

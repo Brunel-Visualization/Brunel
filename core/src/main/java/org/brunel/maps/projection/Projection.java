@@ -64,6 +64,8 @@ public abstract class Projection {
 
     /**
      * Rough estimate of the area of a small rectangle at the given location, when projected
+     * @param p point to estimate at
+     * @return calcuated area
      */
     public double getTissotArea(Point p) {
         double h = 5e-4;            // About 50m at the equator

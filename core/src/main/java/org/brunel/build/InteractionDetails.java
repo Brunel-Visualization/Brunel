@@ -72,7 +72,7 @@ public class InteractionDetails {
 
 	}
 
-	/**
+	/*
 	 * This attaches event handlers to the element for click-selection
 	 */
 	public void addHandlers(ElementStructure structure, ScriptWriter out) {
@@ -188,6 +188,7 @@ public class InteractionDetails {
 	 * Set up the overlay group and shapes for trapping events for zooming.
 	 *
 	 * @param diagram the diagram the chart uses
+	 * @param out where to write to
 	 */
 	public void addOverlayForZoom(VisTypes.Diagram diagram, ScriptWriter out) {
 		// The group for the overlay
@@ -226,6 +227,7 @@ public class InteractionDetails {
 
 	/**
 	 * Set up the overlay group and shapes for trapping events for zooming.
+	 * @param out where to write to
 	 */
 	public void addZoomFunctionality(ScriptWriter out) {
 
@@ -276,6 +278,7 @@ public class InteractionDetails {
 	/**
 	 * We will always write the zoom function in, as it can be used even if the user did not request
 	 * it to be on available interactively. This way it can be called by API.
+	 * @param out where to write to
 	 */
 	public void defineChartZoomFunction(ScriptWriter out) {
 		out.onNewLine().add("zoom: function(params, time) {").indentMore().indentMore().onNewLine()

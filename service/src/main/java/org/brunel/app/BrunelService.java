@@ -16,6 +16,7 @@
 
 package org.brunel.app;
 
+import com.google.gson.Gson;
 import org.brunel.action.Action;
 import org.brunel.build.VisualizationBuilder;
 import org.brunel.build.util.ContentReader;
@@ -25,8 +26,6 @@ import org.brunel.match.BestMatch;
 import org.brunel.util.BrunelD3Result;
 import org.brunel.util.D3Integration;
 import org.brunel.util.WebDisplay;
-
-import com.google.gson.Gson;
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.Consumes;
@@ -66,204 +65,199 @@ public class BrunelService extends Application {
 			"<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css'>\n" +
 			"<script src='//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js' charset='utf-8'></script>\n" +
 			"<script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js'></script>\n" +
-			"<div class='alert alert-danger'>\n"+
+			"<div class='alert alert-danger'>\n" +
 			"<strong>Error!</strong> %s\n" +
 			"</div>";
 
-    /**
-     * Generates all JS/CSS using D3 to produce a visualization.  The data can be on the payload or it can be specified using
-     * the Brunel data() function.
-     * @param data   the data to use for the visualization (as URL or cache identifier)
-     * @param brunelSrc the Brunel syntax defining the visualization
-     * @param width the desired width of the resulting visualization
-     * @param height the desired height of the resulting visualization
-     * @param visId an identifier to use for the d3 JS to reference the HTML tag containing the visualization on the web page (usually an SVG tag).
-     * @param controlsId an identifier to use for HTML tag that will contain the interactive controls.
-     *          If null, then resulting JS will not contain code for the vis controls and the client is responsible for creating any UIs for vis controls using the returned JSON.
-     * @param prefix (optional) The prefix used to uniquely identify data for a given user session when adding data to the cache.
-     * @return a JSON object containing the css, js, and an object describing interactive controls that require a separate UI
-     */
-    @POST
-    @Path("d3")
-    @Consumes(MediaType.TEXT_PLAIN)        //A CSV file is the payload
-    @Produces(MediaType.APPLICATION_JSON)  //JSON object with "js" and "css" entries
-    public Response createAsD3(String data, @QueryParam("src") String brunelSrc,
-                               @QueryParam("width") int width,
-                               @QueryParam("height") int height,
-                               @QueryParam("visid") String visId,
-                               @QueryParam("controlsid") String controlsId,
-                               @QueryParam("data_prefix") String prefix
-                               ) {
+	/**
+	 * Generates all JS/CSS using D3 to produce a visualization.  The data can be on the payload or it can be specified using
+	 * the Brunel data() function.
+	 *
+	 * @param data       the data to use for the visualization (as URL or cache identifier)
+	 * @param brunelSrc  the Brunel syntax defining the visualization
+	 * @param width      the desired width of the resulting visualization
+	 * @param height     the desired height of the resulting visualization
+	 * @param visId      an identifier to use for the d3 JS to reference the HTML tag containing the visualization on the web page (usually an SVG tag).
+	 * @param controlsId an identifier to use for HTML tag that will contain the interactive controls.
+	 *                   If null, then resulting JS will not contain code for the vis controls and the client is responsible for creating any UIs for vis controls using the returned JSON.
+	 * @param prefix     (optional) The prefix used to uniquely identify data for a given user session when adding data to the cache.
+	 * @return a JSON object containing the css, js, and an object describing interactive controls that require a separate UI
+	 */
+	@POST
+	@Path("d3")
+	@Consumes(MediaType.TEXT_PLAIN)        //A CSV file is the payload
+	@Produces(MediaType.APPLICATION_JSON)  //JSON object with "js" and "css" entries
+	public Response createAsD3(String data, @QueryParam("src") String brunelSrc,
+							   @QueryParam("width") int width,
+							   @QueryParam("height") int height,
+							   @QueryParam("visid") String visId,
+							   @QueryParam("controlsid") String controlsId,
+							   @QueryParam("data_prefix") String prefix
+	) {
 
-    	try {
-    		if (prefix != null) brunelSrc = D3Integration.prefixAllDataStatements(brunelSrc, prefix);
-    		BrunelD3Result result = D3Integration.createBrunelResult(data, brunelSrc, width, height, visId, controlsId);
-    		return Response.ok(result).header("Access-Control-Allow-Origin", "*").build();
-    	}
-    	catch (Exception ex) {
-    		ex.printStackTrace();
-    		throw makeException(ex.getMessage(), ex, Status.BAD_REQUEST.getStatusCode(), false);
-    	}
-    }
+		try {
+			if (prefix != null) brunelSrc = D3Integration.prefixAllDataStatements(brunelSrc, prefix);
+			BrunelD3Result result = D3Integration.createBrunelResult(data, brunelSrc, width, height, visId, controlsId);
+			return Response.ok(result).header("Access-Control-Allow-Origin", "*").build();
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			throw makeException(ex.getMessage(), ex, Status.BAD_REQUEST.getStatusCode(), false);
+		}
+	}
 
-    /**
-     * Creates a full HTML page suitable for use within an HTML IFrame.
-     * @param brunelSrc the Brunel syntax defining the visualization
-     * @param brunelUrl (optional) a URL to a file containing the Brunel syntax
-     * @param width the desired width of the resulting visualization
-     * @param height the desired height of the resulting visualization
-     * @param title (optional) title to include with the visualization
-     * @param description (optional) description to include with the visualization
-     * @param dataUrl a URL pointing to the CSV to use for the visualization's data.  Note if the Brunel contains a data()
-     *  function, then this will be used instead
-     * @param filesLoc (optional) an alternate location for the main Brunel javascript
-     * @param prefix (optional) The prefix used to uniquely identify data for a given user session when adding data to the cache.
-     * @return a full HTML page with all JS/CSS and interactive controls for a given visualization.
-     */
-    @GET
-    @Path("d3")
-    @Produces(MediaType.TEXT_HTML)
-    public Response createAsD3Html(@QueryParam("brunel_src") String brunelSrc,
-    							 @QueryParam("brunel_url") String brunelUrl,
-                                 @QueryParam("width") int width,
-                                 @QueryParam("height") int height,
-                                 @QueryParam("title") String title,
-                                 @QueryParam("description") String description,
-                                 @QueryParam("show_brunel") String showBrunel,
-                                 @QueryParam("data") String dataUrl,
-                                 @QueryParam("files") String filesLoc,
-                                 @QueryParam("data_prefix") String prefix
-    ) {
+	/**
+	 * Creates a full HTML page suitable for use within an HTML IFrame.
+	 *
+	 * @param brunelSrc   the Brunel syntax defining the visualization
+	 * @param brunelUrl   (optional) a URL to a file containing the Brunel syntax
+	 * @param showBrunel  if true, show the brunel command
+	 * @param width       the desired width of the resulting visualization
+	 * @param height      the desired height of the resulting visualization
+	 * @param title       (optional) title to include with the visualization
+	 * @param description (optional) description to include with the visualization
+	 * @param dataUrl     a URL pointing to the CSV to use for the visualization's data.  Note if the Brunel contains a data()
+	 *                    function, then this will be used instead
+	 * @param filesLoc    (optional) an alternate location for the main Brunel javascript
+	 * @param prefix      (optional) The prefix used to uniquely identify data for a given user session when adding data to the cache.
+	 * @return a full HTML page with all JS/CSS and interactive controls for a given visualization.
+	 */
+	@GET
+	@Path("d3")
+	@Produces(MediaType.TEXT_HTML)
+	public Response createAsD3Html(@QueryParam("brunel_src") String brunelSrc,
+								   @QueryParam("brunel_url") String brunelUrl,
+								   @QueryParam("width") int width,
+								   @QueryParam("height") int height,
+								   @QueryParam("title") String title,
+								   @QueryParam("description") String description,
+								   @QueryParam("show_brunel") String showBrunel,
+								   @QueryParam("data") String dataUrl,
+								   @QueryParam("files") String filesLoc,
+								   @QueryParam("data_prefix") String prefix
+	) {
 
-    	try {
+		try {
 
-    		if (title == null) title = "";
-    		if (description == null) description = "";
-    		String brunelStr = new Boolean(showBrunel) ? brunelSrc : "";
-    		if (prefix != null && brunelSrc != null) brunelSrc = D3Integration.prefixAllDataStatements(brunelSrc, prefix);
+			if (title == null) title = "";
+			if (description == null) description = "";
+			String brunelStr = new Boolean(showBrunel) ? brunelSrc : "";
+			if (prefix != null && brunelSrc != null)
+				brunelSrc = D3Integration.prefixAllDataStatements(brunelSrc, prefix);
 
+			String[] titles = new String[]{title, description};
+			String src = brunelSrc != null ? brunelSrc : ContentReader.readContentFromUrl(URI.create(brunelUrl));
+			VisualizationBuilder builder = D3Integration.makeD3(readBrunelData(dataUrl, true), src, width, height, "visualization", "controls");
+			String response = WebDisplay.writeHtml(builder, width, height, brunelStr, titles);
+			return Response.ok(response).header("Access-Control-Allow-Origin", "*").build();
+		} catch (IOException ex) {
+			throw makeException("Could not read brunel from: " + brunelUrl, ex, Status.BAD_REQUEST.getStatusCode(), true);
+		} catch (Exception ex) {
+			throw makeException(ex.getMessage(), ex, Status.BAD_REQUEST.getStatusCode(), true);
 
-    		String[] titles = new String[] {title, description};
-	    	String src = brunelSrc != null ? brunelSrc : ContentReader.readContentFromUrl(URI.create(brunelUrl));
-	        VisualizationBuilder builder = D3Integration.makeD3(readBrunelData(dataUrl, true), src, width, height, "visualization", "controls");
-	        String response = WebDisplay.writeHtml(builder, width, height, brunelStr, titles);
-    		return Response.ok(response).header("Access-Control-Allow-Origin", "*").build();
-    	}
-    	catch (IOException ex) {
-    		 throw makeException("Could not read brunel from: " + brunelUrl, ex, Status.BAD_REQUEST.getStatusCode(), true);
-    	}
-    	catch (Exception ex) {
-   		 	 throw makeException(ex.getMessage(), ex, Status.BAD_REQUEST.getStatusCode(), true);
+		}
 
-    	}
-
-    }
-
+	}
 
 	/**
 	 * Service that creates new Brunel syntax to use a given visualization with new data.
+	 *
 	 * @param originalData the original data (as URL or cache identifier)
-	 * @param newData the new data (as URL or cache identifier)
-	 * @param brunelSrc the Brunel syntax that produced the original visualization
+	 * @param newData      the new data (as URL or cache identifier)
+	 * @param brunelSrc    the Brunel syntax that produced the original visualization
 	 * @return Brunel syntax using the new data
 	 */
-    @GET
-    @Path("match")
-    @Produces(MediaType.TEXT_PLAIN)
+	@GET
+	@Path("match")
+	@Produces(MediaType.TEXT_PLAIN)
 
-    public String actionFromExisting(@QueryParam("original_data") String originalData,
-                                     @QueryParam("new_data") String newData,
-                                     @QueryParam("src") String brunelSrc) {
-        try {
-        	if (originalData != null) {
-	            Dataset origDS = DataCache.get(originalData);
-	            Dataset newDS = DataCache.get(newData);
-	            return BestMatch.match(origDS, newDS, Action.parse(brunelSrc)).toString();
-        	}
-        	else {
-        		return BestMatch.match(brunelSrc, newData).toString();
-        	}
-        } catch (IOException e) {
-            // You would have to be really unlucky to get this -- the cache would have to be flushed and then the
-            // the remote file fail to be read.
-            throw makeException("Could not read data for match: " + e.getMessage(), e, Status.BAD_REQUEST.getStatusCode(), false);
-        }
+	public String actionFromExisting(@QueryParam("original_data") String originalData,
+									 @QueryParam("new_data") String newData,
+									 @QueryParam("src") String brunelSrc) {
+		try {
+			if (originalData != null) {
+				Dataset origDS = DataCache.get(originalData);
+				Dataset newDS = DataCache.get(newData);
+				return BestMatch.match(origDS, newDS, Action.parse(brunelSrc)).toString();
+			} else {
+				return BestMatch.match(brunelSrc, newData).toString();
+			}
+		} catch (IOException e) {
+			// You would have to be really unlucky to get this -- the cache would have to be flushed and then the
+			// the remote file fail to be read.
+			throw makeException("Could not read data for match: " + e.getMessage(), e, Status.BAD_REQUEST.getStatusCode(), false);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw makeException("Error matching to new data: " + e.getMessage(), e, Status.BAD_REQUEST.getStatusCode(), false);
 
-        catch (Exception e) {
-        	e.printStackTrace();
-            throw makeException("Error matching to new data: " + e.getMessage(), e,  Status.BAD_REQUEST.getStatusCode(), false);
+		}
+	}
 
-        }
-    }
+	/**
+	 * Get all dataset names in a given Brunel statement.
+	 *
+	 * @param brunel the Brunel
+	 * @return a JSON Array containing the names within the data() statements in order.
+	 */
+	@GET
+	@Path("data_names")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getDatasetNames(@QueryParam("brunel_src") String brunel) {
+		try {
+			String[] names = D3Integration.getDatasetNames(brunel);
+			return Response.ok(gson.toJsonTree(names)).header("Access-Control-Allow-Origin", "*").build();
+		} catch (Exception ex) {
+			throw makeException(ex.getMessage(), ex, Status.BAD_REQUEST.getStatusCode(), false);
+		}
+	}
 
-    /**
-     * Get all dataset names in a given Brunel statement.
-     * @param brunel the Brunel
-     * @return a JSON Array containing the names within the data() statements in order.
-     */
-    @GET
-    @Path("data_names")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getDatasetNames(@QueryParam("brunel_src") String brunel) {
-    	try {
-	    	String[] names = D3Integration.getDatasetNames(brunel);
-	        return Response.ok(gson.toJsonTree(names)).header("Access-Control-Allow-Origin", "*").build();
-    	}
-    	catch (Exception ex) {
-  		 	 throw makeException(ex.getMessage(), ex, Status.BAD_REQUEST.getStatusCode(), false);
-    	}
-    }
+	/**
+	 * Caches CSV data which is then used by Brunel data() statements.
+	 *
+	 * @param csv     the CSV to cache
+	 * @param dataKey the name of the dataset as it will be referred to within the data() statement
+	 * @param prefix  (optional) a prefix to allow the name of the dataset to be unique for a given user session
+	 * @return the response
+	 */
+	@POST
+	@Path("cache")
+	@Consumes(MediaType.TEXT_PLAIN)
+	public Response cacheData(String csv, @QueryParam("data_key") String dataKey, @QueryParam("prefix") String prefix) {
 
-    /**
-     * Caches CSV data which is then used by Brunel data() statements.
-     * @param csv the CSV to cache
-     * @param dataKey the name of the dataset as it will be referred to within the data() statement
-     * @param prefix (optional) a prefix to allow the name of the dataset to be unique for a given user session
-     */
-    @POST
-    @Path("cache")
-    @Consumes(MediaType.TEXT_PLAIN)
-    public Response cacheData(String csv, @QueryParam("data_key") String dataKey, @QueryParam("prefix") String prefix ) {
+		String key = prefix != null ? prefix + dataKey : dataKey;
+		try {
+			D3Integration.cacheData(key, csv);
+			return Response.ok().header("Access-Control-Allow-Origin", "*").build();
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			throw makeException(ex.getMessage(), ex, Status.BAD_REQUEST.getStatusCode(), false);
+		}
+	}
 
-    	String key = prefix != null ? prefix + dataKey : dataKey;
-    	try {
-	    	D3Integration.cacheData(key, csv);
-	    	return Response.ok().header("Access-Control-Allow-Origin", "*").build();
-    	}
-    	catch (Exception ex) {
-    		 ex.printStackTrace();
-  		 	 throw makeException(ex.getMessage(), ex, Status.BAD_REQUEST.getStatusCode(), false);
-    	}
-    }
+	//Get a Dataset instance given a URL.  The content will be loaded if not present in the cache.
+	private Dataset readBrunelData(String url, boolean formattedError) {
+		try {
+			return DataCache.get(url);
+		} catch (Exception e) {
+			throw makeException("Could not read data as CSV from: " + url, e, Status.BAD_REQUEST.getStatusCode(), formattedError);
+		}
+	}
 
+	//Simple web exception handling.  A bootstrap HTML formatted message is returned for <iframe> requests.
+	private WebApplicationException makeException(String message, Exception thrown, int code, boolean formatted) {
 
-    //Get a Dataset instance given a URL.  The content will be loaded if not present in the cache.
-    private Dataset readBrunelData(String url, boolean formattedError) {
-        try {
-            return DataCache.get(url);
-        } catch (Exception e) {
-            throw makeException("Could not read data as CSV from: " + url, e, Status.BAD_REQUEST.getStatusCode(), formattedError);
-        }
-    }
+		String separator = formatted ? "<P><P>" : "\n";
+		message += D3Integration.buildExceptionMessage(thrown, message, separator);
 
+		String t = MediaType.TEXT_PLAIN;
+		if (formatted) {
+			t = MediaType.TEXT_HTML;
+			message = String.format(ERROR_TEMPLATE, message);
+		}
 
-    //Simple web exception handling.  A bootstrap HTML formatted message is returned for <iframe> requests.
-    private WebApplicationException makeException(String message, Exception thrown, int code, boolean formatted) {
-
-    	String separator =  formatted ? "<P><P>": "\n";
-    	message += D3Integration.buildExceptionMessage(thrown, message, separator);
-
-    	String t = MediaType.TEXT_PLAIN;
-    	if (formatted) {
-    		t = MediaType.TEXT_HTML;
-    		message = String.format(ERROR_TEMPLATE, message);
-    	}
-
-    	ResponseBuilder rb = Response.status(Status.fromStatusCode(code)).header("Access-Control-Allow-Origin", "*").
-                        entity(message).type(t);
+		ResponseBuilder rb = Response.status(Status.fromStatusCode(code)).header("Access-Control-Allow-Origin", "*").
+				entity(message).type(t);
 
 		return new WebApplicationException(rb.build());
 	}
-
 
 }

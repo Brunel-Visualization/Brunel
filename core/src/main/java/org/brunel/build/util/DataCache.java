@@ -61,6 +61,7 @@ public class DataCache {
 	/**
 	 * This method will return the value in the cache if it exists, and if not, it will read the data
 	 *
+	 * @throws IOException access error
 	 * @param dataKey the location to read from
 	 * @return the built data set
 	 */

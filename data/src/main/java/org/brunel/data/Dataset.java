@@ -178,7 +178,7 @@ public class Dataset extends Informative implements Serializable {
 		return isSummarized() ? this : Transform.transform(this, command);
 	}
 
-	/**
+	/*
 	 * Remove the special fields form this data set -- useful when serializing
 	 */
 	public Dataset removeSpecialFields() {

@@ -99,7 +99,7 @@ public class Geom {
         return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
     }
 
-    /**
+    /*
      * This calculates the perpendicular distance from a point to a line segment.
      * If there is no such distance (the perpendicular line does not intersect the segment)
      * then MAX_VALUE is returned.

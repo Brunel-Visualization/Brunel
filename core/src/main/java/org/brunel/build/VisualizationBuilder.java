@@ -58,13 +58,16 @@ public class VisualizationBuilder {
 
 	/**
 	 * Return the required builder with default options
+	 * @return builder
 	 */
 	public static VisualizationBuilder make() {
 		return make(new BuilderOptions());
 	}
 
 	/**
-	 * Return the required builder with the stated options
+	 * Return the required builder with requested options
+	 * @param options options to use
+	 * @return builder
 	 */
 	public static VisualizationBuilder make(BuilderOptions options) {
 		return new VisualizationBuilder(options);

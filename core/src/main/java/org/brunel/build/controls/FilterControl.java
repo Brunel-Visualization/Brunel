@@ -36,8 +36,9 @@ public class FilterControl {
 	/**
 	 * Given a field, make the information for a valid filter for it
 	 *
-	 * @param data      base data to filter
-	 * @param parameter contains the field and modifiers on how to use it
+	 * @param data         base data to filter
+	 * @param parameter    contains the field and modifiers on how to use it
+	 * @param datasetIndex index of the data set to use
 	 * @return built Filter description
 	 */
 	public static FilterControl makeForFilterField(Dataset data, int datasetIndex, Param parameter) {

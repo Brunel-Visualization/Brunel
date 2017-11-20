@@ -42,8 +42,10 @@ public class GeoMapping {
      * Creates a mapping definition based on a polygonal regions to display
      * @param polygon usually a convex hull for the space to show
      * @param required any files that must be used
-     * @param geoAnalysis gloabl information on features
-     * @return a mappig structure, or null if no files could be found that matched up
+     * @param geoAnalysis global information on features
+     * @param quality name of the quality of the geo file
+     * @param geoInfo base info
+     * @return a mapping structure, or null if no files could be found that matched up
      */
     public static GeoMapping createGeoMapping(Poly polygon, List<GeoFile> required, GeoData geoAnalysis, String quality, GeoInformation geoInfo) {
         HashSet<Object> unmatched = new HashSet<>();
@@ -135,11 +137,11 @@ public class GeoMapping {
     public Map<Object, int[]> getFeatureMap() {
         return featureMap;
     }
-    
+
     public GeoInformation getGeoInformation() {
     	return geoInformation;
     }
-    
+
 
     public String[] getFiles() {
         String[] strings = new String[files.length];

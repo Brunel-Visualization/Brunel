@@ -105,7 +105,7 @@ public class ElementStructure {
 
 	/**
 	 * Return the distance at which we want snap for tooltips to operate.
-	 * @return a distance in pixels, with <= 0 meaning no snap is required.
+	 * @return a distance in pixels, with &lt;= 0 meaning no snap is required.
 	 */
 	public int tooltipSnapDistance() {
 		for (Param param : vis.itemsTooltip) {

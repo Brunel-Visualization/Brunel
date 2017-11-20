@@ -48,6 +48,7 @@ public class D3Integration {
 	 * @param width the desired width for the visualization
 	 * @param height the desired height for the visualization
 	 * @param visId an identifier used in the SVG tag that will contain the visualization
+	 * @param controlsId an identifier for the controls
 	 * @return a String that is JSON containing the Brunel JS, CSS and interactive control metadata.
 	 */
 
@@ -85,7 +86,7 @@ public class D3Integration {
     	DataCache.store(dataKey, makeBrunelData(csv));
     }
 
-    /**
+    /*
      * Get all dataset names from data() statements that are supplied in the given brunel.
      * @param brunel the brunel syntax
      */
@@ -122,6 +123,7 @@ public class D3Integration {
 	 * @param width the desired width for the visualization
 	 * @param height the desired height for the visualization
 	 * @param visId an identifier used in the SVG tag that will contain the visualization
+	 * @param controlsId an identifier for the controls
 	 * @return a Gson serializable object containing the Brunel JS, CSS and interactive control metadata.
 	 */
 

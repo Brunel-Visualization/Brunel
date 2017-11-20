@@ -221,7 +221,7 @@ public class VisElement extends VisItem implements Cloneable {
 		return this;
 	}
 
-	/**
+	/*
 	 * Defines guides for the current item
 	 *
 	 * @param params guide definitions

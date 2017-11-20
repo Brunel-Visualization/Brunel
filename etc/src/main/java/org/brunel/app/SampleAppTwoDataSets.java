@@ -36,7 +36,7 @@ public class SampleAppTwoDataSets {
 
 	private static final SimpleCache cache = new SimpleCache();
 
-	/**
+	/*
 	 * A very simple sample program which shows how to run brunel on data you already have in memory,
 	 * using two data sets, one for nodes and one for links
 	 */

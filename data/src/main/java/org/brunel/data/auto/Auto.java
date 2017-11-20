@@ -40,6 +40,7 @@ public class Auto {
 	 * @param padFraction          amount to pad the raw range by (upper and lower values)
 	 * @param includeZeroTolerance include zero if it does not make "white space" more than this fraction
 	 * @param desiredTickCount     number of ticks it would be nice to get (&lt;= 0 for auto)
+	 * @param forBinning           if true, this is for binning
 	 * @return the info on the scale
 	 */
 	public static NumericScale makeNumericScale(NumericExtentDetail extentDetail, boolean nice, double[] padFraction, double includeZeroTolerance, int desiredTickCount, boolean forBinning) {

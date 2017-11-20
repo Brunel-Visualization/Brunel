@@ -27,7 +27,7 @@ if (brunelServer == null) brunelServer = "http://locahost:8080/brunel-service"
 
 def distName = 'brunel-all'
 
-version = '2.4'
+version = '2.5'
 
 configure([project(":data"), project(":core"), project(":etc"), project(":service")]) {
     apply plugin: 'java'
@@ -37,7 +37,7 @@ configure([project(":data"), project(":core"), project(":etc"), project(":servic
     compileJava.options.encoding = 'UTF-8'
     compileTestJava.options.encoding = 'UTF-8'
 
-    version = '2.4'
+    version = '2.5'
 
     repositories {
         mavenCentral()
@@ -144,7 +144,7 @@ task makePythonJS (type: Copy, dependsOn: [makeMinified, makeMinifiedControls, m
 task createOutputDir(dependsOn: [makeMinified, makeMinifiedControls, makeCSS, brunelJavadoc]) {
 
     copy {
-        from project(':core').file('etc/geo files 2.4.zip')
+        from project(':core').file('etc/geo files 2.5.zip')
         into 'out'
     }
 
