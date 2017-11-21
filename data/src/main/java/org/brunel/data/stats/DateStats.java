@@ -23,6 +23,8 @@ import org.brunel.data.util.DateUnit;
 public class DateStats {
 
     public static void populate(Field f) {
+        if (f.min() == null) return;        // Nope!
+
         // If we have a degenerate date range, choose units assuming the min is 0
         double days = f.max() - f.min();
         if (days == 0) days = f.max();
