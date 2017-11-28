@@ -38,7 +38,7 @@ dependencies {
     testCompile 'junit:junit:4.11'
     testCompile 'org.scalatest:scalatest_2.11:2.2.6'
     compile 'org.scala-lang:scala-library:2.11.8'
-    compile 'org.apache.spark:spark-sql_2.11:2.0.1'
+    compile 'org.apache.spark:spark-sql_2.11:2.1.0'
     compile project(':data')
     compile project(':core')
 }
