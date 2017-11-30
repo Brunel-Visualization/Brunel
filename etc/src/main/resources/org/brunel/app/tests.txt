@@ -60,7 +60,7 @@ multiline cpi Date food housing health transport / stack area label(#series)    
 - simple	/ bar x(animal) y(size) color(animal) sort(size) filter(size, #row, animal, mammal) :: pass
 - simple	/ bar x(animal) y(size) color(mammal) transpose                                     :: pass
 - baseball  / x(age) y(salary) color(rbirate) | line x(age) y(rbirate) smooth(rbirate)          :: pass :: Legend should be attached to chart on left
-- simple	/ bar x(mammal) y(size) color(aquatic) stack label(#all) tooltip(aquatic, #count)   :: pass
+- simple	/ bar x(mammal) y(size) color(aquatic) stack label(#all) tooltip(aquatic:snap:50, #count)   :: pass :: note the tooltip should snap within 50 pixels
 
 - whiskey	/ bar x(country) y(#count) color(category) stack                                    :: pass
 - whiskey	/ bar x(country) y(#count) percent(#count) color(category) stack                    :: pass
@@ -123,6 +123,10 @@ colorScatter whiskey rating price Category / size(Category:[200%,100%,100%]) key
 - whiskey / bubble x(rating) bin(rating:20) sort(price) size(price) symbol(category) key(#row) + style('symbol:curved') data('raw:a,b;0,1;1,2;2,4;4,8;8,16;16,32;32,64') edge key(a,b) color(#row:nominal) label(#row)  :: pass
 - whiskey / map  key(country) + data('raw:a,b;Canada,France;France,India;India,Japan') edge key(a,b) style('symbol:curved') color(#row:nominal) label(#row)  :: pass
 - baseball / x('Top 5') y(age) top(age:5) + x('Top 6-10') y(age) top(age:6:10) + x('Bottom 6-10') y(age) bottom(age:6:10) axes(x, y) + x('Bottom 5') y(age) bottom(age:5) :: pass
+
+colorScatter cpi CLOTHING HEALTH Date / rectangular(same) + guide(y:x):: pass :: note axes have same span
+colorScatter cpi CLOTHING HEALTH Date / rectangular(same, square) + guide(y:x) :: pass :: note chart has square inner
+
 #### Note
 
 baseball:   Age Weight Height BattingAvg OnBasePct HomeRunRate SlugRate RBIRate WalkRate

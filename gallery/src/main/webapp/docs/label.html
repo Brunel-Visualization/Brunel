@@ -68,6 +68,19 @@
 <p class="examples"><a onClick="showAction(this.text)">treemap size(population) color(region) label(state:40)
     list(state:5) sum(population) tooltip(state)</a></p>
 
+<p>
+    When items are small, tooltips can be hard to get for items as you need to be directly over the item. To help
+    with there is an optional `snap` parameter that can be added to the tooltip and makes tooltips work when the
+    mouse is within a given distance of the item, rather than just directly on top of the item.
+    If <i>any</i> of the tooltip options have a snap option, snap will be applied to the entire tooltip. Snap has a small
+    fixed distance at which it takes effect, but an optional numeric parameter allows you to define that
+    distance in pixels.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">treemap label(state:3) tooltip(#all:snap) color(violent_crimes)
+    size(population) sort(population:ascending)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">treemap size(population) color(region) label(state:50)
+    list(state) sum(population) tooltip(state:snap:100)</a></p>
 
 
 

@@ -219,14 +219,15 @@ var BrunelD3 = (function () {
             return pts;
         }
 
-        // Define a function for each category that extracts the rows and sorts them into x order
+        // Define a function for each category that extracts the rows
         // It returns a structure for use in the element containing sample row, key and path
         function f(category) {
             var d = data._rows.filter(function (d) {
                 return data._split(d) == category;
             });
             if (xFunction) d.sort(function (a, b) {
-                return xFunction(a) - xFunction(b)
+                // If tied for x, respect row order
+                return xFunction(a) - xFunction(b) || a.row - b.row;
             });
             return {'path': path(d), 'key': d[0].key, 'row': d[0].row, 'points': makePoints(path, d)}
         }
@@ -984,7 +985,7 @@ var BrunelD3 = (function () {
             pt = svg.createSVGPoint();                                          // For matrix calculations
 
 
-        d3Target.on('mousemove', function (d) {
+        var showTooltipForItem = function (d) {
             if (!d) return;
             if (d.data && d.data.row != undefined) d = d.data;       // Complex structures embed the data a level
 
@@ -1044,12 +1045,45 @@ var BrunelD3 = (function () {
 
             tooltip.style.left = (p.x - tooltip.offsetWidth / 2) + 'px';    // Set to be centered on target
             tooltip.style.top = top + 'px';   // locate relative to the div center notch
-        });
+        };
 
-        d3Target.on('mouseout', function () {
+        var hideTooltip = function () {
             if (tooltip) tooltip.style.visibility = 'hidden';
-        });   // hide it
+        };
 
+        function installStandardTooltip() {
+            d3Target.on('mousemove', showTooltipForItem);
+            d3Target.on('mouseout', hideTooltip);   // hide it
+        }
+
+        /**
+         * Install a tooltip that snaps to the given distance
+         * @param chart the D3 selection for the chart that contains this
+         * @param distance the distance to snap to
+         */
+        function installSnap(chart, distance) {
+            d3Target.on('mousemove', showTooltipForItem);               // Show tooltip when directly over item
+
+            // Add handlers to the overlay for when the mouse is not directly over an item
+            chart.select('rect.overlay')
+                .on('mousemove.tooltip_snap', function() {
+                    var c = closestItem(d3Target, 'xy', distance );
+                    if (c.item)
+                        showTooltipForItem.call(c.target, c.item);
+                    else
+                        hideTooltip();
+                })
+                .on('mouseout.tooltip_snap', function() {
+                    hideTooltip();
+                });
+        }
+
+        return {
+            install: installStandardTooltip,
+            installSnap: installSnap,
+            showFor: showTooltipForItem,
+            hide: hideTooltip
+        }
 
     }
 
@@ -1728,9 +1762,10 @@ var BrunelD3 = (function () {
     }
 
     function facet(chart, parentElement, time) {
-        parentElement.selection().each(function (d, i) {
-            if (d.row == null) return;
-            var value = parentElement.data().field("#row").value(d.row);
+        parentElement.selection().each(function (d) {
+            var row = d.row >=0 ? d.row : (d.data ? d.data.row : null);
+            if (row == null) return;
+            var value = parentElement.data().field("#row").value(row);
             var items = value.items ? value.items : [value];          // If just a single row, make it into an array
             var c = chart(this, items.map(function (v) {
                 return v - 1

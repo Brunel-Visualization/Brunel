@@ -66,7 +66,7 @@ public class ContentReader {
 		}
 	}
 
-	/**
+	/*
 	 * Convenience method to extract bounds from a topojson file
 	 * @param url
 	 * @return the bounds stored in the topo json

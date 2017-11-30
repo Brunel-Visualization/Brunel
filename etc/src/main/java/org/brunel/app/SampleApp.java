@@ -31,7 +31,7 @@ import java.io.PrintWriter;
  */
 public class SampleApp {
 
-    /**
+    /*
      * Run a simple Brunel command.
      * The first parameter is a Brunel Command. The second is the URL of the data source. This can be a file reference
      * such as 'file://...'.
@@ -57,7 +57,7 @@ public class SampleApp {
 
         // Define a builder using online library version 0.7
         BuilderOptions options = new BuilderOptions();
-        options.version = "2.4";
+        options.version = "2.5";
         VisualizationBuilder builder = VisualizationBuilder.make(options);
 
         // Build the visualization into a 600x600 area

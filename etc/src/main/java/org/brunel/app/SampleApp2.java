@@ -32,7 +32,7 @@ import java.io.StringWriter;
  */
 public class SampleApp2 {
 
-    /**
+    /*
      * A very simple sample program which shows how to run brunel on data you already have in memory
      */
     public static void main(String[] args) throws Exception {

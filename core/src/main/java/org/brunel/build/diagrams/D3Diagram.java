@@ -117,7 +117,7 @@ public abstract class D3Diagram {
 		// By default, do nothing
 	}
 
-	public void writeAdditionalUpdateStatements(ElementDetails details, ScriptWriter out){
+	public void writeAdditionalUpdateStatements(ElementDetails details, ScriptWriter out) {
 		// By default, do nothing
 	}
 
@@ -125,12 +125,12 @@ public abstract class D3Diagram {
 		// By default, do nothing
 	}
 
-	/**
+	/*
 	 * Any initialization needed at the start of the build function
 	 */
 	public abstract void writeDataStructures(ScriptWriter out);
 
-	/**
+	/*
 	 * This is called when entering
 	 */
 	public void writeDiagramEnter(ElementDetails details, LabelBuilder labelBuilder, ScriptWriter out) {
@@ -153,6 +153,7 @@ public abstract class D3Diagram {
 	 * @param x       the x coordinate
 	 * @param y       the x coordinate
 	 * @param r       the radius
+	 * @param out     where to write to
 	 * @param details override details in here
 	 */
 	protected void defineXYR(String x, String y, String r, ElementDetails details, ScriptWriter out) {

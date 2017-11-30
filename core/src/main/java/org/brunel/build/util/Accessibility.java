@@ -26,7 +26,7 @@ import org.brunel.model.VisElement;
  */
 public class Accessibility {
 
-	/**
+	/*
 	 * Add to the selection the attributes needed to show aria labels
 	 *
 	 * @param structure the element structure

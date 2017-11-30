@@ -40,6 +40,7 @@ public class Auto {
 	 * @param padFraction          amount to pad the raw range by (upper and lower values)
 	 * @param includeZeroTolerance include zero if it does not make "white space" more than this fraction
 	 * @param desiredTickCount     number of ticks it would be nice to get (&lt;= 0 for auto)
+	 * @param forBinning           if true, this is for binning
 	 * @return the info on the scale
 	 */
 	public static NumericScale makeNumericScale(NumericExtentDetail extentDetail, boolean nice, double[] padFraction, double includeZeroTolerance, int desiredTickCount, boolean forBinning) {
@@ -192,6 +193,6 @@ public class Auto {
 		if (asNumeric.numProperty("q1") < 1600) return false;           // Use the lower quartile (to avoid outliers)
 		if (asNumeric.numProperty("q3") > 2100) return false;           // High value is usually OK
 		Double d = asNumeric.numProperty("granularity");
-		return d != null && d - Math.floor(d) < 1e-6;
+		return d != null && d > 0 && d - Math.floor(d) < 1e-6;
 	}
 }

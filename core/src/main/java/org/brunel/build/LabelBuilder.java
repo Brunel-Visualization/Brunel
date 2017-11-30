@@ -114,7 +114,7 @@ public class LabelBuilder {
 	StringBuffer spanBuf;
 
 	private void setBidi() {
-		if (vis.fGuiDir !=null)
+		if (vis.fGuiDir != null)
 			mirror = "rtl".equals(vis.fGuiDir);
 		if (vis.fNumShape != null)
 			numshape = vis.fNumShape;
@@ -142,9 +142,15 @@ public class LabelBuilder {
 
 	public void addTooltips(ElementDetails details) {
 		if (!structure.needsTooltips()) return;
+		int snapDistance = structure.tooltipSnapDistance();
+
 		out.onNewLine().ln();
 		defineLabeling(prettify(vis.itemsTooltip, true, true), details.representation.getTooltipTextMethod(), true, true, null, 0, Collections.<Param>emptyList(), 0);
-		out.add("BrunelD3.addTooltip(selection, tooltipLabeling, geom)").endStatement();
+		out.add("BrunelD3.addTooltip(selection, tooltipLabeling)");
+		if (snapDistance > 0)
+			out.addChained("installSnap(chart, " + snapDistance + ")").endStatement();
+		else
+			out.addChained("install()").endStatement();
 	}
 
 	/* Call to add labels for internal nodes of trees and treemaps */
@@ -180,7 +186,7 @@ public class LabelBuilder {
 	 * @param fitsShape            true if the text is to fit inside the shape (if the shape wants it)
 	 * @param alignment            left | right | center
 	 * @param padding              numeric amount
-	 * @param cssFunctions        list of functions to use for css class
+	 * @param cssFunctions         list of functions to use for css class
 	 * @param hitDetectGranularity if strictly positive, the pixel level granularity to use for hit detection. If zero, none will be done
 	 */
 	public void defineLabeling(List<Param> items, String textMethod, boolean forTooltip,

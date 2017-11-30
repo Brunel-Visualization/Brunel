@@ -71,7 +71,7 @@ public class DataMinimizer {
 		return !vis.fAnimate.isEmpty() || !vis.fFilter.isEmpty();
 	}
 
-	/**
+	/*
 	 * Attempt to combine two transforms into a "minimal" combined transformation
 	 */
 	public TransformParameters merge(TransformParameters a, TransformParameters b) {

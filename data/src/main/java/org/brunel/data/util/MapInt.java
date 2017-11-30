@@ -79,7 +79,7 @@ public class MapInt {
         return array[(int) Math.floor((array.length - 1) / 2)];
     }
 
-    /**
+    /*
      * If not present in the map, add each with an index number equal to the map size (starting at 0)
      *
      * @param keys array of items to add to indexing

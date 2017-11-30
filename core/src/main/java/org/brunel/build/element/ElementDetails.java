@@ -50,9 +50,11 @@ public class ElementDetails {
 	 * and will also remove the label if it does not fit.
 	 * a box around the shape (and so will work bets for convex shapes like rectangles and circles)
 	 *
-	 * @param structure
-	 * @param elementClass the name of the element class for CSS purposes (polygon, path, point, etc.)
-	 * @param dataSource   the javascript name of the element's data
+	 * @param structure      the target element
+	 * @param representation the mark or appearance fo the element
+	 * @param elementClass   the name of the element class for CSS purposes (polygon, path, point, etc.)
+	 * @param dataSource     the javascript name of the element's data
+	 * @return Definition of the element
 	 */
 	public static ElementDetails makeForDiagram(ElementStructure structure, ElementRepresentation representation,
 												String elementClass, String dataSource) {
@@ -69,7 +71,7 @@ public class ElementDetails {
 				&& representation != ElementRepresentation.generalPath;
 
 		// Exception! Points in parallel coordinates are drawn as circles, and so although as paths, do need filling
-		if (structure.vis.tElement ==Element.point && structure.chart.diagram == VisTypes.Diagram.parallel)
+		if (structure.vis.tElement == Element.point && structure.chart.diagram == VisTypes.Diagram.parallel)
 			filled = true;
 
 		return new ElementDetails(structure.vis, representation, elementClass, dataSource, filled);
@@ -103,6 +105,7 @@ public class ElementDetails {
 				&& !anyNumeric(chart.coordinates.allYFields);
 
 	}
+
 	public final String dataSource;                     // Where the data for d3 lives
 	public final ElementRepresentation representation;  // The type of element produced
 	public final String[] classes;                      // Class names for this item

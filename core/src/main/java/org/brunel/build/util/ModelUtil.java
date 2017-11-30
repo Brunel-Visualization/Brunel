@@ -26,7 +26,7 @@ import org.brunel.model.style.StyleTarget;
  */
 public class ModelUtil {
 
-	/**
+	/*
 	 * Determine if the fields are best represented by a categorical (as opposed to numeric) scale
 	 *
 	 * @param fields fields to analyze
@@ -80,6 +80,8 @@ public class ModelUtil {
 	 * Returns the font size of the element as defined by the style
 	 *
 	 * @param vis the visualization to look for definitions in
+	 * @param target the item that we are lookigng for styles defining
+	 * @param defaultSize if not set in the style, this will be returned
 	 * @return integer size
 	 */
 	public static double getFontSize(VisElement vis, StyleTarget target, int defaultSize) {
@@ -112,7 +114,7 @@ public class ModelUtil {
 		return s == null ? defaultValue : s.value(defaultValue);
 	}
 
-	/**
+	/*
 	 * Returns the title position (defaults to center)
 	 *
 	 * @param vis the visualization to look for definitions in

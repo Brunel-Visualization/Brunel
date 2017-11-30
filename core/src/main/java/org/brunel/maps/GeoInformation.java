@@ -126,8 +126,7 @@ public class GeoInformation {
 
 	/**
 	 * Sets the projection and bounds using the supplied rectangle.  Used for user provided maps.
-	 *
-	 * @param newBounds
+	 * @param newBounds boudns to set
 	 */
 	public void setProjectionBounds(Rect newBounds) {
 
