@@ -362,6 +362,7 @@ public class VisualizationBuilder {
 				)
 			return;
 
+    out.add("var BrunelMirror = " + "rtl".equals(((VisElement)main).fGuiDir) + ";\n");
 		out.add("var BrunelD3Locale;\n");
 		out.add("bidiProcessing('"
 				+ options.visIdentifier + "', '"
