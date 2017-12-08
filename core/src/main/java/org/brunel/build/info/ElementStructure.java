@@ -118,7 +118,7 @@ public class ElementStructure {
 	}
 
 	// Returns the element we depend on
-	private ElementStructure getDependencyBase() {
+	public ElementStructure getDependencyBase() {
 		for (Dependency dependency : dependencies) {
 			if (dependency.dependent == this) return dependency.base;
 		}

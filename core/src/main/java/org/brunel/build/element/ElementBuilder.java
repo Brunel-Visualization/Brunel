@@ -223,6 +223,10 @@ public abstract class ElementBuilder {
 
 	public void generate() {
 
+		// We do not show edges for a sunburst diagram, even through they are defined
+		if (structure.isDependentEdge() && structure.getDependencyBase().vis.tDiagram == VisTypes.Diagram.sunburst)
+			return;
+
 		out.add("element = elements[" + structure.index + "]").endStatement();
 
 		ElementDetails details = structure.details;

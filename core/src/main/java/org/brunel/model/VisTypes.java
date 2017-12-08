@@ -40,7 +40,8 @@ public class VisTypes {
 
 	/* Our diagram layouts; each may have an option default element to use */
 	public enum Diagram {
-		bubble(Element.point, true), chord(Element.edge, false), cloud(Element.text, false), tree(Element.point, true),
+		bubble(Element.point, true), chord(Element.edge, false), cloud(Element.text, false),
+		tree(Element.point, true), sunburst(Element.point, true),
 		treemap(Element.bar, true), network(Element.point, false), map(Element.polygon, false),
 		parallel(Element.path, false), table(Element.point, false), gridded(Element.point, true),
 		pack(Element.point, true),
