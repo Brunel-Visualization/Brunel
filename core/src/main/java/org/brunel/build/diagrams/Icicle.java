@@ -44,8 +44,10 @@ class Icicle extends D3Diagram {
     // Create the d3 layout
     out.add("d3.partition()")
       .addChained(sunburst ? "size([2*Math.PI, 1])" : "size([geom.inner_width, 1])");
-    if (padding.horizontal() != 0)
-      out.addChained("padding(" + padding.horizontal()/100.0 + ")");
+    if (padding.horizontal() != 0) {
+      double v = sunburst ? padding.horizontal() / 100.0 : padding.horizontal();
+      out.addChained("padding(" + v + ")");
+    }
     out.add("(tree)").endStatement();
 
     out.add("var maxDepth = 0; tree.descendants().forEach(function(i) {maxDepth = Math.max(maxDepth, i.depth)})")
