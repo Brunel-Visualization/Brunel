@@ -43,8 +43,10 @@ class Icicle extends D3Diagram {
 
     // Create the d3 layout
     out.add("d3.partition()")
-      .addChained(sunburst ? "size([2*Math.PI, 1])" : "size([geom.inner_width, 1])")
-      .add("(tree)").endStatement();
+      .addChained(sunburst ? "size([2*Math.PI, 1])" : "size([geom.inner_width, 1])");
+    if (padding.horizontal() != 0)
+      out.addChained("padding(" + padding.horizontal()/100.0 + ")");
+    out.add("(tree)").endStatement();
 
     out.add("var maxDepth = 0; tree.descendants().forEach(function(i) {maxDepth = Math.max(maxDepth, i.depth)})")
       .endStatement();
@@ -65,11 +67,6 @@ class Icicle extends D3Diagram {
   }
 
   public void defineCoordinateFunctions(ElementDetails details, ScriptWriter out) {
-    // Padding strings
-    String padA = padding.top == 0 ? "" : (padding.top < 0 ? "" + padding.top : "+" + padding.top);
-    String padB = padding.bottom == 0 ? "" : (padding.bottom < 0 ? "+" + (-padding.bottom) : "-" + padding.top);
-
-    String padSize = padding.vertical() == 0 ? "" : (padding.vertical() < 0 ? "+" + -padding.vertical() : "-" + padding.vertical());
 
     if (sunburst) {
       // Define the arcs used for the wedge
@@ -79,13 +76,13 @@ class Icicle extends D3Diagram {
       out.add("var path = d3.arc()")
         .addChained("startAngle(function(d) { return scale_x(d.x0); })")
         .addChained("endAngle(function(d) { return scale_x(d.x1); })")
-        .addChained("innerRadius(function(d) { return depth_scale(d.depth)" + padA + "; })")
-        .addChained("outerRadius(function(d) { return depth_scale(d.depth+1)" + padB + "; })")
+        .addChained("innerRadius(function(d) { return depth_scale(d.depth)" + padding.topModifier() + "; })")
+        .addChained("outerRadius(function(d) { return depth_scale(d.depth+1)" + padding.bottomModifier() + "; })")
         .endStatement();
     } else {
-      out.add("function h(x) { return geom.inner_height * scale_y( (x-1) / maxDepth )" + padA + "}")
+      out.add("function h(x) { return geom.inner_height * scale_y( (x-1) / maxDepth )" + padding.topModifier() + "}")
         .endStatement()
-        .add("var w = geom.inner_height / maxDepth " + padSize)
+        .add("var w = geom.inner_height / maxDepth " + padding.heightModifier())
         .endStatement();
     }
   }

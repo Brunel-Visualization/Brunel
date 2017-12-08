@@ -20,23 +20,50 @@ package org.brunel.build.util;
  * Simple padding structure
  */
 public class Padding {
-	public int top;
-	public int left;
-	public int bottom;
-	public int right;
+  public int top;
+  public int left;
+  public int bottom;
+  public int right;
 
-	public Padding(int top, int left, int bottom, int right) {
-		this.top = top;
-		this.left = left;
-		this.bottom = bottom;
-		this.right = right;
-	}
+  public Padding(int top, int left, int bottom, int right) {
+    this.top = top;
+    this.left = left;
+    this.bottom = bottom;
+    this.right = right;
+  }
 
-	public int horizontal() {
-		return left + right;
-	}
+  public int horizontal() {
+    return left + right;
+  }
 
-	public int vertical() {
-		return top + bottom;
-	}
+  public String topModifier() {
+    return asModifier(top);
+  }
+
+  public String bottomModifier() {
+    return asModifier(-bottom);
+  }
+
+  public String leftModifier() {
+    return asModifier(left);
+  }
+
+  public String heightModifier() {
+    // We subtract the vertical pad from the height
+    return asModifier(-vertical());
+  }
+
+  public String widthModifier() {
+    // We subtract the horizontal pad from the width
+    return asModifier(-horizontal());
+  }
+
+  // Return something that looks like an empty string, +x, or -x
+  private String asModifier(int v) {
+    return v == 0 ? "" : (v < 0 ? "" + v : "+" + v);
+  }
+
+  public int vertical() {
+    return top + bottom;
+  }
 }
