@@ -484,15 +484,11 @@ var BrunelD3 = (function () {
                 break;
             }
 
-            max_W = W;
-            if (typeof BrunelMirror != "undefined" && BrunelMirror === true )
-                max_W = (-1) * W;
-
             // If it doesn't fit, remove the content and try to add ellipses
-            if (tspan.getComputedTextLength() > max_W) {
+            if (tspan.getComputedTextLength() > W) {
                 content.pop();
                 if (!content.length) {
-                    if (!addEllipses(tspan, word, max_W - 4)) {
+                    if (!addEllipses(tspan, word, W - 4)) {
                         textItem.removeChild(tspan);
                         break;
                     }
