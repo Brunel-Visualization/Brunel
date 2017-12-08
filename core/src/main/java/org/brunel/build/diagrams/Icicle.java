@@ -74,7 +74,7 @@ class Icicle extends D3Diagram {
     if (sunburst) {
       // Define the arcs used for the wedge
 
-      out.add("function depth_Scale(x) { return geom.inner_radius * scale_y((x-0.5) / (maxDepth+0.5)) }").endStatement();
+      out.add("function depth_scale(x) { return geom.inner_radius * scale_y((x-0.5) / (maxDepth+0.5)) }").endStatement();
 
       out.add("var path = d3.arc()")
         .addChained("startAngle(function(d) { return scale_x(d.x0); })")
