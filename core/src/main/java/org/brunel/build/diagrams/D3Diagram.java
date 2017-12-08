@@ -45,7 +45,7 @@ public abstract class D3Diagram {
 
 		// Normal diagrams
 		if (vis.tDiagram == Diagram.bubble) return new Bubble(structure);
-		if (vis.tDiagram == Diagram.sunburst) return new Sunburst(structure);
+		if (vis.tDiagram == Diagram.icicle) return new Icicle(structure);
 		if (vis.tDiagram == Diagram.chord) return new Chord(structure);
 		if (vis.tDiagram == Diagram.cloud) return new Cloud(structure);
 		if (vis.tDiagram == Diagram.tree) return new Tree(structure);
@@ -285,7 +285,7 @@ public abstract class D3Diagram {
 		out.add("tree = d3.hierarchy(targetNode).sum(function(d) { return d.value })")
 				.endStatement();
 
-		boolean reduceSizes = vis.tDiagram == Diagram.bubble || vis.tDiagram == Diagram.treemap || vis.tDiagram == Diagram.sunburst;
+		boolean reduceSizes = vis.tDiagram == Diagram.bubble || vis.tDiagram == Diagram.treemap || vis.tDiagram == Diagram.icicle;
 
 		// The collapseState map contains a map of keys to true / false for user-specified collapsing
 

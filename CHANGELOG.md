@@ -13,7 +13,6 @@ Several fixes and improvements from the community -- many thanks!
 In development, stay posted
 
 
-
 # 2.5 Release Notes
 
 ### Defect fixes for labels, axes and spacing

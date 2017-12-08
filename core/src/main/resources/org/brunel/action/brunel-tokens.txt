@@ -25,7 +25,7 @@ parallel diagram - NUMBER
 tree diagram - prune
 treemap diagram - prune
 network diagram - NUMBER
-sunburst diagram
+icicle diagram
 map diagram - STRING+ labels low medium high full
 
 ## X and Y locations
