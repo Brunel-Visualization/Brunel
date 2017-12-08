@@ -1,3 +1,19 @@
+# 2.6 Release Notes
+
+### Miscellaneous fixes
+
+Several fixes and improvements from the community -- many thanks!
+
+ * Fix for Toree
+ * HTML4 compatibility
+ * Bidi improvements
+
+### Sunburst and Icicle plots
+
+In development, stay posted
+
+
+
 # 2.5 Release Notes
 
 ### Defect fixes for labels, axes and spacing
