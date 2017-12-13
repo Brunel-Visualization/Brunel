@@ -146,11 +146,11 @@ public class LabelBuilder {
 
 		out.onNewLine().ln();
 		defineLabeling(prettify(vis.itemsTooltip, true, true), details.representation.getTooltipTextMethod(), true, true, null, 0, Collections.<Param>emptyList(), 0);
-		out.add("BrunelD3.addTooltip(selection, tooltipLabeling)");
+		out.add("var ttp = BrunelD3.addTooltip(selection, tooltipLabeling)").endStatement();
 		if (snapDistance > 0)
-			out.addChained("installSnap(chart, " + snapDistance + ")").endStatement();
+			out.add("if (ttp) ttp.installSnap(chart, " + snapDistance + ")").endStatement();
 		else
-			out.addChained("install()").endStatement();
+			out.add("if (ttp) ttp.install()").endStatement();
 	}
 
 	/* Call to add labels for internal nodes of trees and treemaps */
