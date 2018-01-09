@@ -29,7 +29,9 @@ import org.brunel.model.VisElement;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisTypes;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A rough flow of the build process is as follows:
@@ -77,7 +79,8 @@ public class VisualizationBuilder {
 
   private final BuilderOptions options;        // How to build
   private VisInfo visStructure;                // Information on the main structure
-  private ScriptWriter out;                // Where to write code
+  private NestingInfo nestingInfo;             // How elements are nested within element
+  private ScriptWriter out;                    // Where to write code
 
   private VisualizationBuilder(BuilderOptions options) {
     this.options = options;
@@ -92,6 +95,7 @@ public class VisualizationBuilder {
    */
   public final void build(VisItem main, int width, int height) {
     this.visStructure = new VisInfo(width, height, options);
+    this.nestingInfo = new NestingInfo();
 
     // Index the datasets with the number in the list of input data sets
     Dataset[] datasets = main.getDataSets();
@@ -100,39 +104,60 @@ public class VisualizationBuilder {
     // Create the main visualization area
     writeStart();
 
-    // The build process for each item is the same, regardless of composition method:
-    // - calculate the location for it relative to the defined space
-    // - build the data (giving it a an ID that is unique within the vis)
-    // - build the item, which stores controls and styles, and then calls the descendant's createSingle method
-
-    VisItem[] children = main.children();
-    if (children == null) {
-      // For a single, one-element visualization, treat as a tiling of one chart
-      buildTiledCharts(width, height, new VisItem[]{main.getSingle()}, 0);
-    } else {
-      VisTypes.Composition compositionMethod = ((VisComposition) main).method;
-
-      if (compositionMethod == VisTypes.Composition.tile) {
-        // We define a set of charts and build them, tiling them into the space.
-        buildTiledCharts(width, height, children, 0);
-      } else if (compositionMethod == VisTypes.Composition.overlay) {
-        // If we have a set of compositions, they are placed into the whole area
-        // Each is an individual element
-        double[] loc = new ChartLayout(width, height, main).getLocation(0);
-        new ChartBuilder(visStructure, options, loc, out).build(0, children);
-      } else if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
-        double[] location = new ChartLayout(width, height, children[0]).getLocation(0);
-        buildNestedChart(width, height, children, location, 0);
+    Map<VisItem, double[]> locations = new LinkedHashMap<>();     // Where to place items
+    VisItem[] parts = main.children();                            // The parts contained in this item
+    if (parts != null && ((VisComposition) main).method == VisTypes.Composition.tile) {
+      // We have tiled locations, so read them all in
+      ChartLayout layout = new ChartLayout(width, height, parts);   // Layout method
+      for (int i = 0; i < parts.length; i++) {
+        VisItem chart = parts[i];
+        double[] location = layout.getLocation(i);
+        locations.put(chart, location);
       }
+    } else {
+      // we have a single top level item (might be composition)
+      locations.put(main, new ChartLayout(width, height, main).getLocation(0));
     }
 
+    int chartIndex = 0;
+    for (Map.Entry<VisItem, double[]> e : locations.entrySet())
+      buildChart(e.getKey(), e.getValue(), chartIndex++);
+
     writeEnd(main);
+  }
+
+  private void buildChart(VisItem item, double[] location, int chartIndex) {
+    VisTypes.Composition compositionMethod = item.children() == null ? null : ((VisComposition) item).method;
+    VisItem[] children = item.children();
+
+    if (compositionMethod == null) {
+      new ChartBuilder(visStructure, options, location, out).build(chartIndex, item.getSingle());
+    } else if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
+      if (children.length != 2) throw new IllegalStateException("Nesting requires two children");
+      VisElement outer = (VisElement) children[0];
+      VisElement inner = (VisElement) children[1];
+      ChartStructure outerStructure = new ChartBuilder(visStructure, options, location, out)
+        .buildNestedOuter(chartIndex, chartIndex + 1, outer);
+      nestingInfo.add(inner, outer, outerStructure);
+
+    } else {
+      if (compositionMethod != VisTypes.Composition.overlay)
+        throw new IllegalStateException("Unexpected composition type: " + compositionMethod);
+      VisElement[] elements = new VisElement[children.length];
+      for (int i = 0; i < elements.length; i++)
+        elements[i] = extractMainElement(children[i]);
+      new ChartBuilder(visStructure, options, location, out).build(chartIndex, elements);
+    }
+
+  }
+
+  private VisElement extractMainElement(VisItem item) {
+    return (VisElement) item;
   }
 
   public String getLanguage() {
     return visStructure.getLanguage();
   }
-
 
   public Controls getControls() {
     return visStructure.controls;
@@ -212,55 +237,6 @@ public class VisualizationBuilder {
         + String.format(pattern, options.locJavaScript + "/sumoselect.css");
     }
     return base;
-  }
-
-  private void buildNestedChart(int width, int height, VisItem[] children, double[] location, int firstIndex) {
-    // The following rules should be ensured by the parser
-    if (children.length != 2)
-      throw new IllegalStateException("Nested charts only implemented for exactly one inner, one outer");
-    if (children[0].children() != null)
-      throw new IllegalStateException("Inner chart in nesting must be atomic");
-    if (children[1].children() != null)
-      throw new IllegalStateException("Outer chart in nesting must be atomic");
-
-    VisElement inner = children[1].getSingle();
-    VisElement outer = children[0].getSingle();
-
-    // Remember the nesting
-    visStructure.nesting.put(firstIndex + 1, firstIndex);
-    ChartStructure outerStructure = new ChartBuilder(visStructure, options, location, out)
-      .buildNestedOuter(firstIndex, firstIndex + 1, outer);
-
-    double[] loc  = new ChartLayout(width, height, inner).getLocation(0);
-    new ChartBuilder(visStructure, options, loc, out)
-      .buildNestedInner(firstIndex + 1, outerStructure, inner);
-  }
-
-  /* Build independent charts tiled into the same display area */
-  private void buildTiledCharts(int width, int height, VisItem[] charts, int firstIndex) {
-    ChartLayout layout = new ChartLayout(width, height, charts);
-
-    for (int i = 0; i < charts.length; i++) {
-      VisItem chart = charts[i];
-      VisItem[] items = chart.children();
-      double[] location = layout.getLocation(i);      // location for this chart to be placed
-
-
-      if (items == null) {
-        // The chart is a single element
-        new ChartBuilder(visStructure, options, location, out)
-          .build(firstIndex + i, chart);
-      } else {
-        VisTypes.Composition compositionMethod = ((VisComposition) chart).method;
-        if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
-          buildNestedChart(width, height, items, location, firstIndex + i);
-        } else {
-          new ChartBuilder(visStructure, options, location, out)
-            .build(firstIndex + i, items);
-        }
-      }
-    }
-
   }
 
   private void writeStart() {

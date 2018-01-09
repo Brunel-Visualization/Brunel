@@ -15,7 +15,6 @@ import org.brunel.build.util.SVGGroupUtility;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.model.VisElement;
 import org.brunel.model.VisException;
-import org.brunel.model.VisItem;
 import org.brunel.model.VisTypes;
 import org.brunel.model.style.StyleSheet;
 
@@ -47,8 +46,8 @@ public class ChartBuilder {
     this.out = out;
   }
 
-  public ChartStructure build(int chartIndex, VisItem... items) {
-    return build(chartIndex, items, null, null);
+  public ChartStructure build(int chartIndex, VisElement... elements) {
+    return build(chartIndex, elements, null, null);
   }
 
   public ChartStructure buildNestedInner(int chartIndex, ChartStructure outerStructure, VisElement... elements) {
@@ -59,13 +58,12 @@ public class ChartBuilder {
     return build(chartIndex, new VisElement[]{element}, null, innerChartIndex);
   }
 
-  private ChartStructure build(int chartIndex, VisItem[] items, ChartStructure outer, Integer innerChartIndex) {
+  private ChartStructure build(int chartIndex, VisElement[] elements, ChartStructure outer, Integer innerChartIndex) {
 
     // Assemble the elements and data
-    TransformedData[] data = new TransformedData[items.length];
-    VisElement[] elements = new VisElement[items.length];
+    TransformedData[] data = new TransformedData[elements.length];
     for (int i = 0; i < elements.length; i++) {
-      elements[i] = ((VisElement) items[i]).makeCanonical();
+      elements[i] = elements[i].makeCanonical();
       data[i] = TransformedData.make(elements[i]);
     }
 
@@ -308,7 +306,7 @@ public class ChartBuilder {
       .indentLess().onNewLine().add("}").endStatement();
 
     // Finish the chart method
-    if (visInfo.nesting.containsKey(structure.chartIndex)) {
+    if (visInfo.nesting.contains(structure.chartIndex)) {
       // For a nested chart we need to build the chart completely each time, so store the FUNCTION
       out.add("}");
     } else {
