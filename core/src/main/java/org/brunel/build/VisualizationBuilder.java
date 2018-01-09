@@ -119,7 +119,7 @@ public class VisualizationBuilder {
         // If we have a set of compositions, they are placed into the whole area
         // Each is an individual element
         double[] loc = new ChartLayout(width, height, main).getLocation(0);
-        new ChartBuilder(visStructure, options, loc, out).build(0, asSingle(children));
+        new ChartBuilder(visStructure, options, loc, out).build(0, children);
       } else if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
         double[] location = new ChartLayout(width, height, children[0]).getLocation(0);
         buildNestedChart(width, height, children, location, 0);
@@ -133,11 +133,6 @@ public class VisualizationBuilder {
     return visStructure.getLanguage();
   }
 
-  private VisElement[] asSingle(VisItem[] children) {
-    VisElement[] items = new VisElement[children.length];
-    for (int i = 0; i < items.length; i++) items[i] = (VisElement) children[i];
-    return items;
-  }
 
   public Controls getControls() {
     return visStructure.controls;
@@ -254,14 +249,14 @@ public class VisualizationBuilder {
       if (items == null) {
         // The chart is a single element
         new ChartBuilder(visStructure, options, location, out)
-          .build(firstIndex + i, (VisElement) chart);
+          .build(firstIndex + i, chart);
       } else {
         VisTypes.Composition compositionMethod = ((VisComposition) chart).method;
         if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
           buildNestedChart(width, height, items, location, firstIndex + i);
         } else {
           new ChartBuilder(visStructure, options, location, out)
-            .build(firstIndex + i, asSingle(items));
+            .build(firstIndex + i, items);
         }
       }
     }
