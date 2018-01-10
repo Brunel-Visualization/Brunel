@@ -40,8 +40,7 @@ public class ChartStructure {
 
 	public final int chartIndex;                            // 0-based chart index
 	public final ChartLocation location;                    // chart location information
-	public final ChartStructure outer;                      // If non-null, the enclosing element for a nested chart
-	public final Integer innerChartIndex;                   // If non-null, the index of the chart we enclose
+	public final boolean isNested;                      		// True if this is nested within another element
 	public final ChartCoordinates coordinates;                // Coordinate system for this chart
 	public final GeoInformation geo;                        // Geo information
 	public final Diagram diagram;                            // Diagram for this chart
@@ -53,12 +52,11 @@ public class ChartStructure {
 	public boolean accessible;                              // If true, generate accessible content
 
 	public ChartStructure(int chartIndex, VisElement[] elements, ChartLocation location, TransformedData[] data,
-						  ChartStructure outer, Integer innerChartIndex, String visIdentifier) {
+												boolean isNested, String visIdentifier) {
 		this.chartIndex = chartIndex;
 		this.elements = elements;
 		this.location = location;
-		this.outer = outer;
-		this.innerChartIndex = innerChartIndex;
+		this.isNested = isNested;
 		this.visIdentifier = visIdentifier;
 		this.elementStructure = new ElementStructure[elements.length];
 		this.diagram = findDiagram();
@@ -143,7 +141,7 @@ public class ChartStructure {
 	}
 
 	public boolean nested() {
-		return outer != null;
+		return isNested;
 	}
 
 	private Diagram findDiagram() {

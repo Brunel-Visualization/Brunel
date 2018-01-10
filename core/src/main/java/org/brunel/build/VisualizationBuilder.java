@@ -20,7 +20,7 @@ import org.brunel.action.Param;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.data.DataTableWriter;
 import org.brunel.build.info.ChartLayout;
-import org.brunel.build.info.ChartStructure;
+import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
@@ -97,6 +97,8 @@ public class VisualizationBuilder {
     this.visStructure = new VisInfo(width, height, options);
     this.nestingInfo = new NestingInfo();
 
+    main = ensureCanonical(main);
+
     // Index the datasets with the number in the list of input data sets
     Dataset[] datasets = main.getDataSets();
     for (int i = 0; i < datasets.length; i++) datasets[i].set("index", i);
@@ -119,40 +121,59 @@ public class VisualizationBuilder {
       locations.put(main, new ChartLayout(width, height, main).getLocation(0));
     }
 
+    // Write all the regular charts
     int chartIndex = 0;
     for (Map.Entry<VisItem, double[]> e : locations.entrySet())
       buildChart(e.getKey(), e.getValue(), chartIndex++);
 
+    // Write any nested charts
+    for (NestingInfo.NestedItem item : nestingInfo.items) {
+      visStructure.nesting.add(chartIndex);                                           // This chart is a nested one
+      double[] loc = new ChartLayout(width, height, item.inner).getLocation(0);
+      new ChartBuilder(visStructure, options, loc, out).build(chartIndex, nestingInfo, item.inner);
+      chartIndex++;
+    }
+
     writeEnd(main);
   }
 
-  private void buildChart(VisItem item, double[] location, int chartIndex) {
-    VisTypes.Composition compositionMethod = item.children() == null ? null : ((VisComposition) item).method;
+  private VisItem ensureCanonical(VisItem item) {
     VisItem[] children = item.children();
-
-    if (compositionMethod == null) {
-      new ChartBuilder(visStructure, options, location, out).build(chartIndex, item.getSingle());
-    } else if (compositionMethod == VisTypes.Composition.inside || compositionMethod == VisTypes.Composition.nested) {
-      if (children.length != 2) throw new IllegalStateException("Nesting requires two children");
-      VisElement outer = (VisElement) children[0];
-      VisElement inner = (VisElement) children[1];
-      ChartStructure outerStructure = new ChartBuilder(visStructure, options, location, out)
-        .buildNestedOuter(chartIndex, chartIndex + 1, outer);
-      nestingInfo.add(inner, outer, outerStructure);
-
-    } else {
-      if (compositionMethod != VisTypes.Composition.overlay)
-        throw new IllegalStateException("Unexpected composition type: " + compositionMethod);
-      VisElement[] elements = new VisElement[children.length];
-      for (int i = 0; i < elements.length; i++)
-        elements[i] = extractMainElement(children[i]);
-      new ChartBuilder(visStructure, options, location, out).build(chartIndex, elements);
-    }
-
+    if (children == null)
+      return item.getSingle().makeCanonical();
+    else for (int i = 0; i < children.length; i++)
+      children[i] = ensureCanonical(children[i]);
+    return item;
   }
 
-  private VisElement extractMainElement(VisItem item) {
-    return (VisElement) item;
+  private void buildChart(VisItem item, double[] location, int chartIndex) {
+    VisElement[] elements;                          // Elements to build for this chart
+
+    VisItem[] children = item.children();
+    VisTypes.Composition compositionMethod = children == null ? null : ((VisComposition) item).method;
+
+    if (compositionMethod == VisTypes.Composition.overlay) {
+      elements = new VisElement[children.length];
+      for (int i = 0; i < children.length; i++) elements[i] = toMainElement(children[i]);
+    } else {
+      // Main item is either simple or a nesting
+      elements = new VisElement[]{toMainElement(item)};
+    }
+
+    new ChartBuilder(visStructure, options, location, out).build(chartIndex, nestingInfo, elements);
+  }
+
+  private VisElement toMainElement(VisItem item) {
+    VisItem[] children = item.children();
+    // Simple case -- the item is an element
+    if (children == null) return item.getSingle();
+
+    // Must be a nesting
+    if (children.length != 2) throw new IllegalStateException("Nesting requires two children");
+    VisElement outer = (VisElement) children[0];
+    VisElement inner = (VisElement) children[1];
+    nestingInfo.add(inner, outer);
+    return outer;
   }
 
   public String getLanguage() {
@@ -269,6 +290,16 @@ public class VisualizationBuilder {
       .add("for (var i=0;i<arguments.length;i++) setData(arguments[i], i)").endStatement()
       .add("updateAll(transitionTime)").endStatement();
     out.indentLess().add("}").ln().ln();
+
+    // Define nesting info
+    for (NestingInfo.NestedItem item : nestingInfo.items) {
+      ElementStructure outerElement = visStructure.findElement(item.outer);
+      ElementStructure innerElement = visStructure.findElement(item.inner);
+      //      String chartID = "g.chart" + ChartStructure.makeChartID(index);
+      out.add("charts[" + outerElement.chart.chartIndex + "].elements[" + outerElement.index + "]")
+        .add(".facet = { chartID:'g.chart" + innerElement.chart.chartID() + "', index:" + innerElement.chart.chartIndex + "}")
+        .endStatement();
+    }
 
     // Return the important items
     out.add("return {").indentMore().ln()

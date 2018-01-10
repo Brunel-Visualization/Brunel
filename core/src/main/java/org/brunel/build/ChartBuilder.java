@@ -46,32 +46,21 @@ public class ChartBuilder {
     this.out = out;
   }
 
-  public ChartStructure build(int chartIndex, VisElement... elements) {
-    return build(chartIndex, elements, null, null);
-  }
-
-  public ChartStructure buildNestedInner(int chartIndex, ChartStructure outerStructure, VisElement... elements) {
-    return build(chartIndex, elements, outerStructure, null);
-  }
-
-  public ChartStructure buildNestedOuter(int chartIndex, int innerChartIndex, VisElement element) {
-    return build(chartIndex, new VisElement[]{element}, null, innerChartIndex);
-  }
-
-  private ChartStructure build(int chartIndex, VisElement[] elements, ChartStructure outer, Integer innerChartIndex) {
+  public ChartStructure build(int chartIndex, NestingInfo nestingInfo, VisElement... elements) {
 
     // Assemble the elements and data
     TransformedData[] data = new TransformedData[elements.length];
     for (int i = 0; i < elements.length; i++) {
-      elements[i] = elements[i].makeCanonical();
       data[i] = TransformedData.make(elements[i]);
     }
 
-    ChartStructure structure = new ChartStructure(chartIndex, elements, location, data, outer, innerChartIndex, options.visIdentifier);
+    // If this is nested, it can only be one element
+    boolean nested = nestingInfo.isNested(elements[0]);
+    ChartStructure structure = new ChartStructure(chartIndex, elements, location, data, nested, options.visIdentifier);
     structure.accessible = options.accessibleContent;
 
     defineChart(structure);
-    for (ElementStructure e : structure.elementStructure) buildElement(e);
+    for (ElementStructure e : structure.elementStructure) buildElement(e, nestingInfo);
     endChart(structure);
 
     return structure;
@@ -133,11 +122,11 @@ public class ChartBuilder {
   }
 
   // Builds controls as needed, then the custom styles, then the visualization
-  private void buildElement(ElementStructure structure) {
+  private void buildElement(ElementStructure structure, NestingInfo nestingInfo) {
     try {
 
       visInfo.controls.buildControls(structure);                // build controls
-      defineElement(structure);                                // define the element
+      defineElement(structure, nestingInfo);                                // define the element
       // we need to add these to the main style sheet with correct element class identifier
       if (structure.vis.styles != null) {
         StyleSheet styles = structure.vis.styles.replaceClass("currentElement", "element" + structure.elementID());
@@ -216,7 +205,7 @@ public class ChartBuilder {
     structure.symbols.addDefinitions(out);
   }
 
-  private void defineElement(ElementStructure structure) {
+  private void defineElement(ElementStructure structure, NestingInfo info) {
 
     ElementBuilder elementBuilder = elementBuilders[structure.index];
 
@@ -248,12 +237,11 @@ public class ChartBuilder {
     structure.chart.interaction.addHandlers(structure, out);
 
     // If a chart is nested within us, build its facets
-    Integer index = structure.chart.innerChartIndex;
-    if (index != null) {
-      String id = ChartStructure.makeChartID(index);
+    if (info.nestsOther(structure.vis)) {
+//      String chartID = "g.chart" + ChartStructure.makeChartID(index);
       out.onNewLine().comment("Build the faceted charts within this chart's selection");
-      out.add("vis.select('g.chart" + id + "').selectAll('*').remove()").endStatement()
-        .add("BrunelD3.facet(charts[" + index + "], element, transitionMillis)").endStatement();
+      out.add("vis.select(element.facet.chartID).selectAll('*').remove()").endStatement()
+        .add("BrunelD3.facet(charts[element.facet.index], element, transitionMillis)").endStatement();
 
     }
 

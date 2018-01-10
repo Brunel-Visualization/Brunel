@@ -1,6 +1,5 @@
 package org.brunel.build;
 
-import org.brunel.build.info.ChartStructure;
 import org.brunel.model.VisElement;
 
 import java.util.ArrayList;
@@ -12,25 +11,29 @@ import java.util.List;
 class NestingInfo {
   final List<NestedItem> items = new ArrayList<>();
 
-  public void add(VisElement inner, VisElement outer, ChartStructure outerStructure) {
-    items.add(new NestedItem(inner, outer, outerStructure));
+  public void add(VisElement inner, VisElement outer) {
+    items.add(new NestedItem(inner, outer));
   }
 
-//        visStructure.nesting.add(chartIndex + 1);
-//  double[] loc = new ChartLayout(width, height, inner).getLocation(0);
-//      new ChartBuilder(visStructure, options, loc, out)
-//        .buildNestedInner(chartIndex + 1, outerStructure, inner);
+  public boolean isNested(VisElement element) {
+    for (NestedItem item : items)
+      if (item.inner == element) return true;
+    return false;
+  }
 
+  public boolean nestsOther(VisElement element) {
+    for (NestedItem item : items)
+      if (item.outer == element) return true;
+    return false;
+  }
 
   static class NestedItem {
     final VisElement inner;
     final VisElement outer;
-    final ChartStructure outerStructure;
 
-    NestedItem(VisElement inner, VisElement outer, ChartStructure outerStructure) {
+    NestedItem(VisElement inner, VisElement outer) {
       this.inner = inner;
       this.outer = outer;
-      this.outerStructure = outerStructure;
     }
   }
 }

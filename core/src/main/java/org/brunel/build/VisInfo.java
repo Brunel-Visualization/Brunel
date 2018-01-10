@@ -3,6 +3,7 @@ package org.brunel.build;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.BuilderOptions;
+import org.brunel.model.VisElement;
 import org.brunel.model.style.StyleSheet;
 
 import java.util.HashSet;
@@ -29,7 +30,14 @@ class VisInfo {
 		visStyles = new StyleSheet();
 	}
 
-	public String getLanguage() {
+  public ElementStructure findElement(VisElement target) {
+    for (ElementStructure e : allElements) {
+      if (e.vis == target) return e;
+    }
+    throw new IllegalStateException("Unfound target: " + target);
+  }
+
+  public String getLanguage() {
 		for (ElementStructure e : allElements) {
 			String locale = e.vis.fLocale;
 			if (locale != null) return locale;
