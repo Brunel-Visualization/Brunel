@@ -60,7 +60,9 @@ public class ChartBuilder {
     structure.accessible = options.accessibleContent;
 
     defineChart(structure);
-    for (ElementStructure e : structure.elementStructure) buildElement(e, nestingInfo);
+    for (ElementStructure e : structure.elementStructure) {
+      buildElement(e, nestingInfo);
+    }
     endChart(structure, nested);
 
     return structure;
@@ -79,10 +81,11 @@ public class ChartBuilder {
     out.onNewLine().add("fields: {").indentMore();
 
     boolean needsComma = writeFieldName("x", vis.fX, false);
-    if (vis.fRange != null)
+    if (vis.fRange != null) {
       needsComma = writeFieldName("y", Arrays.asList(vis.fRange), needsComma);
-    else
+    } else {
       needsComma = writeFieldName("y", vis.fY, needsComma);
+    }
 
     List<String> keys = dataBuilder.makeKeyFields();
     if (!keys.isEmpty()) {
@@ -105,7 +108,9 @@ public class ChartBuilder {
     out.add("var elementGroup = interior.append('g').attr('class', 'element" + structure.elementID() + "')");
 
     Accessibility.addElementInformation(structure, out);
-    if (elementTransform != null) out.addChained(elementTransform);
+    if (elementTransform != null) {
+      out.addChained(elementTransform);
+    }
 
     // The main group
     out.add(",").ln().indent().add("main = elementGroup.append('g').attr('class', 'main')");
@@ -145,8 +150,9 @@ public class ChartBuilder {
 
     ElementStructure[] structures = structure.elementStructure;
     elementBuilders = new ElementBuilder[structures.length];
-    for (int i = 0; i < structures.length; i++)
+    for (int i = 0; i < structures.length; i++) {
       elementBuilders[i] = ElementBuilder.make(structures[i], out, scalesBuilder);
+    }
   }
 
   private void defineChart(ChartStructure structure) {
@@ -172,13 +178,19 @@ public class ChartBuilder {
       .indentLess();
 
     // Transpose if needed
-    if (forceSquare(structure.elements)) out.add("geom.makeSquare()").endStatement();
-    if (structure.coordinates.isTransposed()) out.add("geom.transpose()").endStatement();
+    if (forceSquare(structure.elements)) {
+      out.add("geom.makeSquare()").endStatement();
+    }
+    if (structure.coordinates.isTransposed()) {
+      out.add("geom.transpose()").endStatement();
+    }
 
     // Now build the main groups
     out.titleComment("Define groups for the chart parts");
     writeMainGroups(structure);
-    for (ElementBuilder builder : elementBuilders) builder.writePerChartDefinitions();
+    for (ElementBuilder builder : elementBuilders) {
+      builder.writePerChartDefinitions();
+    }
 
     title.writeContent("chart", out);
     sub.writeContent("chart", out);
@@ -239,11 +251,23 @@ public class ChartBuilder {
     // If a chart is nested within us, build its facets
     if (info.nestsOther(structure.vis)) {
       int index = info.indexOfChartNestedWithin(structure.vis);         // Index of nested chart
-
       String id = ChartStructure.makeChartID(index);
-      out.onNewLine().comment("Build the faceted charts within this chart's selection");
-			out.add("vis.select('g.chart" + id + "').selectAll('*').remove()").endStatement()
-					.add("BrunelD3.facet(charts[" + index + "], element, transitionMillis)").endStatement();
+
+      // Only the network chart uses a call-back mechanism, in which case we do not directly
+      // build the facet, but instead define it for later call back
+      boolean usesTickCallBack = (structure.vis.tDiagram == VisTypes.Diagram.network);
+
+      if (usesTickCallBack) {
+        out.add("element.buildFacet = function() {").indentMore().onNewLine();
+      }
+
+      out.onNewLine().comment("Build the faceted charts within this chart's selection")
+        .add("vis.select('g.chart" + id + "').selectAll('*').remove()").endStatement()
+        .add("BrunelD3.facet(charts[" + index + "], element, 0)").endStatement();
+
+      if (usesTickCallBack) {
+        out.indentLess().onNewLine().add("}");
+      }
 
     }
 
@@ -262,22 +286,28 @@ public class ChartBuilder {
     out.add("if (first) time = 0;").comment("No transition for first call");
 
     // For coordinate system charts, see if axes are needed
-    if (axisBuilder.needsAxes() || structure.geo != null && structure.geo.withGraticule)
+    if (axisBuilder.needsAxes() || structure.geo != null && structure.geo.withGraticule) {
       out.onNewLine().add("buildAxes(time)").endStatement();
+    }
 
     Integer[] order = structure.elementBuildOrder();
 
     out.onNewLine().add("if ((first || time > -1) && !noData) {").indentMore();
-    for (int i : order)
+    for (int i : order) {
       out.onNewLine().add("elements[" + i + "].makeData()").endStatement();
+    }
     legendBuilder.writeLegends();
     out.indentLess().onNewLine().add("}").ln();
-    if (structure.diagram == VisTypes.Diagram.network)
+    if (structure.diagram == VisTypes.Diagram.network) {
       out.onNewLine().add("graph = null").endStatement();
-    for (int i : order)
+    }
+    for (int i : order) {
       out.onNewLine().add("elements[" + i + "].build(time);");
+    }
 
-    for (ElementBuilder builder : elementBuilders) builder.writeBuildCommands();
+    for (ElementBuilder builder : elementBuilders) {
+      builder.writeBuildCommands();
+    }
 
     out.indentLess().onNewLine().add("}").ln();
 
@@ -296,7 +326,7 @@ public class ChartBuilder {
       .indentLess().onNewLine().add("}").endStatement();
 
     // Finish the chart method
-    if (isNested)  {
+    if (isNested) {
       // For a nested chart we need to build the chart completely each time, so store the FUNCTION
       out.add("}");
     } else {
@@ -311,19 +341,22 @@ public class ChartBuilder {
   private boolean forceSquare(VisElement[] elements) {
     for (VisElement e : elements) {
       for (Param p : e.fCoords) {
-        if (p.asString().equals("square")) return true;
+        if (p.asString().equals("square")) {
+          return true;
+        }
       }
     }
     return false;
   }
 
   private String makeElementTransform(VisTypes.Coordinates coords) {
-    if (coords == VisTypes.Coordinates.transposed)
+    if (coords == VisTypes.Coordinates.transposed) {
       return "attr('transform','matrix(0,1,1,0,0,0)')";
-    else if (coords == VisTypes.Coordinates.polar)
+    } else if (coords == VisTypes.Coordinates.polar) {
       return makeTranslateTransform("geom.inner_width/2", "geom.inner_height/2");
-    else
+    } else {
       return null;
+    }
   }
 
   private String makeTranslateTransform(String dx, String dy) {
@@ -343,12 +376,19 @@ public class ChartBuilder {
    * @return updated needsCommaBefore, changed to be true if we added anthing
    */
   private boolean writeFieldName(String key, List fieldNames, boolean needsCommaBefore) {
-    if (fieldNames.isEmpty()) return needsCommaBefore;
-    if (needsCommaBefore) out.add(",");
+    if (fieldNames.isEmpty()) {
+      return needsCommaBefore;
+    }
+    if (needsCommaBefore) {
+      out.add(",");
+    }
     List<String> names = new ArrayList<>();
     for (Object p : fieldNames) {
-      if (p instanceof Param) names.add(((Param) p).asField());
-      else names.add(p.toString());
+      if (p instanceof Param) {
+        names.add(((Param) p).asField());
+      } else {
+        names.add(p.toString());
+      }
     }
     out.onNewLine().add(key, ":").at(24).add("[").addQuotedCollection(names).add("]");
     return true;
@@ -373,13 +413,16 @@ public class ChartBuilder {
     }
 
     // Only write group info if we have multiple elements within the chart
-    if (structure.elements.length > 1) groupUtil.addAccessibleChartInfo();
+    if (structure.elements.length > 1) {
+      groupUtil.addAccessibleChartInfo();
+    }
 
     String sTranslate;
-    if ("rtl".equals(structure.elements[0].fGuiDir))
+    if ("rtl".equals(structure.elements[0].fGuiDir)) {
       sTranslate = makeTranslateTransformWithMirroring("geom.chart_right", "0");
-    else
+    } else {
       sTranslate = makeTranslateTransform("geom.chart_left", "geom.chart_top");
+    }
     out.addChained(sTranslate).endStatement();
 
     structure.interaction.addOverlayForZoom(structure.diagram, out);
@@ -399,7 +442,9 @@ public class ChartBuilder {
       .addChained(axesTransform);
 
     // Nested charts do not need additional clipping
-    if (!structure.nested()) groupUtil.addClipPathReference("inner");
+    if (!structure.nested()) {
+      groupUtil.addClipPathReference("inner");
+    }
 
     out.endStatement();
     out.add("interior.append('rect').attr('class', 'inner')")
@@ -408,9 +453,10 @@ public class ChartBuilder {
     out.add("var gridGroup = interior.append('g').attr('class', 'grid')")
       .endStatement();
 
-    if (axisBuilder.needsAxes())
+    if (axisBuilder.needsAxes()) {
       out.add("var axes = chart.append('g').attr('class', 'axis')")
         .addChained(axesTransform).endStatement();
+    }
     if (legendBuilder.needsLegends()) {
       sTranslate = makeTranslateTransform("(geom.chart_right-geom.chart_left - 3)", "0");
       out.add("var legends = chart.append('g').attr('class', 'legend')").addChained(sTranslate);
@@ -418,7 +464,9 @@ public class ChartBuilder {
       out.endStatement();
     }
 
-    if (!structure.nested()) groupUtil.defineInnerClipPath();
+    if (!structure.nested()) {
+      groupUtil.defineInnerClipPath();
+    }
   }
 
 }

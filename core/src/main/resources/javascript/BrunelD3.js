@@ -1694,6 +1694,8 @@ var BrunelD3 = (function () {
                 return makeEdgeShape(p, curved);
             });
 
+            // If the parent element has facet children, build them
+            nodes.buildFacet && nodes.buildFacet();
         }
 
 
@@ -1771,6 +1773,7 @@ var BrunelD3 = (function () {
             }));          // Convert 1-based items to 0-based rows
             c.build(time);
         });
+
     }
 
     // v is in the range -1/2 to 1/2

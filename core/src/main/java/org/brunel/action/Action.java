@@ -193,7 +193,8 @@ public class Action implements Comparable<Action> {
             ActionStep a = steps.get(i);
             if (a.name.startsWith(">")) {
                 // Create whatever is on the other side of the operator and return the composition
-                VisItem inner = applyNesting(steps.subList(i + 1, steps.size()), data);
+                // Note that we need to make sure we are using the same data set for inner as outer
+                VisItem inner = applyNesting(steps.subList(i + 1, steps.size()), outer.getDataset());
                 return a.name.equals(">")
                         ? VisComposition.inside(outer, inner)
                         : VisComposition.nested(outer, inner);

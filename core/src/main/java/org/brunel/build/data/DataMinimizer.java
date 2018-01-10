@@ -90,11 +90,6 @@ public class DataMinimizer {
 		return a;
 	}
 
-	// If different, return the empty command
-	private String eliminateIfDifferent(String a, String b) {
-		return a.equals(b) ? a : "";
-	}
-
 	private TransformParameters makeReducedTransformParams(TransformParameters a) {
 		TransformParameters result = new TransformParameters();
 		result.constantsCommand = a.constantsCommand;
