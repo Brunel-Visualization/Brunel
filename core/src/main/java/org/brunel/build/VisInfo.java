@@ -6,7 +6,6 @@ import org.brunel.build.util.BuilderOptions;
 import org.brunel.model.VisElement;
 import org.brunel.model.style.StyleSheet;
 
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -17,7 +16,6 @@ import java.util.Set;
 class VisInfo {
 	final int width, height;                            // The expected visualization size
 	final Set<ElementStructure> allElements;          // Collection of all elements used
-	final Set<Integer> nesting;                   // Which charts are nested within others
 	Controls controls;                          // Contains the controls for the current chart
 	StyleSheet visStyles;                                // Custom styles for this vis
 
@@ -25,7 +23,6 @@ class VisInfo {
 		this.width = width;
 		this.height = height;
 		allElements = new LinkedHashSet<>();
-		nesting = new HashSet<>();
 		controls = new Controls(options);
 		visStyles = new StyleSheet();
 	}

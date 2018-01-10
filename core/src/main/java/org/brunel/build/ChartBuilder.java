@@ -61,7 +61,7 @@ public class ChartBuilder {
 
     defineChart(structure);
     for (ElementStructure e : structure.elementStructure) buildElement(e, nestingInfo);
-    endChart(structure);
+    endChart(structure, nested);
 
     return structure;
   }
@@ -255,7 +255,7 @@ public class ChartBuilder {
     out.indentLess().onNewLine().add("}()").endStatement().ln();
   }
 
-  private void endChart(ChartStructure structure) {
+  private void endChart(ChartStructure structure, boolean isNested) {
     out.onNewLine().add("function build(time, noData) {").indentMore();
 
     out.onNewLine().add("var first = elements[0].data() == null").endStatement();
@@ -296,7 +296,7 @@ public class ChartBuilder {
       .indentLess().onNewLine().add("}").endStatement();
 
     // Finish the chart method
-    if (visInfo.nesting.contains(structure.chartIndex)) {
+    if (isNested)  {
       // For a nested chart we need to build the chart completely each time, so store the FUNCTION
       out.add("}");
     } else {

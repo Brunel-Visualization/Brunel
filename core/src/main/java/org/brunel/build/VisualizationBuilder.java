@@ -129,8 +129,7 @@ public class VisualizationBuilder {
 
     // Write any nested charts
     for (VisElement item : nestingInfo.nestedElements()) {
-      visStructure.nesting.add(chartIndex);                                           // This chart is a nested one
-      double[] loc = new ChartLayout(width, height, item).getLocation(0);
+      double[] loc = ChartLayout.chartLocation(width, height, item);
       new ChartBuilder(visStructure, options, loc, out).build(chartIndex, nestingInfo, item);
       chartIndex++;
     }
@@ -236,7 +235,8 @@ public class VisualizationBuilder {
       elements = new VisElement[]{toMainElement(item)};
     }
 
-    new ChartBuilder(visStructure, options, location, out).build(chartIndex, nestingInfo, elements);
+    new ChartBuilder(visStructure, options, location, out)
+      .build(chartIndex, nestingInfo, elements);
   }
 
   private int enterAnimate(VisItem main, int dataSetCount) {

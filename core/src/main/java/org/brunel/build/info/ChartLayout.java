@@ -17,6 +17,7 @@
 package org.brunel.build.info;
 
 import org.brunel.action.Param;
+import org.brunel.model.VisElement;
 import org.brunel.model.VisItem;
 
 /**
@@ -54,6 +55,17 @@ public class ChartLayout {
 			}
 		}
 
+	}
+
+	/**
+	 * A utility method to get the location of a whole chart
+	 * @param width vis width
+	 * @param height vis height
+	 * @param item item to check for 'at(x1,y1,x2,y2)' commands
+	 * @return the chart location
+	 */
+	public static double[] chartLocation(int width, int height, VisElement item) {
+		return new ChartLayout(width, height, item).getLocation(0);
 	}
 
 	public double[] getLocation(int chartIndex) {
