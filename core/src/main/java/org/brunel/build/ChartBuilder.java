@@ -238,10 +238,12 @@ public class ChartBuilder {
 
     // If a chart is nested within us, build its facets
     if (info.nestsOther(structure.vis)) {
-//      String chartID = "g.chart" + ChartStructure.makeChartID(index);
+      int index = info.nestedChartIndex(structure.vis);         // Index of nested chart
+
+      String id = ChartStructure.makeChartID(index);
       out.onNewLine().comment("Build the faceted charts within this chart's selection");
-      out.add("vis.select(element.facet.chartID).selectAll('*').remove()").endStatement()
-        .add("BrunelD3.facet(charts[element.facet.index], element, transitionMillis)").endStatement();
+			out.add("vis.select('g.chart" + id + "').selectAll('*').remove()").endStatement()
+					.add("BrunelD3.facet(charts[" + index + "], element, transitionMillis)").endStatement();
 
     }
 

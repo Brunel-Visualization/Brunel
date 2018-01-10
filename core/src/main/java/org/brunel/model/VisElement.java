@@ -251,6 +251,10 @@ public class VisElement extends VisItem implements Cloneable {
 		if (type != null) tLegends = Legends.valueOf(type.asString());
 	}
 
+	public VisTypes.Composition compositionMethod() {
+		return VisTypes.Composition.single;
+	}
+
 	public VisElement getSingle() {
 		return this;
 	}

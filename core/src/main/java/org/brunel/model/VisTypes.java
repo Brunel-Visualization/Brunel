@@ -30,7 +30,7 @@ public class VisTypes {
 
 	/* How we compose visualizations */
 	public enum Composition {
-		inside, nested, overlay, tile
+		single, inside, nested, overlay, tile
 	}
 
 	/* Coordinate methods */

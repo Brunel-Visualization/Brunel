@@ -21,6 +21,9 @@ import org.brunel.data.Dataset;
 /* A visualization; either a single element, or a composition */
 public abstract class VisItem {
 
+  /* Returns null for no composition */
+  public abstract VisTypes.Composition compositionMethod();
+
   /* This is the last element in the composition, or this item if we are a VisSingle */
   public abstract VisElement getSingle();
 

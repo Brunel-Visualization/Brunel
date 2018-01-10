@@ -42,12 +42,16 @@ public class VisComposition extends VisItem {
     return new VisComposition(Composition.tile, items);
   }
 
-  public final Composition method;
+  private final Composition method;
   private final VisItem[] items;
 
   private VisComposition(Composition method, VisItem... items) {
     this.method = method;
     this.items = items;
+  }
+
+  public Composition compositionMethod() {
+    return method;
   }
 
   public VisElement getSingle() {

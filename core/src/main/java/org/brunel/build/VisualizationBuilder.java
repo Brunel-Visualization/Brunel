@@ -20,7 +20,6 @@ import org.brunel.action.Param;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.data.DataTableWriter;
 import org.brunel.build.info.ChartLayout;
-import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
@@ -94,11 +93,13 @@ public class VisualizationBuilder {
    * @param height pixel height of the rectangle into which the visualization is to be put
    */
   public final void build(VisItem main, int width, int height) {
-    this.visStructure = new VisInfo(width, height, options);
-    this.nestingInfo = new NestingInfo();
-
-    // Define defaults and ensure everything is good to go
+    // Define defaults and ensure everything is good to go.
+    // Do this before anything else
     main = main.makeCanonical();
+
+    this.visStructure = new VisInfo(width, height, options);
+    this.nestingInfo = new NestingInfo(createElementIndices(main));
+
 
     // Index the datasets with the number in the list of input data sets
     Dataset[] datasets = main.getDataSets();
@@ -109,7 +110,7 @@ public class VisualizationBuilder {
 
     Map<VisItem, double[]> locations = new LinkedHashMap<>();     // Where to place items
     VisItem[] parts = main.children();                            // The parts contained in this item
-    if (parts != null && ((VisComposition) main).method == VisTypes.Composition.tile) {
+    if (parts != null && ((VisComposition) main).compositionMethod() == VisTypes.Composition.tile) {
       // We have tiled locations, so read them all in
       ChartLayout layout = new ChartLayout(width, height, parts);   // Layout method
       for (int i = 0; i < parts.length; i++) {
@@ -128,7 +129,7 @@ public class VisualizationBuilder {
       buildChart(e.getKey(), e.getValue(), chartIndex++);
 
     // Write any nested charts
-    for (NestingInfo.NestedItem item : nestingInfo.items) {
+    for (NestingInfo.NestedItem item : nestingInfo.items()) {
       visStructure.nesting.add(chartIndex);                                           // This chart is a nested one
       double[] loc = new ChartLayout(width, height, item.inner).getLocation(0);
       new ChartBuilder(visStructure, options, loc, out).build(chartIndex, nestingInfo, item.inner);
@@ -138,20 +139,40 @@ public class VisualizationBuilder {
     writeEnd(main);
   }
 
-  private VisItem makeCanonical(VisItem item) {
+  private Map<VisElement, int[]> createElementIndices(VisItem main) {
+    LinkedHashMap<VisElement, int[]> map = new LinkedHashMap<>();
+    addToMap(main, map, 0, 0);
+    return map;
+  }
+
+  private void addToMap(VisItem item, Map<VisElement, int[]> map, int nextChartIndex, int nextElementIndex) {
+    VisTypes.Composition method = item.compositionMethod();
     VisItem[] children = item.children();
-    if (children == null)
-      return item.getSingle().makeCanonical();
-    else for (int i = 0; i < children.length; i++)
-      children[i] = makeCanonical(children[i]);
-    return item;
+    if (method == VisTypes.Composition.single) {
+      map.put(item.getSingle(), new int[]{nextChartIndex, nextElementIndex});
+    } else if (method == VisTypes.Composition.tile) {
+      // Each item starts a new chart
+      for (VisItem child : children)
+        addToMap(child, map, nextChartIndex++, 0);
+    } else if (method == VisTypes.Composition.overlay) {
+      // Each item starts a new element
+      for (VisItem child : children)
+        addToMap(child, map, nextChartIndex, nextElementIndex++);
+    } else if (method == VisTypes.Composition.nested || method == VisTypes.Composition.inside) {
+      // First item is a new element within the same chart
+      addToMap(children[0], map, nextChartIndex, nextElementIndex);
+      // Second element is a new chart
+      addToMap(children[1], map, ++nextChartIndex, 0);
+    } else {
+      throw new IllegalStateException("Unknown composition method: " + method);
+    }
   }
 
   private void buildChart(VisItem item, double[] location, int chartIndex) {
     VisElement[] elements;                          // Elements to build for this chart
 
     VisItem[] children = item.children();
-    VisTypes.Composition compositionMethod = children == null ? null : ((VisComposition) item).method;
+    VisTypes.Composition compositionMethod = children == null ? null : ((VisComposition) item).compositionMethod();
 
     if (compositionMethod == VisTypes.Composition.overlay) {
       elements = new VisElement[children.length];
@@ -292,18 +313,18 @@ public class VisualizationBuilder {
       .add("updateAll(transitionTime)").endStatement();
     out.indentLess().add("}").ln().ln();
 
-    // Define nesting info
-    if (nestingInfo.facetsExist()) {
-      out.onNewLine().comment("Define facet nesting relationships");
-      for (NestingInfo.NestedItem item : nestingInfo.items) {
-        ElementStructure outerElement = visStructure.findElement(item.outer);
-        ElementStructure innerElement = visStructure.findElement(item.inner);
-        //      String chartID = "g.chart" + ChartStructure.makeChartID(index);
-        out.add("charts[" + outerElement.chart.chartIndex + "].elements[" + outerElement.index + "]")
-          .add(".facet = { chartID:'g.chart" + innerElement.chart.chartID() + "', index:" + innerElement.chart.chartIndex + "}")
-          .endStatement();
-      }
-    }
+//    // Define nesting info
+//    if (nestingInfo.facetsExist()) {
+//      out.onNewLine().comment("Define facet nesting relationships");
+//      for (NestingInfo.NestedItem item : nestingInfo.items()) {
+//        ElementStructure outerElement = visStructure.findElement(item.outer);
+//        ElementStructure innerElement = visStructure.findElement(item.inner);
+//        //      String chartID = "g.chart" + ChartStructure.makeChartID(index);
+//        out.add("charts[" + outerElement.chart.chartIndex + "].elements[" + outerElement.index + "]")
+//          .add(".facet = { chartID:'g.chart" + innerElement.chart.chartID() + "', index:" + innerElement.chart.chartIndex + "}")
+//          .endStatement();
+//      }
+//    }
 
     // Return the important items
     out.add("return {").indentMore().ln()
