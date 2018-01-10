@@ -21,15 +21,18 @@ import org.brunel.data.Dataset;
 /* A visualization; either a single element, or a composition */
 public abstract class VisItem {
 
-    /* This is the last element in the composition, or this item if we are a VisSingle */
-    public abstract VisElement getSingle();
+  /* This is the last element in the composition, or this item if we are a VisSingle */
+  public abstract VisElement getSingle();
 
-    /* Return child parts -- will be null for a VisSingle */
-    public abstract VisItem[] children();
+  /* Return child parts -- will be null for a VisSingle */
+  public abstract VisItem[] children();
 
-    /* Return a string containing validation errors, or NULL if there are no errors */
-    public abstract String validate();
+  /* Define anything undefined, make defaults and return a new ready-to-use item (may be the same object) */
+  public abstract VisItem makeCanonical();
 
-    public abstract Dataset[] getDataSets();
+  /* Return a string containing validation errors, or NULL if there are no errors */
+  public abstract String validate();
+
+  public abstract Dataset[] getDataSets();
 
 }

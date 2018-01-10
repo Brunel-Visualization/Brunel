@@ -1586,7 +1586,6 @@ var BrunelD3 = (function () {
     /**
      * Start a network layout for the node and edge elements
      * The graph should already have been built within the nodeElement
-     * density is
 
      * @param graph the graph structure (data)
      * @param nodes selection for the nodes
@@ -1761,7 +1760,7 @@ var BrunelD3 = (function () {
         return labels;
     }
 
-    function `facet(chart, parentElement, time) {
+    function facet(chart, parentElement, time) {
         parentElement.selection().each(function (d) {
             var row = d.row >=0 ? d.row : (d.data ? d.data.row : null);
             if (row == null) return;

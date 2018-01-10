@@ -97,7 +97,8 @@ public class VisualizationBuilder {
     this.visStructure = new VisInfo(width, height, options);
     this.nestingInfo = new NestingInfo();
 
-    main = ensureCanonical(main);
+    // Define defaults and ensure everything is good to go
+    main = main.makeCanonical();
 
     // Index the datasets with the number in the list of input data sets
     Dataset[] datasets = main.getDataSets();
@@ -137,12 +138,12 @@ public class VisualizationBuilder {
     writeEnd(main);
   }
 
-  private VisItem ensureCanonical(VisItem item) {
+  private VisItem makeCanonical(VisItem item) {
     VisItem[] children = item.children();
     if (children == null)
       return item.getSingle().makeCanonical();
     else for (int i = 0; i < children.length; i++)
-      children[i] = ensureCanonical(children[i]);
+      children[i] = makeCanonical(children[i]);
     return item;
   }
 

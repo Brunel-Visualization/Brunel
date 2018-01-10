@@ -26,67 +26,73 @@ import java.util.Set;
 /* One or more single items, composed together */
 public class VisComposition extends VisItem {
 
-    public static VisComposition inside(VisItem... items) {
-        return new VisComposition(Composition.inside, items);
-    }
+  public static VisComposition inside(VisItem... items) {
+    return new VisComposition(Composition.inside, items);
+  }
 
-    public static VisComposition nested(VisItem... items) {
-        return new VisComposition(Composition.nested, items);
-    }
+  public static VisComposition nested(VisItem... items) {
+    return new VisComposition(Composition.nested, items);
+  }
 
-    public static VisComposition overlay(VisItem... items) {
-        return new VisComposition(Composition.overlay, items);
-    }
+  public static VisComposition overlay(VisItem... items) {
+    return new VisComposition(Composition.overlay, items);
+  }
 
-    public static VisComposition tile(VisItem... items) {
-        return new VisComposition(Composition.tile, items);
-    }
+  public static VisComposition tile(VisItem... items) {
+    return new VisComposition(Composition.tile, items);
+  }
 
-    public final Composition method;
-    private final VisItem[] items;
+  public final Composition method;
+  private final VisItem[] items;
 
-    private VisComposition(Composition method, VisItem... items) {
-        this.method = method;
-        this.items = items;
-    }
+  private VisComposition(Composition method, VisItem... items) {
+    this.method = method;
+    this.items = items;
+  }
 
-    public VisElement getSingle() {
-        return items[0].getSingle();
-    }
+  public VisElement getSingle() {
+    return items[0].getSingle();
+  }
 
-    public VisItem[] children() {
-        return items;
-    }
+  public VisItem[] children() {
+    return items;
+  }
 
-    public String validate() {
-        String error = null;
-        for (VisItem i : items) {
-            String e = i.validate();
-            if (e != null) if (error == null)
-                error = e;
-            else
-                error = error + "; " + e;
-        }
-        return error;
-    }
+  public VisItem makeCanonical() {
+    for (int i = 0; i < items.length; i++)
+      items[i] = items[i].makeCanonical();
+    return this;
+  }
 
-    public Dataset[] getDataSets() {
-        Set<Dataset> datas = new LinkedHashSet<>();
-        for (VisItem v : items) {
-            if (v instanceof VisElement)
-                datas.add(((VisElement) v).getDataset());
-            else
-                Collections.addAll(datas, v.getDataSets());
-        }
-        return datas.toArray(new Dataset[datas.size()]);
+  public String validate() {
+    String error = null;
+    for (VisItem i : items) {
+      String e = i.validate();
+      if (e != null) if (error == null)
+        error = e;
+      else
+        error = error + "; " + e;
     }
+    return error;
+  }
 
-    public String toString() {
-        StringBuilder b = new StringBuilder();
-        for (int i=0; i<items.length; i++) {
-            if (i>1) b.append(method);
-            b.append(items[i]).toString();
-        }
-        return b.toString();
+  public Dataset[] getDataSets() {
+    Set<Dataset> datas = new LinkedHashSet<>();
+    for (VisItem v : items) {
+      if (v instanceof VisElement)
+        datas.add(((VisElement) v).getDataset());
+      else
+        Collections.addAll(datas, v.getDataSets());
     }
+    return datas.toArray(new Dataset[datas.size()]);
+  }
+
+  public String toString() {
+    StringBuilder b = new StringBuilder();
+    for (int i = 0; i < items.length; i++) {
+      if (i > 1) b.append(method);
+      b.append(items[i]).toString();
+    }
+    return b.toString();
+  }
 }
