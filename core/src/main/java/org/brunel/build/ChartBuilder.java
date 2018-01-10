@@ -238,7 +238,7 @@ public class ChartBuilder {
 
     // If a chart is nested within us, build its facets
     if (info.nestsOther(structure.vis)) {
-      int index = info.nestedChartIndex(structure.vis);         // Index of nested chart
+      int index = info.indexOfChartNestedWithin(structure.vis);         // Index of nested chart
 
       String id = ChartStructure.makeChartID(index);
       out.onNewLine().comment("Build the faceted charts within this chart's selection");

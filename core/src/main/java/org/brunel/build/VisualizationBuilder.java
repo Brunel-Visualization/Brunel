@@ -98,8 +98,7 @@ public class VisualizationBuilder {
     main = main.makeCanonical();
 
     this.visStructure = new VisInfo(width, height, options);
-    this.nestingInfo = new NestingInfo(createElementIndices(main));
-
+    this.nestingInfo = new NestingInfo(main);
 
     // Index the datasets with the number in the list of input data sets
     Dataset[] datasets = main.getDataSets();
@@ -129,77 +128,14 @@ public class VisualizationBuilder {
       buildChart(e.getKey(), e.getValue(), chartIndex++);
 
     // Write any nested charts
-    for (NestingInfo.NestedItem item : nestingInfo.items()) {
+    for (VisElement item : nestingInfo.nestedElements()) {
       visStructure.nesting.add(chartIndex);                                           // This chart is a nested one
-      double[] loc = new ChartLayout(width, height, item.inner).getLocation(0);
-      new ChartBuilder(visStructure, options, loc, out).build(chartIndex, nestingInfo, item.inner);
+      double[] loc = new ChartLayout(width, height, item).getLocation(0);
+      new ChartBuilder(visStructure, options, loc, out).build(chartIndex, nestingInfo, item);
       chartIndex++;
     }
 
     writeEnd(main);
-  }
-
-  private Map<VisElement, int[]> createElementIndices(VisItem main) {
-    LinkedHashMap<VisElement, int[]> map = new LinkedHashMap<>();
-    addToMap(main, map, 0, 0);
-    return map;
-  }
-
-  private void addToMap(VisItem item, Map<VisElement, int[]> map, int nextChartIndex, int nextElementIndex) {
-    VisTypes.Composition method = item.compositionMethod();
-    VisItem[] children = item.children();
-    if (method == VisTypes.Composition.single) {
-      map.put(item.getSingle(), new int[]{nextChartIndex, nextElementIndex});
-    } else if (method == VisTypes.Composition.tile) {
-      // Each item starts a new chart
-      for (VisItem child : children)
-        addToMap(child, map, nextChartIndex++, 0);
-    } else if (method == VisTypes.Composition.overlay) {
-      // Each item starts a new element
-      for (VisItem child : children)
-        addToMap(child, map, nextChartIndex, nextElementIndex++);
-    } else if (method == VisTypes.Composition.nested || method == VisTypes.Composition.inside) {
-      // First item is a new element within the same chart
-      addToMap(children[0], map, nextChartIndex, nextElementIndex);
-      // Second element is a new chart
-      addToMap(children[1], map, ++nextChartIndex, 0);
-    } else {
-      throw new IllegalStateException("Unknown composition method: " + method);
-    }
-  }
-
-  private void buildChart(VisItem item, double[] location, int chartIndex) {
-    VisElement[] elements;                          // Elements to build for this chart
-
-    VisItem[] children = item.children();
-    VisTypes.Composition compositionMethod = children == null ? null : ((VisComposition) item).compositionMethod();
-
-    if (compositionMethod == VisTypes.Composition.overlay) {
-      elements = new VisElement[children.length];
-      for (int i = 0; i < children.length; i++) elements[i] = toMainElement(children[i]);
-    } else {
-      // Main item is either simple or a nesting
-      elements = new VisElement[]{toMainElement(item)};
-    }
-
-    new ChartBuilder(visStructure, options, location, out).build(chartIndex, nestingInfo, elements);
-  }
-
-  private VisElement toMainElement(VisItem item) {
-    VisItem[] children = item.children();
-    // Simple case -- the item is an element
-    if (children == null) return item.getSingle();
-
-    // Must be a nesting
-    if (children.length != 2) throw new IllegalStateException("Nesting requires two children");
-    VisElement outer = (VisElement) children[0];
-    VisElement inner = (VisElement) children[1];
-    nestingInfo.add(inner, outer);
-    return outer;
-  }
-
-  public String getLanguage() {
-    return visStructure.getLanguage();
   }
 
   public Controls getControls() {
@@ -210,8 +146,8 @@ public class VisualizationBuilder {
     return visStructure.height;
   }
 
-  public int getWidth() {
-    return visStructure.width;
+  public String getLanguage() {
+    return visStructure.getLanguage();
   }
 
   public final BuilderOptions getOptions() {
@@ -232,6 +168,10 @@ public class VisualizationBuilder {
 
   public String getVisualization() {
     return out.content();
+  }
+
+  public int getWidth() {
+    return visStructure.width;
   }
 
   public String makeImports() {
@@ -282,22 +222,79 @@ public class VisualizationBuilder {
     return base;
   }
 
-  private void writeStart() {
-    this.out = new ScriptWriter(options);
+  private void buildChart(VisItem item, double[] location, int chartIndex) {
+    VisElement[] elements;                          // Elements to build for this chart
 
-    // Write the class definition function (and flag to use strict mode)
-    out.add("function ", options.className, "(visId) {").ln().indentMore();
-    out.add("\"use strict\";").comment("Strict mode");
+    VisItem[] children = item.children();
+    VisTypes.Composition compositionMethod = item.compositionMethod();
 
-    // Add commonly used definitions
-    out.add("var datasets = [],").comment("Array of datasets for the original data");
-    out.add("    pre = function(d, i) { return d },").comment("Default pre-process does nothing");
-    out.add("    post = function(d, i) { return d },").comment("Default post-process does nothing");
-    out.add("    transitionTime = 200,").comment("Transition time for animations");
-    out.add("    charts = [],").comment("The charts in the system");
-    out.add("    vis = d3.select('#' + visId).attr('class', 'brunel');").comment("the SVG container");
+    if (compositionMethod == VisTypes.Composition.overlay) {
+      elements = new VisElement[children.length];
+      for (int i = 0; i < children.length; i++) elements[i] = toMainElement(children[i]);
+    } else {
+      // Main item is either simple or a nesting
+      elements = new VisElement[]{toMainElement(item)};
+    }
 
-    out.ln().add("BrunelD3.addDefinitions(vis);").comment("ensure standard symbols present");
+    new ChartBuilder(visStructure, options, location, out).build(chartIndex, nestingInfo, elements);
+  }
+
+  private int enterAnimate(VisItem main, int dataSetCount) {
+    if (dataSetCount != 1) return -1;                           // Need a single data set to animate over
+
+    if (main.children() != null) {
+      // Check children
+      for (VisItem child : main.children()) {
+        int v = enterAnimate(child, dataSetCount);
+        if (v >= 0) return v;
+      }
+    }
+
+    List<Param> effects = main.getSingle().getSingle().fEffects;
+    for (Param p : effects) {
+      if (p.type() == Param.Type.option && p.asString().equals("enter")) {
+        if (p.hasModifiers()) {
+          try {
+            return (int) p.modifiers()[0].asDouble();
+          } catch (Exception ignored) {
+            // fall through to default case
+          }
+        }
+        return 700;
+      }
+    }
+    return -1;
+  }
+
+  private VisElement toMainElement(VisItem item) {
+    VisItem[] children = item.children();
+    if (children == null) {
+      // Simple case -- the item is an element
+      return item.getSingle();
+    } else {
+      // Must be a nesting
+      if (children.length != 2) throw new IllegalStateException("Nesting requires two children");
+      return (VisElement) children[0];
+    }
+  }
+
+  private void writeBidiEnd(VisItem main) {
+    if (!(main instanceof VisElement))
+      return;
+    VisElement element = (VisElement) main;
+
+    if (element.fLocale == null
+      && element.fTextDir == null
+      && element.fGuiDir == null
+      && element.fNumShape == null)
+      return;
+
+    out.add("var BrunelD3Locale;\n");
+    out.add("bidiProcessing('"
+      + options.visIdentifier + "', '"
+      + element.fLocale + "', '" + element.fTextDir + "', '"
+      + element.fGuiDir + "', '" + element.fNumShape + "');");
+
   }
 
   private void writeEnd(VisItem main) {
@@ -374,50 +371,22 @@ public class VisualizationBuilder {
 
   }
 
-  private void writeBidiEnd(VisItem main) {
-    if (!(main instanceof VisElement))
-      return;
-    VisElement element = (VisElement) main;
+  private void writeStart() {
+    this.out = new ScriptWriter(options);
 
-    if (element.fLocale == null
-      && element.fTextDir == null
-      && element.fGuiDir == null
-      && element.fNumShape == null)
-      return;
+    // Write the class definition function (and flag to use strict mode)
+    out.add("function ", options.className, "(visId) {").ln().indentMore();
+    out.add("\"use strict\";").comment("Strict mode");
 
-    out.add("var BrunelD3Locale;\n");
-    out.add("bidiProcessing('"
-      + options.visIdentifier + "', '"
-      + element.fLocale + "', '" + element.fTextDir + "', '"
-      + element.fGuiDir + "', '" + element.fNumShape + "');");
+    // Add commonly used definitions
+    out.add("var datasets = [],").comment("Array of datasets for the original data");
+    out.add("    pre = function(d, i) { return d },").comment("Default pre-process does nothing");
+    out.add("    post = function(d, i) { return d },").comment("Default post-process does nothing");
+    out.add("    transitionTime = 200,").comment("Transition time for animations");
+    out.add("    charts = [],").comment("The charts in the system");
+    out.add("    vis = d3.select('#' + visId).attr('class', 'brunel');").comment("the SVG container");
 
-  }
-
-  private int enterAnimate(VisItem main, int dataSetCount) {
-    if (dataSetCount != 1) return -1;                           // Need a single data set to animate over
-
-    if (main.children() != null) {
-      // Check children
-      for (VisItem child : main.children()) {
-        int v = enterAnimate(child, dataSetCount);
-        if (v >= 0) return v;
-      }
-    }
-
-    List<Param> effects = main.getSingle().getSingle().fEffects;
-    for (Param p : effects) {
-      if (p.type() == Param.Type.option && p.asString().equals("enter")) {
-        if (p.hasModifiers()) {
-          try {
-            return (int) p.modifiers()[0].asDouble();
-          } catch (Exception ignored) {
-            // fall through to default case
-          }
-        }
-        return 700;
-      }
-    }
-    return -1;
+    out.ln().add("BrunelD3.addDefinitions(vis);").comment("ensure standard symbols present");
   }
 
 }
