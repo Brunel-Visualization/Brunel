@@ -15,6 +15,10 @@ class NestingInfo {
     items.add(new NestedItem(inner, outer));
   }
 
+  public boolean facetsExist() {
+    return !items.isEmpty();
+  }
+
   public boolean isNested(VisElement element) {
     for (NestedItem item : items)
       if (item.inner == element) return true;

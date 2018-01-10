@@ -292,13 +292,16 @@ public class VisualizationBuilder {
     out.indentLess().add("}").ln().ln();
 
     // Define nesting info
-    for (NestingInfo.NestedItem item : nestingInfo.items) {
-      ElementStructure outerElement = visStructure.findElement(item.outer);
-      ElementStructure innerElement = visStructure.findElement(item.inner);
-      //      String chartID = "g.chart" + ChartStructure.makeChartID(index);
-      out.add("charts[" + outerElement.chart.chartIndex + "].elements[" + outerElement.index + "]")
-        .add(".facet = { chartID:'g.chart" + innerElement.chart.chartID() + "', index:" + innerElement.chart.chartIndex + "}")
-        .endStatement();
+    if (nestingInfo.facetsExist()) {
+      out.onNewLine().comment("Define facet nesting relationships");
+      for (NestingInfo.NestedItem item : nestingInfo.items) {
+        ElementStructure outerElement = visStructure.findElement(item.outer);
+        ElementStructure innerElement = visStructure.findElement(item.inner);
+        //      String chartID = "g.chart" + ChartStructure.makeChartID(index);
+        out.add("charts[" + outerElement.chart.chartIndex + "].elements[" + outerElement.index + "]")
+          .add(".facet = { chartID:'g.chart" + innerElement.chart.chartID() + "', index:" + innerElement.chart.chartIndex + "}")
+          .endStatement();
+      }
     }
 
     // Return the important items
