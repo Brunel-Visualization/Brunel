@@ -1761,7 +1761,7 @@ var BrunelD3 = (function () {
         return labels;
     }
 
-    function facet(chart, parentElement, time) {
+    function `facet(chart, parentElement, time) {
         parentElement.selection().each(function (d) {
             var row = d.row >=0 ? d.row : (d.data ? d.data.row : null);
             if (row == null) return;

@@ -283,7 +283,7 @@ public class VisualizationBuilder {
     // Define how we set the data into the system
     out.add("function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }").ln();
 
-    out.add("function updateAll(time) { charts.forEach(function(x) {x.build(time || 0)}) }").ln();
+    out.add("function updateAll(time) { charts.forEach(function(x) { if (x.build) x.build(time || 0)}) }").ln();
 
     // Define visualization functions
     out.add("function buildAll() {").ln().indentMore()
