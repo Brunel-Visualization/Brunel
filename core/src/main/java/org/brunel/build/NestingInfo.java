@@ -15,7 +15,6 @@ class NestingInfo {
   private final Map<VisElement, VisElement> nestsWithin;          // identifies outer elements for each inner one
   private final Map<VisElement, Integer> chartIndices;            // tags each element with its chart index
 
-
   public NestingInfo(VisItem top) {
     nestsWithin = new LinkedHashMap<>();
     chartIndices = new LinkedHashMap<>();
@@ -24,6 +23,7 @@ class NestingInfo {
 
   /**
    * Return true if this element is nested with another
+   *
    * @param element element to consider
    * @return true if nested
    */
@@ -33,6 +33,7 @@ class NestingInfo {
 
   /**
    * All the nested elements
+   *
    * @return a possibly empty list
    */
   public Collection<VisElement> nestedElements() {
@@ -41,6 +42,7 @@ class NestingInfo {
 
   /**
    * Returns the index of the chart that is nested within this element
+   *
    * @param outer target outer element
    * @return index (throws exception if this is not an outer element)
    */
@@ -50,6 +52,12 @@ class NestingInfo {
     throw new IllegalArgumentException("Element was not the outer element of a nest");
   }
 
+  /**
+   * Test if this is an 'outer' element that contains another element
+   *
+   * @param element element to examine
+   * @return true if it is the outer member of a nest composition
+   */
   public boolean nestsOther(VisElement element) {
     return nestsWithin.values().contains(element);
   }
