@@ -223,7 +223,7 @@ var BrunelD3 = (function () {
         // It returns a structure for use in the element containing sample row, key and path
         function f(category) {
             var d = data._rows.filter(function (d) {
-                return data._split(d) == category;
+                return data._split(d) === category;
             });
             if (xFunction) d.sort(function (a, b) {
                 // If tied for x, respect row order
@@ -383,19 +383,19 @@ var BrunelD3 = (function () {
             if (!box) return null;
             var p = labeling.where(box, s, datum);
             loc = {x: p.x, y: p.y, box: box};
-        } else if (method == 'wedge')
+        } else if (method === 'wedge')
             loc = wedgeLoc(labeling.path, datum);
-        else if (method == 'poly')
+        else if (method === 'poly')
             loc = polyLoc(target);
-        else if (method == 'area')
+        else if (method === 'area')
             loc = areaLoc(target, s.length * 3.5);       // Guess at text length
-        else if (method == 'path') {
+        else if (method === 'path') {
             if (labeling.path.centroid)
                 loc = centroidLoc(labeling.path, datum, target);
             else {
                 var fraction = 0.5;
-                if (labeling.align == 'start') fraction = 0;
-                else if (labeling.align == 'end') fraction = 1;
+                if (labeling.align === 'start') fraction = 0;
+                else if (labeling.align === 'end') fraction = 1;
                 loc = pathLoc(target, fraction);
             }
         } else {
@@ -406,12 +406,12 @@ var BrunelD3 = (function () {
             // Adjust for target transform
             box = transformBox(box, target);
 
-            var hPad = labeling.align == 'start' ? pad : -pad;
+            var hPad = labeling.align === 'start' ? pad : -pad;
             var vPad = labeling.inside ? -pad : pad;
 
             // Add padding
-            var dx = pos[0] == 'left' ? hPad : (pos[0] == 'right' ? box.width + hPad : box.width / 2);
-            var dy = pos[1] == 'top' ? -vPad : (pos[1] == 'bottom' ? box.height + vPad : box.height / 2);
+            var dx = pos[0] === 'left' ? hPad : (pos[0] === 'right' ? box.width + hPad : box.width / 2);
+            var dy = pos[1] === 'top' ? -vPad : (pos[1] === 'bottom' ? box.height + vPad : box.height / 2);
             return {x: box.x + dx, y: box.y + dy, box: box}
         }
 
@@ -594,10 +594,10 @@ var BrunelD3 = (function () {
     function shortenWord(word, maxRemovals, level) {
         if (maxRemovals <= 0) return word;                      // Nothing to do
         var len = word.length;
-        if (level == 0) {
+        if (level === 0) {
             // Purge boring words
-            if (word == "the" || word == "of") return "";
-        } else if (level == 1) {
+            if (word === "the" || word === "of") return "";
+        } else if (level === 1) {
             // Purge interior vowels
             var n = len - 1;
             while (--n && maxRemovals) {
@@ -606,10 +606,10 @@ var BrunelD3 = (function () {
                     maxRemovals--;
                 }
             }
-        } else if (level == 2 || level == 3) {
+        } else if (level === 2 || level === 3) {
             // Drop second last letter
             if (len > 4 - level) return word.substring(0, 1) + word.substring(2);
-        } else if (level == 4) {
+        } else if (level === 4) {
             return "";
         }
 
@@ -619,7 +619,7 @@ var BrunelD3 = (function () {
     function shorten(text, len) {
         if (!text || text.length <= len) return text;                   // Text doesn't need shortening
         if (!len) return "";                                            // O-length requested
-        if (len == 1) return text.charAt(0);                            // 1-length requested
+        if (len === 1) return text.charAt(0);                            // 1-length requested
 
 
         var level = 0, i,
@@ -671,7 +671,7 @@ var BrunelD3 = (function () {
         if (e.shiftKey) method = e.altKey ? "sub" : "add";              // ... add, subtract, toggle, select
 
         // Get the row from the data (if necessary from embedded data in item.data)
-        var row = item ? (item.data && item.data.row != null ? item.data.row : item.row) : null;
+        var row = item ? (item.data && item.data.row !== null ? item.data.row : item.row) : null;
 
         // The selection is in terms of the processed data, but we need to propagate back to the original data set
         element.original().modifySelection(method, row, data, element.fields.key);
@@ -729,10 +729,10 @@ var BrunelD3 = (function () {
                 // Mark for deletion if
                 // (i) not the root (zero depth) and is one above a leaf (unit height)
                 // (ii) it has been already marked for collapse
-                if (v.depth && v.height == 1 && userStates[v.data.key] == null) items.push(v);
+                if (v.depth && v.height === 1 && userStates[v.data.key] === null) items.push(v);
             });
 
-            if (items.length == 0) break;                               // Quit if nothing left to do
+            if (items.length === 0) break;                               // Quit if nothing left to do
 
             items.sort(function (a, b) {                                // Smallest weights first
                 return a.value - b.value
@@ -778,12 +778,12 @@ var BrunelD3 = (function () {
     }
 
     /**
-     * Return tue if they are both non-null and different
+     * Return true if they are both non-null and different
      * @param a
      * @param b
      */
     function differ(a, b) {
-        return a && b && a != b;
+        return a && b && a !== b;
     }
 
     /**
@@ -892,14 +892,14 @@ var BrunelD3 = (function () {
                 var asc = r.height + r.y, desc = asc * 0.9,
                     ht = r.height, wd = r.width + 2, oy = 0;
 
-                if (x._ascDesc == 0) {
+                if (x._ascDesc === 0) {
                     // Neither ascenders nor descenders
                     ht -= (asc + desc);
-                } else if (x._ascDesc == 1) {
+                } else if (x._ascDesc === 1) {
                     // Only ascenders
                     ht -= desc;
                     oy += desc / 2;
-                } else if (x._ascDesc == 2) {
+                } else if (x._ascDesc === 2) {
                     // Only descenders
                     ht -= asc;
                     oy -= asc / 2;
@@ -1061,7 +1061,7 @@ var BrunelD3 = (function () {
 
         var showTooltipForItem = function (d) {
             if (!d) return;
-            if (d.data && d.data.row != undefined) d = d.data;       // Complex structures embed the data a level
+            if (d.data && d.data.row !== undefined) d = d.data;       // Complex structures embed the data a level
 
             // Offsets for scrolling
             var ox = document.documentElement.scrollLeft || document.body.scrollLeft,
@@ -1184,7 +1184,7 @@ var BrunelD3 = (function () {
     // Check if it hits an existing space
     function hitsExisting(box, hits) {
         if (!hits || !hits.D) return false;                // Not needed if no hits or no granularity requested
-        if (hits.x == null) {
+        if (hits.x === null) {
             // Define the offset. We use this to ensure that when we pan, there are no changes to the logic
             // Otherwise we get flickering due to different rounding of the panned coordinates
             hits.x = box.x;
@@ -1216,14 +1216,14 @@ var BrunelD3 = (function () {
             if (l < L + D && r > L - D) {
                 // Offset to the right
                 o = L + D;
-                if (labeling.align == 'end') o += (r - l);
-                else if (labeling.align == 'middle') o += (r - l) / 2;
+                if (labeling.align === 'end') o += (r - l);
+                else if (labeling.align === 'middle') o += (r - l) / 2;
                 text.setAttribute("x", o);
             } else if (r > R - D && l < R + D) {
                 // Offset to the right
                 o = R - D;
-                if (labeling.align == 'start') o -= (r - l);
-                else if (labeling.align == 'middle') o -= (r - l) / 2;
+                if (labeling.align === 'start') o -= (r - l);
+                else if (labeling.align === 'middle') o -= (r - l) / 2;
                 text.setAttribute("x", o);
             }
         }
@@ -1244,7 +1244,7 @@ var BrunelD3 = (function () {
      */
     function labelItem(item, labelGroup, labeling, hits, geom) {
         var d = item.__data__;
-        if (d.data && d.data.row != undefined) d = d.data;  // For hierarchies and structures where the data is a layer down
+        if (d.data && d.data.row !== undefined) d = d.data;  // For hierarchies and structures where the data is a layer down
         var content = labeling.content(d);
         if (!content || !item.parentNode) return;                               // If there is no content, we are done
         // If no parent item then we are likely in a transition state
@@ -1472,7 +1472,7 @@ var BrunelD3 = (function () {
                 pr = r.call(this, d[i], i);
                 if (px && py && pr) {
                     // Ignoring duplicated locations, this is the new 'last' item, and add it to the array
-                    if (px != last.x || py != last.y)
+                    if (px !== last.x || py !== last.y)
                         polyline.push(last = {x: px, y: py, r: pr / 2});
                 } else {
                     // Missing values signals the end of a segment
@@ -1533,7 +1533,7 @@ var BrunelD3 = (function () {
     function makeMap(data, locations, property, idFunc, element, millis) {
 
         // locations looks like { "http://../world.json":{'FR':23, 'GE':123, ...} , ... }
-        var use_property = property ? true : false;	//for custom maps, use the supplied property name for the feature ids
+        var use_property = !!property;	//for custom maps, use the supplied property name for the feature ids
 
         function read() {
             element._features = {};             // Maps names in data to GeoJSON features
@@ -1562,16 +1562,16 @@ var BrunelD3 = (function () {
                         if (use_property)
                             if (idFunc) {							//Custom topojson, build the mapping object assuming perfect
                                 var arr = data._rows.map(idFunc);   //matches between the data and the topojson features
-                                for (var i in arr) mapping[arr[i]] = arr[i];
+                                for (var j in arr) mapping[arr[j]] = arr[j];
                             }
                             else mapping = {};						//Custom reference map
                         else
                             property = "a";						    //Standard brunel topojson has geo identifier in property 'a'
-                        for (i in mapping) rev[mapping[i]] = i;     // 'rev' maps from feature ID to data name
+                        for (j in mapping) rev[mapping[j]] = j;     // 'rev' maps from feature ID to data name
                         all.forEach(function (v, i) {
                             d = topojson.feature(x, v);             // convert using topojson call
                             id = rev[d.properties[property]];       // The data name for this
-                            if (id != null)
+                            if (id !== null)
                                 element._features[id] = d;          // Remember it by data name
                             else {
                                 element._featureExtras.push(d);     // Store as an unused element
@@ -1634,7 +1634,7 @@ var BrunelD3 = (function () {
         if (!b) return null;                        // Not displayed -- ignore this
         var r = Math.max(b.width, b.height) / 2;    // good for circles, symbols, rects
 
-        if (svgItem.tagName == 'path' || svgItem.tagName == 'poly')
+        if (svgItem.tagName === 'path' || svgItem.tagName === 'poly')
             r = Math.min(20, r / 3);                 // Arbitrary shape, so inset a lot
 
         return {
@@ -1652,7 +1652,7 @@ var BrunelD3 = (function () {
      */
     function makeEdge(d, nodes) {
         var keys = d.key.split("|");
-        if (keys.length != 2) return null;
+        if (keys.length !== 2) return null;
         var a = nodes[keys[0]], b = nodes[keys[1]];
         return a && b ? {source: a, target: b, key: d.key, row: d.row} : null;
     }
@@ -1692,7 +1692,7 @@ var BrunelD3 = (function () {
 
 
         var mergedNodes = nodes.selection(), mergedEdges = edges.selection();
-        var isSymbol = mergedNodes.node().tagName == "use";
+        var isSymbol = mergedNodes.node().tagName === "use";
 
         function edgeConnectsNode(edge, node) {
             return edge.source === node || edge.target === node;
@@ -1898,7 +1898,7 @@ var BrunelD3 = (function () {
     function facet(chart, parentElement, time) {
         parentElement.selection().each(function (d) {
             var row = d.row >= 0 ? d.row : (d.data ? d.data.row : null);
-            if (row == null) return;
+            if (row === null) return;
             var value = parentElement.data().field("#row").value(row);
             var items = value.items ? value.items : [value];          // If just a single row, make it into an array
             var c = chart(this, items.map(function (v) {
@@ -1923,8 +1923,8 @@ var BrunelD3 = (function () {
         array.forEach(
             function (t) {
                 v = 0;
-                if (distanceMethod != "y") v += (t.x - x) * (t.x - x);
-                if (distanceMethod != "x") v += (t.y - y) * (t.y - y);
+                if (distanceMethod !== "y") v += (t.x - x) * (t.x - x);
+                if (distanceMethod !== "x") v += (t.y - y) * (t.y - y);
                 if (v < result.distance) {
                     result.distance = v;
                     result.d = t.d;
@@ -1941,7 +1941,7 @@ var BrunelD3 = (function () {
     // time is the time we take to do the effect
     function animateBuild(vis, data, time) {
 
-        if (vis.charts.length != 1) return vis.build(data); // Only animate when one chart
+        if (vis.charts.length !== 1) return vis.build(data); // Only animate when one chart
 
         var i,
             targets = ["size", "y", "color"],               // We prefer to animate over size first, then y, then color
@@ -1954,10 +1954,10 @@ var BrunelD3 = (function () {
 
         // Use the data structure options to check it a field is numeric (don't animate a category field)
         function isNumeric(name) {
-            if (name.charAt(0) == '#' || !data.options) return true;
+            if (name.charAt(0) === '#' || !data.options) return true;
             for (var i = 0; i < data.names.length; i++)
-                if (data.names[i] == name)
-                    return data.options[i] != "string";
+                if (data.names[i] === name)
+                    return data.options[i] !== "string";
             return true;
         }
 
@@ -1968,7 +1968,7 @@ var BrunelD3 = (function () {
                 y = e.fields[type];
                 if (y) for (i = 0; i < y.length; i++) {
                     f = y[i];
-                    if (seen[f] || f[0] == "'") continue;   // No duplicates and no constant values
+                    if (seen[f] || f[0] === "'") continue;   // No duplicates and no constant values
                     if (isNumeric(f))   			        // If numeric add values (upper / lower for stacking)
                         result.push(f, f + "$lower", f + "$upper");
                     seen[f] = true;
@@ -1979,11 +1979,11 @@ var BrunelD3 = (function () {
 
         // Get a suitable starting point for the animation of a given type on a given field
         function start(field) {
-            if (role == 'size') return 1e-6;         // Should always be good
+            if (role === 'size') return 1e-6;         // Should always be good
             if (scales && scales[role]) {
                 // If the domain starts at zero, use that, otherwise use the scale midpoint
                 var domain = scales[role].domain();
-                return domain[0] == 0 ? 0 : (domain[0] + domain[domain.length - 1]) / 2;
+                return domain[0] === 0 ? 0 : (domain[0] + domain[domain.length - 1]) / 2;
             } else
                 return field.min();
         }
@@ -2036,8 +2036,8 @@ var BrunelD3 = (function () {
                 d.points.forEach(
                     function (t) {
                         v = 0;
-                        if (distanceMethod != "y") v += (t.x - xx) * (t.x - xx);
-                        if (distanceMethod != "x") v += (t.y - yy) * (t.y - yy);
+                        if (distanceMethod !== "y") v += (t.x - xx) * (t.x - xx);
+                        if (distanceMethod !== "x") v += (t.y - yy) * (t.y - yy);
                         if (v < result.distance) {
                             result.distance = v;
                             result.item = d;
@@ -2052,15 +2052,15 @@ var BrunelD3 = (function () {
                 var xP = xx < t.x ? -1 : (xx > t.x + t.width ? 1 : 0);          // point is left, inside, right
                 var yP = yy < t.y ? -1 : (yy > t.y + t.height ? 1 : 0);         // point is top, inside, bottom
 
-                if (xP == 0 && yP == 0) {
+                if (xP === 0 && yP === 0) {
                     // The point is inside the rectangle
                     v = 0;
                 } else {
                     x = xP < 0 ? t.x : (xP > 0 ? t.x + t.width : xx);           // closest corner (or point on side)
                     y = yP < 0 ? t.y : (yP > 0 ? t.y + t.height : yy);          // closest corner (or point on side)
                     v = 0;
-                    if (distanceMethod != "y") v += (x - xx) * (x - xx);
-                    if (distanceMethod != "x") v += (y - yy) * (y - yy);
+                    if (distanceMethod !== "y") v += (x - xx) * (x - xx);
+                    if (distanceMethod !== "x") v += (y - yy) * (y - yy);
                 }
                 if (v < result.distance) {
                     result.distance = v;
@@ -2257,12 +2257,12 @@ var BrunelD3 = (function () {
     function setAspect(scale_x, scale_y, aspect) {
 
         //Is it safe to do?
-        if (!scale_x.domain() || scale_x.domain().length != 2 || !scale_y.domain() || scale_y.domain().length != 2)
+        if (!scale_x.domain() || scale_x.domain().length !== 2 || !scale_y.domain() || scale_y.domain().length !== 2)
             return;
 
         //Find the non-zero value for the range (this handles transpose case)
-        var xRange = scale_x.range()[1] != 0 ? scale_x.range()[1] : scale_x.range()[0];
-        var yRange = scale_y.range()[0] != 0 ? scale_y.range()[0] : scale_y.range()[1];
+        var xRange = scale_x.range()[1] !== 0 ? scale_x.range()[1] : scale_x.range()[0];
+        var yRange = scale_y.range()[0] !== 0 ? scale_y.range()[0] : scale_y.range()[1];
 
         //Were the domains Dates?
         var xDIsDate = scale_x.domain()[0].getTime;
@@ -2361,7 +2361,7 @@ var BrunelD3 = (function () {
     function zoomLabel(v) {
         var pre = (v > 1) ? "zoomIn zoomIn" : "zoomOut zoomOut";           // zoom direction
         v = Math.round(v > 1 ? v : 1 / v);          // Ensure v >=1
-        if (v == 1) return "zoomNone";              // Flat
+        if (v === 1) return "zoomNone";              // Flat
         if (v <= 5) return pre + v;                 // In1, In2, In3, In4, In5 and similar for out
         if (v <= 10) return pre + "High";           // zoom levels 6-10
         return pre + "Extreme";                     // extreme zoom levels
@@ -2407,13 +2407,13 @@ var BrunelD3 = (function () {
 
     // filters to data items only
     function hasData(d) {
-        return d && (d.row != null || hasData(d.data))
+        return d && (d.row !== null || hasData(d.data))
     }
 
     // returns a filter function identifying selected items of the data
     function isSelected(data) {
         return function (d) {
-            return data.$selection(d) == '\u2713'
+            return data.$selection(d) === '\u2713'
         }
     }
 
