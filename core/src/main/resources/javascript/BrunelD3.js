@@ -1642,23 +1642,38 @@ var BrunelD3 = (function () {
      */
     function makeNetworkLayout(graph, nodes, edges, zoomNode, geom, curved, density) {
 
-        density = density || 1;
+
         var N = graph.nodes.length, E = graph.links.length,
-            W = geom.inner_width, H = geom.inner_height,
-            pad = geom.default_point_size,
+            W = geom.inner_width, H = geom.inner_height;
+
+        var meanRadius = 0;
+        nodes.selection().each(function (d) {
+            var box = getBBox(this);
+            if (!box) return;
+
+            // Set the known radius on the data
+            d.radius = +this.getAttribute("r") || box.getWidth();
+            meanRadius += d.radius;
+        });
+
+        meanRadius /= graph.nodes.length;
+
+
+        density = density || 1;
+        var pad = geom.default_point_size,
             left = pad, top = pad,
             right = geom.inner_width - pad, bottom = geom.inner_height - pad,
-            D = density * 0.75 * Math.min(W, H) / Math.sqrt(N),
+            D = density * Math.min(W, H) / Math.sqrt(N) + meanRadius,
             R = D * Math.max(1, D - 3) / 5 / Math.max(1, E / N);
         R = Math.min(R, D * 6);
 
         var a, i, nd;
         for (i = 0; i < N; i++) {
             // If the positions have already been defined, do not redefine them
-            a = Math.PI * 2 * i / N;
+            a = Math.PI * 6 * i / N;
             nd = graph.nodes[i];
-            nd.x = nd.x || W * (1 + Math.cos(a)) / 2;
-            nd.y = nd.y || H + (1 + Math.sin(a)) / 2
+            nd.x = nd.x || W * (0.5 + Math.cos(a) * Math.sqrt(i / N) / 2);
+            nd.y = nd.y || H * (0.5 + Math.sin(a) * Math.sqrt(i / N) / 2)
         }
 
 
@@ -1705,7 +1720,7 @@ var BrunelD3 = (function () {
         var off = 0;                        // Compare nodes with ones this distance away
         function quickSwaps() {
             off++;                           // each time, increment offset
-            if (off > N || off > 1000 / E) return;                     // Only do it for a while; not forever
+            if (off > N) return;             // Only do it for a while; not forever
             var i, j, n1, n2;
             for (i = 0; i < N; i++) {
                 j = (i + off) % N;
@@ -1725,7 +1740,8 @@ var BrunelD3 = (function () {
 
         function ticked() {
 
-            quickSwaps();
+
+            if (N < 100) quickSwaps();
 
             var t = d3.zoomTransform(zoomNode);
 
@@ -1763,11 +1779,6 @@ var BrunelD3 = (function () {
             }
 
             mergedNodes.each(function (d) {
-                    var box = getBBox(this);
-                    if (!box) return;
-
-                    // Set the known radius on the data
-                    d.radius = +this.getAttribute("r") || box.getWidth();
                     // Adjust placement of labels
                     var i, txt, L = this.__labels__;
                     if (L)for (i in L) {
@@ -1808,15 +1819,17 @@ var BrunelD3 = (function () {
             .force("center", d3.forceCenter(W / 2, H / 2))
             .force("charge", d3.forceManyBody().distanceMax(geom.inner_radius / 2).strength(-R))
             .force("inside", function () {
-                var i, n = graph.nodes.length, node;
+                var i, r, n = graph.nodes.length, node;
                 for (i = 0; i < n; i++) {
                     node = graph.nodes[i];
-                    if (node.x < left) node.vx += left - node.x;
-                    if (node.x > right) node.vx += right - node.x;
-                    if (node.y < top) node.vy += top - node.y;
-                    if (node.y > bottom) node.vy += bottom - node.y;
+                    r = node.radius;
+                    if (node.x - r < left) node.vx += left + r - node.x;
+                    if (node.x + r > right) node.vx += right - r - node.x;
+                    if (node.y - r < top) node.vy += top + r - node.y;
+                    if (node.y + r > bottom) node.vy += bottom - r - node.y;
                 }
             });
+
 
         mergedNodes.call(d3.drag().on('drag', function (d) {
                 d.fx = d3.event.x;
