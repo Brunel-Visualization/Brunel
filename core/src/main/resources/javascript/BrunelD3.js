@@ -422,6 +422,80 @@ var BrunelD3 = (function () {
         return transformLoc(loc, target);
     }
 
+    /**
+     * Determine if two line segments intersect
+     * @param p1 start of segment 'p'
+     * @param p2 end of segment 'p'
+     * @param q1 start of segment 'q'
+     * @param q2 end of segment 'q'
+     * @returns truthiness of intersection
+     */
+    function intersect(p1, p2, q1, q2) {
+
+        // If they share the same exact object, they do not count as intersecting
+        if (p1 === q1 || p1 === q2 || p2 === q1 || p2 === q2) return 0;
+
+        var x1 = p1.x;
+        var x2 = p2.x;
+        var x3 = q1.x;
+        var x4 = q2.x;
+
+        var y1 = p1.y;
+        var y2 = p2.y;
+        var y3 = q1.y;
+        var y4 = q2.y;
+
+
+        function sameSign(a, b) {
+            return a * b > 0
+        }
+
+        var a1, a2, b1, b2, c1, c2;
+        var r1, r2, r3, r4;
+
+        // Compute a1, b1, c1, where line joining points 1 and 2
+        // is "a1 x + b1 y + c1 = 0".
+        a1 = y2 - y1;
+        b1 = x1 - x2;
+        c1 = (x2 * y1) - (x1 * y2);
+
+        // Compute r3 and r4.
+        r3 = ((a1 * x3) + (b1 * y3) + c1);
+        r4 = ((a1 * x4) + (b1 * y4) + c1);
+
+        // Check signs of r3 and r4. If both point 3 and point 4 lie on
+        // same side of line 1, the line segments do not intersect.
+        if ((r3 !== 0) && (r4 !== 0) && sameSign(r3, r4)) {
+            return 0; //return that they do not intersect
+        }
+
+        // Compute a2, b2, c2
+        a2 = y4 - y3;
+        b2 = x3 - x4;
+        c2 = (x4 * y3) - (x3 * y4);
+
+        // Compute r1 and r2
+        r1 = (a2 * x1) + (b2 * y1) + c2;
+        r2 = (a2 * x2) + (b2 * y2) + c2;
+
+        // Check signs of r1 and r2. If both point 1 and point 2 lie
+        // on same side of second line segment, the line segments do
+        // not intersect.
+        if ((r1 !== 0) && (r2 !== 0) && (sameSign(r1, r2))) {
+            return 0; //return that they do not intersect
+        }
+
+        //Line segments intersect: compute intersection point.
+        var denom = (a1 * b2) - (a2 * b1);
+
+        if (denom === 0) {
+            return 1; //collinear
+        }
+
+        // lines_intersect
+        return 1; //lines intersect, return true
+    }
+
 
     function makeTextSpan(loc, parent, content) {
         var span = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
@@ -1066,14 +1140,14 @@ var BrunelD3 = (function () {
 
             // Add handlers to the overlay for when the mouse is not directly over an item
             chart.select('rect.overlay')
-                .on('mousemove.tooltip_snap', function() {
-                    var c = closestItem(d3Target, 'xy', distance );
+                .on('mousemove.tooltip_snap', function () {
+                    var c = closestItem(d3Target, 'xy', distance);
                     if (c.item)
                         showTooltipForItem.call(c.target, c.item);
                     else
                         hideTooltip();
                 })
-                .on('mouseout.tooltip_snap', function() {
+                .on('mouseout.tooltip_snap', function () {
                     hideTooltip();
                 });
         }
@@ -1620,8 +1694,67 @@ var BrunelD3 = (function () {
         var mergedNodes = nodes.selection(), mergedEdges = edges.selection();
         var isSymbol = mergedNodes.node().tagName == "use";
 
+        function edgeConnectsNode(edge, node) {
+            return edge.source === node || edge.target === node;
+        }
+
+        // Returns an array of all edges connected to either node
+        function connectedEdges(n1, n2) {
+            var i, e, result = [];
+            for (i = 0; i < E; i++) {
+                e = graph.links[i];
+                if (edgeConnectsNode(e, n1) || edgeConnectsNode(e, n2))
+                    result.push(e);
+            }
+            return result;
+        }
+
+        // Count intersections between edges and all other edges
+        function countIntersections(edges) {
+            var i, j, e1, e2, c = 0;
+            for (i = 0; i < edges.length; i++) {
+                e1 = edges[i];
+                for (j = 0; j < E; j++) {
+                    e2 = graph.links[j];
+                    if (intersect(e1.source, e1.target, e2.source, e2.target)) c++;
+                }
+            }
+            return c;
+        }
+
+        // Swap node locations
+        function swapLocations(n1, n2) {
+            var tx = n1.x, ty = n1.y;
+            n1.x = n2.x;
+            n2.x = tx;
+            n1.y = n2.y;
+            n2.y = ty;
+        }
+
+        var off = 0;                        // Compare nodes with ones this distance away
+        function quickSwaps() {
+            off++;                           // each time, increment offset
+            if (off > N || off > 1000 / E) return;                     // Only do it for a while; not forever
+            var i, j, n1, n2;
+            for (i = 0; i < N; i++) {
+                j = (i + off) % N;
+                n1 = graph.nodes[i];
+                n2 = graph.nodes[j];
+                var nodeEdges = connectedEdges(n1, n2);                     // The edges that connect them
+                var intersectCurrent = countIntersections(nodeEdges);       // Intersections at existing locations
+                swapLocations(n1, n2);
+                var intersectSwapped = countIntersections(nodeEdges);       // Intersections at swapped locations
+                if (intersectSwapped >= intersectCurrent) {
+                    // Bad swap, need to undo
+                    swapLocations(n1, n2);
+                }
+            }
+        }
+
 
         function ticked() {
+
+            quickSwaps();
 
             var t = d3.zoomTransform(zoomNode);
 
@@ -1764,7 +1897,7 @@ var BrunelD3 = (function () {
 
     function facet(chart, parentElement, time) {
         parentElement.selection().each(function (d) {
-            var row = d.row >=0 ? d.row : (d.data ? d.data.row : null);
+            var row = d.row >= 0 ? d.row : (d.data ? d.data.row : null);
             if (row == null) return;
             var value = parentElement.data().field("#row").value(row);
             var items = value.items ? value.items : [value];          // If just a single row, make it into an array
