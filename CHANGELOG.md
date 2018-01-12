@@ -8,7 +8,17 @@ Several fixes and improvements from the community -- many thanks!
  * HTML4 compatibility
  * Bidi improvements
 
-### Sunburst and Icicle plots
+
+# 2.6 Release Notes
+
+## Faceted (Paneled) charts
+Improvements have been made for faceted charts (charts which embed one chart within another). They now
+respect the syntax in many more situations
+
+## Network Layout improvements
+
+
+## Sunburst and Icicle plots
 
 In development, stay posted
 

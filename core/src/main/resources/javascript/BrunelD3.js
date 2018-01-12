@@ -1658,7 +1658,6 @@ var BrunelD3 = (function () {
 
         meanRadius /= graph.nodes.length;
 
-
         density = density || 1;
         var pad = geom.default_point_size,
             left = pad, top = pad,
