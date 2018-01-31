@@ -15,4 +15,7 @@
  */
 
 include 'data', 'core', 'etc', 'service', 'python', 'gallery', 'scala', 'spark-kernel', 'r'
+include 'webservice'
+include 'webservice'
+include 'webservice'
 
