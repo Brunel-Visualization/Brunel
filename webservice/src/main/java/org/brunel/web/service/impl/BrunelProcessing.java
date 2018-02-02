@@ -15,10 +15,17 @@ public class BrunelProcessing {
     try {
       VisualizationBuilder builder = D3Integration.makeD3(data, syntax, width, height, "visualization", "controls");
       String[] titles = new String[]{title, description};
-      String response = WebDisplay.writeHtml(builder, width, height, syntax, titles);
-      return Response.ok(response).header("Access-Control-Allow-Origin", "*").build();
+      String response = WebDisplay.writeHtml(builder, width, height, null, titles);
+      return Response
+        .ok(response)
+        .header("Access-Control-Allow-Origin", "*")
+        .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE")
+        .header("Access-Control-Allow-Headers", "X-Requested-With,content-type, Authorization")
+        .header("Access-Control-Allow-Credentials", "true")
+        .build();
     } catch (Exception ex) {
       throw ExceptionBuilding.error("Error processing the brunel command", "It may require syntax changes", true, ex);
     }
   }
+
 }

@@ -40,6 +40,9 @@ public class ExceptionBuilding {
   private static WebApplicationException makeException(String message, boolean formattedAsHTML, Status status) {
     ResponseBuilder rb = Response.status(status)
       .header("Access-Control-Allow-Origin", "*")
+      .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE")
+      .header("Access-Control-Allow-Headers", "X-Requested-With,content-type, Authorization")
+      .header("Access-Control-Allow-Credentials", "true")
       .entity(message)
       .type(formattedAsHTML ? MediaType.TEXT_HTML : MediaType.TEXT_PLAIN);
     return new WebApplicationException(rb.build());
