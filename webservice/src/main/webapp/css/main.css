@@ -62,8 +62,8 @@ body {
 }
 
 .wrapper {
-    width: 90%;
-    margin: 0 5%;
+    width: 96%;
+    margin: 0 2%;
 }
 
 /* ===================
@@ -139,7 +139,7 @@ nav a:hover {
 
 .main aside {
     color: white;
-    padding: 0px 5% 10px;
+    padding: 0px 2% 5px;
 }
 
 .footer-container footer {
@@ -161,6 +161,7 @@ nav a:hover {
 
 .title {
     font-size: 3em;
+    line-height: 5px;
     font-family: Helvetica Neue, Helvetica, Arial,sans-serif;
 
 }
@@ -191,7 +192,7 @@ nav a:hover {
         float: left;
         width: 27%;
         margin: 0 1.7%;
-        padding: 25px 2%;
+        padding: 18px 2%;
         margin-bottom: 0;
     }
 
@@ -253,7 +254,7 @@ nav a:hover {
 
     .main aside {
         float: right;
-        width: 28%;
+        width: 38%;
     }
 }
 
