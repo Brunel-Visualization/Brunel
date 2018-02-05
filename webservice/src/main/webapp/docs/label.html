@@ -1,0 +1,87 @@
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<H1>Label and Tooltip</H1>
+
+<p>
+    Labels and tooltips are text that is associated with each graphical item.
+    They have the same command format, but the outputs are different. Labels appear all the time on the display
+    and move with the element in an animated display. Tooltips only appear when the item is hovered over with
+    the mouse (or the equivalent gesture on a touch interface), and are transitory.
+</p>
+
+<p>
+    Care must be taken when using labels and tooltips with elements like line, path and area that aggregated data,
+    as any fields used to label should be consistent within each group. In general this means that fields used
+    for <code>color</code> and <code>split</code> make good choices. Otherwise you may end up with extra groups
+    created to ensure group labels are consistent.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">y(population:log) label(state)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">area x(population) y(density) bin(population) sum(density) stack
+    color(region) label(region) axes(none)</a></p>
+
+<p>
+    When specifying labels and tooltips, the parameters are a mixture of fields and string literals.
+    These are all concatenated together to produce the final string.
+    Specifying the <code>#all</code> field shows every field used in the rest of the chart
+    If multiple fields, and only fields, are present in the definition, that triggers a special formatting mode.
+</p>
+<ul>
+    <li><code>Labels</code> show all the fields, separated by commas</li>
+    <li><code>Tooltips</code> show the field names and the field values, each on its own line</li>
+</ul>
+
+<p class="examples"><a onClick="showAction(this.text)">bubble size(#count) color(region) label(region)
+    tooltip(region)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bubble size(#count) color(region) label(#all) tooltip(#all)</a>
+</p>
+<p class="examples"><a onClick="showAction(this.text)">bubble size(#count) color(region) label(region, "(", #count, ")")
+    tooltip(#all)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bubble size(#count) color(region) label(region, violent_crimes,
+    income) tooltip(#all) mean(violent_crimes, income)</a></p>
+
+<p>
+    Each label field can have an optional integer parameter that makes a "shortened" form of the field.
+    This can be useful to provide a rough idea what the name is, with a tooltip giving the full name.
+    If you are using the <code>list</code> summation method, you can get a variety of labeling effects by
+    manipulating both the number of list items produced and the number of characters to show in the label.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">treemap label(state:3) tooltip(#all) color(violent_crimes)
+    size(population) sort(population:ascending)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">treemap size(population) color(region) label(state:50)
+    list(state) sum(population) tooltip(state)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">treemap size(population) color(region) label(state:40)
+    list(state:5) sum(population) tooltip(state)</a></p>
+
+<p>
+    When items are small, tooltips can be hard to get for items as you need to be directly over the item. To help
+    with there is an optional `snap` parameter that can be added to the tooltip and makes tooltips work when the
+    mouse is within a given distance of the item, rather than just directly on top of the item.
+    If <i>any</i> of the tooltip options have a snap option, snap will be applied to the entire tooltip. Snap has a small
+    fixed distance at which it takes effect, but an optional numeric parameter allows you to define that
+    distance in pixels.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">treemap label(state:3) tooltip(#all:snap) color(violent_crimes)
+    size(population) sort(population:ascending)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">treemap size(population) color(region) label(state:50)
+    list(state) sum(population) tooltip(state:snap:100)</a></p>
+
+
+
+

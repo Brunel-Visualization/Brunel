@@ -1,0 +1,253 @@
+/*
+ * Copyright (c) 2015 IBM Corporation and others.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+header {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 40px;
+    background-color: black;
+    color: white;
+    text-align: center;
+    font-size: 16pt;
+    line-height: 40px;
+}
+
+nav {
+    position: fixed;
+    top: 40px;
+    line-height: 24px;
+    width: 130px;
+    float: left;
+    padding: 4px;
+}
+
+#navback {
+    position: fixed;
+    background-color: #eeeeee;
+    left: 0;
+    width: 160px;
+    top: 40px;
+    bottom: 0;
+}
+
+#belowheader {
+    top: 40px;
+}
+
+nav a {
+    color: #00669E;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+aside {
+    position: fixed;
+    right: 0;
+    top: 40px;
+    padding: 5px;
+    margin: 10px;
+    width: 410px;
+    border: 1px solid #00669E;
+}
+
+#actionText {
+    font-family: Monaco;
+    font-size: 9pt;
+    color: #4E7F00;
+}
+
+#main {
+    margin-top: 20px;
+    left: 160px;
+    right: 425px;
+    padding: 20px 20px 60px;
+    position: absolute;
+}
+
+footer {
+    position: fixed;
+    background-color: #aaa;
+    color: white;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    text-align: center;
+    padding: 3px;
+}
+
+.examples {
+    font-size: 8pt;
+    margin-left: 20px;
+    margin-bottom: 6px;
+    margin-top: 6px;
+    line-height: 12px;
+}
+
+.examples a {
+    background-color: #eeeeee;
+    font-family: Monaco;
+    color: #4E7F00;
+    text-decoration: none;
+}
+
+.fields, .fields a {
+    margin: 0;
+    text-align: center;
+    color: #888888;
+    font-family: Monaco;
+    font-size: 7pt;
+    text-decoration: none
+}
+
+a {
+    cursor: pointer;
+}
+
+code {
+    font-size: 9pt;
+}
+
+img {
+    border: none;
+}
+
+p {
+    margin: 1em 0;
+    line-height: 1.4em;
+}
+
+
+pre, code {
+    font: 12px Inconsolata, Monaco, "Courier New", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", monospace;
+}
+
+pre {
+    color: #4e7f00;
+    margin: 1em 0 1em 2em;
+    border-left-style: solid;
+    padding: 5px;
+    padding-left: 10px;
+    white-space: pre-wrap;
+    line-height: 1.2em;
+    background-color: #f9ecb7;
+}
+
+pre code {
+    padding: 0;
+    border: none;
+}
+
+code {
+    color: #4e7f00;
+    padding: 0.1em .3em;
+    background-color: #f9ecb7;
+}
+
+img {
+    border: 0;
+    max-width: 100%;
+}
+
+abbr {
+    border-bottom: none;
+}
+
+a {
+    color: #4183c4;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+a code, a:link code, a:visited code {
+    color: #4183c4;
+}
+
+h2, h3 {
+    margin: 1em 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    border: 0;
+    color: #00669e
+}
+
+h1 {
+    font-size: 170%;
+    border-top: 4px solid #aaa;
+    padding-top: .5em;
+    margin-top: 1.5em
+}
+
+h1:first-child {
+    margin-top: 0;
+    padding-top: .25em;
+    border-top: none;
+}
+
+h2 {
+    font-size: 150%;
+    margin-top: 1.5em;
+    border-top: 4px solid #e0e0e0;
+    padding-top: .5em;
+}
+
+h3 {
+    margin-top: 1em;
+}
+
+hr {
+    border: 1px solid #ddd;
+}
+
+ul {
+    margin: 1em 0 1em 2em;
+}
+
+ol {
+    margin: 1em 0 1em 2em;
+}
+
+ul li, ol li {
+    margin-top: .5em;
+    margin-bottom: .5em;
+}
+
+ul ul, ul ol, ol ol, ol ul {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+blockquote {
+    margin: 1em 0;
+    border-left: 5px solid #ddd;
+    padding-left: .6em;
+    color: #555;
+}
+
+dt {
+    font-weight: bold;
+    margin-left: 1em;
+}
+
+dd {
+    margin-left: 2em;
+    margin-bottom: 1em;
+}

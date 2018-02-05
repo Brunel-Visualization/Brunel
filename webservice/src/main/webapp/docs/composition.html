@@ -1,0 +1,82 @@
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<H1>Chart Composition</H1>
+
+<p>
+    Chart Composition actions are those that take two charts and combine them to make a single one.
+    The model for how they work is:
+</p>
+
+<P><b>
+    (actions defining chart A) + (actions defining chart B)
+</b></P>
+<p>
+    In the grammar, though, the parentheses are not required, or even allowed.
+    The three composition methods are <code>tile</code>, <code>overlay</code> and <code>nest</code>
+</p>
+<p>
+    Composition is a work in progress. Currently <code>tile</code> and <code>overlay</code> work, but
+    <code>nest</code> does not work. Instead the nested element is ignored.
+</p><p>
+    The composition commands have a defined precedence:
+    <code>nest</code> binds tightest, and <code>tile</code> weakest. Thus
+    <code>A | B + C &lt; D | E</code> will result in three charts: "A", "B + C &lt; D" and "E".
+    The middle chart will have one element "B" and the second element "C" will have element "D" nested within it.
+</p>
+
+
+<h3><code>|</code> (tile)</h3>
+This is the simplest form of composition. It tiles the available space and puts the charts into the space.
+The default layout can be changed by giving each chart an
+<code>at</code> action to indicate its location (in percentages: left, top, right, bottom)
+<p>
+    Examples:
+</p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(income) mean(income) | bar x(region)
+    y(violent_crimes) mean(violent_crimes)</a>
+    <br/><a onClick="showAction(this.text)">x(density) y(income) at(0,0,100,100) color(region) | polar stack bar
+        y(#count) color(region) at (60,45,100, 90) legends(none)</a>
+</p>
+
+<h3><code>+</code> (overlay)</h3>
+<p>
+    This method of composition attempts to combine the coordinate systems of the charts, placing one on top of the other
+    and having them share axes.
+    Because both charts contribute to the same coordinate space, it is important to ensure that those coordinates are
+    compatible.
+    Below are some examples showing how this works
+<p>
+    Examples:
+</p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(water) mean(water) + line x(region) y(under_18)
+    mean(under_18) label("% under 18")</a></p>
+
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) yrange(income) range(income) + bar x(region)
+    yrange(income) iqr(income) + point x(region) y(income) median(income) style("fill:white")</a></p>
+
+<h3><code>&gt;</code> (nest)</h3>
+<P>
+    This method of composition places one chart inside the other. To do this the two charts must have a hierarchical
+    nature --
+    the first chart should represent an aggregation of the second, so the nesting makes sense.
+    When that is defined, the second chart will be replicated as small multiples within the other chart.
+</P>
+
+
+
+
+

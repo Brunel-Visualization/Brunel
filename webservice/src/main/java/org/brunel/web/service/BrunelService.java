@@ -40,6 +40,27 @@ import javax.ws.rs.core.Response;
 public class BrunelService extends Application {
 
   /**
+   * Gets a sample file
+   *
+   * @param file the sample file name
+   * @return the file
+   */
+  @GET()
+  @Path("/sample")
+  @Produces(MediaType.TEXT_PLAIN)
+  public Response html_get(@QueryParam("file") String file) {
+    String csv = DataAccess.readCSV("https://brunelvis.mybluemix.net/sample/" + file + ".csv", true);
+    return Response
+      .ok(csv)
+      .header("Access-Control-Allow-Origin", "*")
+      .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE")
+      .header("Access-Control-Allow-Headers", "X-Requested-With,content-type, Authorization")
+      .header("Access-Control-Allow-Credentials", "true")
+      .build();
+
+  }
+
+  /**
    * Creates a full HTML page suitable for use within an HTML IFrame.
    *
    * @param syntax      the Brunel syntax defining the visualization

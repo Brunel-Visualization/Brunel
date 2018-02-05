@@ -13,10 +13,6 @@
     <link href="jquery-ui.css" rel="stylesheet">
     <style>
 
-        select {
-            width: 200px;
-        }
-
         textarea#syntax, textarea#datatable {
             border-color: #888888;
             font-family: Inconsolata, Monaco, Monospaced, sans-serif;
@@ -35,19 +31,13 @@
             padding: 0;
             width: 100%;
             height: 100%;
-            background:white
-        }
-
-        aside {
-            margin-top: 20px;
-            margin-bottom: 10px;
+            background: white
         }
 
         #tabs {
             padding: 0;
             border-top: none;
         }
-
 
     </style>
 
@@ -66,7 +56,7 @@
             <ul>
                 <li><a href="index.html">Home</a></li>
                 <li><a href="gallery.html">Gallery</a></li>
-                <li><a href="docs.html">Docs</a></li>
+                <li><a href="docs/index.html">Docs</a></li>
             </ul>
         </nav>
     </header>
@@ -90,26 +80,80 @@
                 <ul>
                     <li><a href="#tabs-1">Brunel Syntax</a></li>
                     <li><a href="#tabs-2">Data Table</a></li>
-                    <li><a href="#tabs-3">Third</a></li>
+                    <li><a href="#tabs-3">Options</a></li>
+                    <li><a href="#tabs-4">Web App Help</a></li>
                 </ul>
                 <div id="tabs-1" class="opt">
                     <section>
-                        <textarea id="syntax" rows="4" style="width:99%" class="ui-widget ui-corner-all">data("raw:X;1;2;4") x(x) y(#row) color(#row)</textarea>
+                        <textarea id="syntax" rows="4" style="width:99%" class="ui-widget ui-corner-all">x(weight) y(mpg) color(origin)</textarea>
                     </section>
                     <section>
                         <button id="run">Build</button>
                     </section>
                 </div>
                 <div id="tabs-2" class="opt">
-                    <section style="width:100%">
-                        <textarea id="datatable" rows="4" style="width:99%" class="ui-widget ui-corner-all"></textarea>
+                    <section>
+                        <table style="width:100%; table-layout:fixed">
+                            <tr>
+                                <td style="padding-right:10px">
+                                    <textarea style="width:99%;height:100%" id="datatable" rows="10"
+                                              class="ui-widget"></textarea>
+                                </td>
+                                <td style="width:200px;padding:10px" valign="top">
+                                    <header>
+                                        <h3>Load Sample File:</h3>
+                                    </header>
+                                    <section>
+                                        <select name="Sample Data" id="sample">
+                                            <option>Africa</option>
+                                            <option>AirlineDelays</option>
+                                            <option>Baseball</option>
+                                            <option>Boardgames</option>
+                                            <option selected="selected">Cars</option>
+                                            <option>CPI</option>
+                                            <option>Iris</option>
+                                            <option>Movies</option>
+                                            <option>Sierpinski</option>
+                                            <option>US States</option>
+                                            <option>Whiskey</option>
+                                        </select>
+                                    </section>
+                                </td>
+                            </tr>
+                        </table>
                     </section>
-
                 </div>
-                <div id="tabs-3" class="opt">Nam dui erat, auctor a, dignissim quis, sollicitudin eu, felis.
-                    Pellentesque nisi
-                    urna, interdum eget, sagittis et, consequat vestibulum, lacus. Mauris porttitor ullamcorper
-                    augue.
+                <div id="tabs-3" class="opt">
+                    <section>
+                        <h3>Set Size:</h3>
+                        Size : <input id="widthSpinner" name="value"> by <input id="heightSpinner" name="value">
+                    </section>
+                </div>
+                <div id="tabs-4" class="opt">
+                    <header><h3>Web Application Help</h3></header>
+                    <ul>
+                        <li>
+                            This is a very simple site; it is intended to be used for prototyping and learning,
+                            not for long-term or production use.
+                        </li>
+                        <li>
+                            The <strong>Display</strong> panel at the top shows the Brunel Visualization in a frame.
+                            When you build the syntax, it auto-fits the size of the display, so you can drag the frame
+                            to make a different sized output (although it's a little fiddly -- you need to drag slowly)
+                        </li>
+                        <li>
+                            The <strong>Syntax</strong> panel allows you to edit Brunel syntax. You can specify a
+                            data set available online by the syntax <code>data("http://your-data-url")</code> at the
+                            beginning of your code. Otherwise the default data set from the <strong>Data</strong> panel
+                            is used.
+                        </li>
+                        <li>
+                            The <strong>Data</strong> panel allows you to paste in a table of data, which is
+                            parsed as if it were a CSV file. There are a few canned sample data sets you can also
+                            pull in automatically. This data is passed to the Brunel server along with the syntax to
+                            be built in a visualization.
+                        </li>
+                    </ul>
                 </div>
             </div>
         </article>
@@ -165,10 +209,33 @@
         )
     }
 
+    function loadSampleData(name, successCallback) {
+
+        var url = "https://brunelvis.mybluemix.net/build/sample?file=" + name;
+
+        console.log("Reading data :" + url);
+        $.ajax(url, {
+                crossDomain: true,
+                type: "GET",
+                success: function (data) {
+                    console.log("Call succeeded");
+                    successCallback(data);
+                },
+                error: function (xhr, status, error) {
+                    console.log("Call Failed with error: " + error);
+                    alert("Unexpected error connecting to service: " + error);
+                }
+            }
+        )
+    }
+
+
     <!-- Initialize the widgets -->
     $("#run").button();
     $("#tabs").tabs();
     $("#visbox").resizable();
+    $("#sample").selectmenu();
+
     $("#datatable").text("mpg,cylinders,engine,horsepower,weight,acceleration,year,origin,name\n18,8,307,130,3504,12,70,American,chevrolet chevelle malibu\n15,8,350,165,3693,11.5,70,American,buick skylark 320\n18,8,318,150,3436,11,70,American,plymouth satellite\n16,8,304,150,3433,12,70,American,amc rebel sst\n17,8,302,140,3449,10.5,70,American,ford torino\n15,8,429,198,4341,10,70,American,ford galaxie 500\n14,8,454,220,4354,9,70,American,chevrolet impala\n14,8,440,215,4312,8.5,70,American,plymouth fury iii\n14,8,455,225,4425,10,70,American,pontiac catalina\n15,8,390,190,3850,8.5,70,American,amc ambassador dpl\nnan,8,350,165,4142,11.5,70,American,chevrolet chevelle concours (sw)\nnan,8,351,153,4034,11,70,American,ford torino (sw)\nnan,8,383,175,4166,10.5,70,American,plymouth satellite (sw)\nnan,8,360,175,3850,11,70,American,amc rebel sst (sw)\n15,8,383,170,3563,10,70,American,dodge challenger se\n14,8,340,160,3609,8,70,American,plymouth cuda 340\nnan,8,302,140,3353,8,70,American,ford mustang boss 302\n15,8,400,150,3761,9.5,70,American,chevrolet monte carlo\n14,8,455,225,3086,10,70,American,buick estate wagon (sw)\n22,6,198,95,2833,15.5,70,American,plymouth duster\n18,6,199,97,2774,15.5,70,American,amc hornet\n21,6,200,85,2587,16,70,American,ford maverick\n21,6,199,90,2648,15,70,American,amc gremlin\n10,8,360,215,4615,14,70,American,ford f250\n10,8,307,200,4376,15,70,American,chevy c20\n11,8,318,210,4382,13.5,70,American,dodge d200\n9,8,304,193,4732,18.5,70,American,hi 1200d\n28,4,140,90,2264,15.5,71,American,chevrolet vega 2300\n25,4,98,nan,2046,19,71,American,ford pinto\n19,6,232,100,2634,13,71,American,amc gremlin\n16,6,225,105,3439,15.5,71,American,plymouth satellite custom\n17,6,250,100,3329,15.5,71,American,chevrolet chevelle malibu\n19,6,250,88,3302,15.5,71,American,ford torino 500\n18,6,232,100,3288,15.5,71,American,amc matador\n14,8,350,165,4209,12,71,American,chevrolet impala\n14,8,400,175,4464,11.5,71,American,pontiac catalina brougham\n14,8,351,153,4154,13.5,71,American,ford galaxie 500\n14,8,318,150,4096,13,71,American,plymouth fury iii\n12,8,383,180,4955,11.5,71,American,dodge monaco (sw)\n13,8,400,170,4746,12,71,American,ford country squire (sw)\n13,8,400,175,5140,12,71,American,pontiac safari (sw)\n18,6,258,110,2962,13.5,71,American,amc hornet sportabout (sw)\n22,4,140,72,2408,19,71,American,chevrolet vega (sw)\n19,6,250,100,3282,15,71,American,pontiac firebird\n18,6,250,88,3139,14.5,71,American,ford mustang\n23,4,122,86,2220,14,71,American,mercury capri 2000\n26,4,91,70,1955,20.5,71,American,plymouth cricket\n25,4,97.5,80,2126,17,72,American,dodge colt hardtop\n20,4,140,90,2408,19.5,72,American,chevrolet vega\n21,4,122,86,2226,16.5,72,American,ford pinto runabout\n13,8,350,165,4274,12,72,American,chevrolet impala\n14,8,400,175,4385,12,72,American,pontiac catalina\n15,8,318,150,4135,13.5,72,American,plymouth fury iii\n14,8,351,153,4129,13,72,American,ford galaxie 500\n17,8,304,150,3672,11.5,72,American,amc ambassador sst\n11,8,429,208,4633,11,72,American,mercury marquis\n13,8,350,155,4502,13.5,72,American,buick lesabre custom\n12,8,350,160,4456,13.5,72,American,oldsmobile delta 88 royale\n13,8,400,190,4422,12.5,72,American,chrysler newport royal\n15,8,304,150,3892,12.5,72,American,amc matador (sw)\n13,8,307,130,4098,14,72,American,chevrolet chevelle concours (sw)\n13,8,302,140,4294,16,72,American,ford gran torino (sw)\n14,8,318,150,4077,14,72,American,plymouth satellite custom (sw)\n22,4,122,86,2395,16,72,American,ford pinto (sw)\n28,4,98,80,2164,15,72,American,dodge colt (sw)\n13,8,350,175,4100,13,73,American,buick century 350\n14,8,304,150,3672,11.5,73,American,amc matador\n13,8,350,145,3988,13,73,American,chevrolet malibu\n14,8,302,137,4042,14.5,73,American,ford gran torino\n15,8,318,150,3777,12.5,73,American,dodge coronet custom\n12,8,429,198,4952,11.5,73,American,mercury marquis brougham\n13,8,400,150,4464,12,73,American,chevrolet caprice classic\n13,8,351,158,4363,13,73,American,ford ltd\n14,8,318,150,4237,14.5,73,American,plymouth fury gran sedan\n13,8,440,215,4735,11,73,American,chrysler new yorker brougham\n12,8,455,225,4951,11,73,American,buick electra 225 custom\n13,8,360,175,3821,11,73,American,amc ambassador brougham\n18,6,225,105,3121,16.5,73,American,plymouth valiant\n16,6,250,100,3278,18,73,American,chevrolet nova custom\n18,6,232,100,2945,16,73,American,amc hornet\n18,6,250,88,3021,16.5,73,American,ford maverick\n23,6,198,95,2904,16,73,American,plymouth duster\n11,8,400,150,4997,14,73,American,chevrolet impala\n12,8,400,167,4906,12.5,73,American,ford country\n13,8,360,170,4654,13,73,American,plymouth custom suburb\n12,8,350,180,4499,12.5,73,American,oldsmobile vista cruiser\n18,6,232,100,2789,15,73,American,amc gremlin\n21,4,140,72,2401,19.5,73,American,chevrolet vega\n19,4,122,85,2310,18.5,73,American,ford pinto\n21,6,155,107,2472,14,73,American,mercury capri v6\n15,8,350,145,4082,13,73,American,chevrolet monte carlo s\n16,8,400,230,4278,9.5,73,American,pontiac grand prix\n15,8,318,150,3399,11,73,American,dodge dart custom\n11,8,350,180,3664,11,73,American,oldsmobile omega\n20,6,198,95,3102,16.5,74,American,plymouth duster\n21,6,200,nan,2875,17,74,American,ford maverick\n19,6,232,100,2901,16,74,American,amc hornet\n15,6,250,100,3336,17,74,American,chevrolet nova\n26,4,122,80,2451,16.5,74,American,ford pinto\n25,4,140,75,2542,17,74,American,chevrolet vega\n16,6,250,100,3781,17,74,American,chevrolet chevelle malibu classic\n16,6,258,110,3632,18,74,American,amc matador\n18,6,225,105,3613,16.5,74,American,plymouth satellite sebring\n16,8,302,140,4141,14,74,American,ford gran torino\n13,8,350,150,4699,14.5,74,American,buick century luxus (sw)\n14,8,318,150,4457,13.5,74,American,dodge coronet custom (sw)\n14,8,302,140,4638,16,74,American,ford gran torino (sw)\n14,8,304,150,4257,15.5,74,American,amc matador (sw)\n28,4,90,75,2125,14.5,74,American,dodge colt\n19,6,225,95,3264,16,75,American,plymouth valiant custom\n18,6,250,105,3459,16,75,American,chevrolet nova\n15,6,250,72,3432,21,75,American,mercury monarch\n15,6,250,72,3158,19.5,75,American,ford maverick\n16,8,400,170,4668,11.5,75,American,pontiac catalina\n15,8,350,145,4440,14,75,American,chevrolet bel air\n16,8,318,150,4498,14.5,75,American,plymouth grand fury\n14,8,351,148,4657,13.5,75,American,ford ltd\n17,6,231,110,3907,21,75,American,buick century\n16,6,250,105,3897,18.5,75,American,chevroelt chevelle malibu\n15,6,258,110,3730,19,75,American,amc matador\n18,6,225,95,3785,19,75,American,plymouth fury\n21,6,231,110,3039,15,75,American,buick skyhawk\n20,8,262,110,3221,13.5,75,American,chevrolet monza 2+2\n13,8,302,129,3169,12,75,American,ford mustang ii\n23,4,140,83,2639,17,75,American,ford pinto\n20,6,232,100,2914,16,75,American,amc gremlin\n23,4,140,78,2592,18.5,75,American,pontiac astro\n18,6,171,97,2984,14.5,75,American,ford pinto\n19,6,232,90,3211,17,75,American,amc pacer\n25,4,140,92,2572,14.9,76,American,capri ii\n26,4,98,79,2255,17.7,76,American,dodge colt\n17.5,8,305,140,4215,13,76,American,chevrolet chevelle malibu classic\n16,8,318,150,4190,13,76,American,dodge coronet brougham\n15.5,8,304,120,3962,13.9,76,American,amc matador\n14.5,8,351,152,4215,12.8,76,American,ford gran torino\n22,6,225,100,3233,15.4,76,American,plymouth valiant\n22,6,250,105,3353,14.5,76,American,chevrolet nova\n24,6,200,81,3012,17.6,76,American,ford maverick\n22.5,6,232,90,3085,17.6,76,American,amc hornet\n29,4,85,52,2035,22.2,76,American,chevrolet chevette\n24.5,4,98,60,2164,22.1,76,American,chevrolet woody\n20,6,225,100,3651,17.7,76,American,dodge aspen se\n18,6,250,78,3574,21,76,American,ford granada ghia\n18.5,6,250,110,3645,16.2,76,American,pontiac ventura sj\n17.5,6,258,95,3193,17.8,76,American,amc pacer d/l\n26.5,4,140,72,2565,13.6,76,American,ford pinto\n13,8,318,150,3940,13.2,76,American,plymouth volare premier v8\n16.5,8,350,180,4380,12.1,76,American,cadillac seville\n13,8,350,145,4055,12,76,American,chevy c10\n13,8,302,130,3870,15,76,American,ford f108\n13,8,318,150,3755,14,76,American,dodge d100\n30,4,111,80,2155,14.8,77,American,buick opel isuzu deluxe\n25.5,4,122,96,2300,15.5,77,American,plymouth arrow gs\n17.5,8,305,145,3880,12.5,77,American,chevrolet caprice classic\n17,8,260,110,4060,19,77,American,oldsmobile cutlass supreme\n15.5,8,318,145,4140,13.7,77,American,dodge monaco brougham\n15,8,302,130,4295,14.9,77,American,mercury cougar brougham\n17.5,6,250,110,3520,16.4,77,American,chevrolet concours\n20.5,6,231,105,3425,16.9,77,American,buick skylark\n19,6,225,100,3630,17.7,77,American,plymouth volare custom\n18.5,6,250,98,3525,19,77,American,ford granada\n16,8,400,180,4220,11.1,77,American,pontiac grand prix lj\n15.5,8,350,170,4165,11.4,77,American,chevrolet monte carlo landau\n15.5,8,400,190,4325,12.2,77,American,chrysler cordoba\n16,8,351,149,4335,14.5,77,American,ford thunderbird\n24.5,4,151,88,2740,16,77,American,pontiac sunbird coupe\n25.5,4,140,89,2755,15.8,77,American,ford mustang ii 2+2\n30.5,4,98,63,2051,17,77,American,chevrolet chevette\n33.5,4,98,83,2075,15.9,77,American,dodge colt m/m\n36.1,4,98,66,1800,14.4,78,American,ford fiesta\n19.9,8,260,110,3365,15.5,78,American,oldsmobile cutlass salon brougham\n19.4,8,318,140,3735,13.2,78,American,dodge diplomat\n20.2,8,302,139,3570,12.8,78,American,mercury monarch ghia\n19.2,6,231,105,3535,19.2,78,American,pontiac phoenix lj\n20.5,6,200,95,3155,18.2,78,American,chevrolet malibu\n20.2,6,200,85,2965,15.8,78,American,ford fairmont (auto)\n25.1,4,140,88,2720,15.4,78,American,ford fairmont (man)\n20.5,6,225,100,3430,17.2,78,American,plymouth volare\n19.4,6,232,90,3210,17.2,78,American,amc concord\n20.6,6,231,105,3380,15.8,78,American,buick century special\n20.8,6,200,85,3070,16.7,78,American,mercury zephyr\n18.6,6,225,110,3620,18.7,78,American,dodge aspen\n18.1,6,258,120,3410,15.1,78,American,amc concord d/l\n19.2,8,305,145,3425,13.2,78,American,chevrolet monte carlo landau\n17.7,6,231,165,3445,13.4,78,American,buick regal sport coupe (turbo)\n18.1,8,302,139,3205,11.2,78,American,ford futura\n17.5,8,318,140,4080,13.7,78,American,dodge magnum xe\n30,4,98,68,2155,16.5,78,American,chevrolet chevette\n30.9,4,105,75,2230,14.5,78,American,dodge omni\n23.2,4,156,105,2745,16.7,78,American,plymouth sapporo\n23.8,4,151,85,2855,17.6,78,American,oldsmobile starfire sx\n21.5,6,231,115,3245,15.4,79,American,pontiac lemans v6\n19.8,6,200,85,2990,18.2,79,American,mercury zephyr 6\n22.3,4,140,88,2890,17.3,79,American,ford fairmont 4\n20.2,6,232,90,3265,18.2,79,American,amc concord dl 6\n20.6,6,225,110,3360,16.6,79,American,dodge aspen 6\n17,8,305,130,3840,15.4,79,American,chevrolet caprice classic\n17.6,8,302,129,3725,13.4,79,American,ford ltd landau\n16.5,8,351,138,3955,13.2,79,American,mercury grand marquis\n18.2,8,318,135,3830,15.2,79,American,dodge st. regis\n16.9,8,350,155,4360,14.9,79,American,buick estate wagon (sw)\n15.5,8,351,142,4054,14.3,79,American,ford country squire (sw)\n19.2,8,267,125,3605,15,79,American,chevrolet malibu classic (sw)\n18.5,8,360,150,3940,13,79,American,chrysler lebaron town @ country (sw)\n35.7,4,98,80,1915,14.4,79,American,dodge colt hatchback custom\n27.4,4,121,80,2670,15,79,American,amc spirit dl\n23,8,350,125,3900,17.4,79,American,cadillac eldorado\n23.9,8,260,90,3420,22.2,79,American,oldsmobile cutlass salon brougham\n34.2,4,105,70,2200,13.2,79,American,plymouth horizon\n34.5,4,105,70,2150,14.9,79,American,plymouth horizon tc3\n28.4,4,151,90,2670,16,79,American,buick skylark limited\n28.8,6,173,115,2595,11.3,79,American,chevrolet citation\n26.8,6,173,115,2700,12.9,79,American,oldsmobile omega brougham\n33.5,4,151,90,2556,13.2,79,American,pontiac phoenix\n32.1,4,98,70,2120,15.5,80,American,chevrolet chevette\n28,4,151,90,2678,16.5,80,American,chevrolet citation\n26.4,4,140,88,2870,18.1,80,American,ford fairmont\n24.3,4,151,90,3003,20.1,80,American,amc concord\n19.1,6,225,90,3381,18.7,80,American,dodge aspen\n27.9,4,156,105,2800,14.4,80,American,dodge colt\n23.6,4,140,nan,2905,14.3,80,American,ford mustang cobra\n27.2,4,135,84,2490,15.7,81,American,plymouth reliant\n26.6,4,151,84,2635,16.4,81,American,buick skylark\n25.8,4,156,92,2620,14.4,81,American,dodge aries wagon (sw)\n23.5,6,173,110,2725,12.6,81,American,chevrolet citation\n30,4,135,84,2385,12.9,81,American,plymouth reliant\n39,4,86,64,1875,16.4,81,American,plymouth champ\n34.7,4,105,63,2215,14.9,81,American,plymouth horizon 4\n34.4,4,98,65,2045,16.2,81,American,ford escort 4w\n29.9,4,98,65,2380,20.7,81,American,ford escort 2h\n22.4,6,231,110,3415,15.8,81,American,buick century\n26.6,8,350,105,3725,19,81,American,oldsmobile cutlass ls\n20.2,6,200,88,3060,17.1,81,American,ford granada gl\n17.6,6,225,85,3465,16.6,81,American,chrysler lebaron salon\n28,4,112,88,2605,19.6,82,American,chevrolet cavalier\n27,4,112,88,2640,18.6,82,American,chevrolet cavalier wagon\n34,4,112,88,2395,18,82,American,chevrolet cavalier 2-door\n31,4,112,85,2575,16.2,82,American,pontiac j2000 se hatchback\n29,4,135,84,2525,16,82,American,dodge aries se\n27,4,151,90,2735,18,82,American,pontiac phoenix\n24,4,140,92,2865,16.4,82,American,ford fairmont futura\n23,4,151,nan,3035,20.5,82,American,amc concord dl\n38,4,105,63,2125,14.7,82,American,plymouth horizon miser\n36,4,98,70,2125,17.3,82,American,mercury lynx l\n25,6,181,110,2945,16.4,82,American,buick century limited\n38,6,262,85,3015,17,82,American,oldsmobile cutlass ciera (diesel)\n26,4,156,92,2585,14.5,82,American,chrysler lebaron medallion\n22,6,232,112,2835,14.7,82,American,ford granada l\n36,4,135,84,2370,13,82,American,dodge charger 2.2\n27,4,151,90,2950,17.3,82,American,chevrolet camaro\n27,4,140,86,2790,15.6,82,American,ford mustang gl\n32,4,135,84,2295,11.6,82,American,dodge rampage\n28,4,120,79,2625,18.6,82,American,ford ranger\n31,4,119,82,2720,19.4,82,American,chevy s-10\nnan,4,133,115,3090,17.5,70,European,citroen ds-21 pallas\n26,4,97,46,1835,20.5,70,European,volkswagen 1131 deluxe sedan\n25,4,110,87,2672,17.5,70,European,peugeot 504\n24,4,107,90,2430,14.5,70,European,audi 100 ls\n25,4,104,95,2375,17.5,70,European,saab 99e\n26,4,121,113,2234,12.5,70,European,bmw 2002\nnan,4,97,48,1978,20,71,European,volkswagen super beetle 117\n28,4,116,90,2123,14,71,European,opel 1900\n30,4,79,70,2074,19.5,71,European,peugeot 304\n30,4,88,76,2065,14.5,71,European,fiat 124b\n27,4,97,60,1834,19,71,European,volkswagen model 111\n23,4,97,54,2254,23.5,72,European,volkswagen type 3\n18,4,121,112,2933,14.5,72,European,volvo 145e (sw)\n22,4,121,76,2511,18,72,European,volkswagen 411 (sw)\n21,4,120,87,2979,19.5,72,European,peugeot 504 (sw)\n26,4,96,69,2189,18,72,European,renault 12 (sw)\n26,4,97,46,1950,21,73,European,volkswagen super beetle\n26,4,98,90,2265,15.5,73,European,fiat 124 sport coupe\n29,4,68,49,1867,19.5,73,European,fiat 128\n24,4,116,75,2158,15.5,73,European,opel manta\n20,4,114,91,2582,14,73,European,audi 100ls\n19,4,121,112,2868,15.5,73,European,volvo 144ea\n24,4,121,110,2660,14,73,European,saab 99le\n29,4,98,83,2219,16.5,74,European,audi fox\n26,4,79,67,1963,15.5,74,European,volkswagen dasher\n26,4,97,78,2300,14.5,74,European,opel manta\n24,4,90,75,2108,15.5,74,European,fiat 128\n26,4,116,75,2246,14,74,European,fiat 124 tc\n31,4,79,67,2000,16,74,European,fiat x1.9\n25,4,90,71,2223,16.5,75,European,volkswagen dasher\n29,4,90,70,1937,14,75,European,volkswagen rabbit\n23,4,115,95,2694,15,75,European,audi 100ls\n23,4,120,88,2957,17,75,European,peugeot 504\n22,4,121,98,2945,14.5,75,European,volvo 244dl\n25,4,121,115,2671,13.5,75,European,saab 99le\n28,4,107,86,2464,15.5,76,European,fiat 131\n25,4,116,81,2220,16.9,76,European,opel 1900\n27,4,101,83,2202,15.3,76,European,renault 12tl\n29,4,90,70,1937,14.2,76,European,vw rabbit\n29.5,4,97,71,1825,12.2,76,European,volkswagen rabbit\n20,4,130,102,3150,15.7,76,European,volvo 245\n19,4,120,88,3270,21.9,76,European,peugeot 504\n16.5,6,168,120,3820,16.7,76,European,mercedes-benz 280s\n36,4,79,58,1825,18.6,77,European,renault 5 gtl\n29,4,97,78,1940,14.5,77,European,volkswagen rabbit custom\n30.5,4,97,78,2190,14.1,77,European,volkswagen dasher\n21.5,4,121,110,2600,12.8,77,European,bmw 320i\n43.1,4,90,48,1985,21.5,78,European,volkswagen rabbit custom diesel\n20.3,5,131,103,2830,15.9,78,European,audi 5000\n17,6,163,125,3140,13.6,78,European,volvo 264gl\n21.6,4,121,115,2795,15.7,78,European,saab 99gle\n16.2,6,163,133,3410,15.8,78,European,peugeot 604sl\n31.5,4,89,71,1990,14.9,78,European,volkswagen scirocco\n31.9,4,89,71,1925,14,79,European,vw rabbit custom\n25.4,5,183,77,3530,20.1,79,European,mercedes benz 300d\n27.2,4,141,71,3190,24.8,79,European,peugeot 504\n37.3,4,91,69,2130,14.7,79,European,fiat strada custom\n41.5,4,98,76,2144,14.7,80,European,vw rabbit\n34.3,4,97,78,2188,15.8,80,European,audi 4000\n44.3,4,90,48,2085,21.7,80,European,vw rabbit c (diesel)\n43.4,4,90,48,2335,23.7,80,European,vw dasher (diesel)\n36.4,5,121,67,2950,19.9,80,European,audi 5000s (diesel)\n30,4,146,67,3250,21.8,80,European,mercedes-benz 240d\n40.9,4,85,nan,1835,17.3,80,European,renault lecar deluxe\n29.8,4,89,62,1845,15.3,80,European,vokswagen rabbit\n35,4,122,88,2500,15.1,80,European,triumph tr7 coupe\n33,4,105,74,2190,14.2,81,European,volkswagen jetta\n34.5,4,100,nan,2320,15.8,81,European,renault 18i\n28.1,4,141,80,3230,20.4,81,European,peugeot 505s turbo diesel\nnan,4,121,110,2800,15.4,81,European,saab 900s\n30.7,6,145,76,3160,19.6,81,European,volvo diesel\n36,4,105,74,1980,15.3,82,European,volkswagen rabbit l\n44,4,97,52,2130,24.6,82,European,vw pickup\n24,4,113,95,2372,15,70,Japanese,toyota corona mark ii\n27,4,97,88,2130,14.5,70,Japanese,datsun pl510\n27,4,97,88,2130,14.5,71,Japanese,datsun pl510\n25,4,113,95,2228,14,71,Japanese,toyota corona\n31,4,71,65,1773,19,71,Japanese,toyota corolla 1200\n35,4,72,69,1613,18,71,Japanese,datsun 1200\n24,4,113,95,2278,15.5,72,Japanese,toyota corona hardtop\n19,3,70,97,2330,13.5,72,Japanese,mazda rx2 coupe\n28,4,97,92,2288,17,72,Japanese,datsun 510 (sw)\n23,4,120,97,2506,14.5,72,Japanese,toyouta corona mark ii (sw)\n27,4,97,88,2100,16.5,72,Japanese,toyota corolla 1600 (sw)\n20,4,97,88,2279,19,73,Japanese,toyota carina\n22,4,108,94,2379,16.5,73,Japanese,datsun 610\n18,3,70,90,2124,13.5,73,Japanese,maxda rx3\n20,6,156,122,2807,13.5,73,Japanese,toyota mark ii\n31,4,79,67,1950,19,74,Japanese,datsun b210\n32,4,71,65,1836,21,74,Japanese,toyota corolla 1200\n31,4,76,52,1649,16.5,74,Japanese,toyota corona\n32,4,83,61,2003,19,74,Japanese,datsun 710\n24,4,120,97,2489,15,74,Japanese,honda civic\n26,4,108,93,2391,15.5,74,Japanese,subaru\n29,4,97,75,2171,16,75,Japanese,toyota corolla\n24,4,134,96,2702,13.5,75,Japanese,toyota corona\n24,4,119,97,2545,17,75,Japanese,datsun 710\n33,4,91,53,1795,17.5,75,Japanese,honda civic cvcc\n33,4,91,53,1795,17.4,76,Japanese,honda civic\n32,4,85,70,1990,17,76,Japanese,datsun b-210\n28,4,97,75,2155,16.4,76,Japanese,toyota corolla\n19,6,156,108,2930,15.5,76,Japanese,toyota mark ii\n31.5,4,98,68,2045,18.5,77,Japanese,honda accord cvcc\n33.5,4,85,70,1945,16.8,77,Japanese,datsun f-10 hatchback\n26,4,97,75,2265,18.2,77,Japanese,toyota corolla liftback\n30,4,97,67,1985,16.4,77,Japanese,subaru dl\n22,6,146,97,2815,14.5,77,Japanese,datsun 810\n21.5,3,80,110,2720,13.5,77,Japanese,mazda rx-4\n32.8,4,78,52,1985,19.4,78,Japanese,mazda glc deluxe\n39.4,4,85,70,2070,18.6,78,Japanese,datsun b210 gx\n36.1,4,91,60,1800,16.4,78,Japanese,honda civic cvcc\n27.5,4,134,95,2560,14.2,78,Japanese,toyota corona\n27.2,4,119,97,2300,14.7,78,Japanese,datsun 510\n21.1,4,134,95,2515,14.8,78,Japanese,toyota celica gt liftback\n23.9,4,119,97,2405,14.9,78,Japanese,datsun 200-sx\n29.5,4,98,68,2135,16.6,78,Japanese,honda accord lx\n34.1,4,86,65,1975,15.2,79,Japanese,maxda glc deluxe\n31.8,4,85,65,2020,19.2,79,Japanese,datsun 210\n38.1,4,89,60,1968,18.8,80,Japanese,toyota corolla tercel\n37.2,4,86,65,2019,16.4,80,Japanese,datsun 310\n29.8,4,134,90,2711,15.5,80,Japanese,toyota corona liftback\n31.3,4,120,75,2542,17.5,80,Japanese,mazda 626\n37,4,119,92,2434,15,80,Japanese,datsun 510 hatchback\n32.2,4,108,75,2265,15.2,80,Japanese,toyota corolla\n46.6,4,86,65,2110,17.9,80,Japanese,mazda glc\n40.8,4,85,65,2110,19.2,80,Japanese,datsun 210\n44.6,4,91,67,1850,13.8,80,Japanese,honda civic 1500 gl\n33.8,4,97,67,2145,18,80,Japanese,subaru dl\n32.7,6,168,132,2910,11.4,80,Japanese,datsun 280-zx\n23.7,3,70,100,2420,12.5,80,Japanese,mazda rx-7 gs\n32.4,4,107,72,2290,17,80,Japanese,honda accord\n39.1,4,79,58,1755,16.9,81,Japanese,toyota starlet\n35.1,4,81,60,1760,16.1,81,Japanese,honda civic 1300\n32.3,4,97,67,2065,17.8,81,Japanese,subaru\n37,4,85,65,1975,19.4,81,Japanese,datsun 210 mpg\n37.7,4,89,62,2050,17.3,81,Japanese,toyota tercel\n34.1,4,91,68,1985,16,81,Japanese,mazda glc 4\n33.7,4,107,75,2210,14.4,81,Japanese,honda prelude\n32.4,4,108,75,2350,16.8,81,Japanese,toyota corolla\n32.9,4,119,100,2615,14.8,81,Japanese,datsun 200sx\n31.6,4,120,74,2635,18.3,81,Japanese,mazda 626\n25.4,6,168,116,2900,12.6,81,Japanese,toyota cressida\n24.2,6,146,120,2930,13.8,81,Japanese,datsun 810 maxima\n37,4,91,68,2025,18.2,82,Japanese,mazda glc custom l\n31,4,91,68,1970,17.6,82,Japanese,mazda glc custom\n36,4,120,88,2160,14.5,82,Japanese,nissan stanza xe\n36,4,107,75,2205,14.5,82,Japanese,honda accord\n34,4,108,70,2245,16.9,82,Japanese,toyota corolla\n38,4,91,67,1965,15,82,Japanese,honda civic\n32,4,91,67,1965,15.7,82,Japanese,honda civic (auto)\n38,4,91,67,1995,16.2,82,Japanese,datsun 310 gx\n32,4,144,96,2665,13.9,82,Japanese,toyota celica gt")
 
 
@@ -182,6 +249,31 @@
                 iframe.contentWindow.document.write(data);
                 iframe.contentWindow.document.close();
             });
+    });
+
+    $("#sample").on('selectmenuchange', function (d) {
+        var name = $("#sample").val();
+        loadSampleData(name, function (data) {
+            $("#datatable").text(data)
+        });
+    });
+
+    $("#widthSpinner").spinner({
+        min: 40,
+        step: 10
+    }).val(800).on('change', function () {
+        $("#visbox").width($("#widthSpinner").val())
+    }).on('spin', function (event, ui) {
+        $("#visbox").width(ui.value)
+    });
+
+    $("#heightSpinner").spinner({
+        min: 30,
+        step: 10
+    }).val(600).on('change', function () {
+        $("#visbox").height($("#heightSpinner").val())
+    }).on('spin', function (event, ui) {
+        $("#visbox").height(ui.value)
     });
 
 

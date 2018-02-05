@@ -1,0 +1,222 @@
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<H1>Titles, Guides and Style</H1>
+
+<H3>Titles and Footnotes</H3>
+<p>
+    The <code>title</code> command allows both titles and footnotes to be added to a graph. Options
+    are used to denote a title (<code>header</code>)vs. a footnote (<code>footer</code>). Style settings
+    can be used to control the appearance and placement. References to field names are also supported.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per Region")</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per ", region)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per Region", "US
+    Regions":footer)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per Region", "US
+    Regions":footer) style('.footer {label-location:left} .header {label-location:left}')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) title("Count Per Region", "US
+    Regions":footer) style('.header {fill:orange}')</a></p>
+
+<H3>Axes</H3>
+<p>
+    The axes command controls which axes are displayed. Legal values are <code>none, x, y</code>
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(none)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(x, y)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(x)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(y)</a></p>
+
+<p>
+    In addition, the <code>x</code> and <code>y</code> options can take string and/or numeric parameters.
+    The numbers give a hint as to the number of ticks desired on a numeric axis; the string sets the title for
+    the axis(an empty string suppresses the axis title). Adding a `grid` option displays a grid for the tickas on that
+    axis.
+</p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(x:'Geo Area')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(y:2:'Numbers', x:10)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) axes(y:20:grid:'Numbers', x:10)</a></p>
+
+<H3>Guides</H3>
+
+<p>
+    An element which defines a guide does not use data; it is intended to be used with other elements and
+    provides a reference line or function to be used with those elements. To define a guide element,
+    the command `guide` is used, together with one or more parameters each of which defines either an `x` or
+    a `y` function. These functions are expressions, corresponding to standard expression syntax, but restricted to the
+    following tokens:
+</p>
+
+<ul>
+    <li>`t` -- ranges from zero to one and defiens the position along the path</li>
+    <li>`x`, `y` -- define the position a fraction `t` along the dimension</li>
+    <li>`+`,`-`,`*`,`/`,`(`,`) -- mathematical symbols</li>
+    <li>`?`, `:`,`&gt;`,`&lt;`,`==`,`&lt;=`,`&gt;=`,`!=` -- symbols used to construct if/then statements such as `x&lt;5 ? 10: 20`</li>
+    <li>`e`, `pi` -- constants</li>
+    <li>`abs`, `acos`, `asin`, `atan`, `atan2`, `ceil`, `cos`, `exp`, `floor`,
+        `log`, `max`, `min`, `pow`, `random`, `round`, `sin`, `sqrt`, `tan` -- math functions</li>
+</ul>
+
+<p>
+    Each guide is given a CSS class of `guide` and also a second class of `guideN`, where N is the index of the
+    guide number within the element. Following is an example of a guide:
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) + guide(y:40+x, y:70, y:'70+10*sin(x)') style('.guide1{stroke:red} .guide3 {stroke-dasharray:none}')</a></p>
+
+<p>
+    When constructing the guide, it creates points evenly spaced out along the line to draw it. By default we use 40
+    points, but an optional parameter at the end of the definition can modify that. For example, when you know the
+    guide is linear in a simple rectangular coordinate system, you might use `guide(y:x:2)` to use just two points for
+    maximal speed. Alternatively, if you have a very curvy function (such as the sin wave in the example above), you
+    may want to increase the number of points.
+</p>
+
+<H3>Legends</H3>
+<p>
+    The legends command controls which axes are displayed. Legal values are <code>none, all, auto</code>
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">color(winter) size(summer) x(state) y(summer) legends(auto)</a>
+</p>
+<p class="examples"><a onClick="showAction(this.text)">color(winter) size(summer) x(state) y(summer) legends(all)</a>
+</p>
+<p class="examples"><a onClick="showAction(this.text)">color(winter) size(summer) x(state) y(summer) legends(none)</a>
+</p>
+
+<H3>Style</H3>
+<p>
+    This command is used to change the style of the chart. Its parameter can be a very long string, and consists of
+    CSS-like descriptions of styles.
+    If there are no tags that indicate what the style applies to, it defaults to the element being show. The possible
+    styles include
+    <code>fill, outline, symbol,width, height, size, font-family, font-size, font-weight, stroke-width</code>.
+
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('fill:red')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('fill:white; outline:red')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('size:400%')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('symbol:rect')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('symbol:rect;border-radius:5')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('size:30;stroke-width:3')</a></p>
+<p class="examples"><a onClick="showAction(this.text)"> treemap color(region) size(#count) label(#all) style('.label
+    {font-size:24px}')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) label(#all) style('.label
+    {font-weight:bold; fill:white; text-shadow:none})')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('.axis {fill:red; font-weight:
+    bold')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(#count) style('.axis .tick line
+    {stroke-width:5;stroke:red} .axis .title {font-size:30px ;fill:cyan}')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(Summer) y(Population) axes(x:grid, y:grid)
+    style('.grid{opacity:1} .grid.y {stroke-dasharray:5,5} .grid.x {stroke-width:40px; opacity:0.2}')</a></p>
+
+<p>
+    When there are multiple elements in a chart, if you use the simple form of style without a target,
+    it will choose the current element only as the target.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">line x(state) y(summer) style('stroke:red') + line x(state)
+    y(winter) style('stroke:blue')</a></p>
+
+<H4>Style Details</H4>
+<p>
+    The styles defined are generally CSS style statements, and are placed into the resulting code as a local
+    style sheet. However note:
+</p>
+<ul>
+    <li>Brunel reads the styles and uses the values for initial layout.; for example it may reserve space depending on
+        font size.
+        This expands the list of possible style attributes, notably adding <code>symbol</code> and <code>size</code> as
+        attributes that can be specified.
+    </li>
+    <li>However, Brunel does not support all the complexities of CSS. If you stick to element names and paths and
+        combining them with commas and hierarchies, you should be fine.
+    </li>
+    <li>Local overrides (with the style command) are given them CSS "!important" tag. This means they will completely
+        override any other definition. So if you do <code>style('* {fill:blue}')</code> it will turn all of brunel blue
+        ...
+    </li>
+    <li>SVG CSS is used, so we do not use "color" for color -- instead use "fill" or "stroke"</li>
+</ul>
+<p>
+    Brunel also extends these CSS definitions with <code>size</code>, which allows you to set the size of SVG elements,
+    and
+    <code>label-location</code>, which can be defined for either an element or a label, and allows you to change where a
+    label is
+    located relative to the shape. The valid values are: <code>left, right, top, bottom, middle</code>.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)"><p class="examples"><a onClick="showAction(this.text)">line
+    x(state) y(summer) style('stroke:red') + line x(state)
+    y(winter) style('stroke:blue')</a></p>
+
+
+<H4>Limited gradient support</H4>
+
+<p>Brunel defines four gradients which can be used in style statements. A typical use might be:
+
+<code>style('fill:url(#_gradient_radial_red);stroke:none')</code>
+</p><p>
+The four gradients are `_gradient_linear_blue`, `_gradient_linear_red`, `_gradient_radial_blue`, `_gradient_radial_red`.
+As you might guess form the names, two are linear and two are radial. The colors have been chosen to match the
+first two default brunel element colors.
+</p><p>
+Note that use of gradient styles overrides any color or opacity aesthetic on the element.
+</p>
+
+<H4>Group Hierarchy for CSS</H4>
+<p>The hierarchy for CSS purposes is given below. This is not written in stone and may change slightly in the future.
+    Be careful of depending on it too strongly</p>
+<pre>
+  svg.brunel#id             -- the top level svg container with an id as given by the application
+    g.chart1                -- the first chart
+      g.interior            -- items inside the coordinate space
+
+        g.element1          -- first element
+          g.main            -- main items in the element
+            ???.element     -- this is where the lines, paths, rects and so on will be found
+          g.labels          -- labels for the shapes in '.main'
+            text.label      -- all the labels
+
+        g.element2          -- second element
+          ...               -- main, labels and any other special items (diagrams sometimes add a group)
+
+      g.axis                -- axes for the first chart
+        g.xaxis             -- x axis
+          text.title        -- axis title
+          g.tick            -- group for a tick mark (many of these)
+            line            -- tick mark line
+            text            -- tick mark label
+        g.yaxis             -- y axis
+          ...
+
+      g.grid
+        line.grid.x         -- grid lines for the x axis (vertical grid lines, usually)
+        line.grid.y         -- grid lines for the y axis (horizontal grid lines, usually)
+
+      g.legend              -- axes for the first chart
+        text.title          -- legend title
+        g.tick              -- group for a legend swatch (many of these)
+            rect            -- swatch item
+            text            -- swatch label
+</pre>
+
+
+
+
+
+
+

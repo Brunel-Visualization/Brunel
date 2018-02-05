@@ -1,0 +1,106 @@
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<H1>Basic Concepts</H1>
+
+<h3>Data statement: <code>data('...')</code></h3>
+<p>
+    Although some applications may allow you to specify a data set to use through their user interface (or is
+    predefined, like the example data set used in this guide),
+    the data statement allows you to specify a web location to read data for an element. A different data set can
+    be associated with each element, and we allow two custom location schemes as helpful utilities.
+    Data is inherited from the previous element in the Brunel command chain, until a data satement for an element
+    re-defines it.
+</p>
+<ul>
+    <li><code>sample:???.csv</code> -- using this scheme directly accesses Brunel's sample data files, one of
+        AirlineDelays.csv,
+        BGG Top 2000 Games.csv,
+        BigTenWins.csv,
+        Conferences.csv,
+        minard.csv,
+        minard-cities.csv,
+        minard-temp.csv,
+        minard-troops.csv,
+        US States.csv,
+        whiskey.csv.
+    </li>
+    <li>
+        <code>refresh://???</code> Brunel caches data by URL, so as to speed up multiple accesses. Although this is
+        almost always a good thing, it is not for streaming data, or if you have just edited some online data!
+        Simply replace the <code>http:</code> prefix for your data with <code>refresh:</code> and the resource will
+        be read every time the command is executed.
+    </li>
+</ul>
+
+<p class="examples"><a onClick="showAction(this.text)">data("http://brunel.mybluemix.net/sample_data/minard-troops.csv") x(long) y(lat) size(survivors:600%)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">data('sample:minard-troops.csv') path x(long) y(lat) color(direction) size(survivors:600%) split(group)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">data('sample:minard-troops.csv') path x(long) y(lat) color(direction) size(survivors:600%) split(group) + data('sample:minard-cities.csv') text x(long) y(lat) label(city)</a></p>
+
+<h3>Position Commands: <code>x</code> and <code>y</code></h3>
+<p>
+    The commands <code>x</code> and <code>y</code> set fields to be used for the x and y dimensions. These
+    dimensions may be physically flipped by using the transpose option, but that does not affect how they behave.
+    Elements <em>line</em>, <em>bar</em> and <em>area</em> go along the x axis, and are intended to show how the
+    'y' field depends on the 'x' field. The Y field is considered as the "result" or "dependent" field and
+    generally is thought of as the more important -- it's a rare chart that doesn't specify 'Y'.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(winter)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">y(summer)</a>
+</p>
+
+<p>
+    Diagram charts also use the position commands to specify how they are drawn; often they are defined as regular
+    charts with the simple addition of a diagram keyword.
+</p>
+
+<h3>Basic Elements</h3>
+<p>
+    The language allows you to specify any of the following element types, which define the base way the data is
+    displayed.
+</p>
+<pre>  point, bar, text,            line, area, path, polygon</pre>
+<p>
+    The most important thing to note about the element is whether it is an <b>aggregating</b> element. The first
+    three elements (<em>point</em>, <em>bar</em> and <em>text</em>) are not, and they generate one symbol per row of
+    data. The second group of four elements create a single graphic shape from
+    all the data, and so some care is needed when applying <b>color</b>, <b>label</b> or other aesthetics as must ensure
+    the value of that field is the same for the whole graphic shape. If the aesthetic field is a categorical one,
+    then Brunel handles that for you automatically by splitting up the shape and making one graphic shape per group.
+</p>
+<p>
+    if you do not specify an element, then the <code>point</code> element is the default. However a <b>diagram</b>
+    knows which element it likes, and so will provide a suitable default. In general it is simplest not to define
+    the element when using a diagram
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">point x(winter) y(summer) color(region) legends(none)</a>
+<p class="examples"><a onClick="showAction(this.text)">bar x(winter) y(summer) color(region) legends(none)</a>
+<p class="examples"><a onClick="showAction(this.text)">bar x(winter) y(summer)  bin(winter) mean(summer)</a>
+<p class="examples"><a onClick="showAction(this.text)">text x(winter) y(summer) label(state) color(region) legends(none)</a>
+<p class="examples"><a onClick="showAction(this.text)">text x(winter) y(summer) label(state:2) color(region) legends(none) tooltip(state)</a>
+<p class="examples"><a onClick="showAction(this.text)">line x(winter) y(summer) color(region) legends(none)</a>
+<p class="examples"><a onClick="showAction(this.text)">line x(winter) y(summer) color(region) using(interpolate) legends(none)</a>
+<p class="examples"><a onClick="showAction(this.text)">area x(winter) y(#count)  bin(winter) stack color(region)</a>
+<p class="examples"><a onClick="showAction(this.text)">path x(winter) y(summer)</a>
+<p class="examples"><a onClick="showAction(this.text)">polygon x(winter) y(summer)</a>
+</p>
+
+
+
+

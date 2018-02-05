@@ -1,0 +1,81 @@
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<H1>Constant and Special Fields</H1>
+
+<h3>Constant Fields</h3>
+<p>
+    Any place a field can be used, a constant can be used instead. Constants are defined without quotes as numeric
+    values, or with quotes as a categorical value.
+</p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(state) yrange(winter, 58.2) + bar x(state) yrange(summer,
+    58.2)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">y(region) x('Hot') color(summer:red) style('symbol:circle')
+    size(#count) mean(summer) sort(summer) + y(region) x('Cold') color(winter:blue) style('symbol:circle')
+    size(#count) mean (winter)</a>
+</p>
+<p>
+    As well as constant and regular fields, you can use the following "special" fields where a regular field is
+    expected. These fields start with a '#' symbol and have special meaning, as described below. It is often helpful to aggregate
+    rows using the <code>list</code> function to show a list of the rows aggregated into a single shape
+</p>
+
+<h3>#row</h3>
+<p>
+    This field simply has the value of the row of the data, indexed starting at one.
+</p>
+<p class="examples"><a onClick="showAction(this.text)">text x(#row) y(winter) label(#row) color(#row)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">path x(winter) y(summer) + text x(winter) y(summer)
+    label(#row)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">text y(region) x(0.5) label('Rows: ',#row) list(#row:20)</a></p>
+
+
+<h3>#count</h3>
+<p>
+    This field has the value one, initially, but specifying it automatically causes summarization, with the effect that
+    the effective value of the field is the count of the group. This is one of the most common ways of summarization.
+    Using the <code>percent</code> summarization command on #count turns it into a percentage.</p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count) sort(#count)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) bin(winter) bin(summer) color(#count)
+    style('symbol:rect')</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) bin(winter) bin(summer) color(#count)
+    style('symbol:rect') percent(#count) label(#count)</a></p>
+
+
+<h3>#series and #values</h3>
+<p>
+    These special fields are used when there are multiple 'y' coordinates given.
+    The <code>#series</code> field gives the names of each Y field used,
+    and the <code>#values</code> field gives the corresponding value of that field.
+</p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(state) y(summer, winter) stack color(#series)
+    label(#values) tooltip('Value for ', #series, ' is ', #values)</a>
+</p>
+
+
+<h3>#all</h3>
+<p>
+    This field works for labels and tooltips, and is syntactic sugar for adding all the fields as a list
+</p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(summer) y(#count) color(region) bin(summer) stack axes(x)
+    percent(#count) label(#count) tooltip(#all)</a>
+</p>
+
+
+
+
+
+

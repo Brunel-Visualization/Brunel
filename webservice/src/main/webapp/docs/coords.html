@@ -1,0 +1,122 @@
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<H1>Coordinates</H1>
+
+<p>
+    Coordinate-based charts are one of the main two types of charts (diagrams are the other major division).
+    In a coordinates-based chart we assign fields to map chart dimensions (the <i>X</i> and <i>Y</i> dimensions in a
+    regular
+    chart, or <i>angle</i> and <i>radius</i> in a polar chart). We can choose to show the axes or not, but that does
+    not affect the existence of the dimensions. The dimensions define a mapping between the data used for one or
+    more fields and an extent on a chart.
+</p>
+
+
+<H3>Basic Use of <code>x</code> and <code>y</code></H3>
+
+<p>
+    <code>x</code> and <code>y</code> work as you would expect when there is only one of each.
+    Note that <b>Brunel</b> will choose a suitable scale transform (<i>linear</i>, <i>root</i> or <i>log</i>)) for you
+    unless you explicitly request a different transform. On addition to the above transforms, the transform <i>reverse</i>
+    can be used either alone or in combination with another transform to reverse the order of the scale.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">x(density) y(population)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(density) y(population:linear)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(density:root) y(population:root)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(density:root:reverse) y(population:root)</a></p>
+
+<p>
+    Multiple fields specified for <code>x</code> provide clustering of dimensions within the X axis.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)"> bar x(Region, Presidential_Choice) y(#count) color(Presidential_Choice)</a></p>
+
+
+<p>
+    Multiple fields specified for <code>y</code> define multiple series; one series for each field specified.
+    This is particularly useful with time series where we have different comparable fields in different columns.
+    When we have multiple <code>y</code> fields, the <code>#series</code> and <code>#values</code> special fields
+    become useful. They allow you to refer to the name of the series and the value of whatever series is being
+    shown without explicitly requiring a name:
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">line x(state) y(summer, winter) sort(summer)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">line x(state) y(summer, winter) color(#series) + x(state)
+    y(summer, winter) color(#series) tooltip(state, ": ", #series, " = ", #values)</a></p>
+
+<H3><code>yrange</code></H3>
+
+The <code>yrange</code> command takes two fields and constructs a range between them. It is most often used with
+bar and area shapes. The statistics <code>range</code> and <code>iqr</code> are also often used with yrange, as
+they generate two values (a high and a low), exactly like two fields would.
+
+<p class="examples"><a onClick="showAction(this.text)">area x(state) yrange(summer, winter) sort(winter)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">area x(region) yrange(density) range(density)</a></p>
+
+<H3>Coordinate Transforms</H3>
+
+<ul>
+	<li> Rectangular is the default coordinate system.
+    <li> Transpose flips the X and the Y dimensions, so 'Y' reads horizontally and 'X' vertically.
+        Note that this is not the same as simply swapping X and Y as the direction of the elements also changes.
+    <li> Polar maps the Y dimension to the polar radius, and the X direction to the polar angle
+    <li> Stack takes all items with the same X value and stacks them on top of each other
+</ul>
+
+<p>
+Both <code>rectangular</code> and <code>transpose</code> support the <code>aspect</code> parameter which controls
+the aspect ratio of the data on the axes (x:y).  A value of <code>1.0</code> or <code>square</code> results in
+equal spacing of data on both axes.
+</p>
+<p>
+    In addition, <code>rectangular</code> and <code>transpose</code> support the <code>square</code> parameter which
+    forces the physical space for the chart to be square. The chart is positioned at the upper left of any space
+    allocated for it, with the space inside the axes guaranteed to be square. You can use a combination of setting
+    <code>square</code> with <code>aspect</code> and setting the X and Y ranges explicitly. In case of conflict,
+    the <code>square</code> and <code>aspect</code> settings will be honored and the ranges will be expanded to suit
+    the other settings.
+</p>
+<p>
+    Instead of <code>aspect</code> you can specify the keyword <code>same</code> which ensures both axes are indentical
+    in range
+</p>
+
+<p>
+Currently, polar is poorly supported; stacked polar bars (pie charts) work, and you can set the size on them to
+do a Rose Diagram (a pie chart with different radii for each wedge). Little else works.
+</p>
+
+<p>
+    Examples:
+</p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(#count)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">transpose bar x(region) y(#count)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(summer) y(winter) rectangular(aspect:square)</a>
+<p class="examples"><a onClick="showAction(this.text)">stack bar x(summer) bin(summer) y(#count) color(region)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">stack transpose bar x(summer) bin(summer) y(#count)
+    color(region)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">stack polar y(#count) color(region) label(region)</a>
+<p class="examples"><a onClick="showAction(this.text)">y(population) stack polar color(region) size(income)
+    label(region) tooltip(#all) sum(population) mean(income)</a></p>
+</p>
+
+
+
+
+
+

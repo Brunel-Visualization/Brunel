@@ -1,0 +1,127 @@
+<!--
+  ~ Copyright (c) 2015 IBM Corporation and others.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ You may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<H1>Interactivity</H1>
+
+<p>
+    Brunel allows a number of interactive features.
+    If not specified, some interactivity is available by default, but, as always, specifying what is wanted will
+    force that option.
+    Note that interactivity is specified on a per-chart basis, so each chart can have a different mode of use.
+</p>
+
+
+<h3>Pan/Zoom</h3>
+<p>
+    By default this is set <b>on</b>, but  will only apply to <i>numeric</i> dimensions of charts that do not specify a diagram.
+    When this feature is active, a chart can be panned and zoomed by dragging or double-clicking on any <b>blank</b> area of the chart.
+    Holding down the shift key while double-clicking zooms the chart out instead of in.
+</p>
+<p class="examples"><a onClick="showAction(this.text)">text x(winter) y(summer) tooltip(state, region) label(abbr)</a>
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(latitude) y(summer) | x(latitude) y(winter)
+    interaction(none)</a>
+</p>
+<p>
+    This parameter takes the options <code>x</code>, <code>y</code>, <code>xy</code>,<code>none</code>, ,<code>none</code>
+    which allow control over exactly which dimensions can be panned or zoomed.
+</p>
+
+<h3>Selection</h3>
+<p>
+    Each data set has a special field <code>"#selection"</code> that can be used in the same way as any other field --
+    for color, coordinates, etc. In general this feature not be useful unless you have multiple charts and at least one
+    of
+    them states that they use selection interactivity. When clicking on elements of that chart, those selections
+    will then be propagated through to the other charts in that system. You can modify the selection to make it
+    apply to different events by adding an event parameter <code>interaction(select:<i>event</i>)</code>:
+</p>
+<ul>
+    <li><b>click</b> -- the default, fired when an element is clicked on</li>
+    <li><b>mouseover</b> -- fired when an element is moved on top of</li>
+    <li><b>mousemove</b> -- fired continuously as the mouse moves over an element</li>
+    <li><b>mouseout</b> -- fired when the mouse leaves an element</li>
+    <li><b>snap</b> -- this is a special event that is fired when the mouse moves over the chart, and
+    "sufficiently close" to an item. Variants "snapX" and "snapY" are used to measure distance only in one dimension,
+    and an optional numeric parameter allows the sufficient distance to be specified in pixels</li>
+</ul>
+<p>
+
+    Selection takes on two possible values, an 'x' for unselected and a check mark for selected. One common use case is
+    to map the value to color to show the selected parts from one chart as highlighted in the other chart.
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(winter) y(summer) color(#selection) size(#selection:200%) |
+    y(region) size(#count) interaction(select:mouseover) color(#selection) x('') axes(none)
+    label(region) sort(#count:ascending)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">treemap x(region, presidential_choice) tooltip(#all)
+    size(population) color(#selection) label(abbr) | bar x(boys_name) y(#count) stack color(#selection)
+    interaction(select) transpose axes(x) | bar x(girls_name) axes(x) y(#count) stack color(#selection)
+    interaction(select) color(#selection) transpose axes(x) legends(none) stack</a></p>
+<p class="examples"><a onClick="showAction(this.text)">line x(winter) y(summer) + x(winter) y(summer)
+    size(#selection:200%) label(summer) style('.label:not(.selected) {visibility:hidden}')
+    interaction(select:snapx:1000)</a></p>
+
+<h3>Interaction(filter)</h3>
+<p>
+    Instead of using the<code>#selection</code> field as a regular field, it can also be used to filter the data
+    going into the chart, by specifying <code>interaction(filter)</code>.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">x(boys_name) y(girls_name) label(#count) interaction(filter) |
+    bar y(population) stack color(#selection) split(region) sort(population) label(region) sum(population)
+    interaction(select)</a></p>
+
+<h3>Filter</h3>
+<p>
+    The <code>filter</code> command is an interaction command which will create one or more interactive controls
+    (sliders, check boxes, ...) beside the visualization and allow dynamic filtering using those items. As is true
+    for all interactivity, the filtering happens client-side and sorting and summarization happen afterwards and
+    so will respect the filtered data.  Default filter values may be provided as attributes to the fields used for
+    filtering.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">x(population) y(violent_crimes) color(dem_rep) size(water:600%)
+    filter(presidential_choice, water)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">x(population) y(violent_crimes) color(dem_rep) size(water:600%)
+    filter(Region:[Pacific, South], water:6-65)</a></p>
+
+<h3>Animation</h3>
+<p>
+    The <code>animate</code> command will create an interactive control that animates over the values of a continuous field.
+    The button will pause or continue the animation and it will automatically loop back to the beginning.  When
+    the animation is paused, the slider may be used as a regular filter.  A numeric option on the field name requests a
+    desired number of animation frames.  Note the results may not have exactly this number of frames depending on the data.
+    The number of milliseconds between frames may be controlled using the <code>speed</code> option.
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">data('sample:Unemployment.csv') bar x(Period) y(Women)
+ animate(Year:10, speed:200) mean(Women)</a></p>
+
+
+<h3>Effects</h3>
+<p>
+    Although technically not interactivity, an effect is a usually animated feature of a visualization.
+    In Brunel, we have define one simple effect so far, which animates the first appearance of a chart. It
+    will only operate for single chart visualizations, and animates the size, y value or color if it finds a
+    numeric field defined for that role. Otherwise this effect is ignored.
+</p>
+<p>
+    Use the command <code>effect(enter)</code> to request an entrance animation. An optional time parameter
+    in milliseconds allows the speed of the animation to be controlled, like this: <code>effect(enter:1200)</code>
+</p>
+
+<p class="examples"><a onClick="showAction(this.text)">x(region) y(violent_crimes) size(population:1000%) effect(enter)</a></p>
+<p class="examples"><a onClick="showAction(this.text)">bar x(region) y(violent_crimes) sum(violent_crimes) effect(enter:5000)</a></p>
