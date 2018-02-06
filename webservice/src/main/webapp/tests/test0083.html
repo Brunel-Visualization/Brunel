@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-Equiv="Cache-Control" Content="no-cache">
+	<meta http-Equiv="Pragma" Content="no-cache">
+	<meta http-Equiv="Expires" Content="0">
+	<title>Brunel Output</title>
+	<!--
+		D3 Copyright © 2012, Michael Bostock
+		jQuery Copyright © 2010 by The jQuery Project
+		sumoselect Copyright © 2014 Hemant Negi
+ 	-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min.js" charset="utf-8"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js" charset="utf-8"></script>
+	<script src="https://brunelvis.org/js/brunel.2.6.min.js" charset="utf-8"></script>
+
+	<link rel="stylesheet" type="text/css" href="https://brunelvis.org/js/brunel.2.6.css" charset="utf-8"/>
+
+</head>
+<body style="margin:0">
+<h2 style='font-size:16px;text-align:center;margin:2px;color:blue'><span style='font-style:italic;color:#aaaaaa'>0083</span>&nbsp;&nbsp;&nbsp;&nbsp;gridded x(country) color(rating:[black, red]) size(rating) symbol(country)</h2>
+<p style='color:blue;margin:2px;margin-bottom:6px;font-size:10px'>Gridded is experimental at the moment: </p>
+<svg id="visualization" width="480" height="330"></svg>
+</body>
+<script>
+function  BrunelVis(visId) {
+  "use strict";                                                                       // strict mode
+  var datasets = [],                                      // array of datasets for the original data
+      pre = function(d, i) { return d },                         // default pre-process does nothing
+      post = function(d, i) { return d },                       // default post-process does nothing
+      transitionTime = 200,                                        // transition time for animations
+      charts = [],                                                       // the charts in the system
+      vis = d3.select('#' + visId).attr('class', 'brunel');                     // the SVG container
+
+  BrunelD3.addDefinitions(vis);                                   // ensure standard symbols present
+
+  // Define chart #1 in the visualization //////////////////////////////////////////////////////////
+
+  charts[0] = function(parentNode, filterRows) {
+    var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0, 1, 1, 0, 0, 0, 64),
+      elements = [];                                              // array of elements in this chart
+
+    // Define groups for the chart parts ///////////////////////////////////////////////////////////
+
+    var chart =  vis.append('g').attr('class', 'chart1')
+      .attr('transform','translate(' + geom.chart_left + ',' + geom.chart_top + ')');
+    var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay');
+    var zoom = d3.zoom().scaleExtent([1/3,3]);
+    var zoomNode = overlay.append('rect').attr('class', 'overlay')
+      .attr('x', geom.inner_left).attr('y', geom.inner_top)
+      .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
+      .style('cursor', 'default')
+      .node();
+    zoomNode.__zoom = d3.zoomIdentity;
+    chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
+    var interior = chart.append('g').attr('class', 'interior zoomNone')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_inner)');
+    interior.append('rect').attr('class', 'inner').attr('width', geom.inner_width).attr('height', geom.inner_height);
+    var gridGroup = interior.append('g').attr('class', 'grid');
+    var legends = chart.append('g').attr('class', 'legend')
+      .attr('transform','translate(' + (geom.chart_right-geom.chart_left - 3) + ',' + 0 + ')')
+      .attr('role', 'region').attr('aria-label', 'Legend');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_inner').append('rect')
+      .attr('x', 0).attr('y', 0)
+      .attr('width', geom.inner_rawWidth+1).attr('height', geom.inner_rawHeight+1);
+    var tree, expandState = [], collapseState = {};    // collapse state maps node IDs to true/false
+    var scale_x = d3.scaleLinear(), scale_y = d3.scaleLinear();
+    var base_scales = [scale_x, scale_y];                           // untransformed original scales
+    zoom.on('zoom', function(t, time) {
+        t = t || d3.event.transform;
+        zoomNode.__zoom = t;
+        interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));;
+        build(time || -1);
+    });
+
+    // Define element #1 ///////////////////////////////////////////////////////////////////////////
+
+    elements[0] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element1')
+        .attr('role', 'region').attr('aria-label', 'Country as a gridded diagram, also showing Rating, Country'),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup),
+        diagramExtras = elementGroup.append('g').attr('class', 'extras');
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0);
+        processed = post(processed, 0);
+        var f0 = processed.field('Country'),
+          f1 = processed.field('Rating'),
+          f2 = processed.field('#row'),
+          f3 = processed.field('#selection');
+        var keyFunc = function(d) { return f2.value(d) };
+        data = {
+          Country:      function(d) { return f0.value(d.row) },
+          Rating:       function(d) { return f1.value(d.row) },
+          $row:         function(d) { return f2.value(d.row) },
+          $selection:   function(d) { return f3.value(d.row) },
+          Country_f:    function(d) { return f0.valueFormatted(d.row) },
+          Rating_f:     function(d) { return f1.valueFormatted(d.row) },
+          $row_f:       function(d) { return f2.valueFormatted(d.row) },
+          $selection_f: function(d) { return f3.valueFormatted(d.row) },
+          _split:       function(d) { return f1.value(d.row)+ '|' + f0.value(d.row)+ '|' + f1.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+      // Aesthetic Functions
+      var scale_color = d3.scaleLinear().domain([40, 43.333333, 46.666667, 50, 53.333333, 56.666667, 60, 63.333333, 66.666667, 70, 73.333333, 76.666667, 80, 83.333333, 86.666667, 90, 93.333333, 96.666667, 100])
+        .interpolate(d3.interpolateHcl)
+        .range([ '#000000', '#1C1C1C', '#393939', '#555555', '#717171', '#8E8E8E', 
+          '#AAAAAA', '#C6C6C6', '#E3E3E3', '#ffffff', '#FFFFFF', '#FFE3E3', '#FFC6C6', 
+          '#FFAAAA', '#FF8E8E', '#FF7171', '#FF5555', '#FF3939', '#FF1C1C']);
+      var color = function(d) { var c = data.Rating(d.data); return c!=null ? scale_color(c) : null };
+      var scale_symbol = d3.scaleOrdinal()
+        .domain(['Canada', 'England', 'France', 'India', 'Ireland', 'Japan', 'Scotland', 'Taiwan', 'USA'])
+        .range([ '_sym_circle', '_sym_square', '_sym_triangle', '_sym_diamond', 
+          '_sym_cross', '_sym_pentagon', '_sym_star', '_sym_hexagon']);
+      var symbolID = function(d) { var s =data.Country(d.data); return s!=null ? scale_symbol(s) : '_sym_circle' };
+      var scale_size = d3.scaleSqrt().domain([0, 100.00001])
+        .range([ 0.001, 1]);
+      var size = function(d) { var s = data.Rating(d.data); return s!=null ? scale_size(s) : null };
+      legends._legend = legends._legend || { title: ['Rating'], 
+        ticks: [100, 90, 80, 70, 60, 50, 40]};
+      legends._legend.color = scale_color;
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[0];
+        // Define hierarchy and grid data structures
+        var first = (!tree), graph = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, null, 'Rating', 'Country');
+        var targetNode = graph.root;
+        tree = d3.hierarchy(targetNode).sum(function(d) { return d.value })
+          .sort(function(a,b) { return a.data.row - b.data.row});
+        function nodeKey(d) { return d.data.key == null ? data._key(d.data.row) : d.data.key };
+        var gridLabels = BrunelD3.gridLayout(tree, [geom.inner_width, geom.inner_height], 0, 0, 1.0);
+        main.attr('class', 'diagram gridded hierarchy');
+        // Define Coordinate functions
+        function r(d) { return size(d) * 1 * (scale_x(d.r) - scale_x(0)) };
+        function x1(d) { return scale_x(d.x) - r(d) };
+        function x2(d) { return scale_x(d.x) + r(d) };
+        function y1(d) { return scale_y(d.y) - r(d) };
+        function y2(d) { return scale_y(d.y) + r(d) };
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element point filled')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element point') })
+            .attr('xlink:href', function(d) { return '#' + symbolID(d) })
+            .each(function(d) {
+              var a = x1(d), b = x2(d), left = Math.min(a,b), width = Math.max(1e-6, Math.abs(a-b)), 
+              c = y1(d), d = y2(d), top = Math.min(c,d), height = Math.max(1e-6, Math.abs(c-d));
+              this.r = {x:left, y:top, w:width, h:height};
+            })
+            .attr('x', function(d) { return this.r.x })
+            .attr('y', function(d) { return this.r.y })
+            .attr('width', function(d) { return this.r.w })
+            .attr('height', function(d) { return this.r.h })
+            .filter(BrunelD3.hasData)                     // following only performed for data items
+            .style('fill', color)
+            .attr('xlink:href', function(d) { return '#' + symbolID(d) });
+          ;
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(tree.leaves(), nodeKey);
+        var added = selection.enter().append('use');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['Country'],
+          key:          ['#row'],
+          color:        ['Rating'],
+          size:         ['Rating'],
+          symbol:       ['Country']
+        }
+      };
+    }();
+
+    function build(time, noData) {
+      var first = elements[0].data() == null;
+      if (first) time = 0;                                           // no transition for first call
+      if ((first || time > -1) && !noData) {
+        elements[0].makeData();
+        BrunelD3.addLegend(legends, legends._legend);
+      }
+      elements[0].build(time);
+    }
+
+    // Expose the following components of the chart
+    return {
+      elements : elements,
+      interior : interior,
+      zoom: function(params, time) {
+          if (params) zoom.on('zoom').call(zoomNode, params, time);
+          return d3.zoomTransform(zoomNode);
+      },
+      build : build
+    };
+    }();
+
+  function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }
+  function updateAll(time) { charts.forEach(function(x) { if (x.build) x.build(time || 0)}) }
+  function buildAll() {
+    for (var i=0;i<arguments.length;i++) setData(arguments[i], i);
+    updateAll(transitionTime);
+  }
+
+  return {
+    dataPreProcess:     function(f) { if (f) pre = f; return pre },
+    dataPostProcess:    function(f) { if (f) post = f; return post },
+    data:               function(d,i) { if (d) setData(d,i); return datasets[i||0] },
+    visId:              visId,
+    build:              buildAll,
+    rebuild:            updateAll,
+    charts:             charts
+  }
+}
+
+// Data Tables /////////////////////////////////////////////////////////////////////////////////////
+
+var table1 = {
+   summarized: false,
+   names: ['Country', 'Rating'], 
+   options: ['string', 'numeric'], 
+   rows: [['Canada', 40], ['Canada', 43], ['Ireland', 47], ['Canada', 47], ['Canada', 48],
+  ['Ireland', 50], ['Canada', 53], ['Ireland', 54], ['USA', 54], ['Canada', 54], ['Canada', 56],
+  ['Canada', 56], ['USA', 57], ['USA', 57], ['Scotland', 58], ['Canada', 60], ['Canada', 60],
+  ['Canada', 64], ['Ireland', 64], ['Ireland', 65], ['Ireland', 65], ['USA', 67], ['Scotland', 67],
+  ['Canada', 67], ['Canada', 67], ['Canada', 67], ['Canada', 68], ['USA', 68], ['Canada', 69],
+  ['Canada', 69], ['USA', 69], ['USA', 69], ['Scotland', 69], ['Scotland', 70], ['Ireland', 70],
+  ['Canada', 71], ['Ireland', 71], ['Scotland', 72], ['Ireland', 73], ['Ireland', 73],
+  ['Ireland', 74], ['Ireland', 74], ['Canada', 74], ['Scotland', 74], ['Canada', 75], ['USA', 76],
+  ['USA', 76], ['India', 76], ['India', 76], ['USA', 76], ['Scotland', 76], ['Canada', 77],
+  ['Ireland', 77], ['England', 77], ['Scotland', 77], ['USA', 77], ['USA', 78], ['Scotland', 78],
+  ['Scotland', 78], ['Ireland', 78], ['Ireland', 79], ['USA', 79], ['USA', 79], ['Canada', 79],
+  ['Canada', 80], ['Scotland', 80], ['USA', 80], ['USA', 80], ['India', 80], ['USA', 80],
+  ['USA', 81], ['USA', 81], ['Scotland', 81], ['Ireland', 81], ['USA', 81], ['Taiwan', 81],
+  ['Ireland', 81], ['France', 81], ['France', 81], ['Canada', 81], ['USA', 81], ['USA', 81],
+  ['Ireland', 81], ['Ireland', 81], ['USA', 81], ['Ireland', 81], ['Canada', 81], ['USA', 81],
+  ['USA', 82], ['Taiwan', 82], ['Taiwan', 82], ['Scotland', 82], ['USA', 82], ['USA', 82],
+  ['USA', 82], ['Scotland', 82], ['USA', 83], ['Ireland', 83], ['Scotland', 83], ['USA', 83],
+  ['Canada', 83], ['USA', 83], ['Scotland', 83], ['Scotland', 83], ['Ireland', 84], ['Scotland', 84],
+  ['Scotland', 84], ['Ireland', 84], ['Ireland', 84], ['Scotland', 84], ['USA', 85],
+  ['Scotland', 85], ['Scotland', 85], ['India', 85], ['USA', 85], ['Ireland', 85], ['Scotland', 85],
+  ['USA', 85], ['Ireland', 86], ['Ireland', 86], ['Ireland', 86], ['Scotland', 86], ['Japan', 86],
+  ['USA', 86], ['USA', 86], ['Scotland', 86], ['Scotland', 86], ['USA', 87], ['Ireland', 87],
+  ['USA', 87], ['Ireland', 87], ['Scotland', 87], ['USA', 87], ['USA', 87], ['USA', 87], ['USA', 88],
+  ['USA', 88], ['Ireland', 88], ['USA', 88], ['Canada', 88], ['Ireland', 88], ['USA', 88],
+  ['USA', 88], ['Taiwan', 88], ['Taiwan', 88], ['USA', 88], ['USA', 88], ['USA', 88], ['Taiwan', 88],
+  ['USA', 88], ['USA', 88], ['Scotland', 88], ['Scotland', 88], ['Scotland', 88], ['USA', 88],
+  ['USA', 88], ['USA', 88], ['USA', 88], ['Scotland', 88], ['Scotland', 88], ['USA', 88],
+  ['USA', 88], ['USA', 88], ['USA', 88], ['Scotland', 89], ['Scotland', 89], ['Scotland', 89],
+  ['Scotland', 89], ['Scotland', 89], ['USA', 89], ['Scotland', 89], ['Ireland', 90],
+  ['Scotland', 90], ['Scotland', 90], ['Scotland', 90], ['Scotland', 90], ['Scotland', 90],
+  ['Japan', 90], ['USA', 90], ['Scotland', 90], ['Scotland', 90], ['USA', 90], ['Scotland', 90],
+  ['Ireland', 91], ['Ireland', 91], ['Scotland', 91], ['Scotland', 91], ['Ireland', 91],
+  ['India', 91], ['Ireland', 92], ['Scotland', 92], ['Canada', 92], ['Scotland', 92],
+  ['Scotland', 92], ['Scotland', 92], ['USA', 92], ['Scotland', 92], ['Scotland', 92],
+  ['Ireland', 93], ['Scotland', 93], ['USA', 93], ['USA', 93], ['Scotland', 94], ['Scotland', 94],
+  ['Scotland', 94], ['USA', 94], ['USA', 94], ['USA', 94], ['Scotland', 94], ['Scotland', 94],
+  ['Scotland', 94], ['Scotland', 94], ['Scotland', 94], ['Scotland', 94], ['Scotland', 94],
+  ['Scotland', 94], ['USA', 94], ['Scotland', 95], ['Scotland', 95], ['Scotland', 95],
+  ['Scotland', 96], ['USA', 96], ['USA', 96], ['USA', 96], ['USA', 96], ['Scotland', 96],
+  ['Scotland', 96], ['Taiwan', 96], ['USA', 96], ['USA', 96], ['Scotland', 96], ['Scotland', 96],
+  ['Scotland', 96], ['Scotland', 96], ['Scotland', 96], ['Scotland', 96], ['Scotland', 96],
+  ['Scotland', 96], ['Scotland', 96], ['Scotland', 96], ['Scotland', 96], ['Scotland', 96],
+  ['Scotland', 96], ['Scotland', 96], ['USA', 96], ['Ireland', 96], ['Scotland', 96],
+  ['Scotland', 96], ['USA', 96], ['Scotland', 97], ['Ireland', 99], ['Japan', 99], ['Scotland', 99],
+  ['Scotland', 99], ['Scotland', 99], ['Scotland', 99], ['Scotland', 99], ['Scotland', 99],
+  ['Scotland', 99], ['Scotland', 99], ['Scotland', 99], ['Scotland', 99], ['Scotland', 99],
+  ['Scotland', 99], ['USA', 99], ['USA', 99], ['USA', 99], ['Scotland', 99], ['USA', 99],
+  ['USA', 99], ['Ireland', 100], ['Scotland', 100], ['Japan', null], ['Canada', null],
+  ['Canada', null], ['Scotland', null], ['Scotland', null], ['Scotland', null], ['Scotland', null],
+  ['Scotland', null], ['USA', null], ['USA', null], ['Taiwan', null]]
+};
+
+// Call Code to Build the system ///////////////////////////////////////////////////////////////////
+
+var v  = new BrunelVis('visualization');
+v.build(table1);
+
+</script>
+

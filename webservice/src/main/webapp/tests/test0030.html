@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-Equiv="Cache-Control" Content="no-cache">
+	<meta http-Equiv="Pragma" Content="no-cache">
+	<meta http-Equiv="Expires" Content="0">
+	<title>Brunel Output</title>
+	<!--
+		D3 Copyright © 2012, Michael Bostock
+		jQuery Copyright © 2010 by The jQuery Project
+		sumoselect Copyright © 2014 Hemant Negi
+ 	-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min.js" charset="utf-8"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js" charset="utf-8"></script>
+	<script src="https://brunelvis.org/js/brunel.2.6.min.js" charset="utf-8"></script>
+
+	<link rel="stylesheet" type="text/css" href="https://brunelvis.org/js/brunel.2.6.css" charset="utf-8"/>
+
+</head>
+<body style="margin:0">
+<h2 style='font-size:16px;text-align:center;margin:2px;color:green'><span style='font-style:italic;color:#aaaaaa'>0030</span>&nbsp;&nbsp;&nbsp;&nbsp;line x(Date) y(CLOTHING, HOUSING) label(#series)</h2>
+<p style='color:green;margin:2px;margin-bottom:6px;font-size:10px'>Pass: Should split automatically</p>
+<svg id="visualization" width="480" height="330"></svg>
+</body>
+<script>
+function  BrunelVis(visId) {
+  "use strict";                                                                       // strict mode
+  var datasets = [],                                      // array of datasets for the original data
+      pre = function(d, i) { return d },                         // default pre-process does nothing
+      post = function(d, i) { return d },                       // default post-process does nothing
+      transitionTime = 200,                                        // transition time for animations
+      charts = [],                                                       // the charts in the system
+      vis = d3.select('#' + visId).attr('class', 'brunel');                     // the SVG container
+
+  BrunelD3.addDefinitions(vis);                                   // ensure standard symbols present
+
+  // Define chart #1 in the visualization //////////////////////////////////////////////////////////
+
+  charts[0] = function(parentNode, filterRows) {
+    var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0, 1, 1, 5, 32, 37, 32),
+      elements = [];                                              // array of elements in this chart
+
+    // Define groups for the chart parts ///////////////////////////////////////////////////////////
+
+    var chart =  vis.append('g').attr('class', 'chart1')
+      .attr('transform','translate(' + geom.chart_left + ',' + geom.chart_top + ')');
+    var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay');
+    var zoom = d3.zoom().scaleExtent([1/3,3]);
+    var zoomNode = overlay.append('rect').attr('class', 'overlay')
+      .attr('x', geom.inner_left).attr('y', geom.inner_top)
+      .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
+      .style('cursor', 'move').call(zoom)
+      .node();
+    zoomNode.__zoom = d3.zoomIdentity;
+    chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
+    var interior = chart.append('g').attr('class', 'interior zoomNone')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_inner)');
+    interior.append('rect').attr('class', 'inner').attr('width', geom.inner_width).attr('height', geom.inner_height);
+    var gridGroup = interior.append('g').attr('class', 'grid');
+    var axes = chart.append('g').attr('class', 'axis')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_inner').append('rect')
+      .attr('x', 0).attr('y', 0)
+      .attr('width', geom.inner_rawWidth+1).attr('height', geom.inner_rawHeight+1);
+
+    // Scales //////////////////////////////////////////////////////////////////////////////////////
+
+    var scale_x = d3.scaleUtc().domain([new Date('1988-01-01'), new Date('2008-04-01')])
+      .range([0, geom.inner_width]);
+    var scale_inner = d3.scaleLinear().domain([0,1])
+      .range([-0.5, 0.5]);
+    var scale_y = d3.scaleLinear().domain([40, 200.00002])
+      .range([geom.inner_height, 0]);
+    var base_scales = [scale_x, scale_y];                           // untransformed original scales
+
+    // Axes ////////////////////////////////////////////////////////////////////////////////////////
+
+    axes.append('g').attr('class', 'x axis')
+      .attr('transform','translate(0,' + geom.inner_rawHeight + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_haxis)')
+      .attr('role', 'region').attr('aria-label', 'Horizontal Axis');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_haxis').append('polyline')
+      .attr('points', '-1,-1000, -1,-1 -5,5, -1000,5, -100,1000, 10000,1000 10000,-1000');
+    axes.select('g.axis.x').append('text').attr('class', 'title').text('Date').style('text-anchor', 'middle')
+      .attr('x',geom.inner_rawWidth/2)
+      .attr('y', geom.inner_bottom - 2.0).attr('dy','-0.27em');
+    axes.append('g').attr('class', 'y axis')
+      .attr('clip-path', 'url(#clip_visualization_chart1_vaxis)')
+      .attr('role', 'region').attr('aria-label', 'Vertical Axis');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_vaxis').append('polyline')
+      .attr('points', '-1000,-10000, 10000,-10000, 10000,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+5) + ', -1000,' + (geom.inner_rawHeight+5) );
+
+    var axis_bottom = d3.axisBottom(scale_x).ticks(5);
+    var axis_left = d3.axisLeft(scale_y).ticks(Math.min(10, Math.round(geom.inner_rawHeight / 20)));
+
+    function buildAxes(time) {
+      var axis_x = axes.select('g.axis.x');
+      BrunelD3.transition(axis_x, time).call(axis_bottom.scale(scale_x));
+      var axis_y = axes.select('g.axis.y');
+      BrunelD3.transition(axis_y, time).call(axis_left.scale(scale_y));
+    }
+    zoom.on('zoom', function(t, time) {
+        t = t ||BrunelD3.restrictZoom(d3.event.transform, geom, this);
+        scale_x = t.rescaleX(base_scales[0]);
+        scale_y = t.rescaleY(base_scales[1]);
+        zoomNode.__zoom = t;
+        interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));;
+        build(time || -1);
+    });
+
+    // Define element #1 ///////////////////////////////////////////////////////////////////////////
+
+    elements[0] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element1')
+        .attr('role', 'region').attr('aria-label', 'Date, CLOTHING, HOUSING as lines, also showing series'),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .reduce('Date; CLOTHING; HOUSING; #series; #row; #count')
+          .series('CLOTHING,HOUSING;Date')
+          .sortRows('Date:ascending');
+        processed = post(processed, 0);
+        var f0 = processed.field('#series'),
+          f1 = processed.field('#values'),
+          f2 = processed.field('Date'),
+          f3 = processed.field('#row'),
+          f4 = processed.field('#selection');
+        var keyFunc = function(d) { return f0.value(d) };
+        data = {
+          $series:      function(d) { return f0.value(d.row) },
+          $values:      function(d) { return f1.value(d.row) },
+          Date:         function(d) { return f2.value(d.row) },
+          $row:         function(d) { return f3.value(d.row) },
+          $selection:   function(d) { return f4.value(d.row) },
+          $series_f:    function(d) { return f0.valueFormatted(d.row) },
+          $values_f:    function(d) { return f1.valueFormatted(d.row) },
+          Date_f:       function(d) { return f2.valueFormatted(d.row) },
+          $row_f:       function(d) { return f3.valueFormatted(d.row) },
+          $selection_f: function(d) { return f4.valueFormatted(d.row) },
+          _split:       function(d) { return f0.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[0];
+        var w = geom.default_point_size;
+        var x = function(d) { return scale_x(data.Date(d))};
+        var h = geom.default_point_size;
+        var y = function(d) { return scale_y(data.$values(d))};
+        // Define paths
+        var path = d3.line().x(x).y(y);
+        var splits = BrunelD3.makePathSplits(data, path, x);
+        var labeling  = [{
+          index: 0, method: 'path', location: ['center', 'center'], inside: false, align: 'middle', pad: 3, dy: 0.3,
+          fit: false, granularity: 4,
+          path: path,
+          content: function(d) {
+            return d.row == null ? null : data.$series_f(d)
+          }
+        }];
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element line')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data.$series_f(d);
+          })
+            .attr('d', function(d) { return d.path })
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('d', function(d) { return d.path });
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+          BrunelD3.label(selection, labels, transitionMillis, geom, labeling);
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(splits, function(d) { return d.key });
+        var added = selection.enter().append('path');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+        label(merged, transitionMillis);
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['Date'],
+          y:            ['CLOTHING', 'HOUSING'],
+          key:          ['#series']
+        }
+      };
+    }();
+
+    function build(time, noData) {
+      var first = elements[0].data() == null;
+      if (first) time = 0;                                           // no transition for first call
+      buildAxes(time);
+      if ((first || time > -1) && !noData) {
+        elements[0].makeData();
+      }
+      elements[0].build(time);
+    }
+
+    // Expose the following components of the chart
+    return {
+      elements : elements,
+      interior : interior,
+      scales: {x:scale_x, y:scale_y},
+      zoom: function(params, time) {
+          if (params) zoom.on('zoom').call(zoomNode, params, time);
+          return d3.zoomTransform(zoomNode);
+      },
+      build : build
+    };
+    }();
+
+  function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }
+  function updateAll(time) { charts.forEach(function(x) { if (x.build) x.build(time || 0)}) }
+  function buildAll() {
+    for (var i=0;i<arguments.length;i++) setData(arguments[i], i);
+    updateAll(transitionTime);
+  }
+
+  return {
+    dataPreProcess:     function(f) { if (f) pre = f; return pre },
+    dataPostProcess:    function(f) { if (f) post = f; return post },
+    data:               function(d,i) { if (d) setData(d,i); return datasets[i||0] },
+    visId:              visId,
+    build:              buildAll,
+    rebuild:            updateAll,
+    charts:             charts
+  }
+}
+
+// Data Tables /////////////////////////////////////////////////////////////////////////////////////
+
+var table1 = {
+   summarized: false,
+   names: ['Date', 'CLOTHING', 'HOUSING'], 
+   options: ['date-YearMonth', 'numeric', 'numeric'], 
+   rows: [['1988-01-01', 159.3, 49.4], ['1988-02-01', 160.3, 49.4], ['1988-03-01', 161.6, 49.4],
+  ['1988-04-01', 161.9, 50.7], ['1988-05-01', 164.2, 51.1], ['1988-06-01', 164.7, 51.6],
+  ['1988-07-01', 161.9, 52], ['1988-08-01', 162, 52], ['1988-09-01', 164.3, 52.1],
+  ['1988-10-01', 167.6, 52.3], ['1988-11-01', 168.6, 52.4], ['1988-12-01', 169.2, 52.4],
+  ['1989-01-01', 165.6, 52.5], ['1989-02-01', 167.2, 52.6], ['1989-03-01', 167.9, 52.7],
+  ['1989-04-01', 170.8, 54.5], ['1989-05-01', 171.9, 54.7], ['1989-06-01', 172.2, 55.1],
+  ['1989-07-01', 168.9, 55.4], ['1989-08-01', 168.9, 55.5], ['1989-09-01', 172.4, 55.6],
+  ['1989-10-01', 174.5, 55.9], ['1989-11-01', 175.5, 56.1], ['1989-12-01', 175.4, 56.2],
+  ['1990-01-01', 171.6, 56.6], ['1990-02-01', 173.6, 56.5], ['1990-03-01', 174.7, 56.7],
+  ['1990-04-01', 177.4, 59], ['1990-05-01', 178.3, 59.7], ['1990-06-01', 178, 60.2],
+  ['1990-07-01', 173.2, 60.7], ['1990-08-01', 175, 61.3], ['1990-09-01', 179, 61.6],
+  ['1990-10-01', 181.1, 62.3], ['1990-11-01', 182.6, 62.2], ['1990-12-01', 182.5, 62.2],
+  ['1991-01-01', 175.1, 62.7], ['1991-02-01', 175.7, 62.8], ['1991-03-01', 177.6, 62.6],
+  ['1991-04-01', 181.3, 65.6], ['1991-05-01', 182.1, 66.2], ['1991-06-01', 182.5, 66.9],
+  ['1991-07-01', 174.9, 67.2], ['1991-08-01', 177.7, 67.5], ['1991-09-01', 182, 67.6],
+  ['1991-10-01', 184.3, 67.7], ['1991-11-01', 184.9, 67.8], ['1991-12-01', 185.3, 67.8],
+  ['1992-01-01', 175.3, 67.9], ['1992-02-01', 176.4, 68], ['1992-03-01', 178.6, 68],
+  ['1992-04-01', 179.9, 69.9], ['1992-05-01', 179.8, 70], ['1992-06-01', 180.4, 69.9],
+  ['1992-07-01', 172.6, 70.2], ['1992-08-01', 172.3, 70.1], ['1992-09-01', 178.8, 70],
+  ['1992-10-01', 181.4, 70.2], ['1992-11-01', 180.8, 70.2], ['1992-12-01', 179.9, 70.1],
+  ['1993-01-01', 171, 69.6], ['1993-02-01', 172.3, 69.7], ['1993-03-01', 174.7, 69.8],
+  ['1993-04-01', 176.3, 71.5], ['1993-05-01', 177, 71.3], ['1993-06-01', 175.6, 71.3],
+  ['1993-07-01', 169.1, 71.2], ['1993-08-01', 171.2, 71.3], ['1993-09-01', 177.5, 71.4],
+  ['1993-10-01', 178.2, 71.5], ['1993-11-01', 178.6, 71.5], ['1993-12-01', 178.1, 71.5],
+  ['1994-01-01', 168.4, 71.7], ['1994-02-01', 170.8, 71.6], ['1994-03-01', 173, 71.5],
+  ['1994-04-01', 173, 75.2], ['1994-05-01', 173, 75.1], ['1994-06-01', 172.7, 75.1],
+  ['1994-07-01', 165.3, 75.2], ['1994-08-01', 169, 75.3], ['1994-09-01', 173.9, 75.3],
+  ['1994-10-01', 173.6, 75.3], ['1994-11-01', 174.6, 75.3], ['1994-12-01', 174.7, 75.4],
+  ['1995-01-01', 165.8, 75.5], ['1995-02-01', 166.5, 75.6], ['1995-03-01', 168.3, 75.6],
+  ['1995-04-01', 169.4, 77.4], ['1995-05-01', 170.1, 77.4], ['1995-06-01', 169.6, 77.5],
+  ['1995-07-01', 161.7, 77.4], ['1995-08-01', 164, 77.5], ['1995-09-01', 170.4, 77.7],
+  ['1995-10-01', 170.5, 77.8], ['1995-11-01', 171.4, 77.9], ['1995-12-01', 171.6, 77.9],
+  ['1996-01-01', 160.8, 78.3], ['1996-02-01', 161.2, 78.3], ['1996-03-01', 163.1, 78.4],
+  ['1996-04-01', 163.7, 79.7], ['1996-05-01', 164.3, 79.7], ['1996-06-01', 164.2, 79.9],
+  ['1996-07-01', 155.5, 80.1], ['1996-08-01', 157.3, 80.1], ['1996-09-01', 164.9, 80.2],
+  ['1996-10-01', 165, 80.2], ['1996-11-01', 166.9, 80.1], ['1996-12-01', 166.9, 80.2],
+  ['1997-01-01', 156.6, 80.4], ['1997-02-01', 157, 80.4], ['1997-03-01', 159.2, 80.5],
+  ['1997-04-01', 159.8, 81.4], ['1997-05-01', 160.6, 81.4], ['1997-06-01', 159.8, 81.4],
+  ['1997-07-01', 151.6, 81.3], ['1997-08-01', 154.4, 81.4], ['1997-09-01', 160.9, 80.8],
+  ['1997-10-01', 160.8, 80.9], ['1997-11-01', 162.8, 80.9], ['1997-12-01', 162.2, 80.8],
+  ['1998-01-01', 150.3, 80.7], ['1998-02-01', 151.4, 80.8], ['1998-03-01', 153.8, 81],
+  ['1998-04-01', 153.5, 82.2], ['1998-05-01', 155.4, 82.1], ['1998-06-01', 155, 82.1],
+  ['1998-07-01', 145, 82.1], ['1998-08-01', 147.8, 82.2], ['1998-09-01', 155.3, 82.3],
+  ['1998-10-01', 154.1, 82.5], ['1998-11-01', 155.4, 82.6], ['1998-12-01', 154.5, 82.6],
+  ['1999-01-01', 143, 82.7], ['1999-02-01', 144.2, 82.7], ['1999-03-01', 146.4, 82.8],
+  ['1999-04-01', 145.7, 83.7], ['1999-05-01', 146.8, 83.7], ['1999-06-01', 146.6, 83.8],
+  ['1999-07-01', 138.3, 83.9], ['1999-08-01', 140.9, 84.1], ['1999-09-01', 146.9, 84.2],
+  ['1999-10-01', 145.6, 84.3], ['1999-11-01', 146, 84.5], ['1999-12-01', 144.8, 84.7],
+  ['2000-01-01', 133.6, 84.9], ['2000-02-01', 135.6, 84.9], ['2000-03-01', 137.4, 84.9],
+  ['2000-04-01', 137.8, 84.5], ['2000-05-01', 137.7, 84.3], ['2000-06-01', 137, 84.3],
+  ['2000-07-01', 126.2, 84.6], ['2000-08-01', 128.5, 84.7], ['2000-09-01', 133.5, 85.2],
+  ['2000-10-01', 133.7, 85.5], ['2000-11-01', 134.5, 85.5], ['2000-12-01', 133.5, 85.5],
+  ['2001-01-01', 123.9, 85.4], ['2001-02-01', 125.6, 85.5], ['2001-03-01', 127.4, 85.4],
+  ['2001-04-01', 126.1, 87], ['2001-05-01', 126.4, 87.2], ['2001-06-01', 126.3, 87.3],
+  ['2001-07-01', 117.1, 87.1], ['2001-08-01', 120.5, 87.3], ['2001-09-01', 124.3, 87.6],
+  ['2001-10-01', 123.4, 87.4], ['2001-11-01', 124, 87.3], ['2001-12-01', 123.5, 87.4],
+  ['2002-01-01', 116.2, 88], ['2002-02-01', 116.1, 88], ['2002-03-01', 117.3, 88],
+  ['2002-04-01', 116.7, 89], ['2002-05-01', 117.2, 89.2], ['2002-06-01', 116.1, 89.3],
+  ['2002-07-01', 109, 89.3], ['2002-08-01', 110.2, 89.4], ['2002-09-01', 115.7, 89.4],
+  ['2002-10-01', 115.1, 89.5], ['2002-11-01', 116.7, 89.5], ['2002-12-01', 114.4, 89.7],
+  ['2003-01-01', 109.7, 89.8], ['2003-02-01', 111, 89.9], ['2003-03-01', 111.8, 90],
+  ['2003-04-01', 111.7, 90.5], ['2003-05-01', 111.8, 90.5], ['2003-06-01', 110.9, 90.6],
+  ['2003-07-01', 106.6, 90.9], ['2003-08-01', 109, 91], ['2003-09-01', 111.9, 91.2],
+  ['2003-10-01', 111.4, 91.5], ['2003-11-01', 111.8, 91.5], ['2003-12-01', 110.4, 91.7],
+  ['2004-01-01', 107, 91.8], ['2004-02-01', 106.7, 92], ['2004-03-01', 106.7, 92.3],
+  ['2004-04-01', 106.6, 93.6], ['2004-05-01', 106.8, 93.8], ['2004-06-01', 105.7, 94],
+  ['2004-07-01', 101.4, 94.2], ['2004-08-01', 102.7, 94.4], ['2004-09-01', 105.4, 94.6],
+  ['2004-10-01', 105.4, 95.5], ['2004-11-01', 105.9, 96], ['2004-12-01', 104.5, 96.6],
+  ['2005-01-01', 100.7, 97.2], ['2005-02-01', 100.5, 97.4], ['2005-03-01', 101.3, 97.7],
+  ['2005-04-01', 100.9, 99.6], ['2005-05-01', 101, 99.8], ['2005-06-01', 100.6, 100],
+  ['2005-07-01', 96.5, 100.4], ['2005-08-01', 98.2, 100.4], ['2005-09-01', 99.9, 100.7],
+  ['2005-10-01', 99.9, 101.7], ['2005-11-01', 100.5, 102.3], ['2005-12-01', 100.1, 102.8],
+  ['2006-01-01', 96, 103.3], ['2006-02-01', 95.9, 103.6], ['2006-03-01', 96.5, 104.5],
+  ['2006-04-01', 96.5, 107.3], ['2006-05-01', 97.2, 108.8], ['2006-06-01', 96.7, 109.7],
+  ['2006-07-01', 92.2, 110.5], ['2006-08-01', 94.4, 110.9], ['2006-09-01', 96.4, 111.5],
+  ['2006-10-01', 96.6, 112.7], ['2006-11-01', 97.2, 113.7], ['2006-12-01', 96, 114.5],
+  ['2007-01-01', 92, 114.9], ['2007-02-01', 91.9, 115.1], ['2007-03-01', 92.8, 115],
+  ['2007-04-01', 93.7, 115.7], ['2007-05-01', 93.7, 115], ['2007-06-01', 93.6, 114.5],
+  ['2007-07-01', 89.8, 114.3], ['2007-08-01', 91.1, 114], ['2007-09-01', 92.5, 114],
+  ['2007-10-01', 92.5, 114.3], ['2007-11-01', 92.9, 114.6], ['2007-12-01', 92.2, 114.7],
+  ['2008-01-01', 87.5, 115.4], ['2008-02-01', 87.6, 119.1], ['2008-03-01', 87.9, 119.5],
+  ['2008-04-01', 87.8, 122]]
+};
+
+// Call Code to Build the system ///////////////////////////////////////////////////////////////////
+
+var v  = new BrunelVis('visualization');
+v.build(table1);
+
+</script>
+

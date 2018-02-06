@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-Equiv="Cache-Control" Content="no-cache">
+	<meta http-Equiv="Pragma" Content="no-cache">
+	<meta http-Equiv="Expires" Content="0">
+	<title>Brunel Output</title>
+	<!--
+		D3 Copyright © 2012, Michael Bostock
+		jQuery Copyright © 2010 by The jQuery Project
+		sumoselect Copyright © 2014 Hemant Negi
+ 	-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min.js" charset="utf-8"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js" charset="utf-8"></script>
+	<script src="https://brunelvis.org/js/brunel.2.6.min.js" charset="utf-8"></script>
+
+	<link rel="stylesheet" type="text/css" href="https://brunelvis.org/js/brunel.2.6.css" charset="utf-8"/>
+
+</head>
+<body style="margin:0">
+<h2 style='font-size:16px;text-align:center;margin:2px;color:green'><span style='font-style:italic;color:#aaaaaa'>0039</span>&nbsp;&nbsp;&nbsp;&nbsp;x(age) y(salary) color(rbirate) | line x(age) y(rbirate) smooth(rbirate)</h2>
+<p style='color:green;margin:2px;margin-bottom:6px;font-size:10px'>Pass: Legend should be attached to chart on left</p>
+<svg id="visualization" width="480" height="330"></svg>
+</body>
+<script>
+function  BrunelVis(visId) {
+  "use strict";                                                                       // strict mode
+  var datasets = [],                                      // array of datasets for the original data
+      pre = function(d, i) { return d },                         // default pre-process does nothing
+      post = function(d, i) { return d },                       // default post-process does nothing
+      transitionTime = 200,                                        // transition time for animations
+      charts = [],                                                       // the charts in the system
+      vis = d3.select('#' + visId).attr('class', 'brunel');                     // the SVG container
+
+  BrunelD3.addDefinitions(vis);                                   // ensure standard symbols present
+
+  // Define chart #1 in the visualization //////////////////////////////////////////////////////////
+
+  charts[0] = function(parentNode, filterRows) {
+    var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0, 1, 0.5, 5, 47, 37, 64),
+      elements = [];                                              // array of elements in this chart
+
+    // Define groups for the chart parts ///////////////////////////////////////////////////////////
+
+    var chart =  vis.append('g').attr('class', 'chart1')
+      .attr('transform','translate(' + geom.chart_left + ',' + geom.chart_top + ')');
+    var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay');
+    var zoom = d3.zoom().scaleExtent([1/3,3]);
+    var zoomNode = overlay.append('rect').attr('class', 'overlay')
+      .attr('x', geom.inner_left).attr('y', geom.inner_top)
+      .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
+      .style('cursor', 'move').call(zoom)
+      .node();
+    zoomNode.__zoom = d3.zoomIdentity;
+    chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
+    var interior = chart.append('g').attr('class', 'interior zoomNone')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_inner)');
+    interior.append('rect').attr('class', 'inner').attr('width', geom.inner_width).attr('height', geom.inner_height);
+    var gridGroup = interior.append('g').attr('class', 'grid');
+    var axes = chart.append('g').attr('class', 'axis')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')');
+    var legends = chart.append('g').attr('class', 'legend')
+      .attr('transform','translate(' + (geom.chart_right-geom.chart_left - 3) + ',' + 0 + ')')
+      .attr('role', 'region').attr('aria-label', 'Legend');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_inner').append('rect')
+      .attr('x', 0).attr('y', 0)
+      .attr('width', geom.inner_rawWidth+1).attr('height', geom.inner_rawHeight+1);
+
+    // Scales //////////////////////////////////////////////////////////////////////////////////////
+
+    var scale_x = d3.scaleLinear().domain([15, 45.000003])
+      .range([0, geom.inner_width]);
+    var scale_inner = d3.scaleLinear().domain([0,1])
+      .range([-0.5, 0.5]);
+    var scale_y = d3.scaleSqrt().domain([0, 10000001])
+      .range([geom.inner_height, 0]);
+    var base_scales = [scale_x, scale_y];                           // untransformed original scales
+
+    // Axes ////////////////////////////////////////////////////////////////////////////////////////
+
+    axes.append('g').attr('class', 'x axis')
+      .attr('transform','translate(0,' + geom.inner_rawHeight + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_haxis)')
+      .attr('role', 'region').attr('aria-label', 'Horizontal Axis');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_haxis').append('polyline')
+      .attr('points', '-1,-1000, -1,-1 -5,5, -1000,5, -100,1000, 10000,1000 10000,-1000');
+    axes.select('g.axis.x').append('text').attr('class', 'title').text('Age').style('text-anchor', 'middle')
+      .attr('x',geom.inner_rawWidth/2)
+      .attr('y', geom.inner_bottom - 2.0).attr('dy','-0.27em');
+    axes.append('g').attr('class', 'y axis')
+      .attr('clip-path', 'url(#clip_visualization_chart1_vaxis)')
+      .attr('role', 'region').attr('aria-label', 'Vertical Axis');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_vaxis').append('polyline')
+      .attr('points', '-1000,-10000, 10000,-10000, 10000,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+5) + ', -1000,' + (geom.inner_rawHeight+5) );
+    axes.select('g.axis.y').append('text').attr('class', 'title').text('Salary').style('text-anchor', 'middle')
+      .attr('x',-geom.inner_rawHeight/2)
+      .attr('y', 4-geom.inner_left).attr('dy', '0.7em').attr('transform', 'rotate(270)');
+
+    var axis_bottom = d3.axisBottom(scale_x).ticks(2);
+    var axis_left = d3.axisLeft(scale_y).ticks(Math.min(10, Math.round(geom.inner_rawHeight / 20)), 's');
+
+    function buildAxes(time) {
+      var axis_x = axes.select('g.axis.x');
+      BrunelD3.transition(axis_x, time).call(axis_bottom.scale(scale_x));
+      var axis_y = axes.select('g.axis.y');
+      BrunelD3.transition(axis_y, time).call(axis_left.scale(scale_y));
+    }
+    zoom.on('zoom', function(t, time) {
+        t = t ||BrunelD3.restrictZoom(d3.event.transform, geom, this);
+        scale_x = t.rescaleX(base_scales[0]);
+        scale_y = t.rescaleY(base_scales[1]);
+        zoomNode.__zoom = t;
+        interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));;
+        build(time || -1);
+    });
+
+    // Define element #1 ///////////////////////////////////////////////////////////////////////////
+
+    elements[0] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element1')
+        .attr('role', 'region').attr('aria-label', 'Age, Salary as points, also showing RBIRate'),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0);
+        processed = post(processed, 0);
+        var f0 = processed.field('Age'),
+          f1 = processed.field('Salary'),
+          f2 = processed.field('RBIRate'),
+          f3 = processed.field('#row'),
+          f4 = processed.field('#selection');
+        var keyFunc = function(d) { return f3.value(d) };
+        data = {
+          Age:          function(d) { return f0.value(d.row) },
+          Salary:       function(d) { return f1.value(d.row) },
+          RBIRate:      function(d) { return f2.value(d.row) },
+          $row:         function(d) { return f3.value(d.row) },
+          $selection:   function(d) { return f4.value(d.row) },
+          Age_f:        function(d) { return f0.valueFormatted(d.row) },
+          Salary_f:     function(d) { return f1.valueFormatted(d.row) },
+          RBIRate_f:    function(d) { return f2.valueFormatted(d.row) },
+          $row_f:       function(d) { return f3.valueFormatted(d.row) },
+          $selection_f: function(d) { return f4.valueFormatted(d.row) },
+          _split:       function(d) { return f2.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+      // Aesthetic Functions
+      var scale_color = d3.scaleLinear().domain([0, 0.0338472, 0.0676944, 0.1015415, 0.1353887, 0.1692359, 0.203083, 0.2369302, 0.2707774])
+        .interpolate(d3.interpolateHcl)
+        .range([ '#045a8d', '#2b8cbe', '#74a9cf', '#bdc9e1', '#f8efe8', '#fef0d9', 
+          '#fdcc8a', '#fc8d59', '#e34a33']);
+      var color = function(d) { var c = data.RBIRate(d); return c!=null ? scale_color(c) : null };
+      legends._legend = legends._legend || { title: ['RBIRate'], 
+        ticks: [0.3, 0.25, 0.2, 0.15, 0.1, 0.05, 0]};
+      legends._legend.color = scale_color;
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[0];
+        var w = geom.default_point_size;
+        var x = function(d) { return scale_x(data.Age(d))};
+        var h = geom.default_point_size;
+        var y = function(d) { return scale_y(data.Salary(d))};
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element point filled')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+            .attr('cx',function(d) { return scale_x(data.Age(d))})
+            .attr('cy',function(d) { return scale_y(data.Salary(d))})
+            .attr('r',0)
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('cx',function(d) { return scale_x(data.Age(d))})
+            .attr('cy',function(d) { return scale_y(data.Salary(d))})
+            .attr('r',geom.default_point_size / 2)
+            .filter(BrunelD3.hasData)                     // following only performed for data items
+            .style('fill', color);
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
+        var added = selection.enter().append('circle');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['Age'],
+          y:            ['Salary'],
+          key:          ['#row'],
+          color:        ['RBIRate']
+        }
+      };
+    }();
+
+    function build(time, noData) {
+      var first = elements[0].data() == null;
+      if (first) time = 0;                                           // no transition for first call
+      buildAxes(time);
+      if ((first || time > -1) && !noData) {
+        elements[0].makeData();
+        BrunelD3.addLegend(legends, legends._legend);
+      }
+      elements[0].build(time);
+    }
+
+    // Expose the following components of the chart
+    return {
+      elements : elements,
+      interior : interior,
+      scales: {x:scale_x, y:scale_y},
+      zoom: function(params, time) {
+          if (params) zoom.on('zoom').call(zoomNode, params, time);
+          return d3.zoomTransform(zoomNode);
+      },
+      build : build
+    };
+    }();
+
+  // Define chart #2 in the visualization //////////////////////////////////////////////////////////
+
+  charts[1] = function(parentNode, filterRows) {
+    var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0.5, 1, 1, 5, 54, 37, 15),
+      elements = [];                                              // array of elements in this chart
+
+    // Define groups for the chart parts ///////////////////////////////////////////////////////////
+
+    var chart =  vis.append('g').attr('class', 'chart2')
+      .attr('transform','translate(' + geom.chart_left + ',' + geom.chart_top + ')');
+    var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay');
+    var zoom = d3.zoom().scaleExtent([1/3,3]);
+    var zoomNode = overlay.append('rect').attr('class', 'overlay')
+      .attr('x', geom.inner_left).attr('y', geom.inner_top)
+      .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
+      .style('cursor', 'move').call(zoom)
+      .node();
+    zoomNode.__zoom = d3.zoomIdentity;
+    chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
+    var interior = chart.append('g').attr('class', 'interior zoomNone')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart2_inner)');
+    interior.append('rect').attr('class', 'inner').attr('width', geom.inner_width).attr('height', geom.inner_height);
+    var gridGroup = interior.append('g').attr('class', 'grid');
+    var axes = chart.append('g').attr('class', 'axis')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart2_inner').append('rect')
+      .attr('x', 0).attr('y', 0)
+      .attr('width', geom.inner_rawWidth+1).attr('height', geom.inner_rawHeight+1);
+
+    // Scales //////////////////////////////////////////////////////////////////////////////////////
+
+    var scale_x = d3.scaleLinear().domain([17.333333, 42.66667])
+      .range([0, geom.inner_width]);
+    var scale_inner = d3.scaleLinear().domain([0,1])
+      .range([-0.5, 0.5]);
+    var scale_y = d3.scaleLinear().domain([0.08, 0.14])
+      .range([geom.inner_height, 0]);
+    var base_scales = [scale_x, scale_y];                           // untransformed original scales
+
+    // Axes ////////////////////////////////////////////////////////////////////////////////////////
+
+    axes.append('g').attr('class', 'x axis')
+      .attr('transform','translate(0,' + geom.inner_rawHeight + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart2_haxis)')
+      .attr('role', 'region').attr('aria-label', 'Horizontal Axis');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart2_haxis').append('polyline')
+      .attr('points', '-1,-1000, -1,-1 -5,5, -1000,5, -100,1000, 10000,1000 10000,-1000');
+    axes.select('g.axis.x').append('text').attr('class', 'title').text('Age').style('text-anchor', 'middle')
+      .attr('x',geom.inner_rawWidth/2)
+      .attr('y', geom.inner_bottom - 2.0).attr('dy','-0.27em');
+    axes.append('g').attr('class', 'y axis')
+      .attr('clip-path', 'url(#clip_visualization_chart2_vaxis)')
+      .attr('role', 'region').attr('aria-label', 'Vertical Axis');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart2_vaxis').append('polyline')
+      .attr('points', '-1000,-10000, 10000,-10000, 10000,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+5) + ', -1000,' + (geom.inner_rawHeight+5) );
+    axes.select('g.axis.y').append('text').attr('class', 'title').text('Smooth(RBIRate)').style('text-anchor', 'middle')
+      .attr('x',-geom.inner_rawHeight/2)
+      .attr('y', 4-geom.inner_left).attr('dy', '0.7em').attr('transform', 'rotate(270)');
+
+    var axis_bottom = d3.axisBottom(scale_x).ticks(4);
+    var axis_left = d3.axisLeft(scale_y).ticks(Math.min(10, Math.round(geom.inner_rawHeight / 20)));
+
+    function buildAxes(time) {
+      var axis_x = axes.select('g.axis.x');
+      BrunelD3.transition(axis_x, time).call(axis_bottom.scale(scale_x));
+      var axis_y = axes.select('g.axis.y');
+      BrunelD3.transition(axis_y, time).call(axis_left.scale(scale_y));
+    }
+    zoom.on('zoom', function(t, time) {
+        t = t ||BrunelD3.restrictZoom(d3.event.transform, geom, this);
+        scale_x = t.rescaleX(base_scales[0]);
+        scale_y = t.rescaleY(base_scales[1]);
+        zoomNode.__zoom = t;
+        interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));;
+        build(time || -1);
+    });
+
+    // Define element #1 ///////////////////////////////////////////////////////////////////////////
+
+    elements[0] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element1')
+        .attr('role', 'region').attr('aria-label', 'Age, RBIRate as lines'),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .summarize('RBIRate=RBIRate:smooth; Age=Age:base')
+          .sortRows('Age:ascending');
+        processed = post(processed, 0);
+        var f0 = processed.field('Age'),
+          f1 = processed.field('RBIRate'),
+          f2 = processed.field('#row'),
+          f3 = processed.field('#selection');
+        var keyFunc = function(d) { return 'ALL' };
+        data = {
+          Age:          function(d) { return f0.value(d.row) },
+          RBIRate:      function(d) { return f1.value(d.row) },
+          $row:         function(d) { return f2.value(d.row) },
+          $selection:   function(d) { return f3.value(d.row) },
+          Age_f:        function(d) { return f0.valueFormatted(d.row) },
+          RBIRate_f:    function(d) { return f1.valueFormatted(d.row) },
+          $row_f:       function(d) { return f2.valueFormatted(d.row) },
+          $selection_f: function(d) { return f3.valueFormatted(d.row) },
+          _split:       function(d) { return 'ALL' },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[0];
+        var w = geom.default_point_size;
+        var x = function(d) { return scale_x(data.Age(d))};
+        var h = geom.default_point_size;
+        var y = function(d) { return scale_y(data.RBIRate(d))};
+        // Define paths
+        var path = d3.line().x(x).y(y);
+        var splits = BrunelD3.makePathSplits(data, path, x);
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element line')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+            .attr('d', function(d) { return d.path })
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('d', function(d) { return d.path });
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(splits, function(d) { return d.key });
+        var added = selection.enter().append('path');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[1] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['Age'],
+          y:            ['RBIRate']
+        }
+      };
+    }();
+
+    function build(time, noData) {
+      var first = elements[0].data() == null;
+      if (first) time = 0;                                           // no transition for first call
+      buildAxes(time);
+      if ((first || time > -1) && !noData) {
+        elements[0].makeData();
+      }
+      elements[0].build(time);
+    }
+
+    // Expose the following components of the chart
+    return {
+      elements : elements,
+      interior : interior,
+      scales: {x:scale_x, y:scale_y},
+      zoom: function(params, time) {
+          if (params) zoom.on('zoom').call(zoomNode, params, time);
+          return d3.zoomTransform(zoomNode);
+      },
+      build : build
+    };
+    }();
+
+  function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }
+  function updateAll(time) { charts.forEach(function(x) { if (x.build) x.build(time || 0)}) }
+  function buildAll() {
+    for (var i=0;i<arguments.length;i++) setData(arguments[i], i);
+    updateAll(transitionTime);
+  }
+
+  return {
+    dataPreProcess:     function(f) { if (f) pre = f; return pre },
+    dataPostProcess:    function(f) { if (f) post = f; return post },
+    data:               function(d,i) { if (d) setData(d,i); return datasets[i||0] },
+    visId:              visId,
+    build:              buildAll,
+    rebuild:            updateAll,
+    charts:             charts
+  }
+}
+
+// Data Tables /////////////////////////////////////////////////////////////////////////////////////
+
+var table1 = {
+   summarized: false,
+   names: ['Age', 'Salary', 'RBIRate'], 
+   options: ['numeric', 'numeric', 'numeric'], 
+   rows: [[26.25, 4334958.2, 0.1829268], [24, 286500, 0.0232558], [29.25, 281937.5, 0.1428571],
+  [27.916667, 3172900, 0.1483622], [25.166667, 220000, 0.1034482], [32.166667, 4787738.4, 0.138301],
+  [34.5, 1816666.7, 0.0958904], [34.583333, 4136107.1, 0.1763727], [30.25, 3610192.3, 0],
+  [28.5, 2643000, 0.1696832], [26.083333, 416000, 0.1106719], [22.333333, 993000, 0],
+  [29.75, 2105950, 0.1116108], [31.333333, 2117875, 0.076923], [32.416667, 6981923.1, 0.1555944],
+  [28.5, 498571.43, 0.0724637], [19.75, 310000, 0.1428571], [25.75, 305750, 0.1620111],
+  [24.833333, 1008416.7, 0.1425438], [28, 2119562.5, 0.1815181], [28.416667, 1045454.5, 0.1205936],
+  [20.833333, 300000, 0.0308333], [22.75, 305000, 0.1995133], [20.416667, 1796875, 0.0454545],
+  [28.75, 1427900, 0.1444652], [26.666667, 332250, 0.1567877], [25.333333, 664166.67, 0.1168614],
+  [21.333333, 2020000, 0.2023411], [23.333333, 3245833.3, 0.1754442],
+  [28.333333, 320785.71, 0.0913242], [26.916667, 2850000, 0.091093], [30.75, 462500, 0.1493506],
+  [23.916667, 248500, 0.0238095], [24.166667, 2201000, 0.1948529], [22.083333, 337250, 0.0839843],
+  [24.416667, 681250, 0], [23.916667, 340000, 0.1422594], [36, 4375968.8, 0.099526],
+  [27.666667, 341200, 0.1499148], [20.916667, 350833.33, 0.176282],
+  [29.666667, 699285.71, 0.1174603], [23.916667, 312500, 0.0957446],
+  [27.333333, 664166.67, 0.1032448], [24.25, 250000, 0.0666666], [36.583333, 6914730.6, 0.2707774],
+  [31.333333, 3318333.3, 0.1399662], [37.416667, 722961.54, 0.1066936],
+  [22.333333, 618075, 0.1298449], [31.75, 406642.86, 0.0957446], [26, 288333.33, 0.170886],
+  [24.75, 313550, 0.1961722], [22.25, 257250, 0.1230769], [22.25, 307500, 0.1538461],
+  [27.583333, 351250, 0.1], [23.083333, 1003583.3, 0.0344827], [31.333333, 3259848.5, 0.2037037],
+  [24.833333, 2327500, 0.1875], [20.75, 280666.67, 0.0898661], [23.666667, 327500, 0.0953757],
+  [31, 1519666.7, 0.1333333], [24.166667, 314000, 0.1282952], [29, 428200, 0.1309192],
+  [17.333333, 242787, 0.1857379], [26.916667, 1814357.1, 0.107726], [26.416667, 512500, 0.1166666],
+  [24.75, 306250, 0.1190476], [27.083333, 2296733.4, 0.1541582], [22.666667, 305000, 0.0666666],
+  [25.333333, 1023749.9, 0.016129], [26.166667, 305000, 0.0733944], [26.583333, 2885000, 0.17338],
+  [24, 302000, 0.116022], [30.166667, 354142.86, 0.1235955], [19.25, 300000, 0.1018276],
+  [25.75, 1791074.1, 0.0833333], [33.583333, 2979730.8, 0.2246998], [28.5, 411000, 0.0869565],
+  [24.25, 266000, 0.0833333], [26.333333, 1219642.9, 0.1044176], [26.666667, 1892550, 0.115],
+  [22.166667, 300000, 0.067729], [24, 2031833.3, 0.1621052], [27.25, 241333.33, 0.1419753],
+  [21.25, 307500, 0.1195614], [23, 335000, 0.0868794], [31.75, 3070954.5, 0.0933333],
+  [27.333333, 307166.67, 0.1303116], [28.5, 2221125, 0.1936758], [30.083333, 2228000, 0.0940766],
+  [26.666667, 2366833.3, 0.0363636], [38.666667, 5150050, 0.0972222], [34.5, 2159583.3, 0.159309],
+  [25.083333, 252500, 0.0727272], [21.166667, 300000, 0.0294117], [25.833333, 705000, 0.1160493],
+  [29.833333, 1471954.6, 0.090909], [21.166667, 303000, 0.1212121],
+  [30.666667, 1296666.8, 0.0486257], [19.666667, 310000, 0.0878594], [22.333333, 327500, 0.1408163],
+  [21.416667, 309000, 0.0253164], [21.916667, 319400, 0.1446028], [20.083333, 300500, 0.1174311],
+  [24.666667, 301400, 0.1320754], [28.916667, 1132142.9, 0.138539], [27.083333, 265625, 0.1904761],
+  [26.333333, 1571250, 0.1431192], [21.25, 305000, 0.1327433], [27.916667, 3693900, 0.1513687],
+  [28.166667, 697500, 0.1066666], [28, 260833.33, 0.1192982], [23.25, 637000, 0.080303],
+  [25.75, 336666.67, 0], [22.833333, 300000, 0.0857142], [22.5, 308250, 0.0344827],
+  [28.5, 8629900, 0.2161572], [28.583333, 222666.67, 0.1], [27.833333, 500000, 0.18429],
+  [25.166667, 429166.67, 0.1003236], [29.083333, 1598166.7, 0], [29, 1057750, 0.0791366],
+  [31.416667, 472142.86, 0.090909], [24.25, 225000, 0], [25.916667, 2881948, 0.1795366],
+  [21.916667, 365000, 0.1795774], [29.916667, 3850400, 0.1380042], [25.666667, 252500, 0.0487804],
+  [26.083333, 4152666.8, 0.1503759], [31.916667, 2042500, 0.1928251], [23.916667, 697500, 0.125],
+  [25.083333, 763750, 0.0618374], [30.5, 3800194.3, 0.2228915], [24.25, 1956142.9, 0.125733],
+  [25.666667, 293333.33, 0.1605839], [26.5, 3590625, 0.1393939], [22.75, 253850, 0.0789473],
+  [27.166667, 1885550, 0.0277777], [24.5, 312500, 0.1645021], [23.166667, 368375, 0.0807291],
+  [29.5, 3121694.3, 0.1232999], [37.083333, 2106269.3, 0.047619], [25.333333, 399500, 0.166998],
+  [26.25, 600833.33, 0.0607476], [22.083333, 320000, 0.1039861], [35.25, 3384459, 0.1620844],
+  [33.833333, 1267909.2, 0.1259842], [29, 2783625, 0.1590909], [25, 289000, 0.0566037],
+  [30.416667, 1088750, 0.0596026], [22.083333, 294833.33, 0], [42.666667, 1394231.8, 0.178125],
+  [24.25, 260000, 0.0554455], [23.833333, 1372000, 0.1047957], [27.75, 237833.33, 0.0869565],
+  [25.833333, 494416.67, 0.1406249], [27.583333, 5020444.4, 0.1279137],
+  [22.083333, 301000, 0.1166666], [23.75, 325600, 0.1060291], [29.083333, 4434471.2, 0.1515151],
+  [23.25, 851875, 0.1358381], [29.083333, 3669033.5, 0.1543513], [22.416667, 318833.33, 0.126649],
+  [25.666667, 265000, 0.125], [24.416667, 342166.5, 0.1554404], [30.666667, 1442500, 0.0864197],
+  [24.666667, 3293214.3, 0.2028985], [34.25, 5132224.7, 0.1481481], [24.333333, 302000, 0.1880341],
+  [29.5, 1065750, 0.1085043], [27.333333, 2524488.6, 0.1042503], [23.166667, 1023000, 0.1408199],
+  [31.833333, 6174107.1, 0.1338582], [33.75, 2534285.6, 0.126649], [21.5, 300000, 0.1242236],
+  [32.583333, 1407666.7, 0.0285714], [24.416667, 301000, 0.1156069], [28.5, 450312.5, 0.0935251],
+  [21.833333, 300500, 0.1342975], [28.916667, 6089069.6, 0.1457627],
+  [29.416667, 331166.67, 0.1794871], [24.416667, 2024571.4, 0.2494658], [31.916667, 6728728.4, 0.2],
+  [33.333333, 3279766.7, 0.1601423], [30.5, 2271400, 0.0894941], [24.166667, 5178750, 0.2058823],
+  [28.833333, 320000, 0.0962962], [25.75, 1181666.7, 0.1858237], [24.416667, 690000, 0.1840707],
+  [30.416667, 1697833.4, 0.0771825], [22.25, 1405000, 0.0798611], [23.5, 309250, 0.226141],
+  [24.416667, 788000, 0.0836236], [22, 310000, 0.1358974], [25.833333, 276666.67, 0.1485148],
+  [31.916667, 747285.71, 0.114035], [29.25, 2624916.6, 0.0631578], [23.416667, 315000, 0.0923076],
+  [28.75, 5203878.6, 0.109375], [22.416667, 360000, 0], [22.5, 318500, 0.0660146],
+  [22.25, 308750, 0.120614], [32, 929375, 0.1490909], [24.416667, 680625, 0.1021897],
+  [27.666667, 4317500, 0.1755027], [29, 2373499.9, 0.0333333], [31.583333, 1380454.5, 0.1374407],
+  [25.166667, 2775000, 0.1234567], [24.416667, 996416.67, 0.1640625], [22.25, 300000, 0.0724637],
+  [25.583333, 3863750, 0.1556237], [30.666667, 4320400, 0.1428571], [22.333333, 315000, 0.1158798],
+  [25.583333, 733500, 0.1423487], [23.666667, 566666.67, 0.1210526],
+  [30.333333, 468272.73, 0.0425531], [27.333333, 1179500, 0.1486486], [24, 317500, 0.1186094],
+  [25, 1495833.5, 0.1733333], [25.583333, 2384166.7, 0.1557692], [28.5, 1218809.6, 0.1288981],
+  [20, 302500, 0.1093439], [23.416667, 285000, 0.1568627], [27.75, 2150000, 0.1090909],
+  [20.166667, 302833.33, 0.0925373], [26.583333, 3133000, 0.1507293],
+  [22.583333, 290333.33, 0.084507], [26.5, 8647777.8, 0.1213063], [24, 520000, 0.1190053],
+  [29.583333, 3475681.8, 0.1540983], [22.75, 508687.5, 0.1314741], [37.75, 6980468.8, 0.075],
+  [25, 318000, 0.113594], [23.333333, 5245166.7, 0.1596491], [28.333333, 5374194.3, 0.2033898],
+  [25.333333, 1352083.3, 0.1441441], [33.25, 3895948.8, 0.1084905],
+  [25.666667, 1159166.7, 0.1137931], [33.916667, 3837230.8, 0.1067961], [22.25, 315000, 0.0802469],
+  [20.416667, 375000, 0.1474654], [26.5, 3695365.2, 0.0888501], [24.083333, 971250, 0.1025641],
+  [21.416667, 281666.67, 0.0833333], [32.25, 3898961.5, 0.1981481], [24.666667, 336250, 0.1302521],
+  [28.5, 244500, 0.1111111], [23.75, 303000, 0.1785714], [29.5, 3368791.7, 0.1641791],
+  [24.25, 3005714.3, 0.2078152], [27.5, 1799166.7, 0.1682464], [26, 2271428.6, 0.1039603],
+  [21.916667, 300000, 0.1088435], [31.916667, 241100, 0.1452991], [25.666667, 396000, 0.208633],
+  [25, 307500, 0.1397058], [33.5, 3413928.6, 0.11], [36.333333, 4129868.4, 0.1271676],
+  [21.916667, 300000, 0.1388888], [24.416667, 313000, 0.118644], [26.25, 918000, 0.1410256],
+  [24.416667, 595000, 0.032258], [29.916667, 2743900, 0.1184433], [26, 284166.67, 0.1477272],
+  [27.916667, 612391.67, 0.1434268], [24.5, 2379166.7, 0.1675126], [25.75, 2021952.4, 0.1619834],
+  [35.833333, 3818756.2, 0], [25, 305000, 0.1212121], [28.25, 1867500, 0.1238095],
+  [28.083333, 3387090.8, 0.1281512], [28.75, 2397271.6, 0.0416666],
+  [28.333333, 1536000.2, 0.1535338], [33.416667, 3404285.7, 0.0652173],
+  [24.166667, 1666437.5, 0.0972222], [20.416667, 277500, 0.1174242],
+  [30.916667, 3734208.3, 0.1485319], [30.75, 433222.22, 0.090909], [29.666667, 1690550, 0.1225806],
+  [26.166667, 2242666.7, 0.1421404], [22.583333, 304700, 0.08], [25.916667, 973750, 0.1290877],
+  [20.166667, 300000, 0.1271676], [30.833333, 728666.67, 0.1666666], [19.083333, 300000, 0.0714285],
+  [27.5, 217500, 0.0410958], [28.083333, 547500, 0.113402], [24.5, 294666.67, 0.1527494],
+  [34.333333, 6814411.8, 0.0724637], [22.666667, 332000, 0.125], [27.916667, 906785.71, 0.16],
+  [28.833333, 533000, 0.1153846], [34, 3776538.5, 0.1659388], [23, 304500, 0.2076923],
+  [22.166667, 267500, 0.143695], [30.75, 1216272.7, 0.1298701], [22.833333, 477000, 0.0848484],
+  [26.5, 6500000, 0.1849315], [25.833333, 5033333, 0.0956521], [26.666667, 454166.67, 0.1285714],
+  [17.333333, 300000, 0.1588785], [32.333333, 1070769.2, 0.0792331],
+  [31.916667, 407857.14, 0.1125827], [30.25, 932111.11, 0.0416666], [26.75, 264450, 0.0752688],
+  [28.833333, 460500, 0.115942], [26.083333, 300000, 0.081081], [36.833333, 1373211.9, 0.084],
+  [29.916667, 243000, 0.1195652], [28.25, 357500, 0.1448598], [22.083333, 336250, 0.1621004],
+  [29.083333, 291100, 0.0681176], [29.333333, 356000, 0.1473684], [24.416667, 320000, 0.1337792],
+  [26.5, 1050000, 0.090743], [25, 300000, 0.0900383], [29.75, 1076428.6, 0.1456692],
+  [24.25, 317000, 0.076923], [31.833333, 1308437.5, 0.1460957], [24.75, 1129000, 0.1111111],
+  [27, 4103571.4, 0.0217391], [25.666667, 3120714.3, 0.076923], [26.083333, 201500, 0.1034482],
+  [30.833333, 443928.57, 0.2], [19.166667, 305000, 0], [25.166667, 295000, 0.0851735],
+  [24.5, 285833.33, 0.1064638], [26.583333, 760000, 0.1602373], [25.5, 265000, 0.1231527],
+  [29.25, 5455833.3, 0.0854129], [23.166667, 335000, 0.1610738], [28.166667, 977666.6, 0.1890909],
+  [34, 298000, 0.0595238], [26.666667, 3718750, 0.0967741], [29.25, 1588750, 0.1428571],
+  [25.5, 241666.67, 0.0344827], [23.833333, 1593750, 0.1526479], [20.666667, 331250, 0.0196078],
+  [22.916667, 750000, 0.1168831], [29.083333, 1948200, 0.1919561], [27.75, 203000, 0.1447721],
+  [20.833333, 300000, 0.1239892], [26.333333, 2010000, 0.1543624], [32.666667, 3340900, 0.0384615],
+  [28.583333, 381250, 0.0232558], [24.25, 355833.33, 0.0714285], [23.166667, 300000, 0.1046733],
+  [25, 314000, 0.1282051], [24.25, 785625, 0], [27, 226250, 0.118644],
+  [25.083333, 305000, 0.1666666], [32.666667, 4549577.8, 0.1214138],
+  [30.833333, 2364833.3, 0.0526315], [22.583333, 310000, 0.1359485], [26.083333, 4288125, 0.1831683],
+  [29.916667, 2658937.5, 0.0819672], [25.916667, 1239583.3, 0.2388316], [26.5, 2212857.1, 0.0169491],
+  [32.833333, 419611.11, 0], [23.666667, 1350000, 0.084507], [23.083333, 313000, 0.150259],
+  [23.75, 875000, 0.0857142], [31.083333, 474750, 0.0902255], [36.75, 4794222, 0.16],
+  [21.666667, 357500, 0.1141045], [22.083333, 310000, 0.030303], [25.416667, 272500, 0.1428571],
+  [24.083333, 1223214.3, 0.0882352], [28.916667, 843500, 0.1200873], [19.416667, 327500, 0.0508474],
+  [27.666667, 310000, 0.0826446], [22.416667, 280666.67, 0.1704781], [18.083333, 566500, 0.1964285],
+  [22.416667, 1287500, 0.0212765], [32.416667, 417300, 0.0764705], [27.5, 1664611.1, 0.1001111],
+  [23.5, 1610833.3, 0.032258], [19.666667, 313000, 0], [25.333333, 455833.33, 0.1365187],
+  [28, 355571.43, 0.1193181], [31.75, 630333.33, 0.1268656], [28.5, 5115400, 0.0869565],
+  [22.416667, 331000, 0.1522301], [24.75, 309000, 0.0939226], [32.75, 7862881.1, 0.1186813],
+  [23.666667, 1053750, 0.0722713], [25, 1081250, 0.1634819], [24.25, 350000, 0.0609375],
+  [25.833333, 1547500, 0.1093439], [29.666667, 3757312.5, 0.1804008], [33.166667, 437954.55, 0.125],
+  [33, 172750, 0.075], [20.75, 2300000, 0], [20.083333, 2175000, 0.2077702],
+  [23.916667, 269166.67, 0.1318681], [22.5, 1697500, 0.1882998], [28.416667, 7169393.9, 0.2288732],
+  [32, 1678400, 0.1154639], [26.416667, 311250, 0.25], [24.166667, 303000, 0.1617647],
+  [22.166667, 347500, 0], [23.25, 321000, 0.0934065], [29.416667, 496428.57, 0.101626],
+  [27.5, 1380000, 0.1188524], [27.75, 617857.14, 0.0894736], [25.666667, 3608062.5, 0.1228668],
+  [17.5, 307500, 0.0636363], [22.166667, 300000, 0.0163934], [21.666667, 570000, 0.1011904],
+  [22.333333, 312000, 0.1253196], [23.833333, 345000, 0.0826833], [28.416667, 400900, 0.1264596],
+  [27.833333, 340000, 0.0543478], [25.583333, 9093363.6, 0.1763727],
+  [29.916667, 5654615.4, 0.1631878], [25.333333, 3901000, 0.248], [22.916667, 857500, 0.1111111],
+  [23.75, 375000, 0.076923], [23.25, 310000, 0.090909], [23.666667, 295000, 0.1416837],
+  [31, 2599027.8, 0.0327868], [26.916667, 1844000, 0.076923], [30.833333, 397500, 0.1981981],
+  [24.666667, 309000, 0.0783132], [33.833333, 1072291.7, 0.091228], [34, 2146846.2, 0.1502242],
+  [35.25, 1730287.1, 0.1314285], [21.666667, 307000, 0.051282], [27.083333, 2714300, 0.0454545],
+  [24.916667, 290666.67, 0.1123853], [25.833333, 301500, 0.0945054], [23.416667, 300000, 0.03125],
+  [27, 2677285.7, 0.2555555], [22.583333, 835750, 0.0149253], [32.916667, 6625625.1, 0.2111692],
+  [35.833333, 2794333.3, 0.2117263], [25.416667, 691875, 0.04], [23.25, 300000, 0.1557788],
+  [23.583333, 200000, 0.1225806], [32.166667, 2798750, 0.1734104], [22.083333, 1865000, 0.149671],
+  [32.916667, 6660500, 0.167364], [35.583333, 1312062.5, 0.032258],
+  [28.166667, 423792.86, 0.1405405], [28.75, 1429083.4, 0.1117166], [25.083333, 803625, 0.122807],
+  [32.166667, 1040454.5, 0.1503416], [26.166667, 2449562.4, 0.1243386],
+  [30.166667, 570650, 0.118644], [27.083333, 574333.33, 0.0987654], [25.083333, 1125000, 0],
+  [36.666667, 1875007.7, 0.1457725], [27.833333, 5132333.5, 0.0852272],
+  [31.833333, 298000, 0.2259887], [27.583333, 3814300, 0.1922141], [31.583333, 1200000, 0.1396648],
+  [20.333333, 1687500, 0.2055045], [24.416667, 2077125, 0.229709], [30.666667, 4723452.4, 0.2066929],
+  [27.833333, 738750, 0.060606], [27.333333, 1068571.4, 0], [22.583333, 282000, 0.1337209],
+  [30.833333, 2271541.7, 0.0847457], [29.5, 1248900, 0.1336206], [22.666667, 255000, 0],
+  [21.583333, 290666.67, 0.1474103], [23, 300000, 0.2134831], [27.666667, 2062045.5, 0.0714285],
+  [23.333333, 302500, 0.1259259], [25.75, 295625, 0.0990099], [31.833333, 2398710.3, 0.1555555],
+  [30, 835111.11, 0.0588235], [22.5, 307500, 0], [28.333333, 2526071.4, 0.1576673],
+  [24.666667, 287500, 0.1130434], [33.583333, 4475666.7, 0.1842105],
+  [26.666667, 2492187.5, 0.145631], [31.333333, 1979499.9, 0.0608695], [32.25, 1687928.6, 0.0921787],
+  [33.333333, 2581593.8, 0.1040564], [23.583333, 262000, 0.0967741], [35, 6978340.3, 0.1825925],
+  [27.416667, 1037111.1, 0.1344086], [25.5, 490000, 0.1945392], [24.666667, 2675000, 0.0285714],
+  [21.416667, 335000, 0.0625], [37.416667, 2789333.4, 0.0526315], [23.333333, 1072500, 0],
+  [23, 452750, 0.125], [21.416667, 301500, 0.1620689], [28.166667, 2241750, 0.1495535],
+  [23.833333, 309250, 0.1332417], [23.5, 298666.67, 0.1171328], [32.75, 6374489.9, 0.1247771],
+  [18.083333, 293963, 0.0405405], [34.666667, 981786.58, 0.0852713], [20, 308000, 0],
+  [34.666667, 3059291.6, 0.0327868], [24.916667, 568666.67, 0.1461675], [31.25, 2333250, 0.1034482],
+  [27.583333, 482357.14, 0.1291666], [24, 654250, 0.0904907], [27.25, 859857.14, 0.0333333],
+  [26.583333, 3414666.7, 0.1435643], [27.25, 363125, 0.1337579], [26.5, 1400833.3, 0.1293929],
+  [22.166667, 262500, 0.1049382], [24.666667, 1334166.7, 0.1777777], [31.75, 2425000, 0.068716],
+  [23.5, 3053571.4, 0.0666666], [24.5, 402166.67, 0.112676], [28.583333, 340750, 0.0377358],
+  [27, 1216928.6, 0], [26, 1333125, 0.0701754], [23.666667, 300000, 0],
+  [27.833333, 2922666.7, 0.1542416], [33.416667, 2325208.3, 0.0784883],
+  [24.833333, 371666.67, 0.1434782], [19.5, 395000, 0.0714285], [29.333333, 578777.78, 0.1065088],
+  [35.75, 2547999.9, 0.1005747]]
+};
+
+// Call Code to Build the system ///////////////////////////////////////////////////////////////////
+
+var v  = new BrunelVis('visualization');
+v.build(table1);
+
+</script>
+

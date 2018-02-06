@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-Equiv="Cache-Control" Content="no-cache">
+	<meta http-Equiv="Pragma" Content="no-cache">
+	<meta http-Equiv="Expires" Content="0">
+	<title>Brunel Output</title>
+	<!--
+		D3 Copyright © 2012, Michael Bostock
+		jQuery Copyright © 2010 by The jQuery Project
+		sumoselect Copyright © 2014 Hemant Negi
+ 	-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min.js" charset="utf-8"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js" charset="utf-8"></script>
+	<script src="https://brunelvis.org/js/brunel.2.6.min.js" charset="utf-8"></script>
+
+	<link rel="stylesheet" type="text/css" href="https://brunelvis.org/js/brunel.2.6.css" charset="utf-8"/>
+
+</head>
+<body style="margin:0">
+<h2 style='font-size:16px;text-align:center;margin:2px;color:green'><span style='font-style:italic;color:#aaaaaa'>0053</span>&nbsp;&nbsp;&nbsp;&nbsp;bar x(mammal, aquatic) size(#count) color(#count) label('Mammal=':top, mammal:top, 'Aquatic=':bottom...</h2>
+<p style='color:green;margin:2px;margin-bottom:6px;font-size:10px'>Pass: </p>
+<svg id="visualization" width="480" height="330"></svg>
+</body>
+<script>
+function  BrunelVis(visId) {
+  "use strict";                                                                       // strict mode
+  var datasets = [],                                      // array of datasets for the original data
+      pre = function(d, i) { return d },                         // default pre-process does nothing
+      post = function(d, i) { return d },                       // default post-process does nothing
+      transitionTime = 200,                                        // transition time for animations
+      charts = [],                                                       // the charts in the system
+      vis = d3.select('#' + visId).attr('class', 'brunel');                     // the SVG container
+
+  BrunelD3.addDefinitions(vis);                                   // ensure standard symbols present
+
+  // Define chart #1 in the visualization //////////////////////////////////////////////////////////
+
+  charts[0] = function(parentNode, filterRows) {
+    var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0, 1, 1, 0, 0, 0, 64),
+      elements = [];                                              // array of elements in this chart
+
+    // Define groups for the chart parts ///////////////////////////////////////////////////////////
+
+    var chart =  vis.append('g').attr('class', 'chart1')
+      .attr('transform','translate(' + geom.chart_left + ',' + geom.chart_top + ')');
+    var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay');
+    var zoom = d3.zoom().scaleExtent([1/3,3]);
+    var zoomNode = overlay.append('rect').attr('class', 'overlay')
+      .attr('x', geom.inner_left).attr('y', geom.inner_top)
+      .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
+      .style('cursor', 'default')
+      .node();
+    zoomNode.__zoom = d3.zoomIdentity;
+    chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
+    var interior = chart.append('g').attr('class', 'interior zoomNone')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_inner)');
+    interior.append('rect').attr('class', 'inner').attr('width', geom.inner_width).attr('height', geom.inner_height);
+    var gridGroup = interior.append('g').attr('class', 'grid');
+    var legends = chart.append('g').attr('class', 'legend')
+      .attr('transform','translate(' + (geom.chart_right-geom.chart_left - 3) + ',' + 0 + ')')
+      .attr('role', 'region').attr('aria-label', 'Legend');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_inner').append('rect')
+      .attr('x', 0).attr('y', 0)
+      .attr('width', geom.inner_rawWidth+1).attr('height', geom.inner_rawHeight+1);
+    var tree, expandState = [], collapseState = {};    // collapse state maps node IDs to true/false
+    var scale_x = d3.scaleLinear(), scale_y = d3.scaleLinear();
+    var base_scales = [scale_x, scale_y];                           // untransformed original scales
+    zoom.on('zoom', function(t, time) {
+        t = t || d3.event.transform;
+        zoomNode.__zoom = t;
+        interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));;
+        build(time || -1);
+    });
+
+    // Define element #1 ///////////////////////////////////////////////////////////////////////////
+
+    elements[0] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element1')
+        .attr('role', 'region').attr('aria-label', 'mammal, aquatic as a treemap diagram, also showing count'),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup),
+        diagramLabels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'diagram labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .summarize('#count=#count:sum; mammal=mammal:base; aquatic=aquatic:base');
+        processed = post(processed, 0);
+        var f0 = processed.field('mammal'),
+          f1 = processed.field('aquatic'),
+          f2 = processed.field('#count'),
+          f3 = processed.field('#row'),
+          f4 = processed.field('#selection');
+        var keyFunc = function(d) { return f0.value(d)+ '|' + f1.value(d) };
+        data = {
+          mammal:       function(d) { return f0.value(d.row) },
+          aquatic:      function(d) { return f1.value(d.row) },
+          $count:       function(d) { return f2.value(d.row) },
+          $row:         function(d) { return f3.value(d.row) },
+          $selection:   function(d) { return f4.value(d.row) },
+          mammal_f:     function(d) { return f0.valueFormatted(d.row) },
+          aquatic_f:    function(d) { return f1.valueFormatted(d.row) },
+          $count_f:     function(d) { return f2.valueFormatted(d.row) },
+          $row_f:       function(d) { return f3.valueFormatted(d.row) },
+          $selection_f: function(d) { return f4.valueFormatted(d.row) },
+          _split:       function(d) { return f2.value(d.row)+ '|' + f2.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+      // Aesthetic Functions
+      var scale_color = d3.scaleLinear().domain([1, 1.5, 2, 2.5, 3])
+        .interpolate(d3.interpolateHcl)
+        .range([ '#f1eef6', '#bdc9e1', '#74a9cf', '#2b8cbe', '#045a8d']);
+      var color = function(d) { var c = data.$count(d.data); return c!=null ? scale_color(c) : null };
+      var scale_size = d3.scaleLinear().domain([0, 3.0000003])
+        .range([ 0.001, 1]);
+      var size = function(d) { var s = data.$count(d.data); return s!=null ? scale_size(s) : null };
+      legends._legend = legends._legend || { title: ['Count'], 
+        ticks: [3, 2.5, 2, 1.5, 1]};
+      legends._legend.color = scale_color;
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[0];
+        // Define treemap (hierarchy) data structures
+        var first = (!tree), graph = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, null, '#count', 'mammal', 'aquatic');
+        var targetNode = graph.root;
+        tree = d3.hierarchy(targetNode).sum(function(d) { return d.value })
+          .sort(function(a,b) { return a.data.row - b.data.row});
+        BrunelD3.prune(tree, collapseState, true);
+        function nodeKey(d) { return d.data.key == null ? data._key(d.data.row) : d.data.key };
+        var treemap = d3.treemap().tile(d3.treemapResquarify)
+          .size([geom.inner_width, geom.inner_height])
+          .padding(function(d) { return d.depth < 3 ? 2*d.depth : 0} )
+          .paddingTop(function(d) { return d.depth ==1 ? 15 : (d.depth == 2) ? 12 : 0});
+        main.attr('class', 'diagram treemap hierarchy');
+        var labeling  = [
+          {
+            index: 0, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 3, dy: 0.7,
+            fit: true, granularity: 1,
+            content: function(d) {
+              return d.row == null ? null : 'Mammal='
+			+ data.mammal_f(d)
+            }
+          }, {
+            index: 1, method: 'box', location: ['center', 'bottom'], inside: true, align: 'middle', pad: 3, dy: -0.25,
+            fit: true, granularity: 1,
+            content: function(d) {
+              return d.row == null ? null : 'Aquatic='
+			+ data.aquatic_f(d)
+            }
+          }
+        ];
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element polygon filled')
+            .filter(function(d) { return d.parent })
+            .attr('x', function(d) { return scale_x((d.parent.x0+d.parent.x1)/2) })
+            .attr('y', function(d) { return scale_y((d.parent.y0+d.parent.y1)/2) })
+            .attr('width', 0).attr('height', 0)
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data.mammal_f(d)
+			+ ', '
+			+ data.aquatic_f(d)
+			+ ', '
+			+ data.$count_f(d);
+          })
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('class', function(d) { return (d.collapsed ? 'collapsed ' : '') + (d.data.children ? 'element L' + d.depth : 'leaf element bar') })
+            .attr('x', function(d) { return scale_x(d.x0) })
+            .attr('y', function(d) { return scale_y(d.y0) })
+            .attr('width', function(d) { return scale_x(d.x1) - scale_x(d.x0) })
+            .attr('height', function(d) { return scale_y(d.y1) - scale_y(d.y0) })
+            .filter(BrunelD3.hasData)                     // following only performed for data items
+            .style('fill', color);
+          ;
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+          BrunelD3.label(selection, labels, transitionMillis, geom, labeling);
+
+          var tooltipLabeling  = {
+            index: -1, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 0, dy: 0.7,
+            fit: true, granularity: 0,
+            content: function(d) {
+              return d.row == null ? null : '<span class="title">Mammal: </span>'
+			+ '<span class="field">' + data.mammal_f(d) + '</span>'
+			+ '<br/>'
+			+ '<span class="title">Aquatic: </span>'
+			+ '<span class="field">' + data.aquatic_f(d) + '</span>'
+			+ '<br/>'
+			+ '<span class="title">Count: </span>'
+			+ '<span class="field">' + data.$count_f(d) + '</span>'
+            }
+          };
+          var ttp = BrunelD3.addTooltip(selection, tooltipLabeling);
+          if (ttp) ttp.install();
+          diagramLabels.attr('class', 'axis diagram treemap hierarchy');
+          var treeLabeling = [{ index:0, method:'inner-left', fit:true, dy:0.83, align:'start', 
+            content:  function(d) { return d.data.innerNodeName },
+            cssClass: function(d) { return 'axis label L' + d.depth + ' H' + d.height }, 
+            where :   function(box) { return {'x': box.x + 2, 'y': box.y, 'box': box} }
+          }];
+          BrunelD3.label(selection.filter(function(d) {return d.data.key}), diagramLabels, transitionMillis, geom, treeLabeling);
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(treemap(tree).descendants(), nodeKey);
+        var added = selection.enter().append('rect');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+        label(merged, transitionMillis);
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+        merged                                                     // attach handlers to the element
+          .on('dblclick.collapse', function(d) {if (d.data.children) {collapseState[d.data.key] = !collapseState[d.data.key]; charts[0].build(500)}  });
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['mammal', 'aquatic'],
+          key:          ['mammal', 'aquatic'],
+          color:        ['#count'],
+          size:         ['#count']
+        }
+      };
+    }();
+
+    function build(time, noData) {
+      var first = elements[0].data() == null;
+      if (first) time = 0;                                           // no transition for first call
+      if ((first || time > -1) && !noData) {
+        elements[0].makeData();
+        BrunelD3.addLegend(legends, legends._legend);
+      }
+      elements[0].build(time);
+    }
+
+    // Expose the following components of the chart
+    return {
+      elements : elements,
+      interior : interior,
+      zoom: function(params, time) {
+          if (params) zoom.on('zoom').call(zoomNode, params, time);
+          return d3.zoomTransform(zoomNode);
+      },
+      build : build
+    };
+    }();
+
+  function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }
+  function updateAll(time) { charts.forEach(function(x) { if (x.build) x.build(time || 0)}) }
+  function buildAll() {
+    for (var i=0;i<arguments.length;i++) setData(arguments[i], i);
+    updateAll(transitionTime);
+  }
+
+  return {
+    dataPreProcess:     function(f) { if (f) pre = f; return pre },
+    dataPostProcess:    function(f) { if (f) post = f; return post },
+    data:               function(d,i) { if (d) setData(d,i); return datasets[i||0] },
+    visId:              visId,
+    build:              buildAll,
+    rebuild:            updateAll,
+    charts:             charts
+  }
+}
+
+// Data Tables /////////////////////////////////////////////////////////////////////////////////////
+
+var table1 = {
+   summarized: true,
+   names: ['mammal', 'aquatic', '#count'], 
+   options: ['string', 'string', 'numeric'], 
+   rows: [['no', 'no', 1], ['yes', 'no', 3], ['no', 'yes', 2], ['yes', 'yes', 1]]
+};
+
+// Call Code to Build the system ///////////////////////////////////////////////////////////////////
+
+var v  = new BrunelVis('visualization');
+v.build(table1);
+
+</script>
+

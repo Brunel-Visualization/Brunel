@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-Equiv="Cache-Control" Content="no-cache">
+	<meta http-Equiv="Pragma" Content="no-cache">
+	<meta http-Equiv="Expires" Content="0">
+	<title>Brunel Output</title>
+	<!--
+		D3 Copyright © 2012, Michael Bostock
+		jQuery Copyright © 2010 by The jQuery Project
+		sumoselect Copyright © 2014 Hemant Negi
+ 	-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min.js" charset="utf-8"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js" charset="utf-8"></script>
+	<script src="https://brunelvis.org/js/brunel.2.6.min.js" charset="utf-8"></script>
+
+	<link rel="stylesheet" type="text/css" href="https://brunelvis.org/js/brunel.2.6.css" charset="utf-8"/>
+
+</head>
+<body style="margin:0">
+<h2 style='font-size:16px;text-align:center;margin:2px;color:green'><span style='font-style:italic;color:#aaaaaa'>0057</span>&nbsp;&nbsp;&nbsp;&nbsp;point size(SlugRate) color(Salary) bubble</h2>
+<p style='color:green;margin:2px;margin-bottom:6px;font-size:10px'>Pass: </p>
+<svg id="visualization" width="480" height="330"></svg>
+</body>
+<script>
+function  BrunelVis(visId) {
+  "use strict";                                                                       // strict mode
+  var datasets = [],                                      // array of datasets for the original data
+      pre = function(d, i) { return d },                         // default pre-process does nothing
+      post = function(d, i) { return d },                       // default post-process does nothing
+      transitionTime = 200,                                        // transition time for animations
+      charts = [],                                                       // the charts in the system
+      vis = d3.select('#' + visId).attr('class', 'brunel');                     // the SVG container
+
+  BrunelD3.addDefinitions(vis);                                   // ensure standard symbols present
+
+  // Define chart #1 in the visualization //////////////////////////////////////////////////////////
+
+  charts[0] = function(parentNode, filterRows) {
+    var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0, 1, 1, 0, 0, 0, 64),
+      elements = [];                                              // array of elements in this chart
+
+    // Define groups for the chart parts ///////////////////////////////////////////////////////////
+
+    var chart =  vis.append('g').attr('class', 'chart1')
+      .attr('transform','translate(' + geom.chart_left + ',' + geom.chart_top + ')');
+    var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay');
+    var zoom = d3.zoom().scaleExtent([1/3,3]);
+    var zoomNode = overlay.append('rect').attr('class', 'overlay')
+      .attr('x', geom.inner_left).attr('y', geom.inner_top)
+      .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
+      .style('cursor', 'default')
+      .node();
+    zoomNode.__zoom = d3.zoomIdentity;
+    chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
+    var interior = chart.append('g').attr('class', 'interior zoomNone')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_inner)');
+    interior.append('rect').attr('class', 'inner').attr('width', geom.inner_width).attr('height', geom.inner_height);
+    var gridGroup = interior.append('g').attr('class', 'grid');
+    var legends = chart.append('g').attr('class', 'legend')
+      .attr('transform','translate(' + (geom.chart_right-geom.chart_left - 3) + ',' + 0 + ')')
+      .attr('role', 'region').attr('aria-label', 'Legend');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_inner').append('rect')
+      .attr('x', 0).attr('y', 0)
+      .attr('width', geom.inner_rawWidth+1).attr('height', geom.inner_rawHeight+1);
+    var tree, expandState = [], collapseState = {};    // collapse state maps node IDs to true/false
+    var scale_x = d3.scaleLinear(), scale_y = d3.scaleLinear();
+    var base_scales = [scale_x, scale_y];                           // untransformed original scales
+    zoom.on('zoom', function(t, time) {
+        t = t || d3.event.transform;
+        zoomNode.__zoom = t;
+        interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));;
+        build(time || -1);
+    });
+
+    // Define element #1 ///////////////////////////////////////////////////////////////////////////
+
+    elements[0] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element1')
+        .attr('role', 'region').attr('aria-label', 'No data as a bubble diagram, also showing Salary, SlugRate'),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0);
+        processed = post(processed, 0);
+        var f0 = processed.field('Salary'),
+          f1 = processed.field('SlugRate'),
+          f2 = processed.field('#row'),
+          f3 = processed.field('#selection');
+        var keyFunc = function(d) { return f2.value(d) };
+        data = {
+          Salary:       function(d) { return f0.value(d.row) },
+          SlugRate:     function(d) { return f1.value(d.row) },
+          $row:         function(d) { return f2.value(d.row) },
+          $selection:   function(d) { return f3.value(d.row) },
+          Salary_f:     function(d) { return f0.valueFormatted(d.row) },
+          SlugRate_f:   function(d) { return f1.valueFormatted(d.row) },
+          $row_f:       function(d) { return f2.valueFormatted(d.row) },
+          $selection_f: function(d) { return f3.valueFormatted(d.row) },
+          _split:       function(d) { return f0.value(d.row)+ '|' + f1.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+      // Aesthetic Functions
+      var scale_color = d3.scaleSqrt().domain([172750, 548515.17, 1135512.2, 1933741.1, 2943201.9, 4163894.5, 5595819, 7238975.4, 9093363.6])
+        .interpolate(d3.interpolateHcl)
+        .range([ '#045a8d', '#2b8cbe', '#74a9cf', '#bdc9e1', '#f8efe8', '#fef0d9', 
+          '#fdcc8a', '#fc8d59', '#e34a33']);
+      var color = function(d) { var c = data.Salary(d.data); return c!=null ? scale_color(c) : null };
+      var scale_size = d3.scaleSqrt().domain([0, 0.8123325])
+        .range([ 0.001, 1]);
+      var size = function(d) { var s = data.SlugRate(d.data); return s!=null ? scale_size(s) : null };
+      legends._legend = legends._legend || { title: ['Salary'], 
+        ticks: [10000000, 8000000, 6000000, 4000000, 2000000, 0]};
+      legends._legend.color = scale_color;
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[0];
+        // Define bubble (hierarchy) data structures
+        var first = (!tree), graph = BrunelData.diagram_Hierarchical.makeByNestingFields(processed, null, 'SlugRate');
+        var targetNode = graph.root;
+        tree = d3.hierarchy(targetNode).sum(function(d) { return d.value })
+          .sort(function(a,b) { return a.data.row - b.data.row});
+        BrunelD3.prune(tree, collapseState, true);
+        function nodeKey(d) { return d.data.key == null ? data._key(d.data.row) : d.data.key };
+        var pack = d3.pack().size([geom.inner_width, geom.inner_height]);
+        main.attr('class', 'diagram bubble hierarchy');
+        // Define Coordinate functions
+        function r(d) { return scale_x(d.r) - scale_x(0) };
+        function x(d) { return scale_x(d.x) };
+        function y(d) { return scale_y(d.y) };
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element point filled')
+            .filter(function(d) { return d.parent })
+            .attr('x', function(d) { return scale_x(d.parent.x) })
+            .attr('y', function(d) { return scale_y(d.parent.y) })
+            .attr('r', 0)
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('class', function(d) { return (d.collapsed ? 'collapsed ' : '') + (d.data.children ? 'element L' + d.depth : 'leaf element point') })
+            .filter(function(d) { return d.depth })
+            .attr('class', function(d) { return (d.children ? 'element L' + d.depth : 'leaf element point') })
+            .attr('cx',function(d) { return x(d)})
+            .attr('cy',function(d) { return y(d)})
+            .attr('r',function(d) { return r(d) * 2 / 2})
+            .filter(BrunelD3.hasData)                     // following only performed for data items
+            .style('fill', color);
+          ;
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(pack(tree).descendants(), nodeKey);
+        var added = selection.enter().append('circle');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+        merged                                                     // attach handlers to the element
+          .on('dblclick.collapse', function(d) {if (d.data.children) {collapseState[d.data.key] = !collapseState[d.data.key]; charts[0].build(500)}  });
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          key:          ['#row'],
+          color:        ['Salary'],
+          size:         ['SlugRate']
+        }
+      };
+    }();
+
+    function build(time, noData) {
+      var first = elements[0].data() == null;
+      if (first) time = 0;                                           // no transition for first call
+      if ((first || time > -1) && !noData) {
+        elements[0].makeData();
+        BrunelD3.addLegend(legends, legends._legend);
+      }
+      elements[0].build(time);
+    }
+
+    // Expose the following components of the chart
+    return {
+      elements : elements,
+      interior : interior,
+      zoom: function(params, time) {
+          if (params) zoom.on('zoom').call(zoomNode, params, time);
+          return d3.zoomTransform(zoomNode);
+      },
+      build : build
+    };
+    }();
+
+  function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }
+  function updateAll(time) { charts.forEach(function(x) { if (x.build) x.build(time || 0)}) }
+  function buildAll() {
+    for (var i=0;i<arguments.length;i++) setData(arguments[i], i);
+    updateAll(transitionTime);
+  }
+
+  return {
+    dataPreProcess:     function(f) { if (f) pre = f; return pre },
+    dataPostProcess:    function(f) { if (f) post = f; return post },
+    data:               function(d,i) { if (d) setData(d,i); return datasets[i||0] },
+    visId:              visId,
+    build:              buildAll,
+    rebuild:            updateAll,
+    charts:             charts
+  }
+}
+
+// Data Tables /////////////////////////////////////////////////////////////////////////////////////
+
+var table1 = {
+   summarized: false,
+   names: ['Salary', 'SlugRate'], 
+   options: ['numeric', 'numeric'], 
+   rows: [[4334958.2, 0.543554], [286500, 0.0465116], [281937.5, 0.3333333], [3172900, 0.406551],
+  [220000, 0.3448275], [4787738.4, 0.3593144], [1816666.7, 0.3082191], [4136107.1, 0.5574043],
+  [3610192.3, 0.1612903], [2643000, 0.4457013], [416000, 0.3794466], [993000, 0],
+  [2105950, 0.3606113], [2117875, 0.325062], [6981923.1, 0.4650349], [498571.43, 0.2826086],
+  [310000, 0.4362934], [305750, 0.4525139], [1008416.7, 0.489035], [2119562.5, 0.4554455],
+  [1045454.5, 0.4007421], [300000, 0.2323484], [305000, 0.5498783], [1796875, 0.1818181],
+  [1427900, 0.4577861], [332250, 0.4435946], [664166.67, 0.4257095], [2020000, 0.6287625],
+  [3245833.3, 0.5461965], [320785.71, 0.3287671], [2850000, 0.1160593], [462500, 0.3376623],
+  [248500, 0.2142857], [2201000, 0.5661764], [337250, 0.3847656], [681250, 0], [340000, 0.4267782],
+  [4375968.8, 0.4691943], [341200, 0.4855195], [350833.33, 0.5], [699285.71, 0.3682539],
+  [312500, 0.3297872], [664166.67, 0.3480825], [250000, 0.4], [6914730.6, 0.8123324],
+  [3318333.3, 0.4232715], [722961.54, 0.3319855], [618075, 0.4244186], [406642.86, 0.3723404],
+  [288333.33, 0.5253164], [313550, 0.4880382], [257250, 0.3487179], [307500, 0.5192307],
+  [351250, 0.3333333], [1003583.3, 0.137931], [3259848.5, 0.5592592], [2327500, 0.4553571],
+  [280666.67, 0.3652007], [327500, 0.3208092], [1519666.7, 0.2], [314000, 0.4674868],
+  [428200, 0.3844011], [242787, 0.5124378], [1814357.1, 0.4004048], [512500, 0.4166666],
+  [306250, 0.2261904], [2296733.4, 0.4787018], [305000, 0.2666666], [1023749.9, 0.0806451],
+  [305000, 0.3715596], [2885000, 0.5341506], [302000, 0.3093922], [354142.86, 0.3707865],
+  [300000, 0.3681462], [1791074.1, 0.3475177], [2979730.8, 0.5351629], [411000, 0.3779264],
+  [266000, 0.2604166], [1219642.9, 0.3895582], [1892550, 0.375], [300000, 0.3705179],
+  [2031833.3, 0.5010526], [241333.33, 0.2592592], [307500, 0.3682986], [335000, 0.3634751],
+  [3070954.5, 0.2933333], [307166.67, 0.3966005], [2221125, 0.458498], [2228000, 0.3972125],
+  [2366833.3, 0.1636363], [5150050, 0.1805555], [2159583.3, 0.4318618], [252500, 0.2363636],
+  [300000, 0.117647], [705000, 0.3802469], [1471954.6, 0.2878787], [303000, 0.5],
+  [1296666.8, 0.3150105], [310000, 0.4504792], [327500, 0.4183673], [309000, 0.2151898],
+  [319400, 0.4460285], [300500, 0.425688], [301400, 0.3018867], [1132142.9, 0.4307304],
+  [265625, 0.340136], [1571250, 0.4330275], [305000, 0.439528], [3693900, 0.4766505],
+  [697500, 0.4133333], [260833.33, 0.4175438], [637000, 0.2454545], [336666.67, 0.015625],
+  [300000, 0.1714285], [308250, 0.137931], [8629900, 0.5349344], [222666.67, 0.3846153],
+  [500000, 0.4410876], [429166.67, 0.3203883], [1598166.7, 0.2777777], [1057750, 0.3021582],
+  [472142.86, 0.2272727], [225000, 0.0666666], [2881948, 0.569498], [365000, 0.5686619],
+  [3850400, 0.4840764], [252500, 0.402439], [4152666.8, 0.4642857], [2042500, 0.4573991],
+  [697500, 0.3125], [763750, 0.3321554], [3800194.3, 0.6425702], [1956142.9, 0.3989583],
+  [293333.33, 0.4111922], [3590625, 0.4], [253850, 0.3092105], [1885550, 0.3055555],
+  [312500, 0.4502164], [368375, 0.3854166], [3121694.3, 0.4000153], [2106269.3, 0.1904761],
+  [399500, 0.4850894], [600833.33, 0.2468847], [320000, 0.4194107], [3384459, 0.4905852],
+  [1267909.2, 0.4645669], [2783625, 0.4621212], [289000, 0.0943396], [1088750, 0.2847682],
+  [294833.33, 0.095238], [1394231.8, 0.440625], [260000, 0.3683168], [1372000, 0.4138543],
+  [237833.33, 0.3304347], [494416.67, 0.3747632], [5020444.4, 0.4772727], [301000, 0.3],
+  [325600, 0.4054054], [4434471.2, 0.3787878], [851875, 0.3786127], [3669033.5, 0.4745484],
+  [318833.33, 0.4432717], [265000, 0.34375], [342166.5, 0.4792746], [1442500, 0.265432],
+  [3293214.3, 0.5748792], [5132224.7, 0.2407407], [302000, 0.4786324], [1065750, 0.346041],
+  [2524488.6, 0.3507158], [1023000, 0.4188948], [6174107.1, 0.4409448], [2534285.6, 0.4934036],
+  [300000, 0.468944], [1407666.7, 0.2761904], [301000, 0.3815028], [450312.5, 0.3345323],
+  [300500, 0.4462809], [6089069.6, 0.459322], [331166.67, 0.5076923], [2024571.4, 0.4885149],
+  [6728728.4, 0.5133333], [3279766.7, 0.4501779], [2271400, 0.4319066], [5178750, 0.5980392],
+  [320000, 0.2962962], [1181666.7, 0.5421455], [690000, 0.4973451], [1697833.4, 0.2531746],
+  [1405000, 0.3836805], [309250, 0.5829875], [788000, 0.3972125], [310000, 0.3743589],
+  [276666.67, 0.3663366], [747285.71, 0.3508771], [2624916.6, 0.3578947], [315000, 0.4051282],
+  [5203878.6, 0.3125], [360000, 0.0877192], [318500, 0.3227383], [308750, 0.4210526], [929375, 0.42],
+  [680625, 0.3613138], [4317500, 0.619744], [2373499.9, 0.1], [1380454.5, 0.5402843],
+  [2775000, 0.3703703], [996416.67, 0.4765625], [300000, 0.2608695], [3863750, 0.4375116],
+  [4320400, 0.3883928], [315000, 0.3390557], [733500, 0.4644128], [566666.67, 0.3754385],
+  [468272.73, 0.2234042], [1179500, 0.5472972], [317500, 0.4376278], [1495833.5, 0.4933333],
+  [2384166.7, 0.475], [1218809.6, 0.4719334], [302500, 0.4493041], [285000, 0.4534313],
+  [2150000, 0.1818181], [302833.33, 0.380597], [3133000, 0.4732576], [290333.33, 0.3380281],
+  [8647777.8, 0.4712286], [520000, 0.3943161], [3475681.8, 0.4295081], [508687.5, 0.3984063],
+  [6980468.8, 0.1625], [318000, 0.3798882], [5245166.7, 0.4877192], [5374194.3, 0.4851694],
+  [1352083.3, 0.427027], [3895948.8, 0.3632075], [1159166.7, 0.3896551], [3837230.8, 0.3106796],
+  [315000, 0.3641975], [375000, 0.4193548], [3695365.2, 0.3902439], [971250, 0.4059829],
+  [281666.67, 0.1875], [3898961.5, 0.5314814], [336250, 0.3697478], [244500, 0.3650793],
+  [303000, 0.2857142], [3368791.7, 0.4477611], [3005714.3, 0.5346358], [1799166.7, 0.4952606],
+  [2271428.6, 0.4587458], [300000, 0.2857142], [241100, 0.3076923], [396000, 0.5107913],
+  [307500, 0.4632352], [3413928.6, 0.425], [4129868.4, 0.4190751], [300000, 0.4876543],
+  [313000, 0.338983], [918000, 0.4307692], [595000, 0.1129032], [2743900, 0.4213197],
+  [284166.67, 0.4242424], [612391.67, 0.3315692], [2379166.7, 0.5245346], [2021952.4, 0.5041322],
+  [3818756.2, 0.1111111], [305000, 0.3030303], [1867500, 0.295238], [3387090.8, 0.4474789],
+  [2397271.6, 0.1875], [1536000.2, 0.410235], [3404285.7, 0.3949275], [1666437.5, 0.4201388],
+  [277500, 0.405303], [3734208.3, 0.5025906], [433222.22, 0.2727272], [1690550, 0.4951612],
+  [2242666.7, 0.5050167], [304700, 0.38], [973750, 0.3958691], [300000, 0.3641618],
+  [728666.67, 0.5041666], [300000, 0.3928571], [217500, 0.2328767], [547500, 0.3762886],
+  [294666.67, 0.4195519], [6814411.8, 0.1594202], [332000, 0.375], [906785.71, 0.52],
+  [533000, 0.3461538], [3776538.5, 0.4606986], [304500, 0.4923076], [267500, 0.4081133],
+  [1216272.7, 0.3480519], [477000, 0.3333333], [6500000, 0.5222602], [5033333, 0.3956521],
+  [454166.67, 0.4607142], [300000, 0.5700934], [1070769.2, 0.2639627], [407857.14, 0.4039735],
+  [932111.11, 0.2801282], [264450, 0.344086], [460500, 0.3115942], [300000, 0.2567567],
+  [1373211.9, 0.328], [243000, 0.3260869], [357500, 0.4626168], [336250, 0.5388127],
+  [291100, 0.2975731], [356000, 0.4263157], [320000, 0.4147157], [1050000, 0.3402165],
+  [300000, 0.367816], [1076428.6, 0.4744094], [317000, 0.025641], [1308437.5, 0.4030226],
+  [1129000, 0.2592592], [4103571.4, 0.2173913], [3120714.3, 0.1692307], [201500, 0.275862],
+  [443928.57, 0.525], [305000, 0.1333333], [295000, 0.3028391], [285833.33, 0.4372623],
+  [760000, 0.4035608], [265000, 0.3743842], [5455833.3, 0.3297682], [335000, 0.4876957],
+  [977666.6, 0.5618181], [298000, 0.297619], [3718750, 0.1774193], [1588750, 0.4461152],
+  [241666.67, 0.0689655], [1593750, 0.4454828], [331250, 0.2745098], [750000, 0.4155844],
+  [1948200, 0.4917733], [203000, 0.4530831], [300000, 0.4366576], [2010000, 0.5100671],
+  [3340900, 0.2307692], [381250, 0.2558139], [355833.33, 0.3186813], [300000, 0.3002333],
+  [314000, 0.4615384], [785625, 0.08], [226250, 0.4576271], [305000, 0.4294871],
+  [4549577.8, 0.3782473], [2364833.3, 0.1578947], [310000, 0.4419769], [4288125, 0.4851485],
+  [2658937.5, 0.262295], [1239583.3, 0.6030927], [2212857.1, 0.1355932], [419611.11, 0.08],
+  [1350000, 0.1549295], [313000, 0.478411], [875000, 0.1142857], [474750, 0.3458646],
+  [4794222, 0.4363636], [357500, 0.451664], [310000, 0.1212121], [272500, 0.3714285],
+  [1223214.3, 0.3235294], [843500, 0.3668122], [327500, 0.1864406], [310000, 0.3471074],
+  [280666.67, 0.4719334], [566500, 0.5267857], [1287500, 0.0638297], [417300, 0.3529411],
+  [1664611.1, 0.4215289], [1610833.3, 0.1451612], [313000, 0.1896551], [455833.33, 0.3378839],
+  [355571.43, 0.4147727], [630333.33, 0.3656716], [5115400, 0.2173913], [331000, 0.4979482],
+  [309000, 0.3259668], [7862881.1, 0.443956], [1053750, 0.4070796], [1081250, 0.4097664],
+  [350000, 0.3640625], [1547500, 0.4413518], [3757312.5, 0.481069], [437954.55, 0.3671875],
+  [172750, 0.325], [2300000, 0.1388888], [2175000, 0.6570945], [269166.67, 0.3186813],
+  [1697500, 0.5776965], [7169393.9, 0.612676], [1678400, 0.4082474], [311250, 0.6666666],
+  [303000, 0.3823529], [347500, 0.137931], [321000, 0.3736263], [496428.57, 0.3414634],
+  [1380000, 0.3032786], [617857.14, 0.3052631], [3608062.5, 0.4010238], [307500, 0.3727272],
+  [300000, 0.1803278], [570000, 0.4315476], [312000, 0.4654731], [345000, 0.375975],
+  [400900, 0.3990417], [340000, 0.3369565], [9093363.6, 0.5124792], [5654615.4, 0.5104364],
+  [3901000, 0.598], [857500, 0.4550989], [375000, 0.2051282], [310000, 0.290909],
+  [295000, 0.5441478], [2599027.8, 0.1639344], [1844000, 0.3333333], [397500, 0.5045045],
+  [309000, 0.3855421], [1072291.7, 0.3368421], [2146846.2, 0.4820627], [1730287.1, 0.4342857],
+  [307000, 0.2051282], [2714300, 0.2272727], [290666.67, 0.3990825], [301500, 0.3934065],
+  [300000, 0.1875], [2677285.7, 0.5777777], [835750, 0.1343283], [6625625.1, 0.5340314],
+  [2794333.3, 0.456026], [691875, 0.1988235], [300000, 0.4623115], [200000, 0.432258],
+  [2798750, 0.5289017], [1865000, 0.4835526], [6660500, 0.5167364], [1312062.5, 0.1290322],
+  [423792.86, 0.4108108], [1429083.4, 0.346049], [803625, 0.4210526], [1040454.5, 0.451025],
+  [2449562.4, 0.4470899], [570650, 0.4576271], [574333.33, 0.2962962], [1125000, 0.0701754],
+  [1875007.7, 0.419825], [5132333.5, 0.4545454], [298000, 0.5084745], [3814300, 0.5036496],
+  [1200000, 0.4189944], [1687500, 0.559633], [2077125, 0.5344563], [4723452.4, 0.5807086],
+  [738750, 0.2121212], [1068571.4, 0.1290322], [282000, 0.4069767], [2271541.7, 0.2033898],
+  [1248900, 0.4116379], [255000, 0.0833333], [290666.67, 0.505976], [300000, 0.4681647],
+  [2062045.5, 0.2756302], [302500, 0.4814814], [295625, 0.3811881], [2398710.3, 0.4733333],
+  [835111.11, 0.1764705], [307500, 0.0454545], [2526071.4, 0.4816414], [287500, 0.3217391],
+  [4475666.7, 0.3618421], [2492187.5, 0.4538834], [1979499.9, 0.2695652], [1687928.6, 0.3743016],
+  [2581593.8, 0.388007], [262000, 0.2903225], [6978340.3, 0.5948148], [1037111.1, 0.4677419],
+  [490000, 0.4744027], [2675000, 0.2714285], [335000, 0.09375], [2789333.4, 0.1052631],
+  [1072500, 0.3023255], [452750, 0.4720149], [301500, 0.4862068], [2241750, 0.453125],
+  [309250, 0.4139193], [298666.67, 0.4982517], [6374489.9, 0.4349376], [293963, 0.2972972],
+  [981786.58, 0.4186046], [308000, 0.1388888], [3059291.6, 0.2459016], [568666.67, 0.4991087],
+  [2333250, 0.3103448], [482357.14, 0.325], [654250, 0.4585889], [859857.14, 0.1333333],
+  [3414666.7, 0.3910891], [363125, 0.4267515], [1400833.3, 0.4265175], [262500, 0.4444444],
+  [1334166.7, 0.5111111], [2425000, 0.3851717], [3053571.4, 0.2222222], [402166.67, 0.3474178],
+  [340750, 0.226415], [1216928.6, 0.1052631], [1333125, 0.1754385], [300000, 0.090909],
+  [2922666.7, 0.4807197], [2325208.3, 0.3808139], [371666.67, 0.4826086], [395000, 0.2857142],
+  [578777.78, 0.3934911], [2547999.9, 0.3563218]]
+};
+
+// Call Code to Build the system ///////////////////////////////////////////////////////////////////
+
+var v  = new BrunelVis('visualization');
+v.build(table1);
+
+</script>
+

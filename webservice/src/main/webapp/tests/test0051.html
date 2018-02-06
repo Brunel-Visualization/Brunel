@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-Equiv="Cache-Control" Content="no-cache">
+	<meta http-Equiv="Pragma" Content="no-cache">
+	<meta http-Equiv="Expires" Content="0">
+	<title>Brunel Output</title>
+	<!--
+		D3 Copyright © 2012, Michael Bostock
+		jQuery Copyright © 2010 by The jQuery Project
+		sumoselect Copyright © 2014 Hemant Negi
+ 	-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min.js" charset="utf-8"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js" charset="utf-8"></script>
+	<script src="https://brunelvis.org/js/brunel.2.6.min.js" charset="utf-8"></script>
+
+	<link rel="stylesheet" type="text/css" href="https://brunelvis.org/js/brunel.2.6.css" charset="utf-8"/>
+
+</head>
+<body style="margin:0">
+<h2 style='font-size:16px;text-align:center;margin:2px;color:green'><span style='font-style:italic;color:#aaaaaa'>0051</span>&nbsp;&nbsp;&nbsp;&nbsp;edge yrange(country, category) chord size(#count) color(country) tooltip(#all)</h2>
+<p style='color:green;margin:2px;margin-bottom:6px;font-size:10px'>Pass: </p>
+<svg id="visualization" width="480" height="330"></svg>
+</body>
+<script>
+function  BrunelVis(visId) {
+  "use strict";                                                                       // strict mode
+  var datasets = [],                                      // array of datasets for the original data
+      pre = function(d, i) { return d },                         // default pre-process does nothing
+      post = function(d, i) { return d },                       // default post-process does nothing
+      transitionTime = 200,                                        // transition time for animations
+      charts = [],                                                       // the charts in the system
+      vis = d3.select('#' + visId).attr('class', 'brunel');                     // the SVG container
+
+  BrunelD3.addDefinitions(vis);                                   // ensure standard symbols present
+
+  // Define chart #1 in the visualization //////////////////////////////////////////////////////////
+
+  charts[0] = function(parentNode, filterRows) {
+    var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0, 1, 1, 0, 0, 0, 98),
+      elements = [];                                              // array of elements in this chart
+
+    // Define groups for the chart parts ///////////////////////////////////////////////////////////
+
+    var chart =  vis.append('g').attr('class', 'chart1')
+      .attr('transform','translate(' + geom.chart_left + ',' + geom.chart_top + ')');
+    var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay');
+    var zoom = d3.zoom().scaleExtent([1/3,3]);
+    var zoomNode = overlay.append('rect').attr('class', 'overlay')
+      .attr('x', geom.inner_left).attr('y', geom.inner_top)
+      .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
+      .style('cursor', 'default')
+      .node();
+    zoomNode.__zoom = d3.zoomIdentity;
+    chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
+    var interior = chart.append('g').attr('class', 'interior zoomNone')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_inner)');
+    interior.append('rect').attr('class', 'inner').attr('width', geom.inner_width).attr('height', geom.inner_height);
+    var gridGroup = interior.append('g').attr('class', 'grid');
+    var legends = chart.append('g').attr('class', 'legend')
+      .attr('transform','translate(' + (geom.chart_right-geom.chart_left - 3) + ',' + 0 + ')')
+      .attr('role', 'region').attr('aria-label', 'Legend');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_inner').append('rect')
+      .attr('x', 0).attr('y', 0)
+      .attr('width', geom.inner_rawWidth+1).attr('height', geom.inner_rawHeight+1);
+    var scale_x = d3.scaleLinear(), scale_y = d3.scaleLinear();
+    var base_scales = [scale_x, scale_y];                           // untransformed original scales
+    zoom.on('zoom', function(t, time) {
+        t = t || d3.event.transform;
+        zoomNode.__zoom = t;
+        interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));;
+        build(time || -1);
+    });
+
+    // Define element #1 ///////////////////////////////////////////////////////////////////////////
+
+    elements[0] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element1')
+        .attr('role', 'region').attr('aria-label', 'Country, Category as a chord diagram, also showing Country, count')
+        .attr('transform','translate(' + geom.inner_width/2 + ',' + geom.inner_height/2 + ')'),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup),
+        diagramExtras = elementGroup.append('g').attr('class', 'extras');
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .summarize('#count=#count:sum; Country=Country; Category=Category');
+        processed = post(processed, 0);
+        var f0 = processed.field('Country'),
+          f1 = processed.field('Category'),
+          f2 = processed.field('#count'),
+          f3 = processed.field('#row'),
+          f4 = processed.field('#selection');
+        var keyFunc = function(d) { return f0.value(d)+ '|' + f1.value(d) };
+        data = {
+          Country:      function(d) { return f0.value(d.row) },
+          Category:     function(d) { return f1.value(d.row) },
+          $count:       function(d) { return f2.value(d.row) },
+          $row:         function(d) { return f3.value(d.row) },
+          $selection:   function(d) { return f4.value(d.row) },
+          Country_f:    function(d) { return f0.valueFormatted(d.row) },
+          Category_f:   function(d) { return f1.valueFormatted(d.row) },
+          $count_f:     function(d) { return f2.valueFormatted(d.row) },
+          $row_f:       function(d) { return f3.valueFormatted(d.row) },
+          $selection_f: function(d) { return f4.valueFormatted(d.row) },
+          _split:       function(d) { return f0.value(d.row)+ '|' + f2.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+      // Aesthetic Functions
+      var scale_color = d3.scaleOrdinal()
+        .domain(['Canada', 'England', 'France', 'India', 'Ireland', 'Japan', 'Scotland', 'Taiwan', 'USA'])
+        .range([ '#00538A', '#C10020', '#F4C800', '#007D34', '#803E75', '#FF6800', 
+          '#817066', '#FFB300', '#F6768E', '#93AA00', '#53377A', '#FF8E00', '#B32851', 
+          '#CEA262', '#FF7A5C', '#7F180D', '#593315', '#F13A13', '#232C16']);
+      var color = function(d) { var c = data.Country(d); return c!=null ? scale_color(c) : null };
+      var scale_size = d3.scaleLinear().domain([0, 51.000005])
+        .range([ 0.001, 1]);
+      var size = function(d) { var s = data.$count(d); return s!=null ? scale_size(s) : null };
+      legends._legend = legends._legend || { title: ['Country'], 
+        ticks: scale_color.domain()};
+      legends._legend.color = scale_color;
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[0];
+        // Define chord data structures using Brunel's enhanced chord diagram builder
+        var chords = BrunelData.diagram_Chord.make(processed,'Country', 'Category', 
+            '#count');
+        var arc_width = 9.6;                                                // width of exterior arc
+        function keyFunction(d) { return d.source.index + '|' + d.target.index };//  special key function for the edges
+        var R = scale_x(geom.inner_radius)-scale_x(0), svgTrans = 'translate(' + scale_x(0) + ',' + scale_y(0) + ')';
+        main.attr('class', 'diagram chord');
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element edge filled')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data.Country_f(d)
+			+ ', '
+			+ data.Category_f(d)
+			+ ', '
+			+ data.$count_f(d);
+          })
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('d', d3.ribbon().radius(R-arc_width))
+            .attr('class', 'element edge')
+            .attr('transform', svgTrans)
+            .filter(BrunelD3.hasData)                     // following only performed for data items
+            .style('fill', color)
+
+          // Add in the arcs on the outside for the groups
+          diagramExtras.attr('class', 'diagram chord arcs');
+          var arcGroup = diagramExtras.selectAll('g').data(chords.groups),
+            addedArcGroups = arcGroup.enter().append('g'),
+            arcPath = d3.arc().innerRadius(R - arc_width).outerRadius(R);
+          addedArcGroups.append('path').attr('class', 'box')
+            .attr('id', function(d, i) { return 'arc' + i; });
+          addedArcGroups.append('text').attr('class', 'label')
+            .attr('dy', arc_width*0.72).attr('class', 'label')
+            .append('textPath').attr('xlink:href', function(d, i) { return '#arc' + i });
+          var mergedArcGroups = addedArcGroups.merge(arcGroup);
+          BrunelD3.tween(mergedArcGroups, transitionMillis, function(d, i) { 
+              var group = d3.select(this);
+              group.attr('transform', svgTrans);
+              return function() {
+                  group.select('path').attr('d', arcPath(d));
+                  group.select('textPath').text(d.name);
+                  BrunelD3.centerInWedge(group.select('text'), arc_width);
+              }
+          });
+
+          arcGroup.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+          ;
+          ;
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+
+          var tooltipLabeling  = {
+            index: -1, method: 'poly', location: ['center', 'center'], inside: true, align: 'middle', pad: 0, dy: 0.3,
+            fit: true, granularity: 0,
+            content: function(d) {
+              return d.row == null ? null : '<span class="title">Country: </span>'
+			+ '<span class="field">' + data.Country_f(d) + '</span>'
+			+ '<br/>'
+			+ '<span class="title">Category: </span>'
+			+ '<span class="field">' + data.Category_f(d) + '</span>'
+			+ '<br/>'
+			+ '<span class="title">Count: </span>'
+			+ '<span class="field">' + data.$count_f(d) + '</span>'
+            }
+          };
+          var ttp = BrunelD3.addTooltip(selection, tooltipLabeling);
+          if (ttp) ttp.install();
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(chords.chords, function(d) { return d.source.index + '|' + d.target.index });
+        var added = selection.enter().append('path');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+        label(merged, transitionMillis);
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          y:            ['country', 'category'],
+          key:          ['Country', 'Category'],
+          color:        ['Country'],
+          size:         ['#count']
+        }
+      };
+    }();
+
+    function build(time, noData) {
+      var first = elements[0].data() == null;
+      if (first) time = 0;                                           // no transition for first call
+      if ((first || time > -1) && !noData) {
+        elements[0].makeData();
+        BrunelD3.addLegend(legends, legends._legend);
+      }
+      elements[0].build(time);
+    }
+
+    // Expose the following components of the chart
+    return {
+      elements : elements,
+      interior : interior,
+      zoom: function(params, time) {
+          if (params) zoom.on('zoom').call(zoomNode, params, time);
+          return d3.zoomTransform(zoomNode);
+      },
+      build : build
+    };
+    }();
+
+  function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }
+  function updateAll(time) { charts.forEach(function(x) { if (x.build) x.build(time || 0)}) }
+  function buildAll() {
+    for (var i=0;i<arguments.length;i++) setData(arguments[i], i);
+    updateAll(transitionTime);
+  }
+
+  return {
+    dataPreProcess:     function(f) { if (f) pre = f; return pre },
+    dataPostProcess:    function(f) { if (f) post = f; return post },
+    data:               function(d,i) { if (d) setData(d,i); return datasets[i||0] },
+    visId:              visId,
+    build:              buildAll,
+    rebuild:            updateAll,
+    charts:             charts
+  }
+}
+
+// Data Tables /////////////////////////////////////////////////////////////////////////////////////
+
+var table1 = {
+   summarized: true,
+   names: ['Country', 'Category', '#count'], 
+   options: ['string', 'string', 'numeric'], 
+   rows: [['Canada', 'Blended', 25], ['France', 'Blended', 1], ['Ireland', 'Blended', 23],
+  ['Japan', 'Blended', 1], ['Scotland', 'Blended', 21], ['USA', 'Blended', 2],
+  ['USA', 'Bourbon', 51], ['Scotland', 'Campbeltown', 2], ['USA', 'Corn', 8],
+  ['Ireland', 'Flavored', 1], ['Taiwan', 'Flavored', 1], ['USA', 'Flavored', 3],
+  ['Ireland', 'Grain', 1], ['USA', 'Grain', 1], ['Scotland', 'Highlands', 26],
+  ['Scotland', 'Islands', 9], ['Scotland', 'Islay', 17], ['Scotland', 'Lowlands', 1],
+  ['Ireland', 'Pure Pot Still', 2], ['Canada', 'Rye', 3], ['USA', 'Rye', 15],
+  ['Canada', 'Single Malt', 2], ['England', 'Single Malt', 1], ['France', 'Single Malt', 1],
+  ['India', 'Single Malt', 5], ['Ireland', 'Single Malt', 14], ['Japan', 'Single Malt', 3],
+  ['Taiwan', 'Single Malt', 7], ['USA', 'Single Malt', 2], ['Scotland', 'Speyside', 32],
+  ['USA', 'Unaged', 2]]
+};
+
+// Call Code to Build the system ///////////////////////////////////////////////////////////////////
+
+var v  = new BrunelVis('visualization');
+v.build(table1);
+
+</script>
+

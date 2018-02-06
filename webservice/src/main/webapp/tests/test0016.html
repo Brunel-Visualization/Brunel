@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-Equiv="Cache-Control" Content="no-cache">
+	<meta http-Equiv="Pragma" Content="no-cache">
+	<meta http-Equiv="Expires" Content="0">
+	<title>Brunel Output</title>
+	<!--
+		D3 Copyright © 2012, Michael Bostock
+		jQuery Copyright © 2010 by The jQuery Project
+		sumoselect Copyright © 2014 Hemant Negi
+ 	-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min.js" charset="utf-8"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js" charset="utf-8"></script>
+	<script src="https://brunelvis.org/js/brunel.2.6.min.js" charset="utf-8"></script>
+
+	<link rel="stylesheet" type="text/css" href="https://brunelvis.org/js/brunel.2.6.css" charset="utf-8"/>
+
+</head>
+<body style="margin:0">
+<h2 style='font-size:16px;text-align:center;margin:2px;color:green'><span style='font-style:italic;color:#aaaaaa'>0016</span>&nbsp;&nbsp;&nbsp;&nbsp;cloud x(Age) color(Salary) size(Salary) sort(Salary) bin(Age) mean(Salary)</h2>
+<p style='color:green;margin:2px;margin-bottom:6px;font-size:10px'>Pass: </p>
+<svg id="visualization" width="480" height="330"></svg>
+</body>
+<script>
+function  BrunelVis(visId) {
+  "use strict";                                                                       // strict mode
+  var datasets = [],                                      // array of datasets for the original data
+      pre = function(d, i) { return d },                         // default pre-process does nothing
+      post = function(d, i) { return d },                       // default post-process does nothing
+      transitionTime = 200,                                        // transition time for animations
+      charts = [],                                                       // the charts in the system
+      vis = d3.select('#' + visId).attr('class', 'brunel');                     // the SVG container
+
+  BrunelD3.addDefinitions(vis);                                   // ensure standard symbols present
+
+  // Define chart #1 in the visualization //////////////////////////////////////////////////////////
+
+  charts[0] = function(parentNode, filterRows) {
+    var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0, 1, 1, 0, 0, 0, 90),
+      elements = [];                                              // array of elements in this chart
+
+    // Define groups for the chart parts ///////////////////////////////////////////////////////////
+
+    var chart =  vis.append('g').attr('class', 'chart1')
+      .attr('transform','translate(' + geom.chart_left + ',' + geom.chart_top + ')');
+    var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay');
+    var zoom = d3.zoom().scaleExtent([1/3,3]);
+    var zoomNode = overlay.append('rect').attr('class', 'overlay')
+      .attr('x', geom.inner_left).attr('y', geom.inner_top)
+      .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
+      .style('cursor', 'default')
+      .node();
+    zoomNode.__zoom = d3.zoomIdentity;
+    chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
+    var interior = chart.append('g').attr('class', 'interior zoomNone')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_inner)');
+    interior.append('rect').attr('class', 'inner').attr('width', geom.inner_width).attr('height', geom.inner_height);
+    var gridGroup = interior.append('g').attr('class', 'grid');
+    var legends = chart.append('g').attr('class', 'legend')
+      .attr('transform','translate(' + (geom.chart_right-geom.chart_left - 3) + ',' + 0 + ')')
+      .attr('role', 'region').attr('aria-label', 'Legend');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_inner').append('rect')
+      .attr('x', 0).attr('y', 0)
+      .attr('width', geom.inner_rawWidth+1).attr('height', geom.inner_rawHeight+1);
+    var scale_x = d3.scaleLinear(), scale_y = d3.scaleLinear();
+    var base_scales = [scale_x, scale_y];                           // untransformed original scales
+    zoom.on('zoom', function(t, time) {
+        t = t || d3.event.transform;
+        zoomNode.__zoom = t;
+        interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));;
+        interior.attr('transform', d3.zoomTransform(zoomNode));
+    });
+
+    // Define element #1 ///////////////////////////////////////////////////////////////////////////
+
+    elements[0] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element1')
+        .attr('role', 'region').attr('aria-label', 'Age as a cloud diagram, also showing Salary, sorted by Salary')
+        .attr('transform','translate(' + geom.inner_width/2 + ',' + geom.inner_height/2 + ')'),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .transform('Age=bin')
+          .summarize('Salary=Salary:mean; Age=Age:base')
+          .sort('Salary');
+        processed = post(processed, 0);
+        var f0 = processed.field('Age'),
+          f1 = processed.field('Salary'),
+          f2 = processed.field('#row'),
+          f3 = processed.field('#selection');
+        var keyFunc = function(d) { return f0.value(d) };
+        data = {
+          Age:          function(d) { return f0.value(d.row) },
+          Salary:       function(d) { return f1.value(d.row) },
+          $row:         function(d) { return f2.value(d.row) },
+          $selection:   function(d) { return f3.value(d.row) },
+          Age_f:        function(d) { return f0.valueFormatted(d.row) },
+          Salary_f:     function(d) { return f1.valueFormatted(d.row) },
+          $row_f:       function(d) { return f2.valueFormatted(d.row) },
+          $selection_f: function(d) { return f3.valueFormatted(d.row) },
+          _split:       function(d) { return f1.value(d.row)+ '|' + f1.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+      // Aesthetic Functions
+      var scale_color = d3.scaleSqrt().domain([283429, 561756.94, 934370.5, 1401269.7, 1962454.5, 2617924.9, 3367681, 4211722.7, 5150050])
+        .interpolate(d3.interpolateHcl)
+        .range([ '#045a8d', '#2b8cbe', '#74a9cf', '#bdc9e1', '#f8efe8', '#fef0d9', 
+          '#fdcc8a', '#fc8d59', '#e34a33']);
+      var color = function(d) { var c = data.Salary(d); return c!=null ? scale_color(c) : null };
+      var scale_size = d3.scaleSqrt().domain([0, 5150050.5])
+        .range([ 0.001, 1]);
+      var size = function(d) { var s = data.Salary(d); return s!=null ? scale_size(s) : null };
+      legends._legend = legends._legend || { title: ['Mean(Salary)'], 
+        ticks: [6000000, 5000000, 4000000, 3000000, 2000000, 1000000, 0]};
+      legends._legend.color = scale_color;
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[0];
+        // Build the cloud layout
+        var cloud = BrunelD3.cloudLayout(processed, [geom.inner_width, geom.inner_height]);
+        function keyFunction(d) { return d.key };
+        main.attr('class', 'diagram cloud');
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element text filled')
+            .style('text-anchor', 'middle').classed('label', true)
+            .text(function(d) { return data.Age_f(d) })
+            .style('font-size', function(d) { return (100*size(d)) + '%' })
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .each(cloud.prepare).call(cloud.build)
+            .filter(BrunelD3.hasData)                     // following only performed for data items
+            .style('fill', color);
+          ;
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
+        var added = selection.enter().append('text');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['Age'],
+          key:          ['Age'],
+          color:        ['Salary'],
+          size:         ['Salary']
+        }
+      };
+    }();
+
+    function build(time, noData) {
+      var first = elements[0].data() == null;
+      if (first) time = 0;                                           // no transition for first call
+      if ((first || time > -1) && !noData) {
+        elements[0].makeData();
+        BrunelD3.addLegend(legends, legends._legend);
+      }
+      elements[0].build(time);
+    }
+
+    // Expose the following components of the chart
+    return {
+      elements : elements,
+      interior : interior,
+      zoom: function(params, time) {
+          if (params) zoom.on('zoom').call(zoomNode, params, time);
+          return d3.zoomTransform(zoomNode);
+      },
+      build : build
+    };
+    }();
+
+  function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }
+  function updateAll(time) { charts.forEach(function(x) { if (x.build) x.build(time || 0)}) }
+  function buildAll() {
+    for (var i=0;i<arguments.length;i++) setData(arguments[i], i);
+    updateAll(transitionTime);
+  }
+
+  return {
+    dataPreProcess:     function(f) { if (f) pre = f; return pre },
+    dataPostProcess:    function(f) { if (f) post = f; return post },
+    data:               function(d,i) { if (d) setData(d,i); return datasets[i||0] },
+    visId:              visId,
+    build:              buildAll,
+    rebuild:            updateAll,
+    charts:             charts
+  }
+}
+
+// Data Tables /////////////////////////////////////////////////////////////////////////////////////
+
+var table1 = {
+   summarized: true,
+   names: ['Age', 'Salary'], 
+   options: ['range-numeric', 'numeric'], 
+   rows: [[[16,18], 283429], [[18,20], 342096.3], [[20,22], 558891.19], [[22,24], 605284.92],
+  [[24,26], 1066493.5], [[26,28], 1815778.2], [[28,30], 1950050.8], [[30,32], 1858892.8],
+  [[32,34], 3069106.4], [[34,36], 3111040.9], [[36,38], 3606204.2], [[38,40], 5150050],
+  [[42,44], 1394231.8]]
+};
+
+// Call Code to Build the system ///////////////////////////////////////////////////////////////////
+
+var v  = new BrunelVis('visualization');
+v.build(table1);
+
+</script>
+

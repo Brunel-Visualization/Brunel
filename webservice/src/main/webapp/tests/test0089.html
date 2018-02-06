@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-Equiv="Cache-Control" Content="no-cache">
+	<meta http-Equiv="Pragma" Content="no-cache">
+	<meta http-Equiv="Expires" Content="0">
+	<title>Brunel Output</title>
+	<!--
+		D3 Copyright © 2012, Michael Bostock
+		jQuery Copyright © 2010 by The jQuery Project
+		sumoselect Copyright © 2014 Hemant Negi
+ 	-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min.js" charset="utf-8"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js" charset="utf-8"></script>
+	<script src="https://brunelvis.org/js/brunel.2.6.min.js" charset="utf-8"></script>
+
+	<link rel="stylesheet" type="text/css" href="https://brunelvis.org/js/brunel.2.6.css" charset="utf-8"/>
+
+</head>
+<body style="margin:0">
+<h2 style='font-size:16px;text-align:center;margin:2px;color:green'><span style='font-style:italic;color:#aaaaaa'>0089</span>&nbsp;&nbsp;&nbsp;&nbsp;x('Top 5') y(age) top(age:5) + x('Top 6-10') y(age) top(age:6:10) + x('Bottom 6-10') y(age) bottom(a...</h2>
+<p style='color:green;margin:2px;margin-bottom:6px;font-size:10px'>Pass: </p>
+<svg id="visualization" width="480" height="330"></svg>
+</body>
+<script>
+function  BrunelVis(visId) {
+  "use strict";                                                                       // strict mode
+  var datasets = [],                                      // array of datasets for the original data
+      pre = function(d, i) { return d },                         // default pre-process does nothing
+      post = function(d, i) { return d },                       // default post-process does nothing
+      transitionTime = 200,                                        // transition time for animations
+      charts = [],                                                       // the charts in the system
+      vis = d3.select('#' + visId).attr('class', 'brunel');                     // the SVG container
+
+  BrunelD3.addDefinitions(vis);                                   // ensure standard symbols present
+
+  // Define chart #1 in the visualization //////////////////////////////////////////////////////////
+
+  charts[0] = function(parentNode, filterRows) {
+    var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0, 1, 1, 5, 54, 19, 0),
+      elements = [];                                              // array of elements in this chart
+
+    // Define groups for the chart parts ///////////////////////////////////////////////////////////
+
+    var chart =  vis.append('g').attr('class', 'chart1')
+      .attr('role', 'region').attr('aria-label', 'First chart')
+      .attr('transform','translate(' + geom.chart_left + ',' + geom.chart_top + ')');
+    var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay');
+    var zoom = d3.zoom().scaleExtent([1/3,3]);
+    var zoomNode = overlay.append('rect').attr('class', 'overlay')
+      .attr('x', geom.inner_left).attr('y', geom.inner_top)
+      .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
+      .style('cursor', 'move').call(zoom)
+      .node();
+    zoomNode.__zoom = d3.zoomIdentity;
+    chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
+    var interior = chart.append('g').attr('class', 'interior zoomNone')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_inner)');
+    interior.append('rect').attr('class', 'inner').attr('width', geom.inner_width).attr('height', geom.inner_height);
+    var gridGroup = interior.append('g').attr('class', 'grid');
+    var axes = chart.append('g').attr('class', 'axis')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_inner').append('rect')
+      .attr('x', 0).attr('y', 0)
+      .attr('width', geom.inner_rawWidth+1).attr('height', geom.inner_rawHeight+1);
+
+    // Scales //////////////////////////////////////////////////////////////////////////////////////
+
+    var scale_x = d3.scalePoint().padding(0.5)
+      .domain(['Top 5', 'Top 6-10', 'Bottom 6-10', 'Bottom 5'])
+      .range([0, geom.inner_width]);
+    var scale_inner = d3.scaleLinear().domain([0,1])
+      .range([-0.5, 0.5]);
+    var scale_y = d3.scaleLinear().domain([15, 45.000003])
+      .range([geom.inner_height, 0]);
+    var base_scales = [scale_x, scale_y];                           // untransformed original scales
+
+    // Axes ////////////////////////////////////////////////////////////////////////////////////////
+
+    axes.append('g').attr('class', 'x axis')
+      .attr('transform','translate(0,' + geom.inner_rawHeight + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_haxis)')
+      .attr('role', 'region').attr('aria-label', 'Horizontal Axis');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_haxis').append('polyline')
+      .attr('points', '-1,-1000, -1,-1 -5,5, -1000,5, -100,1000, 10000,1000 10000,-1000');
+    axes.append('g').attr('class', 'y axis')
+      .attr('clip-path', 'url(#clip_visualization_chart1_vaxis)')
+      .attr('role', 'region').attr('aria-label', 'Vertical Axis');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_vaxis').append('polyline')
+      .attr('points', '-1000,-10000, 10000,-10000, 10000,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+5) + ', -1000,' + (geom.inner_rawHeight+5) );
+    axes.select('g.axis.y').append('text').attr('class', 'title').text('Age').style('text-anchor', 'middle')
+      .attr('x',-geom.inner_rawHeight/2)
+      .attr('y', 4-geom.inner_left).attr('dy', '0.7em').attr('transform', 'rotate(270)');
+
+    var axis_bottom = d3.axisBottom(scale_x).ticks(Math.min(10, Math.round(geom.inner_rawWidth / 120.0)));
+    var axis_left = d3.axisLeft(scale_y).ticks(Math.min(10, Math.round(geom.inner_rawHeight / 20)));
+
+    function buildAxes(time) {
+      axis_bottom.tickValues(BrunelD3.filterTicks(scale_x))
+      var axis_x = axes.select('g.axis.x');
+      BrunelD3.transition(axis_x, time).call(axis_bottom.scale(scale_x));
+      var axis_y = axes.select('g.axis.y');
+      BrunelD3.transition(axis_y, time).call(axis_left.scale(scale_y));
+    }
+    zoom.on('zoom', function(t, time) {
+        t = t ||BrunelD3.restrictZoom(d3.event.transform, geom, this);
+        scale_y = t.rescaleY(base_scales[1]);
+        zoomNode.__zoom = t;
+        interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));;
+        build(time || -1);
+    });
+
+    // Define element #1 ///////////////////////////////////////////////////////////////////////////
+
+    elements[0] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element1')
+        .attr('role', 'region').attr('aria-label', "'Top 5', Age as points"),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .addConstants("'Top 5'")
+          .filter('Age ranked 1,5');
+        processed = post(processed, 0);
+        var f0 = processed.field("'Top 5'"),
+          f1 = processed.field('Age'),
+          f2 = processed.field('#row'),
+          f3 = processed.field('#selection');
+        var keyFunc = function(d) { return f2.value(d) };
+        data = {
+          _Top_5_:      function(d) { return f0.value(d.row) },
+          Age:          function(d) { return f1.value(d.row) },
+          $row:         function(d) { return f2.value(d.row) },
+          $selection:   function(d) { return f3.value(d.row) },
+          _Top_5__f:    function(d) { return f0.valueFormatted(d.row) },
+          Age_f:        function(d) { return f1.valueFormatted(d.row) },
+          $row_f:       function(d) { return f2.valueFormatted(d.row) },
+          $selection_f: function(d) { return f3.valueFormatted(d.row) },
+          _split:       function(d) { return 'ALL' },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[0];
+        var w = 0.9 * geom.inner_width;
+        var x = function(d) { return scale_x(data._Top_5_(d))};
+        var h = geom.default_point_size;
+        var y = function(d) { return scale_y(data.Age(d))};
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element point filled')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+            .attr('cx',function(d) { return scale_x(data._Top_5_(d))})
+            .attr('cy',function(d) { return scale_y(data.Age(d))})
+            .attr('r',0)
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('cx',function(d) { return scale_x(data._Top_5_(d))})
+            .attr('cy',function(d) { return scale_y(data.Age(d))})
+            .attr('r',Math.min(0.9 * geom.inner_width, geom.default_point_size) / 2);
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
+        var added = selection.enter().append('circle');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ["'Top 5'"],
+          y:            ['Age'],
+          key:          ['#row']
+        }
+      };
+    }();
+
+    // Define element #2 ///////////////////////////////////////////////////////////////////////////
+
+    elements[1] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element2')
+        .attr('role', 'region').attr('aria-label', "'Top 6-10', Age as points"),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .addConstants("'Top 6-10'")
+          .filter('Age ranked 6,10');
+        processed = post(processed, 0);
+        var f0 = processed.field("'Top 6-10'"),
+          f1 = processed.field('Age'),
+          f2 = processed.field('#row'),
+          f3 = processed.field('#selection');
+        var keyFunc = function(d) { return f2.value(d) };
+        data = {
+          _Top_6_10_:   function(d) { return f0.value(d.row) },
+          Age:          function(d) { return f1.value(d.row) },
+          $row:         function(d) { return f2.value(d.row) },
+          $selection:   function(d) { return f3.value(d.row) },
+          _Top_6_10__f: function(d) { return f0.valueFormatted(d.row) },
+          Age_f:        function(d) { return f1.valueFormatted(d.row) },
+          $row_f:       function(d) { return f2.valueFormatted(d.row) },
+          $selection_f: function(d) { return f3.valueFormatted(d.row) },
+          _split:       function(d) { return 'ALL' },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[1];
+        var w = 0.9 * geom.inner_width;
+        var x = function(d) { return scale_x(data._Top_6_10_(d))};
+        var h = geom.default_point_size;
+        var y = function(d) { return scale_y(data.Age(d))};
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element point filled')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+            .attr('cx',function(d) { return scale_x(data._Top_6_10_(d))})
+            .attr('cy',function(d) { return scale_y(data.Age(d))})
+            .attr('r',0)
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('cx',function(d) { return scale_x(data._Top_6_10_(d))})
+            .attr('cy',function(d) { return scale_y(data.Age(d))})
+            .attr('r',Math.min(0.9 * geom.inner_width, geom.default_point_size) / 2);
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
+        var added = selection.enter().append('circle');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ["'Top 6-10'"],
+          y:            ['Age'],
+          key:          ['#row']
+        }
+      };
+    }();
+
+    // Define element #3 ///////////////////////////////////////////////////////////////////////////
+
+    elements[2] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element3')
+        .attr('role', 'region').attr('aria-label', "'Bottom 6-10', Age as points"),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .addConstants("'Bottom 6-10'")
+          .filter('Age ranked 509,513');
+        processed = post(processed, 0);
+        var f0 = processed.field("'Bottom 6-10'"),
+          f1 = processed.field('Age'),
+          f2 = processed.field('#row'),
+          f3 = processed.field('#selection');
+        var keyFunc = function(d) { return f2.value(d) };
+        data = {
+          _Bottom_6_10_:function(d) { return f0.value(d.row) },
+          Age:          function(d) { return f1.value(d.row) },
+          $row:         function(d) { return f2.value(d.row) },
+          $selection:   function(d) { return f3.value(d.row) },
+          _Bottom_6_10__f:function(d) { return f0.valueFormatted(d.row) },
+          Age_f:        function(d) { return f1.valueFormatted(d.row) },
+          $row_f:       function(d) { return f2.valueFormatted(d.row) },
+          $selection_f: function(d) { return f3.valueFormatted(d.row) },
+          _split:       function(d) { return 'ALL' },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[2];
+        var w = 0.9 * geom.inner_width;
+        var x = function(d) { return scale_x(data._Bottom_6_10_(d))};
+        var h = geom.default_point_size;
+        var y = function(d) { return scale_y(data.Age(d))};
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element point filled')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+            .attr('cx',function(d) { return scale_x(data._Bottom_6_10_(d))})
+            .attr('cy',function(d) { return scale_y(data.Age(d))})
+            .attr('r',0)
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('cx',function(d) { return scale_x(data._Bottom_6_10_(d))})
+            .attr('cy',function(d) { return scale_y(data.Age(d))})
+            .attr('r',Math.min(0.9 * geom.inner_width, geom.default_point_size) / 2);
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
+        var added = selection.enter().append('circle');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ["'Bottom 6-10'"],
+          y:            ['Age'],
+          key:          ['#row']
+        }
+      };
+    }();
+
+    // Define element #4 ///////////////////////////////////////////////////////////////////////////
+
+    elements[3] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element4')
+        .attr('role', 'region').attr('aria-label', "'Bottom 5', Age as points"),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .addConstants("'Bottom 5'")
+          .filter('Age ranked 514,518');
+        processed = post(processed, 0);
+        var f0 = processed.field("'Bottom 5'"),
+          f1 = processed.field('Age'),
+          f2 = processed.field('#row'),
+          f3 = processed.field('#selection');
+        var keyFunc = function(d) { return f2.value(d) };
+        data = {
+          _Bottom_5_:   function(d) { return f0.value(d.row) },
+          Age:          function(d) { return f1.value(d.row) },
+          $row:         function(d) { return f2.value(d.row) },
+          $selection:   function(d) { return f3.value(d.row) },
+          _Bottom_5__f: function(d) { return f0.valueFormatted(d.row) },
+          Age_f:        function(d) { return f1.valueFormatted(d.row) },
+          $row_f:       function(d) { return f2.valueFormatted(d.row) },
+          $selection_f: function(d) { return f3.valueFormatted(d.row) },
+          _split:       function(d) { return 'ALL' },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[3];
+        var w = 0.9 * geom.inner_width;
+        var x = function(d) { return scale_x(data._Bottom_5_(d))};
+        var h = geom.default_point_size;
+        var y = function(d) { return scale_y(data.Age(d))};
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element point filled')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+            .attr('cx',function(d) { return scale_x(data._Bottom_5_(d))})
+            .attr('cy',function(d) { return scale_y(data.Age(d))})
+            .attr('r',0)
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('cx',function(d) { return scale_x(data._Bottom_5_(d))})
+            .attr('cy',function(d) { return scale_y(data.Age(d))})
+            .attr('r',Math.min(0.9 * geom.inner_width, geom.default_point_size) / 2);
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
+        var added = selection.enter().append('circle');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ["'Bottom 5'"],
+          y:            ['Age'],
+          key:          ['#row']
+        }
+      };
+    }();
+
+    function build(time, noData) {
+      var first = elements[0].data() == null;
+      if (first) time = 0;                                           // no transition for first call
+      buildAxes(time);
+      if ((first || time > -1) && !noData) {
+        elements[0].makeData();
+        elements[1].makeData();
+        elements[2].makeData();
+        elements[3].makeData();
+      }
+      elements[0].build(time);
+      elements[1].build(time);
+      elements[2].build(time);
+      elements[3].build(time);
+    }
+
+    // Expose the following components of the chart
+    return {
+      elements : elements,
+      interior : interior,
+      scales: {x:scale_x, y:scale_y},
+      zoom: function(params, time) {
+          if (params) zoom.on('zoom').call(zoomNode, params, time);
+          return d3.zoomTransform(zoomNode);
+      },
+      build : build
+    };
+    }();
+
+  function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }
+  function updateAll(time) { charts.forEach(function(x) { if (x.build) x.build(time || 0)}) }
+  function buildAll() {
+    for (var i=0;i<arguments.length;i++) setData(arguments[i], i);
+    updateAll(transitionTime);
+  }
+
+  return {
+    dataPreProcess:     function(f) { if (f) pre = f; return pre },
+    dataPostProcess:    function(f) { if (f) post = f; return post },
+    data:               function(d,i) { if (d) setData(d,i); return datasets[i||0] },
+    visId:              visId,
+    build:              buildAll,
+    rebuild:            updateAll,
+    charts:             charts
+  }
+}
+
+// Data Tables /////////////////////////////////////////////////////////////////////////////////////
+
+var table1 = {
+   summarized: false,
+   names: ['Age'], 
+   options: ['numeric'], 
+   rows: [[26.25], [24], [29.25], [27.916667], [25.166667], [32.166667], [34.5], [34.583333],
+  [30.25], [28.5], [26.083333], [22.333333], [29.75], [31.333333], [32.416667], [28.5], [19.75],
+  [25.75], [24.833333], [28], [28.416667], [20.833333], [22.75], [20.416667], [28.75], [26.666667],
+  [25.333333], [21.333333], [23.333333], [28.333333], [26.916667], [30.75], [23.916667], [24.166667],
+  [22.083333], [24.416667], [23.916667], [36], [27.666667], [20.916667], [29.666667], [23.916667],
+  [27.333333], [24.25], [36.583333], [31.333333], [37.416667], [22.333333], [31.75], [26], [24.75],
+  [22.25], [22.25], [27.583333], [23.083333], [31.333333], [24.833333], [20.75], [23.666667], [31],
+  [24.166667], [29], [17.333333], [26.916667], [26.416667], [24.75], [27.083333], [22.666667],
+  [25.333333], [26.166667], [26.583333], [24], [30.166667], [19.25], [25.75], [33.583333], [28.5],
+  [24.25], [26.333333], [26.666667], [22.166667], [24], [27.25], [21.25], [23], [31.75], [27.333333],
+  [28.5], [30.083333], [26.666667], [38.666667], [34.5], [25.083333], [21.166667], [25.833333],
+  [29.833333], [21.166667], [30.666667], [19.666667], [22.333333], [21.416667], [21.916667],
+  [20.083333], [24.666667], [28.916667], [27.083333], [26.333333], [21.25], [27.916667], [28.166667],
+  [28], [23.25], [25.75], [22.833333], [22.5], [28.5], [28.583333], [27.833333], [25.166667],
+  [29.083333], [29], [31.416667], [24.25], [25.916667], [21.916667], [29.916667], [25.666667],
+  [26.083333], [31.916667], [23.916667], [25.083333], [30.5], [24.25], [25.666667], [26.5], [22.75],
+  [27.166667], [24.5], [23.166667], [29.5], [37.083333], [25.333333], [26.25], [22.083333], [35.25],
+  [33.833333], [29], [25], [30.416667], [22.083333], [42.666667], [24.25], [23.833333], [27.75],
+  [25.833333], [27.583333], [22.083333], [23.75], [29.083333], [23.25], [29.083333], [22.416667],
+  [25.666667], [24.416667], [30.666667], [24.666667], [34.25], [24.333333], [29.5], [27.333333],
+  [23.166667], [31.833333], [33.75], [21.5], [32.583333], [24.416667], [28.5], [21.833333],
+  [28.916667], [29.416667], [24.416667], [31.916667], [33.333333], [30.5], [24.166667], [28.833333],
+  [25.75], [24.416667], [30.416667], [22.25], [23.5], [24.416667], [22], [25.833333], [31.916667],
+  [29.25], [23.416667], [28.75], [22.416667], [22.5], [22.25], [32], [24.416667], [27.666667], [29],
+  [31.583333], [25.166667], [24.416667], [22.25], [25.583333], [30.666667], [22.333333], [25.583333],
+  [23.666667], [30.333333], [27.333333], [24], [25], [25.583333], [28.5], [20], [23.416667], [27.75],
+  [20.166667], [26.583333], [22.583333], [26.5], [24], [29.583333], [22.75], [37.75], [25],
+  [23.333333], [28.333333], [25.333333], [33.25], [25.666667], [33.916667], [22.25], [20.416667],
+  [26.5], [24.083333], [21.416667], [32.25], [24.666667], [28.5], [23.75], [29.5], [24.25], [27.5],
+  [26], [21.916667], [31.916667], [25.666667], [25], [33.5], [36.333333], [21.916667], [24.416667],
+  [26.25], [24.416667], [29.916667], [26], [27.916667], [24.5], [25.75], [35.833333], [25], [28.25],
+  [28.083333], [28.75], [28.333333], [33.416667], [24.166667], [20.416667], [30.916667], [30.75],
+  [29.666667], [26.166667], [22.583333], [25.916667], [20.166667], [30.833333], [19.083333], [27.5],
+  [28.083333], [24.5], [34.333333], [22.666667], [27.916667], [28.833333], [34], [23], [22.166667],
+  [30.75], [22.833333], [26.5], [25.833333], [26.666667], [17.333333], [32.333333], [31.916667],
+  [30.25], [26.75], [28.833333], [26.083333], [36.833333], [29.916667], [28.25], [22.083333],
+  [29.083333], [29.333333], [24.416667], [26.5], [25], [29.75], [24.25], [31.833333], [24.75], [27],
+  [25.666667], [26.083333], [30.833333], [19.166667], [25.166667], [24.5], [26.583333], [25.5],
+  [29.25], [23.166667], [28.166667], [34], [26.666667], [29.25], [25.5], [23.833333], [20.666667],
+  [22.916667], [29.083333], [27.75], [20.833333], [26.333333], [32.666667], [28.583333], [24.25],
+  [23.166667], [25], [24.25], [27], [25.083333], [32.666667], [30.833333], [22.583333], [26.083333],
+  [29.916667], [25.916667], [26.5], [32.833333], [23.666667], [23.083333], [23.75], [31.083333],
+  [36.75], [21.666667], [22.083333], [25.416667], [24.083333], [28.916667], [19.416667], [27.666667],
+  [22.416667], [18.083333], [22.416667], [32.416667], [27.5], [23.5], [19.666667], [25.333333], [28],
+  [31.75], [28.5], [22.416667], [24.75], [32.75], [23.666667], [25], [24.25], [25.833333],
+  [29.666667], [33.166667], [33], [20.75], [20.083333], [23.916667], [22.5], [28.416667], [32],
+  [26.416667], [24.166667], [22.166667], [23.25], [29.416667], [27.5], [27.75], [25.666667], [17.5],
+  [22.166667], [21.666667], [22.333333], [23.833333], [28.416667], [27.833333], [25.583333],
+  [29.916667], [25.333333], [22.916667], [23.75], [23.25], [23.666667], [31], [26.916667],
+  [30.833333], [24.666667], [33.833333], [34], [35.25], [21.666667], [27.083333], [24.916667],
+  [25.833333], [23.416667], [27], [22.583333], [32.916667], [35.833333], [25.416667], [23.25],
+  [23.583333], [32.166667], [22.083333], [32.916667], [35.583333], [28.166667], [28.75], [25.083333],
+  [32.166667], [26.166667], [30.166667], [27.083333], [25.083333], [36.666667], [27.833333],
+  [31.833333], [27.583333], [31.583333], [20.333333], [24.416667], [30.666667], [27.833333],
+  [27.333333], [22.583333], [30.833333], [29.5], [22.666667], [21.583333], [23], [27.666667],
+  [23.333333], [25.75], [31.833333], [30], [22.5], [28.333333], [24.666667], [33.583333],
+  [26.666667], [31.333333], [32.25], [33.333333], [23.583333], [35], [27.416667], [25.5],
+  [24.666667], [21.416667], [37.416667], [23.333333], [23], [21.416667], [28.166667], [23.833333],
+  [23.5], [32.75], [18.083333], [34.666667], [20], [34.666667], [24.916667], [31.25], [27.583333],
+  [24], [27.25], [26.583333], [27.25], [26.5], [22.166667], [24.666667], [31.75], [23.5], [24.5],
+  [28.583333], [27], [26], [23.666667], [27.833333], [33.416667], [24.833333], [19.5], [29.333333],
+  [35.75]]
+};
+
+// Call Code to Build the system ///////////////////////////////////////////////////////////////////
+
+var v  = new BrunelVis('visualization');
+v.build(table1);
+
+</script>
+

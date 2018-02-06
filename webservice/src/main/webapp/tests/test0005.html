@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-Equiv="Cache-Control" Content="no-cache">
+	<meta http-Equiv="Pragma" Content="no-cache">
+	<meta http-Equiv="Expires" Content="0">
+	<title>Brunel Output</title>
+	<!--
+		D3 Copyright © 2012, Michael Bostock
+		jQuery Copyright © 2010 by The jQuery Project
+		sumoselect Copyright © 2014 Hemant Negi
+ 	-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min.js" charset="utf-8"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js" charset="utf-8"></script>
+	<script src="https://brunelvis.org/js/brunel.2.6.min.js" charset="utf-8"></script>
+
+	<link rel="stylesheet" type="text/css" href="https://brunelvis.org/js/brunel.2.6.css" charset="utf-8"/>
+
+</head>
+<body style="margin:0">
+<h2 style='font-size:16px;text-align:center;margin:2px;color:green'><span style='font-style:italic;color:#aaaaaa'>0005</span>&nbsp;&nbsp;&nbsp;&nbsp;x(Country) y(Brand) color(Rating)</h2>
+<p style='color:green;margin:2px;margin-bottom:6px;font-size:10px'>Pass: </p>
+<svg id="visualization" width="480" height="330"></svg>
+</body>
+<script>
+function  BrunelVis(visId) {
+  "use strict";                                                                       // strict mode
+  var datasets = [],                                      // array of datasets for the original data
+      pre = function(d, i) { return d },                         // default pre-process does nothing
+      post = function(d, i) { return d },                       // default post-process does nothing
+      transitionTime = 200,                                        // transition time for animations
+      charts = [],                                                       // the charts in the system
+      vis = d3.select('#' + visId).attr('class', 'brunel');                     // the SVG container
+
+  BrunelD3.addDefinitions(vis);                                   // ensure standard symbols present
+
+  // Define chart #1 in the visualization //////////////////////////////////////////////////////////
+
+  charts[0] = function(parentNode, filterRows) {
+    var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0, 1, 1, 5, 114, 76, 64),
+      elements = [];                                              // array of elements in this chart
+
+    // Define groups for the chart parts ///////////////////////////////////////////////////////////
+
+    var chart =  vis.append('g').attr('class', 'chart1')
+      .attr('transform','translate(' + geom.chart_left + ',' + geom.chart_top + ')');
+    var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay');
+    var zoom = d3.zoom().scaleExtent([1/3,3]);
+    var zoomNode = overlay.append('rect').attr('class', 'overlay')
+      .attr('x', geom.inner_left).attr('y', geom.inner_top)
+      .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
+      .style('cursor', 'default')
+      .node();
+    zoomNode.__zoom = d3.zoomIdentity;
+    chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
+    var interior = chart.append('g').attr('class', 'interior zoomNone')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_inner)');
+    interior.append('rect').attr('class', 'inner').attr('width', geom.inner_width).attr('height', geom.inner_height);
+    var gridGroup = interior.append('g').attr('class', 'grid');
+    var axes = chart.append('g').attr('class', 'axis')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')');
+    var legends = chart.append('g').attr('class', 'legend')
+      .attr('transform','translate(' + (geom.chart_right-geom.chart_left - 3) + ',' + 0 + ')')
+      .attr('role', 'region').attr('aria-label', 'Legend');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_inner').append('rect')
+      .attr('x', 0).attr('y', 0)
+      .attr('width', geom.inner_rawWidth+1).attr('height', geom.inner_rawHeight+1);
+
+    // Scales //////////////////////////////////////////////////////////////////////////////////////
+
+    var scale_x = d3.scalePoint().padding(0.5)
+      .domain(['Canada', 'England', 'France', 'India', 'Ireland', 'Japan', 'Scotland', 'Taiwan', 'USA'])
+      .range([0, geom.inner_width]);
+    var scale_inner = d3.scaleLinear().domain([0,1])
+      .range([-0.5, 0.5]);
+    var scale_y = d3.scalePoint().padding(0.5)
+      .domain(['Yamazaki', 'Woodford Reserve', 'Wolfhound', "Wiser's", 'William Larue Weller', 'William Grant & Sons', 'Wild Turkey', 'Whyte & Mackay', 'Tyrconnell', 'Tweeddale', 'Tullamore', 'Tomatin', 'Tobermory', 'Thomas H. Handy', 'Thirteen Colony', 'The Irishman', 'Texas Crown', 'Templeton', 'Talisker', 'Suntory', 'Stillhouse', 'Springbank', 'Speyburn', 'Smooth Ambler', 'Slane Castle', "Seagram's", 'Sazerac', "Russell's", 'Royal Salute', 'Royal Canadian', "Rowan's Creek", 'Rogue', 'Ridgemont Reserve', 'Rich & Rare', 'Redbreast', 'Rebel Yell', 'Price Edward', 'Powers', 'Pescadores', 'Penderyn', "Parker's Heritage", 'Pappy Van Winkle', 'P & M', 'Origine', 'Old Pulteney', 'Old Parr', 'Old Forester', 'Oban', "Noah's Mill", 'Midleton', 'Middle West', 'Mickey Finn', 'Michael Collins', 'McAdams', "Maker's Mark", 'Macallan', 'Longrow', 'Leopold Bros.', 'Ledaig', 'Laphroaig', 'Lagavulin', 'Knob creek', 'Kingdom', 'Kilbeggan', 'Kellan', 'Kavalan', 'Kansas Spirit', 'Johnnie Walker', 'John L. Sullivan', 'Jim Beam', 'Jefferson', 'Jameson', "Jack Daniel's", 'Isle of Jura', 'Hudson', 'Hood River', 'Highland Park', 'High West', 'Haig', 'Greenore', 'Glenrothes', 'Glenora', 'Glenmorangie', 'Glenlivet', 'Glengoyne', 'Glenfiddich', 'Glendullan', 'Glen Grant', 'Glen Garioch', 'Glen Breton', 'George T. Stagg', 'George Dickel', 'Garrison Brothers', 'Four Roses', 'Forty Creek', 'Feckin', 'Famous Grouse', 'Evan Williams', 'Elmer T Lee', 'Ellington', 'Elijah Craig', 'Early Times', 'Eagle', 'Downslope', 'Delaware Phoenix', 'Deanston', 'Danfield', 'Dalwhinnie', 'Dalmore', 'Crown Royal', 'Corsair', 'Copper Fox', 'Connemara', 'Collingwood', 'Chivas Regal', 'Charter', 'Cedar Ridge', 'Catoctin Creek', 'Cardhu', 'Caol Ila', 'Canadian Mist', 'Canadian LTD', 'Canadian Hunter', 'Canadian Club', 'Bushmills', 'Bunnahabhain', 'Bulleit', 'Buffalo Trace', 'Buchanan', 'Breckenridge', 'Bowmore', 'Bowman', "Booker's", 'Blanton', 'Black Velvet', 'Black Maple Hill', 'Benchmark', "Bell's", 'Basil Hayden', 'Barton', 'Balvenie', 'Balcones', 'Balblair', 'Auchentoshan', 'Ardmore', 'Ardbeg', 'Ancnoc', 'Amrut', 'Abraham Bowman', 'Aberlour', 'Aberfeldy', 'A.H. Hirsch', '8 Seconds'])
+      .range([geom.inner_height, 0]);
+    var base_scales = [scale_x, scale_y];                           // untransformed original scales
+
+    // Axes ////////////////////////////////////////////////////////////////////////////////////////
+
+    axes.append('g').attr('class', 'x axis')
+      .attr('transform','translate(0,' + geom.inner_rawHeight + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_haxis)')
+      .attr('role', 'region').attr('aria-label', 'Horizontal Axis');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_haxis').append('polyline')
+      .attr('points', '-1,-1000, -1,-1 -5,5, -1000,5, -100,1000, 10000,1000 10000,-1000');
+    axes.select('g.axis.x').append('text').attr('class', 'title').text('Country').style('text-anchor', 'middle')
+      .attr('x',geom.inner_rawWidth/2)
+      .attr('y', geom.inner_bottom - 2.0).attr('dy','-0.27em');
+    axes.append('g').attr('class', 'y axis')
+      .attr('clip-path', 'url(#clip_visualization_chart1_vaxis)')
+      .attr('role', 'region').attr('aria-label', 'Vertical Axis');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_vaxis').append('polyline')
+      .attr('points', '-1000,-10000, 10000,-10000, 10000,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+5) + ', -1000,' + (geom.inner_rawHeight+5) );
+    axes.select('g.axis.y').append('text').attr('class', 'title').text('Brand').style('text-anchor', 'middle')
+      .attr('x',-geom.inner_rawHeight/2)
+      .attr('y', 4-geom.inner_left).attr('dy', '0.7em').attr('transform', 'rotate(270)');
+
+    var axis_bottom = d3.axisBottom(scale_x).ticks(Math.min(10, Math.round(geom.inner_rawWidth / 90.0)));
+    var axis_left = d3.axisLeft(scale_y).ticks(Math.min(10, Math.round(geom.inner_rawHeight / 20)));
+
+    function buildAxes(time) {
+      axis_bottom.tickValues(BrunelD3.filterTicks(scale_x))
+      var axis_x = axes.select('g.axis.x');
+      BrunelD3.transition(axis_x, time).call(axis_bottom.scale(scale_x)).selectAll('.tick text')
+        .attr('transform', function() {
+          var v = this.getComputedTextLength() / Math.sqrt(2)/2;
+          return 'translate(-' + (v+6) + ',' + v + ') rotate(-45)'
+      });
+      axis_left.tickValues(BrunelD3.filterTicks(scale_y))
+      var axis_y = axes.select('g.axis.y');
+      BrunelD3.transition(axis_y, time).call(axis_left.scale(scale_y));
+    }
+    zoom.on('zoom', function(t, time) {
+        t = t ||BrunelD3.restrictZoom(d3.event.transform, geom, this);
+        zoomNode.__zoom = t;
+        interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));;
+        build(time || -1);
+    });
+
+    // Define element #1 ///////////////////////////////////////////////////////////////////////////
+
+    elements[0] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element1')
+        .attr('role', 'region').attr('aria-label', 'Country, Brand as points, also showing Rating'),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0);
+        processed = post(processed, 0);
+        var f0 = processed.field('Country'),
+          f1 = processed.field('Brand'),
+          f2 = processed.field('Rating'),
+          f3 = processed.field('#row'),
+          f4 = processed.field('#selection');
+        var keyFunc = function(d) { return f3.value(d) };
+        data = {
+          Country:      function(d) { return f0.value(d.row) },
+          Brand:        function(d) { return f1.value(d.row) },
+          Rating:       function(d) { return f2.value(d.row) },
+          $row:         function(d) { return f3.value(d.row) },
+          $selection:   function(d) { return f4.value(d.row) },
+          Country_f:    function(d) { return f0.valueFormatted(d.row) },
+          Brand_f:      function(d) { return f1.valueFormatted(d.row) },
+          Rating_f:     function(d) { return f2.valueFormatted(d.row) },
+          $row_f:       function(d) { return f3.valueFormatted(d.row) },
+          $selection_f: function(d) { return f4.valueFormatted(d.row) },
+          _split:       function(d) { return f2.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+      // Aesthetic Functions
+      var scale_color = d3.scaleLinear().domain([40, 47.5, 55, 62.5, 70, 77.5, 85, 92.5, 100])
+        .interpolate(d3.interpolateHcl)
+        .range([ '#045a8d', '#2b8cbe', '#74a9cf', '#bdc9e1', '#f8efe8', '#fef0d9', 
+          '#fdcc8a', '#fc8d59', '#e34a33']);
+      var color = function(d) { var c = data.Rating(d); return c!=null ? scale_color(c) : null };
+      legends._legend = legends._legend || { title: ['Rating'], 
+        ticks: [100, 90, 80, 70, 60, 50, 40]};
+      legends._legend.color = scale_color;
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[0];
+        var w = 0.9 * Math.abs(scale_x(scale_x.domain()[1]) - scale_x(scale_x.domain()[0]) );
+        var x = function(d) { return scale_x(data.Country(d))};
+        var h = 0.9 * Math.abs(scale_y(scale_y.domain()[1]) - scale_y(scale_y.domain()[0]) );
+        var y = function(d) { return scale_y(data.Brand(d))};
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element point filled')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+            .each(function(d) {
+              var width = w, left = x(d) - width/2, 
+              height = h, top = y(d) - height/2;
+              this.r = {x:left, y:top, w:width, h:height};
+            })
+            .attr('x', function(d) { return this.r.x })
+            .attr('y', function(d) { return this.r.y + this.r.h/2 })
+            .attr('width', function(d) { return this.r.w })
+            .attr('height',0)
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .each(function(d) {
+              var width = w, left = x(d) - width/2, 
+              height = h, top = y(d) - height/2;
+              this.r = {x:left, y:top, w:width, h:height};
+            })
+            .attr('x', function(d) { return this.r.x })
+            .attr('y', function(d) { return this.r.y })
+            .attr('width', function(d) { return this.r.w })
+            .attr('height', function(d) { return this.r.h })
+            .filter(BrunelD3.hasData)                     // following only performed for data items
+            .style('fill', color);
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
+        var added = selection.enter().append('rect');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['Country'],
+          y:            ['Brand'],
+          key:          ['#row'],
+          color:        ['Rating']
+        }
+      };
+    }();
+
+    function build(time, noData) {
+      var first = elements[0].data() == null;
+      if (first) time = 0;                                           // no transition for first call
+      buildAxes(time);
+      if ((first || time > -1) && !noData) {
+        elements[0].makeData();
+        BrunelD3.addLegend(legends, legends._legend);
+      }
+      elements[0].build(time);
+    }
+
+    // Expose the following components of the chart
+    return {
+      elements : elements,
+      interior : interior,
+      scales: {x:scale_x, y:scale_y},
+      zoom: function(params, time) {
+          if (params) zoom.on('zoom').call(zoomNode, params, time);
+          return d3.zoomTransform(zoomNode);
+      },
+      build : build
+    };
+    }();
+
+  function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }
+  function updateAll(time) { charts.forEach(function(x) { if (x.build) x.build(time || 0)}) }
+  function buildAll() {
+    for (var i=0;i<arguments.length;i++) setData(arguments[i], i);
+    updateAll(transitionTime);
+  }
+
+  return {
+    dataPreProcess:     function(f) { if (f) pre = f; return pre },
+    dataPostProcess:    function(f) { if (f) post = f; return post },
+    data:               function(d,i) { if (d) setData(d,i); return datasets[i||0] },
+    visId:              visId,
+    build:              buildAll,
+    rebuild:            updateAll,
+    charts:             charts
+  }
+}
+
+// Data Tables /////////////////////////////////////////////////////////////////////////////////////
+
+var table1 = {
+   summarized: false,
+   names: ['Country', 'Brand', 'Rating'], 
+   options: ['string', 'string', 'numeric'], 
+   rows: [['Canada', 'Canadian Hunter', 40], ['Canada', 'Canadian LTD', 43],
+  ['Ireland', 'Kellan', 47], ['Canada', 'Rich & Rare', 47], ['Canada', 'Canadian Mist', 48],
+  ['Ireland', 'Slane Castle', 50], ['Canada', 'Canadian Club', 53], ['Ireland', 'Origine', 54],
+  ['USA', "Jack Daniel's", 54], ['Canada', 'Ellington', 54], ['Canada', 'Canadian Club', 56],
+  ['Canada', 'Hood River', 56], ['USA', 'Jim Beam', 57], ['USA', 'Catoctin Creek', 57],
+  ['Scotland', 'Johnnie Walker', 58], ['Canada', 'Danfield', 60], ['Canada', "Wiser's", 60],
+  ['Canada', '8 Seconds', 64], ['Ireland', 'Feckin', 64], ['Ireland', 'Bushmills', 65],
+  ['Ireland', 'Jameson', 65], ['USA', 'Templeton', 67], ['Scotland', 'Dalwhinnie', 67],
+  ['Canada', 'Forty Creek', 67], ['Canada', "Wiser's", 67], ['Canada', 'Black Velvet', 67],
+  ['Canada', 'Crown Royal', 68], ['USA', 'Benchmark', 68], ['Canada', 'Forty Creek', 69],
+  ['Canada', 'Canadian Club', 69], ['USA', 'Jim Beam', 69], ['USA', 'Sazerac', 69],
+  ['Scotland', 'Famous Grouse', 69], ['Scotland', 'Johnnie Walker', 70],
+  ['Ireland', 'Tullamore', 70], ['Canada', 'Canadian Club', 71], ['Ireland', 'Greenore', 71],
+  ['Scotland', 'Ardmore', 72], ['Ireland', 'Jameson', 73], ['Ireland', 'Connemara', 73],
+  ['Ireland', 'Bushmills', 74], ['Ireland', "Wiser's", 74], ['Canada', "Wiser's", 74],
+  ['Scotland', 'Whyte & Mackay', 74], ['Canada', 'Glen Breton', 75], ['USA', 'Copper Fox', 76],
+  ['USA', 'Jim Beam', 76], ['India', 'Amrut', 76], ['India', 'Amrut', 76],
+  ['USA', 'Early Times', 76], ['Scotland', 'Johnnie Walker', 76], ['Canada', 'Glenora', 77],
+  ['Ireland', 'Michael Collins', 77], ['England', 'Penderyn', 77], ['Scotland', 'Balvenie', 77],
+  ['USA', 'Wild Turkey', 77], ['USA', 'Sazerac', 78], ['Scotland', 'William Grant & Sons', 78],
+  ['Scotland', 'Johnnie Walker', 78], ['Ireland', 'Connemara', 78], ['Ireland', 'Bushmills', 79],
+  ['USA', 'Hudson', 79], ['USA', 'George Dickel', 79], ['Canada', 'Royal Canadian', 79],
+  ['Canada', 'Canadian Mist', 80], ['Scotland', 'Isle of Jura', 80], ['USA', 'Evan Williams', 80],
+  ['USA', "Booker's", 80], ['India', 'Amrut', 80], ['USA', 'Basil Hayden', 80],
+  ['USA', 'Four Roses', 81], ['USA', 'Hudson', 81], ['Scotland', 'Balblair', 81],
+  ['Ireland', 'Barton', 81], ['USA', 'Corsair', 81], ['Taiwan', 'Kavalan', 81],
+  ['Ireland', 'Mickey Finn', 81], ['France', 'P & M', 81], ['France', 'P & M', 81],
+  ['Canada', 'Price Edward', 81], ['USA', 'Jim Beam', 81], ['USA', "Seagram's", 81],
+  ['Ireland', 'Tullamore', 81], ['Ireland', 'Wolfhound', 81], ['USA', 'Wild Turkey', 81],
+  ['Ireland', 'The Irishman', 81], ['Canada', 'Collingwood', 81], ['USA', 'Old Forester', 81],
+  ['USA', 'Buffalo Trace', 82], ['Taiwan', 'Kavalan', 82], ['Taiwan', 'Kavalan', 82],
+  ['Scotland', 'Old Parr', 82], ['USA', 'Charter', 82], ['USA', 'George Dickel', 82],
+  ['USA', 'High West', 82], ['Scotland', 'Glenrothes', 82], ['USA', 'Ridgemont Reserve', 83],
+  ['Ireland', 'Tyrconnell', 83], ['Scotland', 'Dalmore', 83], ['USA', 'Hudson', 83],
+  ['Canada', 'Forty Creek', 83], ['USA', "Maker's Mark", 83], ['Scotland', 'Oban', 83],
+  ['Scotland', 'Laphroaig', 83], ['Ireland', 'Powers', 84], ['Scotland', 'Laphroaig', 84],
+  ['Scotland', 'Johnnie Walker', 84], ['Ireland', 'Kilbeggan', 84], ['Ireland', 'Tullamore', 84],
+  ['Scotland', 'Balvenie', 84], ['USA', 'High West', 85], ['Scotland', 'Lagavulin', 85],
+  ['Scotland', 'Auchentoshan', 85], ['India', 'Amrut', 85], ['USA', 'Black Maple Hill', 85],
+  ['Ireland', 'Bushmills', 85], ['Scotland', 'Springbank', 85], ['USA', 'Cedar Ridge', 85],
+  ['Ireland', 'Jameson', 86], ['Ireland', 'John L. Sullivan', 86], ['Ireland', 'Tullamore', 86],
+  ['Scotland', 'Caol Ila', 86], ['Japan', 'Yamazaki', 86], ['USA', 'Jim Beam', 86],
+  ['USA', 'Buffalo Trace', 86], ['Scotland', 'Old Parr', 86], ['Scotland', 'Balvenie', 86],
+  ['USA', 'George Dickel', 87], ['Ireland', 'Jameson', 87], ['USA', 'Elmer T Lee', 87],
+  ['Ireland', 'Tyrconnell', 87], ['Scotland', 'Ledaig', 87], ['USA', 'Blanton', 87],
+  ['USA', 'Four Roses', 87], ['USA', 'Bowman', 87], ['USA', "Russell's", 88],
+  ['USA', 'Balcones', 88], ['Ireland', 'Connemara', 88], ['USA', 'Downslope', 88],
+  ['Canada', 'Forty Creek', 88], ['Ireland', 'Greenore', 88], ['USA', 'Hudson', 88],
+  ['USA', 'Kansas Spirit', 88], ['Taiwan', 'Kavalan', 88], ['Taiwan', 'Kavalan', 88],
+  ['USA', 'Leopold Bros.', 88], ['USA', 'Stillhouse', 88], ['USA', 'Middle West', 88],
+  ['Taiwan', 'Pescadores', 88], ['USA', 'Rogue', 88], ['USA', 'Smooth Ambler', 88],
+  ['Scotland', 'Highland Park', 88], ['Scotland', 'Macallan', 88], ['Scotland', 'Longrow', 88],
+  ['USA', 'Knob creek', 88], ['USA', 'Breckenridge', 88], ['USA', 'Garrison Brothers', 88],
+  ['USA', 'Old Forester', 88], ['Scotland', 'Balvenie', 88], ['Scotland', 'Balvenie', 88],
+  ['USA', 'Bulleit', 88], ['USA', 'Woodford Reserve', 88], ['USA', 'Old Forester', 88],
+  ['USA', 'Wild Turkey', 88], ['Scotland', 'Aberlour', 89], ['Scotland', 'Glendullan', 89],
+  ['Scotland', 'Whyte & Mackay', 89], ['Scotland', 'Dalmore', 89], ['Scotland', 'Chivas Regal', 89],
+  ['USA', 'Jefferson', 89], ['Scotland', 'Glenlivet', 89], ['Ireland', 'Jameson', 90],
+  ['Scotland', 'Highland Park', 90], ['Scotland', 'Buchanan', 90], ['Scotland', 'Aberlour', 90],
+  ['Scotland', 'Glenfiddich', 90], ['Scotland', 'Macallan', 90], ['Japan', 'Suntory', 90],
+  ['USA', 'Wild Turkey', 90], ['Scotland', 'Glenlivet', 90], ['Scotland', 'Glenfiddich', 90],
+  ['USA', 'Jefferson', 90], ['Scotland', 'Speyburn', 90], ['Ireland', 'Bushmills', 91],
+  ['Ireland', 'Midleton', 91], ['Scotland', 'Isle of Jura', 91], ['Scotland', 'Glenrothes', 91],
+  ['Ireland', 'Bushmills', 91], ['India', 'Amrut', 91], ['Ireland', 'Redbreast', 92],
+  ['Scotland', 'Old Pulteney', 92], ['Canada', 'Forty Creek', 92], ['Scotland', 'Old Pulteney', 92],
+  ['Scotland', 'Deanston', 92], ['Scotland', 'Glenlivet', 92], ['USA', 'Eagle', 92],
+  ['Scotland', 'Balblair', 92], ['Scotland', 'Laphroaig', 92], ['Ireland', 'Michael Collins', 93],
+  ['Scotland', 'Glenfiddich', 93], ['USA', 'Wild Turkey', 93], ['USA', 'Four Roses', 93],
+  ['Scotland', 'Tobermory', 94], ['Scotland', 'Glenmorangie', 94], ['Scotland', 'Ancnoc', 94],
+  ['USA', 'Pappy Van Winkle', 94], ['USA', 'Black Maple Hill', 94], ['USA', 'Abraham Bowman', 94],
+  ['Scotland', 'Isle of Jura', 94], ['Scotland', 'Royal Salute', 94], ['Scotland', 'Ardbeg', 94],
+  ['Scotland', 'Aberfeldy', 94], ['Scotland', 'Talisker', 94], ['Scotland', 'Highland Park', 94],
+  ['Scotland', 'Bowmore', 94], ['Scotland', 'Bowmore', 94], ['USA', 'Wild Turkey', 94],
+  ['Scotland', 'Old Pulteney', 95], ['Scotland', 'Glen Grant', 95], ['Scotland', 'Glenmorangie', 95],
+  ['Scotland', 'Macallan', 96], ['USA', 'George T. Stagg', 96], ['USA', "Parker's Heritage", 96],
+  ['USA', "Rowan's Creek", 96], ['USA', 'Woodford Reserve', 96], ['Scotland', 'Lagavulin', 96],
+  ['Scotland', 'Highland Park', 96], ['Taiwan', 'Kavalan', 96], ['USA', 'Delaware Phoenix', 96],
+  ['USA', 'Thirteen Colony', 96], ['Scotland', 'Glenfiddich', 96], ['Scotland', 'Oban', 96],
+  ['Scotland', 'Old Pulteney', 96], ['Scotland', 'Tomatin', 96], ['Scotland', 'Glengoyne', 96],
+  ['Scotland', 'Aberfeldy', 96], ['Scotland', 'Buchanan', 96], ['Scotland', 'Bunnahabhain', 96],
+  ['Scotland', 'Buchanan', 96], ['Scotland', 'Lagavulin', 96], ['Scotland', 'Tomatin', 96],
+  ['Scotland', 'Glenmorangie', 96], ['Scotland', 'Haig', 96], ['Scotland', 'Kingdom', 96],
+  ['USA', 'William Larue Weller', 96], ['Ireland', 'Redbreast', 96], ['Scotland', 'Glenlivet', 96],
+  ['Scotland', 'Chivas Regal', 96], ['USA', 'Hudson', 96], ['Scotland', 'Glenlivet', 97],
+  ['Ireland', 'Powers', 99], ['Japan', 'Suntory', 99], ['Scotland', 'Glenmorangie', 99],
+  ['Scotland', 'Glenmorangie', 99], ['Scotland', 'Bunnahabhain', 99], ['Scotland', 'Laphroaig', 99],
+  ['Scotland', 'Cardhu', 99], ['Scotland', 'Aberlour', 99], ['Scotland', 'Balvenie', 99],
+  ['Scotland', 'Caol Ila', 99], ['Scotland', 'Kingdom', 99], ['Scotland', 'Balvenie', 99],
+  ['Scotland', 'Glen Garioch', 99], ['Scotland', 'Bowmore', 99], ['USA', 'Rebel Yell', 99],
+  ['USA', 'Pappy Van Winkle', 99], ['USA', 'Thomas H. Handy', 99], ['Scotland', 'Ardbeg', 99],
+  ['USA', "Noah's Mill", 99], ['USA', "Parker's Heritage", 99], ['Ireland', 'Tyrconnell', 100],
+  ['Scotland', 'Dalmore', 100], ['Japan', 'Suntory', null], ['Canada', 'McAdams', null],
+  ['Canada', 'Texas Crown', null], ['Scotland', 'Bunnahabhain', null],
+  ['Scotland', 'Glenlivet', null], ['Scotland', "Bell's", null], ['Scotland', 'Glengoyne', null],
+  ['Scotland', 'Tweeddale', null], ['USA', 'A.H. Hirsch', null], ['USA', 'Elijah Craig', null],
+  ['Taiwan', 'Kavalan', null]]
+};
+
+// Call Code to Build the system ///////////////////////////////////////////////////////////////////
+
+var v  = new BrunelVis('visualization');
+v.build(table1);
+
+</script>
+

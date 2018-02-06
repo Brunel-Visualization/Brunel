@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-Equiv="Cache-Control" Content="no-cache">
+	<meta http-Equiv="Pragma" Content="no-cache">
+	<meta http-Equiv="Expires" Content="0">
+	<title>Brunel Output</title>
+	<!--
+		D3 Copyright © 2012, Michael Bostock
+		jQuery Copyright © 2010 by The jQuery Project
+		sumoselect Copyright © 2014 Hemant Negi
+ 	-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min.js" charset="utf-8"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js" charset="utf-8"></script>
+	<script src="https://brunelvis.org/js/brunel.2.6.min.js" charset="utf-8"></script>
+
+	<link rel="stylesheet" type="text/css" href="https://brunelvis.org/js/brunel.2.6.css" charset="utf-8"/>
+
+</head>
+<body style="margin:0">
+<h2 style='font-size:16px;text-align:center;margin:2px;color:green'><span style='font-style:italic;color:#aaaaaa'>0072</span>&nbsp;&nbsp;&nbsp;&nbsp;x(#row) y('reds') color(#row:reds) axes(y) legends(none) + x(#row) y('red') color(#row:red) legends(...</h2>
+<p style='color:green;margin:2px;margin-bottom:6px;font-size:10px'>Pass: </p>
+<svg id="visualization" width="480" height="330"></svg>
+</body>
+<script>
+function  BrunelVis(visId) {
+  "use strict";                                                                       // strict mode
+  var datasets = [],                                      // array of datasets for the original data
+      pre = function(d, i) { return d },                         // default pre-process does nothing
+      post = function(d, i) { return d },                       // default post-process does nothing
+      transitionTime = 200,                                        // transition time for animations
+      charts = [],                                                       // the charts in the system
+      vis = d3.select('#' + visId).attr('class', 'brunel');                     // the SVG container
+
+  BrunelD3.addDefinitions(vis);                                   // ensure standard symbols present
+
+  // Define chart #1 in the visualization //////////////////////////////////////////////////////////
+
+  charts[0] = function(parentNode, filterRows) {
+    var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0, 1, 1, 5, 103, 5, 0),
+      elements = [];                                              // array of elements in this chart
+
+    // Define groups for the chart parts ///////////////////////////////////////////////////////////
+
+    var chart =  vis.append('g').attr('class', 'chart1')
+      .attr('role', 'region').attr('aria-label', 'First chart')
+      .attr('transform','translate(' + geom.chart_left + ',' + geom.chart_top + ')');
+    var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay');
+    var zoom = d3.zoom().scaleExtent([1/3,3]);
+    var zoomNode = overlay.append('rect').attr('class', 'overlay')
+      .attr('x', geom.inner_left).attr('y', geom.inner_top)
+      .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
+      .style('cursor', 'move').call(zoom)
+      .node();
+    zoomNode.__zoom = d3.zoomIdentity;
+    chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
+    var interior = chart.append('g').attr('class', 'interior zoomNone')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_inner)');
+    interior.append('rect').attr('class', 'inner').attr('width', geom.inner_width).attr('height', geom.inner_height);
+    var gridGroup = interior.append('g').attr('class', 'grid');
+    var axes = chart.append('g').attr('class', 'axis')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_inner').append('rect')
+      .attr('x', 0).attr('y', 0)
+      .attr('width', geom.inner_rawWidth+1).attr('height', geom.inner_rawHeight+1);
+
+    // Scales //////////////////////////////////////////////////////////////////////////////////////
+
+    var scale_x = d3.scaleLinear().domain([0, 8.0000008])
+      .range([0, geom.inner_width]);
+    var scale_inner = d3.scaleLinear().domain([0,1])
+      .range([-0.5, 0.5]);
+    var scale_y = d3.scalePoint().padding(0.5)
+      .domain(['nominal', 'blue-black-red', 'blue-none-red', 'blue-red', 'blues-reds', 'red', 'reds'])
+      .range([geom.inner_height, 0]);
+    var base_scales = [scale_x, scale_y];                           // untransformed original scales
+
+    // Axes ////////////////////////////////////////////////////////////////////////////////////////
+
+    axes.append('g').attr('class', 'y axis')
+      .attr('clip-path', 'url(#clip_visualization_chart1_vaxis)')
+      .attr('role', 'region').attr('aria-label', 'Vertical Axis');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_vaxis').append('polyline')
+      .attr('points', '-1000,-10000, 10000,-10000, 10000,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+5) + ', -1000,' + (geom.inner_rawHeight+5) );
+
+    var axis_left = d3.axisLeft(scale_y).ticks(Math.min(10, Math.round(geom.inner_rawHeight / 20)));
+
+    function buildAxes(time) {
+      axis_left.tickValues(BrunelD3.filterTicks(scale_y))
+      var axis_y = axes.select('g.axis.y');
+      BrunelD3.transition(axis_y, time).call(axis_left.scale(scale_y));
+    }
+    zoom.on('zoom', function(t, time) {
+        t = t ||BrunelD3.restrictZoom(d3.event.transform, geom, this);
+        scale_x = t.rescaleX(base_scales[0]);
+        zoomNode.__zoom = t;
+        interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));;
+        build(time || -1);
+    });
+
+    // Define element #1 ///////////////////////////////////////////////////////////////////////////
+
+    elements[0] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element1')
+        .attr('role', 'region').attr('aria-label', "row, 'reds' as points, also showing row"),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .addConstants("'reds'");
+        processed = post(processed, 0);
+        var f0 = processed.field('#row'),
+          f1 = processed.field("'reds'"),
+          f2 = processed.field('#selection');
+        var keyFunc = function(d) { return f0.value(d) };
+        data = {
+          $row:         function(d) { return f0.value(d.row) },
+          _reds_:       function(d) { return f1.value(d.row) },
+          $selection:   function(d) { return f2.value(d.row) },
+          $row_f:       function(d) { return f0.valueFormatted(d.row) },
+          _reds__f:     function(d) { return f1.valueFormatted(d.row) },
+          $selection_f: function(d) { return f2.valueFormatted(d.row) },
+          _split:       function(d) { return f0.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+      // Aesthetic Functions
+      var scale_color = d3.scaleLinear().domain([1, 2.5, 4, 5.5, 7])
+        .interpolate(d3.interpolateHcl)
+        .range([ '#fef0d9', '#fdcc8a', '#fc8d59', '#e34a33', '#b30000']);
+      var color = function(d) { var c = data.$row(d); return c!=null ? scale_color(c) : null };
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[0];
+        var w = Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] );
+        var x = function(d) { return scale_x(data.$row(d))};
+        var h = 0.9 * geom.inner_height;
+        var y = function(d) { return scale_y(data._reds_(d))};
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element point filled')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+            .attr('cx',function(d) { return scale_x(data.$row(d))})
+            .attr('cy',function(d) { return scale_y(data._reds_(d))})
+            .attr('r',0)
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('cx',function(d) { return scale_x(data.$row(d))})
+            .attr('cy',function(d) { return scale_y(data._reds_(d))})
+            .attr('r',Math.min(Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] ), 0.9 * geom.inner_height) / 2)
+            .filter(BrunelD3.hasData)                     // following only performed for data items
+            .style('fill', color);
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
+        var added = selection.enter().append('circle');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['#row'],
+          y:            ["'reds'"],
+          key:          ['#row'],
+          color:        ['#row']
+        }
+      };
+    }();
+
+    // Define element #2 ///////////////////////////////////////////////////////////////////////////
+
+    elements[1] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element2')
+        .attr('role', 'region').attr('aria-label', "row, 'red' as points, also showing row"),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .addConstants("'red'");
+        processed = post(processed, 0);
+        var f0 = processed.field('#row'),
+          f1 = processed.field("'red'"),
+          f2 = processed.field('#selection');
+        var keyFunc = function(d) { return f0.value(d) };
+        data = {
+          $row:         function(d) { return f0.value(d.row) },
+          _red_:        function(d) { return f1.value(d.row) },
+          $selection:   function(d) { return f2.value(d.row) },
+          $row_f:       function(d) { return f0.valueFormatted(d.row) },
+          _red__f:      function(d) { return f1.valueFormatted(d.row) },
+          $selection_f: function(d) { return f2.valueFormatted(d.row) },
+          _split:       function(d) { return f0.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+      // Aesthetic Functions
+      var scale_color = d3.scaleLinear().domain([1, 1.6666667, 2.3333333, 3, 3.6666667, 4.3333333, 5, 5.6666667, 6.3333333, 7])
+        .interpolate(d3.interpolateHcl)
+        .range([ '#FFFFFF', '#FFE3E3', '#FFC6C6', '#FFAAAA', '#FF8E8E', '#FF7171', 
+          '#FF5555', '#FF3939', '#FF1C1C', '#FF0000']);
+      var color = function(d) { var c = data.$row(d); return c!=null ? scale_color(c) : null };
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[1];
+        var w = Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] );
+        var x = function(d) { return scale_x(data.$row(d))};
+        var h = 0.9 * geom.inner_height;
+        var y = function(d) { return scale_y(data._red_(d))};
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element point filled')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+            .attr('cx',function(d) { return scale_x(data.$row(d))})
+            .attr('cy',function(d) { return scale_y(data._red_(d))})
+            .attr('r',0)
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('cx',function(d) { return scale_x(data.$row(d))})
+            .attr('cy',function(d) { return scale_y(data._red_(d))})
+            .attr('r',Math.min(Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] ), 0.9 * geom.inner_height) / 2)
+            .filter(BrunelD3.hasData)                     // following only performed for data items
+            .style('fill', color);
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
+        var added = selection.enter().append('circle');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['#row'],
+          y:            ["'red'"],
+          key:          ['#row'],
+          color:        ['#row']
+        }
+      };
+    }();
+
+    // Define element #3 ///////////////////////////////////////////////////////////////////////////
+
+    elements[2] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element3')
+        .attr('role', 'region').attr('aria-label', "row, 'blues-reds' as points, also showing row"),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .addConstants("'blues-reds'");
+        processed = post(processed, 0);
+        var f0 = processed.field('#row'),
+          f1 = processed.field("'blues-reds'"),
+          f2 = processed.field('#selection');
+        var keyFunc = function(d) { return f0.value(d) };
+        data = {
+          $row:         function(d) { return f0.value(d.row) },
+          _blues_reds_: function(d) { return f1.value(d.row) },
+          $selection:   function(d) { return f2.value(d.row) },
+          $row_f:       function(d) { return f0.valueFormatted(d.row) },
+          _blues_reds__f:function(d) { return f1.valueFormatted(d.row) },
+          $selection_f: function(d) { return f2.valueFormatted(d.row) },
+          _split:       function(d) { return f0.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+      // Aesthetic Functions
+      var scale_color = d3.scaleLinear().domain([1, 1.75, 2.5, 3.25, 4, 4.75, 5.5, 6.25, 7])
+        .interpolate(d3.interpolateHcl)
+        .range([ '#045a8d', '#2b8cbe', '#74a9cf', '#bdc9e1', '#f8efe8', '#fef0d9', 
+          '#fdcc8a', '#fc8d59', '#e34a33']);
+      var color = function(d) { var c = data.$row(d); return c!=null ? scale_color(c) : null };
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[2];
+        var w = Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] );
+        var x = function(d) { return scale_x(data.$row(d))};
+        var h = 0.9 * geom.inner_height;
+        var y = function(d) { return scale_y(data._blues_reds_(d))};
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element point filled')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+            .attr('cx',function(d) { return scale_x(data.$row(d))})
+            .attr('cy',function(d) { return scale_y(data._blues_reds_(d))})
+            .attr('r',0)
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('cx',function(d) { return scale_x(data.$row(d))})
+            .attr('cy',function(d) { return scale_y(data._blues_reds_(d))})
+            .attr('r',Math.min(Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] ), 0.9 * geom.inner_height) / 2)
+            .filter(BrunelD3.hasData)                     // following only performed for data items
+            .style('fill', color);
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
+        var added = selection.enter().append('circle');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['#row'],
+          y:            ["'blues-reds'"],
+          key:          ['#row'],
+          color:        ['#row']
+        }
+      };
+    }();
+
+    // Define element #4 ///////////////////////////////////////////////////////////////////////////
+
+    elements[3] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element4')
+        .attr('role', 'region').attr('aria-label', "row, 'blue-red' as points, also showing row"),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .addConstants("'blue-red'");
+        processed = post(processed, 0);
+        var f0 = processed.field('#row'),
+          f1 = processed.field("'blue-red'"),
+          f2 = processed.field('#selection');
+        var keyFunc = function(d) { return f0.value(d) };
+        data = {
+          $row:         function(d) { return f0.value(d.row) },
+          _blue_red_:   function(d) { return f1.value(d.row) },
+          $selection:   function(d) { return f2.value(d.row) },
+          $row_f:       function(d) { return f0.valueFormatted(d.row) },
+          _blue_red__f: function(d) { return f1.valueFormatted(d.row) },
+          $selection_f: function(d) { return f2.valueFormatted(d.row) },
+          _split:       function(d) { return f0.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+      // Aesthetic Functions
+      var scale_color = d3.scaleLinear().domain([1, 1.3333333, 1.6666667, 2, 2.3333333, 2.6666667, 3, 3.3333333, 3.6666667, 4, 4.3333333, 4.6666667, 5, 5.3333333, 5.6666667, 6, 6.3333333, 6.6666667, 7])
+        .interpolate(d3.interpolateHcl)
+        .range([ '#0000FF', '#1C1CFF', '#3939FF', '#5555FF', '#7171FF', '#8E8EFF', 
+          '#AAAAFF', '#C6C6FF', '#E3E3FF', '#ffffff', '#FFFFFF', '#FFE3E3', '#FFC6C6', 
+          '#FFAAAA', '#FF8E8E', '#FF7171', '#FF5555', '#FF3939', '#FF1C1C']);
+      var color = function(d) { var c = data.$row(d); return c!=null ? scale_color(c) : null };
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[3];
+        var w = Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] );
+        var x = function(d) { return scale_x(data.$row(d))};
+        var h = 0.9 * geom.inner_height;
+        var y = function(d) { return scale_y(data._blue_red_(d))};
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element point filled')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+            .attr('cx',function(d) { return scale_x(data.$row(d))})
+            .attr('cy',function(d) { return scale_y(data._blue_red_(d))})
+            .attr('r',0)
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('cx',function(d) { return scale_x(data.$row(d))})
+            .attr('cy',function(d) { return scale_y(data._blue_red_(d))})
+            .attr('r',Math.min(Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] ), 0.9 * geom.inner_height) / 2)
+            .filter(BrunelD3.hasData)                     // following only performed for data items
+            .style('fill', color);
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
+        var added = selection.enter().append('circle');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['#row'],
+          y:            ["'blue-red'"],
+          key:          ['#row'],
+          color:        ['#row']
+        }
+      };
+    }();
+
+    // Define element #5 ///////////////////////////////////////////////////////////////////////////
+
+    elements[4] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element5')
+        .attr('role', 'region').attr('aria-label', "row, 'blue-none-red' as points, also showing row"),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .addConstants("'blue-none-red'");
+        processed = post(processed, 0);
+        var f0 = processed.field('#row'),
+          f1 = processed.field("'blue-none-red'"),
+          f2 = processed.field('#selection');
+        var keyFunc = function(d) { return f0.value(d) };
+        data = {
+          $row:         function(d) { return f0.value(d.row) },
+          _blue_none_red_:function(d) { return f1.value(d.row) },
+          $selection:   function(d) { return f2.value(d.row) },
+          $row_f:       function(d) { return f0.valueFormatted(d.row) },
+          _blue_none_red__f:function(d) { return f1.valueFormatted(d.row) },
+          $selection_f: function(d) { return f2.valueFormatted(d.row) },
+          _split:       function(d) { return f0.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+      // Aesthetic Functions
+      var scale_color = d3.scaleLinear().domain([1, 7])
+        .interpolate(d3.interpolateHcl)
+        .range([ '#0000FF', '#FF0000']);
+      var color = function(d) { var c = data.$row(d); return c!=null ? scale_color(c) : null };
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[4];
+        var w = Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] );
+        var x = function(d) { return scale_x(data.$row(d))};
+        var h = 0.9 * geom.inner_height;
+        var y = function(d) { return scale_y(data._blue_none_red_(d))};
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element point filled')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+            .attr('cx',function(d) { return scale_x(data.$row(d))})
+            .attr('cy',function(d) { return scale_y(data._blue_none_red_(d))})
+            .attr('r',0)
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('cx',function(d) { return scale_x(data.$row(d))})
+            .attr('cy',function(d) { return scale_y(data._blue_none_red_(d))})
+            .attr('r',Math.min(Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] ), 0.9 * geom.inner_height) / 2)
+            .filter(BrunelD3.hasData)                     // following only performed for data items
+            .style('fill', color);
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
+        var added = selection.enter().append('circle');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['#row'],
+          y:            ["'blue-none-red'"],
+          key:          ['#row'],
+          color:        ['#row']
+        }
+      };
+    }();
+
+    // Define element #6 ///////////////////////////////////////////////////////////////////////////
+
+    elements[5] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element6')
+        .attr('role', 'region').attr('aria-label', "row, 'blue-black-red' as points, also showing row"),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .addConstants("'blue-black-red'");
+        processed = post(processed, 0);
+        var f0 = processed.field('#row'),
+          f1 = processed.field("'blue-black-red'"),
+          f2 = processed.field('#selection');
+        var keyFunc = function(d) { return f0.value(d) };
+        data = {
+          $row:         function(d) { return f0.value(d.row) },
+          _blue_black_red_:function(d) { return f1.value(d.row) },
+          $selection:   function(d) { return f2.value(d.row) },
+          $row_f:       function(d) { return f0.valueFormatted(d.row) },
+          _blue_black_red__f:function(d) { return f1.valueFormatted(d.row) },
+          $selection_f: function(d) { return f2.valueFormatted(d.row) },
+          _split:       function(d) { return f0.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+      // Aesthetic Functions
+      var scale_color = d3.scaleLinear().domain([1, 4, 7])
+        .interpolate(d3.interpolateHcl)
+        .range([ '#0000FF', '#000000', '#FF0000']);
+      var color = function(d) { var c = data.$row(d); return c!=null ? scale_color(c) : null };
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[5];
+        var w = Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] );
+        var x = function(d) { return scale_x(data.$row(d))};
+        var h = 0.9 * geom.inner_height;
+        var y = function(d) { return scale_y(data._blue_black_red_(d))};
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element point filled')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+            .attr('cx',function(d) { return scale_x(data.$row(d))})
+            .attr('cy',function(d) { return scale_y(data._blue_black_red_(d))})
+            .attr('r',0)
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('cx',function(d) { return scale_x(data.$row(d))})
+            .attr('cy',function(d) { return scale_y(data._blue_black_red_(d))})
+            .attr('r',Math.min(Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] ), 0.9 * geom.inner_height) / 2)
+            .filter(BrunelD3.hasData)                     // following only performed for data items
+            .style('fill', color);
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
+        var added = selection.enter().append('circle');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['#row'],
+          y:            ["'blue-black-red'"],
+          key:          ['#row'],
+          color:        ['#row']
+        }
+      };
+    }();
+
+    // Define element #7 ///////////////////////////////////////////////////////////////////////////
+
+    elements[6] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element7')
+        .attr('role', 'region').attr('aria-label', "row, 'nominal' as points, also showing row"),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .addConstants("'nominal'");
+        processed = post(processed, 0);
+        var f0 = processed.field('#row'),
+          f1 = processed.field("'nominal'"),
+          f2 = processed.field('#selection');
+        var keyFunc = function(d) { return f0.value(d) };
+        data = {
+          $row:         function(d) { return f0.value(d.row) },
+          _nominal_:    function(d) { return f1.value(d.row) },
+          $selection:   function(d) { return f2.value(d.row) },
+          $row_f:       function(d) { return f0.valueFormatted(d.row) },
+          _nominal__f:  function(d) { return f1.valueFormatted(d.row) },
+          $selection_f: function(d) { return f2.valueFormatted(d.row) },
+          _split:       function(d) { return f0.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+      // Aesthetic Functions
+      var scale_color = d3.scaleLinear().domain([1, 1.3333333, 1.6666667, 2, 2.3333333, 2.6666667, 3, 3.3333333, 3.6666667, 4, 4.3333333, 4.6666667, 5, 5.3333333, 5.6666667, 6, 6.3333333, 6.6666667, 7])
+        .interpolate(d3.interpolateHcl)
+        .range([ '#00538A', '#C10020', '#F4C800', '#007D34', '#803E75', '#FF6800', 
+          '#817066', '#FFB300', '#F6768E', '#93AA00', '#53377A', '#FF8E00', '#B32851', 
+          '#CEA262', '#FF7A5C', '#7F180D', '#593315', '#F13A13', '#232C16']);
+      var color = function(d) { var c = data.$row(d); return c!=null ? scale_color(c) : null };
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[6];
+        var w = Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] );
+        var x = function(d) { return scale_x(data.$row(d))};
+        var h = 0.9 * geom.inner_height;
+        var y = function(d) { return scale_y(data._nominal_(d))};
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element point filled')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+            .attr('cx',function(d) { return scale_x(data.$row(d))})
+            .attr('cy',function(d) { return scale_y(data._nominal_(d))})
+            .attr('r',0)
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('cx',function(d) { return scale_x(data.$row(d))})
+            .attr('cy',function(d) { return scale_y(data._nominal_(d))})
+            .attr('r',Math.min(Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] ), 0.9 * geom.inner_height) / 2)
+            .filter(BrunelD3.hasData)                     // following only performed for data items
+            .style('fill', color);
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
+        var added = selection.enter().append('circle');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['#row'],
+          y:            ["'nominal'"],
+          key:          ['#row'],
+          color:        ['#row']
+        }
+      };
+    }();
+
+    function build(time, noData) {
+      var first = elements[0].data() == null;
+      if (first) time = 0;                                           // no transition for first call
+      buildAxes(time);
+      if ((first || time > -1) && !noData) {
+        elements[0].makeData();
+        elements[1].makeData();
+        elements[2].makeData();
+        elements[3].makeData();
+        elements[4].makeData();
+        elements[5].makeData();
+        elements[6].makeData();
+      }
+      elements[0].build(time);
+      elements[1].build(time);
+      elements[2].build(time);
+      elements[3].build(time);
+      elements[4].build(time);
+      elements[5].build(time);
+      elements[6].build(time);
+    }
+
+    // Expose the following components of the chart
+    return {
+      elements : elements,
+      interior : interior,
+      scales: {x:scale_x, y:scale_y},
+      zoom: function(params, time) {
+          if (params) zoom.on('zoom').call(zoomNode, params, time);
+          return d3.zoomTransform(zoomNode);
+      },
+      build : build
+    };
+    }();
+
+  function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }
+  function updateAll(time) { charts.forEach(function(x) { if (x.build) x.build(time || 0)}) }
+  function buildAll() {
+    for (var i=0;i<arguments.length;i++) setData(arguments[i], i);
+    updateAll(transitionTime);
+  }
+
+  return {
+    dataPreProcess:     function(f) { if (f) pre = f; return pre },
+    dataPostProcess:    function(f) { if (f) post = f; return post },
+    data:               function(d,i) { if (d) setData(d,i); return datasets[i||0] },
+    visId:              visId,
+    build:              buildAll,
+    rebuild:            updateAll,
+    charts:             charts
+  }
+}
+
+// Data Tables /////////////////////////////////////////////////////////////////////////////////////
+
+var table1 = {
+   summarized: false,
+   names: ['_dummy_'], 
+   options: ['numeric'], 
+   rows: [[1], [1], [1], [1], [1], [1], [1]]
+};
+
+// Call Code to Build the system ///////////////////////////////////////////////////////////////////
+
+var v  = new BrunelVis('visualization');
+v.build(table1);
+
+</script>
+

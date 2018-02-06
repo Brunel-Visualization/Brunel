@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-Equiv="Cache-Control" Content="no-cache">
+	<meta http-Equiv="Pragma" Content="no-cache">
+	<meta http-Equiv="Expires" Content="0">
+	<title>Brunel Output</title>
+	<!--
+		D3 Copyright © 2012, Michael Bostock
+		jQuery Copyright © 2010 by The jQuery Project
+		sumoselect Copyright © 2014 Hemant Negi
+ 	-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min.js" charset="utf-8"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js" charset="utf-8"></script>
+	<script src="https://brunelvis.org/js/brunel.2.6.min.js" charset="utf-8"></script>
+
+	<link rel="stylesheet" type="text/css" href="https://brunelvis.org/js/brunel.2.6.css" charset="utf-8"/>
+
+</head>
+<body style="margin:0">
+<h2 style='font-size:16px;text-align:center;margin:2px;color:green'><span style='font-style:italic;color:#aaaaaa'>0011</span>&nbsp;&nbsp;&nbsp;&nbsp;line x(Rating) y(Age) color(Category) transpose</h2>
+<p style='color:green;margin:2px;margin-bottom:6px;font-size:10px'>Pass: Note: transposed.</p>
+<svg id="visualization" width="480" height="330"></svg>
+</body>
+<script>
+function  BrunelVis(visId) {
+  "use strict";                                                                       // strict mode
+  var datasets = [],                                      // array of datasets for the original data
+      pre = function(d, i) { return d },                         // default pre-process does nothing
+      post = function(d, i) { return d },                       // default post-process does nothing
+      transitionTime = 200,                                        // transition time for animations
+      charts = [],                                                       // the charts in the system
+      vis = d3.select('#' + visId).attr('class', 'brunel');                     // the SVG container
+
+  BrunelD3.addDefinitions(vis);                                   // ensure standard symbols present
+
+  // Define chart #1 in the visualization //////////////////////////////////////////////////////////
+
+  charts[0] = function(parentNode, filterRows) {
+    var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0, 1, 1, 5, 47, 37, 138),
+      elements = [];                                              // array of elements in this chart
+    geom.transpose();
+
+    // Define groups for the chart parts ///////////////////////////////////////////////////////////
+
+    var chart =  vis.append('g').attr('class', 'chart1')
+      .attr('transform','translate(' + geom.chart_left + ',' + geom.chart_top + ')');
+    var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay');
+    var zoom = d3.zoom().scaleExtent([1/3,3]);
+    var zoomNode = overlay.append('rect').attr('class', 'overlay')
+      .attr('x', geom.inner_left).attr('y', geom.inner_top)
+      .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
+      .style('cursor', 'move').call(zoom)
+      .node();
+    zoomNode.__zoom = d3.zoomIdentity;
+    chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
+    var interior = chart.append('g').attr('class', 'interior zoomNone')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_inner)');
+    interior.append('rect').attr('class', 'inner').attr('width', geom.inner_width).attr('height', geom.inner_height);
+    var gridGroup = interior.append('g').attr('class', 'grid');
+    var axes = chart.append('g').attr('class', 'axis')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')');
+    var legends = chart.append('g').attr('class', 'legend')
+      .attr('transform','translate(' + (geom.chart_right-geom.chart_left - 3) + ',' + 0 + ')')
+      .attr('role', 'region').attr('aria-label', 'Legend');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_inner').append('rect')
+      .attr('x', 0).attr('y', 0)
+      .attr('width', geom.inner_rawWidth+1).attr('height', geom.inner_rawHeight+1);
+
+    // Scales //////////////////////////////////////////////////////////////////////////////////////
+
+    var scale_x = d3.scaleLinear().domain([53, 100])
+      .range([geom.inner_width, 0]);
+    var scale_inner = d3.scaleLinear().domain([0,1])
+      .range([-0.5, 0.5]);
+    var scale_y = d3.scaleLinear().domain([0, 45.000005])
+      .range([0, geom.inner_height]);
+    var base_scales = [scale_x, scale_y];                           // untransformed original scales
+
+    // Axes ////////////////////////////////////////////////////////////////////////////////////////
+
+    axes.append('g').attr('class', 'x axis')
+      .attr('transform','translate(0,' + geom.inner_rawHeight + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_haxis)')
+      .attr('role', 'region').attr('aria-label', 'Horizontal Axis');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_haxis').append('polyline')
+      .attr('points', '-1,-1000, -1,-1 -5,5, -1000,5, -100,1000, 10000,1000 10000,-1000');
+    axes.select('g.axis.x').append('text').attr('class', 'title').text('Age').style('text-anchor', 'middle')
+      .attr('x',geom.inner_rawWidth/2)
+      .attr('y', geom.inner_bottom - 2.0).attr('dy','-0.27em');
+    axes.append('g').attr('class', 'y axis')
+      .attr('clip-path', 'url(#clip_visualization_chart1_vaxis)')
+      .attr('role', 'region').attr('aria-label', 'Vertical Axis');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_vaxis').append('polyline')
+      .attr('points', '-1000,-10000, 10000,-10000, 10000,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+5) + ', -1000,' + (geom.inner_rawHeight+5) );
+    axes.select('g.axis.y').append('text').attr('class', 'title').text('Rating').style('text-anchor', 'middle')
+      .attr('x',-geom.inner_rawHeight/2)
+      .attr('y', 4-geom.inner_left).attr('dy', '0.7em').attr('transform', 'rotate(270)');
+
+    var axis_bottom = d3.axisBottom(scale_y).ticks(7);
+    var axis_left = d3.axisLeft(scale_x).ticks(Math.min(10, Math.round(geom.inner_rawHeight / 20)));
+
+    function buildAxes(time) {
+      var axis_x = axes.select('g.axis.x');
+      BrunelD3.transition(axis_x, time).call(axis_bottom.scale(scale_y));
+      var axis_y = axes.select('g.axis.y');
+      BrunelD3.transition(axis_y, time).call(axis_left.scale(scale_x));
+    }
+    zoom.on('zoom', function(t, time) {
+        t = t ||BrunelD3.restrictZoom(d3.event.transform, geom, this);
+        scale_x = t.rescaleY(base_scales[0]);
+        scale_y = t.rescaleX(base_scales[1]);
+        zoomNode.__zoom = t;
+        interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));;
+        build(time || -1);
+    });
+
+    // Define element #1 ///////////////////////////////////////////////////////////////////////////
+
+    elements[0] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element1')
+        .attr('role', 'region').attr('aria-label', 'Rating, Age as lines, also showing Category')
+        .attr('transform','matrix(0,1,1,0,0,0)'),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .filter('Rating valid; Age valid')
+          .sortRows('Rating:ascending');
+        processed = post(processed, 0);
+        var f0 = processed.field('Rating'),
+          f1 = processed.field('Age'),
+          f2 = processed.field('Category'),
+          f3 = processed.field('#row'),
+          f4 = processed.field('#selection');
+        var keyFunc = function(d) { return f2.value(d) };
+        data = {
+          Rating:       function(d) { return f0.value(d.row) },
+          Age:          function(d) { return f1.value(d.row) },
+          Category:     function(d) { return f2.value(d.row) },
+          $row:         function(d) { return f3.value(d.row) },
+          $selection:   function(d) { return f4.value(d.row) },
+          Rating_f:     function(d) { return f0.valueFormatted(d.row) },
+          Age_f:        function(d) { return f1.valueFormatted(d.row) },
+          Category_f:   function(d) { return f2.valueFormatted(d.row) },
+          $row_f:       function(d) { return f3.valueFormatted(d.row) },
+          $selection_f: function(d) { return f4.valueFormatted(d.row) },
+          _split:       function(d) { return f2.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+      // Aesthetic Functions
+      var scale_color = d3.scaleOrdinal()
+        .domain(['Blended', 'Bourbon', 'Campbeltown', 'Corn', 'Flavored', 'Grain', 'Highlands', 'Islands', 'Islay', 'Lowlands', 'Pure Pot Still', 'Rye', 'Single Malt', 'Speyside', 'Unaged'])
+        .range([ '#00538A', '#C10020', '#F4C800', '#007D34', '#803E75', '#FF6800', 
+          '#817066', '#FFB300', '#F6768E', '#93AA00', '#53377A', '#FF8E00', '#B32851', 
+          '#CEA262', '#FF7A5C', '#7F180D', '#593315', '#F13A13', '#232C16']);
+      var color = function(d) { var c = data.Category(d); return c!=null ? scale_color(c) : null };
+      legends._legend = legends._legend || { title: ['Category'], 
+        ticks: scale_color.domain()};
+      legends._legend.color = scale_color;
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[0];
+        var w = Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] );
+        var x = function(d) { return scale_x(data.Rating(d))};
+        var h = Math.abs( scale_y(scale_y.domain()[0] + 1.0) - scale_y.range()[0] );
+        var y = function(d) { return scale_y(data.Age(d))};
+        // Define paths
+        var path = d3.line().x(x).y(y);
+        var splits = BrunelD3.makePathSplits(data, path, x);
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element line')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+            .attr('d', function(d) { return d.path })
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('d', function(d) { return d.path })
+            .filter(BrunelD3.hasData)                     // following only performed for data items
+            .style('stroke', color);
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(splits, function(d) { return d.key });
+        var added = selection.enter().append('path');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['Rating'],
+          y:            ['Age'],
+          key:          ['Category'],
+          color:        ['Category']
+        }
+      };
+    }();
+
+    function build(time, noData) {
+      var first = elements[0].data() == null;
+      if (first) time = 0;                                           // no transition for first call
+      buildAxes(time);
+      if ((first || time > -1) && !noData) {
+        elements[0].makeData();
+        BrunelD3.addLegend(legends, legends._legend);
+      }
+      elements[0].build(time);
+    }
+
+    // Expose the following components of the chart
+    return {
+      elements : elements,
+      interior : interior,
+      scales: {x:scale_x, y:scale_y},
+      zoom: function(params, time) {
+          if (params) zoom.on('zoom').call(zoomNode, params, time);
+          return d3.zoomTransform(zoomNode);
+      },
+      build : build
+    };
+    }();
+
+  function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }
+  function updateAll(time) { charts.forEach(function(x) { if (x.build) x.build(time || 0)}) }
+  function buildAll() {
+    for (var i=0;i<arguments.length;i++) setData(arguments[i], i);
+    updateAll(transitionTime);
+  }
+
+  return {
+    dataPreProcess:     function(f) { if (f) pre = f; return pre },
+    dataPostProcess:    function(f) { if (f) post = f; return post },
+    data:               function(d,i) { if (d) setData(d,i); return datasets[i||0] },
+    visId:              visId,
+    build:              buildAll,
+    rebuild:            updateAll,
+    charts:             charts
+  }
+}
+
+// Data Tables /////////////////////////////////////////////////////////////////////////////////////
+
+var table1 = {
+   summarized: false,
+   names: ['Rating', 'Age', 'Category'], 
+   options: ['numeric', 'numeric', 'string'], 
+   rows: [[40, null, 'Blended'], [43, null, 'Blended'], [47, null, 'Blended'], [47, null, 'Blended'],
+  [48, null, 'Blended'], [50, null, 'Blended'], [53, 6, 'Blended'], [54, null, 'Blended'],
+  [54, 7, 'Blended'], [54, null, 'Blended'], [56, 10, 'Blended'], [56, null, 'Blended'],
+  [57, 4, 'Rye'], [57, null, 'Rye'], [58, null, 'Blended'], [60, null, 'Blended'], [60, null, 'Rye'],
+  [64, null, 'Blended'], [64, null, 'Blended'], [65, null, 'Blended'], [65, null, 'Blended'],
+  [67, 4, 'Rye'], [67, 15, 'Highlands'], [67, null, 'Blended'], [67, 18, 'Blended'],
+  [67, 8, 'Blended'], [68, null, 'Blended'], [68, null, 'Bourbon'], [69, null, 'Blended'],
+  [69, 12, 'Blended'], [69, 4, 'Bourbon'], [69, 6, 'Rye'], [69, null, 'Blended'],
+  [70, 12, 'Blended'], [70, null, 'Blended'], [71, 8, 'Blended'], [71, 8, 'Grain'],
+  [72, 30, 'Speyside'], [73, 18, 'Blended'], [73, 12, 'Single Malt'], [74, null, 'Blended'],
+  [74, 10, 'Single Malt'], [74, null, 'Blended'], [74, 19, 'Blended'], [75, 10, 'Single Malt'],
+  [76, 1, 'Rye'], [76, 7, 'Bourbon'], [76, null, 'Single Malt'], [76, null, 'Single Malt'],
+  [76, null, 'Bourbon'], [76, 15, 'Blended'], [77, 15, 'Single Malt'], [77, 12, 'Blended'],
+  [77, null, 'Single Malt'], [77, 17, 'Speyside'], [77, 8, 'Bourbon'], [78, 18, 'Rye'],
+  [78, null, 'Blended'], [78, 18, 'Blended'], [78, null, 'Single Malt'], [79, 11, 'Blended'],
+  [79, null, 'Rye'], [79, 12, 'Corn'], [79, null, 'Blended'], [80, null, 'Rye'], [80, 16, 'Islands'],
+  [80, 12, 'Bourbon'], [80, 7, 'Bourbon'], [80, null, 'Single Malt'], [80, 8, 'Bourbon'],
+  [81, null, 'Bourbon'], [81, null, 'Single Malt'], [81, null, 'Highlands'], [81, null, 'Blended'],
+  [81, null, 'Flavored'], [81, null, 'Single Malt'], [81, null, 'Flavored'], [81, null, 'Blended'],
+  [81, null, 'Single Malt'], [81, null, 'Rye'], [81, 4, 'Flavored'], [81, 7, 'Flavored'],
+  [81, 10, 'Single Malt'], [81, null, 'Blended'], [81, 8, 'Bourbon'], [81, 10, 'Single Malt'],
+  [81, null, 'Blended'], [81, 4, 'Bourbon'], [82, null, 'Corn'], [82, null, 'Single Malt'],
+  [82, null, 'Single Malt'], [82, 18, 'Blended'], [82, null, 'Bourbon'], [82, null, 'Corn'],
+  [82, 21, 'Rye'], [82, 19, 'Speyside'], [83, null, 'Bourbon'], [83, null, 'Single Malt'],
+  [83, null, 'Highlands'], [83, null, 'Bourbon'], [83, null, 'Blended'], [83, null, 'Bourbon'],
+  [83, 14, 'Highlands'], [83, 10, 'Islay'], [84, 12, 'Blended'], [84, 10, 'Islay'],
+  [84, 12, 'Blended'], [84, 15, 'Blended'], [84, 12, 'Blended'], [84, 21, 'Speyside'],
+  [85, null, 'Rye'], [85, 16, 'Islay'], [85, 18, 'Lowlands'], [85, null, 'Single Malt'],
+  [85, 23, 'Rye'], [85, 10, 'Single Malt'], [85, 15, 'Campbeltown'], [85, null, 'Bourbon'],
+  [86, null, 'Blended'], [86, null, 'Blended'], [86, 10, 'Blended'], [86, 12, 'Islay'],
+  [86, 12, 'Single Malt'], [86, 8, 'Bourbon'], [86, null, 'Bourbon'], [86, 12, 'Blended'],
+  [86, 15, 'Speyside'], [87, null, 'Corn'], [87, 12, 'Blended'], [87, 23, 'Bourbon'],
+  [87, 10, 'Single Malt'], [87, 10, 'Highlands'], [87, null, 'Bourbon'], [87, 10, 'Bourbon'],
+  [87, null, 'Bourbon'], [88, 6, 'Rye'], [88, null, 'Corn'], [88, null, 'Single Malt'],
+  [88, null, 'Blended'], [88, null, 'Blended'], [88, 15, 'Single Malt'], [88, null, 'Corn'],
+  [88, 0, 'Unaged'], [88, null, 'Single Malt'], [88, null, 'Single Malt'], [88, null, 'Rye'],
+  [88, null, 'Corn'], [88, null, 'Grain'], [88, null, 'Flavored'], [88, null, 'Single Malt'],
+  [88, 0, 'Unaged'], [88, 12, 'Islands'], [88, 30, 'Speyside'], [88, null, 'Campbeltown'],
+  [88, 9, 'Bourbon'], [88, 2, 'Bourbon'], [88, null, 'Bourbon'], [88, null, 'Bourbon'],
+  [88, 12, 'Speyside'], [88, 17, 'Speyside'], [88, null, 'Bourbon'], [88, null, 'Bourbon'],
+  [88, 12, 'Bourbon'], [88, 15, 'Bourbon'], [89, 16, 'Speyside'], [89, 12, 'Speyside'],
+  [89, 40, 'Blended'], [89, null, 'Highlands'], [89, 25, 'Blended'], [89, 18, 'Bourbon'],
+  [89, 25, 'Speyside'], [90, 18, 'Blended'], [90, 25, 'Islands'], [90, null, 'Blended'],
+  [90, 21, 'Speyside'], [90, 18, 'Speyside'], [90, 15, 'Speyside'], [90, 12, 'Single Malt'],
+  [90, null, 'Bourbon'], [90, 18, 'Speyside'], [90, 15, 'Speyside'], [90, 17, 'Bourbon'],
+  [90, 10, 'Speyside'], [91, 16, 'Single Malt'], [91, 25, 'Blended'], [91, null, 'Islands'],
+  [91, 31, 'Speyside'], [91, 21, 'Single Malt'], [91, null, 'Single Malt'],
+  [92, 15, 'Pure Pot Still'], [92, 17, 'Highlands'], [92, null, 'Blended'], [92, 12, 'Highlands'],
+  [92, 12, 'Highlands'], [92, 15, 'Speyside'], [92, 17, 'Bourbon'], [92, 17, 'Highlands'],
+  [92, null, 'Islay'], [93, 10, 'Single Malt'], [93, 21, 'Speyside'], [93, 10, 'Bourbon'],
+  [93, null, 'Bourbon'], [94, 15, 'Islands'], [94, 18, 'Highlands'], [94, 16, 'Highlands'],
+  [94, 20, 'Bourbon'], [94, 21, 'Bourbon'], [94, 9, 'Rye'], [94, 21, 'Islands'],
+  [94, 21, 'Speyside'], [94, 16, 'Islay'], [94, 21, 'Highlands'], [94, 12, 'Islands'],
+  [94, 18, 'Islands'], [94, 25, 'Islay'], [94, 12, 'Islay'], [94, null, 'Bourbon'],
+  [95, 21, 'Highlands'], [95, 10, 'Speyside'], [95, 12, 'Highlands'], [96, 21, 'Speyside'],
+  [96, null, 'Bourbon'], [96, 10, 'Bourbon'], [96, 12, 'Bourbon'], [96, null, 'Bourbon'],
+  [96, 21, 'Islay'], [96, 30, 'Islands'], [96, null, 'Single Malt'], [96, 0, 'Rye'],
+  [96, null, 'Corn'], [96, 12, 'Speyside'], [96, 15, 'Highlands'], [96, 30, 'Highlands'],
+  [96, 18, 'Speyside'], [96, 17, 'Highlands'], [96, 12, 'Highlands'], [96, 18, 'Blended'],
+  [96, 12, 'Islay'], [96, null, 'Blended'], [96, 12, 'Islay'], [96, 15, 'Speyside'],
+  [96, 25, 'Highlands'], [96, null, 'Blended'], [96, 12, 'Blended'], [96, null, 'Bourbon'],
+  [96, 12, 'Pure Pot Still'], [96, 16, 'Speyside'], [96, 18, 'Blended'], [96, null, 'Bourbon'],
+  [97, 21, 'Speyside'], [99, 12, 'Blended'], [99, 18, 'Single Malt'], [99, 10, 'Highlands'],
+  [99, 10, 'Highlands'], [99, 18, 'Islay'], [99, 18, 'Islay'], [99, 12, 'Highlands'],
+  [99, 18, 'Speyside'], [99, 14, 'Speyside'], [99, null, 'Islay'], [99, 17, 'Blended'],
+  [99, 12, 'Speyside'], [99, null, 'Highlands'], [99, 15, 'Islay'], [99, null, 'Bourbon'],
+  [99, 15, 'Bourbon'], [99, 6, 'Rye'], [99, null, 'Islay'], [99, null, 'Bourbon'],
+  [99, 15, 'Bourbon'], [100, 10, 'Single Malt'], [100, 18, 'Highlands'], [null, 12, 'Blended'],
+  [null, null, 'Blended'], [null, 4, 'Blended'], [null, 25, 'Islay'], [null, 18, 'Speyside'],
+  [null, null, 'Blended'], [null, 10, 'Highlands'], [null, 12, 'Blended'], [null, 16, 'Bourbon'],
+  [null, 18, 'Bourbon'], [null, null, 'Single Malt']]
+};
+
+// Call Code to Build the system ///////////////////////////////////////////////////////////////////
+
+var v  = new BrunelVis('visualization');
+v.build(table1);
+
+</script>
+

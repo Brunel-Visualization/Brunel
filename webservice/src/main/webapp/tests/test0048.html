@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-Equiv="Cache-Control" Content="no-cache">
+	<meta http-Equiv="Pragma" Content="no-cache">
+	<meta http-Equiv="Expires" Content="0">
+	<title>Brunel Output</title>
+	<!--
+		D3 Copyright © 2012, Michael Bostock
+		jQuery Copyright © 2010 by The jQuery Project
+		sumoselect Copyright © 2014 Hemant Negi
+ 	-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min.js" charset="utf-8"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js" charset="utf-8"></script>
+	<script src="https://brunelvis.org/js/brunel.2.6.min.js" charset="utf-8"></script>
+
+	<link rel="stylesheet" type="text/css" href="https://brunelvis.org/js/brunel.2.6.css" charset="utf-8"/>
+
+</head>
+<body style="margin:0">
+<h2 style='font-size:16px;text-align:center;margin:2px;color:green'><span style='font-style:italic;color:#aaaaaa'>0048</span>&nbsp;&nbsp;&nbsp;&nbsp;area x(date) yrange(food, housing)</h2>
+<p style='color:green;margin:2px;margin-bottom:6px;font-size:10px'>Pass: </p>
+<svg id="visualization" width="480" height="330"></svg>
+</body>
+<script>
+function  BrunelVis(visId) {
+  "use strict";                                                                       // strict mode
+  var datasets = [],                                      // array of datasets for the original data
+      pre = function(d, i) { return d },                         // default pre-process does nothing
+      post = function(d, i) { return d },                       // default post-process does nothing
+      transitionTime = 200,                                        // transition time for animations
+      charts = [],                                                       // the charts in the system
+      vis = d3.select('#' + visId).attr('class', 'brunel');                     // the SVG container
+
+  BrunelD3.addDefinitions(vis);                                   // ensure standard symbols present
+
+  // Define chart #1 in the visualization //////////////////////////////////////////////////////////
+
+  charts[0] = function(parentNode, filterRows) {
+    var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0, 1, 1, 5, 47, 37, 32),
+      elements = [];                                              // array of elements in this chart
+
+    // Define groups for the chart parts ///////////////////////////////////////////////////////////
+
+    var chart =  vis.append('g').attr('class', 'chart1')
+      .attr('transform','translate(' + geom.chart_left + ',' + geom.chart_top + ')');
+    var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay');
+    var zoom = d3.zoom().scaleExtent([1/3,3]);
+    var zoomNode = overlay.append('rect').attr('class', 'overlay')
+      .attr('x', geom.inner_left).attr('y', geom.inner_top)
+      .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
+      .style('cursor', 'move').call(zoom)
+      .node();
+    zoomNode.__zoom = d3.zoomIdentity;
+    chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
+    var interior = chart.append('g').attr('class', 'interior zoomNone')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_inner)');
+    interior.append('rect').attr('class', 'inner').attr('width', geom.inner_width).attr('height', geom.inner_height);
+    var gridGroup = interior.append('g').attr('class', 'grid');
+    var axes = chart.append('g').attr('class', 'axis')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_inner').append('rect')
+      .attr('x', 0).attr('y', 0)
+      .attr('width', geom.inner_rawWidth+1).attr('height', geom.inner_rawHeight+1);
+
+    // Scales //////////////////////////////////////////////////////////////////////////////////////
+
+    var scale_x = d3.scaleUtc().domain([new Date('1988-01-01'), new Date('2008-04-01')])
+      .range([0, geom.inner_width]);
+    var scale_inner = d3.scaleLinear().domain([0,1])
+      .range([-0.5, 0.5]);
+    var scale_y = d3.scaleLinear().domain([40, 130.00001])
+      .range([geom.inner_height, 0]);
+    var base_scales = [scale_x, scale_y];                           // untransformed original scales
+
+    // Axes ////////////////////////////////////////////////////////////////////////////////////////
+
+    axes.append('g').attr('class', 'x axis')
+      .attr('transform','translate(0,' + geom.inner_rawHeight + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_haxis)')
+      .attr('role', 'region').attr('aria-label', 'Horizontal Axis');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_haxis').append('polyline')
+      .attr('points', '-1,-1000, -1,-1 -5,5, -1000,5, -100,1000, 10000,1000 10000,-1000');
+    axes.select('g.axis.x').append('text').attr('class', 'title').text('Date').style('text-anchor', 'middle')
+      .attr('x',geom.inner_rawWidth/2)
+      .attr('y', geom.inner_bottom - 2.0).attr('dy','-0.27em');
+    axes.append('g').attr('class', 'y axis')
+      .attr('clip-path', 'url(#clip_visualization_chart1_vaxis)')
+      .attr('role', 'region').attr('aria-label', 'Vertical Axis');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_vaxis').append('polyline')
+      .attr('points', '-1000,-10000, 10000,-10000, 10000,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+5) + ', -1000,' + (geom.inner_rawHeight+5) );
+    axes.select('g.axis.y').append('text').attr('class', 'title').text('FOOD, HOUSING').style('text-anchor', 'middle')
+      .attr('x',-geom.inner_rawHeight/2)
+      .attr('y', 4-geom.inner_left).attr('dy', '0.7em').attr('transform', 'rotate(270)');
+
+    var axis_bottom = d3.axisBottom(scale_x).ticks(5);
+    var axis_left = d3.axisLeft(scale_y).ticks(Math.min(10, Math.round(geom.inner_rawHeight / 20)));
+
+    function buildAxes(time) {
+      var axis_x = axes.select('g.axis.x');
+      BrunelD3.transition(axis_x, time).call(axis_bottom.scale(scale_x));
+      var axis_y = axes.select('g.axis.y');
+      BrunelD3.transition(axis_y, time).call(axis_left.scale(scale_y));
+    }
+    zoom.on('zoom', function(t, time) {
+        t = t ||BrunelD3.restrictZoom(d3.event.transform, geom, this);
+        scale_x = t.rescaleX(base_scales[0]);
+        scale_y = t.rescaleY(base_scales[1]);
+        zoomNode.__zoom = t;
+        interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));;
+        build(time || -1);
+    });
+
+    // Define element #1 ///////////////////////////////////////////////////////////////////////////
+
+    elements[0] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element1')
+        .attr('role', 'region').attr('aria-label', 'Date, FOOD, HOUSING as areas'),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .sortRows('Date:ascending');
+        processed = post(processed, 0);
+        var f0 = processed.field('Date'),
+          f1 = processed.field('FOOD'),
+          f2 = processed.field('HOUSING'),
+          f3 = processed.field('#row'),
+          f4 = processed.field('#selection');
+        var keyFunc = function(d) { return 'ALL' };
+        data = {
+          Date:         function(d) { return f0.value(d.row) },
+          FOOD:         function(d) { return f1.value(d.row) },
+          HOUSING:      function(d) { return f2.value(d.row) },
+          $row:         function(d) { return f3.value(d.row) },
+          $selection:   function(d) { return f4.value(d.row) },
+          Date_f:       function(d) { return f0.valueFormatted(d.row) },
+          FOOD_f:       function(d) { return f1.valueFormatted(d.row) },
+          HOUSING_f:    function(d) { return f2.valueFormatted(d.row) },
+          $row_f:       function(d) { return f3.valueFormatted(d.row) },
+          $selection_f: function(d) { return f4.valueFormatted(d.row) },
+          _split:       function(d) { return 'ALL' },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[0];
+        var w = geom.default_point_size;
+        var x = function(d) { return scale_x(data.Date(d))};
+        var h = geom.default_point_size;
+        var y1 = function(d) { return scale_y(data.FOOD(d))};
+        var y2 = function(d) { return scale_y(data.HOUSING(d))};
+        var y = function(d) { return scale_y( (data.HOUSING(d) + data.FOOD(d) )/2)};
+        // Define paths
+        var path = d3.area().x(x).y1(y2).y0(y1);
+        var splits = BrunelD3.makePathSplits(data, path, x);
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element area filled')
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+            .attr('d', function(d) { return d.path })
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .attr('d', function(d) { return d.path });
+        }
+
+        // Define labeling for the selection
+        function label(selection, transitionMillis) {
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(splits, function(d) { return d.key });
+        var added = selection.enter().append('path');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['Date'],
+          y:            ['food', 'housing']
+        }
+      };
+    }();
+
+    function build(time, noData) {
+      var first = elements[0].data() == null;
+      if (first) time = 0;                                           // no transition for first call
+      buildAxes(time);
+      if ((first || time > -1) && !noData) {
+        elements[0].makeData();
+      }
+      elements[0].build(time);
+    }
+
+    // Expose the following components of the chart
+    return {
+      elements : elements,
+      interior : interior,
+      scales: {x:scale_x, y:scale_y},
+      zoom: function(params, time) {
+          if (params) zoom.on('zoom').call(zoomNode, params, time);
+          return d3.zoomTransform(zoomNode);
+      },
+      build : build
+    };
+    }();
+
+  function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }
+  function updateAll(time) { charts.forEach(function(x) { if (x.build) x.build(time || 0)}) }
+  function buildAll() {
+    for (var i=0;i<arguments.length;i++) setData(arguments[i], i);
+    updateAll(transitionTime);
+  }
+
+  return {
+    dataPreProcess:     function(f) { if (f) pre = f; return pre },
+    dataPostProcess:    function(f) { if (f) post = f; return post },
+    data:               function(d,i) { if (d) setData(d,i); return datasets[i||0] },
+    visId:              visId,
+    build:              buildAll,
+    rebuild:            updateAll,
+    charts:             charts
+  }
+}
+
+// Data Tables /////////////////////////////////////////////////////////////////////////////////////
+
+var table1 = {
+   summarized: false,
+   names: ['Date', 'FOOD', 'HOUSING'], 
+   options: ['date-YearMonth', 'numeric', 'numeric'], 
+   rows: [['1988-01-01', 67.1, 49.4], ['1988-02-01', 67.5, 49.4], ['1988-03-01', 67.7, 49.4],
+  ['1988-04-01', 68.1, 50.7], ['1988-05-01', 68.3, 51.1], ['1988-06-01', 68.4, 51.6],
+  ['1988-07-01', 67.8, 52], ['1988-08-01', 68.1, 52], ['1988-09-01', 68.3, 52.1],
+  ['1988-10-01', 68.5, 52.3], ['1988-11-01', 69, 52.4], ['1988-12-01', 69.4, 52.4],
+  ['1989-01-01', 70, 52.5], ['1989-02-01', 70.2, 52.6], ['1989-03-01', 70.6, 52.7],
+  ['1989-04-01', 71.4, 54.5], ['1989-05-01', 71.9, 54.7], ['1989-06-01', 72.1, 55.1],
+  ['1989-07-01', 71.7, 55.4], ['1989-08-01', 72, 55.5], ['1989-09-01', 72.5, 55.6],
+  ['1989-10-01', 73.3, 55.9], ['1989-11-01', 74, 56.1], ['1989-12-01', 74.7, 56.2],
+  ['1990-01-01', 75.6, 56.6], ['1990-02-01', 76.3, 56.5], ['1990-03-01', 76.7, 56.7],
+  ['1990-04-01', 77.4, 59], ['1990-05-01', 78.4, 59.7], ['1990-06-01', 78.3, 60.2],
+  ['1990-07-01', 77.4, 60.7], ['1990-08-01', 78.3, 61.3], ['1990-09-01', 78.5, 61.6],
+  ['1990-10-01', 78.5, 62.3], ['1990-11-01', 79.1, 62.2], ['1990-12-01', 79.6, 62.2],
+  ['1991-01-01', 80.1, 62.7], ['1991-02-01', 81.1, 62.8], ['1991-03-01', 81.1, 62.6],
+  ['1991-04-01', 82.1, 65.6], ['1991-05-01', 82, 66.2], ['1991-06-01', 82.7, 66.9],
+  ['1991-07-01', 81.7, 67.2], ['1991-08-01', 82.5, 67.5], ['1991-09-01', 81.9, 67.6],
+  ['1991-10-01', 81.9, 67.7], ['1991-11-01', 82.7, 67.8], ['1991-12-01', 82.9, 67.8],
+  ['1992-01-01', 83.7, 67.9], ['1992-02-01', 84.2, 68], ['1992-03-01', 84.4, 68],
+  ['1992-04-01', 84.1, 69.9], ['1992-05-01', 84.4, 70], ['1992-06-01', 84.1, 69.9],
+  ['1992-07-01', 83, 70.2], ['1992-08-01', 83.2, 70.1], ['1992-09-01', 82.9, 70],
+  ['1992-10-01', 83.2, 70.2], ['1992-11-01', 83, 70.2], ['1992-12-01', 83.7, 70.1],
+  ['1993-01-01', 83.6, 69.6], ['1993-02-01', 84.5, 69.7], ['1993-03-01', 85.2, 69.8],
+  ['1993-04-01', 84.8, 71.5], ['1993-05-01', 85.8, 71.3], ['1993-06-01', 85.3, 71.3],
+  ['1993-07-01', 85.2, 71.2], ['1993-08-01', 85.3, 71.3], ['1993-09-01', 84.9, 71.4],
+  ['1993-10-01', 84.2, 71.5], ['1993-11-01', 83.6, 71.5], ['1993-12-01', 83.8, 71.5],
+  ['1994-01-01', 84.6, 71.7], ['1994-02-01', 85.1, 71.6], ['1994-03-01', 85.7, 71.5],
+  ['1994-04-01', 85.9, 75.2], ['1994-05-01', 86.7, 75.1], ['1994-06-01', 86.6, 75.1],
+  ['1994-07-01', 86.1, 75.2], ['1994-08-01', 86.4, 75.3], ['1994-09-01', 85.5, 75.3],
+  ['1994-10-01', 85.4, 75.3], ['1994-11-01', 85.7, 75.3], ['1994-12-01', 86.3, 75.4],
+  ['1995-01-01', 87.3, 75.5], ['1995-02-01', 87.8, 75.6], ['1995-03-01', 88.5, 75.6],
+  ['1995-04-01', 88.4, 77.4], ['1995-05-01', 89.9, 77.4], ['1995-06-01', 89.4, 77.5],
+  ['1995-07-01', 88.6, 77.4], ['1995-08-01', 90.3, 77.5], ['1995-09-01', 90.6, 77.7],
+  ['1995-10-01', 89.3, 77.8], ['1995-11-01', 89.4, 77.9], ['1995-12-01', 90.2, 77.9],
+  ['1996-01-01', 90.7, 78.3], ['1996-02-01', 91.7, 78.3], ['1996-03-01', 92.4, 78.4],
+  ['1996-04-01', 92.4, 79.7], ['1996-05-01', 93.1, 79.7], ['1996-06-01', 93, 79.9],
+  ['1996-07-01', 91.7, 80.1], ['1996-08-01', 92.9, 80.1], ['1996-09-01', 91.9, 80.2],
+  ['1996-10-01', 91.1, 80.2], ['1996-11-01', 90.6, 80.1], ['1996-12-01', 90.8, 80.2],
+  ['1997-01-01', 91.4, 80.4], ['1997-02-01', 91.3, 80.4], ['1997-03-01', 90.7, 80.5],
+  ['1997-04-01', 91, 81.4], ['1997-05-01', 91.7, 81.4], ['1997-06-01', 92.6, 81.4],
+  ['1997-07-01', 92.1, 81.3], ['1997-08-01', 92.3, 81.4], ['1997-09-01', 92.1, 80.8],
+  ['1997-10-01', 92.2, 80.9], ['1997-11-01', 91.8, 80.9], ['1997-12-01', 91.8, 80.8],
+  ['1998-01-01', 91.7, 80.7], ['1998-02-01', 91.7, 80.8], ['1998-03-01', 91.5, 81],
+  ['1998-04-01', 91.8, 82.2], ['1998-05-01', 93.1, 82.1], ['1998-06-01', 92.8, 82.1],
+  ['1998-07-01', 92.5, 82.1], ['1998-08-01', 93.6, 82.2], ['1998-09-01', 93.2, 82.3],
+  ['1998-10-01', 93.3, 82.5], ['1998-11-01', 93.1, 82.6], ['1998-12-01', 93.8, 82.6],
+  ['1999-01-01', 94.2, 82.7], ['1999-02-01', 94.3, 82.7], ['1999-03-01', 93.7, 82.8],
+  ['1999-04-01', 93.2, 83.7], ['1999-05-01', 93.8, 83.7], ['1999-06-01', 93.2, 83.8],
+  ['1999-07-01', 92.4, 83.9], ['1999-08-01', 92.1, 84.1], ['1999-09-01', 92, 84.2],
+  ['1999-10-01', 91.8, 84.3], ['1999-11-01', 92.2, 84.5], ['1999-12-01', 92.3, 84.7],
+  ['2000-01-01', 92.3, 84.9], ['2000-02-01', 92.2, 84.9], ['2000-03-01', 91.5, 84.9],
+  ['2000-04-01', 91.2, 84.5], ['2000-05-01', 92.2, 84.3], ['2000-06-01', 92.5, 84.3],
+  ['2000-07-01', 93.2, 84.6], ['2000-08-01', 92.4, 84.7], ['2000-09-01', 92.7, 85.2],
+  ['2000-10-01', 92.7, 85.5], ['2000-11-01', 93.2, 85.5], ['2000-12-01', 93.4, 85.5],
+  ['2001-01-01', 93.6, 85.4], ['2001-02-01', 93.8, 85.5], ['2001-03-01', 95, 85.4],
+  ['2001-04-01', 95.2, 87], ['2001-05-01', 97.9, 87.2], ['2001-06-01', 98.5, 87.3],
+  ['2001-07-01', 96.4, 87.1], ['2001-08-01', 96.2, 87.3], ['2001-09-01', 96.1, 87.6],
+  ['2001-10-01', 96.2, 87.4], ['2001-11-01', 96, 87.3], ['2001-12-01', 96.6, 87.4],
+  ['2002-01-01', 97.4, 88], ['2002-02-01', 97.4, 88], ['2002-03-01', 97.6, 88],
+  ['2002-04-01', 97.3, 89], ['2002-05-01', 97, 89.2], ['2002-06-01', 96.3, 89.3],
+  ['2002-07-01', 96.2, 89.3], ['2002-08-01', 96.1, 89.4], ['2002-09-01', 96.3, 89.4],
+  ['2002-10-01', 96.4, 89.5], ['2002-11-01', 96.4, 89.5], ['2002-12-01', 96.3, 89.7],
+  ['2003-01-01', 96.3, 89.8], ['2003-02-01', 97, 89.9], ['2003-03-01', 97.3, 90],
+  ['2003-04-01', 97.6, 90.5], ['2003-05-01', 98.2, 90.5], ['2003-06-01', 97.6, 90.6],
+  ['2003-07-01', 97.6, 90.9], ['2003-08-01', 97.7, 91], ['2003-09-01', 98.4, 91.2],
+  ['2003-10-01', 98.6, 91.5], ['2003-11-01', 98.9, 91.5], ['2003-12-01', 99.2, 91.7],
+  ['2004-01-01', 98.9, 91.8], ['2004-02-01', 99.1, 92], ['2004-03-01', 99.1, 92.3],
+  ['2004-04-01', 98.9, 93.6], ['2004-05-01', 99.2, 93.8], ['2004-06-01', 98.4, 94],
+  ['2004-07-01', 97.8, 94.2], ['2004-08-01', 97.5, 94.4], ['2004-09-01', 97.8, 94.6],
+  ['2004-10-01', 98, 95.5], ['2004-11-01', 98.4, 96], ['2004-12-01', 99, 96.6],
+  ['2005-01-01', 99.2, 97.2], ['2005-02-01', 99.9, 97.4], ['2005-03-01', 100.8, 97.7],
+  ['2005-04-01', 99.9, 99.6], ['2005-05-01', 100.6, 99.8], ['2005-06-01', 100.6, 100],
+  ['2005-07-01', 99.4, 100.4], ['2005-08-01', 99.6, 100.4], ['2005-09-01', 99.7, 100.7],
+  ['2005-10-01', 99.5, 101.7], ['2005-11-01', 100.1, 102.3], ['2005-12-01', 100.7, 102.8],
+  ['2006-01-01', 100.4, 103.3], ['2006-02-01', 101, 103.6], ['2006-03-01', 100.4, 104.5],
+  ['2006-04-01', 100.2, 107.3], ['2006-05-01', 101.7, 108.8], ['2006-06-01', 102.4, 109.7],
+  ['2006-07-01', 102.6, 110.5], ['2006-08-01', 103, 110.9], ['2006-09-01', 103.6, 111.5],
+  ['2006-10-01', 104.2, 112.7], ['2006-11-01', 105.1, 113.7], ['2006-12-01', 105.4, 114.5],
+  ['2007-01-01', 104.4, 114.9], ['2007-02-01', 105.4, 115.1], ['2007-03-01', 106, 115],
+  ['2007-04-01', 106.2, 115.7], ['2007-05-01', 106.7, 115], ['2007-06-01', 107.3, 114.5],
+  ['2007-07-01', 105.5, 114.3], ['2007-08-01', 106.1, 114], ['2007-09-01', 107.4, 114],
+  ['2007-10-01', 109.1, 114.3], ['2007-11-01', 110.1, 114.6], ['2007-12-01', 111.1, 114.7],
+  ['2008-01-01', 110.8, 115.4], ['2008-02-01', 111.3, 119.1], ['2008-03-01', 111.8, 119.5],
+  ['2008-04-01', 113.2, 122]]
+};
+
+// Call Code to Build the system ///////////////////////////////////////////////////////////////////
+
+var v  = new BrunelVis('visualization');
+v.build(table1);
+
+</script>
+

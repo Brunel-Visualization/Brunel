@@ -141,8 +141,8 @@ class VisualTests {
 		String id = String.format("test%04d", index);
 		String name = String.format("%04d", index);
 
-		int HEIGHT = 350;
-		int WIDTH = 500;
+		int HEIGHT = 330;
+		int WIDTH = 480;
 		try {
 			display.buildSingle(a.apply(base), WIDTH, HEIGHT, id + ".html", makeTitle(name, a, result), makeComments(comments, result));
 		} catch (Exception e) {
@@ -152,13 +152,13 @@ class VisualTests {
 	}
 
 	private String makeComments(String notes, String result) {
-		return "<p style='" + resultColor(result) + ";margin:2px;margin-bottom:6px'>" + result + ": " + notes + "</p>";
+		return "<p style='" + resultColor(result) + ";margin:2px;margin-bottom:6px;font-size:10px'>" + result + ": " + notes + "</p>";
 	}
 
 	private String makeTitle(String id, Action a, String result) {
 		String s = a.toString();
 		if (s.length() > 100) s = s.substring(0, 100) + "...";
-		return "<h2 style='text-align:center;margin:2px;" + resultColor(result) + "'>" +
+		return "<h2 style='font-size:16px;text-align:center;margin:2px;" + resultColor(result) + "'>" +
 				"<span style='font-style:italic;color:#aaaaaa'>" + id + "</span>&nbsp;&nbsp;&nbsp;&nbsp;" + s + "</h2>";
 	}
 

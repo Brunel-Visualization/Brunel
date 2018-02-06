@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-Equiv="Cache-Control" Content="no-cache">
+	<meta http-Equiv="Pragma" Content="no-cache">
+	<meta http-Equiv="Expires" Content="0">
+	<title>Brunel Output</title>
+	<!--
+		D3 Copyright © 2012, Michael Bostock
+		jQuery Copyright © 2010 by The jQuery Project
+		sumoselect Copyright © 2014 Hemant Negi
+ 	-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min.js" charset="utf-8"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js" charset="utf-8"></script>
+	<script src="https://brunelvis.org/js/brunel.2.6.min.js" charset="utf-8"></script>
+
+	<link rel="stylesheet" type="text/css" href="https://brunelvis.org/js/brunel.2.6.css" charset="utf-8"/>
+
+</head>
+<body style="margin:0">
+<h2 style='font-size:16px;text-align:center;margin:2px;color:green'><span style='font-style:italic;color:#aaaaaa'>0015</span>&nbsp;&nbsp;&nbsp;&nbsp;cloud x(Name) color(Rating) size(Rating) sort(Rating) mean(Rating)</h2>
+<p style='color:green;margin:2px;margin-bottom:6px;font-size:10px'>Pass: </p>
+<svg id="visualization" width="480" height="330"></svg>
+</body>
+<script>
+function  BrunelVis(visId) {
+  "use strict";                                                                       // strict mode
+  var datasets = [],                                      // array of datasets for the original data
+      pre = function(d, i) { return d },                         // default pre-process does nothing
+      post = function(d, i) { return d },                       // default post-process does nothing
+      transitionTime = 200,                                        // transition time for animations
+      charts = [],                                                       // the charts in the system
+      vis = d3.select('#' + visId).attr('class', 'brunel');                     // the SVG container
+
+  BrunelD3.addDefinitions(vis);                                   // ensure standard symbols present
+
+  // Define chart #1 in the visualization //////////////////////////////////////////////////////////
+
+  charts[0] = function(parentNode, filterRows) {
+    var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0, 1, 1, 0, 0, 0, 90),
+      elements = [];                                              // array of elements in this chart
+
+    // Define groups for the chart parts ///////////////////////////////////////////////////////////
+
+    var chart =  vis.append('g').attr('class', 'chart1')
+      .attr('transform','translate(' + geom.chart_left + ',' + geom.chart_top + ')');
+    var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay');
+    var zoom = d3.zoom().scaleExtent([1/3,3]);
+    var zoomNode = overlay.append('rect').attr('class', 'overlay')
+      .attr('x', geom.inner_left).attr('y', geom.inner_top)
+      .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
+      .style('cursor', 'default')
+      .node();
+    zoomNode.__zoom = d3.zoomIdentity;
+    chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
+    var interior = chart.append('g').attr('class', 'interior zoomNone')
+      .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')')
+      .attr('clip-path', 'url(#clip_visualization_chart1_inner)');
+    interior.append('rect').attr('class', 'inner').attr('width', geom.inner_width).attr('height', geom.inner_height);
+    var gridGroup = interior.append('g').attr('class', 'grid');
+    var legends = chart.append('g').attr('class', 'legend')
+      .attr('transform','translate(' + (geom.chart_right-geom.chart_left - 3) + ',' + 0 + ')')
+      .attr('role', 'region').attr('aria-label', 'Legend');
+    vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_inner').append('rect')
+      .attr('x', 0).attr('y', 0)
+      .attr('width', geom.inner_rawWidth+1).attr('height', geom.inner_rawHeight+1);
+    var scale_x = d3.scaleLinear(), scale_y = d3.scaleLinear();
+    var base_scales = [scale_x, scale_y];                           // untransformed original scales
+    zoom.on('zoom', function(t, time) {
+        t = t || d3.event.transform;
+        zoomNode.__zoom = t;
+        interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));;
+        interior.attr('transform', d3.zoomTransform(zoomNode));
+    });
+
+    // Define element #1 ///////////////////////////////////////////////////////////////////////////
+
+    elements[0] = function() {
+      var original, processed,                           // data sets passed in and then transformed
+        element, data,                                 // brunel element information and brunel data
+        selection, merged;                                      // d3 selection and merged selection
+      var elementGroup = interior.append('g').attr('class', 'element1')
+        .attr('role', 'region').attr('aria-label', 'Name as a cloud diagram, also showing Rating, sorted by Rating')
+        .attr('transform','translate(' + geom.inner_width/2 + ',' + geom.inner_height/2 + ')'),
+        main = elementGroup.append('g').attr('class', 'main'),
+        labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+      function makeData() {
+        original = datasets[0];
+        if (filterRows) original = original.retainRows(filterRows);
+        processed = pre(original, 0)
+          .summarize('Rating=Rating:mean; Name=Name:base')
+          .sort('Rating');
+        processed = post(processed, 0);
+        var f0 = processed.field('Name'),
+          f1 = processed.field('Rating'),
+          f2 = processed.field('#row'),
+          f3 = processed.field('#selection');
+        var keyFunc = function(d) { return f0.value(d) };
+        data = {
+          Name:         function(d) { return f0.value(d.row) },
+          Rating:       function(d) { return f1.value(d.row) },
+          $row:         function(d) { return f2.value(d.row) },
+          $selection:   function(d) { return f3.value(d.row) },
+          Name_f:       function(d) { return f0.valueFormatted(d.row) },
+          Rating_f:     function(d) { return f1.valueFormatted(d.row) },
+          $row_f:       function(d) { return f2.valueFormatted(d.row) },
+          $selection_f: function(d) { return f3.valueFormatted(d.row) },
+          _split:       function(d) { return f1.value(d.row)+ '|' + f1.value(d.row) },
+          _key:         keyFunc,
+          _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+        };
+      }
+      // Aesthetic Functions
+      var scale_color = d3.scaleLinear().domain([40, 47.5, 55, 62.5, 70, 77.5, 85, 92.5, 100])
+        .interpolate(d3.interpolateHcl)
+        .range([ '#045a8d', '#2b8cbe', '#74a9cf', '#bdc9e1', '#f8efe8', '#fef0d9', 
+          '#fdcc8a', '#fc8d59', '#e34a33']);
+      var color = function(d) { var c = data.Rating(d); return c!=null ? scale_color(c) : null };
+      var scale_size = d3.scaleSqrt().domain([0, 100.00001])
+        .range([ 0.001, 1]);
+      var size = function(d) { var s = data.Rating(d); return s!=null ? scale_size(s) : null };
+      legends._legend = legends._legend || { title: ['Mean(Rating)'], 
+        ticks: [100, 90, 80, 70, 60, 50, 40]};
+      legends._legend.color = scale_color;
+
+      // Build element from data ///////////////////////////////////////////////////////////////////
+
+      function build(transitionMillis) {
+        element = elements[0];
+        // Build the cloud layout
+        var cloud = BrunelD3.cloudLayout(processed, [geom.inner_width, geom.inner_height]);
+        function keyFunction(d) { return d.key };
+        main.attr('class', 'diagram cloud');
+
+        // Define selection entry operations
+        function initialState(selection) {
+          selection
+            .attr('class', 'element text filled')
+            .style('text-anchor', 'middle').classed('label', true)
+            .text(function(d) { return data.Name_f(d) })
+            .style('font-size', function(d) { return (100*size(d)) + '%' })
+            .style('pointer-events', 'none')
+            .attr('role', 'img').attr('aria-label', 
+          function(d) { return data._key(d.row);
+          })
+        }
+
+        // Define selection update operations on merged data
+        function updateState(selection) {
+          selection
+            .each(cloud.prepare).call(cloud.build)
+            .filter(BrunelD3.hasData)                     // following only performed for data items
+            .style('fill', color);
+          ;
+        }
+        // Create selections, set the initial state and transition updates
+        selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
+        var added = selection.enter().append('text');
+        merged = selection.merge(added);
+        initialState(added);
+        selection.filter(BrunelD3.hasData)
+          .classed('selected', BrunelD3.isSelected(data))
+          .filter(BrunelD3.isSelected(data)).raise();
+        updateState(BrunelD3.transition(merged, transitionMillis));
+
+        selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+      }
+
+      return {
+        data:           function() { return processed },
+        original:       function() { return original },
+        internal:       function() { return data },
+        selection:      function() { return merged },
+        makeData:       makeData,
+        build:          build,
+        chart:          function() { return charts[0] },
+        group:          function() { return elementGroup },
+        fields: {
+          x:            ['Name'],
+          key:          ['Name'],
+          color:        ['Rating'],
+          size:         ['Rating']
+        }
+      };
+    }();
+
+    function build(time, noData) {
+      var first = elements[0].data() == null;
+      if (first) time = 0;                                           // no transition for first call
+      if ((first || time > -1) && !noData) {
+        elements[0].makeData();
+        BrunelD3.addLegend(legends, legends._legend);
+      }
+      elements[0].build(time);
+    }
+
+    // Expose the following components of the chart
+    return {
+      elements : elements,
+      interior : interior,
+      zoom: function(params, time) {
+          if (params) zoom.on('zoom').call(zoomNode, params, time);
+          return d3.zoomTransform(zoomNode);
+      },
+      build : build
+    };
+    }();
+
+  function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }
+  function updateAll(time) { charts.forEach(function(x) { if (x.build) x.build(time || 0)}) }
+  function buildAll() {
+    for (var i=0;i<arguments.length;i++) setData(arguments[i], i);
+    updateAll(transitionTime);
+  }
+
+  return {
+    dataPreProcess:     function(f) { if (f) pre = f; return pre },
+    dataPostProcess:    function(f) { if (f) post = f; return post },
+    data:               function(d,i) { if (d) setData(d,i); return datasets[i||0] },
+    visId:              visId,
+    build:              buildAll,
+    rebuild:            updateAll,
+    charts:             charts
+  }
+}
+
+// Data Tables /////////////////////////////////////////////////////////////////////////////////////
+
+var table1 = {
+   summarized: true,
+   names: ['Name', 'Rating'], 
+   options: ['string', 'numeric'], 
+   rows: [['1972 Ridgemont Reserve Kentucky Straight Bourbon Whiskey', 83],
+  ['8 Seconds Canadian Whiskey', 64], ['A.H. Hirsch Finest Reserve 20 Bourbon', null],
+  ['Aberfeldy 12 Year Old Single Malt Scotch', 96], ['Aberfeldy 21 Year Old Single Malt Scotch', 94],
+  ['Aberlour 16 Year Old Single Malt Scotch', 89], ['Aberlour 18 Year Old Single Malt Scotch', 99],
+  ["Aberlour A'Bunadh Batch 21 Scotch", 90], ['Abraham Bowman Rye Whiskey', 94],
+  ['Amrut Fusion Single Malt Whisky', 85], ['Amrut Indian Single Malt Whisky', 76],
+  ['Amrut Indian Single Malt Whisky Cask Strength', 91],
+  ['Amrut Peated Indian Single Malt Whiskey Cask Strength', 80],
+  ['Amrut Peated Indian Single Malt Whisky', 76], ['Ancnoc 16 Year Old Single Malt Scotch', 94],
+  ['Ardbeg Airigh Nam Beist Scotch', 94], ['Ardbeg Uigeadail', 99],
+  ['Ardmore Traditional Cask Highland Single Malt Scotch Whisky', 72],
+  ['Auchentoshan 18-Year Old Single Malt Scotch Whisky', 85],
+  ["Baker's Kentucky Straight Bourbon Whiskey", 76],
+  ['Balblair 1997 Highland Single Malt Scotch Whisky', 81], ['Balblair Single Malt Scotch', 92],
+  ['Balcones True Blue Cask Strength Corn Whiskey', 88],
+  ['Balvenie 12 Year Old Doublewood Single Malt Scotch', 99],
+  ['Balvenie 14 Year Old Single Malt Scotch', 99],
+  ['Balvenie 15 Year Old Single Barrel Single Malt Scotch', 86],
+  ['Balvenie 17 Year Old Single Malt Scotch', 88],
+  ['Balvenie Madeira Cask 17 Year Old Single Malt Scotch Whisky', 77],
+  ['Balvenie Portwood 21 Year Old Single Malt Scotch Whisky', 84],
+  ['Balvenie Signature 12 Year Old Single Malt Scotch', 88], ['Barton Irish Whiskey', 81],
+  ["Basil Hayden's 8 Year Old Bourbon Whiskey", 80], ["Bell's Scotch Whisky", null],
+  ['Benchmark Old No. 8 Kentucky Straight Bourbon Whiskey', 68],
+  ['Black Maple Hill 21 Cask 7 Bourbon', 94],
+  ['Black Maple Hill 23 Year Old Limited Edition Kentucky Straight Rye Whiskey', 85],
+  ['Black Velvet Reserve Canadian Whiskey', 67], ["Blanton's Single Barrel Bourbon", 87],
+  ["Booker's True Barrel Bourbon", 80], ['Bowman Brothers Virginia Straight Bourbon Whiskey', 87],
+  ['Bowmore 12 Year Old Single Malt Scotch', 94], ['Bowmore 15 Year Old Single Malt Scotch', 99],
+  ['Bowmore 25 Year Old Scotch', 94], ['Breckenridge Bourbon Whiskey', 88],
+  ["Buchanan's 18 Year Old Special Reserve Scotch", 96], ["Buchanan's Master Blended Scotch", 96],
+  ["Buchanan's Red Seal Blended Scotch", 90],
+  ['Buffalo Trace Kentucky Straight Bourbon Whiskey', 86],
+  ['Buffalo Trace White Dog Mash #1 Corn Whiskey', 82], ['Bulleit Bourbon Frontier Whiskey', 88],
+  ['Bunnahabhain 12 Year Old Single Malt Scotch', 96],
+  ['Bunnahabhain 18 Year Old Single Malt Scotch', 99], ['Bunnahabhain 25', null],
+  ['Bushmills 10 Year Old Single Malt Irish Whiskey', 85],
+  ['Bushmills 16 Year Old Single Malt Irish Whiskey', 91],
+  ['Bushmills 1608 Irish Whiskey Limited Edition', 74],
+  ['Bushmills 21 Year Old Single Malt Irish Whiskey', 91],
+  ['Bushmills Black Bush Irish Whiskey', 79], ['Bushmills Original Irish Whiskey', 65],
+  ['Canadian Club 6 Year Old Canadian Whisky', 53], ['Canadian Club Classic 12 Canadian Whisky', 69],
+  ['Canadian Club Reserve Canadian Whisky', 56], ['Canadian Club Sherry Cask Canadian Whisky', 71],
+  ['Canadian Hunter Canadian Whisky', 40], ['Canadian LTD Blended Canadian Whiskey', 43],
+  ['Canadian Mist Black Diamond Canadian Whiskey', 80],
+  ['Canadian Mist Blended Canadian Whisky', 48], ['Caol Ila 12 Year Old Single Malt Scotch', 86],
+  ['Caol Ila Single Malt Scotch Distillers Edition', 99],
+  ['Cardhu 12 Year Old Single Malt Scotch', 99],
+  ['Catoctin Creek Organic Roundstone Rye Whisky', 57],
+  ['Cedar Ridge Distillery Iowa Bourbon Whiskey', 85],
+  ['Charter 101 Kentucky Straight Bourbon Whiskey', 82],
+  ['Chivas Regal 18 Year Old Blended Scotch Whisky', 96], ['Chivas Regal 25 Year Old Scotch', 89],
+  ['Collingwood Hand-Crafted Blended Canadian Whisky', 81],
+  ['Connemara 12 Year Old Peated Single Malt Irish Whiskey', 73],
+  ['Connemara Cask Strength Peated Single Malt Irish Whiskey', 78],
+  ['Connemara Turf Mor Irish Whiskey', 88], ['Corsair Pumpkin Spice Moonshine', 81],
+  ['Crown Royal Canadian Whisky', 68],
+  ['Dalmore "1263 King Alexander the Third" Single Highland Malt Scotch', 83],
+  ['Dalmore 18 Year Old Single Highland Malt Scotch Whisky', 100],
+  ['Dalmore 1974 Single Highland Malt Scotch Whisky', 89],
+  ['Dalwhinnie 15 Year Old Single Malt Scotch', 67],
+  ["Danfield's Private Reserve Small Batch Canaidan Whiskey", 60],
+  ['Deanston 12 Year Old Single Malt Scotch', 92], ['Downslope Double Diamond Whiskey', 88],
+  ['Eagle Rare 17 Year Old Single Barrel Kentucky Straight Bourbon', 92],
+  ['Early Times 354 Bourbon', 76], ['Elijah Craig 18 Year Bourbon', null],
+  ['Ellington Canadian Whisky', 54], ['Elmer T Lee Bourbon Whiskey', 87],
+  ['Evan Williams 1999 Vintage Bourbon Whiskey', 80], ['Famous Grouse Blended Scotch Whisky', 69],
+  ['Feckin Irish Whiskey', 64], ['Forty Creek Barrel Select Canadian Whiskey', 69],
+  ['Forty Creek Confederation Oak Canadian Whiskey', 92],
+  ['Forty Creek Double Barrel Canadian Whiskey', 88],
+  ['Forty Creek John K. Hall Small Batch Reserve Whisky', 67],
+  ['Forty Creek Port Wood Reserve Whiskey', 83],
+  ['Four Roses Single Barrel Kentucky Straight Bourbon', 87],
+  ['Four Roses Small Batch Kentucky Straight Bourbon Whiskey', 93],
+  ['Four Roses Yellow Label Straight Bourbon', 81],
+  ['Garrison Brothers Texas Straight Bourbon Whiskey', 88],
+  ['George Dickel Barrel Select Tennessee Whiskey', 79], ['George Dickel Tennessee Whiskey #12', 87],
+  ['George Dickel Tennessee Whisky #8', 82],
+  ['George T. Stagg Kentucky Straight Bourbon Whiskey', 96],
+  ['Glen Breton "Battle of the Glen" 15 Year Old Single Malt Canadian Whisky', 77],
+  ['Glen Breton Rare 10 Year Old Single Malt Canadian Whisky', 75],
+  ['Glen Garioch Founders Reserve Scotch', 99], ['Glen Grant 10 Year Old Single Malt Scotch', 95],
+  ['Glenfiddich 12 Year Old Single Malt Scotch', 96],
+  ['Glenfiddich 15 Year Old Single Malt Scotch', 90],
+  ['Glenfiddich 18 Year Old Single Malt Scotch', 90],
+  ['Glenfiddich 21 Year Old Single Malt Scotch', 93],
+  ['Glengoyne 10 Year Old Single Malt Scotch', null],
+  ['Glengoyne 17 Year Old Single Malt Scotch', 96], ['Glenlivet 15 Year Old Single Malt Scotch', 92],
+  ['Glenlivet 18 Year Old Single Malt Scotch', null],
+  ['Glenlivet 18 Year Old Single Malt Scotch Whisky', 90],
+  ['Glenlivet 21 Year Old Single Malt Scotch', 97],
+  ['Glenlivet Nadurra 16 Year Old Cask Strength Single Malt Scotch Whisky', 96],
+  ['Glenlivet XXV Single Malt Scotch Whisky', 89],
+  ['Glenmorangie 10 Year Old Single Malt Scotch Whisky', 99],
+  ['Glenmorangie 12 Year Old Single Malt Scotch', 95],
+  ['Glenmorangie 18 Year Old Single Malt Scotch', 94],
+  ['Glenmorangie 25 Year Old Single Malt Scotch', 96], ['Glenmorangie Single Malt Scotch', 99],
+  ['Glenrothes 1975 Single Malt Scotch', 91], ['Glenrothes 1985 Single Malt Scotch Whisky', 82],
+  ["Grant's Family Reserve Blended Scotch Whisky", 78],
+  ['Greenore 15 Year Old Single Malt Irish Whiskey', 88],
+  ['Greenore 8 Year Old Single Grain Irish Whiskey', 71], ['Haig Supreme Blended Scotch', 96],
+  ['High West Double Rye Whiskey', 85], ['High West Rocky Mountain Rye 21 Year Old Whiskey', 82],
+  ['Highland Park 12 Year Old Orkneys Single Malt Whisky', 88], ['Highland Park 18 Scotch', 94],
+  ['Highland Park 25-Year-Old Orkney Islands Single Malt Whisky', 90],
+  ['Highland Park 30 Scotch', 96], ['Hudson Baby Bourbon', 96], ['Hudson Four Grain Bourbon', 83],
+  ['Hudson Manhattan Rye', 79], ['Hudson New York Corn Whiskey', 88],
+  ['Hudson Single Malt Whiskey', 81], ['Isle of Jura 16 Year Old Single Malt Scotch Whisky', 80],
+  ['Isle of Jura 21 Year Old Single Malt Scotch', 94], ['Isle of Jura Prophecy Scotch', 91],
+  ["Jack Daniel's No. 7 Whiskey", 54], ['Jameson 12 Year Old Irish Whiskey', 87],
+  ['Jameson 18 Year Old Limited Reserve Irish Whiskey', 73], ['Jameson Irish Whiskey', 65],
+  ['Jameson Irish Whiskey Gold Reserve', 86], ['Jameson Rarest Reserve Whiskey', 90],
+  ["Jefferson's Presidential Select", 90], ["Jefferson's Select 18 Year Old Bourbon Whiskey", 89],
+  ['Jim Beam Black Bourbon', 86], ['Jim Beam Kentucky Straight Bourbon Whiskey', 69],
+  ['Jim Beam Red Stag Black Cherry Flavored Whiskey', 81], ['Jim Beam Straight Rye Whiskey', 57],
+  ['John L. Sullivan Irish Whiskey', 86], ['Johnnie Walker Black Label Scotch Whisky', 70],
+  ['Johnnie Walker Blue Label Scotch Whisky', 84],
+  ['Johnnie Walker Gold Label Blended Scotch Whisky', 78],
+  ['Johnnie Walker Green Label Scotch Whisky', 76], ['Johnnie Walker Red Label Whisky', 58],
+  ['Kansas Spirit Whiskey', 88], ['Kavalan Concert Master Single Malt Whiskey', 82],
+  ['Kavalan Single Malt Whiskey', 82], ['Kavalan Solist Ex-Bourbon Single Malt Whisky', 81],
+  ['Kavalan Solist Fino Cast Strength Single Malt Whiskey', 88],
+  ['Kavalan Solist Sherry Single Malt Whisky', 88],
+  ['Kavalan Solist Vinho Single Malt Whisky', null], ['Kellan Irish Whiskey', 47],
+  ['Kilbeggan 15 Year Old Finest Irish Whiskey', 84], ['King Car Single Malt Whisky', 96],
+  ['Kingdom 12 Year Old Scotch', 96], ['Kingdom 17 Year Old Scotch', 99],
+  ['Knob Creek 9 Year Old Single Barrel Reserve Bourbon Whiskey', 88],
+  ['Lagavulin 12 Year Old Single Malt Scotch', 96], ['Lagavulin 16 Scotch', 85],
+  ['Lagavulin 21 Scotch', 96],
+  ['Laphroaig 10 Year Old "Cast Strength" Islay Single Malt Scotch Whisky', 83],
+  ['Laphroaig 10 Year Old Single Malt Scotch Whisky', 84],
+  ['Laphroaig 18 Year Old Single Malt Scotch', 99],
+  ['Laphroaig Quarter Cask Single Malt Scotch', 92], ['Ledaig 10 Year Old Single Malt Scotch', 87],
+  ['Leopold Bros. Maryland Style Rye Whiskey', 88],
+  ['Longrow CV Campbeltown Single Malt Whisky', 88], ['Macallan 15 Year Old Fine Oak Scotch', 90],
+  ['Macallan 21 Year Old Fine Oak Scotch Whisky', 96],
+  ['Macallan 30 Year Old Fine Oak Speyside Single Malt Whisky', 88], ["Maker's Mark Bourbon 46", 83],
+  ['McAdams Canadian Whisky', null], ['Michael Collins 10 Year Old Single Malt Irish Whiskey', 93],
+  ['Michael Collins Blended Irish Whiskey', 77], ['Michael Collins Single Malt Irish Whiskey', 74],
+  ['Mickey Finn Irish Whiskey', 81], ['Midleton Very Rare Irish Whiskey', 91],
+  ["Noah's Mill Bourbon", 99], ['OYO Soft Red Winter Wheat Whiskey Single Barrel', 88],
+  ['Oban 14 Year Old Single Malt Scotch', 83], ['Oban 15 Year Old Single Malt Scotch', 96],
+  ['Old Forester 12 Year Old Birthday Bourbon Whiskey', 88],
+  ['Old Forester Signature Kentucky Straight Bourbon Whiskey', 88],
+  ['Old Forester Straight Bourbon 86 Proof', 81], ['Old Parr 12 Year Old Blended Scotch', 86],
+  ['Old Parr Superior 18 Year Old Blended Scotch Whisky', 82],
+  ['Old Pulteney 12 Year Old Single Malt Scotch', 92],
+  ['Old Pulteney 17 Year Old Single Malt Scotch', 92],
+  ['Old Pulteney 21 Year Old Single Malt Scotch Whisky', 95],
+  ['Old Pulteney 30 Year Old Single Malt Scotch', 96], ['Original Moonshine Corn Whiskey', 88],
+  ['Origine Irish Whiskey', 54], ['P & M Blended Whisky', 81], ['P & M Single Malt Whisky', 81],
+  ['Pappy Van Winkle 15 Year Old Family Reserve Whiskey', 99],
+  ['Pappy Van Winkle 20 year old Family Reserve Kentucky Straight Bourbon Whiskey', 94],
+  ["Parker's Heritage Bourbon", 99],
+  ["Parker's Heritage Collection 10 Year Old Wheated Bourbon", 96],
+  ['Penderyn Single Malt Welsh Whisky', 77], ['Pendleton Blended Canadian Whisky', 56],
+  ['Pescadores Pumpkin Whisky', 88], ['Powers 12 Year Old Irish Whiskey', 99],
+  ['Powers Gold Label Irish Whiskey', 84], ['Prince Edward Canadian Rye', 81],
+  ['Rebel Yell Kentucky Straight Bourbon Whiskey', 99], ['Redbreast 12 Year Old Irish Whiskey', 96],
+  ['Redbreast 15 Year Old Irish Whiskey', 92], ['Rich & Rare Canadian Whisky', 47],
+  ['Rogue Oregon Single Malt Whiskey', 88], ["Rowan's Creek Bourbon", 96],
+  ['Royal Canadian Small Batch Canadian Whisky', 79], ['Royal Salute 21 Year Old Scotch', 94],
+  ["Russell's Reserve 6 Year Old Straight Rye Whiskey", 88], ['Rye Dog Whiskey', 96],
+  ['Sazerac 18 Year Old Kentucky Straight Rye Whiskey', 78],
+  ['Sazerac Kentucky Straight Rye Whiskey', 69], ["Seagram's 7 Crown Dark Honey Whiskey", 81],
+  ['Slane Castle Irish Whiskey', 50], ['Smooth Ambler Exceptional White Whisky', 88],
+  ['Speyburn 10 Year Old Single Malt Scotch', 90],
+  ['Springbank 15 Year Old Campbeltown Single Malt Scotch Whisky', 85],
+  ['Suntory Hakushu 12 Year Old Single Malt Whiskey', 90],
+  ['Suntory The Yamazaki 18 Year Old Single Malt Whiskey', 99], ['Suntory Whiskey Hibiki', null],
+  ['Talisker 1992 Single Malt Scotch', 94], ['Templeton Rye Whiskey', 67],
+  ['Texas Crown Club Canadian Whisky', null], ['The Irishman Single Malt Whiskey', 81],
+  ['The Singleton of Glendullan 12 Year Old Single Malt Scotch', 89], ['The Tweeddale Blend', null],
+  ['Thirteenth Colony Southern Corn Whiskey', 96],
+  ['Thomas H. Handy Kentucky Straight Rye Whiskey', 99],
+  ['Tobermory 15 Year Old Single Malt Scotch', 94], ['Tomatin 15 Year Old Single Malt Scotch', 96],
+  ['Tomatin 18 Year Old Single Malt Scotch', 96],
+  ['Tullamore Dew 10 Year Old Irish Reserve Whiskey', 86],
+  ['Tullamore Dew 10 Year Old Single Malt Irish Whiskey', 81],
+  ['Tullamore Dew 12 Year Old Irish Special Reserve Whiskey', 84],
+  ['Tullamore Dew Irish Whiskey', 70],
+  ['Tyrconnell 10 Year Old Single Malt Madeira Cask Finish Irish Whiskey', 100],
+  ['Tyrconnell 10 Year Old Single Malt Sherry Cask Finish Irish Whiskey', 87],
+  ['Tyrconnell Single Malt Irish Whiskey', 83], ["Wasmund's Copper Fox Rye Whisky", 76],
+  ['Whyte & Mackay "Old Luxury" 19 Year Old Aged Blended Scotch Whisky', 74],
+  ['Whyte & Mackay "Original" 40 Year Old Aged Blended Scotch Whisky', 89],
+  ['Wild Turkey 81 Bourbon Whiskey', 81], ['Wild Turkey Bourbon 101', 77],
+  ['Wild Turkey Bourbon Tradition 15 year', 88], ['Wild Turkey Kentucky Spirit Bourbon', 94],
+  ['Wild Turkey Rare Breed Bourbon', 90], ["Wild Turkey Russel's Reserve Bourbon", 93],
+  ['William Larue Weller Bourbon', 96], ["Wiser's 18 Year Old Canadian Whisky", 67],
+  ["Wiser's Legacy Canadian Whisky", 74], ["Wiser's Small Batch Canadian Whisky", 60],
+  ['Wolfhound Irish Whiskey', 81], ["Woodford Reserve Distiller's Select Bourbon", 88],
+  ["Woodford Reserve Master's Collection Bourbon", 96], ['Yamazaki Single Malt 12-Year Whisky', 86]]
+};
+
+// Call Code to Build the system ///////////////////////////////////////////////////////////////////
+
+var v  = new BrunelVis('visualization');
+v.build(table1);
+
+</script>
+
