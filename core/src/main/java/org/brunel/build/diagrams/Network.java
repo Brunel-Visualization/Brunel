@@ -26,8 +26,8 @@ import org.brunel.model.VisElement;
 
 class Network extends D3Diagram {
 
-	private final ElementStructure nodes;
-	private final String nodeID;
+	protected final ElementStructure nodes;
+	protected final String nodeID;
 
 	public Network(ElementStructure structure) {
 		super(structure);

@@ -88,7 +88,7 @@ public class Hierarchical {
 
 	private static Node makeInternalNode(String label) {
 		Node node = new Node(null, 0, label, new ArrayList<Node>());
-		node.temp = new HashMap<String, Object>();
+		node.content = new HashMap<String, Object>();
 		return node;
 	}
 
@@ -104,7 +104,7 @@ public class Hierarchical {
 			Node current = root;                            // Start at root
 
 			for (Field field : fields) {
-				Map<Object, Node> map = (Map<Object, Node>) current.temp;
+				Map<Object, Node> map = (Map<Object, Node>) current.content;
 				List<Node> children = (List<Node>) current.children;
 				Object v = field.value(row);
 				if (v != null) current = map.get(v);
@@ -170,7 +170,7 @@ public class Hierarchical {
 		if (!processed.add(current))
 			return;            // Do not do this twice, in case the data was not actually a tree
 
-		current.temp = null;	// Free temp memory
+		current.content = null;	// Free temp memory
 
 
 		List<Node> array = ((List<Node>) current.children);

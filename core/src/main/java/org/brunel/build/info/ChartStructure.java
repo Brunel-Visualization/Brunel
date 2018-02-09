@@ -112,7 +112,7 @@ public class ChartStructure {
 	 * @return true or false
 	 */
 	public boolean diagramDefinesGraph() {
-		return diagram == Diagram.tree || diagram == Diagram.network;
+		return diagram == Diagram.tree || diagram == Diagram.network|| diagram == Diagram.dag;
 	}
 
 	public Integer[] elementBuildOrder() {

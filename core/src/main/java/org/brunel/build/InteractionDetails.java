@@ -200,7 +200,7 @@ public class InteractionDetails {
 		if (diagram == VisTypes.Diagram.map)
 			extent = "1/5,5";
 		else if (diagram == VisTypes.Diagram.parallel ||
-				diagram == VisTypes.Diagram.tree || diagram == VisTypes.Diagram.network) extent = "1/2,10";
+			diagram == VisTypes.Diagram.dag || diagram == VisTypes.Diagram.tree || diagram == VisTypes.Diagram.network) extent = "1/2,10";
 		else
 			extent = "1/3,3";
 
@@ -440,7 +440,7 @@ public class InteractionDetails {
 
 	private boolean[] defaultZooms() {
 		// Handle cases when there are diagrams -- the ones that do not fill the space by default are zoomable
-		if (diagram == VisTypes.Diagram.network || diagram == VisTypes.Diagram.map
+		if (diagram == VisTypes.Diagram.network || diagram == VisTypes.Diagram.map || diagram == VisTypes.Diagram.dag
 				|| diagram == VisTypes.Diagram.tree) return ZOOM_ALL;
 
 		// Parallel coordinates gets special zooming -- just the "Y"

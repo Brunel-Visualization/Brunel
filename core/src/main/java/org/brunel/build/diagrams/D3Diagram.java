@@ -49,6 +49,7 @@ public abstract class D3Diagram {
     if (vis.tDiagram == Diagram.chord) return new Chord(structure);
     if (vis.tDiagram == Diagram.cloud) return new Cloud(structure);
     if (vis.tDiagram == Diagram.tree) return new Tree(structure);
+    if (vis.tDiagram == Diagram.dag) return new DAG(structure);
     if (vis.tDiagram == Diagram.parallel) return new ParallelCoordinates(structure);
     if (vis.tDiagram == Diagram.gridded) return new Grid(structure);
     if (vis.tDiagram == Diagram.table) return new Table(structure);

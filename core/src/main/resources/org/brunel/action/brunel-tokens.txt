@@ -22,6 +22,7 @@ cloud diagram - rectangular
 gridded diagram - rows columns aspect
 table diagram
 parallel diagram - NUMBER
+dag diagram
 tree diagram - prune
 treemap diagram - prune
 network diagram - NUMBER

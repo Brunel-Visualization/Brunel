@@ -16,6 +16,10 @@
 
 package org.brunel.data.diagram;
 
+import org.brunel.translator.JSTranslation;
+
+import java.util.Objects;
+
 /**
  * A  node with values named such that they can easily be used by D3 in hierarchies
  * This is also usd in Node/Edge layouts, but most of the fields are unused
@@ -28,7 +32,7 @@ public class Node {
     public final String innerNodeName;              // Name for a non-leaf node
     public Node parent;                             // Parent node
     public Object children;                         // Initially a List, then an array
-    public Object temp;                             // Temporary storage for building
+    public Object content;                          // General content
 
     public Node(Integer row, double value, String innerNodeName, Object children) {
         this.row = row;
@@ -49,4 +53,10 @@ public class Node {
             return row;
         }
     }
+
+    @JSTranslation(ignore = true)
+    public String toString() {
+        return Objects.toString(key);
+    }
+
 }
