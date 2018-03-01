@@ -61,8 +61,11 @@ public class ElementDetails {
 
 		// we override the suggested representation if we have a symbol defined
 		if (representation == spaceFillingCircle || representation == largeCircle || representation == pointLikeCircle) {
-			if (!structure.vis.fSymbol.isEmpty() || structure.styleSymbol != null)
-				representation = ElementRepresentation.symbol;
+			if (!structure.vis.fSymbol.isEmpty() || structure.styleSymbol != null) {
+				representation = structure.styleSymbol.equals("rect")
+					? ElementRepresentation.rect
+					: ElementRepresentation.symbol;
+			}
 		}
 
 		// Only these items are unfilled
