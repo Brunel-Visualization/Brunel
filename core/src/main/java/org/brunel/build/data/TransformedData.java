@@ -16,8 +16,12 @@
 
 package org.brunel.build.data;
 
+import org.brunel.action.Param;
 import org.brunel.data.Dataset;
+import org.brunel.data.Field;
 import org.brunel.model.VisElement;
+
+import java.util.List;
 
 /**
  * This is a dataset that is the result of a transform from another data set.
@@ -25,45 +29,66 @@ import org.brunel.model.VisElement;
  */
 public class TransformedData extends Dataset {
 
-	public static TransformedData make(VisElement vis) {
-		TransformParameters params = new TransformParameterBuilder(vis).make();
-		Dataset source = vis.getDataset();
-		return new TransformedData(source, params, transform(source, params));
-	}
+  public static TransformedData make(VisElement vis) {
+    TransformParameters params = new TransformParameterBuilder(vis).make();
+    Dataset source = vis.getDataset();
 
-	public static Dataset transform(Dataset data, TransformParameters params) {
-		return data
-				.addConstants(params.constantsCommand)                              // add constant fields
-				.each(params.eachCommand)                                           // divide up fields into parts
-				.filter(params.filterCommand)                                       // filter data
-				.transform(params.transformCommand)                                 // bin, rank, ... on data
-				.summarize(params.summaryCommand)                                   // summarize data
-				.series(params.seriesCommand)                                       // convert series
-				.setRowCount(params.rowCountCommand)                                // set the number of rows
-				.sort(params.sortCommand)                                           // sort data
-				.sortRows(params.sortRowsCommand)                                   // sort rows only
-				.stack(params.stackCommand);                                        // stack data
-	}
-	private final Dataset source;                            // Original dataset the transform was applied to
-	private final TransformParameters transformParameters;        // The parameters used for the transform
+    // If the user specifies a transform for X or Y, copy it to the field
+    // so that binning or other operations on the field know about it
+    applyUserTransforms(source, vis.fX);
+    applyUserTransforms(source, vis.fY);
 
-	/**
-	 * Private constructor copies all the input from the result data (shallow copy) and stores info
-	 *
-	 * @param params parameters used to transform
-	 * @param result transformed data
-	 */
-	private TransformedData(Dataset source, TransformParameters params, Dataset result) {
-		super(result.fields, result);
-		this.transformParameters = params;
-		this.source = source;
-	}
+    return new TransformedData(source, params, transform(source, params));
+  }
 
-	public Dataset getSource() {
-		return source;
-	}
+  private static void applyUserTransforms(Dataset source, List<Param> axes) {
+    for (Param param : axes) {
+      Field f = source.field(param.asField(source));
+      if (param.hasModifierOption("log")) {
+        f.set("transform", "log");
+      } else if (param.hasModifierOption("root")) {
+        f.set("transform", "root");
+      } else if (param.hasModifierOption("linear")) {
+        f.set("transform", "linear");
+      }
+    }
 
-	public TransformParameters getTransformParameters() {
-		return transformParameters;
-	}
+  }
+
+  public static Dataset transform(Dataset data, TransformParameters params) {
+    return data
+      .addConstants(params.constantsCommand)                              // add constant fields
+      .each(params.eachCommand)                                           // divide up fields into parts
+      .filter(params.filterCommand)                                       // filter data
+      .transform(params.transformCommand)                                 // bin, rank, ... on data
+      .summarize(params.summaryCommand)                                   // summarize data
+      .series(params.seriesCommand)                                       // convert series
+      .setRowCount(params.rowCountCommand)                                // set the number of rows
+      .sort(params.sortCommand)                                           // sort data
+      .sortRows(params.sortRowsCommand)                                   // sort rows only
+      .stack(params.stackCommand);                                        // stack data
+  }
+
+  private final Dataset source;                            // Original dataset the transform was applied to
+  private final TransformParameters transformParameters;        // The parameters used for the transform
+
+  /**
+   * Private constructor copies all the input from the result data (shallow copy) and stores info
+   *
+   * @param params parameters used to transform
+   * @param result transformed data
+   */
+  private TransformedData(Dataset source, TransformParameters params, Dataset result) {
+    super(result.fields, result);
+    this.transformParameters = params;
+    this.source = source;
+  }
+
+  public Dataset getSource() {
+    return source;
+  }
+
+  public TransformParameters getTransformParameters() {
+    return transformParameters;
+  }
 }
