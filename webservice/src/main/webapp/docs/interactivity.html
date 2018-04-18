@@ -36,9 +36,17 @@
     interaction(none)</a>
 </p>
 <p>
-    This parameter takes the options <code>x</code>, <code>y</code>, <code>xy</code>,<code>none</code>, ,<code>none</code>
+    The explicit parameter <code>panzoom</code> takes the options <code>x</code>, <code>y</code>, <code>xy</code>,<code>none</code>, ,<code>none</code>
     which allow control over exactly which dimensions can be panned or zoomed.
 </p>
+<p>
+    By default, the zoom is limited to a reasonable range. You can modify this by specifying a list of two numeric values
+    for the min and max of the allowed zoom factors, like the followign example, which allows you to zoom out up
+    to a zoom factor of 2, or in up to 100 times
+</p>
+<p class="examples"><a onClick="showAction(this.text)">x(latitude) y(summer) interaction(panzoom:[0.5, 100])</a>
+</p>
+
 
 <h3>Selection</h3>
 <p>
