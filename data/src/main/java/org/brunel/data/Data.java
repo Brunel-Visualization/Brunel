@@ -109,12 +109,14 @@ public class Data {
 
     @JSTranslation(js = {
             "if (d == 0) return '0';",
+            "if (decimalPlaces != null && Math.abs(d) < Math.pow(10, -decimalPlaces)) return '0';",
             "if (Math.abs(d) <= 1e-6 || Math.abs(d) >= 1e8) return $.formatScientific(d);",
             "if (Math.abs((d - Math.round(d)) / d) < 1e-9) return $.formatInt(Math.round(d), useGrouping);",
             "return $.formatFixed(d, decimalPlaces == null ? 6 : decimalPlaces, useGrouping);"
     })
     public static String formatNumeric(double d, Number decimalPlaces, boolean useGrouping) {
-        if (d == 0) return "0";
+        if (Math.abs(d) == 0) return "0";
+        if (decimalPlaces != null && Math.abs(d) < Math.pow(10, -decimalPlaces.intValue())) return "0";
         if (Math.abs(d) <= 1e-6 || Math.abs(d) >= 1e8)
             return scientificFormat.format(d).replace('E', 'e');
         else if (Math.abs((d - Math.round(d)) / d) < 1e-9)

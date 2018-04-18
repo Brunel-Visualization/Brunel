@@ -154,8 +154,9 @@ public class TestData {
 
     @Test
     public void testNumericFormat() {
-        assertEquals("0", Data.formatNumeric((double) 0, null, true));
         assertEquals("0", Data.formatNumeric(0.0, null, true));
+        assertEquals("0", Data.formatNumeric(1e-9, 8, true));
+        assertEquals("1.0e-9", Data.formatNumeric(1e-9, 10, true));
         assertEquals("22", Data.formatNumeric((double) 22, null, true));
         assertEquals("22", Data.formatNumeric(22.0000000000001, null, true));
         assertEquals("22", Data.formatNumeric(21.999999999, null, true));
