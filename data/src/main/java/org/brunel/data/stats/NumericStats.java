@@ -112,7 +112,7 @@ public class NumericStats {
 		f.set("minDelta", minD);
 		f.set("granularity", granularity);
 
-		double range = max == min ? (max == 0 ? 1 : max) : max - min;
+		double range = max == min ? (max == 0 ? 1 : Math.abs(max)) : max - min;
 		double places = Math.max(0, Math.round(4 - Math.log(range) / Math.log(10)));         // decimal places to show range
 		f.set("decimalPlaces", allInteger && max - min > 5 ? 0 : places);
 	}
