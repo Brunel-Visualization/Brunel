@@ -32,7 +32,7 @@ public class TestChord {
 			"c,y,1,2",
 			"c,x,2,1",
 			"c,y,5,1",
-	}, "\n");
+	}, "\n", true);
 
 	private static final Dataset simple = Dataset.make(CSV.read(csv));
 

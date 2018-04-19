@@ -67,13 +67,13 @@ public class StylesTest {
     private String debug(StyleSelector[] sel) {
         String[] result = new String[sel.length];
         for (int i = 0; i < result.length; i++) result[i] = sel[i].debug();
-        return Data.join(result, " | ");
+        return Data.join(result, " | ", false);
     }
 
     private String str(StyleSelector[] sel) {
         String[] result = new String[sel.length];
         for (int i = 0; i < result.length; i++) result[i] = sel[i].toString();
-        return Data.join(result, ", ");
+        return Data.join(result, ", ", false);
     }
 
     @Test

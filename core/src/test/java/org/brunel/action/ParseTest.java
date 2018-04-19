@@ -209,7 +209,7 @@ public class ParseTest {
         assertEquals(1, actions.size());
         assertEquals("at(1, 100, 22.9)", actions.get(0).toString());
 
-        actions = new Parser().getActionSteps(new Parser().tokenize("sort(color:ascending) bin(color:12.0)"));
+        actions = new Parser().getActionSteps(new Parser().tokenize("sort(color:ascending) bin(color:12)"));
         assertEquals(2, actions.size());
         assertEquals("sort(color:ascending)", actions.get(0).toString());
         assertEquals("bin(color:12)", actions.get(1).toString());

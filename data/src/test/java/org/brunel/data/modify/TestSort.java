@@ -35,7 +35,7 @@ public class TestSort {
             "b,x,2,3",
             "c,y,1,2",
             "c,x,2,1",
-    }, "\n");
+    }, "\n", false);
 
     private static final Dataset simple = Dataset.make(CSV.read(csv));
 
@@ -89,14 +89,14 @@ public class TestSort {
     public void testSortRowOrder() {
         Dataset a = simple.sort("B:ascending");
         assertEquals("A|B|C|D|#count|#row -- a|x|1|4|1|1 -- b|x|2|3|1|2 -- c|x|2|1|1|4 -- c|y|1|2|1|3", CannedData.dumpData(a));
-        assertEquals("a, b, c", Data.join(a.fields[0].categories()));       // c is biggest because it has ranks 1+2,
-        assertEquals("x, y", Data.join(a.fields[1].categories()));
-        assertEquals("1, 2", Data.join(a.fields[2].categories()));
-        assertEquals("1, 2, 3, 4", Data.join(a.fields[3].categories()));
+        assertEquals("a, b, c", Data.join(a.fields[0].categories(), true));       // c is biggest because it has ranks 1+2,
+        assertEquals("x, y", Data.join(a.fields[1].categories(), true));
+        assertEquals("1, 2", Data.join(a.fields[2].categories(), true));
+        assertEquals("1, 2, 3, 4", Data.join(a.fields[3].categories(), true));
 
         a = simple.sort("C:ascending; D:ascending");
         assertEquals("A|B|C|D|#count|#row -- c|y|1|2|1|3 -- a|x|1|4|1|1 -- c|x|2|1|1|4 -- b|x|2|3|1|2", CannedData.dumpData(a));
-        assertEquals("a, b, c", Data.join(a.fields[0].categories()));       // c is biggest because it has ranks 1+2,
+        assertEquals("a, b, c", Data.join(a.fields[0].categories(), true));       // c is biggest because it has ranks 1+2,
 
         a = simple.sort("C:descending; D:descending");
         assertEquals("A|B|C|D|#count|#row -- b|x|2|3|1|2 -- c|x|2|1|1|4 -- a|x|1|4|1|1 -- c|y|1|2|1|3", CannedData.dumpData(a));

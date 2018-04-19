@@ -154,7 +154,7 @@ public class Data {
     for (int i = 0; i < oo.length; i++) {
       oo[i] = items[i];
     }
-    return join(oo, null);
+    return join(oo, false);
   }
 
   @JSTranslation(ignore = true)
@@ -163,12 +163,12 @@ public class Data {
     for (int i = 0; i < oo.length; i++) {
       oo[i] = items[i];
     }
-    return join(oo, null);
+    return join(oo, false);
   }
 
   @JSTranslation(ignore = true)
   // The Javascript version works fine with the Collections version
-  public static String join(Object[] items, String inter) {
+  public static String join(Object[] items, String inter, boolean formatted) {
     if (inter == null) {
       inter = ", ";
     }
@@ -177,14 +177,25 @@ public class Data {
       if (i > 0) {
         s += inter;
       }
-      s += items[i];
+      if (formatted) {
+        s += Data.format(items[i], false);
+      } else if (items[i] instanceof Number) {
+        Number n = (Number) items[i];
+        if (n.doubleValue() == n.intValue()) {
+          s += Integer.toString(n.intValue());
+        } else {
+          s += n.toString();
+        }
+      } else {
+        s += items[i].toString();
+      }
     }
     return s;
   }
 
   @JSTranslation(ignore = true)
-  public static String join(Object[] items) {
-    return join(items, null);
+  public static String join(Object[] items, boolean formatted) {
+    return join(items, null, formatted);
   }
 
   @JSTranslation(js = {
@@ -409,7 +420,8 @@ public class Data {
     ParsePosition pos = new ParsePosition(0);
     Number parse = STANDARD_FORMAT.parse(s, pos);
     if (s.length() != pos.getIndex()) {
-      throw new NumberFormatException("Could not parse as number: " + s);
+      // This handles scientific
+      return Double.parseDouble(s);
     }
     return parse;
   }

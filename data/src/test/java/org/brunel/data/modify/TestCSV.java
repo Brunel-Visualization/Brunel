@@ -102,11 +102,11 @@ public class TestCSV {
 		assertEquals(2, data.fields[6].categories().length);
 		assertEquals(2, data.fields[7].categories().length);
 
-		assertEquals("Female, Male", Data.join(data.fields[0].categories()));
-		assertEquals("8, 12, 15, 16", Data.join(data.fields[2].categories()));
-		assertEquals("Clerical, Manager", Data.join(data.fields[3].categories()));
-		assertEquals("97, 98", Data.join(data.fields[6].categories()));
-		assertEquals("No, Yes", Data.join(data.fields[7].categories()));
+		assertEquals("Female, Male", Data.join(data.fields[0].categories(), true));
+		assertEquals("8, 12, 15, 16", Data.join(data.fields[2].categories(), true));
+		assertEquals("Clerical, Manager", Data.join(data.fields[3].categories(), true));
+		assertEquals("97, 98", Data.join(data.fields[6].categories(), true));
+		assertEquals("No, Yes", Data.join(data.fields[7].categories(), true));
 	}
 
 	@Test

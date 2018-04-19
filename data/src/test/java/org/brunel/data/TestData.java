@@ -18,6 +18,7 @@ package org.brunel.data;
 
 import org.junit.Test;
 
+import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -114,6 +115,34 @@ public class TestData {
         assertEquals(("\"'Quotes mismatched\"'"), Data.deQuote("\"\\\"'Quotes mismatched\\\"'\""));
         assertEquals(("\\Nasty:\"'\\'\""), Data.deQuote("\"\\\\Nasty:\\\"'\\\\'\\\"\""));
     }
+
+    @Test
+    public void testParseInt() {
+        assertEquals(55, Data.parseInt("55"));
+        assertEquals(55, Data.parseInt("55.0"));
+        assertEquals(55, Data.parseInt("55.0"));
+
+        try {
+            Data.parseInt("a");
+            fail("should not parse");
+        } catch (NumberFormatException ignored) {
+        }
+    }
+
+
+    @Test
+    public void testParseDouble() {
+        assertEquals(55, Data.parseDouble("55"), 1e-12);
+        assertEquals(55, Data.parseInt("55.0"), 1e-12);
+        assertEquals(55, Data.parseDouble("5.5e1"), 1e-12);
+
+        try {
+            Data.parseInt("a");
+            fail("should not parse");
+        } catch (NumberFormatException ignored) {
+        }
+    }
+
 
     @Test
     public void testIndexOf() {

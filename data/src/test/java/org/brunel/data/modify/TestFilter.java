@@ -32,7 +32,7 @@ public class TestFilter {
             "b,x,2,3",
             "c,y,1,2",
             "c,,2,1",
-    }, "\n");
+    }, "\n", true);
 
     private static final Dataset simple = Dataset.make(CSV.read(csv));
 
@@ -44,7 +44,7 @@ public class TestFilter {
 
         a = simple.filter("A in c,z");
         assertEquals("A|B|C|D|#count|#row -- c|y|1|2|1|3 -- c|?|2|1|1|4", CannedData.dumpData(a));
-        assertEquals("c", Data.join(a.fields[0].categories()));
+        assertEquals("c", Data.join(a.fields[0].categories(), true));
 
         a = simple.filter("D in 1.5, 3.5");
         assertEquals("A|B|C|D|#count|#row -- b|x|2|3|1|2 -- c|y|1|2|1|3", CannedData.dumpData(a));

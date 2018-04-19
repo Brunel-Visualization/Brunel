@@ -49,7 +49,7 @@ public abstract class ElementBuilder {
     int n = vis.fCSS.size();
     for (int i = 0; i < n; i++) {
       String suffix = n > 1 ? "_" + (n + 1) : "";                        // Only need suffixes for multiples
-      String base = Data.join(details.classes, " ") + " ";
+      String base = Data.join(details.classes, " ", false) + " ";
       out.addChained("attr('class', function(d) { return " + Data.quote(base) + " + css" + suffix + "(d) } )");
     }
 
@@ -465,7 +465,7 @@ public abstract class ElementBuilder {
     out.onNewLine().ln().comment("Define selection entry operations")
       .onNewLine().add("function initialState(selection) {").indentMore()
       .onNewLine().add("selection").onNewLine();
-    out.addChained("attr('class', '" + Data.join(details.classes, " ") + "')");
+    out.addChained("attr('class', '" + Data.join(details.classes, " ", false) + "')");
     addStylingForRoundRectangle();
     writeDiagramEntry(details);
     if (!interaction.hasElementInteraction(structure)) {

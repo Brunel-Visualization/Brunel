@@ -34,7 +34,7 @@ class BasicSelector extends StyleSelector {
     public String debug() {
         String s = "{";
         if (element != null) s += element + " ";
-        return s + "classes=[" + Data.join(classes, ",") + "]}";
+        return s + "classes=[" + Data.join(classes, ",", false) + "]}";
     }
 
     public boolean match(StyleTarget target) {

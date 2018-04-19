@@ -31,7 +31,7 @@ public class TestSeries {
             "b,x,2,3",
             "c,y,1,2",
             "c,x,2,1",
-    }, "\n");
+    }, "\n", true);
 
     private static final Dataset simple = Dataset.make(CSV.read(csv));
 

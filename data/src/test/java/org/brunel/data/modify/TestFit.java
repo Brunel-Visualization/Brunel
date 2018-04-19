@@ -32,7 +32,7 @@ public class TestFit {
             "b,1,3",
             "b,2,3",
             "b,3,3"
-    }, "\n");
+    }, "\n", true);
 
     private static final Dataset simple = Dataset.make(CSV.read(csv));
 

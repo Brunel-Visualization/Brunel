@@ -83,7 +83,7 @@ class MultiComponentSelector extends StyleSelector {
     }
 
     public String toString() {
-        return Data.join(components, " ");
+        return Data.join(components, " ", false);
     }
 
 }

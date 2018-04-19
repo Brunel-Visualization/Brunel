@@ -120,12 +120,12 @@ public class CannedData {
         boolean strip = d.fields[d.fields.length - 1].name.equals("#selection");
 
         List<String> rows = new ArrayList<>();
-        rows.add(stripLast(Data.join(d.fields, "|"), strip));
+        rows.add(stripLast(Data.join(d.fields, "|", true), strip));
         for (int r = 0; r < d.rowCount(); r++) {
             String[] row = new String[d.fields.length];
             for (int i = 0; i < row.length; i++)
                 row[i] = d.fields[i].format(d.fields[i].value(r));
-            rows.add(stripLast(Data.join(row, "|"), strip));
+            rows.add(stripLast(Data.join(row, "|", true), strip));
         }
         return Data.join(rows, " -- ");
     }
@@ -138,7 +138,7 @@ public class CannedData {
             if (s.equals(Field.VAL_UNSELECTED)) s = "N";
             items[i] = s;
         }
-        return Data.join(items, ",");
+        return Data.join(items, ",", true);
     }
 
 

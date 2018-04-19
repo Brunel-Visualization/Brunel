@@ -31,23 +31,23 @@ public class TestHierarchical {
 			"c,y,1,2",
 			"c,x,2,1",
 			"c,y,5,1",
-	}, "\n");
+	}, "\n", true);
 
 	private static final String nodes = Data.join(new String[]{
 			"A", "a", "b", "c", "d"
-	}, "\n");
+	}, "\n", true);
 
 	private static final String edge1 = Data.join(new String[]{
 			"A,B", "a,b", "a,c", "c,d"
-	}, "\n");
+	}, "\n", true);
 
 	private static final String edge2 = Data.join(new String[]{
 			"A,B", "a,b", "a,c"
-	}, "\n");
+	}, "\n", true);
 
 	private static final String edge3 = Data.join(new String[]{
 			"A,B", "a,b", "a,c", "c,d", "d,a"
-	}, "\n");
+	}, "\n", true);
 
 
 

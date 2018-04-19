@@ -71,7 +71,7 @@ public abstract class TitleBuilder {
 	public void writeContent(String group, ScriptWriter out) {
 		if (content() == null) return;
 
-		out.add(group + ".append('text').attr('class', '" + Data.join(styleTarget.classes, " ") + "')")
+		out.add(group + ".append('text').attr('class', '" + Data.join(styleTarget.classes, " ", false) + "')")
 				.add(".text(" + content() + ")");
 		defineHorizontalLocation(out);
 		defineVerticalLocation(out);

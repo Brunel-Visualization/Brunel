@@ -93,7 +93,7 @@ public class LegendBuilder {
 
 		if (defineColor || defineSymbol) {
 			out.onNewLine().add("legends._legend = legends._legend || { title: [")
-					.add(Data.join(title)).add("], ");
+					.add(Data.join(title, true)).add("], ");
 			if (dateFormat != null)
 				out.add("dateFormat: BrunelData.util_DateFormat." + dateFormat.name() + ", ");
 
@@ -208,9 +208,9 @@ public class LegendBuilder {
 					divs[i] = dateBuilder.make(date, dateFormat, true);
 				}
 
-				legendTicks = "[" + Data.join(divs) + "]";
+				legendTicks = "[" + Data.join(divs, false) + "]";
 			} else {
-				legendTicks = "[" + Data.join(divisions) + "]";
+				legendTicks = "[" + Data.join(divisions, false) + "]";
 			}
 		}
 		return legendTicks;

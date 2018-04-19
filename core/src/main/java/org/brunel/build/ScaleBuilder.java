@@ -212,7 +212,7 @@ public class ScaleBuilder {
 			divs = l.toArray();
 		}
 
-		String domainDivs = Data.join(divs);
+		String domainDivs = Data.join(divs, false);
 		out.add(".domain([").add(domainDivs).add("])");
 		return -1;
 	}
@@ -386,7 +386,7 @@ public class ScaleBuilder {
 		Field f = fieldById(p, vis);
 		Object[] divisions = f.isNumeric() ? null : f.categories();
 		defineScaleWithDomain(name, new Field[]{f}, ScalePurpose.sizeAesthetic, sizes.length, defaultTransform, divisions, false);
-		out.addChained("range([ ").add(Data.join(sizes)).add("])").endStatement();
+		out.addChained("range([ ").add(Data.join(sizes, false)).add("])").endStatement();
 	}
 
 	private void addSymbolScale(Param p, ElementStructure element) {

@@ -11,6 +11,7 @@ public class SanityTests {
     Locale.setDefault(Locale.GERMAN);
     System.out.println(new Double(100.222));
     System.out.println(String.format("%f",100.222));
+    System.out.println(Double.parseDouble("2.1e12"));
   }
 
 }

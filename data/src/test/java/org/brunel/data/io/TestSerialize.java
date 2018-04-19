@@ -138,7 +138,7 @@ public class TestSerialize {
     public void testBankDataset() {
         Dataset dataset = Dataset.make(CSV.read(CannedData.bank));
         byte[] bytes = Serialize.serializeDataset(dataset);
-        assertEquals(591, bytes.length);
+        assertEquals(593, bytes.length);
         assertEquals(Serialize.VERSION, bytes[0]);
     }
 
@@ -245,11 +245,11 @@ public class TestSerialize {
         assertEquals(-1.1, new ByteInput(bytes).readNumber().doubleValue(), 1e-6);
 
         bytes = new ByteOutput().addNumber(1.2e200).asBytes();
-        assertEquals("254 49 46 50 101 50 48 48 0", dump(bytes));
+        assertEquals("254 49 46 50 69 50 48 48 0", dump(bytes));
         assertEquals(1.2e200, new ByteInput(bytes).readNumber().doubleValue(), 1e-6);
 
         bytes = new ByteOutput().addNumber(-1.2e200).asBytes();
-        assertEquals("254 45 49 46 50 101 50 48 48 0", dump(bytes));
+        assertEquals("254 45 49 46 50 69 50 48 48 0", dump(bytes));
         assertEquals(-1.2e200, new ByteInput(bytes).readNumber().doubleValue(), 1e-6);
     }
 
