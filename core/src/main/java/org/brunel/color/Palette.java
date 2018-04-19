@@ -17,6 +17,7 @@
 package org.brunel.color;
 
 import org.brunel.action.Param;
+import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.data.auto.Auto;
 import org.brunel.data.util.DateUnit;
@@ -190,7 +191,7 @@ public class Palette {
 		if (name.startsWith("continuous") || name.startsWith("sequential")) {
 			int n;
 			try {
-				n = Integer.parseInt(name.substring(name.length() - 1));
+				n = Data.parseInt(name.substring(name.length() - 1));
 			} catch (NumberFormatException e) {
 				// The default is the first one
 				n = 1;

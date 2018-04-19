@@ -82,7 +82,7 @@ public class Transform extends DataOperation {
         String option = parts.length > 1 ? parts[1].trim() : null;
 
         if (name.equals("bin")) {
-            int desiredBinCount = option == null ? -1 : Integer.parseInt(option);    // -1 means the default
+            int desiredBinCount = option == null ? -1 : Data.parseInt(option);    // -1 means the default
             return bin(field, desiredBinCount);
         } else if (name.equals("rank")) {
             return rank(field, "ascending".equals(option));

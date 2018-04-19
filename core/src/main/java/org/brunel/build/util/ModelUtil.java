@@ -16,6 +16,7 @@
 
 package org.brunel.build.util;
 
+import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.model.VisElement;
 import org.brunel.model.style.StyleSheet;
@@ -160,7 +161,7 @@ public class ModelUtil {
 			int pUnit = s.length();
 			while (pUnit > 0 && "1234567890.".indexOf(s.charAt(pUnit - 1)) < 0)
 				pUnit--;
-			double v = Double.parseDouble(s.substring(0, pUnit));
+			double v = Data.parseDouble(s.substring(0, pUnit));
 			return new Size(v, s.substring(pUnit));
 		} catch (Exception e) {
 			throw new IllegalArgumentException("Could not parse style defined as: " + s, e);

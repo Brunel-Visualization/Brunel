@@ -20,7 +20,9 @@ import org.brunel.geom.Point;
 import org.brunel.geom.Rect;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
+import java.util.Locale;
 
 /**
  * Base class for a map projection
@@ -39,9 +41,11 @@ public abstract class Projection {
         return r;
     }
 
+    // Output formatting must be in US default
+    public static final NumberFormat F = new DecimalFormat("#.####", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+
     static final String width = "geom.inner_width";                         // Javascript name for the map width in px
     static final String height = "geom.inner_height";                       // Javascript name for the map height in px
-    static final NumberFormat F = new DecimalFormat("#.####");              // For output formatting
     static final String LN = "\n\t\t";                                      // For output formatting
 
 

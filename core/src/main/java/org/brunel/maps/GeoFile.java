@@ -16,6 +16,7 @@
 
 package org.brunel.maps;
 
+import org.brunel.data.Data;
 import org.brunel.geom.Point;
 import org.brunel.geom.Poly;
 import org.brunel.geom.Rect;
@@ -42,7 +43,7 @@ class GeoFile implements Comparable<GeoFile> {
     public GeoFile(String name, String boundsString, String hullString) {
         this.name = name;
         String[] b = boundsString.split(",");
-        this.bounds = new Rect(Double.parseDouble(b[0]), Double.parseDouble(b[1]), Double.parseDouble(b[2]), Double.parseDouble(b[3]));
+        this.bounds = new Rect(Data.parseDouble(b[0]), Data.parseDouble(b[1]), Data.parseDouble(b[2]), Data.parseDouble(b[3]));
         this.hull = new Poly(parse(hullString));
         this.pts = new ArrayList<>();
     }
@@ -52,7 +53,7 @@ class GeoFile implements Comparable<GeoFile> {
         Point[] result = new Point[parts.length];
         for (int i = 0; i < parts.length; i++) {
             String[] p = parts[i].split(",");
-            result[i] = new Point(Double.parseDouble(p[0]), Double.parseDouble(p[1]));
+            result[i] = new Point(Data.parseDouble(p[0]), Data.parseDouble(p[1]));
         }
         return result;
     }

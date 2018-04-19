@@ -17,6 +17,7 @@
 package org.brunel.maps;
 
 import org.brunel.action.Param;
+import org.brunel.data.Data;
 import org.brunel.data.io.CSV;
 import org.brunel.geom.Point;
 import org.brunel.util.MappedLists;
@@ -180,7 +181,7 @@ class GeoData {
             if (line == null) break;
             String[] parts = line.split(",");
             GeoFile geoFile = filesByName.get(GeoNaming.canonical(parts[0]));
-            int id = Integer.parseInt(parts[1]);
+            int id = Data.parseInt(parts[1]);
             if (geoFile == null) throw new IllegalStateException("Unknown file name: " + parts[0]);
             Feature data = new Feature(geoFile, id);
             for (int i = 2; i < parts.length; i++) {

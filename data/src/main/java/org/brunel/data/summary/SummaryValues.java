@@ -16,6 +16,7 @@
 
 package org.brunel.data.summary;
 
+import org.brunel.data.Data;
 import org.brunel.data.Field;
 import org.brunel.data.Fields;
 import org.brunel.data.util.ItemsList;
@@ -73,7 +74,7 @@ public final class SummaryValues {
             if (fit == null) {
                 Double windowPercent = null;
                 if (m.option != null)
-                    windowPercent = Double.parseDouble(m.option);
+                    windowPercent = Data.parseDouble(m.option);
                 fit = new Smooth(m.field, x, windowPercent, validForGroup(index));
             }
             m.setFit(groupFields, index, fit);
@@ -104,10 +105,10 @@ public final class SummaryValues {
         if (summary.equals("stderr")) {
          	Double s = f.numProperty("stddev");
          	Double multiplier = 1.0;
-         	if (m.option != null) multiplier = Double.parseDouble(m.option);
+         	if (m.option != null) multiplier = Data.parseDouble(m.option);
          	if (s != null && mean != null) return Range.make(mean -s * multiplier, mean +s * multiplier, m.getDateFormat());
          }
-        
+
         if (summary.equals("sum")) {
             if (mean == null) return null;
             return mean * f.numProperty("valid");
@@ -115,7 +116,7 @@ public final class SummaryValues {
         if (summary.equals("list")) {
             ItemsList categories = new ItemsList((Object[]) f.property("categories"));
             if (m.option != null) {
-                int displayCount = Integer.parseInt(m.option);
+                int displayCount = Data.parseInt(m.option);
                 categories.setDisplayCount(displayCount);
             }
             return categories;

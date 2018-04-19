@@ -62,7 +62,7 @@ public class ElementDetails {
 		// we override the suggested representation if we have a symbol defined
 		if (representation == spaceFillingCircle || representation == largeCircle || representation == pointLikeCircle) {
 			if (!structure.vis.fSymbol.isEmpty() || structure.styleSymbol != null) {
-				representation = structure.styleSymbol.equals("rect")
+				representation = "rect".equals(structure.styleSymbol)
 					? ElementRepresentation.rect
 					: ElementRepresentation.symbol;
 			}

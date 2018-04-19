@@ -24,14 +24,14 @@ import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.maps.LabelPoint;
+import org.brunel.maps.projection.Projection;
 
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
 
 public class GeoMapLabels extends D3Diagram {
 
-	private final NumberFormat F = new DecimalFormat("#.####");
+	private final NumberFormat F = Projection.F;
 
 	public GeoMapLabels(ElementStructure structure) {
 		super(structure);

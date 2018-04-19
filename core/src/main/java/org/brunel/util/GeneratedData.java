@@ -16,6 +16,7 @@
 
 package org.brunel.util;
 
+import org.brunel.data.Data;
 import org.brunel.data.Dataset;
 import org.brunel.data.Field;
 import org.brunel.data.Fields;
@@ -28,7 +29,7 @@ public class GeneratedData {
     // Where N is the length and a,b,c et.c are methods to generate data
     public static Dataset make(String description) {
         String[] parts = description.split("\\+");
-        int N = Integer.parseInt(parts[0].trim());
+        int N = Data.parseInt(parts[0].trim());
         int M = parts.length - 1;
         Field[] fields = new Field[M];
         for (int i = 0; i < M; i++) {

@@ -21,78 +21,86 @@ import org.brunel.translator.JSTranslation;
 
 public class ItemsList implements Comparable<ItemsList> {
 
-    private final Object[] items;                   // Items
-    private int displayCount = 12;                  // Number of items to display before going to ellipses
+  private final Object[] items;                   // Items
+  private int displayCount = 12;                  // Number of items to display before going to ellipses
 
-    public ItemsList(Object[] items) {
-        this.items = items;
+  public ItemsList(Object[] items) {
+    this.items = items;
+  }
+
+  public boolean equals(Object obj) {
+    return this == obj || obj instanceof ItemsList && compareTo((ItemsList) obj) == 0;
+  }
+
+  public int hashCode() {
+    int result = 1;
+    for (Object element : items) {
+      result = 31 * result + (element == null ? 0 : element.hashCode());
     }
+    return result;
+  }
 
-    public boolean equals(Object obj) {
-        return this == obj || obj instanceof ItemsList && compareTo((ItemsList) obj) == 0;
+  public int compareTo(ItemsList o) {
+    int n = Math.min(size(), o.size());
+    for (int i = 0; i < n; i++) {
+      int d = Data.compare(get(i), o.get(i));
+      if (d != 0) {
+        return d;
+      }
     }
+    return size() - o.size();
+  }
 
-    public int hashCode() {
-        int result = 1;
-        for (Object element : items)
-            result = 31 * result + (element == null ? 0 : element.hashCode());
-        return result;
-    }
+  public Object get(int i) {
+    return items[i];
+  }
 
-    public int compareTo(ItemsList o) {
-        int n = Math.min(size(), o.size());
-        for (int i = 0; i < n; i++) {
-            int d = Data.compare(get(i), o.get(i));
-            if (d != 0) return d;
+  public int size() {
+    return items.length;
+  }
+
+  public void setDisplayCount(int displayCount) {
+    this.displayCount = displayCount;
+  }
+
+  @JSTranslation(ignore = true)
+  public String toString() {
+    return format(false, null);
+  }
+
+  public String format(boolean formatNumbers, DateFormat dateFormat) {
+    String s = "";
+    int n = size();
+    for (int i = 0; i < n; i++) {
+      if (i > 0) {
+        s += ", ";
+      }
+      // Check for overflowing display requested size
+      if (i == displayCount - 1 && n > displayCount) {
+        return s + "\u2026";
+      }
+      Object v = get(i);
+      if (dateFormat != null) {
+        // Need to strip out commas from dates
+        String t = dateFormat.format(Data.asDate(v));
+        int p = t.indexOf(',');
+        if (p > 0) {
+          s += t.substring(0, p);
+          s += t.substring(p + 1);
+        } else {
+          s += t;
         }
-        return size() - o.size();
-    }
-
-    public Object get(int i) {
-        return items[i];
-    }
-
-    public int size() {
-        return items.length;
-    }
-
-    public void setDisplayCount(int displayCount) {
-        this.displayCount = displayCount;
-    }
-
-    @JSTranslation(ignore = true)
-    public String toString() {
-        return toString(null);
-    }
-
-    public String toString(DateFormat dateFormat) {
-        String s = "";
-        int n = size();
-        for (int i = 0; i < n; i++) {
-            if (i > 0) s += ", ";
-            // Check for overflowing display requested size
-            if (i == displayCount - 1 && n > displayCount)
-                return s + "\u2026";
-            Object v = get(i);
-            if (dateFormat != null) {
-                // Need to strip out commas from dates
-                String t = dateFormat.format(Data.asDate(v));
-                int p = t.indexOf(',');
-                if (p>0) {
-                    s += t.substring(0,p);
-                    s += t.substring(p+1);
-                } else {
-                    s += t;
-                }
-            }
-            else {
-                Double d = Data.asNumeric(v);
-                if (d != null)
-                    s += Data.formatNumeric(d, null, false);
-                else
-                    s += v.toString();
-            }
+      } else if (formatNumbers) {
+        Double d = Data.asNumeric(v);
+        if (d != null) {
+          s += Data.formatNumeric(d, null, false);
+        } else {
+          s += v.toString();
         }
-        return s;
+      } else {
+        s += v.toString();
+      }
     }
+    return s;
+  }
 }

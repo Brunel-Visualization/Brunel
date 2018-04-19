@@ -41,7 +41,7 @@ public class SetRowCount extends DataOperation {
     public static Dataset transform(Dataset base, String command) {
         if (base.rowCount() == 0 || command.isEmpty()) return base;
         String[] parts = DataOperation.strings(command, ',');
-        return new SetRowCount(base, base.field(parts[0]), Integer.parseInt(parts[1])).make();
+        return new SetRowCount(base, base.field(parts[0]), Data.parseInt(parts[1])).make();
     }
 
     private final Dataset base;

@@ -603,7 +603,7 @@ public class ScaleBuilder {
 		for (int i = 0; i < n; i++) {
 			Object o = items[reverse ? n - 1 - i : i];
 			if (i > 0) out.add(", ");
-			if (o instanceof Number) out.add(Data.format(o, false));
+			if (o instanceof Number) out.add(o.toString());
 			else out.add(Data.quote(o.toString()));
 		}
 		out.add("])");

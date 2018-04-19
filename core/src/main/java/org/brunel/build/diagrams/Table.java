@@ -56,7 +56,7 @@ class Table extends D3Diagram {
 			if (i > 0) out.add(",").onNewLine();
 			out.add("{ label: " + Data.quote(f.label))
 					.add(", value: data." + BuildUtil.canonicalFieldName(f.name) + "_f")
-					.add(", ext: [L + W * " + Data.format(pos, false) + ", L + W * " + Data.format(pos + fraction[i], false) + "]")
+					.add(", ext: [L + W * " + pos + ", L + W * " + (pos + fraction[i]) + "]")
 					.add(" }");
 			pos += fraction[i];
 		}

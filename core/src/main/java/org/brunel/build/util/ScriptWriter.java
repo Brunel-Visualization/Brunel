@@ -67,7 +67,7 @@ public class ScriptWriter {
 			} else if (item.getClass().isArray()) {
 				throw new IllegalStateException("Cannot handle array of type: " + item.getClass());
 			} else {
-				s = Data.format(item, false);
+				s = item.toString();
 			}
 			if (i > 0 && (s.length() == 0 || !NO_SPACE_BEFORE.contains(s.charAt(0)))) out.print(" ");
 			out.print(s);

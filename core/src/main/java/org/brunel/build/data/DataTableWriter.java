@@ -121,7 +121,7 @@ public class DataTableWriter {
 		} else if (field.isNumeric()) {
 			Double d = Data.asNumeric(value);
 			if (d == null) row.append("null");
-			else row.append(Data.format(d, false));
+			else row.append(d.toString());
 		} else
 			row.append(Data.quote(value.toString()));
 	}

@@ -62,7 +62,7 @@ class ByteInput {
 
     private Number readDouble() {
         String s = readString();
-        return s.equals("NaN") ? Double.NaN : Double.parseDouble(s);
+        return s.equals("NaN") ? Double.NaN : Data.parseDouble(s);
     }
 
     @JSTranslation(js = {

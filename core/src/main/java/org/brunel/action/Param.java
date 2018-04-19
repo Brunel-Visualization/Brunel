@@ -80,7 +80,7 @@ public class Param implements Comparable<Param> {
 
 	public double asDouble() {
 		if (type == Type.number) return ((Number) content).doubleValue();
-		else return Double.parseDouble(content.toString());
+		else return Data.parseDouble(content.toString());
 	}
 
 	public <T extends Enum<T>> T asEnum(Class<T> clazz) {
@@ -120,7 +120,7 @@ public class Param implements Comparable<Param> {
 
 	public int asInteger() {
 		if (type == Type.number) return ((Number) content).intValue();
-		else return Integer.parseInt(content.toString());
+		else return Data.parseInt(content.toString());
 	}
 
 	/**
@@ -134,8 +134,7 @@ public class Param implements Comparable<Param> {
 	}
 
 	public String asString() {
-		if (type == Type.number) return Data.formatNumeric(asDouble(), null, false);
-		else if (type == Type.list) {
+		if (type == Type.list) {
 			List<Param> items = (List<Param>) content;
 			StringBuilder b = new StringBuilder().append("[");
 			for (int i = 0; i < items.size(); i++) {
