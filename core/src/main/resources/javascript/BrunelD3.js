@@ -1872,7 +1872,7 @@ var BrunelD3 = (function () {
 
     // Ensures a D3 item has no cumulative matrix transform
     function undoTransform(labels, element) {
-        var ctm = elementode().getCTM();
+        var ctm = element.node().getCTM();
         if (ctm) {
             var node = labels.node(),                                                   // SVG node
                 t = node.ownerSVGElement.createSVGTransformFromMatrix(ctm.inverse());   // Convert to a transform
