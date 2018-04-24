@@ -87,11 +87,31 @@ public class Data {
   }
 
   @JSTranslation(ignore = true)
-  public static String join(Collection<?> items) {
-    return join(items, null);
+  public static String join(Object[] items) {
+    return join(items, null, false);
   }
 
+  @JSTranslation(ignore = true)
+  public static String join(Collection<?> items) {
+    return join(items, null, false);
+  }
+
+  @JSTranslation(ignore = true)
+  public static String join(Object[] items, String inter) {
+    return join(items, inter, false);
+  }
+
+  @JSTranslation(ignore = true)
   public static String join(Collection<?> items, String inter) {
+    return join(items, inter, false);
+  }
+
+  @JSTranslation(ignore = true)
+  public static String join(Object[] items, String inter, boolean formatted) {
+    return join(Arrays.asList(items), inter, formatted);
+  }
+
+  public static String join(Collection<?> items, String inter, boolean formatted) {
     if (inter == null) {
       inter = ", ";
     }
@@ -101,7 +121,18 @@ public class Data {
       if (!first) {
         s += inter;
       }
-      s += o.toString();
+      if (formatted) {
+        s += Data.format(o, false);
+      } else if (o instanceof Number) {
+        Number n = (Number) o;
+        if (n.doubleValue() == n.intValue()) {
+          s += n.intValue();
+        } else {
+          s += n;
+        }
+      } else {
+        s += o;
+      }
       first = false;
     }
     return s;
@@ -154,7 +185,7 @@ public class Data {
     for (int i = 0; i < oo.length; i++) {
       oo[i] = items[i];
     }
-    return join(oo, false);
+    return join(oo, null, false);
   }
 
   @JSTranslation(ignore = true)
@@ -163,39 +194,7 @@ public class Data {
     for (int i = 0; i < oo.length; i++) {
       oo[i] = items[i];
     }
-    return join(oo, false);
-  }
-
-  @JSTranslation(ignore = true)
-  // The Javascript version works fine with the Collections version
-  public static String join(Object[] items, String inter, boolean formatted) {
-    if (inter == null) {
-      inter = ", ";
-    }
-    String s = "";
-    for (int i = 0; i < items.length; i++) {
-      if (i > 0) {
-        s += inter;
-      }
-      if (formatted) {
-        s += Data.format(items[i], false);
-      } else if (items[i] instanceof Number) {
-        Number n = (Number) items[i];
-        if (n.doubleValue() == n.intValue()) {
-          s += Integer.toString(n.intValue());
-        } else {
-          s += n.toString();
-        }
-      } else {
-        s += items[i].toString();
-      }
-    }
-    return s;
-  }
-
-  @JSTranslation(ignore = true)
-  public static String join(Object[] items, boolean formatted) {
-    return join(items, null, formatted);
+    return join(oo, null, false);
   }
 
   @JSTranslation(js = {
@@ -404,12 +403,12 @@ public class Data {
     return c == '"' || c == '\'' && txt.charAt(txt.length() - 1) == c;
   }
 
-  @JSTranslation(js = "return s")
+  @JSTranslation(js = "return Math.floor(s)")
   public static int parseInt(String s) {
     return parseLocaleFreeNumber(s).intValue();
   }
 
-  @JSTranslation(js = "return s")
+  @JSTranslation(js = "return +s")
   public static double parseDouble(String s) {
     return parseLocaleFreeNumber(s).doubleValue();
   }

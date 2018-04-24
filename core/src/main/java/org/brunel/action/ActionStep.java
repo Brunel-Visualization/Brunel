@@ -53,7 +53,7 @@ public class ActionStep {
 
 	public String toString() {
 		if (parameters.length == 0) return name;
-		return name + '(' + Data.join(parameters, false) + ')';
+		return name + '(' + Data.join(parameters, null, false) + ')';
 	}
 
 	VisElement apply(VisElement item) {

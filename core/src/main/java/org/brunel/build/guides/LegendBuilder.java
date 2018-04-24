@@ -92,8 +92,8 @@ public class LegendBuilder {
 		boolean defineSymbol = symbolField != null && symbolField == getAestheticField(e, "symbol");
 
 		if (defineColor || defineSymbol) {
-			out.onNewLine().add("legends._legend = legends._legend || { title: [")
-					.add(Data.join(title, true)).add("], ");
+      out.onNewLine().add("legends._legend = legends._legend || { title: [")
+					.add(Data.join(title, null, true)).add("], ");
 			if (dateFormat != null)
 				out.add("dateFormat: BrunelData.util_DateFormat." + dateFormat.name() + ", ");
 
@@ -208,9 +208,9 @@ public class LegendBuilder {
 					divs[i] = dateBuilder.make(date, dateFormat, true);
 				}
 
-				legendTicks = "[" + Data.join(divs, false) + "]";
+        legendTicks = "[" + Data.join(divs, null, false) + "]";
 			} else {
-				legendTicks = "[" + Data.join(divisions, false) + "]";
+        legendTicks = "[" + Data.join(divisions, null, false) + "]";
 			}
 		}
 		return legendTicks;

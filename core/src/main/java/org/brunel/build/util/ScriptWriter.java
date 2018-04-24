@@ -59,7 +59,7 @@ public class ScriptWriter {
 			if (item == null) {
 				s = "null";
 			} else if (item instanceof Object[]) {
-				s = Data.join((Object[]) item, false);
+        s = Data.join((Object[]) item, null, false);
 			} else if (item instanceof double[]) {
 				s = Data.join((double[]) item);
 			} else if (item instanceof int[]) {

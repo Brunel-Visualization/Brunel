@@ -1585,7 +1585,7 @@ var BrunelD3 = (function () {
 
     /**
      * This method returns the SVG string form for a path
-     * @param p the structure returned from insetEdge definign edge endpoints
+     * @param p the structure returned from insetEdge defining edge endpoints
      * @param curved if true, a curve is drawn, otherwise a straight line is
      * @returns
      */
@@ -1805,7 +1805,7 @@ var BrunelD3 = (function () {
                     scaleX(d.target.x), scaleY(d.target.y), d.target);
 
                 // Then we return the path description for a curve or a straight line
-                return makeEdgeShape(p, curved);
+                return p ? makeEdgeShape(p, curved) : null;
             });
 
             // If the parent element has facet children, build them
@@ -1844,7 +1844,7 @@ var BrunelD3 = (function () {
     }
 
     /**
-     * Insets a line segement for different sized nodes at ends
+     * Insets a line segment for different sized nodes at ends
      * @param xa start x coord
      * @param ya start y coord
      * @param radiusA start object we look in for radius (in it, then in .data, then default to 5)
@@ -1858,6 +1858,9 @@ var BrunelD3 = (function () {
             d = Math.sqrt(dx * dx + dy * dy),       // distance between nodes
             ra = radiusA.radius || (radiusA.data ? radiusA.data.radius : 5) || 5,
             rb = radiusB.radius || (radiusB.data ? radiusB.data.radius : 5) || 5;
+
+        if (d < ra + rb + 1) return null;            // line is not long enough to inset
+
         return {
             x1: xa - dx * ra / d,                    // indented start point (x1,y1)
             y1: ya - dy * ra / d,
@@ -1869,7 +1872,7 @@ var BrunelD3 = (function () {
 
     // Ensures a D3 item has no cumulative matrix transform
     function undoTransform(labels, element) {
-        var ctm = element.node().getCTM();
+        var ctm = elementode().getCTM();
         if (ctm) {
             var node = labels.node(),                                                   // SVG node
                 t = node.ownerSVGElement.createSVGTransformFromMatrix(ctm.inverse());   // Convert to a transform

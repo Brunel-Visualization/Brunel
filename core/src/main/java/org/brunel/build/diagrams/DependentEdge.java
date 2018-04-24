@@ -78,6 +78,8 @@ class DependentEdge extends D3Diagram {
   }
 
   private static void defineCurve(boolean curved, ScriptWriter out) {
+    out.add("if(!p) return ''").endStatement();
+
     out.add("return 'M' + p.x1 + ',' + p.y1 + ");
     // Add curve if requested, else just a straight line
     if (curved) {

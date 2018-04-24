@@ -95,7 +95,7 @@ public class Accessibility {
 	protected static String makeVisSingleLabel(VisElement vis) {
 
 		String[] pos = vis.positionFields();
-		String label = pos.length == 0 ? "No data" : Data.join(pos, false);
+		String label = pos.length == 0 ? "No data" : Data.join(pos, null, false);
 
 		if (vis.tDiagram != null)
 			label += " as a " + vis.tDiagram + " diagram";
@@ -103,7 +103,7 @@ public class Accessibility {
 			label += " as " + vis.tElement + "s";
 
 		pos = vis.aestheticFields();
-		if (pos.length > 0) label += ", also showing " + Data.join(pos, false);
+		if (pos.length > 0) label += ", also showing " + Data.join(pos, null, false);
 
 		if (!vis.fSort.isEmpty()) label += ", sorted by " + Data.join(vis.fSort);
 

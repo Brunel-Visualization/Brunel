@@ -83,7 +83,7 @@ public class ConvertSeries extends DataOperation {
             }
 
         // Make the field for values, copying properties from the first Y field (we assume they are simialr)
-        Field values = Fields.makeColumnField("#values", Data.join(yFields, false), data);
+      Field values = Fields.makeColumnField("#values", Data.join(yFields, null, false), data);
         Fields.copyBaseProperties(y[0], values);
 
         // Create the series field

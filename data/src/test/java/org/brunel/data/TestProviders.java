@@ -65,7 +65,7 @@ public class TestProviders {
         assertEquals(1, a.value(1));
         assertEquals(1, a.value(2));
         assertEquals(4, a.value(7));
-        assertEquals("1, 2, 3, 4", Data.join(a.categories(), true));
+        assertEquals("1, 2, 3, 4", Data.join(a.categories(), null, true));
     }
 
 }
