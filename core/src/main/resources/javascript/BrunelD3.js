@@ -1805,6 +1805,7 @@ var BrunelD3 = (function () {
                     scaleX(d.target.x), scaleY(d.target.y), d.target);
 
                 // Then we return the path description for a curve or a straight line
+                // if we do not have a valid inset edge, return nothing
                 return p ? makeEdgeShape(p, curved) : null;
             });
 
