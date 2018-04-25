@@ -556,68 +556,6 @@ var BrunelD3 = (function () {
             spans[i].setAttribute('dy', ((i - spans.length / 2.0) * 1.1 + D ) + "em");
     }
 
-    /**
-     * Shortens the word
-     * @param word the word to trim
-     * @param maxRemovals the maximum characters to remove
-     * @param level what to trim
-     */
-    function shortenWord(word, maxRemovals, level) {
-        if (maxRemovals <= 0) return word;                      // Nothing to do
-        var len = word.length;
-        if (level == 0) {
-            // Purge boring words
-            if (word == "the" || word == "of") return "";
-        } else if (level == 1) {
-            // Purge interior vowels
-            var n = len - 1;
-            while (--n && maxRemovals) {
-                if ("aeiou".indexOf(word.charAt(n)) >= 0) {
-                    word = word.substring(0, n) + word.substring(n + 1);
-                    maxRemovals--;
-                }
-            }
-        } else if (level == 2 || level == 3) {
-            // Drop second last letter
-            if (len > 4 - level) return word.substring(0, 1) + word.substring(2);
-        } else if (level == 4) {
-            return "";
-        }
-
-        return word;                                            // Couldn't do anything at this level
-    }
-
-    function shorten(text, len) {
-        if (!text || text.length <= len) return text;                   // Text doesn't need shortening
-        if (!len) return "";                                            // O-length requested
-        if (len == 1) return text.charAt(0);                            // 1-length requested
-
-
-        var level = 0, i,
-            parts = text.split(/[^\w%]+/),                              // Split into words
-            result = parts.join(" "),                                   // Current best result
-            drop = result.length - len;                                 // characters to drop
-
-        while (drop > 0) {
-            var currentDrop = drop;
-            for (i = parts.length - 1; i >= 0; i--) {
-                var pre = parts[i], post = shortenWord(pre, drop, level);
-                if (!post.length) {
-                    // entirely eliminated, remove from search
-                    parts.splice(i, 1);
-                    drop = drop - pre.length - 1;
-                } else {
-                    // possibly shortened
-                    parts[i] = post;
-                    drop = drop + post.length - pre.length;
-                }
-            }
-            if (currentDrop == drop) level++;
-        }
-
-        return parts.join(" ");
-    }
-
     // Calls the function when the target is ready
     function callWhenReady(func, target) {
         if (target && target.__transition__)
@@ -2428,7 +2366,6 @@ var BrunelD3 = (function () {
         'gridLayout': gridLayout,
         'prune': pruneTreeToSize,
         'select': select,
-        'shorten': shorten,
         'transition': transition,
         'sizedPath': sizedPath,
         'tween': transitionTween,

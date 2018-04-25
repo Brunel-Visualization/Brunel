@@ -351,7 +351,7 @@ public class LabelBuilder {
 
 				// We look for a modifier that is numeric; if we find it, we wrap the format code with the shorten call
 				Double restrict = p.firstNumericModifier();
-				if (restrict != null) out.add("BrunelD3.shorten(");
+				if (restrict != null) out.add("BrunelData.Data.shorten(");
 				out.add("data." + BuildUtil.baseFieldID(f) + "_f(d)");
 				if (restrict != null) out.add(",", restrict.intValue(), ")");
 

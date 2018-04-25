@@ -538,4 +538,154 @@ public class Data {
       return ascending ? v : -v;
     }
   }
+
+  @JSTranslation(js = "return target.replace(new RegExp(expression, 'g'), rep);")
+  public static String replaceExpression(String target, String expression, String rep) {
+    return target.replaceAll(expression, rep);
+  }
+
+  /**
+   * Provide a shortened form of a string
+   *
+   * @param text text to shorten
+   * @param n    maximum number of characters to return
+   * @return shortened string
+   */
+  public static String shorten(String text, int n) {
+    text = replaceExpression(text.trim(), "[ \t\n]+", " ");
+
+    // Check if no work is needed
+    if (text.length() <= n) {
+      return text;
+    }
+
+    // Guard against very small n
+    if (n < 1) {
+      return "";
+    }
+
+    // remove parentheses
+    text = replaceExpression(text, " *\\(.*\\) *", "");
+    if (text.length() <= n) {
+      return text;
+    }
+
+    // These are the parts we are going to work with; find total length
+    String[] words = split(text, ' ');
+    List<String> parts = asList(words);
+
+    int m = combinedLength(parts);
+    String concat = " ";
+
+    while (m > n) {
+      int reduced = killBoring(parts);                // drop boring words
+      if (reduced == 0) {
+        break;                                        // made no different
+      }
+      m -= reduced;
+    }
+
+    List<String> copy = new ArrayList<>(parts);
+
+    if (m < 3 * n) {                                  // First try just removing vowels (if we have a hope of success)
+      m = removeVowels(parts, m, n);                  // Try to remove this many vowels
+    }
+    if (m > n) {
+      parts = copy;                                   // go back to the original (with boring words removed)
+      m = combinedLength(parts);                      // recalculate length
+      if (parts.size() > 2) {                         // drop words until we have only 2 or are good
+        concat = "\u2026";                            // change to ellipsis to indicate missing words
+        m = dropWords(parts, m, n);
+      }
+    }
+
+    if (m > n) {                                      // Still not good
+      String first = parts.get(0);                    // first really useful word
+      m = removeVowels(parts, m, n);                  // Try to remove this many vowels
+      if (m > n) {
+        if (first.length() < n) {
+          return first + "\u2026";                    // just the first world
+        } else {
+          return first.substring(0, n);               // Just the text that can fit
+        }
+      }
+    }
+
+    return Data.join(parts, concat);                  // Assemble results
+  }
+
+  private static int dropWords(List<String> parts, int m, int n) {
+    while (parts.size() > 2 && m > n) {
+      int index = parts.size() - 2;
+      m -= (parts.get(index).length() + 1);         // adjust length
+      parts.remove(index);                          // and remove it
+    }
+    return m;
+  }
+
+  private static int removeVowels(List<String> parts, int current, int desired) {
+    if (current <= desired) {
+      return current;
+    }
+
+    // Create the order in which to remove vowels; inner words (last to first), then last word, then first word
+    int n = parts.size();
+    int[] order = new int[n];
+    for (int i = 0; i < n - 2; i++) {
+      order[i] = n - 2 - i;
+    }
+    if (n > 1) {
+      order[n - 2] = n - 1;
+    }
+    order[n - 1] = 0;
+
+    for (int i : order) {
+      while (stripVowel(parts, i)) {
+        if (--current == desired) {
+          return current;
+        }
+      }
+    }
+    return current;
+  }
+
+  private static int combinedLength(List<String> parts) {
+    int m = parts.size() - 1;                         // The spaces between words
+    for (String part : parts) {
+      m += part.length();
+    }
+    return m;
+  }
+
+  private static List<String> asList(String[] words) {
+    List<String> parts = new ArrayList<>();
+    for (String word : words) {
+      parts.add(word);
+    }
+    return parts;
+  }
+
+  private static boolean stripVowel(List<String> parts, int i) {
+    String part = parts.get(i);
+    for (int j = part.length() - 2; j >= 1; j--) {
+      char c = part.charAt(j);
+      if (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u') {
+        parts.set(i, part.substring(0, j) + part.substring(j + 1));
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static int killBoring(List<String> parts) {
+    for (int i = parts.size() - 1; i >= 0; i--) {
+      String part = parts.get(i);
+      if (part.equalsIgnoreCase("the") || part.equalsIgnoreCase("of")) {
+        parts.remove(i);
+        return part.length() + 1;
+      }
+    }
+    return 0;     // no change
+  }
+
 }
