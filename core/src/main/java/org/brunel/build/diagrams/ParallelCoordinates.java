@@ -105,7 +105,7 @@ class ParallelCoordinates extends D3Diagram {
 				out.add(".range(rangeVertical),");
 			String positionExpression = BuildUtil.writeCall(f);
 			if (f.isBinned()) positionExpression += ".mid";                                     // Midpoint of bins
-			out.onNewLine().add("y : function(d) { return this.scale(" + positionExpression + ") },");
+			out.onNewLine().add("value : function(d) { return " + positionExpression + " },");
 			out.onNewLine().add("axis : d3.axisLeft(), numeric: " + f.isNumeric());
 			out.onNewLine().indentLess().add("}");
 		}
@@ -153,12 +153,14 @@ class ParallelCoordinates extends D3Diagram {
 	private void defineLinearPath(ScriptWriter out) {
 		out.add("var radius = 5").endStatement();
 		out.add("parallel.forEach(function(dim, i) {").indentMore().indentMore().onNewLine();
+		out.add("var v = dim.value(d)").endStatement()
+			.add("if (v == null) return null").endStatement();
 		if (element == VisTypes.Element.point) {
-			out.add("p.moveTo(scale_x(i)+radius, dim.y(d))").endStatement()
-					.add("p.arc(scale_x(i), dim.y(d), radius, 0, 2 * Math.PI)").endStatement();
+			out.add("p.moveTo(scale_x(i)+radius, dim.scale(v))").endStatement()
+					.add("p.arc(scale_x(i), dim.scale(v), radius, 0, 2 * Math.PI)").endStatement();
 		} else {
-			out.add("if (i) p.lineTo(scale_x(i), dim.y(d))").endStatement()
-					.add("else   p.moveTo(scale_x(i), dim.y(d))").endStatement();
+			out.add("if (i) p.lineTo(scale_x(i), dim.scale(v))").endStatement()
+					.add("else   p.moveTo(scale_x(i), dim.scale(v))").endStatement();
 		}
 		out.indentLess().indentLess().add("} )").endStatement();
 	}
