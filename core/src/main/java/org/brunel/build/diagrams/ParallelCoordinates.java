@@ -88,13 +88,12 @@ class ParallelCoordinates extends D3Diagram {
       if (i > 0) {
         out.add(",").onNewLine();
       }
-      String type = f.isDate() ? "date" : ( f.isNumeric() ? "num" : "cat");
+      String type = f.isDate() ? "date" : (f.isNumeric() ? "num" : "cat");
       out.add("{").indentMore()
         .onNewLine().add("label : " + Data.quote(f.label) + ", type: '" + type + "',")
         .onNewLine().add("scale : ");
       builder.defineScaleWithDomain(null, new Field[]{f}, ScalePurpose.parallel, 2, getTransform(f), null, isReversed(f));
       out.add(",");
-
 
       String positionExpression = BuildUtil.writeCall(f);
       if (f.isBinned()) {
@@ -104,25 +103,6 @@ class ParallelCoordinates extends D3Diagram {
       out.onNewLine().indentLess().add("}");
     }
     out.indentLess().add("]").endStatement();
-
-
-    /*
-
-            if ("log".equals(transform)) {
-          if (axis.inMillions) {
-            out.add(", '0.0s')");    // format with no decimal places
-          } else {
-            out.add(", ',')");
-          }
-        } else if (axis.inMillions) {
-          out.add(", 's')");                            // Units style formatting
-        } else {
-          out.add(")");                                // No formatting
-        }
-
-
-
-     */
 
     out.ln()
       .add("parallel.forEach(function(p, i) {").indentMore().indentMore().onNewLine()

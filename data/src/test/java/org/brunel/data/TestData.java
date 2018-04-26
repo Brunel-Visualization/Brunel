@@ -304,6 +304,20 @@ public class TestData {
     assertEquals("ford\u2026", Data.shorten("ford focus 2018", 7));
   }
 
+  @Test
+  public void testShortenC() {
+    assertEquals("Quentin Tarantino", Data.shorten("Quentin Tarantino", 17));
+    assertEquals("Quentin Tarantno", Data.shorten("Quentin Tarantino", 16));
+    assertEquals("Quentin Tarntno", Data.shorten("Quentin Tarantino", 15));
+    assertEquals("Quentin Trntno", Data.shorten("Quentin Tarantino", 14));
+    assertEquals("Quentn Trntno", Data.shorten("Quentin Tarantino", 13));
+    assertEquals("Quntn Trntno", Data.shorten("Quentin Tarantino", 12));
+    assertEquals("Qntn Trntno", Data.shorten("Quentin Tarantino", 11));
+    assertEquals("Quentin\u2026", Data.shorten("Quentin Tarantino", 10));
+    assertEquals("Quentin\u2026", Data.shorten("Quentin Tarantino", 9));
+    assertEquals("Quentin\u2026", Data.shorten("Quentin Tarantino", 8));
+  }
+
 
   @Test
   public void testShortenOtherCases() {

@@ -641,7 +641,7 @@ public class Data {
 
     for (int i : order) {
       while (stripVowel(parts, i)) {
-        if (--current == desired) {
+        if (--current <= desired) {
           return current;
         }
       }
