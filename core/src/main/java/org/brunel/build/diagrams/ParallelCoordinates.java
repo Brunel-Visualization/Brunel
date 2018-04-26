@@ -23,9 +23,6 @@ import org.brunel.build.ScalePurpose;
 import org.brunel.build.element.ElementBuilder;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.element.ElementRepresentation;
-import org.brunel.build.guides.AxisDetails;
-import org.brunel.build.guides.AxisRequirement;
-import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.BuildUtil;
 import org.brunel.build.util.ModelUtil;
@@ -42,20 +39,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 class ParallelCoordinates extends D3Diagram {
-
-  private static AxisDetails[] makeAxisDetails(ChartStructure chart, Field[] fields) {
-    AxisDetails[] axes = new AxisDetails[fields.length];
-    for (int i = 0; i < fields.length; i++) {
-      Field f = fields[i];
-      // Create the Axis details and lay out in vertical space
-      AxisRequirement req = new AxisRequirement(VisTypes.Axes.y, i);
-      AxisDetails details = new AxisDetails(req, new Field[]{f}, f.preferCategorical());
-      details.setTextDetails(chart, false);
-      details.layoutVertically(chart.location.height);
-      axes[i] = details;
-    }
-    return axes;
-  }
 
   private final Set<String> TRANSFORMS = new HashSet<>(Arrays.asList("linear", "log", "root"));
   private final Field[] fields;               // The fields in the table
@@ -90,7 +73,7 @@ class ParallelCoordinates extends D3Diagram {
       .add("axisChars = (axisWidth-4) / 7,")
       .comment("number of characters likely to fit for axis ticks")
       .add("scale_x = d3.scaleLinear().range(["
-        + padding.left + " + axisWidth/2, geom.inner_width -", padding.horizontal() + " - axisWidth/2])")
+        + padding.left + " + 2*axisWidth/3, geom.inner_width -", padding.horizontal() + " - axisWidth/3])")
       .addChained("domain([0,", fields.length - 1, "])")
       .endStatement();
 
@@ -105,8 +88,9 @@ class ParallelCoordinates extends D3Diagram {
       if (i > 0) {
         out.add(",").onNewLine();
       }
+      String type = f.isDate() ? "date" : ( f.isNumeric() ? "num" : "cat");
       out.add("{").indentMore()
-        .onNewLine().add("label : " + Data.quote(f.label) + ", numeric: " + f.isNumeric() + ",")
+        .onNewLine().add("label : " + Data.quote(f.label) + ", type: '" + type + "',")
         .onNewLine().add("scale : ");
       builder.defineScaleWithDomain(null, new Field[]{f}, ScalePurpose.parallel, 2, getTransform(f), null, isReversed(f));
       out.add(",");
@@ -121,11 +105,31 @@ class ParallelCoordinates extends D3Diagram {
     }
     out.indentLess().add("]").endStatement();
 
+
+    /*
+
+            if ("log".equals(transform)) {
+          if (axis.inMillions) {
+            out.add(", '0.0s')");    // format with no decimal places
+          } else {
+            out.add(", ',')");
+          }
+        } else if (axis.inMillions) {
+          out.add(", 's')");                            // Units style formatting
+        } else {
+          out.add(")");                                // No formatting
+        }
+
+
+
+     */
+
     out.ln()
       .add("parallel.forEach(function(p, i) {").indentMore().indentMore().onNewLine()
       .add("p.axis = d3.axisLeft()").endStatement()
       .add("p.scale.range(rangeVertical)").endStatement()
-      .add("if (!p.numeric) p.axis.tickFormat(shortTicks).tickValues(BrunelD3.filterTicks(p.scale))").endStatement()
+      .add("if (p.type == 'cat') p.axis.tickFormat(shortTicks).tickValues(BrunelD3.filterTicks(p.scale))").endStatement()
+      .add("else if (p.type == 'num' && p.scale.domain()[1] > 1e6) p.axis.tickFormat(d3.format('.2s'))").endStatement()
       .indentLess().indentLess().add("} )").endStatement().ln();
 
     out.onNewLine().ln().add("function path(d) {").indentMore().ln();
