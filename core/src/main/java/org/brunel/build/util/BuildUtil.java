@@ -32,6 +32,10 @@ public class BuildUtil {
 		return writeCall(f, false);
 	}
 
+	public static String writeFunctionName(Field f) {
+		return "data." + baseFieldID(f);
+	}
+
 	public static String writeCall(Field f, boolean dataInside) {
 		return "data." + baseFieldID(f) + (dataInside ? "(d.data)" : "(d)");
 	}

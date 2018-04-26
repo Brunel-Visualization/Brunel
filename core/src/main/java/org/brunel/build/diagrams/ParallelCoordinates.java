@@ -94,6 +94,9 @@ class ParallelCoordinates extends D3Diagram {
       .addChained("domain([0,", fields.length - 1, "])")
       .endStatement();
 
+    out.onNewLine().ln()
+      .add("function shortTicks(t) { return BrunelData.Data.shorten(t, axisChars) }").endStatement();
+
     out.onNewLine().ln().comment("Define data structures for parallel axes");
 
     out.add("parallel = [").onNewLine().indentMore();
@@ -106,11 +109,9 @@ class ParallelCoordinates extends D3Diagram {
         .onNewLine().add("label : " + Data.quote(f.label) + ", numeric: " + f.isNumeric() + ",")
         .onNewLine().add("scale : ");
       builder.defineScaleWithDomain(null, new Field[]{f}, ScalePurpose.parallel, 2, getTransform(f), null, isReversed(f));
-      if (out.currentColumn() > 60) {
-        out.addChained("range(rangeVertical),");
-      } else {
-        out.add(".range(rangeVertical),");
-      }
+      out.add(",");
+
+
       String positionExpression = BuildUtil.writeCall(f);
       if (f.isBinned()) {
         positionExpression += ".mid";                                     // Midpoint of bins
@@ -120,17 +121,12 @@ class ParallelCoordinates extends D3Diagram {
     }
     out.indentLess().add("]").endStatement();
 
-    out.add("function shortTicks(t) { return BrunelData.Data.shorten(t, axisChars) };")
-      .comment("function to shorten axis ticks");
-
-    out.add("parallel.forEach(function(p, i) {").indentMore().indentMore().onNewLine()
+    out.ln()
+      .add("parallel.forEach(function(p, i) {").indentMore().indentMore().onNewLine()
       .add("p.axis = d3.axisLeft()").endStatement()
-      .add("if (!p.numeric) {").indentMore().onNewLine()
-      .add("p.axis.tickFormat(shortTicks)").endStatement()
-      .add("p.axis.tickValues(BrunelD3.filterTicks(p.scale))").endStatement()
-      .onNewLine().indentLess().add("}")
-      .indentLess().indentLess().add("} )").endStatement();
-
+      .add("p.scale.range(rangeVertical)").endStatement()
+      .add("if (!p.numeric) p.axis.tickFormat(shortTicks).tickValues(BrunelD3.filterTicks(p.scale))").endStatement()
+      .indentLess().indentLess().add("} )").endStatement().ln();
 
     out.onNewLine().ln().add("function path(d) {").indentMore().ln();
     out.add("var p = d3.path()").endStatement();
