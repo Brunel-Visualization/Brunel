@@ -30,6 +30,7 @@ import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.BuildUtil;
 import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.Padding;
+import org.brunel.build.util.SVGGroupUtility;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Data;
 import org.brunel.data.Field;
@@ -60,13 +61,12 @@ class ParallelCoordinates extends D3Diagram {
   private final Field[] fields;               // The fields in the table
   private final Padding padding;              // Space around the edges
   private final double smoothness;            // 0 == linear, 1 is very smooth
+  private SVGGroupUtility groupUtility;
 
   public ParallelCoordinates(ElementStructure structure) {
     super(structure);
     fields = structure.data.fieldArray(vis.positionFields());
-    AxisDetails[] axes = makeAxisDetails(structure.chart, fields);
     padding = ModelUtil.getPadding(vis, StyleTarget.makeElementTarget(null), 6);
-    padding.left += axes[0].size;
     padding.bottom += 15;       // For the bottom "axis" of titles
 
     // Get the smoothness from the parameter
@@ -80,12 +80,16 @@ class ParallelCoordinates extends D3Diagram {
   public void preBuildDefinitions(ScriptWriter out) {
 
     ScaleBuilder builder = new ScaleBuilder(structure.chart, out);
+    groupUtility = new SVGGroupUtility(structure.chart, "ignored", out);
+    groupUtility.defineParallelAxisClipPath(10);
 
-    out.add("var rangeVertical = [geom.inner_height -", padding.vertical() + ", " + padding.top + "];")
-      .comment("vertical range");
+    out.add("var rangeVertical = [geom.inner_height -", padding.vertical() + ", " + padding.top + "],")
+      .comment("vertical range")
+      .add("axisWidth = (geom.inner_width -", padding.horizontal() + ") / " + fields.length + " - 2;")
+      .comment("width for each axis");
 
     out.add("var scale_x = d3.scaleLinear().range(["
-      + padding.left + ", geom.inner_width -", padding.horizontal() + "])")
+      + padding.left + " + axisWidth/2, geom.inner_width -", padding.horizontal() + " - axisWidth/2])")
       .addChained("domain([0,", fields.length - 1, "])")
       .endStatement();
 
@@ -129,17 +133,26 @@ class ParallelCoordinates extends D3Diagram {
   }
 
   public void writeDataStructures(ScriptWriter out) {
+
     out.add("var axes = interior.selectAll('g.parallel.axis').data(parallel)").endStatement();
     out.add("var builtAxes = axes.enter().append('g')")
       .addChained("attr('class', function(d,i) { return 'parallel axis dim' + (i+1) })")
-      .addChained("attr('transform', function(d,i) { return 'translate(' + scale_x(i) + ',0)' })")
-      .addChained("each(function(d) {").indentMore().indentMore()
+      .addChained("attr('transform', function(d,i) { return 'translate(' + scale_x(i) + ',0)' })");
+
+    // Add a clip path for the axis
+    groupUtility.addClipPathReference("parallel");
+
+    out.addChained("each(function(d) {").indentMore().indentMore()
       .add("d3.select(this).append('text').attr('class', 'axis title').text(d.label)")
       .addChained("attr('x', 0).attr('y', geom.inner_height).attr('dy', '-0.3em').style('text-anchor', 'middle')")
       .indentLess().indentLess().add("})").endStatement();
 
-    // Write the calls to display the axes
+    // Set the width for each parallel axis axis
+    out.add("d3.select('#" + groupUtility.clipID("parallel") + " rect')")
+      .addChained("attr('x', -axisWidth).attr('width', 2*axisWidth)")
+      .endStatement();
 
+    // Write the calls to display the axes
     out.add("BrunelD3.transition(axes.merge(builtAxes), transitionMillis)")
       .addChained("each(function(d,i) { d3.select(this).call(d.axis.scale(d.scale)); })")
       .endStatement();
