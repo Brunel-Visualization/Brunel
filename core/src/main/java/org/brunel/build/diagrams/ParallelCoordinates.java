@@ -85,11 +85,12 @@ class ParallelCoordinates extends D3Diagram {
 
     out.add("var rangeVertical = [geom.inner_height -", padding.vertical() + ", " + padding.top + "],")
       .comment("vertical range")
-      .add("axisWidth = (geom.inner_width -", padding.horizontal() + ") / " + fields.length + " - 2;")
-      .comment("width for each axis");
-
-    out.add("var scale_x = d3.scaleLinear().range(["
-      + padding.left + " + axisWidth/2, geom.inner_width -", padding.horizontal() + " - axisWidth/2])")
+      .add("axisWidth = (geom.inner_width -", padding.horizontal() + ") / " + fields.length + " - 2,")
+      .comment("width for each axis")
+      .add("axisChars = (axisWidth-4) / 7,")
+      .comment("number of characters likely to fit for axis ticks")
+      .add("scale_x = d3.scaleLinear().range(["
+        + padding.left + " + axisWidth/2, geom.inner_width -", padding.horizontal() + " - axisWidth/2])")
       .addChained("domain([0,", fields.length - 1, "])")
       .endStatement();
 
@@ -102,7 +103,7 @@ class ParallelCoordinates extends D3Diagram {
         out.add(",").onNewLine();
       }
       out.add("{").indentMore()
-        .onNewLine().add("label : " + Data.quote(f.label) + ",")
+        .onNewLine().add("label : " + Data.quote(f.label) + ", numeric: " + f.isNumeric() + ",")
         .onNewLine().add("scale : ");
       builder.defineScaleWithDomain(null, new Field[]{f}, ScalePurpose.parallel, 2, getTransform(f), null, isReversed(f));
       if (out.currentColumn() > 60) {
@@ -115,10 +116,21 @@ class ParallelCoordinates extends D3Diagram {
         positionExpression += ".mid";                                     // Midpoint of bins
       }
       out.onNewLine().add("value : function(d) { return " + positionExpression + " },");
-      out.onNewLine().add("axis : d3.axisLeft(), numeric: " + f.isNumeric());
       out.onNewLine().indentLess().add("}");
     }
     out.indentLess().add("]").endStatement();
+
+    out.add("function shortTicks(t) { return BrunelData.Data.shorten(t, axisChars) };")
+      .comment("function to shorten axis ticks");
+
+    out.add("parallel.forEach(function(p, i) {").indentMore().indentMore().onNewLine()
+      .add("p.axis = d3.axisLeft()").endStatement()
+      .add("if (!p.numeric) {").indentMore().onNewLine()
+      .add("p.axis.tickFormat(shortTicks)").endStatement()
+      .add("p.axis.tickValues(BrunelD3.filterTicks(p.scale))").endStatement()
+      .onNewLine().indentLess().add("}")
+      .indentLess().indentLess().add("} )").endStatement();
+
 
     out.onNewLine().ln().add("function path(d) {").indentMore().ln();
     out.add("var p = d3.path()").endStatement();
@@ -143,7 +155,8 @@ class ParallelCoordinates extends D3Diagram {
     groupUtility.addClipPathReference("parallel");
 
     out.addChained("each(function(d) {").indentMore().indentMore()
-      .add("d3.select(this).append('text').attr('class', 'axis title').text(d.label)")
+      .add("d3.select(this).append('text').attr('class', 'axis title')")
+      .addChained("text(BrunelData.Data.shorten(d.label, axisChars))")
       .addChained("attr('x', 0).attr('y', geom.inner_height).attr('dy', '-0.3em').style('text-anchor', 'middle')")
       .indentLess().indentLess().add("})").endStatement();
 
