@@ -17,8 +17,8 @@
 # path to the JVM.  Typically jvm.dll on Windows or libjvm.so on Unix
 import os
 JVM_PATH = ""
-D3_LOC = "//cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min"
-TOPO_JSON_LOC = "//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min"
+D3_LOC = "https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min"
+TOPO_JSON_LOC = "https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min"
 JS_LOC = "/nbextensions/brunel_ext"
 
 BRUNEL_CONFIG = os.getenv("BRUNEL_CONFIG", "")

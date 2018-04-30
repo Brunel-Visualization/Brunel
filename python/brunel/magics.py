@@ -16,7 +16,7 @@
 
 from IPython.core.magic import Magics, magics_class, line_magic, cell_magic, line_cell_magic
 import pandas as pd
-import brunel.brunel as brunel
+import brunel.brunel_main as brunel
 
 ipy = get_ipython()
 
@@ -56,12 +56,11 @@ class BrunelMagics(Magics):
                     raise ValueError("Could not find pandas DataFrame named '" + dataName + "'")
             width = self.find_term('width', extras, width)
             height = self.find_term('height', extras, height)
-            output = self.find_term('output', extras, output)
             online_js = self.find_term('online_js', extras, online_js)
 
         if data is None and len(datasets_in_brunel) == 0:
             data = self.best_match(self.get_vars(action), list(datas.values()))
-        return brunel.display(action, data, width, height, output, online_js)
+        return brunel.display(action, data, width, height, online_js)
 
     def cache_data(self, datasets_in_brunel, dataframes):
         for data_name in datasets_in_brunel:

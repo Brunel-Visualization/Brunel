@@ -29,16 +29,12 @@ except:
     import pip, importlib
     pip.main(['install', 'jupyter-pip']); cmdclass = importlib.import_module('jupyterpip').cmdclass
 
-#Use different JPype depending on python 2 or 3
-jpype_name = 'JPype1-py3'
-if sys.version_info < (3,0):
-    jpype_name = 'JPype1'
 
 setup(
     name='brunel',
-    version='2.6',
+    version='2.6.2',
     packages=['brunel'],
-    install_requires= ['pandas', 'jinja2', 'ipython', 'jupyter-pip', jpype_name],
+    install_requires= ['pandas', 'jinja2', 'ipython', 'jupyter-pip', 'Py4J'],
     package_data= {
         'brunel': ['*.js', '*.html', 'lib/*.jar', 'brunel_ext/*.*']
     },
