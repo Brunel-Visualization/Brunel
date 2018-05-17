@@ -29,6 +29,10 @@ public class NumericExtentDetail {
 		this.optimalBinCount = optimalBinCount;
 	}
 
+	public static NumericExtentDetail makeForSimpleRange(double low, double high, DateUnit dateUnit, boolean includeZeroDesired) {
+		return new NumericExtentDetail(low, high, dateUnit, includeZeroDesired, "linear", 0, false, 10);
+	}
+
 	/**
 	 * Make a numeric span info on a field
 	 * Uses "Auto" to fill in needed information
