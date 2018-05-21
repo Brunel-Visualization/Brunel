@@ -80,7 +80,7 @@ class GuideElementBuilder extends CoordinateElementBuilder {
 			defineLabelSettings(structure.details);
 			defineLabeling(structure.details);
 
-			out.add("selection = main.selectAll('.element.guide" + index + "').data(guideData)").endStatement();
+			out.add("selection = main.selectAll('.element.guide" + index + "').data(['guide'])").endStatement();
 
 			out.add("var added = selection.enter().append('path').attr('class', 'element line guide guide" + index + "')");
 			if (structure.chart.accessible)
