@@ -196,6 +196,7 @@ public class InteractionDetails {
       }
 
       out.add("chart.select('rect.overlay')").comment("Attach handlers to the overlay");
+      out.addChained("style('pointer-events', 'all')");
       addDispatchers(overlayEvents, out);
     }
 
@@ -231,7 +232,8 @@ public class InteractionDetails {
 
     // Only attach zoom handlers if we want interactivity; otherwise zoom is only available by API
     if (hasZoomInteractivity()) {
-      out.addChained("style('cursor', 'move').call(zoom)");
+      out.addChained("style('cursor', 'move').call(zoom)")
+        .addChained("style('pointer-events', 'all')");
     } else {
       out.addChained("style('cursor', 'default')");
     }
