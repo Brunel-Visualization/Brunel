@@ -61,7 +61,7 @@ class CoordinateElementBuilder extends ElementBuilder {
 	}
 
 	protected void defineLabeling(ElementDetails details) {
-		if (!structure.needsLabels()) {
+		if (!structure.needsLabels() && !structure.needsTooltips()) {
 			return;
 		}
 		out.onNewLine().ln().comment("Define labeling for the selection")
