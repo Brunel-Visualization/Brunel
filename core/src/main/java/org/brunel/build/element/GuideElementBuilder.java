@@ -34,119 +34,156 @@ import java.util.Set;
  */
 class GuideElementBuilder extends CoordinateElementBuilder {
 
-	private static final Set<String> MATH_FUNCTIONS = new HashSet<>(
-			Arrays.asList("e pi abs acos asin atan atan2 ceil cos exp floor log max min pow random round sin sqrt tan".split(" ")));
-	private static final Set<Character> SYMBOLS = new HashSet<>(
-			Arrays.asList('(', ')', '*', '-', '+', '/', '?', '=', '!', '>', '<', ':'));
+  private static final Set<String> MATH_FUNCTIONS = new HashSet<>(
+    Arrays.asList("e pi abs acos asin atan atan2 ceil cos exp floor log max min pow random round sin sqrt tan".split(" ")));
+  private static final Set<Character> SYMBOLS = new HashSet<>(
+    Arrays.asList('(', ')', '*', '-', '+', '/', '?', '=', '!', '>', '<', ':'));
 
-	public GuideElementBuilder(ElementStructure structure, ScriptWriter out, ScaleBuilder scalesBuilder) {
-		super(structure, out, scalesBuilder);
-	}
+  public GuideElementBuilder(ElementStructure structure, ScriptWriter out, ScaleBuilder scalesBuilder) {
+    super(structure, out, scalesBuilder);
+  }
 
-	public void generate() {
+  public void writePerChartDefinitions() {
+    super.writePerChartDefinitions();
+    out.add("function make_draggable(info, scx, scy, buildFunc, that) {").indentMore()
+      .onNewLine().add("var x0, y0, x1, y1, ox, oy").endStatement()
+      .onNewLine().add("return d3.drag()")
+      .addChained("on('start', function() { ox = info.x; oy = info.y; x0 = scx.invert(d3.event.x); y0 = scy.invert(d3.event.y) })")
+      .addChained("on('drag', function() {x1 = scx.invert(d3.event.x); y1 = scy.invert(d3.event.y); info.x=ox + x1-x0;  info.y = oy + y1-y0; buildFunc.call(that)})")
+      .endStatement()
+      .indentLess().onNewLine().add("}").endStatement();
+  }
 
-		List<Param> guides = vis.tGuides;
+  public void generate() {
 
-		int steps = getSteps(guides);
+    List<Param> guides = vis.tGuides;
 
-		// Define the variables and domains we will need
-		out.add("var i, x, y, t, selection, path, data = [], ")
-				.onNewLine().add("xDomain = scale_x.domain(), x0 = xDomain[0], xs = xDomain[xDomain.length-1]-x0, ")
-				.onNewLine().add("yDomain = scale_y.domain(), y0 = yDomain[0], ys = xDomain[yDomain.length-1]-y0").endStatement();
+    int steps = getSteps(guides);
 
-		// Generate the data for the guide functions
-		out.add("var guideData = Array.apply(null, Array(" + steps + ")).map(function (v, i) {")
-				.indentMore().onNewLine()
-				.add("t = i /", (steps - 1), ";", "return {x:x0 + xs*t, y:y0 + ys*t, t:t} })").endStatement();
+    // Define the variables and domains we will need
+    out.add("var i, x, y, t, selection, path, data = [], ")
+      .onNewLine().add("xDomain = scale_x.domain(), x0 = xDomain[0], xs = xDomain[xDomain.length-1]-x0, ")
+      .onNewLine().add("yDomain = scale_y.domain(), y0 = yDomain[0], ys = xDomain[yDomain.length-1]-y0").endStatement();
 
-		int index = 0;
+    // Generate the data for the guide functions
+    out.add("var guideData = Array.apply(null, Array(" + steps + ")).map(function (v, i) {")
+      .indentMore().onNewLine()
+      .add("t = i /", (steps - 1), ";", "return {x:x0 + xs*t, y:y0 + ys*t, t:t} })").endStatement();
 
-		setGeometry();                           // And the coordinate definitions
+    setGeometry();                           // And the coordinate definitions
 
-		for (Param p : guides) {
-			index++;
-			out.onNewLine().ln().comment("Defining guide #" + index).onNewLine();
+    out.add("this._drags = this._drags || [");
+    for (int i = 0; i < guides.size(); i++) {
+      if (i > 0) {
+        out.add(", ");
+      }
+      out.add("{x:0,y:0}");
+    }
+    out.add("]").comment("Stores the persistent drag info");
 
-			String defX = definition(p, "x");                   // Defines X
-			String defY = definition(p, "y");                   // Defines Y
+    for (int index = 0; index < guides.size(); index++) {
+      Param p = guides.get(index);
 
-			// Define the path
-			out.add("path = d3.line().curve(d3.curveCatmullRom)")
-					.addChained("x(function(d) { return scale_x(", defX, ") })")
-					.addChained("y(function(d) { return scale_y(", defY, ") })")
-					.endStatement();
+      out.onNewLine().ln().comment("Defining guide #" + index).onNewLine();
 
-			// define the labeling structure to be used later
-			defineLabelSettings(structure.details);
-			defineLabeling(structure.details);
+      String defX = definition(p, "x");                   // Defines X
+      String defY = definition(p, "y");                   // Defines Y
 
-			out.add("selection = main.selectAll('.element.guide" + index + "').data(['guide'])").endStatement();
+      out.add("var drags = this._drags[" + index + "]").endStatement();
 
-			out.add("var added = selection.enter().append('path').attr('class', 'element line guide guide" + index + "')");
-			if (structure.chart.accessible)
-				out.addChained("attr('role', 'img').attr('aria-label', 'reference guide')");
-			out.add(",").ln().indent().add("merged = selection.merge(added)").endStatement();
+      // Define the path, adding in the selection state for the offset
+      out.add("path = d3.line().curve(d3.curveCatmullRom)")
+        .addChained("x(function(d) { \nreturn scale_x(" + defX + "+ drags.x) \n })")
+        .addChained("y(function(d) { return scale_y(" + defY + "+ drags.y)  })")
+        .endStatement();
 
-			out.add("BrunelD3.transition(merged, transitionMillis)")
-					.addChained("attr('d', path(guideData))")
-					.endStatement();
-			out.add("label(merged, transitionMillis)").endStatement();
-		}
+      // define the labeling structure to be used later
+      defineLabelSettings(structure.details);
+      defineLabeling(structure.details);
 
-	}
+      out.add("selection = main.selectAll('.element.guide" + index + "').data(['guide'])");
+      out.endStatement();
 
-	// Returns the definition of the given coord (which defaults to the defined value)
-	private String definition(Param p, String coord) {
-		if (p.asString().equals(coord)) {
-			return sanitize(p.firstModifier().asString());
-		} else {
-			return "d." + coord;
-		}
-	}
+      out.add("var added = selection.enter().append('path').attr('class', 'element line guide guide" + index + "')");
+      if (structure.chart.accessible) {
+        out.addChained("attr('role', 'img').attr('aria-label', 'reference guide')");
+      }
+      out.add(",").ln().indent().add("merged = selection.merge(added)").endStatement();
 
-	private int getSteps(List<Param> guides) {
-		int max = 0;
-		for (Param p : guides) {
-			if (p.modifiers().length > 1) {
-				try {
-					max = Math.max((int) p.modifiers()[1].asDouble(), max);
-				} catch (Exception e) {
-					throw new IllegalArgumentException("When setting number of steps in a guide, the value must be an integer");
-				}
-			}
-		}
-		return max <= 1 ? 40 : max;
-	}
+      out.add("BrunelD3.transition(merged, transitionMillis)")
+        .addChained("attr('d', path(guideData))")
+        .addChained("call(make_draggable(drags, scale_x, scale_y, build, this))")
+        .endStatement();
+      if (structure.needsLabels()) {
+        out.add("label(merged, transitionMillis)").endStatement();
+      }
+    }
 
-	private String sanitize(String text) {
-		try {
-			// We cannot just use this string as it could be insecure, so we tokenize it and only accept a subset
-			StreamTokenizer in = new StreamTokenizer(new StringReader(text));
-			for (Character c : SYMBOLS) in.ordinaryChar(c);
-			StringBuilder out = new StringBuilder();
+  }
 
-			for (; ; ) {
-				int tok = in.nextToken();
-				if (tok == StreamTokenizer.TT_EOF || tok == StreamTokenizer.TT_EOL) break;
-				if (tok == StreamTokenizer.TT_NUMBER) out.append(in.nval);
-				else if (tok == StreamTokenizer.TT_WORD) {
-					String s = in.sval.toLowerCase();
-					if (s.equals("x") || s.equals("y") || s.equals("t"))        // Known x,y,t defined variables
-						out.append("d.").append(s);                             // x -> d.x, etc.
-					else if (MATH_FUNCTIONS.contains(s))                        // Math functions
-						out.append("Math.").append(s);
-					else throw new IllegalStateException("Cannot use term '" + s + "' in a function definition");
-				} else {
-					char c = (char) tok;
-					if (SYMBOLS.contains(c))
-						out.append(c);
-					else throw new IllegalStateException("Cannot use symbol '" + c + "' in a function definition");
-				}
-			}
-			return out.toString();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+  // Returns the definition of the given coord (which defaults to the defined value)
+  private String definition(Param p, String coord) {
+    if (p.asString().equals(coord)) {
+      return sanitize(p.firstModifier().asString());
+    } else {
+      return "d." + coord;
+    }
+  }
+
+  private int getSteps(List<Param> guides) {
+    int max = 0;
+    for (Param p : guides) {
+      if (p.modifiers().length > 1) {
+        try {
+          max = Math.max((int) p.modifiers()[1].asDouble(), max);
+        } catch (Exception e) {
+          throw new IllegalArgumentException("When setting number of steps in a guide, the value must be an integer");
+        }
+      }
+    }
+    return max <= 1 ? 40 : max;
+  }
+
+  private String sanitize(String text) {
+    try {
+      // We cannot just use this string as it could be insecure, so we tokenize it and only accept a subset
+      StreamTokenizer in = new StreamTokenizer(new StringReader(text));
+      for (Character c : SYMBOLS) {
+        in.ordinaryChar(c);
+      }
+      StringBuilder out = new StringBuilder();
+
+      for (; ; ) {
+        int tok = in.nextToken();
+        if (tok == StreamTokenizer.TT_EOF || tok == StreamTokenizer.TT_EOL) {
+          break;
+        }
+        if (tok == StreamTokenizer.TT_NUMBER) {
+          out.append(in.nval);
+        } else if (tok == StreamTokenizer.TT_WORD) {
+          String s = in.sval.toLowerCase();
+          if (s.equals("x") || s.equals("y") || s.equals("t"))        // Known x,y,t defined variables
+          {
+            out.append("d.").append(s);                             // x -> d.x, etc.
+          } else if (MATH_FUNCTIONS.contains(s))                        // Math functions
+          {
+            out.append("Math.").append(s);
+          } else {
+            throw new IllegalStateException("Cannot use term '" + s + "' in a function definition");
+          }
+        } else {
+          char c = (char) tok;
+          if (SYMBOLS.contains(c)) {
+            out.append(c);
+          } else {
+            throw new IllegalStateException("Cannot use symbol '" + c + "' in a function definition");
+          }
+        }
+      }
+      return out.toString();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
 }

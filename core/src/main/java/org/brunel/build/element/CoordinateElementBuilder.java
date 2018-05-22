@@ -61,6 +61,9 @@ class CoordinateElementBuilder extends ElementBuilder {
 	}
 
 	protected void defineLabeling(ElementDetails details) {
+		if (!structure.needsLabels()) {
+			return;
+		}
 		out.onNewLine().ln().comment("Define labeling for the selection")
 				.onNewLine().add("function label(selection, transitionMillis) {")
 				.indentMore().onNewLine();
