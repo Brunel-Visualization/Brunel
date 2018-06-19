@@ -160,7 +160,7 @@ public class Data {
     "if (Math.abs((d - Math.round(d)) / d) < 1e-9) return $.formatInt(Math.round(d), useGrouping);",
     "return $.formatFixed(d, decimalPlaces == null ? 6 : decimalPlaces, useGrouping);"
   })
-  public static String formatNumeric(double d, Number decimalPlaces, boolean useGrouping) {
+  public static synchronized String formatNumeric(double d, Number decimalPlaces, boolean useGrouping) {
     if (Math.abs(d) == 0) {
       return "0";
     }
@@ -414,7 +414,7 @@ public class Data {
   }
 
   @JSTranslation(ignore = true)
-  private static Number parseLocaleFreeNumber(String s) {
+  private static synchronized Number parseLocaleFreeNumber(String s) {
     s = s.trim();
     ParsePosition pos = new ParsePosition(0);
     Number parse = STANDARD_FORMAT.parse(s, pos);
