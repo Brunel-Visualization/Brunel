@@ -16,11 +16,6 @@
 
 package org.brunel.build.element;
 
-import org.brunel.action.Param;
-import org.brunel.build.ScaleBuilder;
-import org.brunel.build.info.ElementStructure;
-import org.brunel.build.util.ScriptWriter;
-
 import java.io.IOException;
 import java.io.StreamTokenizer;
 import java.io.StringReader;
@@ -28,11 +23,17 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.brunel.action.Param;
+import org.brunel.build.ScaleBuilder;
+import org.brunel.build.info.ElementStructure;
+import org.brunel.build.util.ScriptWriter;
 
 /**
  * Overrides element builder to build guides only
  */
 class GuideElementBuilder extends CoordinateElementBuilder {
+
+  private static final boolean DRAGGABLE_GUIDES = false;
 
   private static final Set<String> MATH_FUNCTIONS = new HashSet<>(
     Arrays.asList("e pi abs acos asin atan atan2 ceil cos exp floor log max min pow random round sin sqrt tan".split(" ")));
@@ -45,13 +46,15 @@ class GuideElementBuilder extends CoordinateElementBuilder {
 
   public void writePerChartDefinitions() {
     super.writePerChartDefinitions();
-    out.add("function make_draggable(info, scx, scy, buildFunc, that) {").indentMore()
-      .onNewLine().add("var x0, y0, x1, y1, ox, oy").endStatement()
-      .onNewLine().add("return d3.drag()")
-      .addChained("on('start', function() { ox = info.x; oy = info.y; x0 = scx.invert(d3.event.x); y0 = scy.invert(d3.event.y) })")
-      .addChained("on('drag', function() {x1 = scx.invert(d3.event.x); y1 = scy.invert(d3.event.y); info.x=ox + x1-x0;  info.y = oy + y1-y0; buildFunc.call(that)})")
-      .endStatement()
-      .indentLess().onNewLine().add("}").endStatement();
+    if (DRAGGABLE_GUIDES) {
+      out.add("function make_draggable(info, scx, scy, buildFunc, that) {").indentMore()
+        .onNewLine().add("var x0, y0, x1, y1, ox, oy").endStatement()
+        .onNewLine().add("return d3.drag()")
+        .addChained("on('start', function() { ox = info.x; oy = info.y; x0 = scx.invert(d3.event.x); y0 = scy.invert(d3.event.y) })")
+        .addChained("on('drag', function() {x1 = scx.invert(d3.event.x); y1 = scy.invert(d3.event.y); info.x=ox + x1-x0;  info.y = oy + y1-y0; buildFunc.call(that)})")
+        .endStatement()
+        .indentLess().onNewLine().add("}").endStatement();
+    }
   }
 
   public void generate() {
@@ -111,9 +114,11 @@ class GuideElementBuilder extends CoordinateElementBuilder {
       out.add(",").ln().indent().add("merged = selection.merge(added)").endStatement();
 
       out.add("BrunelD3.transition(merged, transitionMillis)")
-        .addChained("attr('d', path(guideData))")
-        .addChained("call(make_draggable(drags, scale_x, scale_y, build, this))")
-        .endStatement();
+        .addChained("attr('d', path(guideData))");
+      if (DRAGGABLE_GUIDES) {
+        out.addChained("call(make_draggable(drags, scale_x, scale_y, build, this))");
+      }
+      out.endStatement();
       if (structure.needsLabels()) {
         out.add("label(merged, transitionMillis)").endStatement();
       }
