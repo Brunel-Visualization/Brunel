@@ -786,7 +786,7 @@ var BrunelD3 = (function () {
                 // Ensure we have a size >= 1px and store it so that if we are called again
                 // we use the original size for calculations
                 var fontSize = getComputedStyle(x).fontSize;
-                if (fontSize.startsWith("0.")) {
+                if (fontSize.substring(0,2) == "0.") {
                     fontSize = "1.0";
                     d3this.style('font-size', fontSize);
                 }
@@ -1184,7 +1184,7 @@ var BrunelD3 = (function () {
         // Idf we cannot find a location, no need to do anyhtign else
         if (!loc || !loc.box) return;
 
-        if (posV.endsWith("px"))
+        if (posV.match("px$") == "px")
             loc.y += Number(posV.substring(0, posV.length - 2));
 
         txt.style('text-anchor', labeling.align).attr('dy', (labeling.dy || "0.25") + "em");
