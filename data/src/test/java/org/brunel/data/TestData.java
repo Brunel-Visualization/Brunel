@@ -184,6 +184,11 @@ public class TestData {
   }
 
   @Test
+  public void testNumericFormatErrorCase() {
+    assertEquals("5,000", Data.formatNumeric(5000.05, 0, true));
+  }
+
+    @Test
   public void testNumericFormat() {
     assertEquals("0", Data.formatNumeric(0.0, null, true));
     assertEquals("0", Data.formatNumeric(1e-9, 8, true));
