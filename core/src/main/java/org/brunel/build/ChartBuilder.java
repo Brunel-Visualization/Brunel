@@ -1,5 +1,8 @@
 package org.brunel.build;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.brunel.action.Param;
 import org.brunel.build.data.DataTransformWriter;
 import org.brunel.build.data.TransformedData;
@@ -17,10 +20,6 @@ import org.brunel.model.VisElement;
 import org.brunel.model.VisException;
 import org.brunel.model.VisTypes;
 import org.brunel.model.style.StyleSheet;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Builds a chart consisting of a set of overlaid elements
@@ -317,7 +316,15 @@ public class ChartBuilder {
       .onNewLine().add("interior : interior,");
 
     if (structure.diagram == null) {
-      out.onNewLine().add("scales: {x:scale_x, y:scale_y},");
+      out.onNewLine().add("scales: function() { return {x:scale_x, y:scale_y} },")
+        .onNewLine().add("resetZoom: function (xdomain, ydomain) {").indentMore()
+        .onNewLine().add("zoomNode.__zoom = d3.zoomIdentity;")
+        .onNewLine().add("scale_x = base_scales[0];")
+        .onNewLine().add("scale_y = base_scales[1];")
+        .onNewLine().add("if (xdomain) scale_x.domain(xdomain);")
+        .onNewLine().add("if (ydomain) scale_y.domain(ydomain);")
+        .indentLess().onNewLine().add("},").onNewLine();
+
     }
 
     structure.interaction.defineChartZoomFunction(out);

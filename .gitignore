@@ -176,3 +176,7 @@ brunel*.zip
 
 # Patch files
 *.patch
+
+/secret-keys.gpg
+/gradle.properties
+/core/secret-keys.gpg
