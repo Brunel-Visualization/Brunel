@@ -1,0 +1,25 @@
+version '2.6.1'
+
+apply plugin: 'java'
+apply plugin: 'war'
+apply from: 'https://raw.github.com/akhikhl/gretty/master/pluginScripts/gretty.plugin'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.14'
+    compile project(':data')
+    compile project(':core')
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+
+configurations {
+    all*.exclude group: 'rhino'
+    all*.exclude group: 'org.eclipse.jdt'
+    all*.exclude module: 'translator-0.5'
+}

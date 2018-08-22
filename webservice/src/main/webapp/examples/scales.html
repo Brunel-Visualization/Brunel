@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-Equiv="Cache-Control" Content="no-cache">
+    <meta http-Equiv="Pragma" Content="no-cache">
+    <meta http-Equiv="Expires" Content="0">
+    <title>Programmatic Control of Scales with Brunel</title>
+    <!--
+        D3 Copyright © 2012, Michael Bostock
+        jQuery Copyright © 2010 by The jQuery Project
+        sumoselect Copyright © 2014 Hemant Negi
+     -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.1/d3.min.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.20/topojson.min.js" charset="utf-8"></script>
+    <script src="https://brunelvis.org/js/brunel.2.6.min.js" charset="utf-8"></script>
+
+    <link rel="stylesheet" type="text/css" href="https://brunelvis.org/js/brunel.2.6.css" charset="utf-8"/>
+
+</head>
+<body>
+<center>
+    <h2 style='text-align:center'>Summer and Winter Temperatures in the United States</h2>
+    <div style='display:inline-block;border:solid 1px #888888; padding:5px;margin:5px; box-shadow: 3px 3px 3px #cccccc;'>
+        <svg id="visualization" width="653" height="403"></svg>
+    </div>
+</center>
+<h3>Use the controls below to modify the scales</h3>
+<p>
+    <button onclick="showDomains()">Show Scale Domains</button>
+    <button onclick="showRanges()">Show Scale Ranges</button>
+</p>
+<p>
+    Set X Domain. From:
+    <input type="text" id="xDomainLower" name="TextBox1">
+    To:
+    <input type="text" id="xDomainUpper" name="TextBox2">
+    <button onclick="setDomainDemo()">Modify</button>
+
+</p>
+
+</body>
+<script>
+    function  BrunelVis(visId) {
+        "use strict";                                                                       // strict mode
+        var datasets = [],                                      // array of datasets for the original data
+            pre = function(d, i) { return d },                         // default pre-process does nothing
+            post = function(d, i) { return d },                       // default post-process does nothing
+            transitionTime = 200,                                        // transition time for animations
+            charts = [],                                                       // the charts in the system
+            vis = d3.select('#' + visId).attr('class', 'brunel');                     // the SVG container
+
+        BrunelD3.addDefinitions(vis);                                   // ensure standard symbols present
+
+        // Define chart #1 in the visualization //////////////////////////////////////////////////////////
+
+        charts[0] = function(parentNode, filterRows) {
+            var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0, 1, 1, 5, 47, 37, 15),
+                elements = [];                                              // array of elements in this chart
+
+            // Define groups for the chart parts ///////////////////////////////////////////////////////////
+
+            var chart =  vis.append('g').attr('class', 'chart1')
+                .attr('transform','translate(' + geom.chart_left + ',' + geom.chart_top + ')');
+            var overlay = chart.append('g').attr('class', 'element').attr('class', 'overlay');
+            var zoom = d3.zoom().scaleExtent([1/3,3]);
+            var zoomNode = overlay.append('rect').attr('class', 'overlay')
+                .attr('x', geom.inner_left).attr('y', geom.inner_top)
+                .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
+                .style('cursor', 'move').call(zoom)
+                .style('pointer-events', 'all')
+                .node();
+            zoomNode.__zoom = d3.zoomIdentity;
+            chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
+            var interior = chart.append('g').attr('class', 'interior zoomNone')
+                .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')')
+                .attr('clip-path', 'url(#clip_visualization_chart1_inner)');
+            interior.append('rect').attr('class', 'inner').attr('width', geom.inner_width).attr('height', geom.inner_height);
+            var gridGroup = interior.append('g').attr('class', 'grid');
+            var axes = chart.append('g').attr('class', 'axis')
+                .attr('transform','translate(' + geom.inner_left + ',' + geom.inner_top + ')');
+            vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_inner').append('rect')
+                .attr('x', 0).attr('y', 0)
+                .attr('width', geom.inner_rawWidth+1).attr('height', geom.inner_rawHeight+1);
+
+            // Scales //////////////////////////////////////////////////////////////////////////////////////
+
+            var scale_x = d3.scaleLinear().domain([15, 65.000005])
+                .range([0, geom.inner_width]);
+            var scale_inner = d3.scaleLinear().domain([0,1])
+                .range([-0.5, 0.5]);
+            var scale_y = d3.scaleLinear().domain([50, 90.000004])
+                .range([geom.inner_height, 0]);
+            var base_scales = [scale_x, scale_y];                           // untransformed original scales
+
+            // Axes ////////////////////////////////////////////////////////////////////////////////////////
+
+            axes.append('g').attr('class', 'x axis')
+                .attr('transform','translate(0,' + geom.inner_rawHeight + ')')
+                .attr('clip-path', 'url(#clip_visualization_chart1_haxis)');
+            vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_haxis').append('polyline')
+                .attr('points', '-1,-1000, -1,-1 -5,5, -1000,5, -100,1000, 10000,1000 10000,-1000');
+            axes.select('g.axis.x').append('text').attr('class', 'title').text('Latitude').style('text-anchor', 'middle')
+                .attr('x',geom.inner_rawWidth/2)
+                .attr('y', geom.inner_bottom - 2.0).attr('dy','-0.27em');
+            axes.append('g').attr('class', 'y axis')
+                .attr('clip-path', 'url(#clip_visualization_chart1_vaxis)');
+            vis.select('defs').append('clipPath').attr('id', 'clip_visualization_chart1_vaxis').append('polyline')
+                .attr('points', '-1000,-10000, 10000,-10000, 10000,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+1) + ', -1,' + (geom.inner_rawHeight+5) + ', -1000,' + (geom.inner_rawHeight+5) );
+            axes.select('g.axis.y').append('text').attr('class', 'title').text('Summer').style('text-anchor', 'middle')
+                .attr('x',-geom.inner_rawHeight/2)
+                .attr('y', 4-geom.inner_left).attr('dy', '0.7em').attr('transform', 'rotate(270)');
+
+            var axis_bottom = d3.axisBottom(scale_x).ticks(Math.min(10, Math.round(geom.inner_rawWidth / 39.0)));
+            var axis_left = d3.axisLeft(scale_y).ticks(Math.min(10, Math.round(geom.inner_rawHeight / 20)));
+
+            function buildAxes(time) {
+                var axis_x = axes.select('g.axis.x');
+                BrunelD3.transition(axis_x, time).call(axis_bottom.scale(scale_x));
+                var axis_y = axes.select('g.axis.y');
+                BrunelD3.transition(axis_y, time).call(axis_left.scale(scale_y));
+            }
+            zoom.on('zoom', function(t, time) {
+                t = t ||BrunelD3.restrictZoom(d3.event.transform, geom, this);
+                scale_x = t.rescaleX(base_scales[0]);
+                scale_y = t.rescaleY(base_scales[1]);
+                zoomNode.__zoom = t;
+                interior.attr('class', 'interior ' + BrunelD3.zoomLabel(t.k));;
+                build(time || -1);
+            });
+
+            // Define element #1 ///////////////////////////////////////////////////////////////////////////
+
+            elements[0] = function() {
+                var original, processed,                           // data sets passed in and then transformed
+                    element, data,                                 // brunel element information and brunel data
+                    selection, merged;                                      // d3 selection and merged selection
+                var elementGroup = interior.append('g').attr('class', 'element1'),
+                    main = elementGroup.append('g').attr('class', 'main'),
+                    labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+                function makeData() {
+                    original = datasets[0];
+                    if (filterRows) original = original.retainRows(filterRows);
+                    processed = pre(original, 0);
+                    processed = post(processed, 0);
+                    var f0 = processed.field('Latitude'),
+                        f1 = processed.field('Summer'),
+                        f2 = processed.field('State'),
+                        f3 = processed.field('#row'),
+                        f4 = processed.field('#selection');
+                    var keyFunc = function(d) { return f3.value(d) };
+                    data = {
+                        Latitude:     function(d) { return f0.value(d.row) },
+                        Summer:       function(d) { return f1.value(d.row) },
+                        State:        function(d) { return f2.value(d.row) },
+                        $row:         function(d) { return f3.value(d.row) },
+                        $selection:   function(d) { return f4.value(d.row) },
+                        Latitude_f:   function(d) { return f0.valueFormatted(d.row) },
+                        Summer_f:     function(d) { return f1.valueFormatted(d.row) },
+                        State_f:      function(d) { return f2.valueFormatted(d.row) },
+                        $row_f:       function(d) { return f3.valueFormatted(d.row) },
+                        $selection_f: function(d) { return f4.valueFormatted(d.row) },
+                        _split:       function(d) { return 'ALL' },
+                        _key:         keyFunc,
+                        _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+                    };
+                }
+
+                // Build element from data ///////////////////////////////////////////////////////////////////
+
+                function build(transitionMillis) {
+                    element = elements[0];
+                    var w = geom.default_point_size;
+                    var x = function(d) { return scale_x(data.Latitude(d))};
+                    var h = geom.default_point_size;
+                    var y = function(d) { return scale_y(data.Summer(d))};
+
+                    // Define selection entry operations
+                    function initialState(selection) {
+                        selection
+                            .attr('class', 'element point filled')
+                            .attr('cx',function(d) { return scale_x(data.Latitude(d))})
+                            .attr('cy',function(d) { return scale_y(data.Summer(d))})
+                            .attr('r',0)
+                    }
+
+                    // Define selection update operations on merged data
+                    function updateState(selection) {
+                        selection
+                            .attr('cx',function(d) { return scale_x(data.Latitude(d))})
+                            .attr('cy',function(d) { return scale_y(data.Summer(d))})
+                            .attr('r',geom.default_point_size / 2);
+                    }
+
+                    // Define labeling for the selection
+                    function label(selection, transitionMillis) {
+
+                        var tooltipLabeling  = {
+                            index: -1, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 0.0, dy: 0.7,
+                            fit: true, granularity: 0,
+                            content: function(d) {
+                                return d.row == null ? null : '<span class="field">' + data.State_f(d) + '</span>'
+                            }
+                        };
+                        var ttp = BrunelD3.addTooltip(selection, tooltipLabeling);
+                        if (ttp) ttp.install();
+                    }
+                    // Create selections, set the initial state and transition updates
+                    selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
+                    var added = selection.enter().append('circle');
+                    merged = selection.merge(added);
+                    initialState(added);
+                    selection.filter(BrunelD3.hasData)
+                        .classed('selected', BrunelD3.isSelected(data))
+                        .filter(BrunelD3.isSelected(data)).raise();
+                    updateState(BrunelD3.transition(merged, transitionMillis));
+                    label(merged, transitionMillis);
+
+                    selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+                }
+
+                return {
+                    data:           function() { return processed },
+                    original:       function() { return original },
+                    internal:       function() { return data },
+                    selection:      function() { return merged },
+                    makeData:       makeData,
+                    build:          build,
+                    chart:          function() { return charts[0] },
+                    group:          function() { return elementGroup },
+                    fields: {
+                        x:            ['Latitude'],
+                        y:            ['Summer'],
+                        key:          ['#row']
+                    }
+                };
+            }();
+
+            // Define element #2 ///////////////////////////////////////////////////////////////////////////
+
+            elements[1] = function() {
+                var original, processed,                           // data sets passed in and then transformed
+                    element, data,                                 // brunel element information and brunel data
+                    selection, merged;                                      // d3 selection and merged selection
+                var elementGroup = interior.append('g').attr('class', 'element2'),
+                    main = elementGroup.append('g').attr('class', 'main'),
+                    labels = BrunelD3.undoTransform(elementGroup.append('g').attr('class', 'labels').attr('aria-hidden', 'true'), elementGroup);
+
+                function makeData() {
+                    original = datasets[0];
+                    if (filterRows) original = original.retainRows(filterRows);
+                    processed = pre(original, 0)
+                        .summarize('Summer=Summer:fit; Latitude=Latitude:base')
+                        .sortRows('Latitude:ascending');
+                    processed = post(processed, 0);
+                    var f0 = processed.field('Latitude'),
+                        f1 = processed.field('Summer'),
+                        f2 = processed.field('#row'),
+                        f3 = processed.field('#selection');
+                    var keyFunc = function(d) { return 'ALL' };
+                    data = {
+                        Latitude:     function(d) { return f0.value(d.row) },
+                        Summer:       function(d) { return f1.value(d.row) },
+                        $row:         function(d) { return f2.value(d.row) },
+                        $selection:   function(d) { return f3.value(d.row) },
+                        Latitude_f:   function(d) { return f0.valueFormatted(d.row) },
+                        Summer_f:     function(d) { return f1.valueFormatted(d.row) },
+                        $row_f:       function(d) { return f2.valueFormatted(d.row) },
+                        $selection_f: function(d) { return f3.valueFormatted(d.row) },
+                        _split:       function(d) { return 'ALL' },
+                        _key:         keyFunc,
+                        _rows:        BrunelD3.makeRowsWithKeys(keyFunc, processed.rowCount())
+                    };
+                }
+
+                // Build element from data ///////////////////////////////////////////////////////////////////
+
+                function build(transitionMillis) {
+                    element = elements[1];
+                    var w = geom.default_point_size;
+                    var x = function(d) { return scale_x(data.Latitude(d))};
+                    var h = geom.default_point_size;
+                    var y = function(d) { return scale_y(data.Summer(d))};
+                    // Define paths
+                    var path = d3.line().x(x).y(y);
+                    var splits = BrunelD3.makePathSplits(data, path, x);
+
+                    // Define selection entry operations
+                    function initialState(selection) {
+                        selection
+                            .attr('class', 'element line')
+                            .style('pointer-events', 'none')
+                            .attr('d', function(d) { return d.path })
+                    }
+
+                    // Define selection update operations on merged data
+                    function updateState(selection) {
+                        selection
+                            .attr('d', function(d) { return d.path });
+                    }
+                    // Create selections, set the initial state and transition updates
+                    selection = main.selectAll('.element').data(splits, function(d) { return d.key });
+                    var added = selection.enter().append('path');
+                    merged = selection.merge(added);
+                    initialState(added);
+                    selection.filter(BrunelD3.hasData)
+                        .classed('selected', BrunelD3.isSelected(data))
+                        .filter(BrunelD3.isSelected(data)).raise();
+                    updateState(BrunelD3.transition(merged, transitionMillis));
+
+                    selection.exit().each(function() { this.remove(); BrunelD3.removeLabels(this)} );
+                }
+
+                return {
+                    data:           function() { return processed },
+                    original:       function() { return original },
+                    internal:       function() { return data },
+                    selection:      function() { return merged },
+                    makeData:       makeData,
+                    build:          build,
+                    chart:          function() { return charts[0] },
+                    group:          function() { return elementGroup },
+                    fields: {
+                        x:            ['Latitude'],
+                        y:            ['Summer']
+                    }
+                };
+            }();
+
+            function build(time, noData) {
+                var first = elements[0].data() == null;
+                if (first) time = 0;                                           // no transition for first call
+                buildAxes(time);
+                if ((first || time > -1) && !noData) {
+                    elements[0].makeData();
+                    elements[1].makeData();
+                }
+                elements[0].build(time);
+                elements[1].build(time);
+            }
+
+            // Expose the following components of the chart
+            return {
+                elements : elements,
+                interior : interior,
+                scales: function() { return {x:scale_x, y:scale_y} },
+                resetZoom: function (xdomain, ydomain) {
+                    zoomNode.__zoom = d3.zoomIdentity;
+                    scale_x = base_scales[0];
+                    scale_y = base_scales[1];
+                    if (xdomain) scale_x.domain(xdomain);
+                    if (ydomain) scale_y.domain(ydomain);
+                },
+                zoom: function(params, time) {
+                    if (params) zoom.on('zoom').call(zoomNode, params, time);
+                    return d3.zoomTransform(zoomNode);
+                },
+                build : build
+            };
+        }();
+
+        function setData(rowData, i) { datasets[i||0] = BrunelD3.makeData(rowData) }
+        function updateAll(time) { charts.forEach(function(x) { if (x.build) x.build(time || 0)}) }
+        function buildAll() {
+            for (var i=0;i<arguments.length;i++) setData(arguments[i], i);
+            updateAll(transitionTime);
+        }
+
+        return {
+            dataPreProcess:     function(f) { if (f) pre = f; return pre },
+            dataPostProcess:    function(f) { if (f) post = f; return post },
+            data:               function(d,i) { if (d) setData(d,i); return datasets[i||0] },
+            visId:              visId,
+            build:              buildAll,
+            rebuild:            updateAll,
+            charts:             charts
+        }
+    }
+
+    // Data Tables /////////////////////////////////////////////////////////////////////////////////////
+
+    var table1 = {
+        summarized: false,
+        names: ['Latitude', 'Summer', 'State'],
+        options: ['numeric', 'numeric', 'string'],
+        rows: [[32.74, 78.6, 'Alabama'], [63.35, 52.3, 'Alaska'], [34.21, 78.1, 'Arizona'],
+            [34.9, 78.8, 'Arkansas'], [37.15, 73.4, 'California'], [38.99, 65.2, 'Colorado'],
+            [41.58, 69.2, 'Connecticut'], [38.99, 74.2, 'Delaware'], [28.46, 81.0, 'Florida'],
+            [32.63, 78.7, 'Georgia'], [19.81, 72.2, 'Hawaii'], [44.3, 63.7, 'Idaho'], [40.1, 73.4, 'Illinois'],
+            [39.9, 72.4, 'Indiana'], [42.07, 71.6, 'Iowa'], [38.5, 76.4, 'Kansas'], [37.53, 74.5, 'Kentucky'],
+            [30.86, 81.1, 'Louisiana'], [45.39, 63.7, 'Maine'], [38.95, 73.3, 'Maryland'],
+            [42.16, 68.0, 'Massachusetts'], [44.84, 66.2, 'Michigan'], [46.32, 66.8, 'Minnesota'],
+            [32.69, 79.5, 'Mississippi'], [38.35, 75.4, 'Missouri'], [47.05, 64.2, 'Montana'],
+            [41.54, 71.8, 'Nebraska'], [39.33, 69.0, 'Nevada'], [43.67, 65.5, 'New Hampshire'],
+            [40.11, 72.2, 'New Jersey'], [34.44, 71.4, 'New Mexico'], [42.91, 66.5, 'New York'],
+            [35.54, 75.7, 'North Carolina'], [47.46, 66.6, 'North Dakota'], [40.41, 70.9, 'Ohio'],
+            [35.59, 79.6, 'Oklahoma'], [43.97, 63.7, 'Oregon'], [40.9, 68.6, 'Pennsylvania'],
+            [41.6, 68.8, 'Rhode Island'], [33.87, 78.4, 'South Carolina'], [44.45, 69.9, 'South Dakota'],
+            [35.86, 75.6, 'Tennessee'], [31.43, 81.1, 'Texas'], [39.33, 69.6, 'Utah'],
+            [44.06, 65.1, 'Vermont'], [37.52, 73.2, 'Virginia'], [47.42, 63.8, 'Washington'],
+            [38.65, 70.2, 'West Virginia'], [44.63, 66.8, 'Wisconsin'], [42.99, 63.5, 'Wyoming']]
+    };
+
+    // Call Code to Build the system ///////////////////////////////////////////////////////////////////
+
+    var vis = new BrunelVis('visualization');
+    vis.build(table1);
+
+    function showDomains() {
+        var sc = vis.charts[0].scales();              // The first chart's scales (we only have one chart)
+        alert("x domain = [" + sc.x.domain() + "], y domain = [" + sc.y.domain() + "]");
+    }
+
+    function showRanges() {
+        var sc = vis.charts[0].scales();              // The first chart's scales (we only have one chart)
+        alert("x range = [" + sc.x.range() + "], y range = [" + sc.y.range() + "]");
+    }
+
+    function setDomainDemo() {
+        // Get the values from the input text boxes
+        var a = parseInt(document.getElementById("xDomainLower").value);
+        var b = parseInt(document.getElementById("xDomainUpper").value);
+
+        // Set them into the domain of the x chart and rebuild
+        vis.charts[0].resetZoom([a,b], null);
+        vis.rebuild();
+    }
+
+
+    // Set the initial values
+    var sc = vis.charts[0].scales().x;
+    document.getElementById("xDomainLower").value = "" + sc.domain()[0];
+    document.getElementById("xDomainUpper").value = "" + sc.domain()[1];
+
+
+</script>
+
