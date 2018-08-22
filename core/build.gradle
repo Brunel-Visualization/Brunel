@@ -22,61 +22,61 @@ dependencies {
     testCompile project(':data').sourceSets.test.output
 }
 
-archivesBaseName = 'brunel-core'
-
-apply plugin: 'maven'
-apply plugin: 'signing'
-
-signing {
-    sign configurations.archives
-}
-
-group = "org.brunelvis"
-version = "2.6"
-
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            pom.project {
-                name 'brunel-core'
-                packaging 'jar'
-                // optionally artifactId can be defined here
-                description 'D3-based visualization'
-                url 'https://brunelvis.org'
-
-                scm {
-                    connection 'scm:git://github.com/Brunel-Visualization'
-                    developerConnection 'scm:git://github.com/Brunel-Visualization'
-                    url 'https://github.com/Brunel-Visualization/Brunel'
-                }
-
-
-                licenses {
-                    license {
-                        name 'The Apache License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id 'grahamwills'
-                        name 'Graham Wills'
-                        email 'gwills@us.ibm.com'
-                    }
-                }
-            }
-        }
-    }
-}
+//archivesBaseName = 'brunel-core'
+//
+//apply plugin: 'maven'
+//apply plugin: 'signing'
+//
+//signing {
+//    sign configurations.archives
+//}
+//
+//group = "org.brunelvis"
+//version = "2.6"
+//
+//
+//uploadArchives {
+//    repositories {
+//        mavenDeployer {
+//            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+//
+//            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+//                authentication(userName: ossrhUsername, password: ossrhPassword)
+//            }
+//
+//            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+//                authentication(userName: ossrhUsername, password: ossrhPassword)
+//            }
+//
+//            pom.project {
+//                name 'brunel-core'
+//                packaging 'jar'
+//                // optionally artifactId can be defined here
+//                description 'D3-based visualization'
+//                url 'https://brunelvis.org'
+//
+//                scm {
+//                    connection 'scm:git://github.com/Brunel-Visualization'
+//                    developerConnection 'scm:git://github.com/Brunel-Visualization'
+//                    url 'https://github.com/Brunel-Visualization/Brunel'
+//                }
+//
+//
+//                licenses {
+//                    license {
+//                        name 'The Apache License, Version 2.0'
+//                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+//                    }
+//                }
+//
+//                developers {
+//                    developer {
+//                        id 'grahamwills'
+//                        name 'Graham Wills'
+//                        email 'gwills@us.ibm.com'
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
