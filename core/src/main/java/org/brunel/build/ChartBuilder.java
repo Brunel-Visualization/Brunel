@@ -293,7 +293,6 @@ public class ChartBuilder {
     if (axisBuilder.needsAxes() || structure.geo != null && structure.geo.withGraticule) {
       out.onNewLine().add("buildAxes(time)").endStatement();
     }
-
     Integer[] order = structure.elementBuildOrder();
 
     out.onNewLine().add("if ((first || time > -1) && !noData) {").indentMore();
@@ -312,6 +311,13 @@ public class ChartBuilder {
     for (ElementBuilder builder : elementBuilders) {
       builder.writeBuildCommands();
     }
+
+    // At the very end, we position a floating legend
+    if (legendBuilder.isFloating()) {
+      legendBuilder.positionFloatingLegend();
+    }
+
+
 
     out.indentLess().onNewLine().add("}").ln();
 

@@ -82,6 +82,7 @@ public class VisElement extends VisItem implements Cloneable {
   private String[] aesthetics;            // aesthetics
   private String[] pos;                   // Position fields only
   private String[] nonPos;                // non-position fields (but not filters)
+  public boolean tFloatingLegend;         // Floating legend desired
 
   public String fTextDir;                 //Base text direction
   public String fGuiDir;                  //UI direction (ltr or rtl)
@@ -277,6 +278,7 @@ public class VisElement extends VisItem implements Cloneable {
   public void legends(Param type) {
     if (type != null) {
       tLegends = Legends.valueOf(type.asString());
+      tFloatingLegend = type.hasModifierOption("float") || type.hasModifierOption("floating");
     }
   }
 

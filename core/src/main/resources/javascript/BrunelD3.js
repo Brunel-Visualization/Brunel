@@ -26,6 +26,7 @@ var BrunelD3 = (function () {
     var notChrome = window.navigator.userAgent.toLowerCase().indexOf("chrome") === -1;
 
     var tooltip, lastTime, lastTimeDescr;
+
     // Return geometries for the given target given the desired margins
     function geometries(target, chart_top, chart_left, chart_bottom, chart_right,
                         inner_top, inner_left, inner_bottom, inner_right) {
@@ -553,7 +554,7 @@ var BrunelD3 = (function () {
 
         // Move everything up to center them
         for (i = 0; i < spans.length; i++)
-            spans[i].setAttribute('dy', ((i - spans.length / 2.0) * 1.1 + D ) + "em");
+            spans[i].setAttribute('dy', ((i - spans.length / 2.0) * 1.1 + D) + "em");
     }
 
     // Calls the function when the target is ready
@@ -786,7 +787,7 @@ var BrunelD3 = (function () {
                 // Ensure we have a size >= 1px and store it so that if we are called again
                 // we use the original size for calculations
                 var fontSize = getComputedStyle(x).fontSize;
-                if (fontSize.substring(0,2) == "0.") {
+                if (fontSize.substring(0, 2) == "0.") {
                     fontSize = "1.0";
                     d3this.style('font-size', fontSize);
                 }
@@ -1199,7 +1200,7 @@ var BrunelD3 = (function () {
             if (labeling.fit) {
                 // Too tall to fit a single line, or too wide and could not add ellipses
                 kill = (b.height > loc.box.height ||
-                b.width > loc.box.width && !addEllipses(textNode, content, loc.box.width));
+                    b.width > loc.box.width && !addEllipses(textNode, content, loc.box.width));
                 if (kill) {
                     textNode.parentNode.removeChild(textNode);          // remove from parent
                     attached[labeling.index] = null;                    // dissociate from item
@@ -1306,7 +1307,7 @@ var BrunelD3 = (function () {
         function intersect(p, q) {
             var r = subtract(p.b, p.a), s = subtract(q.b, q.a), pq = subtract(q.a, p.a);  // Working vectors
             var denominator = cross(r, s);                                          // Cross product of segment vectors
-            if (Math.abs(denominator) < 0.01)  return null;                         // Lines are parallel
+            if (Math.abs(denominator) < 0.01) return null;                         // Lines are parallel
 
             // The parametric distances to the intersection point for both lines
             var t = cross(pq, s) / denominator,
@@ -1718,7 +1719,7 @@ var BrunelD3 = (function () {
             mergedNodes.each(function (d) {
                     // Adjust placement of labels
                     var i, txt, L = this.__labels__;
-                    if (L)for (i in L) {
+                    if (L) for (i in L) {
                         txt = L[i];
                         if (txt.__off__) {
                             // We have calculated the position, just need to move it
@@ -2350,6 +2351,42 @@ var BrunelD3 = (function () {
         );
     }
 
+    function intersectRect(r1, r2) {
+
+        return !(r2.x > r1.x + r1.width ||
+            r2.x + r2.width < r1.x ||
+            r2.y > r1.y + r1.height ||
+            r2.y + r2.height < r1.y);
+    }
+
+
+    /**
+     * Returns the box with the lowest number of hits
+     * @param boxes array of boxes to consider
+     * @param elements array of elements to look at
+     * @returns best box
+     */
+    function lowestBoxHits(boxes, elements) {
+        var i, e, sel, b, box;
+        for (i in boxes) boxes[i]._cnt = 0;
+        for (e in elements) {
+            sel = elements[e].selection();
+            sel.each(function () {
+                b = getBBox(this);
+                if (b) for (i in boxes) {
+                    box = boxes[i];
+                    if (intersectRect(b, box))
+                        box._cnt++;
+                }
+            })
+        }
+        var best = boxes[0];
+        for (i in boxes)
+            if (boxes[i]._cnt < best._cnt) best = boxes[i];
+        return best;
+    }
+
+
     return {
         'makeData': makeDataset,
         'geometry': geometries,
@@ -2377,6 +2414,7 @@ var BrunelD3 = (function () {
         'makeEdge': makeEdge,
         'facet': facet,
         'time': time,
+        'lowestBoxHits': lowestBoxHits,
         'interpolate': interpolate,
         'animateBuild': animateBuild,
         'makeGrid': makeGrid,
