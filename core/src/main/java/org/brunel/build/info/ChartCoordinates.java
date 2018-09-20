@@ -16,6 +16,12 @@
 
 package org.brunel.build.info;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.brunel.action.Param;
 import org.brunel.build.data.TransformedData;
 import org.brunel.build.util.ModelUtil;
@@ -26,270 +32,346 @@ import org.brunel.data.util.DateFormat;
 import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
  * Keep information on fields used for position within a visualization
  */
 public class ChartCoordinates {
 
-	public final VisTypes.Coordinates type;
-	public final Field[] allXFields, allYFields, allXClusterFields;
-	public final String xTransform, yTransform;
-	public final boolean xCategorical, yCategorical;                // Basic measure for the x and y dimensions
-	public final DateFormat xDateFormat, yDateFormat;                // If not null, the dimension is a date
-	public final Double[] xExtent, yExtent;                         // User-provided data overrides for the extents
-	public final boolean xReversed, yReversed;
+  public static ChartCoordinates[] make(VisElement[] elements, TransformedData[] data, VisTypes.Diagram diagram) {
+    boolean isDual = false;
+    for (VisElement element : elements) {
+      if (element.dualAxes) {
+        isDual = true;
+      }
+    }
 
-	private final Map<VisElement, Field[]> x = new HashMap<>();
-	private final Map<VisElement, Field[]> y = new HashMap<>();
+    if (isDual) {
+      if (diagram != null) {
+        throw new IllegalStateException("Cannot use diagram and dual axes together");
+      }
 
-	public ChartCoordinates(VisElement[] elements, TransformedData[] data, VisTypes.Diagram diagram) {
+      // Make a set of coordinates for each element
+      ChartCoordinates[] result = new ChartCoordinates[elements.length];
+      for (int i = 0; i < result.length; i++) {
+        result[i] = new ChartCoordinates(new VisElement[]{elements[i]}, new TransformedData[]{data[i]}, null);
+      }
+      return result;
+    } else {
+      return new ChartCoordinates[]{new ChartCoordinates(elements, data, diagram)};
+    }
+  }
 
-		this.type = makeCombinedCoords(elements, diagram);
+  public final VisTypes.Coordinates type;
+  public final Field[] allXFields, allYFields, allXClusterFields;
+  public final String xTransform, yTransform;
+  public final boolean xCategorical, yCategorical;                // Basic measure for the x and y dimensions
+  public final DateFormat xDateFormat, yDateFormat;                // If not null, the dimension is a date
+  public final Double[] xExtent, yExtent;                         // User-provided data overrides for the extents
+  public final boolean xReversed, yReversed;
 
-		String xTransform = null, yTransform = null;                // If defined by the VisSingle
+  private final Map<VisElement, Field[]> x = new HashMap<>();
+  private final Map<VisElement, Field[]> y = new HashMap<>();
 
-		double xMin = Double.POSITIVE_INFINITY, yMin = Double.POSITIVE_INFINITY;
-		double xMax = Double.NEGATIVE_INFINITY, yMax = Double.NEGATIVE_INFINITY;
+  public ChartCoordinates(VisElement[] elements, TransformedData[] data, VisTypes.Diagram diagram) {
 
-		ArrayList<Field> allX = new ArrayList<>();
-		ArrayList<Field> allY = new ArrayList<>();
-		ArrayList<Field> allCluster = new ArrayList<>();
-		for (int i = 0; i < elements.length; i++) {
-			VisElement vis = elements[i];
-			if (vis.tDiagram == null) {
-				Field[] visXFields = getXFields(vis, data[i]);
-				Field[] visYFields = getYFields(vis, data[i]);
+    this.type = makeCombinedCoords(elements, diagram);
 
-				if (xTransform == null) xTransform = getDefinedXTransform(vis);
-				if (yTransform == null) yTransform = getDefinedYTransform(vis);
+    String xTransform = null, yTransform = null;                // If defined by the VisSingle
 
-				x.put(vis, visXFields);
-				y.put(vis, visYFields);
+    double xMin = Double.POSITIVE_INFINITY, yMin = Double.POSITIVE_INFINITY;
+    double xMax = Double.NEGATIVE_INFINITY, yMax = Double.NEGATIVE_INFINITY;
 
-				xMin = Math.min(xMin, getDefinedExtent(vis.fX, true));
-				yMin = Math.min(yMin, getDefinedExtent(vis.fY, true));
-				xMax = Math.max(xMax, getDefinedExtent(vis.fX, false));
-				yMax = Math.max(yMax, getDefinedExtent(vis.fY, false));
+    ArrayList<Field> allX = new ArrayList<>();
+    ArrayList<Field> allY = new ArrayList<>();
+    ArrayList<Field> allCluster = new ArrayList<>();
+    for (int i = 0; i < elements.length; i++) {
+      VisElement vis = elements[i];
+      if (vis.tDiagram == null) {
+        Field[] visXFields = getXFields(vis, data[i]);
+        Field[] visYFields = getYFields(vis, data[i]);
 
-				if (visXFields.length > 0)
-					allX.add(visXFields[0]);             // Only first X field (rest are clustered)
-				if (visXFields.length > 1) allCluster.add(visXFields[1]);       // Add the clustered X field
-				Collections.addAll(allY, visYFields);                           // All Y fields (used in ranges)
-			} else {
-				x.put(vis, new Field[0]);
-				y.put(vis, new Field[0]);
-			}
-		}
+        if (xTransform == null) {
+          xTransform = getDefinedXTransform(vis);
+        }
+        if (yTransform == null) {
+          yTransform = getDefinedYTransform(vis);
+        }
 
-		if (Double.isInfinite(xMin) && Double.isInfinite(xMax))
-			xExtent = null;
-		else
-			xExtent = new Double[]{Double.isInfinite(xMin) ? null : xMin, Double.isInfinite(xMax) ? null : xMax};
-		if (Double.isInfinite(yMin) && Double.isInfinite(yMax))
-			yExtent = null;
-		else
-			yExtent = new Double[]{Double.isInfinite(yMin) ? null : yMin, Double.isInfinite(yMax) ? null : yMax};
+        x.put(vis, visXFields);
+        y.put(vis, visYFields);
 
-		this.allXFields = allX.toArray(new Field[allX.size()]);
-		this.allYFields = allY.toArray(new Field[allY.size()]);
-		this.allXClusterFields = allCluster.toArray(new Field[allCluster.size()]);
+        xMin = Math.min(xMin, getDefinedExtent(vis.fX, true));
+        yMin = Math.min(yMin, getDefinedExtent(vis.fY, true));
+        xMax = Math.max(xMax, getDefinedExtent(vis.fX, false));
+        yMax = Math.max(yMax, getDefinedExtent(vis.fY, false));
 
-		// Set ordinal / categorical and derive transforms (if not explicitly set above)
-		this.xCategorical = ModelUtil.combinationIsCategorical(allXFields, true);
-		this.yCategorical = ModelUtil.combinationIsCategorical(allYFields, true);
+        if (visXFields.length > 0) {
+          allX.add(visXFields[0]);             // Only first X field (rest are clustered)
+        }
+        if (visXFields.length > 1) {
+          allCluster.add(visXFields[1]);       // Add the clustered X field
+        }
+        Collections.addAll(allY, visYFields);                           // All Y fields (used in ranges)
+      } else {
+        x.put(vis, new Field[0]);
+        y.put(vis, new Field[0]);
+      }
+    }
 
-		if (xTransform == null)
-			this.xTransform = xCategorical ? "linear" : chooseTransform(allXFields);
-		else
-			this.xTransform = xTransform;
+    if (Double.isInfinite(xMin) && Double.isInfinite(xMax)) {
+      xExtent = null;
+    } else {
+      xExtent = new Double[]{Double.isInfinite(xMin) ? null : xMin, Double.isInfinite(xMax) ? null : xMax};
+    }
+    if (Double.isInfinite(yMin) && Double.isInfinite(yMax)) {
+      yExtent = null;
+    } else {
+      yExtent = new Double[]{Double.isInfinite(yMin) ? null : yMin, Double.isInfinite(yMax) ? null : yMax};
+    }
 
-		if (yTransform == null)
-			this.yTransform = yCategorical ? "linear" : chooseTransform(allYFields);
-		else
-			this.yTransform = yTransform;
+    this.allXFields = allX.toArray(new Field[allX.size()]);
+    this.allYFields = allY.toArray(new Field[allY.size()]);
+    this.allXClusterFields = allCluster.toArray(new Field[allCluster.size()]);
 
-		this.xDateFormat = makeDateFormat(allXFields);
-		this.yDateFormat = makeDateFormat(allYFields);
+    // Set ordinal / categorical and derive transforms (if not explicitly set above)
+    this.xCategorical = ModelUtil.combinationIsCategorical(allXFields, true);
+    this.yCategorical = ModelUtil.combinationIsCategorical(allYFields, true);
 
-		// Basic assumptions for reversing -- Don't on the horizontal, do on the vertical if categorical
-		// Ensures numeric on Y reads bottom-up, while categorical reads top-down
-		boolean reverseX = isTransposed() && xCategorical;
-		boolean reverseY = !isTransposed() && yCategorical;
+    if (xTransform == null) {
+      this.xTransform = xCategorical ? "linear" : chooseTransform(allXFields);
+    } else {
+      this.xTransform = xTransform;
+    }
 
-		if (needsReverse(elements, true)) reverseX = !reverseX;
-		if (needsReverse(elements, false)) reverseY = !reverseY;
+    if (yTransform == null) {
+      this.yTransform = yCategorical ? "linear" : chooseTransform(allYFields);
+    } else {
+      this.yTransform = yTransform;
+    }
 
-		xReversed = reverseX;
-		yReversed = reverseY;
-	}
+    this.xDateFormat = makeDateFormat(allXFields);
+    this.yDateFormat = makeDateFormat(allYFields);
 
-	public Field[] getX(VisElement vis) {
-		return x.get(vis);
-	}
+    // Basic assumptions for reversing -- Don't on the horizontal, do on the vertical if categorical
+    // Ensures numeric on Y reads bottom-up, while categorical reads top-down
+    boolean reverseX = isTransposed() && xCategorical;
+    boolean reverseY = !isTransposed() && yCategorical;
 
-	public Field[] getY(VisElement vis) {
-		return y.get(vis);
-	}
+    if (needsReverse(elements, true)) {
+      reverseX = !reverseX;
+    }
+    if (needsReverse(elements, false)) {
+      reverseY = !reverseY;
+    }
 
-	public boolean isPolar() {
-		return type == VisTypes.Coordinates.polar;
-	}
+    xReversed = reverseX;
+    yReversed = reverseY;
+  }
 
-	public boolean isTransposed() {
-		return type == VisTypes.Coordinates.transposed;
-	}
+  public Field[] getX(VisElement vis) {
+    return x.get(vis);
+  }
 
-	private String chooseTransform(Field[] fields) {
-		if (fields.length == 0) return "linear";
+  public Field[] getY(VisElement vis) {
+    return y.get(vis);
+  }
 
-		// Go for the transform that "does the most": log > root > linear
-		String best = "linear";
-		double min = Double.MAX_VALUE;
-		for (Field f : fields) {
-			if (f.min() == null) continue;
-			Auto.defineTransform(f);
-			String s = f.strProperty("transform");
-			if ("log".equals(s)) best = "log";
-			else if ("root".equals(s) && !best.equals("log")) best = "root";
-			if (f.isNumeric())
-				min = Math.min(min, f.min());
-		}
-		if ("log".equals(best) && min <= 0) return "linear";
-		return best;
-	}
+  public boolean isPolar() {
+    return type == VisTypes.Coordinates.polar;
+  }
 
-	private String extractTransform(Param p) {
-		if (p.hasModifierOption("log")) return "log";
-		if (p.hasModifierOption("linear")) return "linear";
-		if (p.hasModifierOption("root")) return "root";
-		return null;
-	}
+  public boolean isTransposed() {
+    return type == VisTypes.Coordinates.transposed;
+  }
 
-	private double getDefinedExtent(List<Param> items, boolean min) {
-		for (Param p : items)
-			if (p.isField() && p.hasModifiers()) {
-				for (Param q : p.modifiers()) {
-					if (q.type() == Param.Type.list) {
-						List<Param> extent = q.asList();
-						if (extent.size() == 2) {
-							Param e = extent.get(min ? 0 : 1);
-							try {
-								return e.asDouble();
-							} catch (Exception ignored) {
-								// Bad value or missing-- ignore it
-							}
-						}
-					}
-				}
-			}
-		return min ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
-	}
+  private String chooseTransform(Field[] fields) {
+    if (fields.length == 0) {
+      return "linear";
+    }
 
-	private String getDefinedXTransform(VisElement v) {
-		if (v.tDiagram != null) return "linear";                         // Diagrams are always linear
-		for (Param p : v.fX)
-			if (p.isField() && p.hasModifiers()) {
-				String type = extractTransform(p);
-				if (type != null) return type;
-			}
-		return null;
-	}
+    // Go for the transform that "does the most": log > root > linear
+    String best = "linear";
+    double min = Double.MAX_VALUE;
+    for (Field f : fields) {
+      if (f.min() == null) {
+        continue;
+      }
+      Auto.defineTransform(f);
+      String s = f.strProperty("transform");
+      if ("log".equals(s)) {
+        best = "log";
+      } else if ("root".equals(s) && !best.equals("log")) {
+        best = "root";
+      }
+      if (f.isNumeric()) {
+        min = Math.min(min, f.min());
+      }
+    }
+    if ("log".equals(best) && min <= 0) {
+      return "linear";
+    }
+    return best;
+  }
 
-	private String getDefinedYTransform(VisElement v) {
-		if (v.tDiagram != null) return "linear";                         // Diagrams are always linear
-		for (Param p : v.fY)
-			if (p.isField() && p.hasModifiers()) {
-				String s = extractTransform(p);
-				if (s != null) return s;
-			}
-		if (v.fRange != null) {
-			if (v.fRange[0].isField() && v.fRange[0].hasModifiers()) {
-				String s = extractTransform(v.fRange[0]);
-				if (s != null) return s;
-			}
-			if (v.fRange[1].isField() && v.fRange[1].hasModifiers()) {
-				String s = extractTransform(v.fRange[1]);
-				if (s != null) return s;
-			}
-		}
-		return null;
-	}
+  private String extractTransform(Param p) {
+    if (p.hasModifierOption("log")) {
+      return "log";
+    }
+    if (p.hasModifierOption("linear")) {
+      return "linear";
+    }
+    if (p.hasModifierOption("root")) {
+      return "root";
+    }
+    return null;
+  }
 
-	private Field[] getXFields(VisElement vis, Dataset data) {
-		Field[] result = new Field[vis.fX.size()];
-		for (int i = 0; i < vis.fX.size(); i++)
-			result[i] = data.field(vis.fX.get(i).asField());
-		return result;
-	}
+  private double getDefinedExtent(List<Param> items, boolean min) {
+    for (Param p : items) {
+      if (p.isField() && p.hasModifiers()) {
+        for (Param q : p.modifiers()) {
+          if (q.type() == Param.Type.list) {
+            List<Param> extent = q.asList();
+            if (extent.size() == 2) {
+              Param e = extent.get(min ? 0 : 1);
+              try {
+                return e.asDouble();
+              } catch (Exception ignored) {
+                // Bad value or missing-- ignore it
+              }
+            }
+          }
+        }
+      }
+    }
+    return min ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
+  }
 
-	private Field[] getYFields(VisElement vis, Dataset data) {
-		if (vis.fRange != null) {
-			// Range is a pair
-			return new Field[]{data.field(vis.fRange[0].asField(data)),
-					data.field(vis.fRange[1].asField(data))};
-		} else if (vis.fY.isEmpty()) {
-			return new Field[0];
-		} else if (vis.fY.size() > 1 && data.field("#values") != null) {
-			// Handle series when they have been used
-			if (vis.stacked)
-				return data.fieldArray(new String[]{"#values$lower", "#values$upper"});
-			else
-				return data.fieldArray(new String[]{"#values"});
-		}
+  private String getDefinedXTransform(VisElement v) {
+    if (v.tDiagram != null) {
+      return "linear";                         // Diagrams are always linear
+    }
+    for (Param p : v.fX) {
+      if (p.isField() && p.hasModifiers()) {
+        String type = extractTransform(p);
+        if (type != null) {
+          return type;
+        }
+      }
+    }
+    return null;
+  }
 
-		// We have a single Y field
-		String s = vis.fY.get(0).asField();
-		if (vis.stacked) {
-			// Stacked has been handled by adding two new fields, so add them
-			return data.fieldArray(new String[]{s + "$lower", s + "$upper"});
-		} else {
-			// Simple case, a single y field
-			return data.fieldArray(new String[]{s});
-		}
-	}
+  private String getDefinedYTransform(VisElement v) {
+    if (v.tDiagram != null) {
+      return "linear";                         // Diagrams are always linear
+    }
+    for (Param p : v.fY) {
+      if (p.isField() && p.hasModifiers()) {
+        String s = extractTransform(p);
+        if (s != null) {
+          return s;
+        }
+      }
+    }
+    if (v.fRange != null) {
+      if (v.fRange[0].isField() && v.fRange[0].hasModifiers()) {
+        String s = extractTransform(v.fRange[0]);
+        if (s != null) {
+          return s;
+        }
+      }
+      if (v.fRange[1].isField() && v.fRange[1].hasModifiers()) {
+        String s = extractTransform(v.fRange[1]);
+        if (s != null) {
+          return s;
+        }
+      }
+    }
+    return null;
+  }
 
-	private VisTypes.Coordinates makeCombinedCoords(VisElement[] elements, VisTypes.Diagram diagram) {
-		// For diagrams, we set the coords to polar for the chord chart and clouds, and centered for networks
-		if (diagram == VisTypes.Diagram.chord || diagram == VisTypes.Diagram.cloud)
-			return VisTypes.Coordinates.polar;
+  private Field[] getXFields(VisElement vis, Dataset data) {
+    Field[] result = new Field[vis.fX.size()];
+    for (int i = 0; i < vis.fX.size(); i++) {
+      result[i] = data.field(vis.fX.get(i).asField());
+    }
+    return result;
+  }
 
-		// The rule here is that we return the one with the highest ordinal value;
-		// that will correspond to the most "unusual". In practice this means that
-		// you need only define 'polar' or 'transpose' in one chart
-		VisTypes.Coordinates result = elements[0].coords;
-		for (VisElement e : elements) if (e.coords.compareTo(result) > 0) result = e.coords;
-		return result;
-	}
+  private Field[] getYFields(VisElement vis, Dataset data) {
+    if (vis.fRange != null) {
+      // Range is a pair
+      return new Field[]{data.field(vis.fRange[0].asField(data)),
+        data.field(vis.fRange[1].asField(data))};
+    } else if (vis.fY.isEmpty()) {
+      return new Field[0];
+    } else if (vis.fY.size() > 1 && data.field("#values") != null) {
+      // Handle series when they have been used
+      if (vis.stacked) {
+        return data.fieldArray(new String[]{"#values$lower", "#values$upper"});
+      } else {
+        return data.fieldArray(new String[]{"#values"});
+      }
+    }
 
-	private DateFormat makeDateFormat(Field[] fields) {
-		// Run through the fields and return the largest date format applicable
-		// (so month rather than day) or null if no fields had date format
-		DateFormat result = null;
-		for (Field field : fields) {
-			DateFormat f = (DateFormat) field.property("dateFormat");
-			if (result == null || f.compareTo(result) > 0) result = f;
-		}
-		return result;
-	}
+    // We have a single Y field
+    String s = vis.fY.get(0).asField();
+    if (vis.stacked) {
+      // Stacked has been handled by adding two new fields, so add them
+      return data.fieldArray(new String[]{s + "$lower", s + "$upper"});
+    } else {
+      // Simple case, a single y field
+      return data.fieldArray(new String[]{s});
+    }
+  }
 
-	private boolean needsReverse(VisElement[] elements, boolean forX) {
-		for (VisElement element : elements) {
-			// Which params to look through -- X or Y?
-			List<Param> pp = forX ? element.fX : (element.fRange == null ? element.fY : Arrays.asList(element.fRange));
+  private VisTypes.Coordinates makeCombinedCoords(VisElement[] elements, VisTypes.Diagram diagram) {
+    // For diagrams, we set the coords to polar for the chord chart and clouds, and centered for networks
+    if (diagram == VisTypes.Diagram.chord || diagram == VisTypes.Diagram.cloud) {
+      return VisTypes.Coordinates.polar;
+    }
 
-			// Look for 'reverse'
-			for (Param p : pp) if (p.hasModifierOption("reverse")) return true;
-		}
+    // The rule here is that we return the one with the highest ordinal value;
+    // that will correspond to the most "unusual". In practice this means that
+    // you need only define 'polar' or 'transpose' in one chart
+    VisTypes.Coordinates result = elements[0].coords;
+    for (VisElement e : elements) {
+      if (e.coords.compareTo(result) > 0) {
+        result = e.coords;
+      }
+    }
+    return result;
+  }
 
-		return false;
+  private DateFormat makeDateFormat(Field[] fields) {
+    // Run through the fields and return the largest date format applicable
+    // (so month rather than day) or null if no fields had date format
+    DateFormat result = null;
+    for (Field field : fields) {
+      DateFormat f = (DateFormat) field.property("dateFormat");
+      if (result == null || f.compareTo(result) > 0) {
+        result = f;
+      }
+    }
+    return result;
+  }
 
-	}
+  private boolean needsReverse(VisElement[] elements, boolean forX) {
+    for (VisElement element : elements) {
+      // Which params to look through -- X or Y?
+      List<Param> pp = forX ? element.fX : (element.fRange == null ? element.fY : Arrays.asList(element.fRange));
+
+      // Look for 'reverse'
+      for (Param p : pp) {
+        if (p.hasModifierOption("reverse")) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+
+  }
 
 }

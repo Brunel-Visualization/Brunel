@@ -1,13 +1,12 @@
 package org.brunel.build.guides;
 
+import java.util.Map;
 import org.brunel.action.Param;
 import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.data.Field;
 import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes.Axes;
-
-import java.util.Map;
 
 /**
  * Defines the axis we want to create
@@ -48,9 +47,9 @@ public final class AxisRequirement {
 		if (auto) {
 			// There were no axis statements, so we choose based on the coordinate system
 			// No axes desired for nested or polar charts
-			if (structure.coordinates.isPolar() || structure.nested()) return null;
+			if (structure.getCoordinates(0).isPolar() || structure.nested()) return null;
 
-			return makeDefault(which, structure.coordinates);
+			return makeDefault(which, structure.getCoordinates(0));
 		} else {
 			// Honor exactly the user definition
 			return result;

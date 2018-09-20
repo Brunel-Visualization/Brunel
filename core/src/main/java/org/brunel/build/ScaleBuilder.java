@@ -16,6 +16,12 @@
 
 package org.brunel.build;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import org.brunel.action.Param;
 import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
@@ -38,13 +44,6 @@ import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes.Diagram;
 import org.brunel.model.VisTypes.Element;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-
 /**
  * Adds scales and axes; also guesses the right size to leave for axes
  *
@@ -59,7 +58,7 @@ public class ScaleBuilder {
 
   private static final double MIN_SIZE_FACTOR = 0.001;
 
-  private final ChartStructure structure;         // Overall detail on the chart composition
+  protected final ChartStructure structure;         // Overall detail on the chart composition
   private final VisElement[] elements;             // The elements that define the scales used
   private final ScriptWriter out;                 // Write definitions to here
 
@@ -110,11 +109,11 @@ public class ScaleBuilder {
       return makeEmptyZeroOneScale();
     }
 
-		/*
+    /*
      * TODO: Handle mixed domains
-		 * The domain is built up and understands mixed numeric and categorical domains, but
-		 * in the following code we ignore that and just use the first in the list
-		 */
+     * The domain is built up and understands mixed numeric and categorical domains, but
+     * in the following code we ignore that and just use the first in the list
+     */
     DomainSpan span = domain.span(0);
 
     // Categorical is relatively easy
@@ -125,10 +124,13 @@ public class ScaleBuilder {
     // Determine how much we want to include zero
     double includeZero = getIncludeZeroFraction(purpose, domain.span(0).desiresZero());
 
+    // Only the 'y1' axis is for the second element
+    ChartCoordinates coordinates = structure.getCoordinates(purpose == ScalePurpose.y1 ? 1 : 0);
+
     // Build a combined scale field and force the desired transform on it for x and y dimensions
     Field field = fields[0];
     Field scaleField = fields.length == 1 ? field : combineNumericFields(fields);
-    ChartCoordinates coordinates = structure.coordinates;
+
     if (purpose == ScalePurpose.x) {
       // We need to copy it as we are modifying it
       if (scaleField == field) {
@@ -144,8 +146,8 @@ public class ScaleBuilder {
     }
 
     // We util a nice scale only for rectangular coordinates
-    boolean nice = purpose.isCoord && !structure.coordinates.isPolar();
-    double[] padding = getNumericPaddingFraction(purpose);
+    boolean nice = purpose.isCoord && !coordinates.isPolar();
+    double[] padding = getNumericPaddingFraction(purpose, coordinates);
 
     // Areas and line should fill the horizontal dimension, as should any binned field
     if (scaleField.isBinned() || purpose == ScalePurpose.x && elementsFillHorizontal(ScalePurpose.x)) {
@@ -353,34 +355,56 @@ public class ScaleBuilder {
   }
 
   public void writeCoordinateScales() {
-    ChartCoordinates coordinates = structure.coordinates;
-    Field[] xFields = coordinates.allXFields;
-    Field[] yFields = coordinates.allYFields;
+    ChartCoordinates[] allCoordinates = structure.getCoordinates();
 
-    // Look through our coordinate parameters and find if we want the X and Y scales to span the same content
-    boolean sameScales = false;
-    for (Param p : allCoordParams()) {
-      if (p.asString().equals("same")) {
-        sameScales = true;
+    for (int i = 0; i < allCoordinates.length; i++) {
+      ChartCoordinates coordinates = allCoordinates[i];
+
+      Field[] xFields = coordinates.allXFields;
+      Field[] yFields = coordinates.allYFields;
+
+      // Look through our coordinate parameters and find if we want the X and Y scales to span the same content
+      boolean sameScales = false;
+      for (Param p : allCoordParams()) {
+        if (p.asString().equals("same")) {
+          sameScales = true;
+        }
       }
-    }
 
-    if (sameScales) {
-      Field[] combined = Arrays.copyOf(xFields, xFields.length + yFields.length);
-      System.arraycopy(yFields, 0, combined, xFields.length, yFields.length);
-      xFields = combined;
-      yFields = combined;
-    }
+      if (sameScales) {
+        Field[] combined = Arrays.copyOf(xFields, xFields.length + yFields.length);
+        System.arraycopy(yFields, 0, combined, xFields.length, yFields.length);
+        xFields = combined;
+        yFields = combined;
+      }
 
-    writePositionScale(ScalePurpose.x, xFields, getXRange(), elementsFillHorizontal(ScalePurpose.x), coordinates.xReversed);
-    writePositionScale(ScalePurpose.inner, coordinates.allXClusterFields, "[-0.5, 0.5]", elementsFillHorizontal(ScalePurpose.inner), coordinates.xReversed);
-    writePositionScale(ScalePurpose.y, yFields, getYRange(), false, coordinates.yReversed);
-    writeScaleExtras();
+      if (i == 0) {
+        // Only write once
+        writePositionScale(ScalePurpose.x, xFields, getXRange(coordinates), elementsFillHorizontal(ScalePurpose.x), coordinates.xReversed, ScalePurpose.x.name());
+        writePositionScale(ScalePurpose.inner, coordinates.allXClusterFields, "[-0.5, 0.5]", elementsFillHorizontal(ScalePurpose.inner), coordinates.xReversed, ScalePurpose.inner.name());
+      }
+
+      // Dual axes have names y1, y2. Single axis just 'y'
+      ScalePurpose yPurpose;
+      String yName;
+      if (i == 0) {
+        yPurpose = ScalePurpose.y;
+        yName = allCoordinates.length == 1 ? "y" : "y1";
+      } else if (i == 1) {
+        yPurpose = ScalePurpose.y1;
+        yName = "y2";
+      } else {
+        throw new IllegalStateException("Cannot handle more than two dual y axes");
+      }
+      writePositionScale(yPurpose, yFields, getYRange(coordinates), false, coordinates.yReversed, yName);
+    }
+    writeScaleExtras(allCoordinates);
+
   }
 
-  public void writeDiagramScales() {
+  public void writeDiagramScales(ChartCoordinates[] coordinates) {
     out.onNewLine().add("var scale_x = d3.scaleLinear(), scale_y = d3.scaleLinear()").endStatement();
-    writeScaleExtras();
+    writeScaleExtras(coordinates);
   }
 
   private void addColorScale(Param p, VisElement vis) {
@@ -609,12 +633,12 @@ public class ScaleBuilder {
     return 0.2;                                         // 20% is the default
   }
 
-  private double[] getNumericPaddingFraction(ScalePurpose purpose) {
+  private double[] getNumericPaddingFraction(ScalePurpose purpose, ChartCoordinates coordinates) {
     double[] padding = new double[]{0, 0};
     if (!purpose.isCoord) {
       return padding;                    // None for aesthetics
     }
-    if (structure.coordinates.isPolar()) {
+    if (coordinates.isPolar()) {
       return padding;    // None for polar angle
     }
     for (VisElement e : elements) {
@@ -673,21 +697,21 @@ public class ScaleBuilder {
     return vis.fSymbol.isEmpty() ? null : vis.fSymbol.get(0);
   }
 
-  private String getXRange() {
-    if (structure.coordinates.isPolar()) {
+  private String getXRange(ChartCoordinates coordinates) {
+    if (coordinates.isPolar()) {
       return "[0, geom.inner_radius]";
     }
-    if (structure.coordinates.isTransposed()) {
+    if (coordinates.isTransposed()) {
       return "[geom.inner_width, 0]";
     }
     return "[0, geom.inner_width]";
   }
 
-  private String getYRange() {
-    if (structure.coordinates.isPolar()) {
+  private String getYRange(ChartCoordinates coordinates) {
+    if (coordinates.isPolar()) {
       return "[0, Math.PI*2]";
     }
-    if (structure.coordinates.isTransposed()) {
+    if (coordinates.isTransposed()) {
       return "[0, geom.inner_height]";
     }
     return "[geom.inner_height, 0]";
@@ -747,18 +771,18 @@ public class ScaleBuilder {
     return -1;
   }
 
-  private void writeAspect() {
+  private void writeAspect(ChartCoordinates coordinates) {
     Double aspect = getAspect();
-    boolean anyCategorial = structure.coordinates.xCategorical || structure.coordinates.yCategorical;
+    boolean anyCategorical = coordinates.xCategorical || coordinates.yCategorical;
 
-    if (aspect != null && !anyCategorial) {
+    if (aspect != null && !anyCategorical) {
       out.onNewLine().add("BrunelD3.setAspect(scale_x, scale_y, " + aspect + ")");
       out.endStatement();
     }
   }
 
-  private void writePositionScale(ScalePurpose purpose, Field[] fields, String range, boolean fillToEdge, boolean reverse) {
-    int categories = defineScaleWithDomain(purpose.name(), fields, purpose, 2, "linear", null, reverse);
+  private void writePositionScale(ScalePurpose purpose, Field[] fields, String range, boolean fillToEdge, boolean reverse, String name) {
+    int categories = defineScaleWithDomain(name, fields, purpose, 2, "linear", null, reverse);
     out.addChained("range(" + range + ")");
     if (categories > 0 && fillToEdge) {
       out.add(".padding(0)");
@@ -766,9 +790,15 @@ public class ScaleBuilder {
     out.endStatement();
   }
 
-  private void writeScaleExtras() {
-    out.onNewLine().add("var base_scales = [scale_x, scale_y];").comment("Untransformed original scales");
-    writeAspect();
+  private void writeScaleExtras(ChartCoordinates[] coordinates) {
+    if (coordinates.length > 1) {
+      out.onNewLine().add("var base_scales = [scale_x, scale_y1];");
+    } else {
+      out.onNewLine().add("var base_scales = [scale_x, scale_y];");
+    }
+
+    out.comment("Untransformed original scales");
+    writeAspect(coordinates[0]);
   }
 
 }

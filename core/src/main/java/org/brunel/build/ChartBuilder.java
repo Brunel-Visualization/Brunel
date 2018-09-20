@@ -101,7 +101,7 @@ public class ChartBuilder {
   }
 
   private void addElementGroups(ElementBuilder builder, ElementStructure structure) {
-    String elementTransform = makeElementTransform(structure.chart.coordinates.type);
+    String elementTransform = makeElementTransform(structure.chart.getCoordinates(structure.index).type);
 
     // The overall group for this element, with accessibility and transforms
     out.add("var elementGroup = interior.append('g').attr('class', 'element" + structure.elementID() + "')");
@@ -180,7 +180,7 @@ public class ChartBuilder {
     if (forceSquare(structure.elements)) {
       out.add("geom.makeSquare()").endStatement();
     }
-    if (structure.coordinates.isTransposed()) {
+    if (structure.getCoordinates()[0].isTransposed()) {
       out.add("geom.transpose()").endStatement();
     }
 
@@ -206,7 +206,7 @@ public class ChartBuilder {
       }
     } else if (structure.diagram != VisTypes.Diagram.parallel) {
       // Parallel coordinates handles it differently
-      scalesBuilder.writeDiagramScales();
+      scalesBuilder.writeDiagramScales(scalesBuilder.structure.getCoordinates());
     }
 
     // Attach the zoom
@@ -224,8 +224,13 @@ public class ChartBuilder {
     out.add("elements[" + structure.index + "] = function() {").indentMore();
     out.onNewLine().add("var original, processed,").comment("data sets passed in and then transformed")
       .indentMore()
-      .onNewLine().add("element, data,").comment("Brunel element information and brunel data")
-      .onNewLine().add("selection, merged;").comment("D3 selection and merged selection")
+      .onNewLine().add("element, data,").comment("Brunel element information and brunel data");
+
+    if (structure.chart.isDualAxes()) {
+      out.onNewLine().add("scale_y, ").comment("Dual Axes mean elements choose a scale");
+    }
+
+    out.onNewLine().add("selection, merged;").comment("D3 selection and merged selection")
       .indentLess();
 
     // Add data variables used throughout
@@ -316,13 +321,14 @@ public class ChartBuilder {
       .onNewLine().add("interior : interior,");
 
     if (structure.diagram == null) {
-      out.onNewLine().add("scales: function() { return {x:scale_x, y:scale_y} },")
-        .onNewLine().add("resetZoom: function (xdomain, ydomain) {").indentMore()
+      String yScaleName = structure.isDualAxes() ? "scale_y1" : "scale_y";
+      out.onNewLine().add("scales: function() { return {x:scale_x, y:" + yScaleName + "} },");
+      out.onNewLine().add("resetZoom: function (xdomain, ydomain) {").indentMore()
         .onNewLine().add("zoomNode.__zoom = d3.zoomIdentity;")
         .onNewLine().add("scale_x = base_scales[0];")
-        .onNewLine().add("scale_y = base_scales[1];")
+        .onNewLine().add(yScaleName + " = base_scales[1];")
         .onNewLine().add("if (xdomain) scale_x.domain(xdomain);")
-        .onNewLine().add("if (ydomain) scale_y.domain(ydomain);")
+        .onNewLine().add("if (ydomain) " + yScaleName + ".domain(ydomain);")
         .indentLess().onNewLine().add("},").onNewLine();
 
     }

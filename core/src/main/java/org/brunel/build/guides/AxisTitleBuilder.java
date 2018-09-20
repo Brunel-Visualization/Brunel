@@ -25,41 +25,48 @@ import org.brunel.model.style.StyleTarget;
  */
 class AxisTitleBuilder extends TitleBuilder {
 
-	private final AxisDetails axis;
-	private final boolean isHorizontal;
-	public double bottomOffset;                             // Extra offset to account for footers
+  private final AxisDetails axis;
+  private final boolean isHorizontal;
+  private final boolean isOpposite;
+  public double bottomOffset;                             // Extra offset to account for footers
 
-	/**
-	 * For building an axis title
-	 *
-	 * @param vis          chart structure
-	 * @param axis         the axis info
-	 * @param isHorizontal true if the horizontal axis
-	 */
-	public AxisTitleBuilder(VisElement vis, AxisDetails axis, boolean isHorizontal) {
-		super(vis, StyleTarget.makeTarget("text", axis.styleTarget, "title"));
-		this.axis = axis;
-		this.isHorizontal = isHorizontal;
-	}
+  /**
+   * For building an axis title
+   *
+   * @param vis          chart structure
+   * @param axis         the axis info
+   * @param isOpposite   true if we are an opposite y axis
+   * @param isHorizontal true if the horizontal axis
+   */
+  public AxisTitleBuilder(VisElement vis, AxisDetails axis, boolean isHorizontal, boolean isOpposite) {
+    super(vis, StyleTarget.makeTarget("text", axis.styleTarget, "title"));
+    this.axis = axis;
+    this.isHorizontal = isHorizontal;
+    this.isOpposite = isOpposite;
+  }
 
-	protected void defineVerticalLocation(ScriptWriter out) {
-		if (isHorizontal) {
-			out.addChained("attr('y', geom.inner_bottom - " + (bottomOffset + padding.bottom) + ").attr('dy','-0.27em')");
-		} else {
-			out.addChained("attr('y', " + (2 + padding.top) + "-geom.inner_left).attr('dy', '0.7em').attr('transform', 'rotate(270)')");
-		}
-	}
+  protected void defineVerticalLocation(ScriptWriter out) {
+    if (isHorizontal) {
+      out.addChained("attr('y', geom.inner_bottom - " + (bottomOffset + padding.bottom) + ").attr('dy','-0.27em')");
+    } else if (isOpposite) {
+      out.addChained("attr('y', " + (2 + padding.top) + "-geom.inner_right).attr('dy', '0.7em').attr('transform', 'rotate(90)')");
+    } else {
+      out.addChained("attr('y', " + (2 + padding.top) + "-geom.inner_left).attr('dy', '0.7em').attr('transform', 'rotate(270)')");
+    }
+  }
 
-	protected String makeText() {
-		return axis.title;
-	}
+  protected String makeText() {
+    return axis.title;
+  }
 
-	protected String[] getXOffsets() {
-		if (isHorizontal) {
-			return new String[]{"0", "geom.inner_rawWidth/2", "geom.inner_rawWidth"};
-		} else {
-			return new String[]{"-geom.inner_rawHeight", "-geom.inner_rawHeight/2", "0"};
-		}
-	}
+  protected String[] getXOffsets() {
+    if (isHorizontal) {
+      return new String[]{"0", "geom.inner_rawWidth/2", "geom.inner_rawWidth"};
+    } else if (isOpposite) {
+      return new String[]{"geom.inner_rawHeight", "geom.inner_rawHeight/2", "0"};
+    } else {
+      return new String[]{"-geom.inner_rawHeight", "-geom.inner_rawHeight/2", "0"};
+    }
+  }
 
 }

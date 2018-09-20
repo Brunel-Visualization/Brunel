@@ -34,7 +34,7 @@ class Icicle extends D3Diagram {
   public Icicle(ElementStructure structure) {
     super(structure);
     padding = ModelUtil.getPadding(vis, StyleTarget.makeElementTarget(null, "element"), 0);
-    this.sunburst = structure.chart.coordinates.isPolar();
+    this.sunburst = structure.chart.getCoordinates(structure.index).isPolar();
   }
 
   public void writeDataStructures(ScriptWriter out) {

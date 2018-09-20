@@ -40,6 +40,7 @@ stack coords
 polar coords
 rectangular coords + aspect square same - NUMBER
 transpose coords + aspect square same - NUMBER
+dualaxes coords
 
 ## Aesthetics
 color aesthetic FIELD+ NUMBER+ STRING+

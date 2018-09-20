@@ -16,6 +16,9 @@
 
 package org.brunel.build.guides;
 
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 import org.brunel.action.Param;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
@@ -32,10 +35,6 @@ import org.brunel.data.util.DateUnit;
 import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Legends;
-
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
 
 /**
  * Adds scales and axes; also guesses the right size to leave for axes
@@ -108,8 +107,8 @@ public class LegendBuilder {
 		if (!needsLegends()) return 0;
 		AxisRequirement legendRequirement = new AxisRequirement(VisTypes.Axes.none, -1);
 		Field field = colorField != null ? colorField : symbolField;
-		AxisDetails legendAxis = new AxisDetails(legendRequirement, new Field[]{field}, field.preferCategorical());
-		legendAxis.setTextDetails(structure, false);
+		AxisDetails legendAxis = new AxisDetails(legendRequirement, new Field[]{field}, field.preferCategorical(), null);
+		legendAxis.setTextDetails(structure, false, false);
 		int spaceNeededForTicks = 32 + legendAxis.maxCategoryWidth();
 		int spaceNeededForTitle = field.label.length() * 7;                // Assume 7 pixels per character
 		return 6 + Math.max(spaceNeededForTicks, spaceNeededForTitle);                // Add some spacing

@@ -16,15 +16,14 @@
 
 package org.brunel.action;
 
-import org.brunel.action.parse.ParseGrammar;
-import org.brunel.data.Data;
-import org.brunel.model.VisException;
-import org.brunel.model.VisElement;
-import org.brunel.model.VisTypes.Diagram;
-import org.brunel.model.VisTypes.Element;
-
 import java.util.Arrays;
 import java.util.Set;
+import org.brunel.action.parse.ParseGrammar;
+import org.brunel.data.Data;
+import org.brunel.model.VisElement;
+import org.brunel.model.VisException;
+import org.brunel.model.VisTypes.Diagram;
+import org.brunel.model.VisTypes.Element;
 
 public class ActionStep {
 	// Use the parser to retrieve the list of summary and transform methods
@@ -140,6 +139,9 @@ public class ActionStep {
 				return item;
 			} else if (name.equals("rectangular")) {
 				item.rectangular(parameters);
+				return item;
+			} else if (name.equals("dualaxes")) {
+				item.dualAxes();
 				return item;
 			} else if (name.equals("polar")) {
 				item.polar();

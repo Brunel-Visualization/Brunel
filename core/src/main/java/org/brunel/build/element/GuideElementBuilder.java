@@ -40,8 +40,11 @@ class GuideElementBuilder extends CoordinateElementBuilder {
   private static final Set<Character> SYMBOLS = new HashSet<>(
     Arrays.asList('(', ')', '*', '-', '+', '/', '?', '=', '!', '>', '<', ':'));
 
+  private final String yScaleName;
+
   public GuideElementBuilder(ElementStructure structure, ScriptWriter out, ScaleBuilder scalesBuilder) {
     super(structure, out, scalesBuilder);
+    this.yScaleName = structure.getYScaleName();
   }
 
   public void writePerChartDefinitions() {
@@ -66,7 +69,7 @@ class GuideElementBuilder extends CoordinateElementBuilder {
     // Define the variables and domains we will need
     out.add("var i, x, y, t, selection, path, data = [], ")
       .onNewLine().add("xDomain = scale_x.domain(), x0 = xDomain[0], xs = xDomain[xDomain.length-1]-x0, ")
-      .onNewLine().add("yDomain = scale_y.domain(), y0 = yDomain[0], ys = xDomain[yDomain.length-1]-y0").endStatement();
+      .onNewLine().add("yDomain = " + yScaleName + ".domain(), y0 = yDomain[0], ys = xDomain[yDomain.length-1]-y0").endStatement();
 
     // Generate the data for the guide functions
     out.add("var guideData = Array.apply(null, Array(" + steps + ")).map(function (v, i) {")
@@ -97,7 +100,7 @@ class GuideElementBuilder extends CoordinateElementBuilder {
       // Define the path, adding in the selection state for the offset
       out.add("path = d3.line().curve(d3.curveCatmullRom)")
         .addChained("x(function(d) { \nreturn scale_x(" + defX + "+ drags.x) \n })")
-        .addChained("y(function(d) { return scale_y(" + defY + "+ drags.y)  })")
+        .addChained("y(function(d) { return " + yScaleName +"(" + defY + "+ drags.y)  })")
         .endStatement();
 
       // define the labeling structure to be used later
@@ -116,7 +119,7 @@ class GuideElementBuilder extends CoordinateElementBuilder {
       out.add("BrunelD3.transition(merged, transitionMillis)")
         .addChained("attr('d', path(guideData))");
       if (DRAGGABLE_GUIDES) {
-        out.addChained("call(make_draggable(drags, scale_x, scale_y, build, this))");
+        out.addChained("call(make_draggable(drags, scale_x, " + yScaleName +", build, this))");
       }
       out.endStatement();
       if (structure.needsLabels()) {

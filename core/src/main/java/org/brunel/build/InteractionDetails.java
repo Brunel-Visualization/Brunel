@@ -16,6 +16,12 @@
 
 package org.brunel.build;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.brunel.action.Param;
 import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ElementStructure;
@@ -24,12 +30,6 @@ import org.brunel.model.VisElement;
 import org.brunel.model.VisTypes;
 import org.brunel.model.VisTypes.Interaction;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 import static org.brunel.model.VisTypes.Interaction.call;
 
@@ -55,12 +55,12 @@ public class InteractionDetails {
   private final boolean usesCollapse;         // true if we have a collapse handler
   private final boolean usesExpand;           // true if we have an expand handler
   private final VisTypes.Diagram diagram;        // The diagram for this chart
-  private final ChartCoordinates coordinates;    // Coordinate system for the chart
+  private final ChartCoordinates[] chartCoordinates;    // Coordinate system for the chart
   private final double[] userZoomBounds;        // A min and maximum range for zooming defined by syntax (else null)
 
-  public InteractionDetails(VisTypes.Diagram diagram, ChartCoordinates coordinates, VisElement[] elements) {
+  public InteractionDetails(VisTypes.Diagram diagram, ChartCoordinates[] coordinates, VisElement[] elements) {
     this.diagram = diagram;
-    this.coordinates = coordinates;
+    this.chartCoordinates = coordinates;
 
     boolean[] zoomTypes = zoomRequested(elements);    // user zoom requests
     if (zoomTypes == null) {
@@ -452,11 +452,22 @@ public class InteractionDetails {
    * @param dimension 0 for X, 1 for Y
    */
   private void applyZoomToScale(int dimension, ScriptWriter out) {
+    // We use the first one for all interaction
+    ChartCoordinates coordinates = chartCoordinates[0];
+
     // Which is the screen dimension for this scale dimension?
     boolean isScreenX = coordinates.isTransposed() ? dimension == 1 : dimension == 0;
     String offset = isScreenX ? "t.x" : "t.y";
 
-    out.add(dimension == 0 ? "scale_x" : "scale_y");
+    String scaleName;
+    if (dimension == 0) {
+      scaleName = "scale_x";
+    } else if (chartCoordinates.length > 1) {
+      scaleName = "scale_y1";
+    } else {
+      scaleName = "scale_y";
+    }
+    out.add(scaleName);
 
     boolean xCategorical = diagram == null && coordinates.xCategorical;
     boolean yCategorical = diagram == null && coordinates.yCategorical;
@@ -511,7 +522,9 @@ public class InteractionDetails {
       return ZOOM_NONE;
     }
 
-    // we cannot zoom diagrams polar coordinates
+    ChartCoordinates coordinates = chartCoordinates[0];
+
+    // we cannot zoom  polar coordinates
     if (coordinates.isPolar()) {
       return ZOOM_NONE;
     }

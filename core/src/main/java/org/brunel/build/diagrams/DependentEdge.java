@@ -20,14 +20,13 @@ import org.brunel.build.LabelBuilder;
 import org.brunel.build.element.ElementBuilder;
 import org.brunel.build.element.ElementDetails;
 import org.brunel.build.element.ElementRepresentation;
-import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.model.VisTypes;
 
 class DependentEdge extends D3Diagram {
 
-  public static void write(boolean curved, ChartStructure structure, ScriptWriter out, String groupName) {
+  public static void write(boolean curved, ElementStructure structure, ScriptWriter out, String groupName) {
     // Create paths for the added items, and grow the from the source
     out.add("var added = " + "edgeGroup" + ".enter().append('path').attr('class', 'edge')");
     writeEdgePlacement("source", curved, structure, out);
@@ -39,17 +38,17 @@ class DependentEdge extends D3Diagram {
     out.endStatement();
   }
 
-  private static void writeEdgePlacement(String target, boolean curved, ChartStructure structure, ScriptWriter out) {
+  private static void writeEdgePlacement(String target, boolean curved, ElementStructure structure, ScriptWriter out) {
 
     out.addChained("attr('d', function(d) {")
       .indentMore().indentMore().onNewLine();
 
-    if (!structure.diagramDefinesGraph()) {
+    if (!structure.chart.diagramDefinesGraph()) {
       // The node locations have already been fully transformed, so just use them
       out.add("var p = BrunelD3.insetEdge(d.source.x, d.source.y, d.source, d.target.x, d.target.y, d.target)")
         .endStatement();
       defineCurve(curved, out);
-    } else if (structure.coordinates.isPolar()) {
+    } else if (structure.chart.getCoordinates(structure.index).isPolar()) {
       out.add("var r1 = d.source.y, a1 = d.source.x, r2 = d." + target + ".y, a2 = d." + target + ".x, r = (r1+r2)/2").endStatement()
         .add("return 'M' + scale_x(r1*Math.cos(a1)) + ',' + scale_y(r1*Math.sin(a1)) +");
 
@@ -63,7 +62,7 @@ class DependentEdge extends D3Diagram {
       out.ln().indent().add(" +  scale_x(r2*Math.cos(a2)) + ',' + scale_y(r2*Math.sin(a2))")
         .endStatement();
     } else {
-      if (structure.diagram == VisTypes.Diagram.dag) {
+      if (structure.chart.diagram == VisTypes.Diagram.dag) {
         // This does not need coordinates flipped
         out.add("var p = BrunelD3.insetEdge(scale_x(d.source.x), scale_y(d.source.y), d.source,").ln().indent().add("scale_x(d.target.x), scale_y(d.target.y), d.target)")
           .endStatement();
@@ -147,7 +146,7 @@ class DependentEdge extends D3Diagram {
   }
 
   public void writeDiagramUpdate(ElementDetails details, ScriptWriter out) {
-    writeEdgePlacement("target", curved, structure.chart, out);
+    writeEdgePlacement("target", curved, structure, out);
     ElementBuilder.writeElementAesthetics(details, true, vis, out);
   }
 

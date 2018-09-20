@@ -20,6 +20,7 @@ package org.brunel.build;
 public enum ScalePurpose {
 	x(true, false),                         // X coordinate is a coordinate with continuous range
 	y(true, false),                         // Y coordinate is a coordinate with continuous range
+	y1(true, false),                        // Y1 coordinate is a coordinate with continuous range (for dual axes)
 	inner(true, false),                     // Clustered inner coordinate is a coordinate with continuous range
 	parallel(true, false),                  // Parallel axes coordinate is a coordinate with continuous range
 	sizeAesthetic(false, false),            // Size aesthetic is not a coordinate, but has continuous range

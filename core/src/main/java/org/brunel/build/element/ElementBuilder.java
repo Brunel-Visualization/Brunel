@@ -4,6 +4,7 @@ import org.brunel.build.InteractionDetails;
 import org.brunel.build.LabelBuilder;
 import org.brunel.build.ScaleBuilder;
 import org.brunel.build.ScalePurpose;
+import org.brunel.build.info.ChartCoordinates;
 import org.brunel.build.info.ChartStructure;
 import org.brunel.build.info.ElementStructure;
 import org.brunel.build.util.Accessibility;
@@ -87,8 +88,8 @@ public abstract class ElementBuilder {
   public static void definePointLikeMark(ElementDetails elementDef, ElementStructure structure,
                                          ScriptWriter out, boolean initialState) {
     if (elementDef.representation == ElementRepresentation.symbol) {
-        defineSymbol(elementDef, structure, out, initialState);
-    } else if (elementDef.representation == ElementRepresentation.rect){
+      defineSymbol(elementDef, structure, out, initialState);
+    } else if (elementDef.representation == ElementRepresentation.rect) {
       defineRect(elementDef, out, initialState);
     } else {
       defineCircle(elementDef, out, initialState);
@@ -241,6 +242,11 @@ public abstract class ElementBuilder {
 
     out.add("element = elements[" + structure.index + "]").endStatement();
 
+    // For dual axes, we have to pick the right scale
+    if (structure.chart.isDualAxes()) {
+      out.add("scale_y = scale_y" + (structure.index + 1)).endStatement();
+    }
+
     ElementDetails details = structure.details;
 
     writeDiagramDataStructures();                    // Diagram specific stuff
@@ -360,9 +366,9 @@ public abstract class ElementBuilder {
 
   protected void setGeometry() {
     ElementDetails e = structure.details;
-
-    Field[] x = structure.chart.coordinates.getX(vis);
-    Field[] y = structure.chart.coordinates.getY(vis);
+    ChartCoordinates coordinates = structure.chart.getCoordinates(structure.index);
+    Field[] x = coordinates.getX(vis);
+    Field[] y = coordinates.getY(vis);
     Field[] keys = new Field[vis.fKeys.size()];
     for (int i = 0; i < keys.length; i++) {
       keys[i] = structure.data.field(vis.fKeys.get(i).asField());
@@ -393,8 +399,8 @@ public abstract class ElementBuilder {
         e.x.size = getSize(x, "geom.inner_width", ScalePurpose.x, e.x, e.representation);
       }
       e.y.size = getSize(y, "geom.inner_height", ScalePurpose.y, e.y, e.representation);
-      DefineLocations.setLocations(e.representation, structure, e.x, "x", x, structure.chart.coordinates.xCategorical);
-      DefineLocations.setLocations(e.representation, structure, e.y, "y", y, structure.chart.coordinates.yCategorical);
+      DefineLocations.setLocations(e.representation, structure, e.x, "x", x, coordinates.xCategorical);
+      DefineLocations.setLocations(e.representation, structure, e.y, "y", y, coordinates.yCategorical);
       if (e.representation == ElementRepresentation.area && e.y.right == null) {
         // Area needs to have two functions even when not defined as such -- make the second the base
         e.y.right = e.y.center;

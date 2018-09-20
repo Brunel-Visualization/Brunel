@@ -108,7 +108,6 @@ tree whiskey #count category rating age / polar tree(prune) symbol(category) siz
 - simple    / data('raw:ID,PARENT;a,b;a,c;a,d;b,e;b,f;f,g') edge css(#row) color(parent) key(id, parent) + data('raw:ID;a;b;c;d;e;f;g') tree color(id) key(id) label(id) size(#row) style('size:50px; symbol:person; label-location:bottom') :: pass
 - simple    / data('raw:ID,PARENT;a,b;a,c;a,d;b,e;b,f;f,g') edge css(#row) color(parent) key(id, parent) + data('raw:ID;a;b;c;d;e;f;g') tree color(id) key(id) label(id) size(#row) symbol(#row) style('size:50px; label-location:bottom') :: pass
 
-
 - simple    / data('raw:x;"a,b";"a";"a,c,b";"a,b";"a,b";"a,b,c"') bar x(x) y(#count) color(x) | bar x(x) y(#count) color(x) each(x) | bubble color(x) size(#count) label(x) | bubble color(x) size(#count) label(x) each(x) :: pass
 - baseball  / x(PutOutRate) y(AssistRate) style('.axis.y .tick text{fill:red;padding-right:10px}') style('.axis.x .tick text{fill:blue;font-size:1cm; padding:2mm} .axis .tick line{size:-5mm} ') style('.axis .title {label-location:left;font-size:20px}') style('.axis .title {label-location:left;font-size:20px;font-style:italic;padding-left:1in}') style('.header {fill:red;font-size:40px;padding-bottom:50px;label-location:right}') title('Ugly Style test') :: pass
 colorScatter whiskey Rating Price Category / y(Price:linear) rectangular(aspect:1.0, square)         :: pass     :: Data aspect ratio should be square, and chart interior should be also
@@ -126,6 +125,8 @@ colorScatter whiskey rating price Category / size(Category:[200%,100%,100%]) key
 
 colorScatter cpi CLOTHING HEALTH Date / rectangular(same) + guide(y:x):: pass :: note axes have same span
 colorScatter cpi CLOTHING HEALTH Date / rectangular(same, square) + guide(y:x) :: pass :: note chart has square inner
+
+- cpi / bar x(date) y(all) bin(date:20) mean(all) + line x(date) y(furniture:[80, 120]) dualaxes bin(date:20) mean(furniture) style('.axis.y1 text {fill:red}') style('.axis.y text {fill:blue}') interaction(panzoom:x) :: pass
 
 #### Note
 

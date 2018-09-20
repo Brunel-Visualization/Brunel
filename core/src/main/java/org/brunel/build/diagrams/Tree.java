@@ -16,6 +16,7 @@
 
 package org.brunel.build.diagrams;
 
+import java.util.List;
 import org.brunel.action.Param;
 import org.brunel.build.LabelBuilder;
 import org.brunel.build.ScaleBuilder;
@@ -28,8 +29,6 @@ import org.brunel.build.util.ModelUtil;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.model.VisTypes.Coordinates;
 import org.brunel.model.style.StyleTarget;
-
-import java.util.List;
 
 class Tree extends D3Diagram {
 
@@ -162,7 +161,7 @@ class Tree extends D3Diagram {
       out.add("var edgeGroup = diagramExtras.selectAll('path').data(tree.links(), edgeKey)")
         .endStatement();
 
-      DependentEdge.write(true, structure.chart, out, "edgeGroup");
+      DependentEdge.write(true, structure, out, "edgeGroup");
       ElementBuilder.writeRemovalOnExit(out, "edgeGroup");
 
       LabelBuilder labelBuilder = new LabelBuilder(structure, out);
