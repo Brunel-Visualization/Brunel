@@ -292,7 +292,7 @@ public class Palette {
 	private static ColorMapping makeNominal(Field field, String[] items) {
 		// Categorical data is easy -- just us the categories and we are done!
 		if (field.preferCategorical())
-			return new ColorMapping(field.categories(), items);
+			return new ColorMapping(field.categories(), items).reduceColorsIfTooMany();
 
 		// For numeric data we make bands of color
 		int n = items.length;
