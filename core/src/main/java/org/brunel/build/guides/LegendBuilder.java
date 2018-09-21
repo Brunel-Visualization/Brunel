@@ -195,7 +195,7 @@ public class LegendBuilder {
       {
         continue;
       }
-      boolean auto = vis.tLegends == Legends.auto || vis.tLegends == Legends.all; // Are we automatic?
+      boolean auto = vis.tLegends == Legends.auto; // Are we automatic?
       if (auto && structure.nested()) {
         continue;                   // No default legend for nested charts
       }

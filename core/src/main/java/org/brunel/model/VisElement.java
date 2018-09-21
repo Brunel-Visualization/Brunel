@@ -277,8 +277,16 @@ public class VisElement extends VisItem implements Cloneable {
 
   public void legends(Param type) {
     if (type != null) {
-      tLegends = Legends.valueOf(type.asString());
       tFloatingLegend = type.hasModifierOption("float") || type.hasModifierOption("floating");
+      String name = type.asString();
+      if (name.equalsIgnoreCase("all")) {
+        tLegends = Legends.auto;
+      } else if (name.equalsIgnoreCase("floating") || name.equalsIgnoreCase("float")) {
+        tLegends = Legends.auto;
+        tFloatingLegend = true;
+      } else {
+        tLegends = Legends.valueOf(name);
+      }
     }
   }
 

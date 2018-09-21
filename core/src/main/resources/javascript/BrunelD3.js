@@ -2368,17 +2368,42 @@ var BrunelD3 = (function () {
      */
     function lowestBoxHits(boxes, elements) {
         var i, e, sel, b, box;
+
         for (i in boxes) boxes[i]._cnt = 0;
+
+        function sumIntersections(r) {
+            if (!r) return;
+            for (i in boxes) {
+                box = boxes[i];
+                if (intersectRect(r, box))
+                    box._cnt++;
+            }
+        }
+
         for (e in elements) {
-            sel = elements[e].selection();
-            sel.each(function () {
-                b = getBBox(this);
-                if (b) for (i in boxes) {
-                    box = boxes[i];
-                    if (intersectRect(b, box))
-                        box._cnt++;
+            sel = elements[e].selection(), b = sel.node();
+            if (b.getTotalLength) {
+                // it's a path -- sample 200 points along it
+                var pts = [], t, tt = b.getTotalLength();
+                for (t = 0; t <= 200; t++)
+                    pts[t] = b.getPointAtLength(t * tt / 200.0);
+
+                // Now check for line segments on it
+                for (t = 1; t <= 200; t++) {
+                    b = {
+                        x: Math.min(pts[t].x, pts[t - 1].x),
+                        y: Math.min(pts[t].y, pts[t - 1].y),
+                        width: Math.abs(pts[t].x - pts[t - 1].x),
+                        height: Math.abs(pts[t].y - pts[t - 1].y)
+                    };
+                    sumIntersections(b);
                 }
-            })
+
+            } else {
+                sel.each(function () {
+                    sumIntersections(getBBox(this));
+                })
+            }
         }
         var best = boxes[0];
         for (i in boxes)

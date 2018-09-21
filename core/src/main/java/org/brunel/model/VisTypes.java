@@ -75,7 +75,7 @@ public class VisTypes {
 
 	/* Axes types */
 	public enum Legends {
-		all, auto, none, color, symbol, size
+		auto, none, color, symbol, size
 	}
 
 	/* Interaction types */
