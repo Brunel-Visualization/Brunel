@@ -162,7 +162,7 @@ function  BrunelVis(visId) {
         };
       }
       // Aesthetic Functions
-      var scale_color = d3.scaleSqrt().domain([1, 6.4280357, 16.570714, 31.428036, 51])
+      var scale_color = d3.scaleSqrt().domain([1, 6.42803566070357, 16.570714214271426, 31.428035660703568, 51.00000000000001])
         .interpolate(d3.interpolateHcl)
         .range([ '#f1eef6', '#bdc9e1', '#74a9cf', '#2b8cbe', '#045a8d']);
       var color = function(d) { var c = data.$count(d); return c!=null ? scale_color(c) : null };
@@ -213,10 +213,6 @@ function  BrunelVis(visId) {
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('fill', color);
         }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
-        }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
         var added = selection.enter().append('rect');
@@ -263,7 +259,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -296,17 +299,17 @@ var table1 = {
    summarized: true,
    names: ['Category', 'Country', '#count'], 
    options: ['string', 'string', 'numeric'], 
-   rows: [['Blended', 'Canada', 25], ['Blended', 'France', 1], ['Blended', 'Ireland', 23],
-  ['Blended', 'Japan', 1], ['Blended', 'Scotland', 21], ['Blended', 'USA', 2],
-  ['Bourbon', 'USA', 51], ['Campbeltown', 'Scotland', 2], ['Corn', 'USA', 8],
-  ['Flavored', 'Ireland', 1], ['Flavored', 'Taiwan', 1], ['Flavored', 'USA', 3],
-  ['Grain', 'Ireland', 1], ['Grain', 'USA', 1], ['Highlands', 'Scotland', 26],
-  ['Islands', 'Scotland', 9], ['Islay', 'Scotland', 17], ['Lowlands', 'Scotland', 1],
-  ['Pure Pot Still', 'Ireland', 2], ['Rye', 'Canada', 3], ['Rye', 'USA', 15],
-  ['Single Malt', 'Canada', 2], ['Single Malt', 'England', 1], ['Single Malt', 'France', 1],
-  ['Single Malt', 'India', 5], ['Single Malt', 'Ireland', 14], ['Single Malt', 'Japan', 3],
-  ['Single Malt', 'Taiwan', 7], ['Single Malt', 'USA', 2], ['Speyside', 'Scotland', 32],
-  ['Unaged', 'USA', 2]]
+   rows: [['Blended', 'Canada', 25.0], ['Blended', 'France', 1.0], ['Blended', 'Ireland', 23.0],
+  ['Blended', 'Japan', 1.0], ['Blended', 'Scotland', 21.0], ['Blended', 'USA', 2.0],
+  ['Bourbon', 'USA', 51.0], ['Campbeltown', 'Scotland', 2.0], ['Corn', 'USA', 8.0],
+  ['Flavored', 'Ireland', 1.0], ['Flavored', 'Taiwan', 1.0], ['Flavored', 'USA', 3.0],
+  ['Grain', 'Ireland', 1.0], ['Grain', 'USA', 1.0], ['Highlands', 'Scotland', 26.0],
+  ['Islands', 'Scotland', 9.0], ['Islay', 'Scotland', 17.0], ['Lowlands', 'Scotland', 1.0],
+  ['Pure Pot Still', 'Ireland', 2.0], ['Rye', 'Canada', 3.0], ['Rye', 'USA', 15.0],
+  ['Single Malt', 'Canada', 2.0], ['Single Malt', 'England', 1.0], ['Single Malt', 'France', 1.0],
+  ['Single Malt', 'India', 5.0], ['Single Malt', 'Ireland', 14.0], ['Single Malt', 'Japan', 3.0],
+  ['Single Malt', 'Taiwan', 7.0], ['Single Malt', 'USA', 2.0], ['Speyside', 'Scotland', 32.0],
+  ['Unaged', 'USA', 2.0]]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

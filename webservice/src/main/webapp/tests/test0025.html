@@ -51,6 +51,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -76,7 +77,7 @@ function  BrunelVis(visId) {
     var scale_inner = d3.scalePoint().padding(0.5)
       .domain(['no', 'yes'])
       .range([-0.5, 0.5]);
-    var scale_y = d3.scaleLinear().domain([0, 3.5000004])
+    var scale_y = d3.scaleLinear().domain([0, 3.50000035])
       .range([geom.inner_height, 0]);
     var base_scales = [scale_x, scale_y];                           // untransformed original scales
 
@@ -210,10 +211,6 @@ function  BrunelVis(visId) {
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('fill', color);
         }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
-        }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
         var added = selection.enter().append('rect');
@@ -260,7 +257,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -293,7 +297,7 @@ var table1 = {
    summarized: true,
    names: ['mammal', 'aquatic', '#count'], 
    options: ['string', 'string', 'numeric'], 
-   rows: [['no', 'no', 1], ['yes', 'no', 3], ['no', 'yes', 2], ['yes', 'yes', 1]]
+   rows: [['no', 'no', 1.0], ['yes', 'no', 3.0], ['no', 'yes', 2.0], ['yes', 'yes', 1.0]]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

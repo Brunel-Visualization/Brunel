@@ -51,6 +51,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -70,11 +71,11 @@ function  BrunelVis(visId) {
 
     // Scales //////////////////////////////////////////////////////////////////////////////////////
 
-    var scale_x = d3.scaleLinear().domain([0, 35.000003])
+    var scale_x = d3.scaleLinear().domain([0, 35.0000035])
       .range([0, geom.inner_width]);
-    var scale_inner = d3.scaleSqrt().domain([35, 70.000004])
+    var scale_inner = d3.scaleSqrt().domain([35, 70.0000035])
       .range([-0.5, 0.5]);
-    var scale_y = d3.scaleSqrt().domain([0, 45.000005])
+    var scale_y = d3.scaleSqrt().domain([0, 45.0000045])
       .range([geom.inner_height, 0]);
     var base_scales = [scale_x, scale_y];                           // untransformed original scales
 
@@ -209,10 +210,6 @@ function  BrunelVis(visId) {
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('fill', color);
         }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
-        }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
         var added = selection.enter().append('rect');
@@ -259,7 +256,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -292,15 +296,19 @@ var table1 = {
    summarized: true,
    names: ['Age', 'ABV', '#count'], 
    options: ['range-numeric', 'range-numeric', 'numeric'], 
-   rows: [[[5,10], [35,40], 1], [[0,5], [40,45], 6], [[5,10], [40,45], 8], [[10,15], [40,45], 43],
-  [[15,20], [40,45], 35], [[20,25], [40,45], 9], [[25,30], [40,45], 5], [[30,35], [40,45], 3],
-  [null, [40,45], 53], [[0,5], [45,50], 1], [[5,10], [45,50], 2], [[10,15], [45,50], 9],
-  [[15,20], [45,50], 18], [[20,25], [45,50], 4], [[25,30], [45,50], 2], [[30,35], [45,50], 2],
-  [null, [45,50], 30], [[0,5], [50,55], 3], [[5,10], [50,55], 2], [[10,15], [50,55], 2],
-  [[15,20], [50,55], 3], [[20,25], [50,55], 1], [null, [50,55], 6], [[10,15], [55,60], 1],
-  [[15,20], [55,60], 1], [[20,25], [55,60], 2], [null, [55,60], 7], [[5,10], [60,65], 2],
-  [[10,15], [60,65], 1], [[15,20], [60,65], 1], [null, [60,65], 4], [[5,10], [65,70], 2],
-  [null, [65,70], 1], [[0,5], null, 1], [[10,15], null, 3], [[35,40], null, 1], [null, null, 8]]
+   rows: [[[5.0,10.0], [35.0,40.0], 1.0], [[0.0,5.0], [40.0,45.0], 6.0],
+  [[5.0,10.0], [40.0,45.0], 8.0], [[10.0,15.0], [40.0,45.0], 43.0], [[15.0,20.0], [40.0,45.0], 35.0],
+  [[20.0,25.0], [40.0,45.0], 9.0], [[25.0,30.0], [40.0,45.0], 5.0], [[30.0,35.0], [40.0,45.0], 3.0],
+  [null, [40.0,45.0], 53.0], [[0.0,5.0], [45.0,50.0], 1.0], [[5.0,10.0], [45.0,50.0], 2.0],
+  [[10.0,15.0], [45.0,50.0], 9.0], [[15.0,20.0], [45.0,50.0], 18.0], [[20.0,25.0], [45.0,50.0], 4.0],
+  [[25.0,30.0], [45.0,50.0], 2.0], [[30.0,35.0], [45.0,50.0], 2.0], [null, [45.0,50.0], 30.0],
+  [[0.0,5.0], [50.0,55.0], 3.0], [[5.0,10.0], [50.0,55.0], 2.0], [[10.0,15.0], [50.0,55.0], 2.0],
+  [[15.0,20.0], [50.0,55.0], 3.0], [[20.0,25.0], [50.0,55.0], 1.0], [null, [50.0,55.0], 6.0],
+  [[10.0,15.0], [55.0,60.0], 1.0], [[15.0,20.0], [55.0,60.0], 1.0], [[20.0,25.0], [55.0,60.0], 2.0],
+  [null, [55.0,60.0], 7.0], [[5.0,10.0], [60.0,65.0], 2.0], [[10.0,15.0], [60.0,65.0], 1.0],
+  [[15.0,20.0], [60.0,65.0], 1.0], [null, [60.0,65.0], 4.0], [[5.0,10.0], [65.0,70.0], 2.0],
+  [null, [65.0,70.0], 1.0], [[0.0,5.0], null, 1.0], [[10.0,15.0], null, 3.0],
+  [[35.0,40.0], null, 1.0], [null, null, 8.0]]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

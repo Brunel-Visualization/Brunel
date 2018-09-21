@@ -51,6 +51,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -67,11 +68,11 @@ function  BrunelVis(visId) {
 
     // Scales //////////////////////////////////////////////////////////////////////////////////////
 
-    var scale_x = d3.scaleSqrt().domain([35, 70.000004])
+    var scale_x = d3.scaleSqrt().domain([35, 70.0000035])
       .range([0, geom.inner_width]);
     var scale_inner = d3.scaleLinear().domain([0,1])
       .range([-0.5, 0.5]);
-    var scale_y = d3.scaleSqrt().domain([0, 180.00002])
+    var scale_y = d3.scaleSqrt().domain([0, 180.000018])
       .range([geom.inner_height, 0]);
     var base_scales = [scale_x, scale_y];                           // untransformed original scales
 
@@ -165,7 +166,7 @@ function  BrunelVis(visId) {
         var y1 = scale_y.range()[0];
         var y2 = function(d) { return scale_y(data.$count(d))};
         var labeling  = [{
-          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3, dy: 0.3,
+          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3.0, dy: 0.3,
           fit: true, granularity: 1,
           content: function(d) {
             return d.row == null ? null : data.Brand_f(d)
@@ -213,7 +214,7 @@ function  BrunelVis(visId) {
           BrunelD3.label(selection, labels, transitionMillis, geom, labeling);
 
           var tooltipLabeling  = {
-            index: -1, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 0, dy: 0.7,
+            index: -1, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 0.0, dy: 0.7,
             fit: true, granularity: 0,
             content: function(d) {
               return d.row == null ? null : '<span class="title">ABV: </span>'
@@ -274,7 +275,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -307,14 +315,14 @@ var table1 = {
    summarized: true,
    names: ['ABV', '#count', 'Brand'], 
    options: ['range-numeric', 'numeric', 'list'], 
-   rows: [[[35,40], 1, "Seagram's"],
-  [[40,45], 162, "8 Seconds, Aberfeldy, Aberlour, Balblair, Balvenie, Barton, Basil Hayden, Bell's, Benchmark, Black Maple Hill, Black Velvet, Bowmore, Breckenridge, Buchanan, Bushmills, Canadian Club, Canadian Hunter, Canadian Mist, Caol Ila, Cardhu, Catoctin Creek, Cedar Ridge, Chivas Regal, Collingwood, Connemara, Corsair, Crown Royal, Dalmore, Dalwhinnie, Downslope, Early Times, Evan Williams, Famous Grouse, Feckin, Forty Creek, Four Roses, George Dickel, Glen Breton, Glen Grant, Glendullan, Glenfiddich, Glengoyne, Glenlivet, Glenmorangie, Glenora, Glenrothes, Greenore, Haig, Highland Park, \u2026"],
-  [[45,50], 68, "A.H. Hirsch, Amrut, Ancnoc, Ardbeg, Ardmore, Balvenie, Black Maple Hill, Blanton, Bowman, Buffalo Trace, Bulleit, Bunnahabhain, Bushmills, Copper Fox, Deanston, Eagle, Elijah Craig, Elmer T Lee, Forty Creek, Four Roses, Garrison Brothers, George Dickel, George T. Stagg, Glen Garioch, Glenlivet, Glenmorangie, High West, Highland Park, Hudson, Isle of Jura, Jameson, Jefferson, Kavalan, Laphroaig, Longrow, Maker's Mark, Middle West, Old Forester, Old Pulteney, Pappy Van Winkle, Penderyn, Redbreast, Ridgemont Reserve, Russell's, Sazerac, Springbank, Talisker, Thirteen Colony, Tobermory, \u2026"],
-  [[50,55], 17, "Amrut, Ardbeg, Auchentoshan, Charter, Delaware Phoenix, Four Roses, High West, Jim Beam, Old Forester, Pappy Van Winkle, Rowan's Creek, Smooth Ambler, Wild Turkey"],
-  [[55,60], 11, "Aberlour, Connemara, Glenlivet, Kavalan, Lagavulin, Noah's Mill"],
-  [[60,65], 8, "Amrut, Balcones, Booker's, Buffalo Trace, Knob creek, Parker's Heritage"],
-  [[65,70], 3, 'Abraham Bowman, Thomas H. Handy, William Larue Weller'],
-  [null, 13, 'Canadian Club, Canadian LTD, Danfield, Ellington, Glengoyne, McAdams, Origine, Rich & Rare, Slane Castle, Texas Crown, Tyrconnell, Whyte & Mackay']]
+   rows: [[[35.0,40.0], 1.0, "Seagram's"],
+  [[40.0,45.0], 162.0, "8 Seconds, Aberfeldy, Aberlour, Balblair, Balvenie, Barton, Basil Hayden, Bell's, Benchmark, Black Maple Hill, Black Velvet, Bowmore, Breckenridge, Buchanan, Bushmills, Canadian Club, Canadian Hunter, Canadian Mist, Caol Ila, Cardhu, Catoctin Creek, Cedar Ridge, Chivas Regal, Collingwood, Connemara, Corsair, Crown Royal, Dalmore, Dalwhinnie, Downslope, Early Times, Evan Williams, Famous Grouse, Feckin, Forty Creek, Four Roses, George Dickel, Glen Breton, Glen Grant, Glendullan, Glenfiddich, Glengoyne, Glenlivet, Glenmorangie, Glenora, Glenrothes, Greenore, Haig, Highland Park, \u2026"],
+  [[45.0,50.0], 68.0, "A.H. Hirsch, Amrut, Ancnoc, Ardbeg, Ardmore, Balvenie, Black Maple Hill, Blanton, Bowman, Buffalo Trace, Bulleit, Bunnahabhain, Bushmills, Copper Fox, Deanston, Eagle, Elijah Craig, Elmer T Lee, Forty Creek, Four Roses, Garrison Brothers, George Dickel, George T. Stagg, Glen Garioch, Glenlivet, Glenmorangie, High West, Highland Park, Hudson, Isle of Jura, Jameson, Jefferson, Kavalan, Laphroaig, Longrow, Maker's Mark, Middle West, Old Forester, Old Pulteney, Pappy Van Winkle, Penderyn, Redbreast, Ridgemont Reserve, Russell's, Sazerac, Springbank, Talisker, Thirteen Colony, Tobermory, \u2026"],
+  [[50.0,55.0], 17.0, "Amrut, Ardbeg, Auchentoshan, Charter, Delaware Phoenix, Four Roses, High West, Jim Beam, Old Forester, Pappy Van Winkle, Rowan's Creek, Smooth Ambler, Wild Turkey"],
+  [[55.0,60.0], 11.0, "Aberlour, Connemara, Glenlivet, Kavalan, Lagavulin, Noah's Mill"],
+  [[60.0,65.0], 8.0, "Amrut, Balcones, Booker's, Buffalo Trace, Knob creek, Parker's Heritage"],
+  [[65.0,70.0], 3.0, 'Abraham Bowman, Thomas H. Handy, William Larue Weller'],
+  [null, 13.0, 'Canadian Club, Canadian LTD, Danfield, Ellington, Glengoyne, McAdams, Origine, Rich & Rare, Slane Castle, Texas Crown, Tyrconnell, Whyte & Mackay']]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

@@ -51,6 +51,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -75,7 +76,7 @@ function  BrunelVis(visId) {
       .range([0, geom.inner_width]);
     var scale_inner = d3.scaleLinear().domain([0,1])
       .range([-0.5, 0.5]);
-    var scale_y = d3.scaleLinear().domain([0, 3.5000004])
+    var scale_y = d3.scaleLinear().domain([0, 3.50000035])
       .range([geom.inner_height, 0]);
     var base_scales = [scale_x, scale_y];                           // untransformed original scales
 
@@ -209,10 +210,6 @@ function  BrunelVis(visId) {
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('fill', color);
         }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
-        }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
         var added = selection.enter().append('rect');
@@ -259,7 +256,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -284,6 +288,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -439,10 +444,6 @@ function  BrunelVis(visId) {
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('fill', color);
         }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
-        }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
         var added = selection.enter().append('rect');
@@ -489,7 +490,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -606,7 +614,7 @@ function  BrunelVis(visId) {
         function x(d) { return scale_x(d.x) };
         function y(d) { return scale_y(d.y) };
         var labeling  = [{
-          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3, dy: 0.3,
+          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3.0, dy: 0.3,
           fit: true, granularity: 1,
           content: function(d) {
             return d.row == null ? null : data.x_f(d)
@@ -808,7 +816,7 @@ function  BrunelVis(visId) {
         function x(d) { return scale_x(d.x) };
         function y(d) { return scale_y(d.y) };
         var labeling  = [{
-          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3, dy: 0.3,
+          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3.0, dy: 0.3,
           fit: true, granularity: 1,
           content: function(d) {
             return d.row == null ? null : data.x_f(d)

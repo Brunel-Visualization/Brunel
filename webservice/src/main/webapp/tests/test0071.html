@@ -113,7 +113,7 @@ function  BrunelVis(visId) {
         };
       }
       // Aesthetic Functions
-      var scale_color = d3.scaleSqrt().domain([1, 1.9921567, 3.3228757, 4.9921567, 7])
+      var scale_color = d3.scaleSqrt().domain([1, 1.9921567416492216, 3.3228756555322954, 4.9921567416492225, 7.000000000000001])
         .interpolate(d3.interpolateHcl)
         .range([ '#f1eef6', '#bdc9e1', '#74a9cf', '#2b8cbe', '#045a8d']);
       var color = function(d) { var c = data.$count(d.data); return c!=null ? scale_color(c) : null };
@@ -142,10 +142,10 @@ function  BrunelVis(visId) {
         function x(d) { return scale_x(d.x) };
         function y(d) { return scale_y(d.y) };
         var labeling  = [{
-          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3, dy: 0.3,
+          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3.0, dy: 0.3,
           fit: true, granularity: 2,
           content: function(d) {
-            return d.row == null ? null : BrunelD3.shorten(data.Brand_f(d), 1)
+            return d.row == null ? null : BrunelData.Data.shorten(data.Brand_f(d), 1)
           }
         }];
 
@@ -158,7 +158,7 @@ function  BrunelVis(visId) {
             .attr('y', function(d) { return scale_y(d.parent.y) })
             .attr('r', 0)
             .attr('role', 'img').attr('aria-label', 
-          function(d) { return BrunelD3.shorten(data.Brand_f(d), 1);
+          function(d) { return BrunelData.Data.shorten(data.Brand_f(d), 1);
           })
         }
 
@@ -313,7 +313,7 @@ function  BrunelVis(visId) {
         };
       }
       // Aesthetic Functions
-      var scale_color = d3.scaleSqrt().domain([1, 1.9921567, 3.3228757, 4.9921567, 7])
+      var scale_color = d3.scaleSqrt().domain([1, 1.9921567416492216, 3.3228756555322954, 4.9921567416492225, 7.000000000000001])
         .interpolate(d3.interpolateHcl)
         .range([ '#f1eef6', '#bdc9e1', '#74a9cf', '#2b8cbe', '#045a8d']);
       var color = function(d) { var c = data.$count(d.data); return c!=null ? scale_color(c) : null };
@@ -342,10 +342,10 @@ function  BrunelVis(visId) {
         function x(d) { return scale_x(d.x) };
         function y(d) { return scale_y(d.y) };
         var labeling  = [{
-          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3, dy: 0.3,
+          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3.0, dy: 0.3,
           fit: true, granularity: 2,
           content: function(d) {
-            return d.row == null ? null : BrunelD3.shorten(data.Brand_f(d), 1)
+            return d.row == null ? null : BrunelData.Data.shorten(data.Brand_f(d), 1)
           }
         }];
 
@@ -358,7 +358,7 @@ function  BrunelVis(visId) {
             .attr('y', function(d) { return scale_y(d.parent.y) })
             .attr('r', 0)
             .attr('role', 'img').attr('aria-label', 
-          function(d) { return BrunelD3.shorten(data.Brand_f(d), 1);
+          function(d) { return BrunelData.Data.shorten(data.Brand_f(d), 1);
           })
         }
 
@@ -459,39 +459,43 @@ var table1 = {
    summarized: true,
    names: ['#count', 'Brand'], 
    options: ['numeric', 'string'], 
-   rows: [[1, '8 Seconds'], [1, 'A.H. Hirsch'], [2, 'Aberfeldy'], [3, 'Aberlour'],
-  [1, 'Abraham Bowman'], [5, 'Amrut'], [1, 'Ancnoc'], [2, 'Ardbeg'], [1, 'Ardmore'],
-  [1, 'Auchentoshan'], [2, 'Balblair'], [1, 'Balcones'], [7, 'Balvenie'], [1, 'Barton'],
-  [1, 'Basil Hayden'], [1, "Bell's"], [1, 'Benchmark'], [2, 'Black Maple Hill'], [1, 'Black Velvet'],
-  [1, 'Blanton'], [1, "Booker's"], [1, 'Bowman'], [3, 'Bowmore'], [1, 'Breckenridge'],
-  [3, 'Buchanan'], [2, 'Buffalo Trace'], [1, 'Bulleit'], [3, 'Bunnahabhain'], [6, 'Bushmills'],
-  [4, 'Canadian Club'], [1, 'Canadian Hunter'], [1, 'Canadian LTD'], [2, 'Canadian Mist'],
-  [2, 'Caol Ila'], [1, 'Cardhu'], [1, 'Catoctin Creek'], [1, 'Cedar Ridge'], [1, 'Charter'],
-  [2, 'Chivas Regal'], [1, 'Collingwood'], [3, 'Connemara'], [1, 'Copper Fox'], [1, 'Corsair'],
-  [1, 'Crown Royal'], [3, 'Dalmore'], [1, 'Dalwhinnie'], [1, 'Danfield'], [1, 'Deanston'],
-  [1, 'Delaware Phoenix'], [1, 'Downslope'], [1, 'Eagle'], [1, 'Early Times'], [1, 'Elijah Craig'],
-  [1, 'Ellington'], [1, 'Elmer T Lee'], [1, 'Evan Williams'], [1, 'Famous Grouse'], [1, 'Feckin'],
-  [5, 'Forty Creek'], [3, 'Four Roses'], [1, 'Garrison Brothers'], [3, 'George Dickel'],
-  [1, 'George T. Stagg'], [1, 'Glen Breton'], [1, 'Glen Garioch'], [1, 'Glen Grant'],
-  [1, 'Glendullan'], [4, 'Glenfiddich'], [2, 'Glengoyne'], [6, 'Glenlivet'], [5, 'Glenmorangie'],
-  [1, 'Glenora'], [2, 'Glenrothes'], [2, 'Greenore'], [1, 'Haig'], [2, 'High West'],
-  [4, 'Highland Park'], [1, 'Hood River'], [5, 'Hudson'], [3, 'Isle of Jura'], [1, "Jack Daniel's"],
-  [5, 'Jameson'], [2, 'Jefferson'], [5, 'Jim Beam'], [1, 'John L. Sullivan'], [5, 'Johnnie Walker'],
-  [1, 'Kansas Spirit'], [7, 'Kavalan'], [1, 'Kellan'], [1, 'Kilbeggan'], [2, 'Kingdom'],
-  [1, 'Knob creek'], [3, 'Lagavulin'], [4, 'Laphroaig'], [1, 'Ledaig'], [1, 'Leopold Bros.'],
-  [1, 'Longrow'], [3, 'Macallan'], [1, "Maker's Mark"], [1, 'McAdams'], [2, 'Michael Collins'],
-  [1, 'Mickey Finn'], [1, 'Middle West'], [1, 'Midleton'], [1, "Noah's Mill"], [2, 'Oban'],
-  [3, 'Old Forester'], [2, 'Old Parr'], [4, 'Old Pulteney'], [1, 'Origine'], [2, 'P & M'],
-  [2, 'Pappy Van Winkle'], [2, "Parker's Heritage"], [1, 'Penderyn'], [1, 'Pescadores'],
-  [2, 'Powers'], [1, 'Price Edward'], [1, 'Rebel Yell'], [2, 'Redbreast'], [1, 'Rich & Rare'],
-  [1, 'Ridgemont Reserve'], [1, 'Rogue'], [1, "Rowan's Creek"], [1, 'Royal Canadian'],
-  [1, 'Royal Salute'], [1, "Russell's"], [2, 'Sazerac'], [1, "Seagram's"], [1, 'Slane Castle'],
-  [1, 'Smooth Ambler'], [1, 'Speyburn'], [1, 'Springbank'], [1, 'Stillhouse'], [3, 'Suntory'],
-  [1, 'Talisker'], [1, 'Templeton'], [1, 'Texas Crown'], [1, 'The Irishman'], [1, 'Thirteen Colony'],
-  [1, 'Thomas H. Handy'], [1, 'Tobermory'], [2, 'Tomatin'], [4, 'Tullamore'], [1, 'Tweeddale'],
-  [3, 'Tyrconnell'], [2, 'Whyte & Mackay'], [6, 'Wild Turkey'], [1, 'William Grant & Sons'],
-  [1, 'William Larue Weller'], [4, "Wiser's"], [1, 'Wolfhound'], [2, 'Woodford Reserve'],
-  [1, 'Yamazaki']]
+   rows: [[1.0, '8 Seconds'], [1.0, 'A.H. Hirsch'], [2.0, 'Aberfeldy'], [3.0, 'Aberlour'],
+  [1.0, 'Abraham Bowman'], [5.0, 'Amrut'], [1.0, 'Ancnoc'], [2.0, 'Ardbeg'], [1.0, 'Ardmore'],
+  [1.0, 'Auchentoshan'], [2.0, 'Balblair'], [1.0, 'Balcones'], [7.0, 'Balvenie'], [1.0, 'Barton'],
+  [1.0, 'Basil Hayden'], [1.0, "Bell's"], [1.0, 'Benchmark'], [2.0, 'Black Maple Hill'],
+  [1.0, 'Black Velvet'], [1.0, 'Blanton'], [1.0, "Booker's"], [1.0, 'Bowman'], [3.0, 'Bowmore'],
+  [1.0, 'Breckenridge'], [3.0, 'Buchanan'], [2.0, 'Buffalo Trace'], [1.0, 'Bulleit'],
+  [3.0, 'Bunnahabhain'], [6.0, 'Bushmills'], [4.0, 'Canadian Club'], [1.0, 'Canadian Hunter'],
+  [1.0, 'Canadian LTD'], [2.0, 'Canadian Mist'], [2.0, 'Caol Ila'], [1.0, 'Cardhu'],
+  [1.0, 'Catoctin Creek'], [1.0, 'Cedar Ridge'], [1.0, 'Charter'], [2.0, 'Chivas Regal'],
+  [1.0, 'Collingwood'], [3.0, 'Connemara'], [1.0, 'Copper Fox'], [1.0, 'Corsair'],
+  [1.0, 'Crown Royal'], [3.0, 'Dalmore'], [1.0, 'Dalwhinnie'], [1.0, 'Danfield'], [1.0, 'Deanston'],
+  [1.0, 'Delaware Phoenix'], [1.0, 'Downslope'], [1.0, 'Eagle'], [1.0, 'Early Times'],
+  [1.0, 'Elijah Craig'], [1.0, 'Ellington'], [1.0, 'Elmer T Lee'], [1.0, 'Evan Williams'],
+  [1.0, 'Famous Grouse'], [1.0, 'Feckin'], [5.0, 'Forty Creek'], [3.0, 'Four Roses'],
+  [1.0, 'Garrison Brothers'], [3.0, 'George Dickel'], [1.0, 'George T. Stagg'], [1.0, 'Glen Breton'],
+  [1.0, 'Glen Garioch'], [1.0, 'Glen Grant'], [1.0, 'Glendullan'], [4.0, 'Glenfiddich'],
+  [2.0, 'Glengoyne'], [6.0, 'Glenlivet'], [5.0, 'Glenmorangie'], [1.0, 'Glenora'],
+  [2.0, 'Glenrothes'], [2.0, 'Greenore'], [1.0, 'Haig'], [2.0, 'High West'], [4.0, 'Highland Park'],
+  [1.0, 'Hood River'], [5.0, 'Hudson'], [3.0, 'Isle of Jura'], [1.0, "Jack Daniel's"],
+  [5.0, 'Jameson'], [2.0, 'Jefferson'], [5.0, 'Jim Beam'], [1.0, 'John L. Sullivan'],
+  [5.0, 'Johnnie Walker'], [1.0, 'Kansas Spirit'], [7.0, 'Kavalan'], [1.0, 'Kellan'],
+  [1.0, 'Kilbeggan'], [2.0, 'Kingdom'], [1.0, 'Knob creek'], [3.0, 'Lagavulin'], [4.0, 'Laphroaig'],
+  [1.0, 'Ledaig'], [1.0, 'Leopold Bros.'], [1.0, 'Longrow'], [3.0, 'Macallan'],
+  [1.0, "Maker's Mark"], [1.0, 'McAdams'], [2.0, 'Michael Collins'], [1.0, 'Mickey Finn'],
+  [1.0, 'Middle West'], [1.0, 'Midleton'], [1.0, "Noah's Mill"], [2.0, 'Oban'],
+  [3.0, 'Old Forester'], [2.0, 'Old Parr'], [4.0, 'Old Pulteney'], [1.0, 'Origine'], [2.0, 'P & M'],
+  [2.0, 'Pappy Van Winkle'], [2.0, "Parker's Heritage"], [1.0, 'Penderyn'], [1.0, 'Pescadores'],
+  [2.0, 'Powers'], [1.0, 'Price Edward'], [1.0, 'Rebel Yell'], [2.0, 'Redbreast'],
+  [1.0, 'Rich & Rare'], [1.0, 'Ridgemont Reserve'], [1.0, 'Rogue'], [1.0, "Rowan's Creek"],
+  [1.0, 'Royal Canadian'], [1.0, 'Royal Salute'], [1.0, "Russell's"], [2.0, 'Sazerac'],
+  [1.0, "Seagram's"], [1.0, 'Slane Castle'], [1.0, 'Smooth Ambler'], [1.0, 'Speyburn'],
+  [1.0, 'Springbank'], [1.0, 'Stillhouse'], [3.0, 'Suntory'], [1.0, 'Talisker'], [1.0, 'Templeton'],
+  [1.0, 'Texas Crown'], [1.0, 'The Irishman'], [1.0, 'Thirteen Colony'], [1.0, 'Thomas H. Handy'],
+  [1.0, 'Tobermory'], [2.0, 'Tomatin'], [4.0, 'Tullamore'], [1.0, 'Tweeddale'], [3.0, 'Tyrconnell'],
+  [2.0, 'Whyte & Mackay'], [6.0, 'Wild Turkey'], [1.0, 'William Grant & Sons'],
+  [1.0, 'William Larue Weller'], [4.0, "Wiser's"], [1.0, 'Wolfhound'], [2.0, 'Woodford Reserve'],
+  [1.0, 'Yamazaki']]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

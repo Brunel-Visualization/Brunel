@@ -57,6 +57,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);

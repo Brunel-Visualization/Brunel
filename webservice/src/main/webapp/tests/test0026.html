@@ -51,6 +51,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -76,7 +77,7 @@ function  BrunelVis(visId) {
     var scale_inner = d3.scalePoint().padding(0.5)
       .domain(['Blended', 'Bourbon', 'Single Malt', '\u2026'])
       .range([-0.5, 0.5]);
-    var scale_y = d3.scaleLog().domain([0.1, 100.00001])
+    var scale_y = d3.scaleLog().domain([0.1, 100.00000999])
       .range([geom.inner_height, 0]);
     var base_scales = [scale_x, scale_y];                           // untransformed original scales
 
@@ -215,10 +216,6 @@ function  BrunelVis(visId) {
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('fill', color);
         }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
-        }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
         var added = selection.enter().append('rect');
@@ -265,7 +262,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -298,13 +302,13 @@ var table1 = {
    summarized: true,
    names: ['Country', 'Category', '#count'], 
    options: ['string', 'string', 'numeric'], 
-   rows: [['Canada', 'Blended', 25], ['France', 'Blended', 1], ['Ireland', 'Blended', 23],
-  ['Japan', 'Blended', 1], ['Scotland', 'Blended', 21], ['USA', 'Blended', 2],
-  ['USA', 'Bourbon', 51], ['Canada', 'Single Malt', 2], ['England', 'Single Malt', 1],
-  ['France', 'Single Malt', 1], ['India', 'Single Malt', 5], ['Ireland', 'Single Malt', 14],
-  ['Japan', 'Single Malt', 3], ['Taiwan', 'Single Malt', 7], ['USA', 'Single Malt', 2],
-  ['Canada', '\u2026', 3], ['Ireland', '\u2026', 4], ['Scotland', '\u2026', 87],
-  ['Taiwan', '\u2026', 1], ['USA', '\u2026', 29]]
+   rows: [['Canada', 'Blended', 25.0], ['France', 'Blended', 1.0], ['Ireland', 'Blended', 23.0],
+  ['Japan', 'Blended', 1.0], ['Scotland', 'Blended', 21.0], ['USA', 'Blended', 2.0],
+  ['USA', 'Bourbon', 51.0], ['Canada', 'Single Malt', 2.0], ['England', 'Single Malt', 1.0],
+  ['France', 'Single Malt', 1.0], ['India', 'Single Malt', 5.0], ['Ireland', 'Single Malt', 14.0],
+  ['Japan', 'Single Malt', 3.0], ['Taiwan', 'Single Malt', 7.0], ['USA', 'Single Malt', 2.0],
+  ['Canada', '\u2026', 3.0], ['Ireland', '\u2026', 4.0], ['Scotland', '\u2026', 87.0],
+  ['Taiwan', '\u2026', 1.0], ['USA', '\u2026', 29.0]]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

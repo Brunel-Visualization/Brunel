@@ -51,6 +51,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -220,10 +221,6 @@ function  BrunelVis(visId) {
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('fill', color);
         }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
-        }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
         var added = selection.enter().append('rect');
@@ -270,7 +267,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -303,19 +307,22 @@ var table1 = {
    summarized: true,
    names: ['Country', '#count', 'Category'], 
    options: ['string', 'numeric', 'string'], 
-   rows: [['Canada', 83.333333, 'Blended'], ['France', 50, 'Blended'],
-  ['Ireland', 56.097561, 'Blended'], ['Japan', 25, 'Blended'], ['Scotland', 19.444444, 'Blended'],
-  ['USA', 2.3809524, 'Blended'], ['USA', 60.714286, 'Bourbon'],
-  ['Scotland', 1.8518519, 'Campbeltown'], ['USA', 9.5238095, 'Corn'],
-  ['Ireland', 2.4390244, 'Flavored'], ['Taiwan', 12.5, 'Flavored'], ['USA', 3.5714286, 'Flavored'],
-  ['Ireland', 2.4390244, 'Grain'], ['USA', 1.1904762, 'Grain'], ['Scotland', 24.074074, 'Highlands'],
-  ['Scotland', 8.3333333, 'Islands'], ['Scotland', 15.740741, 'Islay'],
-  ['Scotland', 0.9259259, 'Lowlands'], ['Ireland', 4.8780488, 'Pure Pot Still'],
-  ['Canada', 10, 'Rye'], ['USA', 17.857143, 'Rye'], ['Canada', 6.6666667, 'Single Malt'],
-  ['England', 100, 'Single Malt'], ['France', 50, 'Single Malt'], ['India', 100, 'Single Malt'],
-  ['Ireland', 34.146341, 'Single Malt'], ['Japan', 75, 'Single Malt'],
-  ['Taiwan', 87.5, 'Single Malt'], ['USA', 2.3809524, 'Single Malt'],
-  ['Scotland', 29.62963, 'Speyside'], ['USA', 2.3809524, 'Unaged']]
+   rows: [['Canada', 83.33333333333333, 'Blended'], ['France', 50.0, 'Blended'],
+  ['Ireland', 56.09756097560975, 'Blended'], ['Japan', 25.0, 'Blended'],
+  ['Scotland', 19.444444444444443, 'Blended'], ['USA', 2.380952380952381, 'Blended'],
+  ['USA', 60.714285714285715, 'Bourbon'], ['Scotland', 1.8518518518518519, 'Campbeltown'],
+  ['USA', 9.523809523809524, 'Corn'], ['Ireland', 2.4390243902439024, 'Flavored'],
+  ['Taiwan', 12.5, 'Flavored'], ['USA', 3.5714285714285716, 'Flavored'],
+  ['Ireland', 2.4390243902439024, 'Grain'], ['USA', 1.1904761904761905, 'Grain'],
+  ['Scotland', 24.074074074074073, 'Highlands'], ['Scotland', 8.333333333333334, 'Islands'],
+  ['Scotland', 15.74074074074074, 'Islay'], ['Scotland', 0.9259259259259259, 'Lowlands'],
+  ['Ireland', 4.878048780487805, 'Pure Pot Still'], ['Canada', 10.0, 'Rye'],
+  ['USA', 17.857142857142858, 'Rye'], ['Canada', 6.666666666666667, 'Single Malt'],
+  ['England', 100.0, 'Single Malt'], ['France', 50.0, 'Single Malt'],
+  ['India', 100.0, 'Single Malt'], ['Ireland', 34.146341463414636, 'Single Malt'],
+  ['Japan', 75.0, 'Single Malt'], ['Taiwan', 87.5, 'Single Malt'],
+  ['USA', 2.380952380952381, 'Single Malt'], ['Scotland', 29.62962962962963, 'Speyside'],
+  ['USA', 2.380952380952381, 'Unaged']]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

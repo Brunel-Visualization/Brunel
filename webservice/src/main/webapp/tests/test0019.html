@@ -51,6 +51,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -155,12 +156,12 @@ function  BrunelVis(visId) {
         };
       }
       // Aesthetic Functions
-      var scale_color = d3.scaleLinear().domain([77.352941, 78.938725, 80.52451, 82.110294, 83.696078, 85.281863, 86.867647, 88.453431, 90.039216, 91.625])
+      var scale_color = d3.scaleLinear().domain([77.3529411764706, 78.93872549019608, 80.52450980392157, 82.11029411764706, 83.69607843137256, 85.28186274509804, 86.86764705882354, 88.45343137254902, 90.0392156862745, 91.625])
         .interpolate(d3.interpolateHcl)
         .range([ '#FFFFFF', '#E3E3FF', '#C6C6FF', '#AAAAFF', '#8E8EFF', '#7171FF', 
           '#5555FF', '#3939FF', '#1C1CFF', '#0000FF']);
       var color = function(d) { var c = data.Rating(d); return c!=null ? scale_color(c) : null };
-      var scale_size = d3.scaleLinear().domain([0, 91.625009])
+      var scale_size = d3.scaleLinear().domain([0, 91.6250091625])
         .range([ 0.001, 1]);
       var size = function(d) { var s = data.Rating(d); return s!=null ? scale_size(s) : null };
       legends._legend = legends._legend || { title: ['Mean(Rating)'], 
@@ -213,10 +214,6 @@ function  BrunelVis(visId) {
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('fill', color);
         }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
-        }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
         var added = selection.enter().append('rect');
@@ -264,7 +261,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -297,9 +301,10 @@ var table1 = {
    summarized: true,
    names: ['Age', '#count', 'Rating'], 
    options: ['range-numeric', 'numeric', 'numeric'], 
-   rows: [[[0,5], 11, 79.1], [[5,10], 17, 77.352941], [[10,15], 59, 87.785714],
-  [[15,20], 58, 89.145455], [[20,25], 16, 91.625], [[25,30], 7, 91.5], [[30,35], 5, 88.6],
-  [[35,40], 1, 89], [null, 109, 80.235849]]
+   rows: [[[0.0,5.0], 11.0, 79.1], [[5.0,10.0], 17.0, 77.3529411764706],
+  [[10.0,15.0], 59.0, 87.78571428571429], [[15.0,20.0], 58.0, 89.14545454545454],
+  [[20.0,25.0], 16.0, 91.625], [[25.0,30.0], 7.0, 91.5], [[30.0,35.0], 5.0, 88.6],
+  [[35.0,40.0], 1.0, 89.0], [null, 109.0, 80.23584905660377]]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

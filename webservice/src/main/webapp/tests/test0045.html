@@ -51,6 +51,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -210,10 +211,6 @@ function  BrunelVis(visId) {
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('fill', color);
         }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
-        }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(splits, function(d) { return d.key });
         var added = selection.enter().append('path');
@@ -260,7 +257,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -293,8 +297,8 @@ var table1 = {
    summarized: false,
    names: ['animal', 'size', 'mammal'], 
    options: ['string', 'numeric', 'string'], 
-   rows: [['fish', 1, 'no'], ['cat', 3, 'yes'], ['bat', 2, 'yes'], ['dolphin', 4, 'yes'],
-  ['elephant', 5, 'yes'], ['frog', 1.5, 'no'], ['crocodile', 4.5, 'no']]
+   rows: [['fish', 1.0, 'no'], ['cat', 3.0, 'yes'], ['bat', 2.0, 'yes'], ['dolphin', 4.0, 'yes'],
+  ['elephant', 5.0, 'yes'], ['frog', 1.5, 'no'], ['crocodile', 4.5, 'no']]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

@@ -140,7 +140,7 @@ function  BrunelVis(visId) {
         };
       }
       // Aesthetic Functions
-      var scale_color = d3.scaleLinear().domain([40, 43.333333, 46.666667, 50, 53.333333, 56.666667, 60, 63.333333, 66.666667, 70, 73.333333, 76.666667, 80, 83.333333, 86.666667, 90, 93.333333, 96.666667, 100])
+      var scale_color = d3.scaleLinear().domain([40, 43.333333333333336, 46.666666666666664, 50, 53.333333333333336, 56.66666666666667, 60, 63.33333333333333, 66.66666666666667, 70, 73.33333333333334, 76.66666666666666, 80, 83.33333333333334, 86.66666666666666, 90, 93.33333333333334, 96.66666666666666, 100])
         .interpolate(d3.interpolateHcl)
         .range([ '#000000', '#1C1C1C', '#393939', '#555555', '#717171', '#8E8E8E', 
           '#AAAAAA', '#C6C6C6', '#E3E3E3', '#ffffff', '#FFFFFF', '#FFE3E3', '#FFC6C6', 
@@ -150,7 +150,7 @@ function  BrunelVis(visId) {
         .domain(['Canada', 'England', 'France', 'India', 'Ireland', 'Japan', 'Scotland', 'Taiwan', 'USA'])
         .range([ '_sym_person', '_sym_diamond', '_sym_hexagon']);
       var symbolID = function(d) { var s =data.Country(d.data); return s!=null ? scale_symbol(s) : '_sym_circle' };
-      var scale_size = d3.scaleSqrt().domain([0, 19.000002])
+      var scale_size = d3.scaleSqrt().domain([0, 19.0000019])
         .range([ 0.001, 1]);
       var size = function(d) { var s = data.$count(d.data); return s!=null ? scale_size(s) : null };
       legends._legend = legends._legend || { title: ['Rating'], 
@@ -220,7 +220,7 @@ function  BrunelVis(visId) {
         function label(selection, transitionMillis) {
 
           var tooltipLabeling  = {
-            index: -1, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 0, dy: 0.7,
+            index: -1, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 0.0, dy: 0.7,
             fit: true, granularity: 0,
             content: function(d) {
               return d.row == null ? null : '<span class="title">Country: </span>'
@@ -317,31 +317,36 @@ var table1 = {
    summarized: true,
    names: ['Country', 'Rating', '#count'], 
    options: ['string', 'numeric', 'numeric'], 
-   rows: [['Canada', 40, 1], ['Canada', 43, 1], ['Canada', 47, 1], ['Canada', 48, 1],
-  ['Canada', 53, 1], ['Canada', 54, 1], ['Canada', 56, 2], ['Canada', 60, 2], ['Canada', 64, 1],
-  ['Canada', 67, 3], ['Canada', 68, 1], ['Canada', 69, 2], ['Canada', 71, 1], ['Canada', 74, 1],
-  ['Canada', 75, 1], ['Canada', 77, 1], ['Canada', 79, 1], ['Canada', 80, 1], ['Canada', 81, 2],
-  ['Canada', 83, 1], ['Canada', 88, 1], ['Canada', 92, 1], ['Canada', null, 2], ['England', 77, 1],
-  ['France', 81, 2], ['India', 76, 2], ['India', 80, 1], ['India', 85, 1], ['India', 91, 1],
-  ['Ireland', 47, 1], ['Ireland', 50, 1], ['Ireland', 54, 1], ['Ireland', 64, 1], ['Ireland', 65, 2],
-  ['Ireland', 70, 1], ['Ireland', 71, 1], ['Ireland', 73, 2], ['Ireland', 74, 2], ['Ireland', 77, 1],
-  ['Ireland', 78, 1], ['Ireland', 79, 1], ['Ireland', 81, 5], ['Ireland', 83, 1], ['Ireland', 84, 3],
-  ['Ireland', 85, 1], ['Ireland', 86, 3], ['Ireland', 87, 2], ['Ireland', 88, 2], ['Ireland', 90, 1],
-  ['Ireland', 91, 3], ['Ireland', 92, 1], ['Ireland', 93, 1], ['Ireland', 96, 1], ['Ireland', 99, 1],
-  ['Ireland', 100, 1], ['Japan', 86, 1], ['Japan', 90, 1], ['Japan', 99, 1], ['Japan', null, 1],
-  ['Scotland', 58, 1], ['Scotland', 67, 1], ['Scotland', 69, 1], ['Scotland', 70, 1],
-  ['Scotland', 72, 1], ['Scotland', 74, 1], ['Scotland', 76, 1], ['Scotland', 77, 1],
-  ['Scotland', 78, 2], ['Scotland', 80, 1], ['Scotland', 81, 1], ['Scotland', 82, 2],
-  ['Scotland', 83, 3], ['Scotland', 84, 3], ['Scotland', 85, 3], ['Scotland', 86, 3],
-  ['Scotland', 87, 1], ['Scotland', 88, 5], ['Scotland', 89, 6], ['Scotland', 90, 8],
-  ['Scotland', 91, 2], ['Scotland', 92, 6], ['Scotland', 93, 1], ['Scotland', 94, 11],
-  ['Scotland', 95, 3], ['Scotland', 96, 19], ['Scotland', 97, 1], ['Scotland', 99, 13],
-  ['Scotland', 100, 1], ['Scotland', null, 5], ['Taiwan', 81, 1], ['Taiwan', 82, 2],
-  ['Taiwan', 88, 3], ['Taiwan', 96, 1], ['Taiwan', null, 1], ['USA', 54, 1], ['USA', 57, 2],
-  ['USA', 67, 1], ['USA', 68, 1], ['USA', 69, 2], ['USA', 76, 3], ['USA', 77, 1], ['USA', 78, 1],
-  ['USA', 79, 2], ['USA', 80, 3], ['USA', 81, 7], ['USA', 82, 4], ['USA', 83, 3], ['USA', 85, 3],
-  ['USA', 86, 2], ['USA', 87, 5], ['USA', 88, 18], ['USA', 89, 1], ['USA', 90, 2], ['USA', 92, 1],
-  ['USA', 93, 2], ['USA', 94, 4], ['USA', 96, 8], ['USA', 99, 5], ['USA', null, 2]]
+   rows: [['Canada', 40.0, 1.0], ['Canada', 43.0, 1.0], ['Canada', 47.0, 1.0], ['Canada', 48.0, 1.0],
+  ['Canada', 53.0, 1.0], ['Canada', 54.0, 1.0], ['Canada', 56.0, 2.0], ['Canada', 60.0, 2.0],
+  ['Canada', 64.0, 1.0], ['Canada', 67.0, 3.0], ['Canada', 68.0, 1.0], ['Canada', 69.0, 2.0],
+  ['Canada', 71.0, 1.0], ['Canada', 74.0, 1.0], ['Canada', 75.0, 1.0], ['Canada', 77.0, 1.0],
+  ['Canada', 79.0, 1.0], ['Canada', 80.0, 1.0], ['Canada', 81.0, 2.0], ['Canada', 83.0, 1.0],
+  ['Canada', 88.0, 1.0], ['Canada', 92.0, 1.0], ['Canada', null, 2.0], ['England', 77.0, 1.0],
+  ['France', 81.0, 2.0], ['India', 76.0, 2.0], ['India', 80.0, 1.0], ['India', 85.0, 1.0],
+  ['India', 91.0, 1.0], ['Ireland', 47.0, 1.0], ['Ireland', 50.0, 1.0], ['Ireland', 54.0, 1.0],
+  ['Ireland', 64.0, 1.0], ['Ireland', 65.0, 2.0], ['Ireland', 70.0, 1.0], ['Ireland', 71.0, 1.0],
+  ['Ireland', 73.0, 2.0], ['Ireland', 74.0, 2.0], ['Ireland', 77.0, 1.0], ['Ireland', 78.0, 1.0],
+  ['Ireland', 79.0, 1.0], ['Ireland', 81.0, 5.0], ['Ireland', 83.0, 1.0], ['Ireland', 84.0, 3.0],
+  ['Ireland', 85.0, 1.0], ['Ireland', 86.0, 3.0], ['Ireland', 87.0, 2.0], ['Ireland', 88.0, 2.0],
+  ['Ireland', 90.0, 1.0], ['Ireland', 91.0, 3.0], ['Ireland', 92.0, 1.0], ['Ireland', 93.0, 1.0],
+  ['Ireland', 96.0, 1.0], ['Ireland', 99.0, 1.0], ['Ireland', 100.0, 1.0], ['Japan', 86.0, 1.0],
+  ['Japan', 90.0, 1.0], ['Japan', 99.0, 1.0], ['Japan', null, 1.0], ['Scotland', 58.0, 1.0],
+  ['Scotland', 67.0, 1.0], ['Scotland', 69.0, 1.0], ['Scotland', 70.0, 1.0], ['Scotland', 72.0, 1.0],
+  ['Scotland', 74.0, 1.0], ['Scotland', 76.0, 1.0], ['Scotland', 77.0, 1.0], ['Scotland', 78.0, 2.0],
+  ['Scotland', 80.0, 1.0], ['Scotland', 81.0, 1.0], ['Scotland', 82.0, 2.0], ['Scotland', 83.0, 3.0],
+  ['Scotland', 84.0, 3.0], ['Scotland', 85.0, 3.0], ['Scotland', 86.0, 3.0], ['Scotland', 87.0, 1.0],
+  ['Scotland', 88.0, 5.0], ['Scotland', 89.0, 6.0], ['Scotland', 90.0, 8.0], ['Scotland', 91.0, 2.0],
+  ['Scotland', 92.0, 6.0], ['Scotland', 93.0, 1.0], ['Scotland', 94.0, 11.0],
+  ['Scotland', 95.0, 3.0], ['Scotland', 96.0, 19.0], ['Scotland', 97.0, 1.0],
+  ['Scotland', 99.0, 13.0], ['Scotland', 100.0, 1.0], ['Scotland', null, 5.0], ['Taiwan', 81.0, 1.0],
+  ['Taiwan', 82.0, 2.0], ['Taiwan', 88.0, 3.0], ['Taiwan', 96.0, 1.0], ['Taiwan', null, 1.0],
+  ['USA', 54.0, 1.0], ['USA', 57.0, 2.0], ['USA', 67.0, 1.0], ['USA', 68.0, 1.0], ['USA', 69.0, 2.0],
+  ['USA', 76.0, 3.0], ['USA', 77.0, 1.0], ['USA', 78.0, 1.0], ['USA', 79.0, 2.0], ['USA', 80.0, 3.0],
+  ['USA', 81.0, 7.0], ['USA', 82.0, 4.0], ['USA', 83.0, 3.0], ['USA', 85.0, 3.0], ['USA', 86.0, 2.0],
+  ['USA', 87.0, 5.0], ['USA', 88.0, 18.0], ['USA', 89.0, 1.0], ['USA', 90.0, 2.0],
+  ['USA', 92.0, 1.0], ['USA', 93.0, 2.0], ['USA', 94.0, 4.0], ['USA', 96.0, 8.0], ['USA', 99.0, 5.0],
+  ['USA', null, 2.0]]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

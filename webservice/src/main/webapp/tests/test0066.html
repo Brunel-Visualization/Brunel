@@ -52,6 +52,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -76,7 +77,7 @@ function  BrunelVis(visId) {
     };
     function project_center(v) { return v ? projection([v.c, v.d]) : [-9e99,-9e99] };
     var path = d3.geoPath().projection(BrunelD3.geoStream(projection));
-    var graticule = d3.geoGraticule().step([ 10, 10])(),
+    var graticule = d3.geoGraticule().step([ 10.0, 10.0])(),
       graticulePath = interior.append('path').attr('class', 'grid');
     function buildAxes() { graticulePath.attr('d', path(graticule) ) }
     var scale_x = d3.scaleLinear(), scale_y = d3.scaleLinear();
@@ -220,7 +221,7 @@ function  BrunelVis(visId) {
         var h = geom.default_point_size;
         var y = function(d) { return projection([data.x(d),data.y(d)])[1]};
         var labeling  = [{
-          index: 0, method: 'box', location: ['right', 'center'], inside: false, align: 'start', pad: 3, dy: 0.3,
+          index: 0, method: 'box', location: ['right', 'center'], inside: false, align: 'start', pad: 3.0, dy: 0.3,
           fit: false, granularity: 1,
           content: function(d) {
             return d.row == null ? null : data.x_f(d)
@@ -335,13 +336,13 @@ var table1 = {
    summarized: false,
    names: ['_dummy_'], 
    options: ['numeric'], 
-   rows: [[1], [1], [1], [1], [1], [1], [1]]
+   rows: [[1.0], [1.0], [1.0], [1.0], [1.0], [1.0], [1.0]]
 };
 var table2 = {
    summarized: false,
    names: ['x', 'y'], 
    options: ['numeric', 'numeric'], 
-   rows: [[10, 50], [100, 0]]
+   rows: [[10.0, 50.0], [100.0, 0.0]]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

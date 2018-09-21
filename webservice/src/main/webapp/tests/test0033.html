@@ -116,7 +116,7 @@ function  BrunelVis(visId) {
         };
       }
       // Aesthetic Functions
-      var scale_size = d3.scaleLinear().domain([0, 51.000005])
+      var scale_size = d3.scaleLinear().domain([0, 51.0000051])
         .range([ 0.001, 1]);
       var size = function(d) { var s = data.$count(d.data); return s!=null ? scale_size(s) : null };
 
@@ -137,7 +137,7 @@ function  BrunelVis(visId) {
           .paddingTop(function(d) { return d.depth ==1 ? 15 : (d.depth == 2) ? 12 : 0});
         main.attr('class', 'diagram treemap hierarchy');
         var labeling  = [{
-          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3, dy: 0.3,
+          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3.0, dy: 0.3,
           fit: true, granularity: 1,
           content: function(d) {
             return d.row == null ? null : data.Brand_f(d)
@@ -258,31 +258,32 @@ var table1 = {
    names: ['Country', 'Category', '#count', 'Brand'], 
    options: ['string', 'string', 'numeric', 'list'], 
    rows: [
-  ['Canada', 'Blended', 25, "8 Seconds, Black Velvet, Canadian Club, Canadian Hunter, Canadian LTD, Canadian Mist, Collingwood, Crown Royal, Danfield, Ellington, Forty Creek, Hood River, McAdams, Rich & Rare, Royal Canadian, Texas Crown, Wiser's"],
-  ['France', 'Blended', 1, 'P & M'],
-  ['Ireland', 'Blended', 23, 'Barton, Bushmills, Feckin, Jameson, John L. Sullivan, Kellan, Kilbeggan, Michael Collins, Midleton, Origine, Powers, Slane Castle, Tullamore, Wolfhound'],
-  ['Japan', 'Blended', 1, 'Suntory'],
-  ['Scotland', 'Blended', 21, "Bell's, Buchanan, Chivas Regal, Famous Grouse, Haig, Johnnie Walker, Kingdom, Old Parr, Tweeddale, Whyte & Mackay, William Grant & Sons"],
-  ['USA', 'Blended', 2, "Downslope, Jack Daniel's"],
-  ['USA', 'Bourbon', 51, "A.H. Hirsch, Basil Hayden, Benchmark, Black Maple Hill, Blanton, Booker's, Bowman, Breckenridge, Buffalo Trace, Bulleit, Cedar Ridge, Charter, Eagle, Early Times, Elijah Craig, Elmer T Lee, Evan Williams, Four Roses, Garrison Brothers, George T. Stagg, Hudson, Jefferson, Jim Beam, Knob creek, Maker's Mark, Noah's Mill, Old Forester, Pappy Van Winkle, Parker's Heritage, Rebel Yell, Ridgemont Reserve, Rowan's Creek, Wild Turkey, William Larue Weller, Woodford Reserve"],
-  ['Scotland', 'Campbeltown', 2, 'Longrow, Springbank'],
-  ['USA', 'Corn', 8, 'Balcones, Buffalo Trace, George Dickel, Hudson, Stillhouse, Thirteen Colony'],
-  ['Ireland', 'Flavored', 1, 'Mickey Finn'], ['Taiwan', 'Flavored', 1, 'Pescadores'],
-  ['USA', 'Flavored', 3, "Corsair, Jim Beam, Seagram's"], ['Ireland', 'Grain', 1, 'Greenore'],
-  ['USA', 'Grain', 1, 'Middle West'],
-  ['Scotland', 'Highlands', 26, 'Aberfeldy, Ancnoc, Balblair, Cardhu, Dalmore, Dalwhinnie, Deanston, Glen Garioch, Glengoyne, Glenmorangie, Ledaig, Oban, Old Pulteney'],
-  ['Scotland', 'Islands', 9, 'Highland Park, Isle of Jura, Talisker, Tobermory'],
-  ['Scotland', 'Islay', 17, 'Ardbeg, Bowmore, Bunnahabhain, Caol Ila, Lagavulin, Laphroaig'],
-  ['Scotland', 'Lowlands', 1, 'Auchentoshan'], ['Ireland', 'Pure Pot Still', 2, 'Redbreast'],
-  ['Canada', 'Rye', 3, "Canadian Mist, Price Edward, Wiser's"],
-  ['USA', 'Rye', 15, "Abraham Bowman, Black Maple Hill, Catoctin Creek, Copper Fox, Delaware Phoenix, High West, Hudson, Jim Beam, Leopold Bros., Russell's, Sazerac, Templeton, Thomas H. Handy"],
-  ['Canada', 'Single Malt', 2, 'Glen Breton, Glenora'], ['England', 'Single Malt', 1, 'Penderyn'],
-  ['France', 'Single Malt', 1, 'P & M'], ['India', 'Single Malt', 5, 'Amrut'],
-  ['Ireland', 'Single Malt', 14, "Bushmills, Connemara, Greenore, Michael Collins, The Irishman, Tullamore, Tyrconnell, Wiser's"],
-  ['Japan', 'Single Malt', 3, 'Suntory, Yamazaki'], ['Taiwan', 'Single Malt', 7, 'Kavalan'],
-  ['USA', 'Single Malt', 2, 'Hudson, Rogue'],
-  ['Scotland', 'Speyside', 32, 'Aberlour, Ardmore, Balvenie, Glen Grant, Glendullan, Glenfiddich, Glenlivet, Glenrothes, Macallan, Royal Salute, Speyburn, Tomatin'],
-  ['USA', 'Unaged', 2, 'Kansas Spirit, Smooth Ambler']]
+  ['Canada', 'Blended', 25.0, "8 Seconds, Black Velvet, Canadian Club, Canadian Hunter, Canadian LTD, Canadian Mist, Collingwood, Crown Royal, Danfield, Ellington, Forty Creek, Hood River, McAdams, Rich & Rare, Royal Canadian, Texas Crown, Wiser's"],
+  ['France', 'Blended', 1.0, 'P & M'],
+  ['Ireland', 'Blended', 23.0, 'Barton, Bushmills, Feckin, Jameson, John L. Sullivan, Kellan, Kilbeggan, Michael Collins, Midleton, Origine, Powers, Slane Castle, Tullamore, Wolfhound'],
+  ['Japan', 'Blended', 1.0, 'Suntory'],
+  ['Scotland', 'Blended', 21.0, "Bell's, Buchanan, Chivas Regal, Famous Grouse, Haig, Johnnie Walker, Kingdom, Old Parr, Tweeddale, Whyte & Mackay, William Grant & Sons"],
+  ['USA', 'Blended', 2.0, "Downslope, Jack Daniel's"],
+  ['USA', 'Bourbon', 51.0, "A.H. Hirsch, Basil Hayden, Benchmark, Black Maple Hill, Blanton, Booker's, Bowman, Breckenridge, Buffalo Trace, Bulleit, Cedar Ridge, Charter, Eagle, Early Times, Elijah Craig, Elmer T Lee, Evan Williams, Four Roses, Garrison Brothers, George T. Stagg, Hudson, Jefferson, Jim Beam, Knob creek, Maker's Mark, Noah's Mill, Old Forester, Pappy Van Winkle, Parker's Heritage, Rebel Yell, Ridgemont Reserve, Rowan's Creek, Wild Turkey, William Larue Weller, Woodford Reserve"],
+  ['Scotland', 'Campbeltown', 2.0, 'Longrow, Springbank'],
+  ['USA', 'Corn', 8.0, 'Balcones, Buffalo Trace, George Dickel, Hudson, Stillhouse, Thirteen Colony'],
+  ['Ireland', 'Flavored', 1.0, 'Mickey Finn'], ['Taiwan', 'Flavored', 1.0, 'Pescadores'],
+  ['USA', 'Flavored', 3.0, "Corsair, Jim Beam, Seagram's"], ['Ireland', 'Grain', 1.0, 'Greenore'],
+  ['USA', 'Grain', 1.0, 'Middle West'],
+  ['Scotland', 'Highlands', 26.0, 'Aberfeldy, Ancnoc, Balblair, Cardhu, Dalmore, Dalwhinnie, Deanston, Glen Garioch, Glengoyne, Glenmorangie, Ledaig, Oban, Old Pulteney'],
+  ['Scotland', 'Islands', 9.0, 'Highland Park, Isle of Jura, Talisker, Tobermory'],
+  ['Scotland', 'Islay', 17.0, 'Ardbeg, Bowmore, Bunnahabhain, Caol Ila, Lagavulin, Laphroaig'],
+  ['Scotland', 'Lowlands', 1.0, 'Auchentoshan'], ['Ireland', 'Pure Pot Still', 2.0, 'Redbreast'],
+  ['Canada', 'Rye', 3.0, "Canadian Mist, Price Edward, Wiser's"],
+  ['USA', 'Rye', 15.0, "Abraham Bowman, Black Maple Hill, Catoctin Creek, Copper Fox, Delaware Phoenix, High West, Hudson, Jim Beam, Leopold Bros., Russell's, Sazerac, Templeton, Thomas H. Handy"],
+  ['Canada', 'Single Malt', 2.0, 'Glen Breton, Glenora'],
+  ['England', 'Single Malt', 1.0, 'Penderyn'], ['France', 'Single Malt', 1.0, 'P & M'],
+  ['India', 'Single Malt', 5.0, 'Amrut'],
+  ['Ireland', 'Single Malt', 14.0, "Bushmills, Connemara, Greenore, Michael Collins, The Irishman, Tullamore, Tyrconnell, Wiser's"],
+  ['Japan', 'Single Malt', 3.0, 'Suntory, Yamazaki'], ['Taiwan', 'Single Malt', 7.0, 'Kavalan'],
+  ['USA', 'Single Malt', 2.0, 'Hudson, Rogue'],
+  ['Scotland', 'Speyside', 32.0, 'Aberlour, Ardmore, Balvenie, Glen Grant, Glendullan, Glenfiddich, Glenlivet, Glenrothes, Macallan, Royal Salute, Speyburn, Tomatin'],
+  ['USA', 'Unaged', 2.0, 'Kansas Spirit, Smooth Ambler']]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

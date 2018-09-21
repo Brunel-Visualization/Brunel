@@ -51,6 +51,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -124,7 +125,7 @@ function  BrunelVis(visId) {
         };
       }
       // Aesthetic Functions
-      var scale_color = d3.scaleSqrt().domain([1, 2.1231602, 3.6642136, 5.6231602, 8])
+      var scale_color = d3.scaleSqrt().domain([1, 2.123160171779821, 3.6642135623730954, 5.623160171779823, 8.000000000000002])
         .interpolate(d3.interpolateHcl)
         .range([ '#f1eef6', '#bdc9e1', '#74a9cf', '#2b8cbe', '#045a8d']);
       var color = function(d) { var c = data.$count(d.data); return c!=null ? scale_color(c) : null };
@@ -150,9 +151,9 @@ function  BrunelVis(visId) {
         BrunelD3.prune(tree, collapseState, false);
         function nodeKey(d) { return d.data.key == null ? data._key(d.data.row) : d.data.key };
         var treeLayout = d3.tree()
-          .size([geom.inner_height-30, geom.inner_width-30]);
+          .size([geom.inner_height-24, geom.inner_width-24]);
         var treeNodes = treeLayout(tree).descendants();
-        BrunelD3.copyTreeLayoutInfo(treeNodes, graph, 15);
+        BrunelD3.copyTreeLayoutInfo(treeNodes, graph, 12);
         main.attr('class', 'diagram tree hierarchy');
         // Define Coordinate functions
         function r(d) { return d.data.radius = size(d) * geom.default_point_size / 2 };
@@ -187,6 +188,7 @@ function  BrunelVis(visId) {
             .attr('d', function(d) {
               var p = BrunelD3.insetEdge(scale_x(d.source.y), scale_y(d.source.x), d.source,
                 scale_x(d.target.y), scale_y(d.target.x), d.target);
+              if(!p) return '';
               return 'M' + p.x1 + ',' + p.y1 + 
                 'C' + (p.x1+p.x2)/2 + ',' + p.y1
                  + ' ' + (p.x1+p.x2)/2 + ',' + p.y2 + ' ' 
@@ -196,6 +198,7 @@ function  BrunelVis(visId) {
             .attr('d', function(d) {
               var p = BrunelD3.insetEdge(scale_x(d.source.y), scale_y(d.source.x), d.source,
                 scale_x(d.target.y), scale_y(d.target.x), d.target);
+              if(!p) return '';
               return 'M' + p.x1 + ',' + p.y1 + 
                 'C' + (p.x1+p.x2)/2 + ',' + p.y1
                  + ' ' + (p.x1+p.x2)/2 + ',' + p.y2 + ' ' 
@@ -292,70 +295,88 @@ var table1 = {
    summarized: true,
    names: ['Country', 'Category', '#count', 'Rating'], 
    options: ['string', 'string', 'numeric', 'numeric'], 
-   rows: [['Canada', 'Blended', 1, 40], ['Canada', 'Blended', 1, 43], ['Canada', 'Blended', 1, 47],
-  ['Canada', 'Blended', 1, 48], ['Canada', 'Blended', 1, 53], ['Canada', 'Blended', 1, 54],
-  ['Canada', 'Blended', 2, 56], ['Canada', 'Blended', 1, 60], ['Canada', 'Blended', 1, 64],
-  ['Canada', 'Blended', 3, 67], ['Canada', 'Blended', 1, 68], ['Canada', 'Blended', 2, 69],
-  ['Canada', 'Blended', 1, 71], ['Canada', 'Blended', 1, 74], ['Canada', 'Blended', 1, 79],
-  ['Canada', 'Blended', 1, 81], ['Canada', 'Blended', 1, 83], ['Canada', 'Blended', 1, 88],
-  ['Canada', 'Blended', 1, 92], ['Canada', 'Blended', 2, null], ['France', 'Blended', 1, 81],
-  ['Ireland', 'Blended', 1, 47], ['Ireland', 'Blended', 1, 50], ['Ireland', 'Blended', 1, 54],
-  ['Ireland', 'Blended', 1, 64], ['Ireland', 'Blended', 2, 65], ['Ireland', 'Blended', 1, 70],
-  ['Ireland', 'Blended', 1, 73], ['Ireland', 'Blended', 1, 74], ['Ireland', 'Blended', 1, 77],
-  ['Ireland', 'Blended', 1, 79], ['Ireland', 'Blended', 2, 81], ['Ireland', 'Blended', 3, 84],
-  ['Ireland', 'Blended', 3, 86], ['Ireland', 'Blended', 1, 87], ['Ireland', 'Blended', 1, 90],
-  ['Ireland', 'Blended', 1, 91], ['Ireland', 'Blended', 1, 99], ['Japan', 'Blended', 1, null],
-  ['Scotland', 'Blended', 1, 58], ['Scotland', 'Blended', 1, 69], ['Scotland', 'Blended', 1, 70],
-  ['Scotland', 'Blended', 1, 74], ['Scotland', 'Blended', 1, 76], ['Scotland', 'Blended', 2, 78],
-  ['Scotland', 'Blended', 1, 82], ['Scotland', 'Blended', 1, 84], ['Scotland', 'Blended', 1, 86],
-  ['Scotland', 'Blended', 2, 89], ['Scotland', 'Blended', 1, 90], ['Scotland', 'Blended', 5, 96],
-  ['Scotland', 'Blended', 1, 99], ['Scotland', 'Blended', 2, null], ['USA', 'Blended', 1, 54],
-  ['USA', 'Blended', 1, 88], ['USA', 'Bourbon', 1, 68], ['USA', 'Bourbon', 1, 69],
-  ['USA', 'Bourbon', 2, 76], ['USA', 'Bourbon', 1, 77], ['USA', 'Bourbon', 3, 80],
-  ['USA', 'Bourbon', 3, 81], ['USA', 'Bourbon', 1, 82], ['USA', 'Bourbon', 3, 83],
-  ['USA', 'Bourbon', 1, 85], ['USA', 'Bourbon', 2, 86], ['USA', 'Bourbon', 4, 87],
-  ['USA', 'Bourbon', 8, 88], ['USA', 'Bourbon', 1, 89], ['USA', 'Bourbon', 2, 90],
-  ['USA', 'Bourbon', 1, 92], ['USA', 'Bourbon', 2, 93], ['USA', 'Bourbon', 3, 94],
-  ['USA', 'Bourbon', 6, 96], ['USA', 'Bourbon', 4, 99], ['USA', 'Bourbon', 2, null],
-  ['Scotland', 'Campbeltown', 1, 85], ['Scotland', 'Campbeltown', 1, 88], ['USA', 'Corn', 1, 79],
-  ['USA', 'Corn', 2, 82], ['USA', 'Corn', 1, 87], ['USA', 'Corn', 3, 88], ['USA', 'Corn', 1, 96],
-  ['Ireland', 'Flavored', 1, 81], ['Taiwan', 'Flavored', 1, 88], ['USA', 'Flavored', 3, 81],
-  ['Ireland', 'Grain', 1, 71], ['USA', 'Grain', 1, 88], ['Scotland', 'Highlands', 1, 67],
-  ['Scotland', 'Highlands', 1, 81], ['Scotland', 'Highlands', 2, 83],
-  ['Scotland', 'Highlands', 1, 87], ['Scotland', 'Highlands', 1, 89],
-  ['Scotland', 'Highlands', 4, 92], ['Scotland', 'Highlands', 3, 94],
-  ['Scotland', 'Highlands', 2, 95], ['Scotland', 'Highlands', 5, 96],
-  ['Scotland', 'Highlands', 4, 99], ['Scotland', 'Highlands', 1, 100],
-  ['Scotland', 'Highlands', 1, null], ['Scotland', 'Islands', 1, 80], ['Scotland', 'Islands', 1, 88],
-  ['Scotland', 'Islands', 1, 90], ['Scotland', 'Islands', 1, 91], ['Scotland', 'Islands', 4, 94],
-  ['Scotland', 'Islands', 1, 96], ['Scotland', 'Islay', 1, 83], ['Scotland', 'Islay', 1, 84],
-  ['Scotland', 'Islay', 1, 85], ['Scotland', 'Islay', 1, 86], ['Scotland', 'Islay', 1, 92],
-  ['Scotland', 'Islay', 3, 94], ['Scotland', 'Islay', 3, 96], ['Scotland', 'Islay', 5, 99],
-  ['Scotland', 'Islay', 1, null], ['Scotland', 'Lowlands', 1, 85],
-  ['Ireland', 'Pure Pot Still', 1, 92], ['Ireland', 'Pure Pot Still', 1, 96],
-  ['Canada', 'Rye', 1, 60], ['Canada', 'Rye', 1, 80], ['Canada', 'Rye', 1, 81],
-  ['USA', 'Rye', 2, 57], ['USA', 'Rye', 1, 67], ['USA', 'Rye', 1, 69], ['USA', 'Rye', 1, 76],
-  ['USA', 'Rye', 1, 78], ['USA', 'Rye', 1, 79], ['USA', 'Rye', 1, 82], ['USA', 'Rye', 2, 85],
-  ['USA', 'Rye', 2, 88], ['USA', 'Rye', 1, 94], ['USA', 'Rye', 1, 96], ['USA', 'Rye', 1, 99],
-  ['Canada', 'Single Malt', 1, 75], ['Canada', 'Single Malt', 1, 77],
-  ['England', 'Single Malt', 1, 77], ['France', 'Single Malt', 1, 81],
-  ['India', 'Single Malt', 2, 76], ['India', 'Single Malt', 1, 80], ['India', 'Single Malt', 1, 85],
-  ['India', 'Single Malt', 1, 91], ['Ireland', 'Single Malt', 1, 73],
-  ['Ireland', 'Single Malt', 1, 74], ['Ireland', 'Single Malt', 1, 78],
-  ['Ireland', 'Single Malt', 2, 81], ['Ireland', 'Single Malt', 1, 83],
-  ['Ireland', 'Single Malt', 1, 85], ['Ireland', 'Single Malt', 1, 87],
-  ['Ireland', 'Single Malt', 2, 88], ['Ireland', 'Single Malt', 2, 91],
-  ['Ireland', 'Single Malt', 1, 93], ['Ireland', 'Single Malt', 1, 100],
-  ['Japan', 'Single Malt', 1, 86], ['Japan', 'Single Malt', 1, 90], ['Japan', 'Single Malt', 1, 99],
-  ['Taiwan', 'Single Malt', 1, 81], ['Taiwan', 'Single Malt', 2, 82],
-  ['Taiwan', 'Single Malt', 2, 88], ['Taiwan', 'Single Malt', 1, 96],
-  ['Taiwan', 'Single Malt', 1, null], ['USA', 'Single Malt', 1, 81], ['USA', 'Single Malt', 1, 88],
-  ['Scotland', 'Speyside', 1, 72], ['Scotland', 'Speyside', 1, 77], ['Scotland', 'Speyside', 1, 82],
-  ['Scotland', 'Speyside', 1, 84], ['Scotland', 'Speyside', 1, 86], ['Scotland', 'Speyside', 3, 88],
-  ['Scotland', 'Speyside', 3, 89], ['Scotland', 'Speyside', 6, 90], ['Scotland', 'Speyside', 1, 91],
-  ['Scotland', 'Speyside', 1, 92], ['Scotland', 'Speyside', 1, 93], ['Scotland', 'Speyside', 1, 94],
-  ['Scotland', 'Speyside', 1, 95], ['Scotland', 'Speyside', 5, 96], ['Scotland', 'Speyside', 1, 97],
-  ['Scotland', 'Speyside', 3, 99], ['Scotland', 'Speyside', 1, null], ['USA', 'Unaged', 2, 88]]
+   rows: [['Canada', 'Blended', 1.0, 40.0], ['Canada', 'Blended', 1.0, 43.0],
+  ['Canada', 'Blended', 1.0, 47.0], ['Canada', 'Blended', 1.0, 48.0],
+  ['Canada', 'Blended', 1.0, 53.0], ['Canada', 'Blended', 1.0, 54.0],
+  ['Canada', 'Blended', 2.0, 56.0], ['Canada', 'Blended', 1.0, 60.0],
+  ['Canada', 'Blended', 1.0, 64.0], ['Canada', 'Blended', 3.0, 67.0],
+  ['Canada', 'Blended', 1.0, 68.0], ['Canada', 'Blended', 2.0, 69.0],
+  ['Canada', 'Blended', 1.0, 71.0], ['Canada', 'Blended', 1.0, 74.0],
+  ['Canada', 'Blended', 1.0, 79.0], ['Canada', 'Blended', 1.0, 81.0],
+  ['Canada', 'Blended', 1.0, 83.0], ['Canada', 'Blended', 1.0, 88.0],
+  ['Canada', 'Blended', 1.0, 92.0], ['Canada', 'Blended', 2.0, null],
+  ['France', 'Blended', 1.0, 81.0], ['Ireland', 'Blended', 1.0, 47.0],
+  ['Ireland', 'Blended', 1.0, 50.0], ['Ireland', 'Blended', 1.0, 54.0],
+  ['Ireland', 'Blended', 1.0, 64.0], ['Ireland', 'Blended', 2.0, 65.0],
+  ['Ireland', 'Blended', 1.0, 70.0], ['Ireland', 'Blended', 1.0, 73.0],
+  ['Ireland', 'Blended', 1.0, 74.0], ['Ireland', 'Blended', 1.0, 77.0],
+  ['Ireland', 'Blended', 1.0, 79.0], ['Ireland', 'Blended', 2.0, 81.0],
+  ['Ireland', 'Blended', 3.0, 84.0], ['Ireland', 'Blended', 3.0, 86.0],
+  ['Ireland', 'Blended', 1.0, 87.0], ['Ireland', 'Blended', 1.0, 90.0],
+  ['Ireland', 'Blended', 1.0, 91.0], ['Ireland', 'Blended', 1.0, 99.0],
+  ['Japan', 'Blended', 1.0, null], ['Scotland', 'Blended', 1.0, 58.0],
+  ['Scotland', 'Blended', 1.0, 69.0], ['Scotland', 'Blended', 1.0, 70.0],
+  ['Scotland', 'Blended', 1.0, 74.0], ['Scotland', 'Blended', 1.0, 76.0],
+  ['Scotland', 'Blended', 2.0, 78.0], ['Scotland', 'Blended', 1.0, 82.0],
+  ['Scotland', 'Blended', 1.0, 84.0], ['Scotland', 'Blended', 1.0, 86.0],
+  ['Scotland', 'Blended', 2.0, 89.0], ['Scotland', 'Blended', 1.0, 90.0],
+  ['Scotland', 'Blended', 5.0, 96.0], ['Scotland', 'Blended', 1.0, 99.0],
+  ['Scotland', 'Blended', 2.0, null], ['USA', 'Blended', 1.0, 54.0], ['USA', 'Blended', 1.0, 88.0],
+  ['USA', 'Bourbon', 1.0, 68.0], ['USA', 'Bourbon', 1.0, 69.0], ['USA', 'Bourbon', 2.0, 76.0],
+  ['USA', 'Bourbon', 1.0, 77.0], ['USA', 'Bourbon', 3.0, 80.0], ['USA', 'Bourbon', 3.0, 81.0],
+  ['USA', 'Bourbon', 1.0, 82.0], ['USA', 'Bourbon', 3.0, 83.0], ['USA', 'Bourbon', 1.0, 85.0],
+  ['USA', 'Bourbon', 2.0, 86.0], ['USA', 'Bourbon', 4.0, 87.0], ['USA', 'Bourbon', 8.0, 88.0],
+  ['USA', 'Bourbon', 1.0, 89.0], ['USA', 'Bourbon', 2.0, 90.0], ['USA', 'Bourbon', 1.0, 92.0],
+  ['USA', 'Bourbon', 2.0, 93.0], ['USA', 'Bourbon', 3.0, 94.0], ['USA', 'Bourbon', 6.0, 96.0],
+  ['USA', 'Bourbon', 4.0, 99.0], ['USA', 'Bourbon', 2.0, null],
+  ['Scotland', 'Campbeltown', 1.0, 85.0], ['Scotland', 'Campbeltown', 1.0, 88.0],
+  ['USA', 'Corn', 1.0, 79.0], ['USA', 'Corn', 2.0, 82.0], ['USA', 'Corn', 1.0, 87.0],
+  ['USA', 'Corn', 3.0, 88.0], ['USA', 'Corn', 1.0, 96.0], ['Ireland', 'Flavored', 1.0, 81.0],
+  ['Taiwan', 'Flavored', 1.0, 88.0], ['USA', 'Flavored', 3.0, 81.0], ['Ireland', 'Grain', 1.0, 71.0],
+  ['USA', 'Grain', 1.0, 88.0], ['Scotland', 'Highlands', 1.0, 67.0],
+  ['Scotland', 'Highlands', 1.0, 81.0], ['Scotland', 'Highlands', 2.0, 83.0],
+  ['Scotland', 'Highlands', 1.0, 87.0], ['Scotland', 'Highlands', 1.0, 89.0],
+  ['Scotland', 'Highlands', 4.0, 92.0], ['Scotland', 'Highlands', 3.0, 94.0],
+  ['Scotland', 'Highlands', 2.0, 95.0], ['Scotland', 'Highlands', 5.0, 96.0],
+  ['Scotland', 'Highlands', 4.0, 99.0], ['Scotland', 'Highlands', 1.0, 100.0],
+  ['Scotland', 'Highlands', 1.0, null], ['Scotland', 'Islands', 1.0, 80.0],
+  ['Scotland', 'Islands', 1.0, 88.0], ['Scotland', 'Islands', 1.0, 90.0],
+  ['Scotland', 'Islands', 1.0, 91.0], ['Scotland', 'Islands', 4.0, 94.0],
+  ['Scotland', 'Islands', 1.0, 96.0], ['Scotland', 'Islay', 1.0, 83.0],
+  ['Scotland', 'Islay', 1.0, 84.0], ['Scotland', 'Islay', 1.0, 85.0],
+  ['Scotland', 'Islay', 1.0, 86.0], ['Scotland', 'Islay', 1.0, 92.0],
+  ['Scotland', 'Islay', 3.0, 94.0], ['Scotland', 'Islay', 3.0, 96.0],
+  ['Scotland', 'Islay', 5.0, 99.0], ['Scotland', 'Islay', 1.0, null],
+  ['Scotland', 'Lowlands', 1.0, 85.0], ['Ireland', 'Pure Pot Still', 1.0, 92.0],
+  ['Ireland', 'Pure Pot Still', 1.0, 96.0], ['Canada', 'Rye', 1.0, 60.0],
+  ['Canada', 'Rye', 1.0, 80.0], ['Canada', 'Rye', 1.0, 81.0], ['USA', 'Rye', 2.0, 57.0],
+  ['USA', 'Rye', 1.0, 67.0], ['USA', 'Rye', 1.0, 69.0], ['USA', 'Rye', 1.0, 76.0],
+  ['USA', 'Rye', 1.0, 78.0], ['USA', 'Rye', 1.0, 79.0], ['USA', 'Rye', 1.0, 82.0],
+  ['USA', 'Rye', 2.0, 85.0], ['USA', 'Rye', 2.0, 88.0], ['USA', 'Rye', 1.0, 94.0],
+  ['USA', 'Rye', 1.0, 96.0], ['USA', 'Rye', 1.0, 99.0], ['Canada', 'Single Malt', 1.0, 75.0],
+  ['Canada', 'Single Malt', 1.0, 77.0], ['England', 'Single Malt', 1.0, 77.0],
+  ['France', 'Single Malt', 1.0, 81.0], ['India', 'Single Malt', 2.0, 76.0],
+  ['India', 'Single Malt', 1.0, 80.0], ['India', 'Single Malt', 1.0, 85.0],
+  ['India', 'Single Malt', 1.0, 91.0], ['Ireland', 'Single Malt', 1.0, 73.0],
+  ['Ireland', 'Single Malt', 1.0, 74.0], ['Ireland', 'Single Malt', 1.0, 78.0],
+  ['Ireland', 'Single Malt', 2.0, 81.0], ['Ireland', 'Single Malt', 1.0, 83.0],
+  ['Ireland', 'Single Malt', 1.0, 85.0], ['Ireland', 'Single Malt', 1.0, 87.0],
+  ['Ireland', 'Single Malt', 2.0, 88.0], ['Ireland', 'Single Malt', 2.0, 91.0],
+  ['Ireland', 'Single Malt', 1.0, 93.0], ['Ireland', 'Single Malt', 1.0, 100.0],
+  ['Japan', 'Single Malt', 1.0, 86.0], ['Japan', 'Single Malt', 1.0, 90.0],
+  ['Japan', 'Single Malt', 1.0, 99.0], ['Taiwan', 'Single Malt', 1.0, 81.0],
+  ['Taiwan', 'Single Malt', 2.0, 82.0], ['Taiwan', 'Single Malt', 2.0, 88.0],
+  ['Taiwan', 'Single Malt', 1.0, 96.0], ['Taiwan', 'Single Malt', 1.0, null],
+  ['USA', 'Single Malt', 1.0, 81.0], ['USA', 'Single Malt', 1.0, 88.0],
+  ['Scotland', 'Speyside', 1.0, 72.0], ['Scotland', 'Speyside', 1.0, 77.0],
+  ['Scotland', 'Speyside', 1.0, 82.0], ['Scotland', 'Speyside', 1.0, 84.0],
+  ['Scotland', 'Speyside', 1.0, 86.0], ['Scotland', 'Speyside', 3.0, 88.0],
+  ['Scotland', 'Speyside', 3.0, 89.0], ['Scotland', 'Speyside', 6.0, 90.0],
+  ['Scotland', 'Speyside', 1.0, 91.0], ['Scotland', 'Speyside', 1.0, 92.0],
+  ['Scotland', 'Speyside', 1.0, 93.0], ['Scotland', 'Speyside', 1.0, 94.0],
+  ['Scotland', 'Speyside', 1.0, 95.0], ['Scotland', 'Speyside', 5.0, 96.0],
+  ['Scotland', 'Speyside', 1.0, 97.0], ['Scotland', 'Speyside', 3.0, 99.0],
+  ['Scotland', 'Speyside', 1.0, null], ['USA', 'Unaged', 2.0, 88.0]]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

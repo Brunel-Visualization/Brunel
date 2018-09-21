@@ -52,6 +52,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -217,11 +218,11 @@ function  BrunelVis(visId) {
         };
       }
       // Aesthetic Functions
-      var scale_symbol = d3.scaleQuantize().domain([1.8, 8.3000007])
+      var scale_symbol = d3.scaleQuantize().domain([1.8, 8.300000650000001])
         .range([ '_sym_circle', '_sym_square', '_sym_triangle', '_sym_diamond', 
           '_sym_cross', '_sym_pentagon', '_sym_star', '_sym_hexagon']);
       var symbolID = function(d) { var s =data.s(d); return s!=null ? scale_symbol(s) : '_sym_circle' };
-      var scale_size = d3.scaleSqrt().domain([0, 8.3000008])
+      var scale_size = d3.scaleSqrt().domain([0, 8.30000083])
         .range([ 0.001, 3]);
       var size = function(d) { var s = data.s(d); return s!=null ? scale_size(s) : null };
       legends._legend = legends._legend || { title: ['S'], 
@@ -237,7 +238,7 @@ function  BrunelVis(visId) {
         var h = function(d) { return w(d)};
         var y = function(d) { return projection([data.x(d),data.y(d)])[1]};
         var labeling  = [{
-          index: 0, method: 'box', location: ['center', 'center'], inside: false, align: 'middle', pad: 3, dy: 0.3,
+          index: 0, method: 'box', location: ['center', 'center'], inside: false, align: 'middle', pad: 3.0, dy: 0.3,
           fit: false, granularity: 1,
           content: function(d) {
             return d.row == null ? null : data.n_f(d)
@@ -366,14 +367,14 @@ var table1 = {
    summarized: false,
    names: ['_dummy_'], 
    options: ['numeric'], 
-   rows: [[1], [1], [1], [1], [1], [1], [1]]
+   rows: [[1.0], [1.0], [1.0], [1.0], [1.0], [1.0], [1.0]]
 };
 var table2 = {
    summarized: false,
    names: ['x', 'y', 's', 'n'], 
    options: ['numeric', 'numeric', 'numeric', 'string'], 
    rows: [[139.7, 35.7, 8.3, 'Tokyo'], [139.6, 35.4, 3.5, 'Yokohama'],
-  [135.5, 34.7, 2.6, 'Osaka-shi'], [141.3, 43, 1.8, 'Sapporo']]
+  [135.5, 34.7, 2.6, 'Osaka-shi'], [141.3, 43.0, 1.8, 'Sapporo']]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

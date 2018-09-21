@@ -1,5 +1,33 @@
 # 2.6 Release Notes
 
+## Dual Y axis charts
+
+A long-requested feature, these are now available using the following syntax:
+
+ * Create a chart with two elements, sharing the same `x` axis, but with different `y` fields
+ * This chart will combine the two `y` axes; to activate dual axes, simply add the syntax `dualaxes`
+ * The main (left) y axis has the classes `y axis`; the alternate (right) axis has the classes
+  `y1 axis`. This makes styling relatively simple -- e.g. `style(".y1.axis text {fill:blue}")`
+ 
+This feature will work with any combination of elements, but note the following:
+
+ * Interactivity (pan-zoom) only affects the first element scale, not the second
+ * tooltips work fine, as expected
+ * Since the x axis is shared, if you specify different x fields, they will be combined.
+ * `transpose` and `polar` transforms will not work with `dualaxes`
+ 
+## Floating legends
+
+This is a somewhat experimental feature; you may no specify a legend as `legends(floating)` 
+or for a specific legend `legends(symbol:floating)` and it will be draw inside the chart,
+and will float to a location where it obscures the least amount of data.
+
+It will float in response to pan-zoom, so you will likely see it move around the screen as
+you navigate a chart
+
+
+# 2.6 Release Notes
+
 ### Miscellaneous fixes
 
 Several fixes and improvements from the community -- many thanks!

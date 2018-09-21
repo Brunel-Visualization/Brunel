@@ -51,6 +51,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -70,11 +71,11 @@ function  BrunelVis(visId) {
 
     // Scales //////////////////////////////////////////////////////////////////////////////////////
 
-    var scale_x = d3.scaleLinear().domain([53, 100])
+    var scale_x = d3.scaleLinear().domain([53, 100.0000047])
       .range([0, geom.inner_width]);
     var scale_inner = d3.scaleLinear().domain([0,1])
       .range([-0.5, 0.5]);
-    var scale_y = d3.scaleLinear().domain([0, 45.000005])
+    var scale_y = d3.scaleLinear().domain([0, 45.0000045])
       .range([geom.inner_height, 0]);
     var base_scales = [scale_x, scale_y];                           // untransformed original scales
 
@@ -197,10 +198,6 @@ function  BrunelVis(visId) {
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('stroke', color);
         }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
-        }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(splits, function(d) { return d.key });
         var added = selection.enter().append('path');
@@ -247,7 +244,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -280,77 +284,89 @@ var table1 = {
    summarized: false,
    names: ['Rating', 'Age', 'Category'], 
    options: ['numeric', 'numeric', 'string'], 
-   rows: [[40, null, 'Blended'], [43, null, 'Blended'], [47, null, 'Blended'], [47, null, 'Blended'],
-  [48, null, 'Blended'], [50, null, 'Blended'], [53, 6, 'Blended'], [54, null, 'Blended'],
-  [54, 7, 'Blended'], [54, null, 'Blended'], [56, 10, 'Blended'], [56, null, 'Blended'],
-  [57, 4, 'Rye'], [57, null, 'Rye'], [58, null, 'Blended'], [60, null, 'Blended'], [60, null, 'Rye'],
-  [64, null, 'Blended'], [64, null, 'Blended'], [65, null, 'Blended'], [65, null, 'Blended'],
-  [67, 4, 'Rye'], [67, 15, 'Highlands'], [67, null, 'Blended'], [67, 18, 'Blended'],
-  [67, 8, 'Blended'], [68, null, 'Blended'], [68, null, 'Bourbon'], [69, null, 'Blended'],
-  [69, 12, 'Blended'], [69, 4, 'Bourbon'], [69, 6, 'Rye'], [69, null, 'Blended'],
-  [70, 12, 'Blended'], [70, null, 'Blended'], [71, 8, 'Blended'], [71, 8, 'Grain'],
-  [72, 30, 'Speyside'], [73, 18, 'Blended'], [73, 12, 'Single Malt'], [74, null, 'Blended'],
-  [74, 10, 'Single Malt'], [74, null, 'Blended'], [74, 19, 'Blended'], [75, 10, 'Single Malt'],
-  [76, 1, 'Rye'], [76, 7, 'Bourbon'], [76, null, 'Single Malt'], [76, null, 'Single Malt'],
-  [76, null, 'Bourbon'], [76, 15, 'Blended'], [77, 15, 'Single Malt'], [77, 12, 'Blended'],
-  [77, null, 'Single Malt'], [77, 17, 'Speyside'], [77, 8, 'Bourbon'], [78, 18, 'Rye'],
-  [78, null, 'Blended'], [78, 18, 'Blended'], [78, null, 'Single Malt'], [79, 11, 'Blended'],
-  [79, null, 'Rye'], [79, 12, 'Corn'], [79, null, 'Blended'], [80, null, 'Rye'], [80, 16, 'Islands'],
-  [80, 12, 'Bourbon'], [80, 7, 'Bourbon'], [80, null, 'Single Malt'], [80, 8, 'Bourbon'],
-  [81, null, 'Bourbon'], [81, null, 'Single Malt'], [81, null, 'Highlands'], [81, null, 'Blended'],
-  [81, null, 'Flavored'], [81, null, 'Single Malt'], [81, null, 'Flavored'], [81, null, 'Blended'],
-  [81, null, 'Single Malt'], [81, null, 'Rye'], [81, 4, 'Flavored'], [81, 7, 'Flavored'],
-  [81, 10, 'Single Malt'], [81, null, 'Blended'], [81, 8, 'Bourbon'], [81, 10, 'Single Malt'],
-  [81, null, 'Blended'], [81, 4, 'Bourbon'], [82, null, 'Corn'], [82, null, 'Single Malt'],
-  [82, null, 'Single Malt'], [82, 18, 'Blended'], [82, null, 'Bourbon'], [82, null, 'Corn'],
-  [82, 21, 'Rye'], [82, 19, 'Speyside'], [83, null, 'Bourbon'], [83, null, 'Single Malt'],
-  [83, null, 'Highlands'], [83, null, 'Bourbon'], [83, null, 'Blended'], [83, null, 'Bourbon'],
-  [83, 14, 'Highlands'], [83, 10, 'Islay'], [84, 12, 'Blended'], [84, 10, 'Islay'],
-  [84, 12, 'Blended'], [84, 15, 'Blended'], [84, 12, 'Blended'], [84, 21, 'Speyside'],
-  [85, null, 'Rye'], [85, 16, 'Islay'], [85, 18, 'Lowlands'], [85, null, 'Single Malt'],
-  [85, 23, 'Rye'], [85, 10, 'Single Malt'], [85, 15, 'Campbeltown'], [85, null, 'Bourbon'],
-  [86, null, 'Blended'], [86, null, 'Blended'], [86, 10, 'Blended'], [86, 12, 'Islay'],
-  [86, 12, 'Single Malt'], [86, 8, 'Bourbon'], [86, null, 'Bourbon'], [86, 12, 'Blended'],
-  [86, 15, 'Speyside'], [87, null, 'Corn'], [87, 12, 'Blended'], [87, 23, 'Bourbon'],
-  [87, 10, 'Single Malt'], [87, 10, 'Highlands'], [87, null, 'Bourbon'], [87, 10, 'Bourbon'],
-  [87, null, 'Bourbon'], [88, 6, 'Rye'], [88, null, 'Corn'], [88, null, 'Single Malt'],
-  [88, null, 'Blended'], [88, null, 'Blended'], [88, 15, 'Single Malt'], [88, null, 'Corn'],
-  [88, 0, 'Unaged'], [88, null, 'Single Malt'], [88, null, 'Single Malt'], [88, null, 'Rye'],
-  [88, null, 'Corn'], [88, null, 'Grain'], [88, null, 'Flavored'], [88, null, 'Single Malt'],
-  [88, 0, 'Unaged'], [88, 12, 'Islands'], [88, 30, 'Speyside'], [88, null, 'Campbeltown'],
-  [88, 9, 'Bourbon'], [88, 2, 'Bourbon'], [88, null, 'Bourbon'], [88, null, 'Bourbon'],
-  [88, 12, 'Speyside'], [88, 17, 'Speyside'], [88, null, 'Bourbon'], [88, null, 'Bourbon'],
-  [88, 12, 'Bourbon'], [88, 15, 'Bourbon'], [89, 16, 'Speyside'], [89, 12, 'Speyside'],
-  [89, 40, 'Blended'], [89, null, 'Highlands'], [89, 25, 'Blended'], [89, 18, 'Bourbon'],
-  [89, 25, 'Speyside'], [90, 18, 'Blended'], [90, 25, 'Islands'], [90, null, 'Blended'],
-  [90, 21, 'Speyside'], [90, 18, 'Speyside'], [90, 15, 'Speyside'], [90, 12, 'Single Malt'],
-  [90, null, 'Bourbon'], [90, 18, 'Speyside'], [90, 15, 'Speyside'], [90, 17, 'Bourbon'],
-  [90, 10, 'Speyside'], [91, 16, 'Single Malt'], [91, 25, 'Blended'], [91, null, 'Islands'],
-  [91, 31, 'Speyside'], [91, 21, 'Single Malt'], [91, null, 'Single Malt'],
-  [92, 15, 'Pure Pot Still'], [92, 17, 'Highlands'], [92, null, 'Blended'], [92, 12, 'Highlands'],
-  [92, 12, 'Highlands'], [92, 15, 'Speyside'], [92, 17, 'Bourbon'], [92, 17, 'Highlands'],
-  [92, null, 'Islay'], [93, 10, 'Single Malt'], [93, 21, 'Speyside'], [93, 10, 'Bourbon'],
-  [93, null, 'Bourbon'], [94, 15, 'Islands'], [94, 18, 'Highlands'], [94, 16, 'Highlands'],
-  [94, 20, 'Bourbon'], [94, 21, 'Bourbon'], [94, 9, 'Rye'], [94, 21, 'Islands'],
-  [94, 21, 'Speyside'], [94, 16, 'Islay'], [94, 21, 'Highlands'], [94, 12, 'Islands'],
-  [94, 18, 'Islands'], [94, 25, 'Islay'], [94, 12, 'Islay'], [94, null, 'Bourbon'],
-  [95, 21, 'Highlands'], [95, 10, 'Speyside'], [95, 12, 'Highlands'], [96, 21, 'Speyside'],
-  [96, null, 'Bourbon'], [96, 10, 'Bourbon'], [96, 12, 'Bourbon'], [96, null, 'Bourbon'],
-  [96, 21, 'Islay'], [96, 30, 'Islands'], [96, null, 'Single Malt'], [96, 0, 'Rye'],
-  [96, null, 'Corn'], [96, 12, 'Speyside'], [96, 15, 'Highlands'], [96, 30, 'Highlands'],
-  [96, 18, 'Speyside'], [96, 17, 'Highlands'], [96, 12, 'Highlands'], [96, 18, 'Blended'],
-  [96, 12, 'Islay'], [96, null, 'Blended'], [96, 12, 'Islay'], [96, 15, 'Speyside'],
-  [96, 25, 'Highlands'], [96, null, 'Blended'], [96, 12, 'Blended'], [96, null, 'Bourbon'],
-  [96, 12, 'Pure Pot Still'], [96, 16, 'Speyside'], [96, 18, 'Blended'], [96, null, 'Bourbon'],
-  [97, 21, 'Speyside'], [99, 12, 'Blended'], [99, 18, 'Single Malt'], [99, 10, 'Highlands'],
-  [99, 10, 'Highlands'], [99, 18, 'Islay'], [99, 18, 'Islay'], [99, 12, 'Highlands'],
-  [99, 18, 'Speyside'], [99, 14, 'Speyside'], [99, null, 'Islay'], [99, 17, 'Blended'],
-  [99, 12, 'Speyside'], [99, null, 'Highlands'], [99, 15, 'Islay'], [99, null, 'Bourbon'],
-  [99, 15, 'Bourbon'], [99, 6, 'Rye'], [99, null, 'Islay'], [99, null, 'Bourbon'],
-  [99, 15, 'Bourbon'], [100, 10, 'Single Malt'], [100, 18, 'Highlands'], [null, 12, 'Blended'],
-  [null, null, 'Blended'], [null, 4, 'Blended'], [null, 25, 'Islay'], [null, 18, 'Speyside'],
-  [null, null, 'Blended'], [null, 10, 'Highlands'], [null, 12, 'Blended'], [null, 16, 'Bourbon'],
-  [null, 18, 'Bourbon'], [null, null, 'Single Malt']]
+   rows: [[40.0, null, 'Blended'], [43.0, null, 'Blended'], [47.0, null, 'Blended'],
+  [47.0, null, 'Blended'], [48.0, null, 'Blended'], [50.0, null, 'Blended'], [53.0, 6.0, 'Blended'],
+  [54.0, null, 'Blended'], [54.0, 7.0, 'Blended'], [54.0, null, 'Blended'], [56.0, 10.0, 'Blended'],
+  [56.0, null, 'Blended'], [57.0, 4.0, 'Rye'], [57.0, null, 'Rye'], [58.0, null, 'Blended'],
+  [60.0, null, 'Blended'], [60.0, null, 'Rye'], [64.0, null, 'Blended'], [64.0, null, 'Blended'],
+  [65.0, null, 'Blended'], [65.0, null, 'Blended'], [67.0, 4.0, 'Rye'], [67.0, 15.0, 'Highlands'],
+  [67.0, null, 'Blended'], [67.0, 18.0, 'Blended'], [67.0, 8.0, 'Blended'], [68.0, null, 'Blended'],
+  [68.0, null, 'Bourbon'], [69.0, null, 'Blended'], [69.0, 12.0, 'Blended'], [69.0, 4.0, 'Bourbon'],
+  [69.0, 6.0, 'Rye'], [69.0, null, 'Blended'], [70.0, 12.0, 'Blended'], [70.0, null, 'Blended'],
+  [71.0, 8.0, 'Blended'], [71.0, 8.0, 'Grain'], [72.0, 30.0, 'Speyside'], [73.0, 18.0, 'Blended'],
+  [73.0, 12.0, 'Single Malt'], [74.0, null, 'Blended'], [74.0, 10.0, 'Single Malt'],
+  [74.0, null, 'Blended'], [74.0, 19.0, 'Blended'], [75.0, 10.0, 'Single Malt'], [76.0, 1.0, 'Rye'],
+  [76.0, 7.0, 'Bourbon'], [76.0, null, 'Single Malt'], [76.0, null, 'Single Malt'],
+  [76.0, null, 'Bourbon'], [76.0, 15.0, 'Blended'], [77.0, 15.0, 'Single Malt'],
+  [77.0, 12.0, 'Blended'], [77.0, null, 'Single Malt'], [77.0, 17.0, 'Speyside'],
+  [77.0, 8.0, 'Bourbon'], [78.0, 18.0, 'Rye'], [78.0, null, 'Blended'], [78.0, 18.0, 'Blended'],
+  [78.0, null, 'Single Malt'], [79.0, 11.0, 'Blended'], [79.0, null, 'Rye'], [79.0, 12.0, 'Corn'],
+  [79.0, null, 'Blended'], [80.0, null, 'Rye'], [80.0, 16.0, 'Islands'], [80.0, 12.0, 'Bourbon'],
+  [80.0, 7.0, 'Bourbon'], [80.0, null, 'Single Malt'], [80.0, 8.0, 'Bourbon'],
+  [81.0, null, 'Bourbon'], [81.0, null, 'Single Malt'], [81.0, null, 'Highlands'],
+  [81.0, null, 'Blended'], [81.0, null, 'Flavored'], [81.0, null, 'Single Malt'],
+  [81.0, null, 'Flavored'], [81.0, null, 'Blended'], [81.0, null, 'Single Malt'],
+  [81.0, null, 'Rye'], [81.0, 4.0, 'Flavored'], [81.0, 7.0, 'Flavored'], [81.0, 10.0, 'Single Malt'],
+  [81.0, null, 'Blended'], [81.0, 8.0, 'Bourbon'], [81.0, 10.0, 'Single Malt'],
+  [81.0, null, 'Blended'], [81.0, 4.0, 'Bourbon'], [82.0, null, 'Corn'], [82.0, null, 'Single Malt'],
+  [82.0, null, 'Single Malt'], [82.0, 18.0, 'Blended'], [82.0, null, 'Bourbon'],
+  [82.0, null, 'Corn'], [82.0, 21.0, 'Rye'], [82.0, 19.0, 'Speyside'], [83.0, null, 'Bourbon'],
+  [83.0, null, 'Single Malt'], [83.0, null, 'Highlands'], [83.0, null, 'Bourbon'],
+  [83.0, null, 'Blended'], [83.0, null, 'Bourbon'], [83.0, 14.0, 'Highlands'], [83.0, 10.0, 'Islay'],
+  [84.0, 12.0, 'Blended'], [84.0, 10.0, 'Islay'], [84.0, 12.0, 'Blended'], [84.0, 15.0, 'Blended'],
+  [84.0, 12.0, 'Blended'], [84.0, 21.0, 'Speyside'], [85.0, null, 'Rye'], [85.0, 16.0, 'Islay'],
+  [85.0, 18.0, 'Lowlands'], [85.0, null, 'Single Malt'], [85.0, 23.0, 'Rye'],
+  [85.0, 10.0, 'Single Malt'], [85.0, 15.0, 'Campbeltown'], [85.0, null, 'Bourbon'],
+  [86.0, null, 'Blended'], [86.0, null, 'Blended'], [86.0, 10.0, 'Blended'], [86.0, 12.0, 'Islay'],
+  [86.0, 12.0, 'Single Malt'], [86.0, 8.0, 'Bourbon'], [86.0, null, 'Bourbon'],
+  [86.0, 12.0, 'Blended'], [86.0, 15.0, 'Speyside'], [87.0, null, 'Corn'], [87.0, 12.0, 'Blended'],
+  [87.0, 23.0, 'Bourbon'], [87.0, 10.0, 'Single Malt'], [87.0, 10.0, 'Highlands'],
+  [87.0, null, 'Bourbon'], [87.0, 10.0, 'Bourbon'], [87.0, null, 'Bourbon'], [88.0, 6.0, 'Rye'],
+  [88.0, null, 'Corn'], [88.0, null, 'Single Malt'], [88.0, null, 'Blended'],
+  [88.0, null, 'Blended'], [88.0, 15.0, 'Single Malt'], [88.0, null, 'Corn'], [88.0, 0.0, 'Unaged'],
+  [88.0, null, 'Single Malt'], [88.0, null, 'Single Malt'], [88.0, null, 'Rye'],
+  [88.0, null, 'Corn'], [88.0, null, 'Grain'], [88.0, null, 'Flavored'], [88.0, null, 'Single Malt'],
+  [88.0, 0.0, 'Unaged'], [88.0, 12.0, 'Islands'], [88.0, 30.0, 'Speyside'],
+  [88.0, null, 'Campbeltown'], [88.0, 9.0, 'Bourbon'], [88.0, 2.0, 'Bourbon'],
+  [88.0, null, 'Bourbon'], [88.0, null, 'Bourbon'], [88.0, 12.0, 'Speyside'],
+  [88.0, 17.0, 'Speyside'], [88.0, null, 'Bourbon'], [88.0, null, 'Bourbon'],
+  [88.0, 12.0, 'Bourbon'], [88.0, 15.0, 'Bourbon'], [89.0, 16.0, 'Speyside'],
+  [89.0, 12.0, 'Speyside'], [89.0, 40.0, 'Blended'], [89.0, null, 'Highlands'],
+  [89.0, 25.0, 'Blended'], [89.0, 18.0, 'Bourbon'], [89.0, 25.0, 'Speyside'],
+  [90.0, 18.0, 'Blended'], [90.0, 25.0, 'Islands'], [90.0, null, 'Blended'],
+  [90.0, 21.0, 'Speyside'], [90.0, 18.0, 'Speyside'], [90.0, 15.0, 'Speyside'],
+  [90.0, 12.0, 'Single Malt'], [90.0, null, 'Bourbon'], [90.0, 18.0, 'Speyside'],
+  [90.0, 15.0, 'Speyside'], [90.0, 17.0, 'Bourbon'], [90.0, 10.0, 'Speyside'],
+  [91.0, 16.0, 'Single Malt'], [91.0, 25.0, 'Blended'], [91.0, null, 'Islands'],
+  [91.0, 31.0, 'Speyside'], [91.0, 21.0, 'Single Malt'], [91.0, null, 'Single Malt'],
+  [92.0, 15.0, 'Pure Pot Still'], [92.0, 17.0, 'Highlands'], [92.0, null, 'Blended'],
+  [92.0, 12.0, 'Highlands'], [92.0, 12.0, 'Highlands'], [92.0, 15.0, 'Speyside'],
+  [92.0, 17.0, 'Bourbon'], [92.0, 17.0, 'Highlands'], [92.0, null, 'Islay'],
+  [93.0, 10.0, 'Single Malt'], [93.0, 21.0, 'Speyside'], [93.0, 10.0, 'Bourbon'],
+  [93.0, null, 'Bourbon'], [94.0, 15.0, 'Islands'], [94.0, 18.0, 'Highlands'],
+  [94.0, 16.0, 'Highlands'], [94.0, 20.0, 'Bourbon'], [94.0, 21.0, 'Bourbon'], [94.0, 9.0, 'Rye'],
+  [94.0, 21.0, 'Islands'], [94.0, 21.0, 'Speyside'], [94.0, 16.0, 'Islay'],
+  [94.0, 21.0, 'Highlands'], [94.0, 12.0, 'Islands'], [94.0, 18.0, 'Islands'], [94.0, 25.0, 'Islay'],
+  [94.0, 12.0, 'Islay'], [94.0, null, 'Bourbon'], [95.0, 21.0, 'Highlands'],
+  [95.0, 10.0, 'Speyside'], [95.0, 12.0, 'Highlands'], [96.0, 21.0, 'Speyside'],
+  [96.0, null, 'Bourbon'], [96.0, 10.0, 'Bourbon'], [96.0, 12.0, 'Bourbon'], [96.0, null, 'Bourbon'],
+  [96.0, 21.0, 'Islay'], [96.0, 30.0, 'Islands'], [96.0, null, 'Single Malt'], [96.0, 0.0, 'Rye'],
+  [96.0, null, 'Corn'], [96.0, 12.0, 'Speyside'], [96.0, 15.0, 'Highlands'],
+  [96.0, 30.0, 'Highlands'], [96.0, 18.0, 'Speyside'], [96.0, 17.0, 'Highlands'],
+  [96.0, 12.0, 'Highlands'], [96.0, 18.0, 'Blended'], [96.0, 12.0, 'Islay'], [96.0, null, 'Blended'],
+  [96.0, 12.0, 'Islay'], [96.0, 15.0, 'Speyside'], [96.0, 25.0, 'Highlands'],
+  [96.0, null, 'Blended'], [96.0, 12.0, 'Blended'], [96.0, null, 'Bourbon'],
+  [96.0, 12.0, 'Pure Pot Still'], [96.0, 16.0, 'Speyside'], [96.0, 18.0, 'Blended'],
+  [96.0, null, 'Bourbon'], [97.0, 21.0, 'Speyside'], [99.0, 12.0, 'Blended'],
+  [99.0, 18.0, 'Single Malt'], [99.0, 10.0, 'Highlands'], [99.0, 10.0, 'Highlands'],
+  [99.0, 18.0, 'Islay'], [99.0, 18.0, 'Islay'], [99.0, 12.0, 'Highlands'], [99.0, 18.0, 'Speyside'],
+  [99.0, 14.0, 'Speyside'], [99.0, null, 'Islay'], [99.0, 17.0, 'Blended'], [99.0, 12.0, 'Speyside'],
+  [99.0, null, 'Highlands'], [99.0, 15.0, 'Islay'], [99.0, null, 'Bourbon'], [99.0, 15.0, 'Bourbon'],
+  [99.0, 6.0, 'Rye'], [99.0, null, 'Islay'], [99.0, null, 'Bourbon'], [99.0, 15.0, 'Bourbon'],
+  [100.0, 10.0, 'Single Malt'], [100.0, 18.0, 'Highlands'], [null, 12.0, 'Blended'],
+  [null, null, 'Blended'], [null, 4.0, 'Blended'], [null, 25.0, 'Islay'], [null, 18.0, 'Speyside'],
+  [null, null, 'Blended'], [null, 10.0, 'Highlands'], [null, 12.0, 'Blended'],
+  [null, 16.0, 'Bourbon'], [null, 18.0, 'Bourbon'], [null, null, 'Single Malt']]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

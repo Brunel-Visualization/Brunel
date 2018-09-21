@@ -145,14 +145,14 @@ function  BrunelVis(visId) {
         main.attr('class', 'diagram treemap hierarchy');
         var labeling  = [
           {
-            index: 0, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 3, dy: 0.7,
+            index: 0, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 3.0, dy: 0.7,
             fit: true, granularity: 1,
             content: function(d) {
               return d.row == null ? null : 'Mammal='
 			+ data.mammal_f(d)
             }
           }, {
-            index: 1, method: 'box', location: ['center', 'bottom'], inside: true, align: 'middle', pad: 3, dy: -0.25,
+            index: 1, method: 'box', location: ['center', 'bottom'], inside: true, align: 'middle', pad: 3.0, dy: -0.25,
             fit: true, granularity: 1,
             content: function(d) {
               return d.row == null ? null : 'Aquatic='
@@ -196,7 +196,7 @@ function  BrunelVis(visId) {
           BrunelD3.label(selection, labels, transitionMillis, geom, labeling);
 
           var tooltipLabeling  = {
-            index: -1, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 0, dy: 0.7,
+            index: -1, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 0.0, dy: 0.7,
             fit: true, granularity: 0,
             content: function(d) {
               return d.row == null ? null : '<span class="title">Mammal: </span>'
@@ -299,7 +299,7 @@ var table1 = {
    summarized: true,
    names: ['mammal', 'aquatic', '#count'], 
    options: ['string', 'string', 'numeric'], 
-   rows: [['no', 'no', 1], ['yes', 'no', 3], ['no', 'yes', 2], ['yes', 'yes', 1]]
+   rows: [['no', 'no', 1.0], ['yes', 'no', 3.0], ['no', 'yes', 2.0], ['yes', 'yes', 1.0]]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

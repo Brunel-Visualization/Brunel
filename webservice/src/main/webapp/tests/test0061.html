@@ -38,7 +38,7 @@ function  BrunelVis(visId) {
   // Define chart #1 in the visualization //////////////////////////////////////////////////////////
 
   charts[0] = function(parentNode, filterRows) {
-    var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0, 1, 1, 0, 0, 0, 64),
+    var geom = BrunelD3.geometry(parentNode || vis.node(), 0, 0, 1, 1, 0, 0, 0, 0),
       elements = [];                                              // array of elements in this chart
 
     // Define groups for the chart parts ///////////////////////////////////////////////////////////
@@ -51,6 +51,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -218,6 +219,13 @@ function  BrunelVis(visId) {
         BrunelD3.addLegend(legends, legends._legend);
       }
       elements[0].build(time);
+      var legendBox = legends.node().getBBox(), lw = legendBox.width, lh = legendBox.height, 
+      L = geom.inner_left+5, T = geom.inner_top+5, W = geom.inner_width-10, H = geom.inner_height-10;
+      function box(a,b) { return { x:L+(W-lw)*a, y:T+(H-lh)*b, width:lw, height:lh } };
+      var locs = [ box(1,0), box(1,1), box(1, 0.5), box(0,1), box(0, 0.5), box(0,0) ];
+      var B = BrunelD3.lowestBoxHits(locs, elements);
+      legends.transition().duration(200).ease(d3.easeLinear)
+        .attr('transform', 'translate(' + (B.x + lw) + ',' + B.y + ')' );
     }
 
     // Expose the following components of the chart

@@ -118,12 +118,12 @@ function  BrunelVis(visId) {
         };
       }
       // Aesthetic Functions
-      var scale_color = d3.scaleLinear().domain([74.676471, 77.091912, 79.507353, 81.922794, 84.338235, 86.753676, 89.169118, 91.584559, 94])
+      var scale_color = d3.scaleLinear().domain([74.67647058823529, 77.09191176470588, 79.50735294117646, 81.92279411764706, 84.33823529411765, 86.75367647058823, 89.16911764705883, 91.58455882352942, 94])
         .interpolate(d3.interpolateHcl)
         .range([ '#045a8d', '#2b8cbe', '#74a9cf', '#bdc9e1', '#f8efe8', '#fef0d9', 
           '#fdcc8a', '#fc8d59', '#e34a33']);
       var color = function(d) { var c = data.Rating(d); return c!=null ? scale_color(c) : null };
-      var scale_size = d3.scaleSqrt().domain([0, 94.000009])
+      var scale_size = d3.scaleSqrt().domain([0, 94.0000094])
         .range([ 0.001, 1]);
       var size = function(d) { var s = data.Rating(d); return s!=null ? scale_size(s) : null };
       legends._legend = legends._legend || { title: ['Mean(Rating)'], 
@@ -237,10 +237,11 @@ var table1 = {
    summarized: true,
    names: ['Category', 'Rating'], 
    options: ['string', 'numeric'], 
-   rows: [['Blended', 74.676471], ['Bourbon', 87.55102], ['Campbeltown', 86.5], ['Corn', 86.25],
-  ['Flavored', 82.4], ['Grain', 79.5], ['Highlands', 92.24], ['Islands', 91.222222],
-  ['Islay', 93.4375], ['Lowlands', 85], ['Pure Pot Still', 94], ['Rye', 78.944444],
-  ['Single Malt', 84.470588], ['Speyside', 90.677419], ['Unaged', 88]]
+   rows: [['Blended', 74.67647058823529], ['Bourbon', 87.55102040816327], ['Campbeltown', 86.5],
+  ['Corn', 86.25], ['Flavored', 82.4], ['Grain', 79.5], ['Highlands', 92.24],
+  ['Islands', 91.22222222222223], ['Islay', 93.4375], ['Lowlands', 85.0], ['Pure Pot Still', 94.0],
+  ['Rye', 78.94444444444444], ['Single Malt', 84.47058823529412], ['Speyside', 90.6774193548387],
+  ['Unaged', 88.0]]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

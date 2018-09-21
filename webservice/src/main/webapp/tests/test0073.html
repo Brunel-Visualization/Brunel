@@ -61,6 +61,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -142,6 +143,7 @@ function  BrunelVis(visId) {
             .attr('d', function(d) {
               var p = BrunelD3.insetEdge(scale_x(d.source.y), scale_y(d.source.x), d.source,
                 scale_x(d.target.y), scale_y(d.target.x), d.target);
+              if(!p) return '';
               return 'M' + p.x1 + ',' + p.y1 + 
                 'C' + (p.x1+p.x2)/2 + ',' + p.y1
                  + ' ' + (p.x1+p.x2)/2 + ',' + p.y2 + ' ' 
@@ -224,7 +226,7 @@ function  BrunelVis(visId) {
         graph = graph || BrunelData.diagram_Graph.make(processed, 'A', elements[0].data(), 'A', 'B');
         main.attr('class', 'diagram network');
         var labeling  = [{
-          index: 0, method: 'box', location: ['center', 'center'], inside: false, align: 'middle', pad: 3, dy: 0.3,
+          index: 0, method: 'box', location: ['center', 'center'], inside: false, align: 'middle', pad: 3.0, dy: 0.3,
           fit: false, granularity: 0,
           content: function(d) {
             return d.row == null ? null : data.A_f(d)

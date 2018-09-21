@@ -52,6 +52,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -170,10 +171,6 @@ function  BrunelVis(visId) {
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('fill', color);
         }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
-        }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
         var added = selection.enter().append('circle');
@@ -239,7 +236,7 @@ function  BrunelVis(visId) {
         };
       }
       // Aesthetic Functions
-      var scale_color = d3.scaleLinear().domain([1, 1.6666667, 2.3333333, 3, 3.6666667, 4.3333333, 5, 5.6666667, 6.3333333, 7])
+      var scale_color = d3.scaleLinear().domain([1, 1.6666666666666665, 2.333333333333333, 3, 3.6666666666666665, 4.333333333333334, 5, 5.666666666666667, 6.333333333333333, 7])
         .interpolate(d3.interpolateHcl)
         .range([ '#FFFFFF', '#FFE3E3', '#FFC6C6', '#FFAAAA', '#FF8E8E', '#FF7171', 
           '#FF5555', '#FF3939', '#FF1C1C', '#FF0000']);
@@ -275,10 +272,6 @@ function  BrunelVis(visId) {
             .attr('r',Math.min(Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] ), 0.9 * geom.inner_height) / 2)
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('fill', color);
-        }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
         }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
@@ -382,10 +375,6 @@ function  BrunelVis(visId) {
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('fill', color);
         }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
-        }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
         var added = selection.enter().append('circle');
@@ -451,7 +440,7 @@ function  BrunelVis(visId) {
         };
       }
       // Aesthetic Functions
-      var scale_color = d3.scaleLinear().domain([1, 1.3333333, 1.6666667, 2, 2.3333333, 2.6666667, 3, 3.3333333, 3.6666667, 4, 4.3333333, 4.6666667, 5, 5.3333333, 5.6666667, 6, 6.3333333, 6.6666667, 7])
+      var scale_color = d3.scaleLinear().domain([1, 1.3333333333333333, 1.6666666666666665, 2, 2.333333333333333, 2.666666666666667, 3, 3.3333333333333335, 3.6666666666666665, 4, 4.333333333333334, 4.666666666666666, 5, 5.333333333333333, 5.666666666666667, 6, 6.333333333333333, 6.666666666666667, 7])
         .interpolate(d3.interpolateHcl)
         .range([ '#0000FF', '#1C1CFF', '#3939FF', '#5555FF', '#7171FF', '#8E8EFF', 
           '#AAAAFF', '#C6C6FF', '#E3E3FF', '#ffffff', '#FFFFFF', '#FFE3E3', '#FFC6C6', 
@@ -488,10 +477,6 @@ function  BrunelVis(visId) {
             .attr('r',Math.min(Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] ), 0.9 * geom.inner_height) / 2)
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('fill', color);
-        }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
         }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
@@ -594,10 +579,6 @@ function  BrunelVis(visId) {
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('fill', color);
         }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
-        }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
         var added = selection.enter().append('circle');
@@ -699,10 +680,6 @@ function  BrunelVis(visId) {
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('fill', color);
         }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
-        }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
         var added = selection.enter().append('circle');
@@ -768,7 +745,7 @@ function  BrunelVis(visId) {
         };
       }
       // Aesthetic Functions
-      var scale_color = d3.scaleLinear().domain([1, 1.3333333, 1.6666667, 2, 2.3333333, 2.6666667, 3, 3.3333333, 3.6666667, 4, 4.3333333, 4.6666667, 5, 5.3333333, 5.6666667, 6, 6.3333333, 6.6666667, 7])
+      var scale_color = d3.scaleLinear().domain([1, 1.3333333333333333, 1.6666666666666665, 2, 2.333333333333333, 2.666666666666667, 3, 3.3333333333333335, 3.6666666666666665, 4, 4.333333333333334, 4.666666666666666, 5, 5.333333333333333, 5.666666666666667, 6, 6.333333333333333, 6.666666666666667, 7])
         .interpolate(d3.interpolateHcl)
         .range([ '#00538A', '#C10020', '#F4C800', '#007D34', '#803E75', '#FF6800', 
           '#817066', '#FFB300', '#F6768E', '#93AA00', '#53377A', '#FF8E00', '#B32851', 
@@ -805,10 +782,6 @@ function  BrunelVis(visId) {
             .attr('r',Math.min(Math.abs( scale_x(scale_x.domain()[0] + 1.0) - scale_x.range()[0] ), 0.9 * geom.inner_height) / 2)
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('fill', color);
-        }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
         }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(data._rows, function(d) { return d.key });
@@ -867,7 +840,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -900,7 +880,7 @@ var table1 = {
    summarized: false,
    names: ['_dummy_'], 
    options: ['numeric'], 
-   rows: [[1], [1], [1], [1], [1], [1], [1]]
+   rows: [[1.0], [1.0], [1.0], [1.0], [1.0], [1.0], [1.0]]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

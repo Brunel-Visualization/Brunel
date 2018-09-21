@@ -72,7 +72,7 @@ function  BrunelVis(visId) {
       .range([0, geom.inner_radius]);
     var scale_inner = d3.scaleLinear().domain([0,1])
       .range([-0.5, 0.5]);
-    var scale_y = d3.scaleLinear().domain([0, 21.000002])
+    var scale_y = d3.scaleLinear().domain([0, 21.0000021])
       .range([0, Math.PI*2]);
     var base_scales = [scale_x, scale_y];                           // untransformed original scales
     zoom.on('zoom', function(t, time) {
@@ -150,7 +150,7 @@ function  BrunelVis(visId) {
         var path = d3.arc().innerRadius(0).outerRadius(geom.inner_radius)
           .startAngle(y1).endAngle(y2);
         var labeling  = [{
-          index: 0, method: 'wedge', location: ['center', 'center'], inside: false, align: 'middle', pad: 3, dy: 0.3,
+          index: 0, method: 'wedge', location: ['center', 'center'], inside: false, align: 'middle', pad: 3.0, dy: 0.3,
           fit: false, granularity: 1,
           path: path,
           content: function(d) {
@@ -230,7 +230,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -263,8 +270,8 @@ var table1 = {
    summarized: false,
    names: ['size', 'animal'], 
    options: ['numeric', 'string'], 
-   rows: [[1, 'fish'], [3, 'cat'], [2, 'bat'], [4, 'dolphin'], [5, 'elephant'], [1.5, 'frog'],
-  [4.5, 'crocodile']]
+   rows: [[1.0, 'fish'], [3.0, 'cat'], [2.0, 'bat'], [4.0, 'dolphin'], [5.0, 'elephant'],
+  [1.5, 'frog'], [4.5, 'crocodile']]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

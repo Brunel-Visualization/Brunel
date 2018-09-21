@@ -52,6 +52,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -223,7 +224,7 @@ function  BrunelVis(visId) {
         var h = geom.default_point_size;
         var y = function(d) { return projection([data.x(d),data.y(d)])[1]};
         var labeling  = [{
-          index: 0, method: 'box', location: ['right', 'center'], inside: false, align: 'start', pad: 3, dy: 0.3,
+          index: 0, method: 'box', location: ['right', 'center'], inside: false, align: 'start', pad: 3.0, dy: 0.3,
           fit: false, granularity: 1,
           content: function(d) {
             return d.row == null ? null : data.n_f(d)
@@ -433,7 +434,7 @@ var table1 = {
    summarized: false,
    names: ['_dummy_'], 
    options: ['numeric'], 
-   rows: [[1], [1], [1], [1], [1], [1], [1]]
+   rows: [[1.0], [1.0], [1.0], [1.0], [1.0], [1.0], [1.0]]
 };
 var table2 = {
    summarized: false,

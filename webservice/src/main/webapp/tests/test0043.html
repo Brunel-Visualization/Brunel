@@ -72,7 +72,7 @@ function  BrunelVis(visId) {
       .range([0, geom.inner_radius]);
     var scale_inner = d3.scaleLinear().domain([0,1])
       .range([-0.5, 0.5]);
-    var scale_y = d3.scaleLinear().domain([0, 283.00003])
+    var scale_y = d3.scaleLinear().domain([0, 283.0000283])
       .range([0, Math.PI*2]);
     var base_scales = [scale_x, scale_y];                           // untransformed original scales
     zoom.on('zoom', function(t, time) {
@@ -151,7 +151,7 @@ function  BrunelVis(visId) {
         var path = d3.arc().innerRadius(0).outerRadius(geom.inner_radius)
           .startAngle(y1).endAngle(y2);
         var labeling  = [{
-          index: 0, method: 'wedge', location: ['center', 'center'], inside: false, align: 'middle', pad: 3, dy: 0.3,
+          index: 0, method: 'wedge', location: ['center', 'center'], inside: false, align: 'middle', pad: 3.0, dy: 0.3,
           fit: false, granularity: 1,
           path: path,
           content: function(d) {
@@ -227,7 +227,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -260,8 +267,8 @@ var table1 = {
    summarized: true,
    names: ['#count', 'Country'], 
    options: ['numeric', 'string'], 
-   rows: [[30, 'Canada'], [1, 'England'], [2, 'France'], [5, 'India'], [41, 'Ireland'], [4, 'Japan'],
-  [108, 'Scotland'], [8, 'Taiwan'], [84, 'USA']]
+   rows: [[30.0, 'Canada'], [1.0, 'England'], [2.0, 'France'], [5.0, 'India'], [41.0, 'Ireland'],
+  [4.0, 'Japan'], [108.0, 'Scotland'], [8.0, 'Taiwan'], [84.0, 'USA']]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

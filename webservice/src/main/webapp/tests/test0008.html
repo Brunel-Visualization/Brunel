@@ -148,7 +148,7 @@ function  BrunelVis(visId) {
         };
       }
       // Aesthetic Functions
-      var scale_color = d3.scaleSqrt().domain([1, 8.3290014, 22.772002, 44.329001, 73])
+      var scale_color = d3.scaleSqrt().domain([1, 8.329001404494074, 22.772001872658763, 44.32900140449406, 72.99999999999999])
         .interpolate(d3.interpolateHcl)
         .range([ '#f1eef6', '#bdc9e1', '#74a9cf', '#2b8cbe', '#045a8d']);
       var color = function(d) { var c = data.$count(d); return c!=null ? scale_color(c) : null };
@@ -165,7 +165,7 @@ function  BrunelVis(visId) {
         var h = 0.9 * geom.inner_height;
         var y = function(d) { return scale_y(data._a_(d))};
         var labeling  = [{
-          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3, dy: 0.3,
+          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3.0, dy: 0.3,
           fit: true, granularity: 1,
           content: function(d) {
             return d.row == null ? null : data.Category_f(d)
@@ -258,7 +258,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -291,9 +298,10 @@ var table1 = {
    summarized: true,
    names: ['Category', '#count'], 
    options: ['string', 'numeric'], 
-   rows: [['Blended', 73], ['Bourbon', 51], ['Campbeltown', 2], ['Corn', 8], ['Flavored', 5],
-  ['Grain', 2], ['Highlands', 26], ['Islands', 9], ['Islay', 17], ['Lowlands', 1],
-  ['Pure Pot Still', 2], ['Rye', 18], ['Single Malt', 35], ['Speyside', 32], ['Unaged', 2]]
+   rows: [['Blended', 73.0], ['Bourbon', 51.0], ['Campbeltown', 2.0], ['Corn', 8.0],
+  ['Flavored', 5.0], ['Grain', 2.0], ['Highlands', 26.0], ['Islands', 9.0], ['Islay', 17.0],
+  ['Lowlands', 1.0], ['Pure Pot Still', 2.0], ['Rye', 18.0], ['Single Malt', 35.0],
+  ['Speyside', 32.0], ['Unaged', 2.0]]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

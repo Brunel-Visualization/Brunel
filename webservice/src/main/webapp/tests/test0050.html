@@ -57,6 +57,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -76,11 +77,11 @@ function  BrunelVis(visId) {
 
     // Scales //////////////////////////////////////////////////////////////////////////////////////
 
-    var scale_x = d3.scaleLog().domain([1, 1000.0001])
+    var scale_x = d3.scaleLog().domain([1, 1000.0000999])
       .range([0, geom.inner_width]);
     var scale_inner = d3.scaleLinear().domain([0,1])
       .range([-0.5, 0.5]);
-    var scale_y = d3.scaleLinear().domain([30, 110.00001])
+    var scale_y = d3.scaleLinear().domain([30, 110.000008])
       .range([geom.inner_height, 0]);
     var base_scales = [scale_x, scale_y];                           // untransformed original scales
 
@@ -211,7 +212,7 @@ function  BrunelVis(visId) {
         function label(selection, transitionMillis) {
 
           var tooltipLabeling  = {
-            index: -1, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 0, dy: 0.7,
+            index: -1, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 0.0, dy: 0.7,
             fit: true, granularity: 0,
             content: function(d) {
               return d.row == null ? null : '('
@@ -271,7 +272,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -304,71 +312,83 @@ var table1 = {
    summarized: false,
    names: ['Price', 'Rating', 'Country'], 
    options: ['numeric', 'numeric', 'string'], 
-   rows: [[9, 40, 'Canada'], [10, 43, 'Canada'], [20, 47, 'Ireland'], [10, 47, 'Canada'],
-  [12, 48, 'Canada'], [25, 50, 'Ireland'], [12, 53, 'Canada'], [17, 54, 'Ireland'], [20, 54, 'USA'],
-  [11, 54, 'Canada'], [16, 56, 'Canada'], [26, 56, 'Canada'], [15, 57, 'USA'], [38, 57, 'USA'],
-  [30, 58, 'Scotland'], [25, 60, 'Canada'], [29, 60, 'Canada'], [30, 64, 'Canada'],
-  [20, 64, 'Ireland'], [24, 65, 'Ireland'], [25, 65, 'Ireland'], [35, 67, 'USA'],
-  [50, 67, 'Scotland'], [60, 67, 'Canada'], [65, 67, 'Canada'], [14, 67, 'Canada'],
-  [25, 68, 'Canada'], [12, 68, 'USA'], [23, 69, 'Canada'], [23, 69, 'Canada'], [15, 69, 'USA'],
-  [27, 69, 'USA'], [20, 69, 'Scotland'], [45, 70, 'Scotland'], [26, 70, 'Ireland'],
-  [27, 71, 'Canada'], [50, 71, 'Ireland'], [48, 72, 'Scotland'], [84, 73, 'Ireland'],
-  [90, 73, 'Ireland'], [90, 74, 'Ireland'], [40, 74, 'Ireland'], [50, 74, 'Canada'],
-  [58, 74, 'Scotland'], [85, 75, 'Canada'], [46, 76, 'USA'], [38, 76, 'USA'], [36, 76, 'India'],
-  [70, 76, 'India'], [16, 76, 'USA'], [45, 76, 'Scotland'], [null, 77, 'Canada'],
-  [28, 77, 'Ireland'], [70, 77, 'England'], [179, 77, 'Scotland'], [20, 77, 'USA'], [75, 78, 'USA'],
-  [17, 78, 'Scotland'], [73, 78, 'Scotland'], [65, 78, 'Ireland'], [32, 79, 'Ireland'],
-  [41, 79, 'USA'], [26, 79, 'USA'], [27, 79, 'Canada'], [16, 80, 'Canada'], [63, 80, 'Scotland'],
-  [25, 80, 'USA'], [60, 80, 'USA'], [85, 80, 'India'], [36, 80, 'USA'], [20, 81, 'USA'],
-  [43, 81, 'USA'], [58, 81, 'Scotland'], [20, 81, 'Ireland'], [35, 81, 'USA'], [100, 81, 'Taiwan'],
-  [25, 81, 'Ireland'], [40, 81, 'France'], [60, 81, 'France'], [55, 81, 'Canada'], [18, 81, 'USA'],
-  [17, 81, 'USA'], [69, 81, 'Ireland'], [25, 81, 'Ireland'], [17, 81, 'USA'], [50, 81, 'Ireland'],
-  [28, 81, 'Canada'], [19, 81, 'USA'], [16, 82, 'USA'], [50, 82, 'Taiwan'], [70, 82, 'Taiwan'],
-  [100, 82, 'Scotland'], [19, 82, 'USA'], [17, 82, 'USA'], [133, 82, 'USA'], [100, 82, 'Scotland'],
-  [28, 83, 'USA'], [33, 83, 'Ireland'], [246, 83, 'Scotland'], [42, 83, 'USA'], [70, 83, 'Canada'],
-  [35, 83, 'USA'], [65, 83, 'Scotland'], [60, 83, 'Scotland'], [25, 84, 'Ireland'],
-  [47, 84, 'Scotland'], [199, 84, 'Scotland'], [100, 84, 'Ireland'], [43, 84, 'Ireland'],
-  [160, 84, 'Scotland'], [34, 85, 'USA'], [68, 85, 'Scotland'], [98, 85, 'Scotland'],
-  [65, 85, 'India'], [100, 85, 'USA'], [39, 85, 'Ireland'], [95, 85, 'Scotland'], [36, 85, 'USA'],
-  [61, 86, 'Ireland'], [24, 86, 'Ireland'], [null, 86, 'Ireland'], [43, 86, 'Scotland'],
-  [43, 86, 'Japan'], [20, 86, 'USA'], [24, 86, 'USA'], [40, 86, 'Scotland'], [49, 86, 'Scotland'],
-  [20, 87, 'USA'], [50, 87, 'Ireland'], [30, 87, 'USA'], [60, 87, 'Ireland'], [50, 87, 'Scotland'],
-  [49, 87, 'USA'], [53, 87, 'USA'], [40, 87, 'USA'], [27, 88, 'USA'], [59, 88, 'USA'],
-  [75, 88, 'Ireland'], [32, 88, 'USA'], [60, 88, 'Canada'], [100, 88, 'Ireland'], [35, 88, 'USA'],
-  [30, 88, 'USA'], [220, 88, 'Taiwan'], [117, 88, 'Taiwan'], [48, 88, 'USA'], [40, 88, 'USA'],
-  [45, 88, 'USA'], [25, 88, 'Taiwan'], [48, 88, 'USA'], [28, 88, 'USA'], [40, 88, 'Scotland'],
-  [850, 88, 'Scotland'], [61, 88, 'Scotland'], [37, 88, 'USA'], [39, 88, 'USA'], [75, 88, 'USA'],
-  [21, 88, 'USA'], [53, 88, 'Scotland'], [128, 88, 'Scotland'], [27, 88, 'USA'], [34, 88, 'USA'],
-  [50, 88, 'USA'], [125, 88, 'USA'], [65, 89, 'Scotland'], [35, 89, 'Scotland'], [2, 89, 'Scotland'],
-  [250, 89, 'Scotland'], [260, 89, 'Scotland'], [90, 89, 'USA'], [305, 89, 'Scotland'],
-  [256, 90, 'Ireland'], [240, 90, 'Scotland'], [140, 90, 'Scotland'], [63, 90, 'Scotland'],
-  [79, 90, 'Scotland'], [70, 90, 'Scotland'], [45, 90, 'Japan'], [37, 90, 'USA'],
-  [70, 90, 'Scotland'], [55, 90, 'Scotland'], [90, 90, 'USA'], [29, 90, 'Scotland'],
-  [64, 91, 'Ireland'], [132, 91, 'Ireland'], [75, 91, 'Scotland'], [400, 91, 'Scotland'],
-  [120, 91, 'Ireland'], [50, 91, 'India'], [67, 92, 'Ireland'], [94, 92, 'Scotland'],
-  [70, 92, 'Canada'], [40, 92, 'Scotland'], [47, 92, 'Scotland'], [45, 92, 'Scotland'],
-  [57, 92, 'USA'], [109, 92, 'Scotland'], [47, 92, 'Scotland'], [39, 93, 'Ireland'],
-  [133, 93, 'Scotland'], [35, 93, 'USA'], [32, 93, 'USA'], [108, 94, 'Scotland'],
-  [107, 94, 'Scotland'], [60, 94, 'Scotland'], [93, 94, 'USA'], [95, 94, 'USA'], [70, 94, 'USA'],
-  [140, 94, 'Scotland'], [175, 94, 'Scotland'], [115, 94, 'Scotland'], [150, 94, 'Scotland'],
-  [68, 94, 'Scotland'], [80, 94, 'Scotland'], [190, 94, 'Scotland'], [45, 94, 'Scotland'],
-  [42, 94, 'USA'], [120, 95, 'Scotland'], [47, 95, 'Scotland'], [55, 95, 'Scotland'],
-  [220, 96, 'Scotland'], [70, 96, 'USA'], [80, 96, 'USA'], [50, 96, 'USA'], [80, 96, 'USA'],
-  [300, 96, 'Scotland'], [365, 96, 'Scotland'], [84, 96, 'Taiwan'], [65, 96, 'USA'], [30, 96, 'USA'],
-  [43, 96, 'Scotland'], [89, 96, 'Scotland'], [400, 96, 'Scotland'], [62, 96, 'Scotland'],
-  [73, 96, 'Scotland'], [30, 96, 'Scotland'], [79, 96, 'Scotland'], [43, 96, 'Scotland'],
-  [54, 96, 'Scotland'], [90, 96, 'Scotland'], [48, 96, 'Scotland'], [580, 96, 'Scotland'],
-  [25, 96, 'Scotland'], [30, 96, 'Scotland'], [65, 96, 'USA'], [40, 96, 'Ireland'],
-  [65, 96, 'Scotland'], [64, 96, 'Scotland'], [40, 96, 'USA'], [123, 97, 'Scotland'],
-  [35, 99, 'Ireland'], [120, 99, 'Japan'], [42, 99, 'Scotland'], [80, 99, 'Scotland'],
-  [92, 99, 'Scotland'], [107, 99, 'Scotland'], [45, 99, 'Scotland'], [100, 99, 'Scotland'],
-  [60, 99, 'Scotland'], [70, 99, 'Scotland'], [50, 99, 'Scotland'], [45, 99, 'Scotland'],
-  [45, 99, 'Scotland'], [70, 99, 'Scotland'], [11, 99, 'USA'], [58, 99, 'USA'], [67, 99, 'USA'],
-  [80, 99, 'Scotland'], [60, 99, 'USA'], [80, 99, 'USA'], [72, 100, 'Ireland'],
-  [165, 100, 'Scotland'], [92, null, 'Japan'], [8, null, 'Canada'], [22, null, 'Canada'],
-  [292, null, 'Scotland'], [69, null, 'Scotland'], [null, null, 'Scotland'],
-  [null, null, 'Scotland'], [30, null, 'Scotland'], [280, null, 'USA'], [40, null, 'USA'],
-  [100, null, 'Taiwan']]
+   rows: [[9.0, 40.0, 'Canada'], [10.0, 43.0, 'Canada'], [20.0, 47.0, 'Ireland'],
+  [10.0, 47.0, 'Canada'], [12.0, 48.0, 'Canada'], [25.0, 50.0, 'Ireland'], [12.0, 53.0, 'Canada'],
+  [17.0, 54.0, 'Ireland'], [20.0, 54.0, 'USA'], [11.0, 54.0, 'Canada'], [16.0, 56.0, 'Canada'],
+  [26.0, 56.0, 'Canada'], [15.0, 57.0, 'USA'], [38.0, 57.0, 'USA'], [30.0, 58.0, 'Scotland'],
+  [25.0, 60.0, 'Canada'], [29.0, 60.0, 'Canada'], [30.0, 64.0, 'Canada'], [20.0, 64.0, 'Ireland'],
+  [24.0, 65.0, 'Ireland'], [25.0, 65.0, 'Ireland'], [35.0, 67.0, 'USA'], [50.0, 67.0, 'Scotland'],
+  [60.0, 67.0, 'Canada'], [65.0, 67.0, 'Canada'], [14.0, 67.0, 'Canada'], [25.0, 68.0, 'Canada'],
+  [12.0, 68.0, 'USA'], [23.0, 69.0, 'Canada'], [23.0, 69.0, 'Canada'], [15.0, 69.0, 'USA'],
+  [27.0, 69.0, 'USA'], [20.0, 69.0, 'Scotland'], [45.0, 70.0, 'Scotland'], [26.0, 70.0, 'Ireland'],
+  [27.0, 71.0, 'Canada'], [50.0, 71.0, 'Ireland'], [48.0, 72.0, 'Scotland'], [84.0, 73.0, 'Ireland'],
+  [90.0, 73.0, 'Ireland'], [90.0, 74.0, 'Ireland'], [40.0, 74.0, 'Ireland'], [50.0, 74.0, 'Canada'],
+  [58.0, 74.0, 'Scotland'], [85.0, 75.0, 'Canada'], [46.0, 76.0, 'USA'], [38.0, 76.0, 'USA'],
+  [36.0, 76.0, 'India'], [70.0, 76.0, 'India'], [16.0, 76.0, 'USA'], [45.0, 76.0, 'Scotland'],
+  [null, 77.0, 'Canada'], [28.0, 77.0, 'Ireland'], [70.0, 77.0, 'England'],
+  [179.0, 77.0, 'Scotland'], [20.0, 77.0, 'USA'], [75.0, 78.0, 'USA'], [17.0, 78.0, 'Scotland'],
+  [73.0, 78.0, 'Scotland'], [65.0, 78.0, 'Ireland'], [32.0, 79.0, 'Ireland'], [41.0, 79.0, 'USA'],
+  [26.0, 79.0, 'USA'], [27.0, 79.0, 'Canada'], [16.0, 80.0, 'Canada'], [63.0, 80.0, 'Scotland'],
+  [25.0, 80.0, 'USA'], [60.0, 80.0, 'USA'], [85.0, 80.0, 'India'], [36.0, 80.0, 'USA'],
+  [20.0, 81.0, 'USA'], [43.0, 81.0, 'USA'], [58.0, 81.0, 'Scotland'], [20.0, 81.0, 'Ireland'],
+  [35.0, 81.0, 'USA'], [100.0, 81.0, 'Taiwan'], [25.0, 81.0, 'Ireland'], [40.0, 81.0, 'France'],
+  [60.0, 81.0, 'France'], [55.0, 81.0, 'Canada'], [18.0, 81.0, 'USA'], [17.0, 81.0, 'USA'],
+  [69.0, 81.0, 'Ireland'], [25.0, 81.0, 'Ireland'], [17.0, 81.0, 'USA'], [50.0, 81.0, 'Ireland'],
+  [28.0, 81.0, 'Canada'], [19.0, 81.0, 'USA'], [16.0, 82.0, 'USA'], [50.0, 82.0, 'Taiwan'],
+  [70.0, 82.0, 'Taiwan'], [100.0, 82.0, 'Scotland'], [19.0, 82.0, 'USA'], [17.0, 82.0, 'USA'],
+  [133.0, 82.0, 'USA'], [100.0, 82.0, 'Scotland'], [28.0, 83.0, 'USA'], [33.0, 83.0, 'Ireland'],
+  [246.0, 83.0, 'Scotland'], [42.0, 83.0, 'USA'], [70.0, 83.0, 'Canada'], [35.0, 83.0, 'USA'],
+  [65.0, 83.0, 'Scotland'], [60.0, 83.0, 'Scotland'], [25.0, 84.0, 'Ireland'],
+  [47.0, 84.0, 'Scotland'], [199.0, 84.0, 'Scotland'], [100.0, 84.0, 'Ireland'],
+  [43.0, 84.0, 'Ireland'], [160.0, 84.0, 'Scotland'], [34.0, 85.0, 'USA'], [68.0, 85.0, 'Scotland'],
+  [98.0, 85.0, 'Scotland'], [65.0, 85.0, 'India'], [100.0, 85.0, 'USA'], [39.0, 85.0, 'Ireland'],
+  [95.0, 85.0, 'Scotland'], [36.0, 85.0, 'USA'], [61.0, 86.0, 'Ireland'], [24.0, 86.0, 'Ireland'],
+  [null, 86.0, 'Ireland'], [43.0, 86.0, 'Scotland'], [43.0, 86.0, 'Japan'], [20.0, 86.0, 'USA'],
+  [24.0, 86.0, 'USA'], [40.0, 86.0, 'Scotland'], [49.0, 86.0, 'Scotland'], [20.0, 87.0, 'USA'],
+  [50.0, 87.0, 'Ireland'], [30.0, 87.0, 'USA'], [60.0, 87.0, 'Ireland'], [50.0, 87.0, 'Scotland'],
+  [49.0, 87.0, 'USA'], [53.0, 87.0, 'USA'], [40.0, 87.0, 'USA'], [27.0, 88.0, 'USA'],
+  [59.0, 88.0, 'USA'], [75.0, 88.0, 'Ireland'], [32.0, 88.0, 'USA'], [60.0, 88.0, 'Canada'],
+  [100.0, 88.0, 'Ireland'], [35.0, 88.0, 'USA'], [30.0, 88.0, 'USA'], [220.0, 88.0, 'Taiwan'],
+  [117.0, 88.0, 'Taiwan'], [48.0, 88.0, 'USA'], [40.0, 88.0, 'USA'], [45.0, 88.0, 'USA'],
+  [25.0, 88.0, 'Taiwan'], [48.0, 88.0, 'USA'], [28.0, 88.0, 'USA'], [40.0, 88.0, 'Scotland'],
+  [850.0, 88.0, 'Scotland'], [61.0, 88.0, 'Scotland'], [37.0, 88.0, 'USA'], [39.0, 88.0, 'USA'],
+  [75.0, 88.0, 'USA'], [21.0, 88.0, 'USA'], [53.0, 88.0, 'Scotland'], [128.0, 88.0, 'Scotland'],
+  [27.0, 88.0, 'USA'], [34.0, 88.0, 'USA'], [50.0, 88.0, 'USA'], [125.0, 88.0, 'USA'],
+  [65.0, 89.0, 'Scotland'], [35.0, 89.0, 'Scotland'], [2.0, 89.0, 'Scotland'],
+  [250.0, 89.0, 'Scotland'], [260.0, 89.0, 'Scotland'], [90.0, 89.0, 'USA'],
+  [305.0, 89.0, 'Scotland'], [256.0, 90.0, 'Ireland'], [240.0, 90.0, 'Scotland'],
+  [140.0, 90.0, 'Scotland'], [63.0, 90.0, 'Scotland'], [79.0, 90.0, 'Scotland'],
+  [70.0, 90.0, 'Scotland'], [45.0, 90.0, 'Japan'], [37.0, 90.0, 'USA'], [70.0, 90.0, 'Scotland'],
+  [55.0, 90.0, 'Scotland'], [90.0, 90.0, 'USA'], [29.0, 90.0, 'Scotland'], [64.0, 91.0, 'Ireland'],
+  [132.0, 91.0, 'Ireland'], [75.0, 91.0, 'Scotland'], [400.0, 91.0, 'Scotland'],
+  [120.0, 91.0, 'Ireland'], [50.0, 91.0, 'India'], [67.0, 92.0, 'Ireland'], [94.0, 92.0, 'Scotland'],
+  [70.0, 92.0, 'Canada'], [40.0, 92.0, 'Scotland'], [47.0, 92.0, 'Scotland'],
+  [45.0, 92.0, 'Scotland'], [57.0, 92.0, 'USA'], [109.0, 92.0, 'Scotland'], [47.0, 92.0, 'Scotland'],
+  [39.0, 93.0, 'Ireland'], [133.0, 93.0, 'Scotland'], [35.0, 93.0, 'USA'], [32.0, 93.0, 'USA'],
+  [108.0, 94.0, 'Scotland'], [107.0, 94.0, 'Scotland'], [60.0, 94.0, 'Scotland'],
+  [93.0, 94.0, 'USA'], [95.0, 94.0, 'USA'], [70.0, 94.0, 'USA'], [140.0, 94.0, 'Scotland'],
+  [175.0, 94.0, 'Scotland'], [115.0, 94.0, 'Scotland'], [150.0, 94.0, 'Scotland'],
+  [68.0, 94.0, 'Scotland'], [80.0, 94.0, 'Scotland'], [190.0, 94.0, 'Scotland'],
+  [45.0, 94.0, 'Scotland'], [42.0, 94.0, 'USA'], [120.0, 95.0, 'Scotland'], [47.0, 95.0, 'Scotland'],
+  [55.0, 95.0, 'Scotland'], [220.0, 96.0, 'Scotland'], [70.0, 96.0, 'USA'], [80.0, 96.0, 'USA'],
+  [50.0, 96.0, 'USA'], [80.0, 96.0, 'USA'], [300.0, 96.0, 'Scotland'], [365.0, 96.0, 'Scotland'],
+  [84.0, 96.0, 'Taiwan'], [65.0, 96.0, 'USA'], [30.0, 96.0, 'USA'], [43.0, 96.0, 'Scotland'],
+  [89.0, 96.0, 'Scotland'], [400.0, 96.0, 'Scotland'], [62.0, 96.0, 'Scotland'],
+  [73.0, 96.0, 'Scotland'], [30.0, 96.0, 'Scotland'], [79.0, 96.0, 'Scotland'],
+  [43.0, 96.0, 'Scotland'], [54.0, 96.0, 'Scotland'], [90.0, 96.0, 'Scotland'],
+  [48.0, 96.0, 'Scotland'], [580.0, 96.0, 'Scotland'], [25.0, 96.0, 'Scotland'],
+  [30.0, 96.0, 'Scotland'], [65.0, 96.0, 'USA'], [40.0, 96.0, 'Ireland'], [65.0, 96.0, 'Scotland'],
+  [64.0, 96.0, 'Scotland'], [40.0, 96.0, 'USA'], [123.0, 97.0, 'Scotland'], [35.0, 99.0, 'Ireland'],
+  [120.0, 99.0, 'Japan'], [42.0, 99.0, 'Scotland'], [80.0, 99.0, 'Scotland'],
+  [92.0, 99.0, 'Scotland'], [107.0, 99.0, 'Scotland'], [45.0, 99.0, 'Scotland'],
+  [100.0, 99.0, 'Scotland'], [60.0, 99.0, 'Scotland'], [70.0, 99.0, 'Scotland'],
+  [50.0, 99.0, 'Scotland'], [45.0, 99.0, 'Scotland'], [45.0, 99.0, 'Scotland'],
+  [70.0, 99.0, 'Scotland'], [11.0, 99.0, 'USA'], [58.0, 99.0, 'USA'], [67.0, 99.0, 'USA'],
+  [80.0, 99.0, 'Scotland'], [60.0, 99.0, 'USA'], [80.0, 99.0, 'USA'], [72.0, 100.0, 'Ireland'],
+  [165.0, 100.0, 'Scotland'], [92.0, null, 'Japan'], [8.0, null, 'Canada'], [22.0, null, 'Canada'],
+  [292.0, null, 'Scotland'], [69.0, null, 'Scotland'], [null, null, 'Scotland'],
+  [null, null, 'Scotland'], [30.0, null, 'Scotland'], [280.0, null, 'USA'], [40.0, null, 'USA'],
+  [100.0, null, 'Taiwan']]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

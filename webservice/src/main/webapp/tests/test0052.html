@@ -119,7 +119,7 @@ function  BrunelVis(visId) {
           '#817066', '#FFB300', '#F6768E', '#93AA00', '#53377A', '#FF8E00', '#B32851', 
           '#CEA262', '#FF7A5C', '#7F180D', '#593315', '#F13A13', '#232C16']);
       var color = function(d) { var c = data.Country(d.data); return c!=null ? scale_color(c) : null };
-      var scale_size = d3.scaleSqrt().domain([0, 108.00001])
+      var scale_size = d3.scaleSqrt().domain([0, 108.0000108])
         .range([ 0.001, 1]);
       var size = function(d) { var s = data.$count(d.data); return s!=null ? scale_size(s) : null };
       legends._legend = legends._legend || { title: ['Country'], 
@@ -144,7 +144,7 @@ function  BrunelVis(visId) {
         function x(d) { return scale_x(d.x) };
         function y(d) { return scale_y(d.y) };
         var labeling  = [{
-          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3, dy: 0.3,
+          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3.0, dy: 0.3,
           fit: true, granularity: 1,
           content: function(d) {
             return d.row == null ? null : data.Country_f(d)
@@ -187,7 +187,7 @@ function  BrunelVis(visId) {
           BrunelD3.label(selection, labels, transitionMillis, geom, labeling);
 
           var tooltipLabeling  = {
-            index: -1, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 0, dy: 0.7,
+            index: -1, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 0.0, dy: 0.7,
             fit: true, granularity: 0,
             content: function(d) {
               return d.row == null ? null : '<span class="title">Country: </span>'
@@ -279,8 +279,8 @@ var table1 = {
    summarized: true,
    names: ['Country', '#count'], 
    options: ['string', 'numeric'], 
-   rows: [['Canada', 30], ['England', 1], ['France', 2], ['India', 5], ['Ireland', 41], ['Japan', 4],
-  ['Scotland', 108], ['Taiwan', 8], ['USA', 84]]
+   rows: [['Canada', 30.0], ['England', 1.0], ['France', 2.0], ['India', 5.0], ['Ireland', 41.0],
+  ['Japan', 4.0], ['Scotland', 108.0], ['Taiwan', 8.0], ['USA', 84.0]]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

@@ -51,6 +51,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -75,7 +76,7 @@ function  BrunelVis(visId) {
       .range([0, geom.inner_width]);
     var scale_inner = d3.scaleLinear().domain([-5, 45.000005])
       .range([-0.5, 0.5]);
-    var scale_y = d3.scaleLinear().domain([74, 92.000002])
+    var scale_y = d3.scaleLinear().domain([74, 92.0000018])
       .range([geom.inner_height, 0]);
     var base_scales = [scale_x, scale_y];                           // untransformed original scales
 
@@ -201,10 +202,6 @@ function  BrunelVis(visId) {
             .filter(BrunelD3.hasData)                     // following only performed for data items
             .style('stroke', color);
         }
-
-        // Define labeling for the selection
-        function label(selection, transitionMillis) {
-        }
         // Create selections, set the initial state and transition updates
         selection = main.selectAll('.element').data(splits, function(d) { return d.key });
         var added = selection.enter().append('path');
@@ -251,7 +248,14 @@ function  BrunelVis(visId) {
     return {
       elements : elements,
       interior : interior,
-      scales: {x:scale_x, y:scale_y},
+      scales: function() { return {x:scale_x, y:scale_y} },
+      resetZoom: function (xdomain, ydomain) {
+        zoomNode.__zoom = d3.zoomIdentity;
+        scale_x = base_scales[0];
+        scale_y = base_scales[1];
+        if (xdomain) scale_x.domain(xdomain);
+        if (ydomain) scale_y.domain(ydomain);
+      },
       zoom: function(params, time) {
           if (params) zoom.on('zoom').call(zoomNode, params, time);
           return d3.zoomTransform(zoomNode);
@@ -284,25 +288,34 @@ var table1 = {
    summarized: true,
    names: ['Category', 'Age', 'Rating'], 
    options: ['string', 'numeric', 'numeric'], 
-   rows: [['\u2026', 0, 87.330899], ['\u2026', 1, 82.955516], ['Bourbon', 2, 79.365037],
-  ['Blended', 4, 74.285033], ['Bourbon', 4, 74.285033], ['\u2026', 4, 74.285033],
-  ['Blended', 6, 75.151478], ['\u2026', 6, 75.151478], ['Blended', 7, 79.094808],
-  ['Bourbon', 7, 79.094808], ['\u2026', 7, 79.094808], ['Blended', 8, 81.685828],
-  ['Bourbon', 8, 81.685828], ['\u2026', 8, 81.685828], ['Bourbon', 9, 84.363191],
-  ['\u2026', 9, 84.363191], ['Blended', 10, 86.167539], ['Bourbon', 10, 86.167539],
-  ['Single Malt', 10, 86.167539], ['\u2026', 10, 86.167539], ['Blended', 11, 87.304729],
-  ['Blended', 12, 88.036395], ['Bourbon', 12, 88.036395], ['Single Malt', 12, 88.036395],
-  ['\u2026', 12, 88.036395], ['\u2026', 14, 88.933166], ['Blended', 15, 89.313932],
-  ['Bourbon', 15, 89.313932], ['Single Malt', 15, 89.313932], ['\u2026', 15, 89.313932],
-  ['Bourbon', 16, 89.441804], ['Single Malt', 16, 89.441804], ['\u2026', 16, 89.441804],
-  ['Blended', 17, 89.359896], ['Bourbon', 17, 89.359896], ['\u2026', 17, 89.359896],
-  ['Blended', 18, 89.597731], ['Bourbon', 18, 89.597731], ['Single Malt', 18, 89.597731],
-  ['\u2026', 18, 89.597731], ['Blended', 19, 89.972369], ['\u2026', 19, 89.972369],
-  ['Bourbon', 20, 90.147535], ['Bourbon', 21, 90.409545], ['Single Malt', 21, 90.409545],
-  ['\u2026', 21, 90.409545], ['Bourbon', 23, 91.315192], ['\u2026', 23, 91.315192],
-  ['Blended', 25, 90.462475], ['\u2026', 25, 90.462475], ['\u2026', 30, 88.563143],
-  ['\u2026', 31, 88.638638], ['Blended', 40, 88.67905], ['Blended', null, null],
-  ['Bourbon', null, null], ['Single Malt', null, null], ['\u2026', null, null]]
+   rows: [['\u2026', 0.0, 87.33089925625421], ['\u2026', 1.0, 82.95551583755339],
+  ['Bourbon', 2.0, 79.36503706171399], ['Blended', 4.0, 74.28503253796094],
+  ['Bourbon', 4.0, 74.28503253796094], ['\u2026', 4.0, 74.28503253796094],
+  ['Blended', 6.0, 75.15147774036662], ['\u2026', 6.0, 75.15147774036662],
+  ['Blended', 7.0, 79.09480836606858], ['Bourbon', 7.0, 79.09480836606858],
+  ['\u2026', 7.0, 79.09480836606858], ['Blended', 8.0, 81.68582828432095],
+  ['Bourbon', 8.0, 81.68582828432095], ['\u2026', 8.0, 81.68582828432095],
+  ['Bourbon', 9.0, 84.36319136350207], ['\u2026', 9.0, 84.36319136350207],
+  ['Blended', 10.0, 86.16753888908933], ['Bourbon', 10.0, 86.16753888908933],
+  ['Single Malt', 10.0, 86.16753888908933], ['\u2026', 10.0, 86.16753888908933],
+  ['Blended', 11.0, 87.30472943398844], ['Blended', 12.0, 88.03639487484703],
+  ['Bourbon', 12.0, 88.03639487484703], ['Single Malt', 12.0, 88.03639487484703],
+  ['\u2026', 12.0, 88.03639487484703], ['\u2026', 14.0, 88.93316553041328],
+  ['Blended', 15.0, 89.31393205499099], ['Bourbon', 15.0, 89.31393205499099],
+  ['Single Malt', 15.0, 89.31393205499099], ['\u2026', 15.0, 89.31393205499099],
+  ['Bourbon', 16.0, 89.441803583772], ['Single Malt', 16.0, 89.441803583772],
+  ['\u2026', 16.0, 89.441803583772], ['Blended', 17.0, 89.35989606455492],
+  ['Bourbon', 17.0, 89.35989606455492], ['\u2026', 17.0, 89.35989606455492],
+  ['Blended', 18.0, 89.59773054402663], ['Bourbon', 18.0, 89.59773054402663],
+  ['Single Malt', 18.0, 89.59773054402663], ['\u2026', 18.0, 89.59773054402663],
+  ['Blended', 19.0, 89.9723691082387], ['\u2026', 19.0, 89.9723691082387],
+  ['Bourbon', 20.0, 90.14753490188426], ['Bourbon', 21.0, 90.40954467981496],
+  ['Single Malt', 21.0, 90.40954467981496], ['\u2026', 21.0, 90.40954467981496],
+  ['Bourbon', 23.0, 91.31519165161545], ['\u2026', 23.0, 91.31519165161545],
+  ['Blended', 25.0, 90.46247464503043], ['\u2026', 25.0, 90.46247464503043],
+  ['\u2026', 30.0, 88.56314253077801], ['\u2026', 31.0, 88.63863757317722],
+  ['Blended', 40.0, 88.67904984312096], ['Blended', null, null], ['Bourbon', null, null],
+  ['Single Malt', null, null], ['\u2026', null, null]]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////

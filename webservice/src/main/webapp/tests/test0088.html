@@ -57,6 +57,7 @@ function  BrunelVis(visId) {
       .attr('x', geom.inner_left).attr('y', geom.inner_top)
       .attr('width', geom.inner_rawWidth).attr('height', geom.inner_rawHeight)
       .style('cursor', 'move').call(zoom)
+      .style('pointer-events', 'all')
       .node();
     zoomNode.__zoom = d3.zoomIdentity;
     chart.append('rect').attr('class', 'background').attr('width', geom.chart_right-geom.chart_left).attr('height', geom.chart_bottom-geom.chart_top);
@@ -227,7 +228,7 @@ function  BrunelVis(visId) {
         };
       }
       // Aesthetic Functions
-      var scale_color = d3.scaleLinear().domain([1, 1.1111111, 1.2222222, 1.3333333, 1.4444444, 1.5555556, 1.6666667, 1.7777778, 1.8888889, 2, 2.1111111, 2.2222222, 2.3333333, 2.4444444, 2.5555556, 2.6666667, 2.7777778, 2.8888889, 3])
+      var scale_color = d3.scaleLinear().domain([1, 1.1111111111111112, 1.2222222222222223, 1.3333333333333333, 1.4444444444444444, 1.5555555555555556, 1.6666666666666665, 1.7777777777777777, 1.8888888888888888, 2, 2.111111111111111, 2.2222222222222223, 2.333333333333333, 2.4444444444444446, 2.5555555555555554, 2.666666666666667, 2.7777777777777777, 2.888888888888889, 3])
         .interpolate(d3.interpolateHcl)
         .range([ '#00538A', '#C10020', '#F4C800', '#007D34', '#803E75', '#FF6800', 
           '#817066', '#FFB300', '#F6768E', '#93AA00', '#53377A', '#FF8E00', '#B32851', 
@@ -245,7 +246,7 @@ function  BrunelVis(visId) {
           .filter(function(x) { return x != null})            // add links to the nodes for each row
         main.attr('class', 'diagram hierarchy edge');
         var labeling  = [{
-          index: 0, method: 'box', location: ['center', 'center'], inside: false, align: 'middle', pad: 3, dy: 0.3,
+          index: 0, method: 'box', location: ['center', 'center'], inside: false, align: 'middle', pad: 3.0, dy: 0.3,
           fit: false, granularity: 1,
           content: function(d) {
             return d.row == null ? null : data.$row_f(d)
@@ -267,6 +268,7 @@ function  BrunelVis(visId) {
           selection
             .attr('d', function(d) {
               var p = BrunelD3.insetEdge(d.source.x, d.source.y, d.source, d.target.x, d.target.y, d.target);
+              if(!p) return '';
               return 'M' + p.x1 + ',' + p.y1 + 
                 'C' + (p.x1+p.x2)/2 + ',' + p.y1
                  + ' ' + (p.x1+p.x2)/2 + ',' + p.y2 + ' ' 

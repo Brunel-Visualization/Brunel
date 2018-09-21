@@ -119,12 +119,12 @@ function  BrunelVis(visId) {
         };
       }
       // Aesthetic Functions
-      var scale_color = d3.scaleLinear().domain([65.043478, 68.663043, 72.282609, 75.902174, 79.521739, 83.141304, 86.76087, 90.380435, 94])
+      var scale_color = d3.scaleLinear().domain([65.04347826086956, 68.66304347826087, 72.28260869565217, 75.90217391304347, 79.52173913043478, 83.1413043478261, 86.76086956521739, 90.38043478260869, 94])
         .interpolate(d3.interpolateHcl)
         .range([ '#045a8d', '#2b8cbe', '#74a9cf', '#bdc9e1', '#f8efe8', '#fef0d9', 
           '#fdcc8a', '#fc8d59', '#e34a33']);
       var color = function(d) { var c = data.Rating(d.data); return c!=null ? scale_color(c) : null };
-      var scale_size = d3.scaleLinear().domain([0, 51.000005])
+      var scale_size = d3.scaleLinear().domain([0, 51.0000051])
         .range([ 0.001, 1]);
       var size = function(d) { var s = data.$count(d.data); return s!=null ? scale_size(s) : null };
       legends._legend = legends._legend || { title: ['Mean(Rating)'], 
@@ -148,7 +148,7 @@ function  BrunelVis(visId) {
           .paddingTop(function(d) { return d.depth ==1 ? 15 : (d.depth == 2) ? 12 : 0});
         main.attr('class', 'diagram treemap hierarchy');
         var labeling  = [{
-          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3, dy: 0.3,
+          index: 0, method: 'box', location: ['center', 'center'], inside: true, align: 'middle', pad: 3.0, dy: 0.3,
           fit: true, granularity: 1,
           content: function(d) {
             return d.row == null ? null : data.Country_f(d)
@@ -194,7 +194,7 @@ function  BrunelVis(visId) {
           BrunelD3.label(selection, labels, transitionMillis, geom, labeling);
 
           var tooltipLabeling  = {
-            index: -1, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 0, dy: 0.7,
+            index: -1, method: 'box', location: ['center', 'top'], inside: true, align: 'middle', pad: 0.0, dy: 0.7,
             fit: true, granularity: 0,
             content: function(d) {
               return d.row == null ? null : '<span class="title">Country: </span>'
@@ -300,19 +300,21 @@ var table1 = {
    summarized: true,
    names: ['Country', 'Category', 'Rating', '#count'], 
    options: ['string', 'string', 'numeric', 'numeric'], 
-   rows: [['Canada', 'Blended', 65.043478, 25], ['France', 'Blended', 81, 1],
-  ['Ireland', 'Blended', 76.391304, 23], ['Japan', 'Blended', null, 1],
-  ['Scotland', 'Blended', 84.315789, 21], ['USA', 'Blended', 71, 2],
-  ['USA', 'Bourbon', 87.55102, 51], ['Scotland', 'Campbeltown', 86.5, 2], ['USA', 'Corn', 86.25, 8],
-  ['Ireland', 'Flavored', 81, 1], ['Taiwan', 'Flavored', 88, 1], ['USA', 'Flavored', 81, 3],
-  ['Ireland', 'Grain', 71, 1], ['USA', 'Grain', 88, 1], ['Scotland', 'Highlands', 92.24, 26],
-  ['Scotland', 'Islands', 91.222222, 9], ['Scotland', 'Islay', 93.4375, 17],
-  ['Scotland', 'Lowlands', 85, 1], ['Ireland', 'Pure Pot Still', 94, 2],
-  ['Canada', 'Rye', 73.666667, 3], ['USA', 'Rye', 80, 15], ['Canada', 'Single Malt', 76, 2],
-  ['England', 'Single Malt', 77, 1], ['France', 'Single Malt', 81, 1],
-  ['India', 'Single Malt', 81.6, 5], ['Ireland', 'Single Malt', 85.214286, 14],
-  ['Japan', 'Single Malt', 91.666667, 3], ['Taiwan', 'Single Malt', 86.166667, 7],
-  ['USA', 'Single Malt', 84.5, 2], ['Scotland', 'Speyside', 90.677419, 32], ['USA', 'Unaged', 88, 2]]
+   rows: [['Canada', 'Blended', 65.04347826086956, 25.0], ['France', 'Blended', 81.0, 1.0],
+  ['Ireland', 'Blended', 76.3913043478261, 23.0], ['Japan', 'Blended', null, 1.0],
+  ['Scotland', 'Blended', 84.3157894736842, 21.0], ['USA', 'Blended', 71.0, 2.0],
+  ['USA', 'Bourbon', 87.55102040816327, 51.0], ['Scotland', 'Campbeltown', 86.5, 2.0],
+  ['USA', 'Corn', 86.25, 8.0], ['Ireland', 'Flavored', 81.0, 1.0], ['Taiwan', 'Flavored', 88.0, 1.0],
+  ['USA', 'Flavored', 81.0, 3.0], ['Ireland', 'Grain', 71.0, 1.0], ['USA', 'Grain', 88.0, 1.0],
+  ['Scotland', 'Highlands', 92.24, 26.0], ['Scotland', 'Islands', 91.22222222222223, 9.0],
+  ['Scotland', 'Islay', 93.4375, 17.0], ['Scotland', 'Lowlands', 85.0, 1.0],
+  ['Ireland', 'Pure Pot Still', 94.0, 2.0], ['Canada', 'Rye', 73.66666666666667, 3.0],
+  ['USA', 'Rye', 80.0, 15.0], ['Canada', 'Single Malt', 76.0, 2.0],
+  ['England', 'Single Malt', 77.0, 1.0], ['France', 'Single Malt', 81.0, 1.0],
+  ['India', 'Single Malt', 81.6, 5.0], ['Ireland', 'Single Malt', 85.21428571428571, 14.0],
+  ['Japan', 'Single Malt', 91.66666666666667, 3.0],
+  ['Taiwan', 'Single Malt', 86.16666666666667, 7.0], ['USA', 'Single Malt', 84.5, 2.0],
+  ['Scotland', 'Speyside', 90.6774193548387, 32.0], ['USA', 'Unaged', 88.0, 2.0]]
 };
 
 // Call Code to Build the system ///////////////////////////////////////////////////////////////////
