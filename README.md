@@ -15,12 +15,12 @@ Articles and notes on Brunel can be found in the [brunelvis.org blog](http://www
 ## Zero to Visualization in Sixty Seconds
 
 Users:
-* [Try it out online](http://brunel.mybluemix.net/gallery_app/renderer?title=Bubble+chart+of+2000+games&brunel_src=data%28%27sample%3ABGG+Top+2000+Games.csv%27%29+bubble+color%28rating%29+size%28voters%29+sort%28rating%29+label%28title%29+tooltip%28title%2C+%23all%29+legends%28none%29+style%28%27*+{font-size%3A+7pt}%27%29&description=A+simple+bubble+chart+showing+the+top+ranked+games.+The+color+shows+the+BGG+rating+and+the+size+of+each+bubble+represents+the+number+of+voters+for+that+game.+The+data+is+already+sorted+by+rank%2C+so+no+sort+was+needed.+Data+is+from+March+2015.&width=1000&height=800&control_height=0) (and add your own data)
+* [Try it out online](http://brunelvis.mybluemix.net/gallery_app/renderer?title=Bubble+chart+of+2000+games&brunel_src=data%28%27sample%3ABGG+Top+2000+Games.csv%27%29+bubble+color%28rating%29+size%28voters%29+sort%28rating%29+label%28title%29+tooltip%28title%2C+%23all%29+legends%28none%29+style%28%27*+{font-size%3A+7pt}%27%29&description=A+simple+bubble+chart+showing+the+top+ranked+games.+The+color+shows+the+BGG+rating+and+the+size+of+each+bubble+represents+the+number+of+voters+for+that+game.+The+data+is+already+sorted+by+rank%2C+so+no+sort+was+needed.+Data+is+from+March+2015.&width=1000&height=800&control_height=0) (and add your own data)
 * Try it out in Jupyter notebooks: [Python](https://pypi.python.org/pypi/brunel), [R](https://github.com/Brunel-Visualization/Brunel/tree/master/R), or [Spark](https://github.com/Brunel-Visualization/Brunel/tree/master/spark-kernel)
 * Try it using [Docker](https://hub.docker.com/u/brunelvis/)
 * View the [gallery](https://github.com/Brunel-Visualization/Brunel/wiki)
 * Check out the [Brunel Visualization Cookbook](https://github.com/Brunel-Visualization/Brunel/wiki/Brunel-Visualization-Cookbook)
-* Use the interactive [language tutorial](http://brunel.mybluemix.net/docs)
+* Use the interactive [language tutorial](http://brunelvis.mybluemix.net/docs)
 * Watch [Brunel YouTube Videos](https://www.youtube.com/channel/UClXE1IhLQs6NpdMd0X8jALA)
 
 Developers:
@@ -46,7 +46,7 @@ Developers:
 ## How to use Brunel
 
 ### Online; no coding required
-The simplest way to get started to go to the [online builder application](http://brunel.mybluemix.net/gallery_app/renderer?title=Bubble+chart+of+2000+games&brunel_src=data%28%27http%3A%2F%2Fwillsfamily.org%2Ffiles%2Fvis%2Fdata%2FBGG+Top+2000+Games.csv%27%29+bubble+color%28rating%29+size%28voters%29+sort%28rating%29+label%28title%29+tooltip%28title%2C+%23all%29+legends%28none%29+style%28%27*+%7Bfont-size%3A+7pt%7D%27%29&description=A+simple+bubble+chart+showing+the+top+ranked+games.+The+color+shows+the+BGG+rating+and+the+size+of+each+bubble+represents+the+number+of+voters+for+that+game.+The+data+is+already+sorted+by+rank%2C+so+no+sort+was+needed.+Data+is+from+March+2015),
+The simplest way to get started to go to the [online builder application](http://brunelvis.mybluemix.net/gallery_app/renderer?title=Bubble+chart+of+2000+games&brunel_src=data%28%27http%3A%2F%2Fwillsfamily.org%2Ffiles%2Fvis%2Fdata%2FBGG+Top+2000+Games.csv%27%29+bubble+color%28rating%29+size%28voters%29+sort%28rating%29+label%28title%29+tooltip%28title%2C+%23all%29+legends%28none%29+style%28%27*+%7Bfont-size%3A+7pt%7D%27%29&description=A+simple+bubble+chart+showing+the+top+ranked+games.+The+color+shows+the+BGG+rating+and+the+size+of+each+bubble+represents+the+number+of+voters+for+that+game.+The+data+is+already+sorted+by+rank%2C+so+no+sort+was+needed.+Data+is+from+March+2015),
 drop in your own data or reference your data via a URL and build a custom visualization. Once you have a chart you want to share, you can:
 * Just take a screenshot of the page or download the SVG to get a cool picture
 * Copy the Javascript directly into wherever you want to be completely independent of the Brunel service -- this is a
