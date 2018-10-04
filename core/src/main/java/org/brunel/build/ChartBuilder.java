@@ -37,6 +37,8 @@ public class ChartBuilder {
   private ScaleBuilder scalesBuilder;                 // The scales for the current chart
   private AxisBuilder axisBuilder;                    // Axis for the current chart
   private LegendBuilder legendBuilder;                // Legends for the current chart
+  private ChartTitleBuilder title;                    // Main title
+  private ChartTitleBuilder subTitle;                 // sub title
 
   public ChartBuilder(VisInfo visInfo, BuilderOptions options, double[] location, ScriptWriter out) {
     this.visInfo = visInfo;
@@ -45,25 +47,29 @@ public class ChartBuilder {
     this.out = out;
   }
 
-  public ChartStructure build(int chartIndex, NestingInfo nestingInfo, VisElement... elements) {
+  public void buildChart(NestingInfo nestingInfo, ChartStructure structure) {
+    defineChart(structure);
+    for (ElementStructure e : structure.elementStructure) {
+      buildElement(e, nestingInfo);
+    }
+    VisElement[] elements = structure.elements;
+    endChart(structure, nestingInfo.isNested(elements[0]));
+  }
 
+  public ChartStructure defineStructure(int chartIndex, NestingInfo nestingInfo, VisElement... elements) {
     // Assemble the elements and data
     TransformedData[] data = new TransformedData[elements.length];
     for (int i = 0; i < elements.length; i++) {
       data[i] = TransformedData.make(elements[i]);
     }
 
-    // If this is nested, it can only be one element
-    boolean nested = nestingInfo.isNested(elements[0]);
+    boolean nested = nestingInfo.isNested(elements[0]); // If this is nested, it can only be one element
+
     ChartStructure structure = new ChartStructure(chartIndex, elements, location, data, nested, options.visIdentifier);
     structure.accessible = options.accessibleContent;
-
-    defineChart(structure);
-    for (ElementStructure e : structure.elementStructure) {
-      buildElement(e, nestingInfo);
-    }
-    endChart(structure, nested);
-
+    title = new ChartTitleBuilder(structure, "header");
+    subTitle = new ChartTitleBuilder(structure, "footer");
+    structure.location.setTitleMargins(title.verticalSpace(), subTitle.verticalSpace());
     return structure;
   }
 
@@ -156,10 +162,6 @@ public class ChartBuilder {
 
   private void defineChart(ChartStructure structure) {
 
-    ChartTitleBuilder title = new ChartTitleBuilder(structure, "header");
-    ChartTitleBuilder sub = new ChartTitleBuilder(structure, "footer");
-    structure.location.setTitleMargins(title.verticalSpace(), sub.verticalSpace());
-
     // Calculate the margins for this chart within the overall size
     // Create the scales and element builders.   This also creates the interaction instance.
     createBuilders(structure);
@@ -169,7 +171,7 @@ public class ChartBuilder {
     out.add("charts[" + structure.chartIndex + "] = function(parentNode, filterRows) {").ln();
     out.indentMore();
 
-    axisBuilder.setAdditionalHAxisOffset(sub.verticalSpace());
+    axisBuilder.setAdditionalHAxisOffset(subTitle.verticalSpace());
 
     out.add("var geom = BrunelD3.geometry(parentNode || vis.node(),", location.insets, ",", location.innerMargins(), "),")
       .indentMore()
@@ -192,7 +194,7 @@ public class ChartBuilder {
     }
 
     title.writeContent("chart", out);
-    sub.writeContent("chart", out);
+    subTitle.writeContent("chart", out);
 
     if (structure.diagram == null) {
       // Scales and axes
@@ -316,8 +318,6 @@ public class ChartBuilder {
     if (legendBuilder.isFloating()) {
       legendBuilder.positionFloatingLegend();
     }
-
-
 
     out.indentLess().onNewLine().add("}").ln();
 

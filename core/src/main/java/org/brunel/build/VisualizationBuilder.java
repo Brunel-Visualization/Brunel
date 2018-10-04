@@ -16,10 +16,14 @@
 
 package org.brunel.build;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.brunel.action.Param;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.data.DataTableWriter;
 import org.brunel.build.info.ChartLayout;
+import org.brunel.build.info.ChartStructure;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
@@ -27,10 +31,6 @@ import org.brunel.model.VisComposition;
 import org.brunel.model.VisElement;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisTypes;
-
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * A rough flow of the build process is as follows:
@@ -130,7 +130,10 @@ public class VisualizationBuilder {
     // Write any nested charts
     for (VisElement item : nestingInfo.nestedElements()) {
       double[] loc = ChartLayout.chartLocation(width, height, item);
-      new ChartBuilder(visStructure, options, loc, out).build(chartIndex, nestingInfo, item);
+      VisElement[] elements = new VisElement[]{item};
+      ChartBuilder builder = new ChartBuilder(visStructure, options, loc, out);
+      ChartStructure structure = builder.defineStructure(chartIndex, nestingInfo, elements);
+      builder.buildChart(nestingInfo, structure);
       chartIndex++;
     }
 
@@ -235,8 +238,9 @@ public class VisualizationBuilder {
       elements = new VisElement[]{toMainElement(item)};
     }
 
-    new ChartBuilder(visStructure, options, location, out)
-      .build(chartIndex, nestingInfo, elements);
+    ChartBuilder builder = new ChartBuilder(visStructure, options, location, out);
+    ChartStructure structure = builder.defineStructure(chartIndex, nestingInfo, elements);
+    builder.buildChart(nestingInfo, structure);
   }
 
   private int enterAnimate(VisItem main, int dataSetCount) {
