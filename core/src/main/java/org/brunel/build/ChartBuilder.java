@@ -39,6 +39,7 @@ public class ChartBuilder {
   private LegendBuilder legendBuilder;                // Legends for the current chart
   private ChartTitleBuilder title;                    // Main title
   private ChartTitleBuilder subTitle;                 // sub title
+  private ChartStructure structure;                   // The structure we have built
 
   public ChartBuilder(VisInfo visInfo, BuilderOptions options, double[] location, ScriptWriter out) {
     this.visInfo = visInfo;
@@ -47,7 +48,7 @@ public class ChartBuilder {
     this.out = out;
   }
 
-  public void buildChart(NestingInfo nestingInfo, ChartStructure structure) {
+  public void buildChart(NestingInfo nestingInfo) {
     defineChart(structure);
     for (ElementStructure e : structure.elementStructure) {
       buildElement(e, nestingInfo);
@@ -56,7 +57,7 @@ public class ChartBuilder {
     endChart(structure, nestingInfo.isNested(elements[0]));
   }
 
-  public ChartStructure defineStructure(int chartIndex, NestingInfo nestingInfo, VisElement... elements) {
+  public void defineStructure(int chartIndex, NestingInfo nestingInfo, VisElement... elements) {
     // Assemble the elements and data
     TransformedData[] data = new TransformedData[elements.length];
     for (int i = 0; i < elements.length; i++) {
@@ -65,12 +66,11 @@ public class ChartBuilder {
 
     boolean nested = nestingInfo.isNested(elements[0]); // If this is nested, it can only be one element
 
-    ChartStructure structure = new ChartStructure(chartIndex, elements, location, data, nested, options.visIdentifier);
+    structure = new ChartStructure(chartIndex, elements, location, data, nested, options.visIdentifier);
     structure.accessible = options.accessibleContent;
     title = new ChartTitleBuilder(structure, "header");
     subTitle = new ChartTitleBuilder(structure, "footer");
     structure.location.setTitleMargins(title.verticalSpace(), subTitle.verticalSpace());
-    return structure;
   }
 
   private void addElementExports(VisElement vis, DataTransformWriter dataBuilder, ElementStructure structure) {

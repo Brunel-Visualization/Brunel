@@ -27,7 +27,6 @@ import org.brunel.build.info.ChartStructure;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
-import org.brunel.model.VisComposition;
 import org.brunel.model.VisElement;
 import org.brunel.model.VisItem;
 import org.brunel.model.VisTypes;
@@ -109,7 +108,7 @@ public class VisualizationBuilder {
 
     Map<VisItem, double[]> locations = new LinkedHashMap<>();     // Where to place items
     VisItem[] parts = main.children();                            // The parts contained in this item
-    if (parts != null && ((VisComposition) main).compositionMethod() == VisTypes.Composition.tile) {
+    if (parts != null && main.compositionMethod() == VisTypes.Composition.tile) {
       // We have tiled locations, so read them all in
       ChartLayout layout = new ChartLayout(width, height, parts);   // Layout method
       for (int i = 0; i < parts.length; i++) {
@@ -123,17 +122,21 @@ public class VisualizationBuilder {
     }
 
     // Write all the regular charts
+    Map<VisItem, ChartBuilder> builders = new LinkedHashMap<>();
     int chartIndex = 0;
-    for (Map.Entry<VisItem, double[]> e : locations.entrySet())
-      buildChart(e.getKey(), e.getValue(), chartIndex++);
+    for (Map.Entry<VisItem, double[]> e : locations.entrySet()) {
+      VisItem key = e.getKey();
+      ChartBuilder builder = buildChart(key, e.getValue(), chartIndex++);
+      builders.put(key, builder);
+    }
 
     // Write any nested charts
     for (VisElement item : nestingInfo.nestedElements()) {
       double[] loc = ChartLayout.chartLocation(width, height, item);
       VisElement[] elements = new VisElement[]{item};
       ChartBuilder builder = new ChartBuilder(visStructure, options, loc, out);
-      ChartStructure structure = builder.defineStructure(chartIndex, nestingInfo, elements);
-      builder.buildChart(nestingInfo, structure);
+      builder.defineStructure(chartIndex, nestingInfo, elements);
+      builder.buildChart(nestingInfo);
       chartIndex++;
     }
 
@@ -224,7 +227,7 @@ public class VisualizationBuilder {
     return base;
   }
 
-  private void buildChart(VisItem item, double[] location, int chartIndex) {
+  private ChartBuilder buildChart(VisItem item, double[] location, int chartIndex) {
     VisElement[] elements;                          // Elements to build for this chart
 
     VisItem[] children = item.children();
@@ -239,8 +242,9 @@ public class VisualizationBuilder {
     }
 
     ChartBuilder builder = new ChartBuilder(visStructure, options, location, out);
-    ChartStructure structure = builder.defineStructure(chartIndex, nestingInfo, elements);
-    builder.buildChart(nestingInfo, structure);
+    builder.defineStructure(chartIndex, nestingInfo, elements);
+    builder.buildChart(nestingInfo);
+    return builder;
   }
 
   private int enterAnimate(VisItem main, int dataSetCount) {
