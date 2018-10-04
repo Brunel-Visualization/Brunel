@@ -6,10 +6,10 @@ package org.brunel.build;
 public class ChartLocation {
 	public final double[] insets;                                // insets as fractions
 
-	public final int left, right, top, bottom, width, height;   // Chart extents, relative to parent vis
+	public int left, right, top, bottom, width, height;   // Chart extents, relative to parent vis
 
 	private int legendWidth;                                    // Width of legend (on right)
-	private int axisTop, axisLeft, axisBottom, axisRight;       // space needed for axes
+	public int axisTop, axisLeft, axisBottom, axisRight;       // space needed for axes
 	private int titleTop, titleBottom;                            // space needed for titles
 
 	/**
@@ -55,6 +55,20 @@ public class ChartLocation {
 				Math.max(axisTop, axisBottom + titleBottom),    // Ensure a little space for the V axis to overflow
 				Math.max(axisRight, legendWidth)                // Space for the axis or the legend
 		};
+	}
+
+	/**
+	 * Return the currently defined inner rectangle (inside the margins)
+	 *
+	 * @return rectangle in T L B R form
+	 */
+	public int[] innerRectangle() {
+		int[] result = innerMargins();
+		result[0] += top;
+		result[1] += left;
+		result[2] = bottom - result[2];
+		result[3] = right - result[3];
+		return result;
 	}
 
 	public void setAxisMargins(int axisTop, int axisLeft, int axisBottom, int axisRight) {
