@@ -23,7 +23,6 @@ import org.brunel.action.Param;
 import org.brunel.build.controls.Controls;
 import org.brunel.build.data.DataTableWriter;
 import org.brunel.build.info.ChartLayout;
-import org.brunel.build.info.ChartStructure;
 import org.brunel.build.util.BuilderOptions;
 import org.brunel.build.util.ScriptWriter;
 import org.brunel.data.Dataset;
@@ -101,7 +100,9 @@ public class VisualizationBuilder {
 
     // Index the datasets with the number in the list of input data sets
     Dataset[] datasets = main.getDataSets();
-    for (int i = 0; i < datasets.length; i++) datasets[i].set("index", i);
+    for (int i = 0; i < datasets.length; i++) {
+      datasets[i].set("index", i);
+    }
 
     // Create the main visualization area
     writeStart();
@@ -121,7 +122,7 @@ public class VisualizationBuilder {
       locations.put(main, new ChartLayout(width, height, main).getLocation(0));
     }
 
-    // Write all the regular charts
+    // Define all the regular charts
     Map<VisItem, ChartBuilder> builders = new LinkedHashMap<>();
     int chartIndex = 0;
     for (Map.Entry<VisItem, double[]> e : locations.entrySet()) {
@@ -130,12 +131,20 @@ public class VisualizationBuilder {
       builders.put(key, builder);
     }
 
+    // Examine geoms to see if we can nudge any into better alignments
+    new GeometryAlignment(builders.values()).align();
+
+    // Write all the regular charts
+    for (Map.Entry<VisItem, ChartBuilder> entry : builders.entrySet()) {
+      entry.getValue().buildChart(nestingInfo);
+    }
+
     // Write any nested charts
     for (VisElement item : nestingInfo.nestedElements()) {
       double[] loc = ChartLayout.chartLocation(width, height, item);
       VisElement[] elements = new VisElement[]{item};
       ChartBuilder builder = new ChartBuilder(visStructure, options, loc, out);
-      builder.defineStructure(chartIndex, nestingInfo, elements);
+      builder.prepareForBuilding(chartIndex, nestingInfo, elements);
       builder.buildChart(nestingInfo);
       chartIndex++;
     }
@@ -198,14 +207,17 @@ public class VisualizationBuilder {
         + String.format(pattern, options.locJavaScript + "/BrunelData.js")
         + String.format(pattern, options.locJavaScript + "/BrunelD3.js")
         + String.format(pattern, options.locJavaScript + "/BrunelBidi.js");
-      if (controls.isNeeded()) base = base
-        + String.format(pattern, options.locJavaScript + "/BrunelEventHandlers.js")
-        + String.format(pattern, options.locJavaScript + "/BrunelJQueryControlFactory.js")
-        + String.format(pattern, options.locJavaScript + "/sumoselect/jquery.sumoselect.min.js");
+      if (controls.isNeeded()) {
+        base = base
+          + String.format(pattern, options.locJavaScript + "/BrunelEventHandlers.js")
+          + String.format(pattern, options.locJavaScript + "/BrunelJQueryControlFactory.js")
+          + String.format(pattern, options.locJavaScript + "/sumoselect/jquery.sumoselect.min.js");
+      }
     } else {
       base = base + String.format(pattern, options.locJavaScript + "/brunel." + options.version + ".min.js");
-      if (controls.isNeeded())
+      if (controls.isNeeded()) {
         base = base + String.format(pattern, options.locJavaScript + "/brunel.controls." + options.version + ".min.js");
+      }
     }
     return base;
   }
@@ -235,26 +247,31 @@ public class VisualizationBuilder {
 
     if (compositionMethod == VisTypes.Composition.overlay) {
       elements = new VisElement[children.length];
-      for (int i = 0; i < children.length; i++) elements[i] = toMainElement(children[i]);
+      for (int i = 0; i < children.length; i++) {
+        elements[i] = toMainElement(children[i]);
+      }
     } else {
       // Main item is either simple or a nesting
       elements = new VisElement[]{toMainElement(item)};
     }
 
     ChartBuilder builder = new ChartBuilder(visStructure, options, location, out);
-    builder.defineStructure(chartIndex, nestingInfo, elements);
-    builder.buildChart(nestingInfo);
+    builder.prepareForBuilding(chartIndex, nestingInfo, elements);
     return builder;
   }
 
   private int enterAnimate(VisItem main, int dataSetCount) {
-    if (dataSetCount != 1) return -1;                           // Need a single data set to animate over
+    if (dataSetCount != 1) {
+      return -1;                           // Need a single data set to animate over
+    }
 
     if (main.children() != null) {
       // Check children
       for (VisItem child : main.children()) {
         int v = enterAnimate(child, dataSetCount);
-        if (v >= 0) return v;
+        if (v >= 0) {
+          return v;
+        }
       }
     }
 
@@ -281,21 +298,25 @@ public class VisualizationBuilder {
       return item.getSingle();
     } else {
       // Must be a nesting
-      if (children.length != 2) throw new IllegalStateException("Nesting requires two children");
+      if (children.length != 2) {
+        throw new IllegalStateException("Nesting requires two children");
+      }
       return (VisElement) children[0];
     }
   }
 
   private void writeBidiEnd(VisItem main) {
-    if (!(main instanceof VisElement))
+    if (!(main instanceof VisElement)) {
       return;
+    }
     VisElement element = (VisElement) main;
 
     if (element.fLocale == null
       && element.fTextDir == null
       && element.fGuiDir == null
-      && element.fNumShape == null)
+      && element.fNumShape == null) {
       return;
+    }
 
     out.add("var BrunelD3Locale;\n");
     out.add("bidiProcessing('"
@@ -366,7 +387,9 @@ public class VisualizationBuilder {
       } else {
         out.add(options.visObject + ".build(");
         for (int i = 0; i < length; i++) {
-          if (i > 0) out.add(", ");
+          if (i > 0) {
+            out.add(", ");
+          }
           out.add(String.format(options.dataName, i + 1));
         }
         out.add(")").endStatement();

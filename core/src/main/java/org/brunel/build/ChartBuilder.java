@@ -39,7 +39,7 @@ public class ChartBuilder {
   private LegendBuilder legendBuilder;                // Legends for the current chart
   private ChartTitleBuilder title;                    // Main title
   private ChartTitleBuilder subTitle;                 // sub title
-  private ChartStructure structure;                   // The structure we have built
+  ChartStructure structure;                   // The structure we have built
 
   public ChartBuilder(VisInfo visInfo, BuilderOptions options, double[] location, ScriptWriter out) {
     this.visInfo = visInfo;
@@ -57,7 +57,7 @@ public class ChartBuilder {
     endChart(structure, nestingInfo.isNested(elements[0]));
   }
 
-  public void defineStructure(int chartIndex, NestingInfo nestingInfo, VisElement... elements) {
+  public void prepareForBuilding(int chartIndex, NestingInfo nestingInfo, VisElement... elements) {
     // Assemble the elements and data
     TransformedData[] data = new TransformedData[elements.length];
     for (int i = 0; i < elements.length; i++) {
@@ -71,6 +71,13 @@ public class ChartBuilder {
     title = new ChartTitleBuilder(structure, "header");
     subTitle = new ChartTitleBuilder(structure, "footer");
     structure.location.setTitleMargins(title.verticalSpace(), subTitle.verticalSpace());
+
+    // Calculate the margins for this chart within the overall size
+    // Create the scales and element builders.   This also creates the interaction instance.
+    createBuilders(structure);
+    axisBuilder.setAdditionalHAxisOffset(subTitle.verticalSpace());
+
+
   }
 
   private void addElementExports(VisElement vis, DataTransformWriter dataBuilder, ElementStructure structure) {
@@ -161,17 +168,11 @@ public class ChartBuilder {
   }
 
   private void defineChart(ChartStructure structure) {
-
-    // Calculate the margins for this chart within the overall size
-    // Create the scales and element builders.   This also creates the interaction instance.
-    createBuilders(structure);
-
     // Write the class definition function
     out.titleComment("Define chart #" + structure.chartID(), "in the visualization");
     out.add("charts[" + structure.chartIndex + "] = function(parentNode, filterRows) {").ln();
     out.indentMore();
 
-    axisBuilder.setAdditionalHAxisOffset(subTitle.verticalSpace());
 
     out.add("var geom = BrunelD3.geometry(parentNode || vis.node(),", location.insets, ",", location.innerMargins(), "),")
       .indentMore()
